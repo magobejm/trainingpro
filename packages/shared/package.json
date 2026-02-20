@@ -1,0 +1,10 @@
+{
+  "name": "@trainerpro/shared",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "lint": "pnpm exec eslint src --ext .ts",
+    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
+    "build": "pnpm exec tsc -p tsconfig.json --noEmit"
+  }
+}

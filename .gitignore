@@ -1,5 +1,7 @@
 node_modules
 logs
+docs
+plans
 # Env files
 .env
 .env.*
@@ -14,6 +16,7 @@ coverage/
 *.log
 **/.run/
 apps/api/prisma/.tmp-seed/
+prisma/_tmp*
 
 # Local app state
 apps/mobile/.expo/

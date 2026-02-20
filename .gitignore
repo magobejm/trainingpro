@@ -1,0 +1,26 @@
+node_modules
+logs
+# Env files
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+apps/**/dist/
+build/
+coverage/
+
+# Runtime logs/temp
+*.log
+**/.run/
+apps/api/prisma/.tmp-seed/
+
+# Local app state
+apps/mobile/.expo/
+
+# Supabase local temp state
+supabase/.temp/
+supabase/.branches/
+
+# Local binaries
+schema-engine-*.exe

@@ -1,0 +1,19 @@
+export type Client = {
+  avatarUrl: null | string;
+  birthDate: Date | null;
+  coachMembershipId: string;
+  createdAt: Date;
+  email: string;
+  firstName: string;
+  heightCm: null | number;
+  id: string;
+  lastName: string;
+  notes: null | string;
+  objective: string;
+  objectiveId: string;
+  organizationId: string;
+  phone: null | string;
+  sex: null | string;
+  updatedAt: Date;
+  weightKg: null | number;
+};

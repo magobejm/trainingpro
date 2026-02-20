@@ -1,0 +1,30 @@
+{
+  "name": "@trainerpro/mobile",
+  "private": true,
+  "version": "0.0.1",
+  "main": "index.js",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.89.0",
+    "@expo/metro-runtime": "~5.0.5",
+    "expo": "^53.0.20",
+    "expo-status-bar": "~2.2.3",
+    "i18next": "^24.2.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-i18next": "^15.4.1",
+    "react-native": "^0.77.0",
+    "react-native-web": "^0.20.0",
+    "zustand": "^5.0.8"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.28.0"
+  },
+  "scripts": {
+    "dev": "pnpm exec expo start --web --port 19006",
+    "dev:native": "pnpm exec expo start",
+    "lint": "pnpm exec eslint src --ext .ts,.tsx",
+    "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
+    "build": "pnpm exec tsc -p tsconfig.json --noEmit"
+  }
+}

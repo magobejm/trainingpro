@@ -1,0 +1,12 @@
+{
+  "extends": "../../packages/config/tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "react-jsx",
+    "paths": {
+      "@trainerpro/ui": ["../../packages/ui/src/index.ts"]
+    },
+    "types": ["react", "react-dom", "react-native", "vite/client"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}

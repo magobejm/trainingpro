@@ -1,0 +1,138 @@
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+const COLORS = {
+  accent: '#1c74e9',
+  navBorder: '#1e2a3a',
+  text: '#ffffff',
+  textMuted: '#9aa5b1',
+};
+const BRAND_ICON = '🏋️';
+
+export function SidebarIdentity(props: { roleLabel: string; title: string }): React.JSX.Element {
+  return (
+    <View style={styles.identityCard}>
+      <View style={styles.avatarStub}>
+        <Text style={styles.brandIcon}>{BRAND_ICON}</Text>
+      </View>
+      <View style={styles.identityTextWrap}>
+        <Text style={styles.logo}>{props.title}</Text>
+        <Text style={styles.role}>{props.roleLabel}</Text>
+      </View>
+    </View>
+  );
+}
+
+export function TopBar(props: { roleLabel: string; title: string }): React.JSX.Element {
+  return (
+    <View style={styles.topbar}>
+      <View>
+        <Text style={styles.topbarTitle}>{props.title}</Text>
+        <Text style={styles.topbarSubtitle}>{props.roleLabel}</Text>
+      </View>
+      <View style={styles.topbarRight}>
+        <View style={styles.topbarIconButton} />
+        <View style={styles.topbarIconButton} />
+        <View style={styles.topbarStatus}>
+          <View style={styles.onlineDot} />
+          <Text style={styles.topbarStatusLabel}>{props.roleLabel}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  avatarStub: {
+    alignItems: 'center',
+    backgroundColor: COLORS.accent,
+    borderRadius: 10,
+    height: 38,
+    justifyContent: 'center',
+    width: 38,
+  },
+  identityCard: {
+    alignItems: 'center',
+    backgroundColor: '#111a27',
+    borderColor: COLORS.navBorder,
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 10,
+    padding: 10,
+  },
+  brandIcon: {
+    color: '#ffffff',
+    fontSize: 16,
+    lineHeight: 18,
+  },
+  identityTextWrap: {
+    flex: 1,
+  },
+  logo: {
+    color: COLORS.text,
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  onlineDot: {
+    backgroundColor: '#23b26d',
+    borderRadius: 999,
+    height: 8,
+    width: 8,
+  },
+  role: {
+    color: COLORS.textMuted,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  topbar: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderColor: '#dbe2ec',
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  topbarIconButton: {
+    backgroundColor: '#f1f4f9',
+    borderColor: '#dbe2ec',
+    borderRadius: 999,
+    borderWidth: 1,
+    height: 34,
+    width: 34,
+  },
+  topbarRight: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  topbarStatus: {
+    alignItems: 'center',
+    backgroundColor: '#eef4ff',
+    borderColor: '#d6e4ff',
+    borderRadius: 999,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  topbarStatusLabel: {
+    color: '#214c9f',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topbarSubtitle: {
+    color: '#6a7381',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  topbarTitle: {
+    color: '#111418',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+});

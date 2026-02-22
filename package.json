@@ -7,6 +7,7 @@
     "dev:web": "pnpm --filter @trainerpro/web dev",
     "dev:webapi": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/start-dev.ps1",
     "dev:stop": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/stop-dev.ps1",
+    "dev:status": "powershell -NoProfile -ExecutionPolicy Bypass -File ./scripts/status-dev.ps1",
     "dev:mobile": "pnpm --dir apps/mobile dev",
     "dev:all": "powershell -NoProfile -ExecutionPolicy Bypass -Command \"Start-Process pnpm -ArgumentList '--filter','@trainerpro/api','dev' -WorkingDirectory '.'; Start-Process pnpm -ArgumentList '--filter','@trainerpro/web','dev' -WorkingDirectory '.'; Start-Process pnpm -ArgumentList '--filter','@trainerpro/mobile','dev' -WorkingDirectory '.'\"",
     "lint": "pnpm -r lint",

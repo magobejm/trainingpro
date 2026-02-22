@@ -15,6 +15,7 @@ async function bootstrap(): Promise<void> {
     origin: allowedCorsOrigins(),
   });
   app.use('/assets/avatars', express.static(resolveAvatarAssetsPath()));
+  app.use('/assets/placeholders', express.static(resolvePlaceholderAssetsPath()));
   app.use('/uploads', express.static(resolveUploadsPath()));
   app.useGlobalPipes(new ZodValidationPipe());
   await app.listen(readPort());
@@ -28,6 +29,16 @@ function resolveAvatarAssetsPath(): string {
   ];
   const match = candidates.find((item) => existsSync(item));
   return match ?? resolve(process.cwd(), 'apps/storage/avatar');
+}
+
+function resolvePlaceholderAssetsPath(): string {
+  const candidates = [
+    resolve(process.cwd(), 'apps/storage/placeholders'),
+    resolve(process.cwd(), '../storage/placeholders'),
+    resolve(process.cwd(), '../../apps/storage/placeholders'),
+  ];
+  const match = candidates.find((item) => existsSync(item));
+  return match ?? resolve(process.cwd(), 'apps/storage/placeholders');
 }
 
 function resolveUploadsPath(): string {

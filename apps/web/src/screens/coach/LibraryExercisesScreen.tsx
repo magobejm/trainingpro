@@ -107,11 +107,16 @@ function useExerciseResources(state: ReturnType<typeof useExercisesState>) {
   const defaultCatalogId = findDefaultCatalogId(catalogItems);
   const muscleGroupId = state.activeFilter === 'all' ? undefined : state.activeFilter;
   const listQuery = useLibraryExercisesQuery({ muscleGroupId, query: state.query });
+  const listItems = useMemo(() => {
+    const raw = listQuery.data ?? [];
+    return [...raw].sort((a, b) => a.name.localeCompare(b.name));
+  }, [listQuery.data]);
+
   return {
     catalogItems,
     defaultCatalogId,
     deleteMutation,
-    listItems: listQuery.data ?? [],
+    listItems,
     updateMutation,
   };
 }

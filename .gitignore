@@ -1,7 +1,7 @@
 node_modules
 logs
 docs
-plans
+/plans/
 # Env files
 .env
 .env.*

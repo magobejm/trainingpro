@@ -10,8 +10,14 @@ import {
 } from '@trainerpro/ui';
 import '../../i18n';
 import { useLibraryExercisesQuery } from '../../data/hooks/useLibraryQuery';
-import { useCreatePlanTemplateMutation } from '../../data/hooks/usePlanTemplates';
+import {
+  useCreatePlanTemplateMutation,
+  useDeletePlanTemplateMutation,
+  usePlanTemplatesQuery,
+  useUpdatePlanTemplateMutation,
+} from '../../data/hooks/usePlanTemplates';
 import { usePlanBuilderStore } from '../../store/planBuilder.store';
+import { ActionConfirmModal } from './components/ActionConfirmModal';
 
 type BuilderExercise = {
   displayName: string;
@@ -42,27 +48,79 @@ export function PlanBuilderStrengthScreen(): React.JSX.Element {
 
 function usePlanBuilderViewModel() {
   const { t } = useTranslation();
-  const templateName = usePlanBuilderStore((state) => state.draft.name);
+  const draft = usePlanBuilderStore((state) => state.draft);
+  const currentTemplateId = usePlanBuilderStore((state) => state.currentTemplateId);
   const setTemplateName = usePlanBuilderStore((state) => state.setTemplateName);
+  const resetDraft = usePlanBuilderStore((state) => state.resetDraft);
+  const startEditing = usePlanBuilderStore((state) => state.startEditing);
+
   const createTemplate = useCreatePlanTemplateMutation();
+  const updateTemplate = useUpdatePlanTemplateMutation(currentTemplateId ?? '');
+  const deleteTemplateMutation = useDeletePlanTemplateMutation();
+  const templatesQuery = usePlanTemplatesQuery();
+
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [deletingId, setDeletingId] = useState<null | string>(null);
+
   const exercisesQuery = useLibraryExercisesQuery({ query: '' });
   const pickerItems = useMemo(
     () => mapPickerItems(exercisesQuery.data ?? []),
     [exercisesQuery.data],
   );
+
   const selection = useBuilderSelection(pickerItems);
+
   const onSaveTemplate = () => {
-    createTemplate.mutate(
-      buildTemplatePayload(templateName, selection.selected, t('coach.builder.dayTitleDefault')),
+    const payload = buildTemplatePayload(
+      draft.name,
+      selection.selected,
+      t('coach.builder.dayTitleDefault'),
     );
+
+    const onComplete = () => {
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      resetDraft();
+      selection.resetSelection();
+    };
+
+    if (currentTemplateId) {
+      updateTemplate.mutate(payload, { onSuccess: onComplete });
+    } else {
+      createTemplate.mutate(payload, { onSuccess: onComplete });
+    }
   };
+
+  const onLoadTemplate = (template: any) => {
+    const builderDraft = mapTemplateToBuilder(template, pickerItems);
+    startEditing(template.id, { name: template.name, days: template.days });
+    selection.setSelection(builderDraft);
+  };
+
+  const onDeleteConfirm = () => {
+    if (deletingId) {
+      deleteTemplateMutation.mutate(deletingId, {
+        onSettled: () => setDeletingId(null),
+      });
+    }
+  };
+
   return {
     ...selection,
+    currentTemplateId,
+    deletingId,
+    deleteIsPending: deleteTemplateMutation.isPending,
+    onDeleteConfirm,
+    onDeleteRequest: setDeletingId,
+    onLoadTemplate,
     onSaveTemplate,
     pickerItems,
+    saveSuccess,
+    setDeletingId,
     setTemplateName,
     t,
-    templateName,
+    templateName: draft.name,
+    templates: templatesQuery.data ?? [],
   };
 }
 
@@ -72,6 +130,13 @@ function PlanBuilderStrengthView(props: ViewModel): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{props.t('coach.builder.title')}</Text>
+
+      {props.saveSuccess && (
+        <View style={styles.successBanner}>
+          <Text style={styles.successText}>{props.t('coach.builder.saved')}</Text>
+        </View>
+      )}
+
       <View style={styles.card}>
         <Text style={styles.label}>{props.t('coach.builder.templateName')}</Text>
         <TextInput
@@ -93,8 +158,49 @@ function PlanBuilderStrengthView(props: ViewModel): React.JSX.Element {
       </View>
       <View style={styles.card}>{renderSelected(props)}</View>
       <Pressable onPress={props.onSaveTemplate} style={styles.button}>
-        <Text style={styles.buttonLabel}>{props.t('coach.builder.save')}</Text>
+        <Text style={styles.buttonLabel}>
+          {props.currentTemplateId ? props.t('coach.clientProfile.save') : props.t('coach.builder.save')}
+        </Text>
       </Pressable>
+
+      <View style={[styles.card, { marginTop: 24 }]}>
+        <Text style={styles.label}>{props.t('coach.builder.list.title')}</Text>
+        {props.templates.length === 0 ? (
+          <Text style={styles.empty}>{props.t('coach.builder.list.empty')}</Text>
+        ) : (
+          <View style={styles.templateList}>
+            {props.templates.map((tpl) => (
+              <View key={tpl.id} style={styles.templateItem}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.templateName}>{tpl.name}</Text>
+                  <Text style={styles.templateMeta}>
+                    {tpl.days?.[0]?.exercises?.length || 0} exercises
+                  </Text>
+                </View>
+                <View style={styles.templateActions}>
+                  <Pressable onPress={() => props.onLoadTemplate(tpl)} style={styles.editAction}>
+                    <Text style={styles.editActionLabel}>{props.t('coach.builder.list.edit')}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => props.onDeleteRequest(tpl.id)} style={styles.deleteAction}>
+                    <Text style={styles.deleteActionLabel}>{props.t('coach.builder.list.delete')}</Text>
+                  </Pressable>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+
+      <ActionConfirmModal
+        cancelLabel={props.t('coach.builder.delete.cancel')}
+        confirmLabel={props.t('coach.builder.delete.action')}
+        isLoading={props.deleteIsPending}
+        message={props.t('coach.builder.delete.confirm')}
+        onCancel={() => props.setDeletingId(null)}
+        onConfirm={props.onDeleteConfirm}
+        title={props.t('coach.builder.delete.title')}
+        visible={!!props.deletingId}
+      />
     </ScrollView>
   );
 }
@@ -107,7 +213,12 @@ function renderSelected(props: ViewModel): React.JSX.Element {
     <View style={styles.selectedList}>
       {props.selected.map((item) => (
         <View key={item.id} style={styles.exerciseCard}>
-          <Text style={styles.exerciseTitle}>{item.displayName}</Text>
+          <View style={styles.exerciseHeader}>
+            <Text style={styles.exerciseTitle}>{item.displayName}</Text>
+            <Pressable onPress={() => props.onRemoveExercise(item.id)} style={styles.removeExerciseBtn}>
+              <Text style={styles.removeExerciseLabel}>×</Text>
+            </Pressable>
+          </View>
           <FieldModeControl
             onChange={(mode) => props.onFieldModeChange(item.id, mode)}
             options={resolveModeOptions(props.t)}
@@ -142,7 +253,22 @@ function useBuilderSelection(pickerItems: { id: string; title: string }[]) {
   const onChangeRange = (id: string, index: number, range: SetRange) => {
     setSelected((state) => state.map((item) => replaceRange(item, id, index, range)));
   };
-  return { onAddExercise, onAddRange, onChangeRange, onFieldModeChange, selected };
+  const onRemoveExercise = (id: string) => {
+    setSelected((state) => state.filter((item) => item.id !== id));
+  };
+  const resetSelection = () => setSelected([]);
+  const setSelection = (items: BuilderExercise[]) => setSelected(items);
+
+  return {
+    onAddExercise,
+    onAddRange,
+    onChangeRange,
+    onFieldModeChange,
+    onRemoveExercise,
+    resetSelection,
+    selected,
+    setSelection,
+  };
 }
 
 function resolveModeOptions(t: (key: string) => string) {
@@ -230,12 +356,28 @@ function buildTemplatePayload(name: string, selected: BuilderExercise[], dayTitl
   };
 }
 
-function toNumber(value: string): null | number {
+function toNumber(value: string | null | undefined): null | number {
   if (!value) {
     return null;
   }
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function mapTemplateToBuilder(template: any, pickerItems: { id: string; title: string }[]): BuilderExercise[] {
+  const day = template.days?.[0];
+  if (!day) return [];
+
+  return day.exercises.map((ex: any) => ({
+    displayName: ex.displayName,
+    exerciseLibraryId: ex.exerciseLibraryId || ex.id,
+    fieldMode: ex.fieldModes?.[0]?.mode || 'COACH_INPUT',
+    id: ex.exerciseLibraryId || ex.id,
+    perSetRanges: (ex.prescription?.perSetWeightRanges || ex.perSetWeightRanges || []).map((r: any) => ({
+      maxKg: String(r.maxKg ?? ''),
+      minKg: String(r.minKg ?? ''),
+    })),
+  }));
 }
 
 const styles = StyleSheet.create({
@@ -301,5 +443,85 @@ const styles = StyleSheet.create({
     fontSize: 26,
     fontWeight: '800',
     width: '100%',
+  },
+  exerciseHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  removeExerciseBtn: {
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    borderRadius: 12,
+    height: 24,
+    justifyContent: 'center',
+    width: 24,
+  },
+  removeExerciseLabel: {
+    color: '#ef4444',
+    fontSize: 18,
+    fontWeight: '800',
+    marginTop: -2,
+  },
+  successBanner: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#86efac',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    width: '100%',
+  },
+  successText: {
+    color: '#166534',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  templateList: {
+    gap: 12,
+    marginTop: 8,
+  },
+  templateItem: {
+    alignItems: 'center',
+    backgroundColor: '#f8fafc',
+    borderRadius: 10,
+    flexDirection: 'row',
+    padding: 12,
+  },
+  templateName: {
+    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  templateMeta: {
+    color: COLORS.muted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  templateActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editAction: {
+    backgroundColor: '#e0f2fe',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  editActionLabel: {
+    color: '#0369a1',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  deleteAction: {
+    backgroundColor: '#fee2e2',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  deleteActionLabel: {
+    color: '#b91c1c',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

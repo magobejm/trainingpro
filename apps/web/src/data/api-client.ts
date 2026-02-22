@@ -22,8 +22,8 @@ export class ApiClientError extends Error {
   }
 }
 
-export class UnauthorizedApiError extends ApiClientError {}
-export class ForbiddenApiError extends ApiClientError {}
+export class UnauthorizedApiError extends ApiClientError { }
+export class ForbiddenApiError extends ApiClientError { }
 
 export const UNAUTHORIZED_EVENT = 'trainerpro:unauthorized';
 
@@ -64,7 +64,11 @@ async function executeRequest<T>(
     const payload = await safeReadText(response);
     throw new ApiClientError(payload || 'Unexpected API error', response.status);
   }
-  return (await response.json()) as T;
+  if (response.status === 204) {
+    return undefined as unknown as T;
+  }
+  const text = await response.text();
+  return text ? (JSON.parse(text) as T) : (undefined as unknown as T);
 }
 
 function resolveBaseUrl(baseUrl?: string): string {

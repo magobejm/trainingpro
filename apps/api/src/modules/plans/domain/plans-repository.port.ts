@@ -14,6 +14,8 @@ export interface PlansRepositoryPort {
   createTemplate(context: AuthContext, input: PlanTemplateWriteInput): Promise<PlanTemplate>;
   listCardioTemplates(context: AuthContext): Promise<PlanCardioTemplate[]>;
   listTemplates(context: AuthContext): Promise<PlanTemplate[]>;
+  deleteCardioTemplate(context: AuthContext, templateId: string): Promise<void>;
+  deleteTemplate(context: AuthContext, templateId: string): Promise<void>;
   updateCardioTemplate(
     context: AuthContext,
     templateId: string,
@@ -24,4 +26,5 @@ export interface PlansRepositoryPort {
     templateId: string,
     input: PlanTemplateWriteInput,
   ): Promise<PlanTemplate>;
+  canCoachAccessTemplate(coachSupabaseUid: string, templateId: string): Promise<boolean>;
 }

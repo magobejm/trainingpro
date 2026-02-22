@@ -74,6 +74,17 @@ export function useUpdatePlanTemplateMutation(templateId: string) {
   });
 }
 
+export function useDeletePlanTemplateMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (templateId: string) => deleteTemplate(auth, templateId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['plan-templates'] });
+    },
+  });
+}
+
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
@@ -110,4 +121,11 @@ async function updateTemplate(
     `/plans/templates/strength/${templateId}`,
     input,
   );
+}
+
+async function deleteTemplate(auth: ReturnType<typeof useAuth>, templateId: string) {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  return createApiClient(auth).delete(`/plans/templates/strength/${templateId}`);
 }

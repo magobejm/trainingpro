@@ -68,7 +68,18 @@ export function toYouTubeEmbedUrl(value: null | string): null | string {
   return `https://www.youtube.com/embed/${videoId}`;
 }
 
-function readYouTubeVideoId(raw: string): null | string {
+export function getYouTubeThumbnailUrl(value: null | string): null | string {
+  if (!value) {
+    return null;
+  }
+  const videoId = readYouTubeVideoId(value);
+  if (!videoId) {
+    return null;
+  }
+  return `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+}
+
+export function readYouTubeVideoId(raw: string): null | string {
   try {
     const url = new URL(raw);
     const host = url.hostname.toLowerCase().replace(/^www\./, '');

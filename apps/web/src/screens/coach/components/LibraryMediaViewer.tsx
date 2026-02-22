@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View, type ImageProps } from 'react-native';
-import { toYouTubeEmbedUrl } from '../library-media.helpers';
+import { getYouTubeThumbnailUrl, toYouTubeEmbedUrl } from '../library-media.helpers';
 
 type Props = {
   imageUrl: null | string;
@@ -43,14 +43,50 @@ function BlurredImageFrame(props: { imageUrl: string }): React.JSX.Element {
 }
 
 function YouTubeBlock(props: { t: Props['t']; youtubeUrl: string }): React.JSX.Element {
+  const [isLoaded, setIsLoaded] = useState(false);
   const embedUrl = toYouTubeEmbedUrl(props.youtubeUrl);
+  const thumbnailUrl = getYouTubeThumbnailUrl(props.youtubeUrl);
+
+  const onPlay = () => setIsLoaded(true);
+
   return (
     <View style={styles.videoWrap}>
-      {embedUrl ? <YouTubeFrame embedUrl={embedUrl} /> : null}
+      {isLoaded && embedUrl ? (
+        <YouTubeFrame embedUrl={embedUrl} />
+      ) : (
+        <YouTubePreview
+          onPress={onPlay}
+          thumbnailUrl={thumbnailUrl}
+        />
+      )}
       <Pressable onPress={() => void Linking.openURL(props.youtubeUrl)}>
         <Text style={styles.videoLink}>{props.t('coach.library.media.openYoutube')}</Text>
       </Pressable>
     </View>
+  );
+}
+
+function YouTubePreview(props: {
+  onPress: () => void;
+  thumbnailUrl: null | string;
+}): React.JSX.Element {
+  return (
+    <Pressable onPress={props.onPress} style={styles.videoPreview}>
+      {props.thumbnailUrl ? (
+        <Image
+          resizeMode="cover"
+          source={{ uri: props.thumbnailUrl }}
+          style={styles.thumbnail}
+        />
+      ) : (
+        <View style={[styles.thumbnail, { backgroundColor: '#000' }]} />
+      )}
+      <View style={styles.playOverlay}>
+        <View style={styles.playButton}>
+          <Text style={styles.playIcon}>▶</Text>
+        </View>
+      </View>
+    </Pressable>
   );
 }
 
@@ -62,7 +98,8 @@ function YouTubeFrame(props: { embedUrl: string }): React.JSX.Element {
     <Iframe
       allow={iframeAllow}
       allowFullScreen
-      src={props.embedUrl}
+      loading="lazy"
+      src={`${props.embedUrl}?autoplay=1&rel=0&modestbranding=1`}
       style={IFRAME_STYLE}
       title={iframeTitle}
     />
@@ -100,10 +137,40 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(7, 12, 20, 0.2)',
   },
+  playButton: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    borderRadius: 30,
+    height: 60,
+    justifyContent: 'center',
+    width: 60,
+  },
+  playIcon: {
+    color: '#fff',
+    fontSize: 24,
+    marginLeft: 4, // Center adjustment for play icon
+  },
+  playOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnail: {
+    borderRadius: 8,
+    height: 140,
+    width: 220,
+  },
   videoLink: {
     color: '#1c74e9',
     fontSize: 12,
     fontWeight: '700',
+  },
+  videoPreview: {
+    borderRadius: 8,
+    height: 140,
+    overflow: 'hidden',
+    position: 'relative',
+    width: 220,
   },
   videoWrap: {
     gap: 6,

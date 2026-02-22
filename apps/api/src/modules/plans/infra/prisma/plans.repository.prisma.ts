@@ -28,7 +28,7 @@ type CoachMembership = {
 
 @Injectable()
 export class PlansRepositoryPrisma implements PlansRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   async createCardioTemplate(
     context: AuthContext,
@@ -67,6 +67,10 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
 
   async listTemplates(context: AuthContext): Promise<PlanTemplate[]> {
     const membership = await this.resolveCoachMembership(context);
+    const allTemplates = await this.prisma.planTemplate.findMany({ select: { id: true, coachMembershipId: true, name: true, kind: true, archivedAt: true } });
+    console.log('[PlansRepositoryPrisma] listTemplates DEBUG - All templates:', JSON.stringify(allTemplates, null, 2));
+    console.log('[PlansRepositoryPrisma] listTemplates DEBUG - Current membership:', membership.id);
+
     const rows = await this.prisma.planTemplate.findMany({
       include: templateInclude(),
       orderBy: { updatedAt: 'desc' },
@@ -143,6 +147,36 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
     });
   }
 
+  async deleteTemplate(context: AuthContext, templateId: string): Promise<void> {
+    const membership = await this.resolveCoachMembership(context);
+    const current = await this.prisma.planTemplate.findFirst({
+      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
+      select: { id: true },
+    });
+    if (!current) {
+      throw new NotFoundException('Plan template not found');
+    }
+    await this.prisma.planTemplate.update({
+      where: { id: current.id },
+      data: { archivedAt: new Date() },
+    });
+  }
+
+  async deleteCardioTemplate(context: AuthContext, templateId: string): Promise<void> {
+    const membership = await this.resolveCoachMembership(context);
+    const current = await this.prisma.planTemplate.findFirst({
+      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
+      select: { id: true },
+    });
+    if (!current) {
+      throw new NotFoundException('Cardio template not found');
+    }
+    await this.prisma.planTemplate.update({
+      where: { id: current.id },
+      data: { archivedAt: new Date() },
+    });
+  }
+
   private async resolveCoachMembership(context: AuthContext): Promise<CoachMembership> {
     const membership = await this.prisma.organizationMember.findFirst({
       where: {
@@ -157,6 +191,20 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
       throw new ForbiddenException('Coach membership not found');
     }
     return membership;
+  }
+
+  async canCoachAccessTemplate(coachSupabaseUid: string, templateId: string): Promise<boolean> {
+    const template = await this.prisma.planTemplate.findFirst({
+      where: {
+        id: templateId,
+        archivedAt: null,
+        coachMembership: {
+          user: { supabaseUid: coachSupabaseUid },
+        },
+      },
+      select: { id: true },
+    });
+    return !!template;
   }
 }
 

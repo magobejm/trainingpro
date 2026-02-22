@@ -1,10 +1,10 @@
 import React from 'react';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
-import { ScrollView, Text, View } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import type { ExerciseCreateFormState } from '../LibraryExercisesScreen.create';
 import { libraryStyles as styles } from '../library-screen.styles';
-import { ExerciseLibraryRow } from './ExerciseLibraryRow';
+import { ExerciseLibraryCard } from './ExerciseLibraryCard';
 import { ExerciseBaseFields } from './LibraryCreateFormFields';
 import { LibraryCreateCta } from './LibraryCreateCta';
 import { LibraryCreateModal } from './LibraryCreateModal';
@@ -55,7 +55,7 @@ export function LibraryExercisesView(props: Props): React.JSX.Element {
       <CreateCta {...props} />
       <CreateModal {...props} />
       <EditModal {...props} />
-      <View style={styles.card}>{renderList(props)}</View>
+      {renderList(props)}
     </ScrollView>
   );
 }
@@ -133,23 +133,42 @@ function renderList(props: Props): React.JSX.Element {
     return <Text style={styles.empty}>{props.t('coach.library.empty')}</Text>;
   }
   return (
-    <View style={styles.list}>
+    <View style={gridStyles.grid}>
       {props.deleteError ? <Text style={styles.error}>{props.deleteError}</Text> : null}
       {props.items.map((item) => (
-        <ExerciseLibraryRow
-          deleting={props.deletingId === item.id}
-          expanded={props.expandedId === item.id}
-          item={item}
-          key={item.id}
-          onDelete={() => props.onDelete(item.id)}
-          onEdit={() => props.onEdit(item)}
-          onToggle={() => props.onToggleDetail(item.id)}
-          t={props.t}
-        />
+        <View key={item.id} style={gridStyles.gridItem}>
+          <ExerciseLibraryCard
+            deleting={props.deletingId === item.id}
+            expanded={props.expandedId === item.id}
+            item={item}
+            onDelete={() => props.onDelete(item.id)}
+            onEdit={() => props.onEdit(item)}
+            onToggle={() => props.onToggleDetail(item.id)}
+            t={props.t}
+          />
+        </View>
       ))}
     </View>
   );
 }
+
+const gridStyles = StyleSheet.create({
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -10,
+    marginTop: 10,
+    width: '100%' as DimensionValue,
+  },
+  gridItem: {
+    flexBasis: '25%' as DimensionValue,
+    flexGrow: 1,
+    maxWidth: 400,
+    minWidth: 280,
+    padding: 10,
+    width: '100%' as DimensionValue,
+  },
+});
 
 function buildBaseProps(props: Props, createMode: boolean) {
   return {

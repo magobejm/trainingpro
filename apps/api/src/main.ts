@@ -17,7 +17,7 @@ async function bootstrap(): Promise<void> {
   app.use('/assets/avatars', express.static(resolveAvatarAssetsPath()));
   app.use('/uploads', express.static(resolveUploadsPath()));
   app.useGlobalPipes(new ZodValidationPipe());
-  await app.listen(process.env.PORT ?? 8080);
+  await app.listen(readPort());
 }
 
 function resolveAvatarAssetsPath(): string {
@@ -40,7 +40,10 @@ function resolveUploadsPath(): string {
   return match ?? resolve(process.cwd(), 'apps/storage/uploads');
 }
 
-void bootstrap();
+void bootstrap().catch((error: unknown) => {
+  console.error('Failed to start API', error);
+  process.exit(1);
+});
 
 function loadEnvFiles(): void {
   const runtime = process as unknown as { loadEnvFile?: (path?: string) => void };
@@ -82,4 +85,14 @@ function allowedCorsOrigins(): string[] {
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
   return [...new Set([...defaults, ...fromEnv])];
+}
+
+function readPort(): number {
+  const fallback = 8080;
+  const raw = process.env.PORT;
+  if (!raw) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(raw, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }

@@ -8,5 +8,8 @@ export type StrengthPrescription = {
   perSetWeightRanges: WeightRange[];
   repsMax: null | number;
   repsMin: null | number;
+  restSeconds: null | number;
   setsPlanned: null | number;
+  targetRir: null | number;
+  targetRpe: null | number;
 };

@@ -1,5 +1,10 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-pnpm -r lint
+echo "🏋️‍♀️ TrainerPro: Ejecutando verificaciones Pre-Commit..."
+
+# 1. Lint & Format (solo en archivos modificados)
+pnpm dlx lint-staged
+
+# 2. Typecheck (todo el workspace)
 pnpm -r typecheck

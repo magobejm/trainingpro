@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { FieldModeControl, type FieldModeValue } from '../FieldModeControl';
+import type { FieldModeValue } from '../FieldModeControl';
 
 export type CardioIntervalDraft = {
   displayName: string;
@@ -18,6 +18,7 @@ type Props = {
   distanceLabel: string;
   emptyLabel: string;
   intervals: CardioIntervalDraft[];
+  // Keeping for signature compatibility if needed elsewhere
   modeOptions: { label: string; value: FieldModeValue }[];
   onAddInterval: () => void;
   onChangeInterval: (index: number, next: CardioIntervalDraft) => void;
@@ -40,7 +41,6 @@ export function CardioIntervalEditor(props: Props): React.JSX.Element {
     return (
       <View style={styles.wrap}>
         <Text style={styles.empty}>{props.emptyLabel}</Text>
-        <AddButton label={props.addLabel} onPress={props.onAddInterval} />
       </View>
     );
   }
@@ -52,7 +52,6 @@ export function CardioIntervalEditor(props: Props): React.JSX.Element {
           addLabel={props.addLabel}
           distanceLabel={props.distanceLabel}
           interval={item}
-          modeOptions={props.modeOptions}
           onChange={(next) => props.onChangeInterval(index, next)}
           removeLabel={props.removeLabel}
           restLabel={props.restLabel}
@@ -70,7 +69,6 @@ type IntervalCardProps = {
   addLabel: string;
   distanceLabel: string;
   interval: CardioIntervalDraft;
-  modeOptions: { label: string; value: FieldModeValue }[];
   onChange: (next: CardioIntervalDraft) => void;
   removeLabel: string;
   restLabel: string;
@@ -90,7 +88,6 @@ function IntervalCard(props: IntervalCardProps) {
       />
       <MainNumericRow {...props} />
       <TargetsRow {...props} />
-      <ModesRow {...props} />
       <ClearButton
         interval={props.interval}
         onChange={props.onChange}
@@ -123,47 +120,81 @@ function MainNumericRow(props: IntervalCardProps) {
 }
 
 function TargetsRow(props: IntervalCardProps) {
+  const i = props.interval;
+  const set = props.onChange;
+
+  const onDist = (v: string) => set({ ...i, targetDistanceMeters: v });
+  const onDistMode = (m: FieldModeValue) => set({ ...i, distanceMode: m });
+  const onRpe = (v: string) => set({ ...i, targetRpe: v });
+  const onRpeMode = (m: FieldModeValue) => set({ ...i, rpeMode: m });
+
   return (
     <View style={styles.row}>
-      <Field
+      <ModeField
         label={props.distanceLabel}
-        onChange={(value) => props.onChange({ ...props.interval, targetDistanceMeters: value })}
-        value={props.interval.targetDistanceMeters}
+        mode={i.distanceMode}
+        onChangeMode={onDistMode}
+        onChangeValue={onDist}
+        value={i.targetDistanceMeters}
       />
-      <Field
+      <ModeField
         label={props.rpeLabel}
-        onChange={(value) => props.onChange({ ...props.interval, targetRpe: value })}
-        value={props.interval.targetRpe}
+        mode={i.rpeMode}
+        onChangeMode={onRpeMode}
+        onChangeValue={onRpe}
+        value={i.targetRpe}
       />
     </View>
   );
 }
 
-function ModesRow(props: IntervalCardProps) {
-  return (
-    <View style={styles.row}>
-      <ModeControl
-        mode={props.interval.distanceMode}
-        modeOptions={props.modeOptions}
-        onChange={(mode) => props.onChange({ ...props.interval, distanceMode: mode })}
-      />
-      <ModeControl
-        mode={props.interval.rpeMode}
-        modeOptions={props.modeOptions}
-        onChange={(mode) => props.onChange({ ...props.interval, rpeMode: mode })}
-      />
-    </View>
-  );
-}
-
-function ModeControl(props: {
+type ModeFieldProps = {
+  label: string;
   mode: FieldModeValue;
-  modeOptions: { label: string; value: FieldModeValue }[];
-  onChange: (mode: FieldModeValue) => void;
-}) {
+  onChangeMode: (mode: FieldModeValue) => void;
+  onChangeValue: (value: string) => void;
+  value: string;
+};
+function ModeField(props: ModeFieldProps) {
+  const isHidden = props.mode === 'HIDDEN';
   return (
-    <View style={styles.mode}>
-      <FieldModeControl onChange={props.onChange} options={props.modeOptions} value={props.mode} />
+    <View style={styles.field}>
+      <Text style={styles.label}>{props.label}</Text>
+      <View style={styles.inputContainer}>
+        <TextInput
+          keyboardType="numeric"
+          onChangeText={props.onChangeValue}
+          style={[styles.input, styles.modeInput, isHidden && styles.inputHidden]}
+          value={props.value}
+        />
+        <ModeFieldIcons isHidden={isHidden} mode={props.mode} onChangeMode={props.onChangeMode} />
+      </View>
+    </View>
+  );
+}
+
+type ModeFieldIconsProps = {
+  isHidden: boolean;
+  mode: FieldModeValue;
+  onChangeMode: (mode: FieldModeValue) => void;
+};
+function ModeFieldIcons({ isHidden, mode, onChangeMode }: ModeFieldIconsProps) {
+  const isLocked = mode === 'COACH_INPUT'; // Coach = Lock, Client = Unlock
+  const toggleVisibility = () => onChangeMode(isHidden ? 'CLIENT_INPUT' : 'HIDDEN');
+  const toggleLock = () => {
+    if (isHidden) return; // Hidden overrides lock completely
+    onChangeMode(isLocked ? 'CLIENT_INPUT' : 'COACH_INPUT');
+  };
+  return (
+    <View style={styles.iconsContainer}>
+      <Pressable onPress={toggleVisibility} style={styles.iconButton}>
+        <Text style={[styles.iconText, isHidden && styles.iconHidden]}>👁</Text>
+      </Pressable>
+      {!isHidden && (
+        <Pressable onPress={toggleLock} style={styles.iconButton}>
+          <Text style={styles.iconText}>{isLocked ? '🔒' : '🔓'}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -223,27 +254,22 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     width: 180,
   },
-  addLabel: {
-    color: COLORS.text,
-    fontSize: 12,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  card: {
-    borderColor: COLORS.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    gap: 10,
-    padding: 10,
-  },
-  empty: {
-    color: COLORS.muted,
-    fontSize: 13,
-  },
-  field: {
-    flex: 1,
-    gap: 4,
-    minWidth: 90,
+  addLabel: { color: COLORS.text, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  card: { borderColor: COLORS.border, borderRadius: 10, borderWidth: 1, gap: 10, padding: 10 },
+  empty: { color: COLORS.muted, fontSize: 13 },
+  field: { flex: 1, gap: 4, minWidth: 90 },
+  iconButton: { alignItems: 'center', height: 24, justifyContent: 'center', width: 24 },
+  iconHidden: { opacity: 0.3 },
+  iconText: { fontSize: 14 },
+  iconsContainer: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 2,
+    paddingRight: 6,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
   },
   input: {
     borderColor: COLORS.border,
@@ -253,23 +279,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 6,
   },
-  label: {
-    color: COLORS.muted,
-    fontSize: 12,
-  },
-  mode: {
-    flex: 1,
-  },
-  remove: {
-    color: COLORS.danger,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  wrap: {
-    gap: 10,
-  },
+  inputContainer: { position: 'relative', justifyContent: 'center' },
+  inputHidden: { backgroundColor: '#f8fafc', color: COLORS.muted },
+  label: { color: COLORS.muted, fontSize: 12 },
+  modeInput: { paddingRight: 60 },
+  remove: { color: COLORS.danger, fontSize: 12, fontWeight: '700' },
+  row: { flexDirection: 'row', gap: 8 },
+  wrap: { gap: 10 },
 });

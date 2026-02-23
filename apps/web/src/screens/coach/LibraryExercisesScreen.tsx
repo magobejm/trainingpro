@@ -14,10 +14,7 @@ import {
 } from '../../data/hooks/useLibraryQuery';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryExercisesView } from './components/LibraryExercisesView';
-import {
-  EMPTY_EXERCISE_FORM,
-  type ExerciseCreateFormState,
-} from './LibraryExercisesScreen.create';
+import { EMPTY_EXERCISE_FORM, type ExerciseCreateFormState } from './LibraryExercisesScreen.create';
 import {
   buildCatalogChips,
   buildExerciseInput,
@@ -51,7 +48,11 @@ function useExercisesViewModel() {
   const createForm = useCreateForm();
   const editForm = useEditForm();
   const refs = useExerciseResources(state);
-  useDefaultExerciseCatalog(createForm, refs.defaultCatalogId);
+  useEffect(() => {
+    if (refs.defaultCatalogId && !createForm.form.muscleGroupId) {
+      createForm.setField('muscleGroupId')(refs.defaultCatalogId);
+    }
+  }, [createForm, refs.defaultCatalogId]);
   const chips = useMemo(() => buildCatalogChips(refs.catalogItems, t), [refs.catalogItems, t]);
   return buildExercisesViewModel(state, createForm, editForm, refs, chips, t);
 }
@@ -120,16 +121,7 @@ function useExerciseResources(state: ReturnType<typeof useExercisesState>) {
     updateMutation,
   };
 }
-function useDefaultExerciseCatalog(
-  createForm: ReturnType<typeof useCreateForm>,
-  defaultCatalogId: string,
-): void {
-  useEffect(() => {
-    if (defaultCatalogId && !createForm.form.muscleGroupId) {
-      createForm.setField('muscleGroupId')(defaultCatalogId);
-    }
-  }, [createForm, defaultCatalogId]);
-}
+// Hook inlined
 function buildExerciseActions(
   state: ReturnType<typeof useExercisesState>,
   createForm: ReturnType<typeof useCreateForm>,

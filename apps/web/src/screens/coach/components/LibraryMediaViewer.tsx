@@ -24,7 +24,10 @@ export function LibraryMediaViewer(props: Props): React.JSX.Element {
 
 const IMAGE_RESIZE_MODE: ImageProps['resizeMode'] = 'contain';
 const IMAGE_BACKDROP_RESIZE_MODE: ImageProps['resizeMode'] = 'cover';
+const THUMBNAIL_RESIZE_MODE: ImageProps['resizeMode'] = 'cover';
 const IMAGE_BLUR_RADIUS = 16;
+const PLAY_ICON = '▶';
+const IFRAME_LOADING = 'lazy' as const;
 
 function BlurredImageFrame(props: { imageUrl: string }): React.JSX.Element {
   const source = { uri: props.imageUrl };
@@ -54,10 +57,7 @@ function YouTubeBlock(props: { t: Props['t']; youtubeUrl: string }): React.JSX.E
       {isLoaded && embedUrl ? (
         <YouTubeFrame embedUrl={embedUrl} />
       ) : (
-        <YouTubePreview
-          onPress={onPlay}
-          thumbnailUrl={thumbnailUrl}
-        />
+        <YouTubePreview onPress={onPlay} thumbnailUrl={thumbnailUrl} />
       )}
       <Pressable onPress={() => void Linking.openURL(props.youtubeUrl)}>
         <Text style={styles.videoLink}>{props.t('coach.library.media.openYoutube')}</Text>
@@ -74,7 +74,7 @@ function YouTubePreview(props: {
     <Pressable onPress={props.onPress} style={styles.videoPreview}>
       {props.thumbnailUrl ? (
         <Image
-          resizeMode="cover"
+          resizeMode={THUMBNAIL_RESIZE_MODE}
           source={{ uri: props.thumbnailUrl }}
           style={styles.thumbnail}
         />
@@ -83,7 +83,7 @@ function YouTubePreview(props: {
       )}
       <View style={styles.playOverlay}>
         <View style={styles.playButton}>
-          <Text style={styles.playIcon}>▶</Text>
+          <Text style={styles.playIcon}>{PLAY_ICON}</Text>
         </View>
       </View>
     </Pressable>
@@ -92,13 +92,14 @@ function YouTubePreview(props: {
 
 function YouTubeFrame(props: { embedUrl: string }): React.JSX.Element {
   const Iframe = 'iframe' as unknown as React.ElementType;
-  const iframeAllow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  const iframeAllow =
+    'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
   const iframeTitle = 'youtube-player';
   return (
     <Iframe
       allow={iframeAllow}
       allowFullScreen
-      loading="lazy"
+      loading={IFRAME_LOADING}
       src={`${props.embedUrl}?autoplay=1&rel=0&modestbranding=1`}
       style={IFRAME_STYLE}
       title={iframeTitle}

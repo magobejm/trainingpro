@@ -27,26 +27,32 @@ export function ActionConfirmModal(props: Props): React.JSX.Element {
         <View style={styles.card}>
           <Text style={styles.title}>{props.title}</Text>
           <Text style={styles.message}>{props.message}</Text>
-          <View style={styles.actions}>
-            <Pressable
-              disabled={props.isLoading}
-              onPress={props.onCancel}
-              style={[styles.cancelButton, props.isLoading && { opacity: 0.5 }]}
-            >
-              <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
-            </Pressable>
-            <Pressable
-              disabled={props.isLoading}
-              onPress={props.onConfirm}
-              style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}
-            >
-              <Text style={styles.confirmLabel}>
-                {props.isLoading ? '...' : props.confirmLabel}
-              </Text>
-            </Pressable>
-          </View>
+          <ActionButtons {...props} />
         </View>
       </View>
     </Modal>
+  );
+}
+
+function ActionButtons(
+  props: Pick<Props, 'cancelLabel' | 'confirmLabel' | 'isLoading' | 'onCancel' | 'onConfirm'>,
+): React.JSX.Element {
+  return (
+    <View style={styles.actions}>
+      <Pressable
+        disabled={props.isLoading}
+        onPress={props.onCancel}
+        style={[styles.cancelButton, props.isLoading && { opacity: 0.5 }]}
+      >
+        <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
+      </Pressable>
+      <Pressable
+        disabled={props.isLoading}
+        onPress={props.onConfirm}
+        style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}
+      >
+        <Text style={styles.confirmLabel}>{props.isLoading ? '...' : props.confirmLabel}</Text>
+      </Pressable>
+    </View>
   );
 }

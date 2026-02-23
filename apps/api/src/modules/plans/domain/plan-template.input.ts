@@ -13,8 +13,11 @@ export type PlanStrengthExerciseInput = {
   perSetWeightRanges?: { maxKg?: null | number; minKg?: null | number }[];
   repsMax?: null | number;
   repsMin?: null | number;
+  restSeconds?: null | number;
   setsPlanned?: null | number;
   sortOrder: number;
+  targetRir?: null | number;
+  targetRpe?: null | number;
   weightRangeMaxKg?: null | number;
   weightRangeMinKg?: null | number;
 };

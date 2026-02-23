@@ -369,6 +369,9 @@ model PlanStrengthExercise {
   weightRangeMinKg      Decimal?           @map("weight_range_min_kg") @db.Decimal(6, 2)
   weightRangeMaxKg      Decimal?           @map("weight_range_max_kg") @db.Decimal(6, 2)
   perSetWeightRangesJson Json?             @map("per_set_weight_ranges_json")
+  targetRpe             Int?               @map("target_rpe")
+  targetRir             Int?               @map("target_rir")
+  restSeconds           Int?               @default(0) @map("rest_seconds")
   notes                 String?
   archivedAt            DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)

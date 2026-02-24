@@ -9,6 +9,9 @@ import { ClientsScreen } from './screens/coach/ClientsScreen';
 import { LibraryCardioMethodsScreen } from './screens/coach/LibraryCardioMethodsScreen';
 import { LibraryExercisesScreen } from './screens/coach/LibraryExercisesScreen';
 import { LibraryFoodsScreen } from './screens/coach/LibraryFoodsScreen';
+import { LibraryPlioScreen } from './screens/coach/LibraryPlioScreen';
+import { LibraryWarmupScreen } from './screens/coach/LibraryWarmupScreen';
+import { LibrarySportsScreen } from './screens/coach/LibrarySportsScreen';
 import { PlanBuilderCardioScreen } from './screens/coach/PlanBuilderCardioScreen';
 import { PlanBuilderDietScreen } from './screens/coach/PlanBuilderDietScreen';
 import { PlanBuilderStrengthScreen } from './screens/coach/PlanBuilderStrengthScreen';
@@ -132,6 +135,9 @@ function resolveCoachLibraryScreen(route: ShellRoute): null | React.JSX.Element 
   if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
+  if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
+  if (route === 'coach.library.warmup') return <LibraryWarmupScreen />;
+  if (route === 'coach.library.sports') return <LibrarySportsScreen />;
   return null;
 }
 
@@ -175,6 +181,9 @@ function resolveNavItems(role: 'admin' | 'client' | 'coach' | any): ShellNavItem
     { icon: '👥', id: 'coach.clients', labelKey: 'app.nav.coach.clients' },
     { icon: '🏋️', id: 'coach.library.exercises', labelKey: 'app.nav.coach.library.exercises' },
     { icon: '🏃', id: 'coach.library.cardio', labelKey: 'app.nav.coach.library.cardio' },
+    { icon: '🪂', id: 'coach.library.plyometrics', labelKey: 'app.nav.coach.library.plyometrics' },
+    { icon: '🤸', id: 'coach.library.warmup', labelKey: 'app.nav.coach.library.warmup' },
+    { icon: '⚽', id: 'coach.library.sports', labelKey: 'app.nav.coach.library.sports' },
     { icon: '🥗', id: 'coach.library.foods', labelKey: 'app.nav.coach.library.foods' },
     { icon: '🧩', id: 'coach.builder.strength', labelKey: 'app.nav.coach.builder.strength' },
     { icon: '⏱️', id: 'coach.builder.cardio', labelKey: 'app.nav.coach.builder.cardio' },

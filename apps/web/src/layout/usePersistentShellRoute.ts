@@ -6,6 +6,9 @@ type CoachRoute =
   | 'coach.library.cardio'
   | 'coach.library.exercises'
   | 'coach.library.foods'
+  | 'coach.library.plyometrics'
+  | 'coach.library.warmup'
+  | 'coach.library.sports'
   | 'coach.builder.cardio'
   | 'coach.builder.diet'
   | 'coach.builder.strength'
@@ -95,6 +98,9 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.library.cardio' ||
     route === 'coach.library.exercises' ||
     route === 'coach.library.foods' ||
+    route === 'coach.library.plyometrics' ||
+    route === 'coach.library.warmup' ||
+    route === 'coach.library.sports' ||
     route === 'coach.builder.cardio' ||
     route === 'coach.builder.diet' ||
     route === 'coach.builder.strength' ||

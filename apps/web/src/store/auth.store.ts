@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
 import type { ActiveRole } from '../data/api-client';
 
-type AuthState = {
+export type AuthState = {
   accessToken: null | string;
   activeRole: ActiveRole | null;
   availableRoles: ActiveRole[];

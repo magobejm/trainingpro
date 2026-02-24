@@ -16,6 +16,7 @@ import { ReportsModule } from './modules/reports/reports.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { UsersModule } from './modules/users/users.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
+import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
 
 @Module({
   imports: [
@@ -35,7 +36,8 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
     ProgressModule,
     ReportsModule,
     IncidentsModule,
+    AiEvaluatorModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule {}
+export class AppModule { }

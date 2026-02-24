@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import type { SessionInstance } from '../../domain/session.entity';
 
+// eslint-disable-next-line max-lines-per-function
 export function mapSession(
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): SessionInstance {
@@ -14,6 +15,13 @@ export function mapSession(
     items: row.items.map((item) => ({
       displayName: item.displayName,
       id: item.id,
+      logs: item.logs.map((L) => ({
+        effortRpe: L.effortRpe,
+        repsDone: L.repsDone,
+        sessionItemId: L.sessionItemId,
+        setIndex: L.setIndex,
+        weightDoneKg: typeof L.weightDoneKg === 'number' ? L.weightDoneKg : Number(L.weightDoneKg),
+      })),
       repsMax: item.repsMax,
       repsMin: item.repsMin,
       setsPlanned: item.setsPlanned,
@@ -37,6 +45,11 @@ export function sessionInclude() {
     items: {
       orderBy: { sortOrder: 'asc' as const },
       where: { archivedAt: null },
+      include: {
+        logs: {
+          orderBy: { setIndex: 'asc' as const },
+        },
+      },
     },
   };
 }

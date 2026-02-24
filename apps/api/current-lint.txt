@@ -1,0 +1,7 @@
+
+C:\personal\trainingpro\apps\api\src\modules\ai-evaluator\usecases\analyze-technique.usecase.ts
+  123:1  error  This line has a length of 116. Maximum allowed is 100  max-len
+  125:1  error  This line has a length of 104. Maximum allowed is 100  max-len
+
+Ô£û 2 problems (2 errors, 0 warnings)
+

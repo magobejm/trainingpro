@@ -10,6 +10,7 @@ type CoachRoute =
   | 'coach.builder.diet'
   | 'coach.builder.strength'
   | 'coach.progress'
+  | 'coach.evaluator'
   | 'coach.incidents'
   | 'coach.chat'
   | 'coach.notifications';
@@ -98,6 +99,7 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.builder.diet' ||
     route === 'coach.builder.strength' ||
     route === 'coach.progress' ||
+    route === 'coach.evaluator' ||
     route === 'coach.incidents' ||
     route === 'coach.chat' ||
     route === 'coach.notifications'

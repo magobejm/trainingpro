@@ -1,0 +1,4 @@
+
+> @trainerpro/api@0.0.1 lint C:\personal\trainingpro\apps\api
+> pnpm exec eslint src --ext .ts
+

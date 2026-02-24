@@ -9,6 +9,7 @@ export type SessionSetLog = {
 export type SessionStrengthItem = {
   displayName: string;
   id: string;
+  logs: SessionSetLog[];
   repsMax: null | number;
   repsMin: null | number;
   setsPlanned: null | number;

@@ -127,7 +127,7 @@ function buildHeaders(
   if (accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
   }
-  if (body !== undefined) {
+  if (body !== undefined && !(body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
   }
   return headers;
@@ -162,6 +162,8 @@ async function safeReadText(response: Response): Promise<string> {
   }
 }
 
-function serializeBody(body?: unknown): string | undefined {
-  return body === undefined ? undefined : JSON.stringify(body);
+function serializeBody(body?: unknown): BodyInit | undefined {
+  if (body === undefined) return undefined;
+  if (body instanceof FormData) return body;
+  return JSON.stringify(body);
 }

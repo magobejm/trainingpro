@@ -1,0 +1,19 @@
+
+> @trainerpro/web@0.0.1 lint C:\personal\trainingpro\apps\web
+> pnpm exec eslint src --ext .ts,.tsx
+
+
+C:\personal\trainingpro\apps\web\src\screens\coach\TechniqueEvaluatorScreen.tsx
+    1:1  error  This line has a length of 103. Maximum allowed is 100          max-len
+    1:1  error  Definition for rule 'i18next/no-literal-string' was not found  i18next/no-literal-string
+   47:1  error  This line has a length of 185. Maximum allowed is 100          max-len
+   61:1  error  This line has a length of 127. Maximum allowed is 100          max-len
+  128:1  error  This line has a length of 145. Maximum allowed is 100          max-len
+  136:1  error  This line has a length of 109. Maximum allowed is 100          max-len
+  137:1  error  This line has a length of 112. Maximum allowed is 100          max-len
+
+Ô£û 7 problems (7 errors, 0 warnings)
+
+C:\personal\trainingpro\apps\web:
+ÔÇëERR_PNPM_RECURSIVE_RUN_FIRST_FAILÔÇë @trainerpro/web@0.0.1 lint: `pnpm exec eslint src --ext .ts,.tsx`
+Exit status 1

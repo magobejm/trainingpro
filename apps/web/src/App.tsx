@@ -13,6 +13,7 @@ import { PlanBuilderCardioScreen } from './screens/coach/PlanBuilderCardioScreen
 import { PlanBuilderDietScreen } from './screens/coach/PlanBuilderDietScreen';
 import { PlanBuilderStrengthScreen } from './screens/coach/PlanBuilderStrengthScreen';
 import { ProgressScreen } from './screens/coach/ProgressScreen';
+import { TechniqueEvaluatorScreen } from './screens/coach/TechniqueEvaluatorScreen';
 import { IncidentsScreen } from './screens/coach/IncidentsScreen';
 import { ChatScreen } from './screens/coach/ChatScreen';
 import { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';
@@ -143,6 +144,7 @@ function resolveCoachBuilderScreen(route: ShellRoute): null | React.JSX.Element 
 
 function resolveCoachMonitoringScreen(route: ShellRoute): null | React.JSX.Element {
   if (route === 'coach.progress') return <ProgressScreen />;
+  if (route === 'coach.evaluator') return <TechniqueEvaluatorScreen />;
   if (route === 'coach.incidents') return <IncidentsScreen />;
   if (route === 'coach.chat') return <ChatScreen />;
   if (route === 'coach.notifications') return <NotificationSettingsScreen />;
@@ -177,6 +179,7 @@ function resolveNavItems(role: 'admin' | 'client' | 'coach'): ShellNavItem[] {
     { icon: '⏱️', id: 'coach.builder.cardio', labelKey: 'app.nav.coach.builder.cardio' },
     { icon: '🥙', id: 'coach.builder.diet', labelKey: 'app.nav.coach.builder.diet' },
     { icon: '📈', id: 'coach.progress', labelKey: 'app.nav.coach.progress' },
+    { icon: '👁️', id: 'coach.evaluator', labelKey: 'app.nav.coach.evaluator' },
     { icon: '⚠️', id: 'coach.incidents', labelKey: 'app.nav.coach.incidents' },
     { icon: '💬', id: 'coach.chat', labelKey: 'app.nav.coach.chat' },
     { icon: '🔔', id: 'coach.notifications', labelKey: 'app.nav.coach.notifications' },

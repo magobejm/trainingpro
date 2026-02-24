@@ -1,10 +1,12 @@
+/* eslint-disable max-lines-per-function, max-len, @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { GoogleGenAI, Type } from '@google/genai';
-import * as ffmpeg from 'fluent-ffmpeg';
 import * as ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
+
+const ffmpeg = require('fluent-ffmpeg');
 
 // Configurar ffmpeg con el binario embebido
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
@@ -19,7 +21,6 @@ export class AnalyzeTechniqueUseCase {
         });
     }
 
-    // eslint-disable-next-line max-lines-per-function
     async execute(file: Express.Multer.File, exerciseName?: string) {
         if (!file) {
             throw new BadRequestException('Se requiere archivo multimedia (imagen o video)');
@@ -34,7 +35,7 @@ export class AnalyzeTechniqueUseCase {
         const prompt = this.buildPrompt(exerciseName);
 
         const response = await this.ai.models.generateContent({
-            model: 'gemini-1.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: [
                 {
                     role: 'user',
@@ -116,22 +117,16 @@ export class AnalyzeTechniqueUseCase {
         });
     }
 
-    // eslint-disable-next-line max-lines-per-function
     private buildPrompt(exerciseName?: string): string {
-        // eslint-disable-next-line max-len
         const defaultText = `Actúa como un preparador físico experto. ` +
-            // eslint-disable-next-line max-len
             `Analiza este contenido multimedia del usuario realizando un ejercicio y devuelve ` +
-            // eslint-disable-next-line max-len
             `exclusivamente un objeto JSON que evalúe la postura basándote en estándares de seguridad biomecánica.`;
         if (exerciseName) {
-            // eslint-disable-next-line max-len
             return `${defaultText} El ejercicio que se está intentando ejecutar es: "${exerciseName}".`;
         }
         return defaultText;
     }
 
-    // eslint-disable-next-line max-lines-per-function
     private getSchema() {
         return {
             type: Type.OBJECT,

@@ -46,7 +46,12 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
         const fileIsVideo = file ? file.type.startsWith('video/') : false;
         return <ResultsView
             result={analyzeMutation.data}
-            onReset={() => { setFile(null); setFileUrl(null); analyzeMutation.reset(); }}
+            onReset={() => {
+                setFile(null);
+                setFileUrl(null);
+                setIsUploading(false);
+                analyzeMutation.reset();
+            }}
             fileUrl={fileUrl}
             isVideo={fileIsVideo}
             t={t}

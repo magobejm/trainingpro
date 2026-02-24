@@ -7,6 +7,7 @@ export type AuthState = {
   activeRole: ActiveRole | null;
   availableRoles: ActiveRole[];
   clearSession: () => void;
+  refreshToken: (accessToken: string) => void;
   setActiveRole: (role: ActiveRole) => void;
   setAvailableRoles: (roles: ActiveRole[]) => void;
   setSession: (accessToken: string) => void;
@@ -23,6 +24,7 @@ export const useAuthStore = create<AuthState>()(
       activeRole: DEFAULT_ROLE,
       availableRoles: [],
       clearSession: () => set(resetAuthState),
+      refreshToken: (accessToken) => set({ accessToken }),
       setActiveRole: (role) => set({ activeRole: role }),
       setAvailableRoles: (roles) =>
         set((state) => ({

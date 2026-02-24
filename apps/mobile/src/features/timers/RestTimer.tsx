@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { COLORS } from '../../constants/colors';
 
 type Props = {
   initialSeconds: number;
@@ -7,14 +8,6 @@ type Props = {
   pauseLabel: string;
   resetLabel: string;
   startLabel: string;
-};
-
-const COLORS = {
-  action: '#225fdb',
-  card: '#ffffff',
-  muted: '#617287',
-  text: '#11213a',
-  white: '#ffffff',
 };
 
 export function RestTimer(props: Props): React.JSX.Element {
@@ -35,9 +28,7 @@ export function RestTimer(props: Props): React.JSX.Element {
       <Text style={styles.value}>{formatTime(seconds)}</Text>
       <View style={styles.row}>
         <Pressable onPress={() => setRunning((value) => !value)} style={styles.button}>
-          <Text style={styles.buttonLabel}>
-            {running ? props.pauseLabel : props.startLabel}
-          </Text>
+          <Text style={styles.buttonLabel}>{running ? props.pauseLabel : props.startLabel}</Text>
         </Pressable>
         <Pressable onPress={() => setSeconds(props.initialSeconds)} style={styles.ghost}>
           <Text style={styles.ghostLabel}>{props.resetLabel}</Text>

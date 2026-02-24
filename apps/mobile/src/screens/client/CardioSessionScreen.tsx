@@ -10,14 +10,7 @@ import {
 } from '../../data/hooks/useCardioSession';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 
-const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  muted: '#627285',
-  text: '#0e1a2f',
-  white: '#ffffff',
-};
+import { COLORS } from '../../constants/colors';
 
 const DEMO_SESSION_ID = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb';
 

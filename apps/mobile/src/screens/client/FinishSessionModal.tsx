@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
+import { COLORS } from '../../constants/colors';
 
 type Props = {
   onClose: () => void;
@@ -26,15 +27,6 @@ type ActionsProps = {
   onClose: () => void;
   onOpenWeeklyReport: () => void;
   onSubmit: (comment: string, isIncomplete: boolean) => void;
-};
-
-const COLORS = {
-  action: '#225fdb',
-  bg: 'rgba(12,20,35,0.55)',
-  card: '#ffffff',
-  text: '#0e1a2f',
-  muted: '#5f7288',
-  white: '#ffffff',
 };
 
 const MODAL_ANIMATION = 'fade' as const;
@@ -146,7 +138,7 @@ const styles = StyleSheet.create({
   },
   overlay: {
     alignItems: 'center',
-    backgroundColor: COLORS.bg,
+    backgroundColor: 'rgba(12,20,35,0.55)',
     flex: 1,
     justifyContent: 'center',
     padding: 16,

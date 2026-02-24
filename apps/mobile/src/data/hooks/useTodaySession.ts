@@ -2,9 +2,22 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-type SessionView = {
+export type SessionView = {
   id: string;
-  items: { id: string; displayName: string; setsPlanned: null | number }[];
+  items: {
+    id: string;
+    displayName: string;
+    setsPlanned: null | number;
+    repsMax: null | number;
+    repsMin: null | number;
+    logs: {
+      effortRpe: null | number;
+      repsDone: null | number;
+      sessionItemId: string;
+      setIndex: number;
+      weightDoneKg: null | number;
+    }[];
+  }[];
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
 };
 
@@ -29,8 +42,13 @@ export function useLogSetMutation(sessionId: string) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { repsDone: null | number; sessionItemId: string; setIndex: number }) =>
-      logSet(auth, sessionId, input),
+    mutationFn: (input: {
+      effortRpe: null | number;
+      repsDone: null | number;
+      sessionItemId: string;
+      setIndex: number;
+      weightDoneKg: null | number;
+    }) => logSet(auth, sessionId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
@@ -60,7 +78,13 @@ function useAuth() {
 async function logSet(
   auth: ReturnType<typeof useAuth>,
   sessionId: string,
-  input: { repsDone: null | number; sessionItemId: string; setIndex: number },
+  input: {
+    effortRpe: null | number;
+    repsDone: null | number;
+    sessionItemId: string;
+    setIndex: number;
+    weightDoneKg: null | number;
+  },
 ) {
   if (!auth) {
     throw new Error('Missing authenticated context');

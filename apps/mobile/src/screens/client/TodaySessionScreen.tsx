@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
+import { COLORS } from '../../constants/colors';
+import type { SessionView } from '../../data/hooks/useTodaySession';
 import {
   useFinishSessionMutation,
   useLogSetMutation,
@@ -9,17 +11,9 @@ import {
   useStartSessionMutation,
 } from '../../data/hooks/useTodaySession';
 import { RestTimer } from '../../features/timers/RestTimer';
+import { ActiveExerciseCard } from './ActiveExerciseCard';
 import { FinishSessionModal } from './FinishSessionModal';
 import { WeeklyReportScreen } from './WeeklyReportScreen';
-
-const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  muted: '#627285',
-  text: '#0e1a2f',
-  white: '#ffffff',
-};
 
 const DEMO_SESSION_ID = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
 const REPORT_MODAL_ANIMATION = 'slide' as const;
@@ -29,11 +23,7 @@ export function TodaySessionScreen(): React.JSX.Element {
   const [reportOpen, setReportOpen] = useState(false);
   const handlers = useTodaySessionHandlers(DEMO_SESSION_ID, setFinishOpen, setReportOpen);
   return (
-    <TodaySessionContent
-      finishOpen={finishOpen}
-      handlers={handlers}
-      reportOpen={reportOpen}
-    />
+    <TodaySessionContent finishOpen={finishOpen} handlers={handlers} reportOpen={reportOpen} />
   );
 }
 
@@ -94,36 +84,32 @@ function FinishButtonLabel(): React.JSX.Element {
   return <Text style={styles.buttonLabel}>{t('client.today.finish')}</Text>;
 }
 
-type SessionItem = { id: string; displayName: string; setsPlanned: null | number };
+type SessionItem = SessionView['items'][0];
 
 type SessionItemsCardProps = {
   items: SessionItem[];
-  onLogSet: (sessionItemId: string) => void;
+  onLogSet: (
+    sessionItemId: string,
+    setIndex: number,
+    repsDone: number | null,
+    effortRpe: number | null,
+    weightDoneKg: number | null,
+  ) => void;
 };
 
 function SessionItemsCard(props: SessionItemsCardProps): React.JSX.Element {
   const { t } = useTranslation();
-  return <View style={styles.card}>{renderItems(props.items, t, props.onLogSet)}</View>;
-}
-
-function renderItems(
-  items: { id: string; displayName: string; setsPlanned: null | number }[],
-  t: (key: string) => string,
-  onLogSet: (sessionItemId: string) => void,
-) {
-  if (items.length === 0) {
-    return <Text style={styles.empty}>{t('client.today.empty')}</Text>;
+  if (props.items.length === 0) {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.empty}>{t('client.today.empty')}</Text>
+      </View>
+    );
   }
   return (
     <View style={styles.list}>
-      {items.map((item) => (
-        <View key={item.id} style={styles.item}>
-          <Text style={styles.itemTitle}>{item.displayName}</Text>
-          <Text style={styles.itemMeta}>{`${t('client.today.sets')}: ${item.setsPlanned ?? 0}`}</Text>
-          <Pressable onPress={() => onLogSet(item.id)} style={styles.ghost}>
-            <Text style={styles.ghostLabel}>{t('client.today.logSet')}</Text>
-          </Pressable>
-        </View>
+      {props.items.map((item) => (
+        <ActiveExerciseCard item={item} key={item.id} onLogSet={props.onLogSet} />
       ))}
     </View>
   );
@@ -137,30 +123,43 @@ function useTodaySessionData(sessionId: string) {
   return { sessionQuery, startMutation, finishMutation, logSetMutation };
 }
 
+// eslint-disable-next-line max-lines-per-function
 function useTodaySessionHandlers(
   sessionId: string,
   setFinishOpen: (value: boolean) => void,
   setReportOpen: (value: boolean) => void,
 ) {
   const data = useTodaySessionData(sessionId);
+
+  const onLogSet = (
+    sessionItemId: string,
+    setIndex: number,
+    repsDone: number | null,
+    effortRpe: number | null,
+    weightDoneKg: number | null,
+  ) => {
+    data.logSetMutation.mutate({
+      effortRpe,
+      repsDone,
+      sessionItemId,
+      setIndex,
+      weightDoneKg,
+    });
+  };
+
   return {
     data,
-    onStart: () => data.startMutation.mutate(),
-    onOpenFinish: () => setFinishOpen(true),
     onCloseFinish: () => setFinishOpen(false),
-    onOpenWeeklyReport: () => setReportOpen(true),
     onCloseWeeklyReport: () => setReportOpen(false),
     onFinish: () => {
       data.finishMutation.mutate();
       setFinishOpen(false);
     },
-    onLogSet: (sessionItemId: string) =>
-      data.logSetMutation.mutate(buildLogSetInput(sessionItemId)),
+    onLogSet,
+    onOpenFinish: () => setFinishOpen(true),
+    onOpenWeeklyReport: () => setReportOpen(true),
+    onStart: () => data.startMutation.mutate(),
   };
-}
-
-function buildLogSetInput(sessionItemId: string) {
-  return { repsDone: 10, sessionItemId, setIndex: 1 };
 }
 
 function RestTimerBlock(): React.JSX.Element {
@@ -194,9 +193,28 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.card,
     borderRadius: 14,
-    gap: 10,
-    padding: 14,
+    gap: 14,
+    padding: 16,
     width: '100%',
+  },
+  checkBtn: {
+    alignItems: 'center',
+    backgroundColor: '#e6edf5',
+    borderRadius: 8,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 34,
+  },
+  checkBtnDone: {
+    backgroundColor: '#34c759',
+  },
+  checkBtnLabel: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  checkCol: {
+    flex: 1,
   },
   empty: {
     color: COLORS.muted,
@@ -233,14 +251,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   list: {
-    gap: 8,
+    gap: 16,
+    width: '100%',
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.bg,
-    gap: 10,
-    minHeight: '100%',
-    padding: 16,
+    gap: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 24,
   },
   subtitle: {
     color: COLORS.muted,

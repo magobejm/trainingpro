@@ -5,11 +5,12 @@ import { s } from '../../RoutinePlanner.styles';
 interface MoveMenuProps {
   daysCount: number;
   dayIdx: number;
+  dayLabels?: string[];
   onMoveToDay: (idx: number) => void;
   t: (k: string) => string;
 }
 
-export function MoveMenu({ daysCount, dayIdx, onMoveToDay, t }: MoveMenuProps) {
+export function MoveMenu({ daysCount, dayIdx, dayLabels, onMoveToDay, t }: MoveMenuProps) {
   return (
     <View style={[s.blockTypeRow, styles.container]}>
       <Text style={styles.label}>{`${t('coach.routine.moveToDay')}:`}</Text>
@@ -21,7 +22,9 @@ export function MoveMenu({ daysCount, dayIdx, onMoveToDay, t }: MoveMenuProps) {
               onPress={() => onMoveToDay(i)}
               style={[s.moveBtn, { backgroundColor: '#3b82f6' }]}
             >
-              <Text style={[s.moveBtnText, { color: '#fff' }]}>{i + 1}</Text>
+              <Text numberOfLines={1} style={[s.moveBtnText, styles.dayLabel]}>
+                {dayLabels?.[i] ?? String(i + 1)}
+              </Text>
             </Pressable>
           ),
       )}
@@ -39,5 +42,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#64748b',
     marginRight: 4,
+  },
+  dayLabel: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+    maxWidth: 110,
   },
 });

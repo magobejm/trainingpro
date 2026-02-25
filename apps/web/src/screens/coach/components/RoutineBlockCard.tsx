@@ -8,6 +8,7 @@ import { BlockFields } from './RoutineBlockCard/BlockFields';
 import { BlockNotes } from './RoutineBlockCard/BlockNotes';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
 import { DetailsToggle } from './RoutineBlockCard/DetailsToggle';
+import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
 
 interface RoutineBlockCardProps {
   block: DraftBlock;
@@ -15,6 +16,7 @@ interface RoutineBlockCardProps {
   isFirst: boolean;
   isLast: boolean;
   daysCount: number;
+  dayLabels?: string[];
   readOnly?: boolean;
   onUpdateField: (field: keyof DraftBlock, value: unknown) => void;
   onMove: (direction: -1 | 1) => void;
@@ -24,31 +26,73 @@ interface RoutineBlockCardProps {
 
 export function RoutineBlockCard(props: RoutineBlockCardProps) {
   const { t } = useTranslation();
+  const state = useBlockCardState();
+  return <RoutineBlockCardView props={props} state={state} t={t} />;
+}
+
+function useBlockCardState() {
   const [showMove, setShowMove] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  return {
+    showMove,
+    setShowMove,
+    showDetails,
+    setShowDetails,
+    showDetailModal,
+    setShowDetailModal,
+  };
+}
 
+function RoutineBlockCardView({
+  props,
+  state,
+  t,
+}: {
+  props: RoutineBlockCardProps;
+  state: ReturnType<typeof useBlockCardState>;
+  t: (k: string) => string;
+}) {
   return (
     <View style={s.blockCard}>
-      <BlockHeader
-        daysCount={props.daysCount}
-        displayName={props.block.displayName}
-        isFirst={props.isFirst}
-        isLast={props.isLast}
-        onMove={props.onMove}
-        onRemove={props.onRemove}
-        onShowMove={() => setShowMove(!showMove)}
-        onUpdateName={(v) => props.onUpdateField('displayName', v)}
-        readOnly={!!props.readOnly}
-        type={props.block.type}
-      />
+      <BlockHeaderSection props={props} state={state} />
       <BlockContent
         props={props}
-        setShowDetails={setShowDetails}
-        showDetails={showDetails}
-        showMove={showMove}
+        setShowDetails={state.setShowDetails}
+        showDetails={state.showDetails}
+        showMove={state.showMove}
         t={t}
       />
+      <BlockDetailModal
+        block={props.block}
+        onClose={() => state.setShowDetailModal(false)}
+        visible={state.showDetailModal}
+      />
     </View>
+  );
+}
+
+function BlockHeaderSection({
+  props,
+  state,
+}: {
+  props: RoutineBlockCardProps;
+  state: ReturnType<typeof useBlockCardState>;
+}) {
+  return (
+    <BlockHeader
+      daysCount={props.daysCount}
+      displayName={props.block.displayName}
+      isFirst={props.isFirst}
+      isLast={props.isLast}
+      onMove={props.onMove}
+      onRemove={props.onRemove}
+      onShowMove={() => state.setShowMove(!state.showMove)}
+      onShowDetail={() => state.setShowDetailModal(true)}
+      onUpdateName={(v) => props.onUpdateField('displayName', v)}
+      readOnly={!!props.readOnly}
+      type={props.block.type}
+    />
   );
 }
 
@@ -66,6 +110,7 @@ function MoveSection({
     <MoveMenu
       dayIdx={props.dayIdx}
       daysCount={props.daysCount}
+      dayLabels={props.dayLabels}
       onMoveToDay={props.onMoveToDay}
       t={t}
     />

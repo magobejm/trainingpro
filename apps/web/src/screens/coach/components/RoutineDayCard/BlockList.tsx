@@ -6,6 +6,7 @@ interface BlockListProps {
   blocks: DraftBlock[];
   dayIdx: number;
   daysCount: number;
+  dayLabels?: string[];
   readOnly: boolean;
   onMoveBlock: (idx: number, dir: -1 | 1) => void;
   onMoveBlockToDay: (idx: number, target: number) => void;
@@ -13,33 +14,23 @@ interface BlockListProps {
   onUpdateBlockField: (id: string, f: keyof DraftBlock, v: unknown) => void;
 }
 
-export function BlockList({
-  blocks,
-  dayIdx,
-  daysCount,
-  readOnly,
-  onMoveBlock,
-  onMoveBlockToDay,
-  onRemoveBlock,
-  onUpdateBlockField,
-}: BlockListProps) {
-  return (
-    <>
-      {blocks.map((block, bIdx) => (
-        <RoutineBlockCard
-          key={block.id}
-          block={block}
-          dayIdx={dayIdx}
-          daysCount={daysCount}
-          isFirst={bIdx === 0}
-          isLast={bIdx === blocks.length - 1}
-          onMove={(dir) => onMoveBlock(bIdx, dir)}
-          onMoveToDay={(target) => onMoveBlockToDay(bIdx, target)}
-          onRemove={() => onRemoveBlock(block.id)}
-          onUpdateField={(f, v) => onUpdateBlockField(block.id, f, v)}
-          readOnly={readOnly}
-        />
-      ))}
-    </>
-  );
-}
+export const BlockList = (props: BlockListProps) => (
+  <>
+    {props.blocks.map((block, bIdx) => (
+      <RoutineBlockCard
+        key={block.id}
+        block={block}
+        dayIdx={props.dayIdx}
+        daysCount={props.daysCount}
+        dayLabels={props.dayLabels}
+        isFirst={bIdx === 0}
+        isLast={bIdx === props.blocks.length - 1}
+        onMove={(dir) => props.onMoveBlock(bIdx, dir)}
+        onMoveToDay={(target) => props.onMoveBlockToDay(bIdx, target)}
+        onRemove={() => props.onRemoveBlock(block.id)}
+        onUpdateField={(f, v) => props.onUpdateBlockField(block.id, f, v)}
+        readOnly={props.readOnly}
+      />
+    ))}
+  </>
+);

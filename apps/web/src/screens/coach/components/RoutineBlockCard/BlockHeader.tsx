@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, View, Text } from 'react-native';
+import { TextInput, View, Text, Pressable } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 import { BlockActions } from './BlockActions';
@@ -15,6 +15,7 @@ interface BlockHeaderProps {
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
   onShowMove: () => void;
+  onShowDetail: () => void;
 }
 
 const typeEmoji: Record<BlockType, string> = {
@@ -35,6 +36,9 @@ export function BlockHeader(props: BlockHeaderProps) {
         style={[s.input, { flex: 1 }, props.readOnly && { backgroundColor: '#f8fafc' }]}
         value={props.displayName}
       />
+      <Pressable accessibilityLabel="view-details" onPress={props.onShowDetail} style={s.moveBtn}>
+        <Text style={s.moveBtnText}>{'\uD83D\uDD0D'}</Text>
+      </Pressable>
       {!props.readOnly && (
         <BlockActions
           daysCount={props.daysCount}

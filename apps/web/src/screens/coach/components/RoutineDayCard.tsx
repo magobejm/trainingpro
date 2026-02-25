@@ -11,6 +11,7 @@ interface RoutineDayCardProps {
   day: DraftDay;
   dayIdx: number;
   daysCount: number;
+  dayLabels?: string[];
   activeDayIdx: number;
   addBlockDayIdx: number | null;
   readOnly?: boolean;
@@ -55,7 +56,7 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
 }
 
 function DayBlocksContent({ props, t }: { props: RoutineDayCardProps; t: (k: string) => string }) {
-  const { day, readOnly, dayIdx, daysCount } = props;
+  const { day, readOnly, dayIdx, daysCount, dayLabels } = props;
   if (day.blocks.length === 0) {
     return <Text style={s.emptyDay}>{t('coach.routine.emptyDay')}</Text>;
   }
@@ -64,6 +65,7 @@ function DayBlocksContent({ props, t }: { props: RoutineDayCardProps; t: (k: str
       blocks={day.blocks}
       dayIdx={dayIdx}
       daysCount={daysCount}
+      dayLabels={dayLabels}
       onMoveBlock={props.onMoveBlock}
       onMoveBlockToDay={props.onMoveBlockToDay}
       onRemoveBlock={props.onRemoveBlock}

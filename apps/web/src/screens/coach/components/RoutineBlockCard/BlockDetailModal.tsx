@@ -55,6 +55,7 @@ function useLibrarySources(type: string, query: string) {
 function useBlockDetail(block: DraftBlock): { item: DetailItem | null; isLoading: boolean } {
   const sources = useLibrarySources(block.type, block.displayName);
   const source = (sources as Record<string, DetailSource>)[block.type];
+  if (!source) return { item: null, isLoading: false };
   const target =
     source.items.find((i) => i.id === block.libraryId || i.name === block.displayName) || null;
   return { item: target ? source.map(target) : null, isLoading: source.isLoading };

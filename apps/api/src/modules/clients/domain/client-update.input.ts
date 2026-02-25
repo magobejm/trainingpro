@@ -10,4 +10,5 @@ export type ClientUpdateInput = {
   phone?: null | string;
   sex?: null | string;
   weightKg?: number | null;
+  trainingPlanId?: string | null;
 };

@@ -16,4 +16,6 @@ export type Client = {
   sex: null | string;
   updatedAt: Date;
   weightKg: null | number;
+  trainingPlanId: string | null;
+  trainingPlan?: { id: string; name: string };
 };

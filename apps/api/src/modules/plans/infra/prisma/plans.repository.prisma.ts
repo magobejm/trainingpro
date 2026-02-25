@@ -1,285 +1,96 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../common/audit/audit-fields';
-import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type { PlanCardioTemplate } from '../../domain/entities/cardio-template.entity';
-import type { PlanTemplate } from '../../domain/entities/plan-template.entity';
-import type { PlanCardioTemplateWriteInput } from '../../domain/plan-cardio.input';
-import type { PlanTemplateWriteInput } from '../../domain/plan-template.input';
-import type { PlansRepositoryPort } from '../../domain/plans-repository.port';
-import type { RoutineTemplateWriteInput } from '../../domain/routine-template.input';
-import {
-  cardioTemplateInclude,
-  mapCardioDayCreate,
-  mapCardioTemplate,
-} from './plans-cardio.prisma.helpers';
-import {
-  mapRoutineDayCreate,
-  mapRoutineTemplate,
-  routineTemplateInclude,
-} from './plans-routine.prisma.helpers';
-import { mapDayCreate, mapTemplate, templateInclude } from './plans-strength.prisma.helpers';
-
-type CoachMembership = {
-  id: string;
-  organizationId: string;
-};
+import { AuthContext } from '../../../../common/auth-context/auth-context';
+import { PlanCardioTemplate } from '../../domain/entities/cardio-template.entity';
+import { PlanTemplate } from '../../domain/entities/plan-template.entity';
+import { PlanCardioTemplateWriteInput } from '../../domain/plan-cardio.input';
+import { PlanTemplateWriteInput } from '../../domain/plan-template.input';
+import { PlansRepositoryPort } from '../../domain/plans-repository.port';
+import { RoutineTemplateWriteInput } from '../../domain/routine-template.input';
+import { PlansCardioRepository } from './plans-repository/plans-cardio.repository';
+import { PlansRoutineRepository } from './plans-repository/plans-routine.repository';
+import { PlansStrengthRepository } from './plans-repository/plans-strength.repository';
 
 @Injectable()
 export class PlansRepositoryPrisma implements PlansRepositoryPort {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly cardio: PlansCardioRepository;
+  private readonly routine: PlansRoutineRepository;
+  private readonly strength: PlansStrengthRepository;
 
-  async createCardioTemplate(
-    context: AuthContext,
-    input: PlanCardioTemplateWriteInput,
+  constructor(prisma: PrismaService) {
+    this.cardio = new PlansCardioRepository(prisma);
+    this.routine = new PlansRoutineRepository(prisma);
+    this.strength = new PlansStrengthRepository(prisma);
+  }
+
+  createCardioTemplate(
+    ctx: AuthContext,
+    i: PlanCardioTemplateWriteInput,
   ): Promise<PlanCardioTemplate> {
-    const membership = await this.resolveCoachMembership(context);
-    const row = await this.prisma.planTemplate.create({
-      data: {
-        ...buildCreateAuditFields(context),
-        coachMembershipId: membership.id,
-        days: { create: input.days.map(mapCardioDayCreate) },
-        kind: TemplateKind.CARDIO,
-        name: input.name.trim(),
-        organizationId: membership.organizationId,
-      },
-      include: cardioTemplateInclude(),
-    });
-    return mapCardioTemplate(row);
+    return this.cardio.createCardioTemplate(ctx, i);
   }
 
-  async createTemplate(context: AuthContext, input: PlanTemplateWriteInput): Promise<PlanTemplate> {
-    const membership = await this.resolveCoachMembership(context);
-    const row = await this.prisma.planTemplate.create({
-      data: {
-        ...buildCreateAuditFields(context),
-        coachMembershipId: membership.id,
-        kind: TemplateKind.STRENGTH,
-        name: input.name.trim(),
-        organizationId: membership.organizationId,
-        days: { create: input.days.map(mapDayCreate) },
-      },
-      include: templateInclude(),
-    });
-    return mapTemplate(row);
+  createTemplate(ctx: AuthContext, i: PlanTemplateWriteInput): Promise<PlanTemplate> {
+    return this.strength.createTemplate(ctx, i);
   }
 
-  async listTemplates(context: AuthContext): Promise<PlanTemplate[]> {
-    const membership = await this.resolveCoachMembership(context);
-
-    const rows = await this.prisma.planTemplate.findMany({
-      include: templateInclude(),
-      orderBy: { updatedAt: 'desc' },
-      where: { archivedAt: null, coachMembershipId: membership.id, kind: TemplateKind.STRENGTH },
-    });
-    return rows.map(mapTemplate);
+  listTemplates(ctx: AuthContext, o?: { summary?: boolean }): Promise<PlanTemplate[]> {
+    return this.strength.listTemplates(ctx, o);
   }
 
-  async listCardioTemplates(context: AuthContext): Promise<PlanCardioTemplate[]> {
-    const membership = await this.resolveCoachMembership(context);
-    const rows = await this.prisma.planTemplate.findMany({
-      include: cardioTemplateInclude(),
-      orderBy: { updatedAt: 'desc' },
-      where: { archivedAt: null, coachMembershipId: membership.id, kind: TemplateKind.CARDIO },
-    });
-    return rows.map(mapCardioTemplate);
+  listCardioTemplates(ctx: AuthContext, o?: { summary?: boolean }): Promise<PlanCardioTemplate[]> {
+    return this.cardio.listCardioTemplates(ctx, o);
   }
 
-  async updateTemplate(
-    context: AuthContext,
-    templateId: string,
-    input: PlanTemplateWriteInput,
-  ): Promise<PlanTemplate> {
-    const membership = await this.resolveCoachMembership(context);
-    return this.prisma.$transaction(async (tx) => {
-      const current = await tx.planTemplate.findFirst({
-        where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-        select: { id: true, templateVersion: true },
-      });
-      if (!current) {
-        throw new NotFoundException('Plan template not found');
-      }
-      await tx.planDay.deleteMany({ where: { templateId: current.id } });
-      const row = await tx.planTemplate.update({
-        where: { id: current.id },
-        data: {
-          ...buildUpdateAuditFields(context),
-          name: input.name.trim(),
-          templateVersion: current.templateVersion + 1,
-          days: { create: input.days.map(mapDayCreate) },
-        },
-        include: templateInclude(),
-      });
-      return mapTemplate(row);
-    });
+  getCardioTemplateById(ctx: AuthContext, id: string): Promise<PlanCardioTemplate> {
+    return this.cardio.getCardioTemplateById(ctx, id);
   }
 
-  async updateCardioTemplate(
-    context: AuthContext,
-    templateId: string,
-    input: PlanCardioTemplateWriteInput,
+  updateTemplate(ctx: AuthContext, id: string, i: PlanTemplateWriteInput): Promise<PlanTemplate> {
+    return this.strength.updateTemplate(ctx, id, i);
+  }
+
+  updateCardioTemplate(
+    ctx: AuthContext,
+    id: string,
+    i: PlanCardioTemplateWriteInput,
   ): Promise<PlanCardioTemplate> {
-    const membership = await this.resolveCoachMembership(context);
-    return this.prisma.$transaction(async (tx) => {
-      const current = await tx.planTemplate.findFirst({
-        where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-        select: { id: true, templateVersion: true },
-      });
-      if (!current) {
-        throw new NotFoundException('Cardio template not found');
-      }
-      await tx.planDay.deleteMany({ where: { templateId: current.id } });
-      const row = await tx.planTemplate.update({
-        where: { id: current.id },
-        data: {
-          ...buildUpdateAuditFields(context),
-          days: { create: input.days.map(mapCardioDayCreate) },
-          name: input.name.trim(),
-          templateVersion: current.templateVersion + 1,
-        },
-        include: cardioTemplateInclude(),
-      });
-      return mapCardioTemplate(row);
-    });
+    return this.cardio.updateCardioTemplate(ctx, id, i);
   }
 
-  async deleteTemplate(context: AuthContext, templateId: string): Promise<void> {
-    const membership = await this.resolveCoachMembership(context);
-    const current = await this.prisma.planTemplate.findFirst({
-      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-      select: { id: true },
-    });
-    if (!current) {
-      throw new NotFoundException('Plan template not found');
-    }
-    await this.prisma.planTemplate.update({
-      where: { id: current.id },
-      data: { archivedAt: new Date() },
-    });
+  deleteTemplate(ctx: AuthContext, id: string): Promise<void> {
+    return this.strength.deleteTemplate(ctx, id);
   }
 
-  async deleteCardioTemplate(context: AuthContext, templateId: string): Promise<void> {
-    const membership = await this.resolveCoachMembership(context);
-    const current = await this.prisma.planTemplate.findFirst({
-      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-      select: { id: true },
-    });
-    if (!current) {
-      throw new NotFoundException('Cardio template not found');
-    }
-    await this.prisma.planTemplate.update({
-      where: { id: current.id },
-      data: { archivedAt: new Date() },
-    });
+  deleteCardioTemplate(ctx: AuthContext, id: string): Promise<void> {
+    return this.cardio.deleteCardioTemplate(ctx, id);
   }
 
-  private async resolveCoachMembership(context: AuthContext): Promise<CoachMembership> {
-    const membership = await this.prisma.organizationMember.findFirst({
-      where: {
-        archivedAt: null,
-        isActive: true,
-        role: Role.COACH,
-        user: { supabaseUid: context.subject },
-      },
-      select: { id: true, organizationId: true },
-    });
-    if (!membership) {
-      throw new ForbiddenException('Coach membership not found');
-    }
-    return membership;
+  canCoachAccessTemplate(coach: string, id: string): Promise<boolean> {
+    return this.strength.canCoachAccessTemplate(coach, id);
   }
 
-  async canCoachAccessTemplate(coachSupabaseUid: string, templateId: string): Promise<boolean> {
-    const template = await this.prisma.planTemplate.findFirst({
-      where: {
-        id: templateId,
-        archivedAt: null,
-        coachMembership: {
-          user: { supabaseUid: coachSupabaseUid },
-        },
-      },
-      select: { id: true },
-    });
-    return !!template;
+  getTemplateById(ctx: AuthContext, id: string): Promise<PlanTemplate> {
+    return this.strength.getTemplateById(ctx, id);
   }
 
-  /* ── Routine templates ── */
-
-  async createRoutineTemplate(context: AuthContext, input: RoutineTemplateWriteInput) {
-    const membership = await this.resolveCoachMembership(context);
-    const row = await this.prisma.planTemplate.create({
-      data: {
-        ...buildCreateAuditFields(context),
-        coachMembershipId: membership.id,
-        days: { create: input.days.map(mapRoutineDayCreate) },
-        kind: TemplateKind.ROUTINE,
-        name: input.name.trim(),
-        organizationId: membership.organizationId,
-      },
-      include: routineTemplateInclude(),
-    });
-    return mapRoutineTemplate(row);
+  createRoutineTemplate(ctx: AuthContext, i: RoutineTemplateWriteInput) {
+    return this.routine.createRoutineTemplate(ctx, i);
   }
 
-  async listRoutineTemplates(context: AuthContext) {
-    const membership = await this.resolveCoachMembership(context);
-    const rows = await this.prisma.planTemplate.findMany({
-      include: routineTemplateInclude(),
-      orderBy: [{ kind: 'asc' }, { updatedAt: 'desc' }],
-      where: {
-        archivedAt: null,
-        kind: TemplateKind.ROUTINE,
-        OR: [{ coachMembershipId: membership.id }, { organizationId: null }],
-      },
-    });
-    return rows.map(mapRoutineTemplate);
+  getRoutineTemplateById(ctx: AuthContext, id: string) {
+    return this.routine.getRoutineTemplateById(ctx, id);
   }
 
-  async updateRoutineTemplate(
-    context: AuthContext,
-    templateId: string,
-    input: RoutineTemplateWriteInput,
-  ) {
-    const membership = await this.resolveCoachMembership(context);
-    return this.prisma.$transaction(async (tx) => {
-      const current = await tx.planTemplate.findFirst({
-        where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-        select: { id: true, templateVersion: true },
-      });
-      if (!current) {
-        throw new NotFoundException('Routine template not found');
-      }
-      await tx.planDay.deleteMany({ where: { templateId: current.id } });
-      const row = await tx.planTemplate.update({
-        where: { id: current.id },
-        data: {
-          ...buildUpdateAuditFields(context),
-          days: { create: input.days.map(mapRoutineDayCreate) },
-          name: input.name.trim(),
-          templateVersion: current.templateVersion + 1,
-        },
-        include: routineTemplateInclude(),
-      });
-      return mapRoutineTemplate(row);
-    });
+  listRoutineTemplates(ctx: AuthContext, o?: { summary?: boolean }) {
+    return this.routine.listRoutineTemplates(ctx, o);
   }
 
-  async deleteRoutineTemplate(context: AuthContext, templateId: string): Promise<void> {
-    const membership = await this.resolveCoachMembership(context);
-    const current = await this.prisma.planTemplate.findFirst({
-      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
-      select: { id: true },
-    });
-    if (!current) {
-      throw new NotFoundException('Routine template not found');
-    }
-    await this.prisma.planTemplate.update({
-      where: { id: current.id },
-      data: { archivedAt: new Date() },
-    });
+  updateRoutineTemplate(ctx: AuthContext, id: string, i: RoutineTemplateWriteInput) {
+    return this.routine.updateRoutineTemplate(ctx, id, i);
+  }
+
+  deleteRoutineTemplate(ctx: AuthContext, id: string): Promise<void> {
+    return this.routine.deleteRoutineTemplate(ctx, id);
   }
 }

@@ -12,13 +12,6 @@ type DetailItem = {
 
 const DETAILS: DetailItem[] = [
   {
-    actionKey: 'coach.clientProfile.details.trainingPlan.action',
-    emptyKey: 'coach.clientProfile.details.trainingPlan.empty',
-    icon: '🏋️',
-    id: 'training',
-    titleKey: 'coach.clientProfile.details.trainingPlan.title',
-  },
-  {
     actionKey: 'coach.clientProfile.details.nutritionPlan.action',
     emptyKey: 'coach.clientProfile.details.nutritionPlan.empty',
     icon: '🥗',
@@ -71,10 +64,7 @@ export function ClientProfileDetailsList(props: Props): React.JSX.Element {
   );
 }
 
-function DetailCard(props: {
-  item: DetailItem;
-  t: (key: string) => string;
-}): React.JSX.Element {
+function DetailCard(props: { item: DetailItem; t: (key: string) => string }): React.JSX.Element {
   return (
     <Pressable style={styles.detailCard}>
       <View style={styles.detailLeft}>

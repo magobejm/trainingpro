@@ -16,7 +16,9 @@ export type CreateClientInput = {
   weightKg?: null | number;
 };
 
-export type UpdateClientInput = Partial<CreateClientInput>;
+export type UpdateClientInput = Partial<CreateClientInput> & {
+  trainingPlanId?: string | null;
+};
 
 export type CreateClientResult = {
   client: {

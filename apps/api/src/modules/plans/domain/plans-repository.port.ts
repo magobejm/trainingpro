@@ -13,8 +13,13 @@ export interface PlansRepositoryPort {
     input: PlanCardioTemplateWriteInput,
   ): Promise<PlanCardioTemplate>;
   createTemplate(context: AuthContext, input: PlanTemplateWriteInput): Promise<PlanTemplate>;
-  listCardioTemplates(context: AuthContext): Promise<PlanCardioTemplate[]>;
-  listTemplates(context: AuthContext): Promise<PlanTemplate[]>;
+  listCardioTemplates(
+    context: AuthContext,
+    options?: { summary?: boolean },
+  ): Promise<PlanCardioTemplate[]>;
+  listTemplates(context: AuthContext, options?: { summary?: boolean }): Promise<PlanTemplate[]>;
+  getTemplateById(context: AuthContext, templateId: string): Promise<PlanTemplate>;
+  getCardioTemplateById(context: AuthContext, templateId: string): Promise<PlanCardioTemplate>;
   deleteCardioTemplate(context: AuthContext, templateId: string): Promise<void>;
   deleteTemplate(context: AuthContext, templateId: string): Promise<void>;
   updateCardioTemplate(
@@ -29,7 +34,8 @@ export interface PlansRepositoryPort {
   ): Promise<PlanTemplate>;
   canCoachAccessTemplate(coachSupabaseUid: string, templateId: string): Promise<boolean>;
   createRoutineTemplate(context: AuthContext, input: RoutineTemplateWriteInput): Promise<unknown>;
-  listRoutineTemplates(context: AuthContext): Promise<unknown[]>;
+  getRoutineTemplateById(context: AuthContext, templateId: string): Promise<unknown>;
+  listRoutineTemplates(context: AuthContext, options?: { summary?: boolean }): Promise<unknown[]>;
   updateRoutineTemplate(
     context: AuthContext,
     templateId: string,

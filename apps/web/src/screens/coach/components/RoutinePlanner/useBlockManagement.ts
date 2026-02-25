@@ -2,32 +2,30 @@ import { useCallback } from 'react';
 import type { BlockType, DraftBlock, DraftState } from '../../RoutinePlanner.types';
 import { createBlock } from '../../RoutinePlanner.helpers';
 
-export function useBlockManagement(
-  setDraft: React.Dispatch<React.SetStateAction<DraftState>>,
-  t: (k: string) => string,
-) {
-  const onAddBlock = useAddBlock(setDraft, t);
+export function useBlockManagement(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
+  const onAddBlock = useAddBlock(setDraft);
   const onUpdateBlockField = useUpdateBlock(setDraft);
   const onRemoveBlock = useRemoveBlock(setDraft);
 
   return { onAddBlock, onUpdateBlockField, onRemoveBlock };
 }
 
-function useAddBlock(
-  setDraft: React.Dispatch<React.SetStateAction<DraftState>>,
-  t: (k: string) => string,
-) {
+function useAddBlock(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
   return useCallback(
-    (dayIdx: number, type: BlockType) => {
-      const label = t(`coach.routine.blockType.${type}`);
+    (dayIdx: number, type: BlockType, libraryId: string, displayName: string) => {
       setDraft((d) => ({
         ...d,
         days: d.days.map((day, i) =>
-          i === dayIdx ? { ...day, blocks: [...day.blocks, createBlock(type, label)] } : day,
+          i === dayIdx
+            ? {
+                ...day,
+                blocks: [...day.blocks, { ...createBlock(type, displayName), libraryId }],
+              }
+            : day,
         ),
       }));
     },
-    [t, setDraft],
+    [setDraft],
   );
 }
 

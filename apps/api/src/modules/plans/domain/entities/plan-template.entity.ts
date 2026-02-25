@@ -22,6 +22,8 @@ export type PlanTemplate = {
   createdAt: Date;
   id: string;
   name: string;
+  scope: 'COACH' | 'GLOBAL';
+  coachMembershipId: null | string;
   templateVersion: number;
   updatedAt: Date;
   days: PlanTemplateDay[];

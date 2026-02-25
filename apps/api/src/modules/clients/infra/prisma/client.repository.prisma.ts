@@ -75,8 +75,11 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       audit,
     );
     const hydrated = await this.prisma.client.findUnique({
-      where: { id: created.id },
-      include: { objectiveRef: true },
+      where: { id: created.id, coachMembershipId: membership.id, archivedAt: null },
+      include: {
+        objectiveRef: true,
+        trainingPlan: { select: { id: true, name: true } },
+      },
     });
     if (!hydrated) {
       throw new NotFoundException('Client not found after create');
@@ -87,11 +90,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async getClientById(context: AuthContext, clientId: string): Promise<Client | null> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const client = await this.prisma.client.findFirst({
-      include: { objectiveRef: true },
-      where: {
-        archivedAt: null,
-        coachMembershipId: membership.id,
-        id: clientId,
+      where: { id: clientId, archivedAt: null, coachMembershipId: membership.id },
+      include: {
+        objectiveRef: true,
+        trainingPlan: { select: { id: true, name: true } },
       },
     });
     return client ? mapClient(client) : null;
@@ -100,7 +102,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async listClientsByCoach(context: AuthContext): Promise<Client[]> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const clients = await this.prisma.client.findMany({
-      include: { objectiveRef: true },
+      include: {
+        objectiveRef: true,
+        trainingPlan: { select: { id: true, name: true } },
+      },
       where: {
         archivedAt: null,
         coachMembershipId: membership.id,
@@ -130,7 +135,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           ...payload,
           ...buildUpdateAuditFields(context),
         },
-        include: { objectiveRef: true },
+        include: {
+          objectiveRef: true,
+          trainingPlan: { select: { id: true, name: true } },
+        },
       });
     });
     return mapClient(updated);
@@ -157,13 +165,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
         ...clientData,
         objectiveId: resolvedObjectiveId,
       };
-      const client = await this.createOrRestoreClient(
-        tx,
-        membership,
-        payload,
-        audit,
-        updatedBy,
-      );
+      const client = await this.createOrRestoreClient(tx, membership, payload, audit, updatedBy);
       await incrementClientCount(tx, membership.organizationId);
       return client;
     });
@@ -188,7 +190,6 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     audit: ReturnType<typeof buildCreateAuditFields>,
     updatedBy: string,
   ) {
-    const { objectiveId, ...clientDataWithoutObjective } = clientData;
     const restored = await tryRestoreArchivedClient(
       tx,
       membership.organizationId,
@@ -198,15 +199,29 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     if (restored) {
       return restored;
     }
+    return this.createNewClient(tx, membership, clientData, audit);
+  }
+
+  private createNewClient(
+    tx: Prisma.TransactionClient,
+    membership: CoachMembership,
+    clientData: ClientDataPayload,
+    audit: ReturnType<typeof buildCreateAuditFields>,
+  ) {
+    const { objectiveId, trainingPlanId, ...rest } = clientData;
     return tx.client.create({
       data: {
         ...audit,
+        ...rest,
         coachMembershipId: membership.id,
         objectiveId,
         organizationId: membership.organizationId,
-        ...clientDataWithoutObjective,
+        trainingPlanId: trainingPlanId ?? null,
       },
-      include: { objectiveRef: true },
+      include: {
+        objectiveRef: true,
+        trainingPlan: { select: { id: true, name: true } },
+      },
     });
   }
 }

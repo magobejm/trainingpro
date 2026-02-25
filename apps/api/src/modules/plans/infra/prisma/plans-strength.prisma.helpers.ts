@@ -68,10 +68,12 @@ export function mapTemplate(
   row: Prisma.PlanTemplateGetPayload<{ include: ReturnType<typeof templateInclude> }>,
 ): PlanTemplate {
   return {
+    coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
     days: row.days.map(mapTemplateDay),
     id: row.id,
     name: row.name,
+    scope: row.scope as 'COACH' | 'GLOBAL',
     templateVersion: row.templateVersion,
     updatedAt: row.updatedAt,
   };

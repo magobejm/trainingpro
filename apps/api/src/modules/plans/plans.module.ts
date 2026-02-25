@@ -12,6 +12,9 @@ import { ListTemplatesUseCase } from './application/use-cases/list-templates.use
 import { UpdateCardioTemplateUseCase } from './application/use-cases/update-cardio-template.usecase';
 import { UpdateRoutineTemplateUseCase } from './application/use-cases/update-routine-template.usecase';
 import { UpdateTemplateUseCase } from './application/use-cases/update-template.usecase';
+import { GetCardioTemplateUseCase } from './application/use-cases/get-cardio-template.usecase';
+import { GetRoutineTemplateUseCase } from './application/use-cases/get-routine-template.usecase';
+import { GetTemplateUseCase } from './application/use-cases/get-template.usecase';
 import { CardioRulesService } from './domain/cardio-rules.service';
 import { PLANS_REPOSITORY } from './domain/plans-repository.port';
 import { PlansRulesService } from './domain/plans-rules.service';
@@ -38,6 +41,9 @@ import { PlanOwnershipGuard } from './presentation/guards/plan-ownership.guard';
     UpdateCardioTemplateUseCase,
     UpdateRoutineTemplateUseCase,
     UpdateTemplateUseCase,
+    GetCardioTemplateUseCase,
+    GetRoutineTemplateUseCase,
+    GetTemplateUseCase,
     CardioRulesService,
     PlansRulesService,
     PlansRepositoryPrisma,

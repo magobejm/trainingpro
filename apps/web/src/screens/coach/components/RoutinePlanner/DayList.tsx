@@ -3,7 +3,7 @@ import type { DraftDay, BlockType, DraftBlock } from '../../RoutinePlanner.types
 import { RoutineDayCard } from '../RoutineDayCard';
 
 export interface DraftStateHandlers {
-  onAddBlock: (dayIdx: number, type: BlockType) => void;
+  onOpenPicker: (dayIdx: number, type: BlockType) => void;
   onMoveBlock: (dayIdx: number, blockIdx: number, dir: -1 | 1) => void;
   onMoveBlockToDay: (fromIdx: number, bIdx: number, toIdx: number) => void;
   removeDay: (dayIdx: number) => void;
@@ -63,7 +63,7 @@ function DayListItem(props: ItemProps) {
       dayIdx={idx}
       daysCount={daysCount}
       onAddBlock={(type) => {
-        draftState.onAddBlock(idx, type);
+        draftState.onOpenPicker(idx, type);
         setAddIdx(null);
       }}
       onMoveBlock={(bIdx, dir) => draftState.onMoveBlock(idx, bIdx, dir)}

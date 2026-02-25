@@ -10,7 +10,10 @@ export type CoachMembership = {
 };
 
 type PrismaClientWithObjective = Prisma.ClientGetPayload<{
-  include: { objectiveRef: true };
+  include: {
+    objectiveRef: true;
+    trainingPlan: { select: { id: true; name: true } };
+  };
 }>;
 
 export async function decrementClientCount(
@@ -65,29 +68,47 @@ export async function tryRestoreArchivedClient(
   clientData: ClientDataPayload,
   updatedBy: string,
 ): Promise<null | PrismaClientWithObjective> {
-  const { objectiveId, ...clientDataWithoutObjective } = clientData;
-  const archived = await tx.client.findFirst({
-    where: {
-      archivedAt: { not: null },
-      email: clientData.email,
-      organizationId,
-    },
-    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
-  });
+  const archived = await findArchivedClientByEmail(tx, organizationId, clientData.email);
   if (!archived) {
     return null;
   }
+  return restoreClient(tx, archived.id, clientData, updatedBy);
+}
+
+function findArchivedClientByEmail(
+  tx: Prisma.TransactionClient,
+  organizationId: string,
+  email: string,
+) {
+  return tx.client.findFirst({
+    where: { archivedAt: { not: null }, email, organizationId },
+    orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+    select: { id: true },
+  });
+}
+
+function restoreClient(
+  tx: Prisma.TransactionClient,
+  id: string,
+  data: ClientDataPayload,
+  updatedBy: string,
+) {
+  const { objectiveId, trainingPlanId, ...rest } = data;
   return tx.client.update({
-    where: { id: archived.id },
+    where: { id },
     data: {
-      ...clientDataWithoutObjective,
+      ...rest,
       archivedAt: null,
       archivedBy: null,
-      objectiveRef: { connect: { id: objectiveId } },
+      objectiveId,
+      trainingPlanId: trainingPlanId ?? null,
       updatedBy,
     },
-    include: { objectiveRef: true },
-  });
+    include: {
+      objectiveRef: true,
+      trainingPlan: { select: { id: true, name: true } },
+    },
+  }) as unknown as Promise<PrismaClientWithObjective>;
 }
 
 export async function ensureUniqueClientEmail(

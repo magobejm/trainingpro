@@ -94,12 +94,12 @@ type ListResponse = { items: RoutineTemplateView[] };
 
 /* ── Hooks ── */
 
-export function useRoutineTemplatesQuery() {
+export function useRoutineTemplatesQuery(options?: { summary?: boolean }) {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => listRoutines(auth),
-    queryKey: ['routine-templates', auth?.accessToken, auth?.activeRole],
+    queryFn: () => listRoutines(auth, options),
+    queryKey: ['routine-templates', auth?.accessToken, auth?.activeRole, options?.summary],
   });
 }
 
@@ -153,9 +153,15 @@ async function createRoutine(auth: Auth, input: UpsertRoutineInput) {
   return createApiClient(auth).post<RoutineTemplateView>('/plans/templates/routines', input);
 }
 
-async function listRoutines(auth: Auth): Promise<RoutineTemplateView[]> {
+async function listRoutines(
+  auth: Auth,
+  options?: { summary?: boolean },
+): Promise<RoutineTemplateView[]> {
   if (!auth) throw new Error('Missing authenticated context');
-  const res = await createApiClient(auth).get<ListResponse>('/plans/templates/routines');
+  const res = await createApiClient(auth).get<ListResponse>(
+    '/plans/templates/routines',
+    options?.summary ? { summary: 'true' } : undefined,
+  );
   return res.items;
 }
 

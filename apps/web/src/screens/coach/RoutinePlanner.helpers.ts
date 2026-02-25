@@ -41,6 +41,7 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
 
 const mapStrength = (b: DraftBlock, si: number) => ({
   displayName: b.displayName,
+  exerciseLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   sortOrder: si,
   setsPlanned: b.setsPlanned ?? 3,
@@ -53,6 +54,7 @@ const mapStrength = (b: DraftBlock, si: number) => ({
 
 const mapCardio = (b: DraftBlock, si: number) => ({
   displayName: b.displayName,
+  cardioMethodLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'work', mode: 'COACH_INPUT' as const }],
   methodType: 'interval',
   restSeconds: b.restSeconds ?? 30,
@@ -63,8 +65,20 @@ const mapCardio = (b: DraftBlock, si: number) => ({
   notes: b.notes ?? '',
 });
 
-const mapTimed = (b: DraftBlock, si: number) => ({
+const mapPlio = (b: DraftBlock, si: number) => ({
   displayName: b.displayName,
+  plioExerciseLibraryId: b.libraryId ?? null,
+  restSeconds: b.restSeconds ?? 30,
+  roundsPlanned: b.roundsPlanned ?? 3,
+  sortOrder: si,
+  targetRpe: b.targetRpe ?? null,
+  workSeconds: b.workSeconds ?? 30,
+  notes: b.notes ?? '',
+});
+
+const mapWarmup = (b: DraftBlock, si: number) => ({
+  displayName: b.displayName,
+  warmupExerciseLibraryId: b.libraryId ?? null,
   restSeconds: b.restSeconds ?? 30,
   roundsPlanned: b.roundsPlanned ?? 3,
   sortOrder: si,
@@ -79,12 +93,13 @@ export function buildRoutinePayload(draft: DraftState) {
       dayIndex: idx + 1,
       exercises: day.blocks.filter((b) => b.type === 'strength').map(mapStrength),
       cardioBlocks: day.blocks.filter((b) => b.type === 'cardio').map(mapCardio),
-      plioBlocks: day.blocks.filter((b) => b.type === 'plio').map(mapTimed),
-      warmupBlocks: day.blocks.filter((b) => b.type === 'warmup').map(mapTimed),
+      plioBlocks: day.blocks.filter((b) => b.type === 'plio').map(mapPlio),
+      warmupBlocks: day.blocks.filter((b) => b.type === 'warmup').map(mapWarmup),
       sportBlocks: day.blocks
         .filter((b) => b.type === 'sport')
         .map((b, si) => ({
           displayName: b.displayName,
+          sportLibraryId: b.libraryId ?? null,
           durationMinutes: b.durationMinutes ?? 30,
           sortOrder: si,
           targetRpe: b.targetRpe ?? null,
@@ -117,6 +132,19 @@ interface TemplateData {
   days: TemplateDayData[];
 }
 
+/** Maps the per-type FK field name to the generic `libraryId` on DraftBlock. */
+function extractLibraryId(type: BlockType, item: TemplateBlockData): string | undefined {
+  const fieldMap: Record<BlockType, string> = {
+    strength: 'exerciseLibraryId',
+    cardio: 'cardioMethodLibraryId',
+    plio: 'plioExerciseLibraryId',
+    warmup: 'warmupExerciseLibraryId',
+    sport: 'sportLibraryId',
+  };
+  const val = item[fieldMap[type]];
+  return typeof val === 'string' ? val : undefined;
+}
+
 function mapBlocksFromTemplate(d: TemplateDayData): DraftBlock[] {
   const types: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport'];
   const keys: (keyof TemplateDayData)[] = [
@@ -132,7 +160,13 @@ function mapBlocksFromTemplate(d: TemplateDayData): DraftBlock[] {
     const type = types[idx] as BlockType;
     const items = d[key] as TemplateBlockData[] | undefined;
     (items ?? []).forEach((item) => {
-      blocks.push({ ...createBlock(type, item.displayName), ...item, type } as DraftBlock);
+      const libraryId = extractLibraryId(type, item);
+      blocks.push({
+        ...createBlock(type, item.displayName),
+        ...item,
+        type,
+        ...(libraryId ? { libraryId } : {}),
+      } as DraftBlock);
     });
   });
 

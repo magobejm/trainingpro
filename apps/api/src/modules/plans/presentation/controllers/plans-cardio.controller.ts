@@ -10,6 +10,7 @@ import {
   Post,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
@@ -19,6 +20,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { CreateCardioTemplateUseCase } from '../../application/use-cases/create-cardio-template.usecase';
 import { DeleteCardioTemplateUseCase } from '../../application/use-cases/delete-cardio-template.usecase';
 import { ListCardioTemplatesUseCase } from '../../application/use-cases/list-cardio-templates.usecase';
+import { GetCardioTemplateUseCase } from '../../application/use-cases/get-cardio-template.usecase';
 import { UpdateCardioTemplateUseCase } from '../../application/use-cases/update-cardio-template.usecase';
 import { PlanTemplateIdParamDto } from '../dto/plan-template-id-param.dto';
 import { UpsertCardioTemplateDto } from '../dto/upsert-cardio-template.dto';
@@ -29,24 +31,32 @@ import { PlanOwnershipGuard } from '../guards/plan-ownership.guard';
 @Roles('coach')
 export class PlansCardioController {
   constructor(
-    private readonly createTemplateUseCase: CreateCardioTemplateUseCase,
-    private readonly listTemplatesUseCase: ListCardioTemplatesUseCase,
-    private readonly updateTemplateUseCase: UpdateCardioTemplateUseCase,
-    private readonly deleteTemplateUseCase: DeleteCardioTemplateUseCase,
-  ) { }
+    private readonly createUseCase: CreateCardioTemplateUseCase,
+    private readonly listUseCase: ListCardioTemplatesUseCase,
+    private readonly getUseCase: GetCardioTemplateUseCase,
+    private readonly updateUseCase: UpdateCardioTemplateUseCase,
+    private readonly deleteUseCase: DeleteCardioTemplateUseCase,
+  ) {}
 
   @Post()
   async create(@Body() body: UpsertCardioTemplateDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
-    const template = await this.createTemplateUseCase.execute(auth, body);
+    const template = await this.createUseCase.execute(auth, body);
     return mapTemplateOutput(template);
   }
 
   @Get()
-  async list(@Req() request: HttpAuthRequest) {
+  async list(@Req() request: HttpAuthRequest, @Query('summary') summary?: string) {
     const auth = readAuthContext(request);
-    const items = await this.listTemplatesUseCase.execute(auth);
+    const items = await this.listUseCase.execute(auth, { summary: summary === 'true' });
     return { items: items.map(mapTemplateOutput) };
+  }
+
+  @Get(':templateId')
+  async getOne(@Param() params: PlanTemplateIdParamDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const item = await this.getUseCase.execute(auth, params.templateId);
+    return mapTemplateOutput(item);
   }
 
   @Patch(':templateId')
@@ -57,7 +67,7 @@ export class PlansCardioController {
     @Req() request: HttpAuthRequest,
   ) {
     const auth = readAuthContext(request);
-    const template = await this.updateTemplateUseCase.execute(auth, params.templateId, body);
+    const template = await this.updateUseCase.execute(auth, params.templateId, body);
     return mapTemplateOutput(template);
   }
 
@@ -66,7 +76,7 @@ export class PlansCardioController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param() params: PlanTemplateIdParamDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
-    await this.deleteTemplateUseCase.execute(auth, params.templateId);
+    await this.deleteUseCase.execute(auth, params.templateId);
   }
 }
 

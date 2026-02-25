@@ -85,8 +85,3 @@ main().catch((error) => {
   console.error('Manual migration 0015 failed', error);
   process.exit(1);
 });
-
-main().catch((error) => {
-  console.error('Manual migration 0015 failed', error);
-  process.exit(1);
-});

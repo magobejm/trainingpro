@@ -10,6 +10,7 @@ export class UpdateClientDto {
     lastName: z.string().trim().min(1).max(80).optional(),
     notes: z.string().max(2000).nullable().optional(),
     objectiveId: z.string().uuid().nullable().optional(),
+    trainingPlanId: z.string().uuid().nullable().optional(),
     phone: z.string().max(30).nullable().optional(),
     sex: z.string().max(30).nullable().optional(),
     weightKg: z.number().min(20).max(400).nullable().optional(),
@@ -23,6 +24,7 @@ export class UpdateClientDto {
   lastName?: string;
   notes?: null | string;
   objectiveId?: null | string;
+  trainingPlanId?: string | null;
   phone?: null | string;
   sex?: null | string;
   weightKg?: number | null;

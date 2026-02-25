@@ -10,6 +10,7 @@ import {
   Post,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PlanOwnershipGuard } from '../guards/plan-ownership.guard';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
@@ -20,6 +21,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { CreateRoutineTemplateUseCase } from '../../application/use-cases/create-routine-template.usecase';
 import { DeleteRoutineTemplateUseCase } from '../../application/use-cases/delete-routine-template.usecase';
 import { ListRoutineTemplatesUseCase } from '../../application/use-cases/list-routine-templates.usecase';
+import { GetRoutineTemplateUseCase } from '../../application/use-cases/get-routine-template.usecase';
 import { UpdateRoutineTemplateUseCase } from '../../application/use-cases/update-routine-template.usecase';
 import { PlanTemplateIdParamDto } from '../dto/plan-template-id-param.dto';
 import { UpsertRoutineTemplateDto } from '../dto/upsert-routine-template.dto';
@@ -31,6 +33,7 @@ export class PlansRoutineController {
   constructor(
     private readonly createUseCase: CreateRoutineTemplateUseCase,
     private readonly listUseCase: ListRoutineTemplatesUseCase,
+    private readonly getUseCase: GetRoutineTemplateUseCase,
     private readonly updateUseCase: UpdateRoutineTemplateUseCase,
     private readonly deleteUseCase: DeleteRoutineTemplateUseCase,
   ) {}
@@ -44,10 +47,17 @@ export class PlansRoutineController {
   }
 
   @Get()
-  async list(@Req() request: HttpAuthRequest) {
+  async list(@Req() request: HttpAuthRequest, @Query('summary') summary?: string) {
     const auth = readAuthContext(request);
-    const items = await this.listUseCase.execute(auth);
+    const items = await this.listUseCase.execute(auth, { summary: summary === 'true' });
     return { items: items.map(mapOutput) };
+  }
+
+  @Get(':templateId')
+  async getOne(@Param() params: PlanTemplateIdParamDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const item = await this.getUseCase.execute(auth, params.templateId);
+    return mapOutput(item);
   }
 
   @Patch(':templateId')

@@ -168,6 +168,7 @@ model Client {
   firstName         String             @map("first_name") @db.VarChar(80)
   lastName          String             @map("last_name") @db.VarChar(80)
   objectiveId       String             @map("objective_id") @db.Uuid
+  trainingPlanId    String?            @map("training_plan_id") @db.Uuid
   notes             String?
   phone             String?            @db.VarChar(30)
   sex               String?            @db.VarChar(30)
@@ -183,15 +184,17 @@ model Client {
   organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   coachMembership   OrganizationMember @relation("coach_managed_clients", fields: [coachMembershipId], references: [id], onDelete: Restrict)
   objectiveRef      ClientObjective    @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
+  trainingPlan      PlanTemplate?      @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
   sessions          SessionInstance[]
   incidents         Incident[]
   weeklyReports     WeeklyReport[]
-  chatThreads       ChatThread[]      @relation("client_chat_threads")
+  chatThreads       ChatThread[]       @relation("client_chat_threads")
   notificationEventLogs NotificationEventLog[]
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")
   @@index([objectiveId], map: "idx_client_objective")
+  @@index([trainingPlanId], map: "idx_client_training_plan")
   @@index([email], map: "idx_client_email")
   @@map("client")
 }
@@ -411,6 +414,7 @@ model PlanTemplate {
   coachMembership   OrganizationMember? @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   days              PlanDay[]
   sessions          SessionInstance[]
+  assignedClients   Client[]
 
   @@index([scope, archivedAt], map: "idx_plan_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")

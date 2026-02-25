@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { ScrollView, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import { SuccessBanner } from './SuccessBanner';
@@ -9,6 +9,7 @@ import { DayList } from './DayList';
 import { SaveButton } from './SaveButton';
 import { RoutineList } from './RoutineList';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { ExercisePickerModal } from './ExercisePickerModal';
 import { mapTemplateToDraft } from '../../RoutinePlanner.helpers';
 import type { DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
@@ -24,6 +25,8 @@ interface LayoutProps {
     setDeletingId: (id: string | null) => void;
     addIdx: number | null;
     setAddIdx: (i: number | null) => void;
+    pickerType: BlockType | null;
+    setPickerType: (t: BlockType | null) => void;
   };
   draftState: {
     draft: DraftState;
@@ -33,7 +36,7 @@ interface LayoutProps {
     addDay: () => void;
     removeDay: (dayIdx: number) => void;
     renameDay: (dayIdx: number, title: string) => void;
-    onAddBlock: (dayIdx: number, type: BlockType) => void;
+    onAddBlock: (dayIdx: number, type: BlockType, libraryId: string, name: string) => void;
     onUpdateBlockField: (
       dayIdx: number,
       blockId: string,
@@ -51,6 +54,8 @@ interface LayoutProps {
     mutate: (id: string, opts?: { onSettled?: () => void }) => void;
   };
 }
+
+type OpenPickerFn = (dayIdx: number, type: BlockType) => void;
 
 function RoutineTopSection(props: {
   t: (k: string) => string;
@@ -70,8 +75,20 @@ function RoutineTopSection(props: {
   );
 }
 
-function RoutineMainSection(props: LayoutProps) {
-  const { t, draftState, uiState } = props;
+function buildDraftHandlers(draftState: LayoutProps['draftState'], onOpenPicker: OpenPickerFn) {
+  return {
+    onOpenPicker,
+    onMoveBlock: draftState.onMoveBlock,
+    onMoveBlockToDay: draftState.onMoveBlockToDay,
+    onRemoveBlock: draftState.onRemoveBlock,
+    onUpdateBlockField: draftState.onUpdateBlockField,
+    removeDay: draftState.removeDay,
+    renameDay: draftState.renameDay,
+  };
+}
+
+function RoutineMainSection(props: LayoutProps & { onOpenPicker: OpenPickerFn }) {
+  const { t, draftState, uiState, onOpenPicker } = props;
   const isReadOnly = draftState.draft.scope === 'GLOBAL';
   return (
     <>
@@ -87,7 +104,7 @@ function RoutineMainSection(props: LayoutProps) {
         activeDayIdx={draftState.activeDayIdx}
         addIdx={uiState.addIdx}
         days={draftState.draft.days}
-        draftState={draftState}
+        draftState={buildDraftHandlers(draftState, onOpenPicker)}
         isReadOnly={isReadOnly}
         setAddIdx={uiState.setAddIdx}
       />
@@ -121,18 +138,42 @@ function RoutineFooterSection(props: LayoutProps) {
   );
 }
 
+function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutProps['draftState']) {
+  const pendingDayIdxRef = useRef<number>(0);
+
+  function onOpenPicker(dayIdx: number, type: BlockType) {
+    pendingDayIdxRef.current = dayIdx;
+    uiState.setPickerType(type);
+  }
+
+  function onPickerSelect(libraryId: string, displayName: string) {
+    draftState.onAddBlock(pendingDayIdxRef.current, uiState.pickerType!, libraryId, displayName);
+    uiState.setPickerType(null);
+  }
+
+  return { onOpenPicker, onPickerSelect };
+}
+
 export function RoutinePlannerLayout(props: LayoutProps) {
+  const { uiState, draftState, t } = props;
+  const { onOpenPicker, onPickerSelect } = usePickerHandlers(uiState, draftState);
   return (
     <ScrollView contentContainerStyle={s.page}>
       <RoutineTopSection
-        isReadOnly={props.draftState.draft.scope === 'GLOBAL'}
-        name={props.draftState.draft.name}
-        saveSuccess={props.uiState.saveSuccess}
-        setDraft={props.draftState.setDraft}
-        t={props.t}
+        isReadOnly={draftState.draft.scope === 'GLOBAL'}
+        name={draftState.draft.name}
+        saveSuccess={uiState.saveSuccess}
+        setDraft={draftState.setDraft}
+        t={t}
       />
-      <RoutineMainSection {...props} />
+      <RoutineMainSection {...props} onOpenPicker={onOpenPicker} />
       <RoutineFooterSection {...props} />
+      <ExercisePickerModal
+        blockType={uiState.pickerType}
+        onCancel={() => uiState.setPickerType(null)}
+        onSelect={onPickerSelect}
+        t={t}
+      />
     </ScrollView>
   );
 }

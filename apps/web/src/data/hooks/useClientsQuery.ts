@@ -20,6 +20,8 @@ export type ClientView = {
   sex: null | string;
   updatedAt: string;
   weightKg: null | number;
+  trainingPlanId: string | null;
+  trainingPlan?: { id: string; name: string };
   objectiveOptions?: ClientObjectiveView[];
 };
 

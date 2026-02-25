@@ -33,22 +33,24 @@ export type UpsertTemplateInput = {
 };
 
 export type PlanTemplateView = {
+  coachMembershipId: null | string;
+  days: TemplateDayInput[];
   id: string;
   name: string;
+  scope: 'COACH' | 'GLOBAL';
   templateVersion: number;
-  days: TemplateDayInput[];
 };
 
 type ListTemplatesResponse = {
   items: PlanTemplateView[];
 };
 
-export function usePlanTemplatesQuery() {
+export function usePlanTemplatesQuery(options?: { summary?: boolean }) {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => listTemplates(auth),
-    queryKey: ['plan-templates', auth?.accessToken, auth?.activeRole],
+    queryFn: () => listTemplates(auth, options),
+    queryKey: ['plan-templates', auth?.accessToken, auth?.activeRole, options?.summary],
   });
 }
 
@@ -101,11 +103,17 @@ async function createTemplate(auth: ReturnType<typeof useAuth>, input: UpsertTem
   return createApiClient(auth).post<PlanTemplateView>('/plans/templates/strength', input);
 }
 
-async function listTemplates(auth: ReturnType<typeof useAuth>): Promise<PlanTemplateView[]> {
+async function listTemplates(
+  auth: ReturnType<typeof useAuth>,
+  options?: { summary?: boolean },
+): Promise<PlanTemplateView[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const response = await createApiClient(auth).get<ListTemplatesResponse>('/plans/templates/strength');
+  const response = await createApiClient(auth).get<ListTemplatesResponse>(
+    '/plans/templates/strength',
+    options?.summary ? { summary: 'true' } : undefined,
+  );
   return response.items;
 }
 

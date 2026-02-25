@@ -6,7 +6,7 @@ import { PLANS_REPOSITORY, type PlansRepositoryPort } from '../../domain/plans-r
 export class ListRoutineTemplatesUseCase {
   constructor(@Inject(PLANS_REPOSITORY) private readonly repository: PlansRepositoryPort) {}
 
-  execute(context: AuthContext) {
-    return this.repository.listRoutineTemplates(context);
+  execute(context: AuthContext, options?: { summary?: boolean }) {
+    return this.repository.listRoutineTemplates(context, options);
   }
 }

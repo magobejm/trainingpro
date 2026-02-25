@@ -11,6 +11,7 @@ type RequestOptions = {
   headers?: Record<string, string>;
   method: 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
   path: string;
+  params?: Record<string, string>;
 };
 
 export class ApiClientError extends Error {
@@ -22,8 +23,8 @@ export class ApiClientError extends Error {
   }
 }
 
-export class UnauthorizedApiError extends ApiClientError { }
-export class ForbiddenApiError extends ApiClientError { }
+export class UnauthorizedApiError extends ApiClientError {}
+export class ForbiddenApiError extends ApiClientError {}
 
 export const UNAUTHORIZED_EVENT = 'trainerpro:unauthorized';
 
@@ -32,13 +33,17 @@ export function createApiClient(config: ApiClientOptions) {
   const send = <T>(request: RequestOptions): Promise<T> =>
     executeRequest<T>(baseUrl, config, request);
   return {
-    delete: <T>(path: string, headers?: Record<string, string>): Promise<T> => send<T>({
-      headers,
-      method: 'DELETE',
-      path,
-    }),
-    get: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
-      send<T>({ headers, method: 'GET', path }),
+    delete: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
+      send<T>({
+        headers,
+        method: 'DELETE',
+        path,
+      }),
+    get: <T>(
+      path: string,
+      params?: Record<string, string>,
+      headers?: Record<string, string>,
+    ): Promise<T> => send<T>({ headers, method: 'GET', path, params }),
     patch: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
       send<T>({ body, headers, method: 'PATCH', path }),
     post: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
@@ -54,7 +59,8 @@ async function executeRequest<T>(
   request: RequestOptions,
 ): Promise<T> {
   const headers = buildHeaders(config, request.body, request.headers);
-  const response = await fetch(`${baseUrl}${request.path}`, {
+  const url = buildUrl(baseUrl, request.path, request.params);
+  const response = await fetch(url, {
     body: serializeBody(request.body),
     headers,
     method: request.method,
@@ -166,4 +172,14 @@ function serializeBody(body?: unknown): BodyInit | undefined {
   if (body === undefined) return undefined;
   if (body instanceof FormData) return body;
   return JSON.stringify(body);
+}
+
+function buildUrl(baseUrl: string, path: string, params?: Record<string, string>): string {
+  const url = new URL(`${baseUrl}${path}`);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
+    });
+  }
+  return url.toString();
 }

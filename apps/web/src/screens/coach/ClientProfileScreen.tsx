@@ -13,6 +13,9 @@ import { useClientByIdQuery, useClientObjectivesQuery } from '../../data/hooks/u
 import { ClientProfileDetailsList } from './components/ClientProfileDetailsList';
 import { ClientProfileKpiCards } from './components/ClientProfileKpiCards';
 import { EditClientProfileModal } from './components/EditClientProfileModal';
+import { ClientProfileTrainingPlan } from './components/ClientProfileTrainingPlan';
+import { PlanSelectionModal } from './components/PlanSelectionModal';
+import { useRoutineTemplatesQuery } from '../../data/hooks/useRoutineTemplates';
 import { ClientProfileSummary } from './components/ClientProfileSummary';
 import { pickImageFile } from './client-profile.avatar';
 import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-profile.form';
@@ -33,6 +36,7 @@ function useClientProfileModel(clientId: string, onArchived?: () => void) {
   const { t } = useTranslation();
   const query = useClientByIdQuery(clientId);
   const objectivesQuery = useClientObjectivesQuery();
+  const routineTemplatesQuery = useRoutineTemplatesQuery();
   const mutations = useProfileMutations(clientId);
   const state = useProfileState();
   useSyncFormFromQuery(query.data, state.setForm, state.setErrors);
@@ -42,6 +46,7 @@ function useClientProfileModel(clientId: string, onArchived?: () => void) {
     onArchived,
     query,
     objectives: objectivesQuery.data ?? [],
+    routineTemplates: routineTemplatesQuery.data ?? [],
     t,
   });
 }
@@ -60,15 +65,22 @@ function useProfileState() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [editing, setEditing] = useState(false);
   const [resetPassword, setResetPassword] = useState<null | string>(null);
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
+  const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
+
   return {
     editing,
     errors,
     form,
     resetPassword,
+    selectedObjectiveId,
+    isPlanModalVisible,
     setEditing,
     setErrors,
     setForm,
     setResetPassword,
+    setSelectedObjectiveId,
+    setIsPlanModalVisible,
   };
 }
 
@@ -86,7 +98,7 @@ function useSyncFormFromQuery(
   }, [queryData, setErrors, setForm]);
 }
 
-function buildViewModel(input: {
+interface ViewModelInput {
   archiveMutation: ReturnType<typeof useArchiveClientMutation>;
   editing: boolean;
   errors: FormErrors;
@@ -94,6 +106,7 @@ function buildViewModel(input: {
   onArchived?: () => void;
   query: ReturnType<typeof useClientByIdQuery>;
   objectives: Array<{ id: string; label: string }>;
+  routineTemplates: Array<{ id: string; name: string }>;
   resetPassword: null | string;
   resetPasswordMutation: ReturnType<typeof useResetClientPasswordMutation>;
   setResetPassword: React.Dispatch<React.SetStateAction<null | string>>;
@@ -103,14 +116,26 @@ function buildViewModel(input: {
   t: ReturnType<typeof useTranslation>['t'];
   updateMutation: ReturnType<typeof useUpdateClientMutation>;
   uploadAvatarMutation: ReturnType<typeof useUploadClientAvatarMutation>;
-}) {
+  isPlanModalVisible: boolean;
+  setIsPlanModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function buildViewModel(input: ViewModelInput) {
   const objectiveOptions = readObjectiveOptions(input.query.data, input.objectives);
+  const client = input.query.data;
+  const { updateMutation, setIsPlanModalVisible } = input;
+
   return {
     ...input,
     objectiveOptions,
-    isSaving: input.updateMutation.isPending,
-    saveError: input.updateMutation.isError,
-    saveSuccess: input.updateMutation.isSuccess,
+    isSaving: updateMutation.isPending,
+    saveError: updateMutation.isError,
+    saveSuccess: updateMutation.isSuccess,
+    trainingPlan: client?.trainingPlan ?? undefined,
+    onOpenEdit: () => input.setEditing(true),
+    onAssignPlan: () => setIsPlanModalVisible(true),
+    onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
+    onSelectPlan: (pid: string) => void updateMutation.mutateAsync({ trainingPlanId: pid }),
   };
 }
 
@@ -144,9 +169,21 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
   return (
     <View style={styles.page}>
       <SummarySection vm={props.vm} />
+      <ClientProfileTrainingPlan
+        t={props.vm.t}
+        trainingPlan={props.vm.trainingPlan}
+        onAssign={props.vm.onAssignPlan}
+        onUnassign={props.vm.onUnassignPlan}
+      />
       <ClientProfileDetailsList t={props.vm.t} />
       <ClientProfileKpiCards t={props.vm.t} />
       <ProfileEditModal vm={props.vm} />
+      <PlanSelectionModal
+        visible={props.vm.isPlanModalVisible}
+        t={props.vm.t}
+        onClose={() => props.vm.setIsPlanModalVisible(false)}
+        onSelect={props.vm.onSelectPlan}
+      />
     </View>
   );
 }

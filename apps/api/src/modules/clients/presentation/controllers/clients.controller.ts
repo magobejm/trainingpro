@@ -140,11 +140,7 @@ function mapUpdateDto(body: UpdateClientDto) {
   return {
     ...body,
     birthDate:
-      body.birthDate === undefined
-        ? undefined
-        : body.birthDate
-          ? new Date(body.birthDate)
-          : null,
+      body.birthDate === undefined ? undefined : body.birthDate ? new Date(body.birthDate) : null,
   };
 }
 
@@ -158,9 +154,9 @@ function mapCreateDto(body: CreateClientDto) {
 function mapClientOutput(client: Client) {
   return {
     avatarUrl: client.avatarUrl ?? resolveDefaultAvatarUrl(client.id),
-    birthDate: client.birthDate ? client.birthDate.toISOString().slice(0, 10) : null,
+    birthDate: formatDate(client.birthDate),
     coachMembershipId: client.coachMembershipId,
-    createdAt: client.createdAt.toISOString(),
+    createdAt: formatIso(client.createdAt),
     email: client.email,
     firstName: client.firstName,
     heightCm: client.heightCm,
@@ -172,9 +168,21 @@ function mapClientOutput(client: Client) {
     organizationId: client.organizationId,
     phone: client.phone,
     sex: client.sex,
-    updatedAt: client.updatedAt.toISOString(),
+    updatedAt: formatIso(client.updatedAt),
     weightKg: client.weightKg,
+    trainingPlanId: client.trainingPlanId,
+    trainingPlan: client.trainingPlan,
   };
+}
+
+function formatDate(date: Date | null): string | null {
+  if (!date) return null;
+  if (!(date instanceof Date) || isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10);
+}
+
+function formatIso(date: Date | string): string {
+  return (date instanceof Date ? date : new Date(date)).toISOString();
 }
 
 function resolveDefaultAvatarUrl(clientId: string): string {

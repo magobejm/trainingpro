@@ -3,10 +3,10 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PLANS_REPOSITORY, type PlansRepositoryPort } from '../../domain/plans-repository.port';
 
 @Injectable()
-export class ListCardioTemplatesUseCase {
+export class GetCardioTemplateUseCase {
   constructor(@Inject(PLANS_REPOSITORY) private readonly repository: PlansRepositoryPort) {}
 
-  execute(context: AuthContext, options?: { summary?: boolean }) {
-    return this.repository.listCardioTemplates(context, options);
+  execute(context: AuthContext, templateId: string) {
+    return this.repository.getCardioTemplateById(context, templateId);
   }
 }

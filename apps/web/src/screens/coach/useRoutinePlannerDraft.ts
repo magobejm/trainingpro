@@ -10,7 +10,7 @@ export function useRoutinePlannerDraft(t: (k: string) => string) {
   const [activeDayIdx, setActiveDayIdx] = useState(0);
 
   const dayMgmt = useDayManagement(setDraft, setActiveDayIdx, t);
-  const blockMgmt = useBlockManagement(setDraft, t);
+  const blockMgmt = useBlockManagement(setDraft);
   const blockMove = useBlockMovement(setDraft, setActiveDayIdx);
 
   return {

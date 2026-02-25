@@ -1,19 +1,23 @@
 import { useState } from 'react';
+import type { BlockType } from './RoutinePlanner.types';
 
 export function useRoutinePlannerUIState() {
   const [editingId, setEditingId] = useState<null | string>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [deletingId, setDeletingId] = useState<null | string>(null);
   const [addIdx, setAddIdx] = useState<null | number>(null);
+  const [pickerType, setPickerType] = useState<BlockType | null>(null);
 
   return {
-    editingId,
-    setEditingId,
-    saveSuccess,
-    setSaveSuccess,
-    deletingId,
-    setDeletingId,
     addIdx,
+    deletingId,
+    editingId,
+    pickerType,
+    saveSuccess,
     setAddIdx,
+    setDeletingId,
+    setEditingId,
+    setPickerType,
+    setSaveSuccess,
   };
 }

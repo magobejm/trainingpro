@@ -11,4 +11,5 @@ export type ClientCreateInput = {
   phone?: null | string;
   sex?: null | string;
   weightKg?: number | null;
+  trainingPlanId?: string | null;
 };

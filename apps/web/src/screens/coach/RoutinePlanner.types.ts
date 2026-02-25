@@ -15,8 +15,10 @@ export interface DraftBlock {
   setsPlanned?: number;
   repsPlanned?: number;
   targetRir?: number;
-  // Add meta for Plan 72
+  // Add meta for Plan 72–73
   isGlobal?: boolean;
+  /** ID of the library item this block references (exercise, cardio method, plio, warmup, sport) */
+  libraryId?: string;
 }
 
 export interface DraftDay {

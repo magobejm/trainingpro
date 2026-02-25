@@ -10,6 +10,7 @@ import {
   Post,
   Req,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { PlanOwnershipGuard } from '../guards/plan-ownership.guard';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
@@ -17,6 +18,7 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { GetTemplateUseCase } from '../../application/use-cases/get-template.usecase';
 import { CreateTemplateUseCase } from '../../application/use-cases/create-template.usecase';
 import { ListTemplatesUseCase } from '../../application/use-cases/list-templates.usecase';
 import { UpdateTemplateUseCase } from '../../application/use-cases/update-template.usecase';
@@ -31,9 +33,10 @@ export class PlansController {
   constructor(
     private readonly createTemplateUseCase: CreateTemplateUseCase,
     private readonly listTemplatesUseCase: ListTemplatesUseCase,
+    private readonly getTemplateUseCase: GetTemplateUseCase,
     private readonly updateTemplateUseCase: UpdateTemplateUseCase,
     private readonly deleteTemplateUseCase: DeleteTemplateUseCase,
-  ) { }
+  ) {}
 
   @Post()
   async create(@Body() body: UpsertPlanTemplateDto, @Req() request: HttpAuthRequest) {
@@ -43,10 +46,17 @@ export class PlansController {
   }
 
   @Get()
-  async list(@Req() request: HttpAuthRequest) {
+  async list(@Req() request: HttpAuthRequest, @Query('summary') summary?: string) {
     const auth = readAuthContext(request);
-    const items = await this.listTemplatesUseCase.execute(auth);
+    const items = await this.listTemplatesUseCase.execute(auth, { summary: summary === 'true' });
     return { items: items.map(mapTemplateOutput) };
+  }
+
+  @Get(':templateId')
+  async getOne(@Param() params: PlanTemplateIdParamDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const item = await this.getTemplateUseCase.execute(auth, params.templateId);
+    return mapTemplateOutput(item);
   }
 
   @Patch(':templateId')

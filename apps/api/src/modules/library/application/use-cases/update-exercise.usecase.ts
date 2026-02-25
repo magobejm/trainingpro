@@ -8,11 +8,9 @@ import {
 
 @Injectable()
 export class UpdateExerciseUseCase {
-  constructor(
-    @Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort,
-  ) {}
+  constructor(@Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort) {}
 
-  execute(context: AuthContext, itemId: string, input: ExerciseWriteInput) {
+  execute(context: AuthContext, itemId: string, input: Partial<ExerciseWriteInput>) {
     return this.repository.updateExercise(context, itemId, input);
   }
 }

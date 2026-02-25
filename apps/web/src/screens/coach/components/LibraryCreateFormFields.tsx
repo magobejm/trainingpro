@@ -72,6 +72,32 @@ const FOOD_FIELDS: FieldConfig[] = [
   { field: 'mediaType', placeholderKey: 'coach.library.foods.mediaTypePlaceholder' },
 ];
 
+const PLIO_WARMUP_FIELDS: FieldConfig[] = [
+  { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
+  {
+    field: 'description',
+    multiline: true,
+    numberOfLines: 2,
+    placeholderKey: 'coach.library.exercises.instructionsPlaceholder',
+  },
+  {
+    field: 'notes',
+    multiline: true,
+    numberOfLines: 2,
+    placeholderKey: 'coach.library.foods.notesPlaceholder',
+  },
+];
+
+const SPORT_FIELDS: FieldConfig[] = [
+  { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
+  {
+    field: 'description',
+    multiline: true,
+    numberOfLines: 2,
+    placeholderKey: 'coach.library.exercises.instructionsPlaceholder',
+  },
+];
+
 type BaseProps = {
   form: Record<string, string>;
   setField: StringSetter;
@@ -98,6 +124,14 @@ export function CardioBaseFields(props: BaseProps & CatalogProps): React.JSX.Ele
 
 export function FoodCreateFields(props: BaseProps): React.JSX.Element {
   return <FormFields {...props} fields={FOOD_FIELDS} options={{}} />;
+}
+
+export function PlioWarmupBaseFields(props: BaseProps): React.JSX.Element {
+  return <FormFields {...props} fields={PLIO_WARMUP_FIELDS} options={{}} />;
+}
+
+export function SportBaseFields(props: BaseProps): React.JSX.Element {
+  return <FormFields {...props} fields={SPORT_FIELDS} options={{}} />;
 }
 
 function FormFields(props: FieldsProps): React.JSX.Element {

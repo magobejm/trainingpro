@@ -3,6 +3,8 @@ import { LibraryItemScope, Prisma } from '@prisma/client';
 import type { CardioMethodFilter } from '../../domain/cardio-method.input';
 import type { ExerciseFilter } from '../../domain/exercise.input';
 import type { FoodFilter } from '../../domain/food.input';
+import type { PlioExerciseFilter } from '../../domain/plio-exercise.input';
+import type { WarmupExerciseFilter } from '../../domain/warmup-exercise.input';
 
 export function buildCardioMethodWhere(coachMembershipId: string, filter: CardioMethodFilter) {
   return {
@@ -30,6 +32,27 @@ export function buildFoodWhere(coachMembershipId: string, filter: FoodFilter) {
   } satisfies Prisma.FoodWhereInput;
 }
 
+export function buildPlioWhere(coachMembershipId: string, filter: PlioExerciseFilter) {
+  return {
+    ...buildLibraryScopeWhere(coachMembershipId),
+    name: containsFilter(filter.query),
+  } satisfies Prisma.PlioExerciseWhereInput;
+}
+
+export function buildWarmupWhere(coachMembershipId: string, filter: WarmupExerciseFilter) {
+  return {
+    ...buildLibraryScopeWhere(coachMembershipId),
+    name: containsFilter(filter.query),
+  } satisfies Prisma.WarmupExerciseWhereInput;
+}
+
+export function buildSportWhere(coachMembershipId: string, query?: string) {
+  return {
+    ...buildLibraryScopeWhere(coachMembershipId),
+    name: containsFilter(query),
+  } satisfies Prisma.SportWhereInput;
+}
+
 export function toDomainScope(scope: LibraryItemScope): 'coach' | 'global' {
   return scope === LibraryItemScope.COACH ? 'coach' : 'global';
 }
@@ -46,10 +69,7 @@ export async function assertCatalogExists(
 
 function buildLibraryScopeWhere(coachMembershipId: string) {
   return {
-    OR: [
-      { scope: LibraryItemScope.GLOBAL },
-      { coachMembershipId, scope: LibraryItemScope.COACH },
-    ],
+    OR: [{ scope: LibraryItemScope.GLOBAL }, { coachMembershipId, scope: LibraryItemScope.COACH }],
     archivedAt: null,
   };
 }

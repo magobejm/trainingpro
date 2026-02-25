@@ -1,15 +1,13 @@
-const { PrismaClient } = require('@prisma/client');
+import { PrismaClient } from '@prisma/client';
 
-async function main() {
-  const prisma = new PrismaClient();
-  try {
-    await prisma.$executeRawUnsafe(`
+async function updateSchema(prisma) {
+  await prisma.$executeRawUnsafe(`
       ALTER TABLE "food"
       ADD COLUMN IF NOT EXISTS "food_type" VARCHAR(40),
       ADD COLUMN IF NOT EXISTS "food_category" VARCHAR(80);
     `);
 
-    await prisma.$executeRawUnsafe(`
+  await prisma.$executeRawUnsafe(`
       UPDATE "food"
       SET "serving_unit" = CASE
         WHEN "serving_unit" IS NULL THEN NULL
@@ -19,8 +17,10 @@ async function main() {
         ELSE NULL
       END;
     `);
+}
 
-    await prisma.$executeRawUnsafe(`
+async function addConstraint(prisma) {
+  await prisma.$executeRawUnsafe(`
       DO $$
       BEGIN
         IF NOT EXISTS (
@@ -37,7 +37,13 @@ async function main() {
         END IF;
       END $$;
     `);
+}
 
+async function main() {
+  const prisma = new PrismaClient();
+  try {
+    await updateSchema(prisma);
+    await addConstraint(prisma);
     console.log('Manual migration 0014 applied');
   } finally {
     await prisma.$disconnect();

@@ -5,8 +5,8 @@ import {
   useCreateCardioMethodMutation,
   useDeleteCardioMethodMutation,
   useUpdateCardioMethodMutation,
-  useUploadLibraryImageMutation,
 } from '../../data/hooks/useLibraryMutations';
+import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
 import {
   useLibraryCardioMethodsQuery,
   useLibraryCardioMethodTypesQuery,
@@ -14,17 +14,9 @@ import {
 } from '../../data/hooks/useLibraryQuery';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCardioMethodsView } from './components/LibraryCardioMethodsView';
-import {
-  EMPTY_CARDIO_FORM,
-  toCardioForm,
-  type CardioCreateFormState,
-} from './library-cardio.edit';
+import { EMPTY_CARDIO_FORM, toCardioForm, type CardioCreateFormState } from './library-cardio.edit';
 import { buildCardioChips, findDefaultCardioTypeId } from './library-cardio.helpers';
-import {
-  confirmCardioDelete,
-  createCardio,
-  saveCardioEdit,
-} from './library-cardio.operations';
+import { confirmCardioDelete, createCardio, saveCardioEdit } from './library-cardio.operations';
 import { createFieldSetter } from './libraryCreateForm.utils';
 import { uploadLibraryMediaImage } from './library-media.upload';
 

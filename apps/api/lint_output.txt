@@ -1,0 +1,27 @@
+
+C:\personal\trainingpro\apps\api\src\modules\library\infra\prisma\library-food.repository.ts
+  47:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  58:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+
+C:\personal\trainingpro\apps\api\src\modules\library\infra\prisma\library-specialized.repository.ts
+  107:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  122:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  133:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  144:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  154:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+  164:1  error  This line has a length of 101. Maximum allowed is 100  max-len
+
+C:\personal\trainingpro\apps\api\src\modules\library\infra\prisma\library.mappers.ts
+  115:1  error  This line has a length of 116. Maximum allowed is 100  max-len
+  116:1  error  This line has a length of 117. Maximum allowed is 100  max-len
+  128:1  error  This line has a length of 104. Maximum allowed is 100  max-len
+  129:1  error  This line has a length of 105. Maximum allowed is 100  max-len
+  155:1  error  This line has a length of 114. Maximum allowed is 100  max-len
+  160:1  error  This line has a length of 116. Maximum allowed is 100  max-len
+  161:1  error  This line has a length of 117. Maximum allowed is 100  max-len
+  172:1  error  This line has a length of 104. Maximum allowed is 100  max-len
+  173:1  error  This line has a length of 122. Maximum allowed is 100  max-len
+  174:1  error  This line has a length of 123. Maximum allowed is 100  max-len
+
+Ô£û 18 problems (18 errors, 0 warnings)
+

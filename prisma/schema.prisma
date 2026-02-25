@@ -22,6 +22,7 @@ enum LibraryItemScope {
 enum TemplateKind {
   STRENGTH
   CARDIO
+  ROUTINE
 }
 
 enum FieldMode {
@@ -87,6 +88,9 @@ model Organization {
   exercises    Exercise[]
   cardioMethods CardioMethod[]
   foods        Food[]
+  plioExercises PlioExercise[]
+  warmupExercises WarmupExercise[]
+  sports          Sport[]
   planTemplates PlanTemplate[]
   sessions     SessionInstance[]
   incidents    Incident[]
@@ -125,6 +129,9 @@ model OrganizationMember {
   exercises      Exercise[]   @relation("coach_exercises")
   cardioMethods  CardioMethod[] @relation("coach_cardio_methods")
   foods          Food[]       @relation("coach_foods")
+  plioExercises  PlioExercise[] @relation("coach_plio_exercises")
+  warmupExercises WarmupExercise[] @relation("coach_warmup_exercises")
+  sports          Sport[]       @relation("coach_sports")
   planTemplates  PlanTemplate[] @relation("coach_plan_templates")
   sessions       SessionInstance[]
   incidents      Incident[]
@@ -318,23 +325,94 @@ model Food {
   @@map("food")
 }
 
+model PlioExercise {
+  id                String              @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope    @default(GLOBAL)
+  organizationId    String?             @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  name              String              @db.VarChar(120)
+  description       String?
+  notes             String?
+  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
+  mediaUrl          String?             @map("media_url") @db.VarChar(500)
+  mediaType         String?             @map("media_type") @db.VarChar(40)
+  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember? @relation("coach_plio_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  planPlioBlocks    PlanPlioBlock[]
+
+  @@index([scope, archivedAt], map: "idx_plio_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_plio_coach_archived")
+  @@map("plio_exercise")
+}
+
+model WarmupExercise {
+  id                String              @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope    @default(GLOBAL)
+  organizationId    String?             @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  name              String              @db.VarChar(120)
+  description       String?
+  notes             String?
+  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
+  mediaUrl          String?             @map("media_url") @db.VarChar(500)
+  mediaType         String?             @map("media_type") @db.VarChar(40)
+  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember? @relation("coach_warmup_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  planWarmupBlocks  PlanWarmupBlock[]
+
+  @@index([scope, archivedAt], map: "idx_warmup_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_warmup_coach_archived")
+  @@map("warmup_exercise")
+}
+
+model Sport {
+  id                String              @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope    @default(GLOBAL)
+  organizationId    String?             @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  name              String              @db.VarChar(120)
+  icon              String              @db.VarChar(10)
+  description       String?
+  mediaUrl          String?             @map("media_url") @db.VarChar(500)
+  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember? @relation("coach_sports", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  planSportBlocks   PlanSportBlock[]
+
+  @@index([scope, archivedAt], map: "idx_sport_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_sport_coach_archived")
+  @@map("sport")
+}
+
+
+
 model PlanTemplate {
-  id                String             @id @default(uuid()) @db.Uuid
-  organizationId    String             @map("organization_id") @db.Uuid
-  coachMembershipId String             @map("coach_membership_id") @db.Uuid
-  kind              TemplateKind       @default(STRENGTH)
-  name              String             @db.VarChar(120)
-  templateVersion   Int                @default(1) @map("template_version")
-  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
-  createdBy         String             @map("created_by") @db.Uuid
-  updatedBy         String             @map("updated_by") @db.Uuid
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  coachMembership   OrganizationMember @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: Restrict)
+  id                String              @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope    @default(COACH)
+  organizationId    String?             @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  kind              TemplateKind        @default(STRENGTH)
+  name              String              @db.VarChar(120)
+  templateVersion   Int                 @default(1) @map("template_version")
+  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdBy         String?             @map("created_by") @db.Uuid
+  updatedBy         String?             @map("updated_by") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember? @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   days              PlanDay[]
   sessions          SessionInstance[]
 
+  @@index([scope, archivedAt], map: "idx_plan_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
   @@map("plan_template")
@@ -351,6 +429,9 @@ model PlanDay {
   template       PlanTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
   exercises      PlanStrengthExercise[]
   cardioBlocks   PlanCardioBlock[]
+  plioBlocks     PlanPlioBlock[]
+  warmupBlocks   PlanWarmupBlock[]
+  sportBlocks    PlanSportBlock[]
 
   @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
   @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
@@ -433,6 +514,67 @@ model CardioFieldModeSetting {
   @@unique([planCardioBlockId, fieldKey], map: "uq_cardio_field_mode_item_field")
   @@index([planCardioBlockId], map: "idx_cardio_field_mode_item")
   @@map("cardio_field_mode")
+}
+
+model PlanPlioBlock {
+  id                    String         @id @default(uuid()) @db.Uuid
+  dayId                 String         @map("day_id") @db.Uuid
+  plioExerciseLibraryId String?        @map("plio_exercise_library_id") @db.Uuid
+  sortOrder             Int            @default(0) @map("sort_order")
+  displayName           String         @map("display_name") @db.VarChar(120)
+  roundsPlanned         Int            @default(1) @map("rounds_planned")
+  workSeconds           Int            @map("work_seconds")
+  restSeconds           Int            @default(0) @map("rest_seconds")
+  targetRpe             Int?           @map("target_rpe")
+  notes                 String?
+  archivedAt            DateTime?      @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                   PlanDay        @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryPlioExercise   PlioExercise?  @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
+
+  @@index([dayId, archivedAt], map: "idx_plan_plio_day_archived")
+  @@map("plan_plio_block")
+}
+
+model PlanWarmupBlock {
+  id                      String           @id @default(uuid()) @db.Uuid
+  dayId                   String           @map("day_id") @db.Uuid
+  warmupExerciseLibraryId String?          @map("warmup_exercise_library_id") @db.Uuid
+  sortOrder               Int              @default(0) @map("sort_order")
+  displayName             String           @map("display_name") @db.VarChar(120)
+  roundsPlanned           Int              @default(1) @map("rounds_planned")
+  workSeconds             Int              @map("work_seconds")
+  restSeconds             Int              @default(0) @map("rest_seconds")
+  targetRpe               Int?             @map("target_rpe")
+  notes                   String?
+  archivedAt              DateTime?        @map("archived_at") @db.Timestamptz(6)
+  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                     PlanDay          @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryWarmupExercise   WarmupExercise?  @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+
+  @@index([dayId, archivedAt], map: "idx_plan_warmup_day_archived")
+  @@map("plan_warmup_block")
+}
+
+model PlanSportBlock {
+  id              String    @id @default(uuid()) @db.Uuid
+  dayId           String    @map("day_id") @db.Uuid
+  sportLibraryId  String?   @map("sport_library_id") @db.Uuid
+  sortOrder       Int       @default(0) @map("sort_order")
+  displayName     String    @map("display_name") @db.VarChar(120)
+  durationMinutes Int       @map("duration_minutes")
+  targetRpe       Int?      @map("target_rpe")
+  notes           String?
+  archivedAt      DateTime? @map("archived_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day             PlanDay   @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  librarySport    Sport?    @relation(fields: [sportLibraryId], references: [id], onDelete: SetNull)
+
+  @@index([dayId, archivedAt], map: "idx_plan_sport_day_archived")
+  @@map("plan_sport_block")
 }
 
 model SessionInstance {

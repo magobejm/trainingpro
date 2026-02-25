@@ -40,6 +40,44 @@ export type CardioMethodLibraryItem = {
   youtubeUrl: null | string;
 };
 
+export type PlioExerciseLibraryItem = {
+  coachMembershipId: null | string;
+  createdAt: Date;
+  description: null | string;
+  id: string;
+  media: LibraryMedia;
+  name: string;
+  notes: null | string;
+  scope: Scope;
+  updatedAt: Date;
+  youtubeUrl: null | string;
+};
+
+export type WarmupExerciseLibraryItem = {
+  coachMembershipId: null | string;
+  createdAt: Date;
+  description: null | string;
+  id: string;
+  media: LibraryMedia;
+  name: string;
+  notes: null | string;
+  scope: Scope;
+  updatedAt: Date;
+  youtubeUrl: null | string;
+};
+
+export type SportLibraryItem = {
+  coachMembershipId: null | string;
+  createdAt: Date;
+  description: null | string;
+  icon: string;
+  id: string;
+  mediaUrl: null | string;
+  name: string;
+  scope: Scope;
+  updatedAt: Date;
+};
+
 export type FoodLibraryItem = {
   caloriesKcal: null | number;
   carbsG: null | number;
@@ -67,20 +105,23 @@ export function useLibraryExerciseMuscleGroupsQuery(): UseQueryResult<LibraryCat
   return useCatalogQuery('muscle-groups');
 }
 
-export function useLibraryCardioMethodsQuery(
-  filter: { methodTypeId?: string; query?: string },
-): UseQueryResult<CardioMethodLibraryItem[], Error> {
+export function useLibraryCardioMethodsQuery(filter: {
+  methodTypeId?: string;
+  query?: string;
+}): UseQueryResult<CardioMethodLibraryItem[], Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => fetchLibraryList<CardioMethodLibraryItem>(auth, '/library/cardio-methods', filter),
+    queryFn: () =>
+      fetchLibraryList<CardioMethodLibraryItem>(auth, '/library/cardio-methods', filter),
     queryKey: ['library', 'cardio-methods', filter, auth?.activeRole, auth?.accessToken],
   });
 }
 
-export function useLibraryExercisesQuery(
-  filter: { muscleGroupId?: string; query?: string },
-): UseQueryResult<ExerciseLibraryItem[], Error> {
+export function useLibraryExercisesQuery(filter: {
+  muscleGroupId?: string;
+  query?: string;
+}): UseQueryResult<ExerciseLibraryItem[], Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
@@ -89,14 +130,48 @@ export function useLibraryExercisesQuery(
   });
 }
 
-export function useLibraryFoodsQuery(
-  filter: { foodCategory?: string; foodType?: string; query?: string; servingUnit?: string },
-): UseQueryResult<FoodLibraryItem[], Error> {
+export function useLibraryFoodsQuery(filter: {
+  foodCategory?: string;
+  foodType?: string;
+  query?: string;
+  servingUnit?: string;
+}): UseQueryResult<FoodLibraryItem[], Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
     queryFn: () => fetchLibraryList<FoodLibraryItem>(auth, '/library/foods', filter),
     queryKey: ['library', 'foods', filter, auth?.activeRole, auth?.accessToken],
+  });
+}
+
+export function useLibraryPlioExercisesQuery(filter: {
+  query?: string;
+}): UseQueryResult<PlioExerciseLibraryItem[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchLibraryList<PlioExerciseLibraryItem>(auth, '/library/plyometrics', filter),
+    queryKey: ['library', 'plyometrics', filter, auth?.activeRole, auth?.accessToken],
+  });
+}
+
+export function useLibraryWarmupExercisesQuery(filter: {
+  query?: string;
+}): UseQueryResult<WarmupExerciseLibraryItem[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchLibraryList<WarmupExerciseLibraryItem>(auth, '/library/warmup', filter),
+    queryKey: ['library', 'warmup', filter, auth?.activeRole, auth?.accessToken],
+  });
+}
+
+export function useLibrarySportsQuery(): UseQueryResult<SportLibraryItem[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchLibraryList<SportLibraryItem>(auth, '/library/sports', {}),
+    queryKey: ['library', 'sports', auth?.activeRole, auth?.accessToken],
   });
 }
 

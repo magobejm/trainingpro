@@ -8,11 +8,9 @@ import {
 
 @Injectable()
 export class UpdateFoodUseCase {
-  constructor(
-    @Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort,
-  ) {}
+  constructor(@Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort) {}
 
-  execute(context: AuthContext, itemId: string, input: FoodWriteInput) {
+  execute(context: AuthContext, itemId: string, input: Partial<FoodWriteInput>) {
     return this.repository.updateFood(context, itemId, input);
   }
 }

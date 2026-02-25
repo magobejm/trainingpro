@@ -12,6 +12,7 @@ type CoachRoute =
   | 'coach.builder.cardio'
   | 'coach.builder.diet'
   | 'coach.builder.strength'
+  | 'coach.routine.planner'
   | 'coach.progress'
   | 'coach.evaluator'
   | 'coach.incidents'
@@ -33,9 +34,7 @@ export function usePersistentShellRoute(
   navItems: ShellNavItem[],
 ): [ShellRoute, (route: ShellRoute) => void] {
   const defaultRoute = useMemo(() => resolveDefaultRoute(activeRole), [activeRole]);
-  const [route, setRoute] = useState<ShellRoute>(
-    () => resolveInitialRoute(navItems, defaultRoute),
-  );
+  const [route, setRoute] = useState<ShellRoute>(() => resolveInitialRoute(navItems, defaultRoute));
   useEffect(() => {
     setRoute((previous) => ensureAllowedRoute(previous, navItems, defaultRoute));
   }, [defaultRoute, navItems]);
@@ -104,6 +103,7 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.builder.cardio' ||
     route === 'coach.builder.diet' ||
     route === 'coach.builder.strength' ||
+    route === 'coach.routine.planner' ||
     route === 'coach.progress' ||
     route === 'coach.evaluator' ||
     route === 'coach.incidents' ||

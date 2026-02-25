@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
 import '../../i18n';
-import { useCreateFoodMutation } from '../../data/hooks/useLibraryMutations';
+import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
 import { FoodLibraryRow } from './components/FoodLibraryRow';
 import { FoodCreateFields } from './components/LibraryCreateFormFields';
@@ -53,7 +53,8 @@ function useFoodsViewModel() {
     ...form,
     listQuery,
     ...buildFoodActions(state, form, t),
-    onToggleDetail: (itemId: string) => setExpandedId((current) => (current === itemId ? '' : itemId)),
+    onToggleDetail: (itemId: string) =>
+      setExpandedId((current) => (current === itemId ? '' : itemId)),
     t,
   };
 }
@@ -62,8 +63,10 @@ function useFoodState() {
   const [createError, setCreateError] = useState('');
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [query, setQuery] = useState('');
-  const [activeUnitFilter, setActiveUnitFilter] = useState<(typeof UNIT_FILTER_KEYS)[number]>('all');
-  const [activeTypeFilter, setActiveTypeFilter] = useState<(typeof TYPE_FILTER_KEYS)[number]>('all');
+  const [activeUnitFilter, setActiveUnitFilter] =
+    useState<(typeof UNIT_FILTER_KEYS)[number]>('all');
+  const [activeTypeFilter, setActiveTypeFilter] =
+    useState<(typeof TYPE_FILTER_KEYS)[number]>('all');
   const [activeCategoryFilter, setActiveCategoryFilter] =
     useState<(typeof CATEGORY_FILTER_KEYS)[number]>('all');
   return {
@@ -246,11 +249,7 @@ function buildFoodChips(t: (key: string) => string) {
   };
 }
 
-function mapFilterChips(
-  ids: readonly string[],
-  keyPrefix: string,
-  t: (key: string) => string,
-) {
+function mapFilterChips(ids: readonly string[], keyPrefix: string, t: (key: string) => string) {
   return ids.map((id) => ({ id, label: t(`${keyPrefix}.${id}`) }));
 }
 

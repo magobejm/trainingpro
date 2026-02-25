@@ -11,11 +11,17 @@ import type { PlanTemplate } from '../../domain/entities/plan-template.entity';
 import type { PlanCardioTemplateWriteInput } from '../../domain/plan-cardio.input';
 import type { PlanTemplateWriteInput } from '../../domain/plan-template.input';
 import type { PlansRepositoryPort } from '../../domain/plans-repository.port';
+import type { RoutineTemplateWriteInput } from '../../domain/routine-template.input';
 import {
   cardioTemplateInclude,
   mapCardioDayCreate,
   mapCardioTemplate,
 } from './plans-cardio.prisma.helpers';
+import {
+  mapRoutineDayCreate,
+  mapRoutineTemplate,
+  routineTemplateInclude,
+} from './plans-routine.prisma.helpers';
 import { mapDayCreate, mapTemplate, templateInclude } from './plans-strength.prisma.helpers';
 
 type CoachMembership = {
@@ -199,5 +205,81 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
       select: { id: true },
     });
     return !!template;
+  }
+
+  /* ── Routine templates ── */
+
+  async createRoutineTemplate(context: AuthContext, input: RoutineTemplateWriteInput) {
+    const membership = await this.resolveCoachMembership(context);
+    const row = await this.prisma.planTemplate.create({
+      data: {
+        ...buildCreateAuditFields(context),
+        coachMembershipId: membership.id,
+        days: { create: input.days.map(mapRoutineDayCreate) },
+        kind: TemplateKind.ROUTINE,
+        name: input.name.trim(),
+        organizationId: membership.organizationId,
+      },
+      include: routineTemplateInclude(),
+    });
+    return mapRoutineTemplate(row);
+  }
+
+  async listRoutineTemplates(context: AuthContext) {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.planTemplate.findMany({
+      include: routineTemplateInclude(),
+      orderBy: [{ kind: 'asc' }, { updatedAt: 'desc' }],
+      where: {
+        archivedAt: null,
+        kind: TemplateKind.ROUTINE,
+        OR: [{ coachMembershipId: membership.id }, { organizationId: null }],
+      },
+    });
+    return rows.map(mapRoutineTemplate);
+  }
+
+  async updateRoutineTemplate(
+    context: AuthContext,
+    templateId: string,
+    input: RoutineTemplateWriteInput,
+  ) {
+    const membership = await this.resolveCoachMembership(context);
+    return this.prisma.$transaction(async (tx) => {
+      const current = await tx.planTemplate.findFirst({
+        where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
+        select: { id: true, templateVersion: true },
+      });
+      if (!current) {
+        throw new NotFoundException('Routine template not found');
+      }
+      await tx.planDay.deleteMany({ where: { templateId: current.id } });
+      const row = await tx.planTemplate.update({
+        where: { id: current.id },
+        data: {
+          ...buildUpdateAuditFields(context),
+          days: { create: input.days.map(mapRoutineDayCreate) },
+          name: input.name.trim(),
+          templateVersion: current.templateVersion + 1,
+        },
+        include: routineTemplateInclude(),
+      });
+      return mapRoutineTemplate(row);
+    });
+  }
+
+  async deleteRoutineTemplate(context: AuthContext, templateId: string): Promise<void> {
+    const membership = await this.resolveCoachMembership(context);
+    const current = await this.prisma.planTemplate.findFirst({
+      where: { archivedAt: null, coachMembershipId: membership.id, id: templateId },
+      select: { id: true },
+    });
+    if (!current) {
+      throw new NotFoundException('Routine template not found');
+    }
+    await this.prisma.planTemplate.update({
+      where: { id: current.id },
+      data: { archivedAt: new Date() },
+    });
   }
 }

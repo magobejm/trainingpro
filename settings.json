@@ -1,0 +1,4 @@
+{
+  "antigravity.pnpm.autoExecute": "always",
+  "terminal.integrated.commandsToSkipShell": ["pnpm"]
+}

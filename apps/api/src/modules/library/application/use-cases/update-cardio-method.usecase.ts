@@ -8,11 +8,9 @@ import {
 
 @Injectable()
 export class UpdateCardioMethodUseCase {
-  constructor(
-    @Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort,
-  ) {}
+  constructor(@Inject(LIBRARY_REPOSITORY) private readonly repository: LibraryRepositoryPort) {}
 
-  execute(context: AuthContext, itemId: string, input: CardioMethodWriteInput) {
+  execute(context: AuthContext, itemId: string, input: Partial<CardioMethodWriteInput>) {
     return this.repository.updateCardioMethod(context, itemId, input);
   }
 }

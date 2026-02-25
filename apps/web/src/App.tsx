@@ -20,6 +20,7 @@ import { TechniqueEvaluatorScreen } from './screens/coach/TechniqueEvaluatorScre
 import { IncidentsScreen } from './screens/coach/IncidentsScreen';
 import { ChatScreen } from './screens/coach/ChatScreen';
 import { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';
+import { RoutinePlannerScreen } from './screens/coach/RoutinePlannerScreen';
 import { useAuthStore } from './store/auth.store';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
@@ -30,7 +31,11 @@ import { useMeQuery } from './data/hooks/useMeQuery';
 import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
-import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
+import {
+  type ShellNavItem,
+  type ShellRoute,
+  usePersistentShellRoute,
+} from './layout/usePersistentShellRoute';
 
 export function App(): React.JSX.Element {
   useSessionSync();
@@ -61,6 +66,29 @@ export function App(): React.JSX.Element {
   );
 }
 
+function ShellSidebar(props: {
+  activeRole: 'admin' | 'client' | 'coach';
+  navItems: ShellNavItem[];
+  route: ShellRoute;
+  setRoute: (r: ShellRoute) => void;
+  onLogout: () => void;
+  email: string;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.sidebar}>
+      <SidebarIdentity roleLabel={t(`auth.role.${props.activeRole}`)} title={t('app.title')} />
+      <View style={styles.navList}>
+        {renderNavButtons(props.navItems, props.route, props.setRoute, t)}
+      </View>
+      <SidebarUserPanel email={props.email} fallbackName={t('app.user.fallbackName')} t={t} />
+      <Pressable onPress={props.onLogout} style={styles.logoutButton}>
+        <Text style={styles.logoutLabel}>{t('app.nav.logout')}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
 function Shell(props: {
   activeRole: 'admin' | 'client' | 'coach';
   onLogout: () => Promise<void>;
@@ -71,16 +99,19 @@ function Shell(props: {
   const [route, setRoute] = usePersistentShellRoute(props.activeRole, navItems);
   return (
     <View style={styles.page}>
-      <View style={styles.sidebar}>
-        <SidebarIdentity roleLabel={t(`auth.role.${props.activeRole}`)} title={t('app.title')} />
-        <View style={styles.navList}>{renderNavButtons(navItems, route, setRoute, t)}</View>
-        <SidebarUserPanel email={meQuery.data?.email ?? ''} fallbackName={t('app.user.fallbackName')} t={t} />
-        <Pressable onPress={() => void props.onLogout()} style={styles.logoutButton}>
-          <Text style={styles.logoutLabel}>{t('app.nav.logout')}</Text>
-        </Pressable>
-      </View>
+      <ShellSidebar
+        activeRole={props.activeRole}
+        email={meQuery.data?.email ?? ''}
+        navItems={navItems}
+        onLogout={() => void props.onLogout()}
+        route={route}
+        setRoute={setRoute}
+      />
       <View style={styles.content}>
-        <TopBar roleLabel={t(`auth.role.${props.activeRole}`)} title={t('screen.dashboard.title')} />
+        <TopBar
+          roleLabel={t(`auth.role.${props.activeRole}`)}
+          title={t('screen.dashboard.title')}
+        />
         <View style={styles.contentBody}>{resolveRouteScreen(route, props.activeRole)}</View>
       </View>
     </View>
@@ -138,6 +169,7 @@ function resolveCoachLibraryScreen(route: ShellRoute): null | React.JSX.Element 
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.warmup') return <LibraryWarmupScreen />;
   if (route === 'coach.library.sports') return <LibrarySportsScreen />;
+  if (route === 'coach.routine.planner') return <RoutinePlannerScreen />;
   return null;
 }
 
@@ -185,6 +217,7 @@ function resolveNavItems(role: 'admin' | 'client' | 'coach' | any): ShellNavItem
     { icon: '🤸', id: 'coach.library.warmup', labelKey: 'app.nav.coach.library.warmup' },
     { icon: '⚽', id: 'coach.library.sports', labelKey: 'app.nav.coach.library.sports' },
     { icon: '🥗', id: 'coach.library.foods', labelKey: 'app.nav.coach.library.foods' },
+    { icon: '📋', id: 'coach.routine.planner', labelKey: 'app.nav.coach.routine.planner' },
     { icon: '🧩', id: 'coach.builder.strength', labelKey: 'app.nav.coach.builder.strength' },
     { icon: '⏱️', id: 'coach.builder.cardio', labelKey: 'app.nav.coach.builder.cardio' },
     { icon: '🥙', id: 'coach.builder.diet', labelKey: 'app.nav.coach.builder.diet' },

@@ -5,8 +5,8 @@ import {
   useCreateExerciseMutation,
   useDeleteExerciseMutation,
   useUpdateExerciseMutation,
-  useUploadLibraryImageMutation,
 } from '../../data/hooks/useLibraryMutations';
+import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
 import {
   useLibraryExerciseMuscleGroupsQuery,
   useLibraryExercisesQuery,

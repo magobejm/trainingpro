@@ -5,9 +5,9 @@ type Props = {
   imageUrl: string;
   isUploading: boolean;
   onUpload: () => void;
-  setYoutubeUrl: (value: string) => void;
+  setYoutubeUrl?: (value: string) => void;
   t: (key: string) => string;
-  youtubeUrl: string;
+  youtubeUrl?: string;
 };
 
 export function LibraryMediaFields(props: Props): React.JSX.Element {
@@ -27,14 +27,16 @@ export function LibraryMediaFields(props: Props): React.JSX.Element {
           ? props.t('coach.library.media.uploaded')
           : props.t('coach.library.media.noImage')}
       </Text>
-      <TextInput
-        autoCapitalize={autoCapitalize}
-        keyboardType={keyboardType}
-        onChangeText={props.setYoutubeUrl}
-        placeholder={props.t('coach.library.media.youtubePlaceholder')}
-        style={styles.input}
-        value={props.youtubeUrl}
-      />
+      {props.setYoutubeUrl && (
+        <TextInput
+          autoCapitalize={autoCapitalize}
+          keyboardType={keyboardType}
+          onChangeText={props.setYoutubeUrl}
+          placeholder={props.t('coach.library.media.youtubePlaceholder')}
+          style={styles.input}
+          value={props.youtubeUrl}
+        />
+      )}
     </View>
   );
 }

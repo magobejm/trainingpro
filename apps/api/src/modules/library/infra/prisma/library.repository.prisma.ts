@@ -1,44 +1,38 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { LibraryItemScope, Role } from '@prisma/client';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { LibraryItemScope } from '@prisma/client';
 import {
   buildCreateAuditFields,
   buildUpdateAuditFields,
 } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  CardioMethodFilter,
-  CardioMethodWriteInput,
-} from '../../domain/cardio-method.input';
+import type { CardioMethodFilter, CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseFilter, ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodFilter, FoodWriteInput } from '../../domain/food.input';
+import type { PlioExerciseFilter, PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
+import type {
+  WarmupExerciseFilter,
+  WarmupExerciseWriteInput,
+} from '../../domain/warmup-exercise.input';
+import type { SportWriteInput } from '../../domain/sport.input';
 import type { LibraryRepositoryPort } from '../../domain/library-repository.port';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
 import {
   mapCardioMethod,
   mapCatalogItem,
   mapExercise,
-  mapFood,
   normalizeCardioMethodInput,
   normalizeExerciseInput,
-  normalizeFoodInput,
 } from './library.mappers';
 import {
   assertCatalogExists,
   buildCardioMethodWhere,
   buildExerciseWhere,
-  buildFoodWhere,
   toDomainScope,
 } from './library.repository.prisma.helpers';
-
-type CoachMembership = {
-  id: string;
-  organizationId: string;
-};
+import { LibraryBaseRepository } from './library-base.repository';
+import { LibraryFoodRepository } from './library-food.repository';
+import { LibrarySpecializedRepository } from './library-specialized.repository';
 
 const CARDIO_METHOD_WITH_CATALOG = {
   methodTypeRef: { select: { label: true } },
@@ -49,11 +43,18 @@ const EXERCISE_WITH_CATALOG = {
 } as const;
 
 @Injectable()
-export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
+export class LibraryRepositoryPrisma
+  extends LibraryBaseRepository
+  implements LibraryRepositoryPort
+{
   constructor(
     private readonly policy: LibraryEditPolicy,
-    private readonly prisma: PrismaService,
-  ) {}
+    prisma: PrismaService,
+    private readonly foodRepo: LibraryFoodRepository,
+    private readonly specializedRepo: LibrarySpecializedRepository,
+  ) {
+    super(prisma);
+  }
 
   async createCardioMethod(context: AuthContext, input: CardioMethodWriteInput) {
     const membership = await this.resolveCoachMembership(context);
@@ -88,17 +89,7 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
   }
 
   async createFood(context: AuthContext, input: FoodWriteInput) {
-    const membership = await this.resolveCoachMembership(context);
-    const row = await this.prisma.food.create({
-      data: {
-        ...buildCreateAuditFields(context),
-        ...normalizeFoodInput(input),
-        coachMembershipId: membership.id,
-        organizationId: membership.organizationId,
-        scope: LibraryItemScope.COACH,
-      },
-    });
-    return mapFood(row);
+    return this.foodRepo.createFood(context, input);
   }
 
   async deleteCardioMethod(context: AuthContext, itemId: string): Promise<void> {
@@ -125,6 +116,10 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
         archivedAt: new Date(),
       },
     });
+  }
+
+  async deleteFood(context: AuthContext, itemId: string): Promise<void> {
+    return this.foodRepo.deleteFood(context, itemId);
   }
 
   async listCardioMethodTypes() {
@@ -164,21 +159,74 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
   }
 
   async listFoods(context: AuthContext, filter: FoodFilter) {
-    const membership = await this.resolveCoachMembership(context);
-    const rows = await this.prisma.food.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
-      where: buildFoodWhere(membership.id, filter),
-    });
-    return rows.map(mapFood);
+    return this.foodRepo.listFoods(context, filter);
+  }
+
+  async listPlioExercises(context: AuthContext, filter: PlioExerciseFilter) {
+    return this.specializedRepo.listPlioExercises(context, filter);
+  }
+
+  async listWarmupExercises(context: AuthContext, filter: WarmupExerciseFilter) {
+    return this.specializedRepo.listWarmupExercises(context, filter);
+  }
+
+  async listSports(context: AuthContext, query?: string) {
+    return this.specializedRepo.listSports(context, query);
+  }
+
+  async createPlioExercise(context: AuthContext, input: PlioExerciseWriteInput) {
+    return this.specializedRepo.createPlioExercise(context, input);
+  }
+
+  async createWarmupExercise(context: AuthContext, input: WarmupExerciseWriteInput) {
+    return this.specializedRepo.createWarmupExercise(context, input);
+  }
+
+  async createSport(context: AuthContext, input: SportWriteInput) {
+    return this.specializedRepo.createSport(context, input);
+  }
+
+  async updatePlioExercise(
+    context: AuthContext,
+    itemId: string,
+    input: Partial<PlioExerciseWriteInput>,
+  ) {
+    return this.specializedRepo.updatePlioExercise(context, itemId, input);
+  }
+
+  async updateWarmupExercise(
+    context: AuthContext,
+    itemId: string,
+    input: Partial<WarmupExerciseWriteInput>,
+  ) {
+    return this.specializedRepo.updateWarmupExercise(context, itemId, input);
+  }
+
+  async updateSport(context: AuthContext, itemId: string, input: Partial<SportWriteInput>) {
+    return this.specializedRepo.updateSport(context, itemId, input);
+  }
+
+  async deletePlioExercise(context: AuthContext, itemId: string) {
+    return this.specializedRepo.deletePlioExercise(context, itemId);
+  }
+
+  async deleteWarmupExercise(context: AuthContext, itemId: string) {
+    return this.specializedRepo.deleteWarmupExercise(context, itemId);
+  }
+
+  async deleteSport(context: AuthContext, itemId: string) {
+    return this.specializedRepo.deleteSport(context, itemId);
   }
 
   async updateCardioMethod(
     context: AuthContext,
     itemId: string,
-    input: CardioMethodWriteInput,
+    input: Partial<CardioMethodWriteInput>,
   ) {
     const membership = await this.resolveCoachMembership(context);
-    await this.assertCardioMethodTypeExists(input.methodTypeId);
+    if (input.methodTypeId) {
+      await this.assertCardioMethodTypeExists(input.methodTypeId);
+    }
     const row = await this.readCardioMethodForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
     const updated = await this.prisma.cardioMethod.update({
@@ -189,9 +237,11 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
     return mapCardioMethod(updated);
   }
 
-  async updateExercise(context: AuthContext, itemId: string, input: ExerciseWriteInput) {
+  async updateExercise(context: AuthContext, itemId: string, input: Partial<ExerciseWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
-    await this.assertExerciseMuscleGroupExists(input.muscleGroupId);
+    if (input.muscleGroupId) {
+      await this.assertExerciseMuscleGroupExists(input.muscleGroupId);
+    }
     const row = await this.readExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
     const updated = await this.prisma.exercise.update({
@@ -202,15 +252,8 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
     return mapExercise(updated);
   }
 
-  async updateFood(context: AuthContext, itemId: string, input: FoodWriteInput) {
-    const membership = await this.resolveCoachMembership(context);
-    const row = await this.readFoodForUpdate(itemId);
-    this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
-    const updated = await this.prisma.food.update({
-      where: { id: itemId },
-      data: { ...buildUpdateAuditFields(context), ...normalizeFoodInput(input) },
-    });
-    return mapFood(updated);
+  async updateFood(context: AuthContext, itemId: string, input: Partial<FoodWriteInput>) {
+    return this.foodRepo.updateFood(context, itemId, input);
   }
 
   private async assertCardioMethodTypeExists(methodTypeId: string): Promise<void> {
@@ -247,32 +290,5 @@ export class LibraryRepositoryPrisma implements LibraryRepositoryPort {
       throw new NotFoundException('Exercise not found');
     }
     return row;
-  }
-
-  private async readFoodForUpdate(itemId: string) {
-    const row = await this.prisma.food.findFirst({
-      where: { archivedAt: null, id: itemId },
-      select: { coachMembershipId: true, scope: true },
-    });
-    if (!row) {
-      throw new NotFoundException('Food not found');
-    }
-    return row;
-  }
-
-  private async resolveCoachMembership(context: AuthContext): Promise<CoachMembership> {
-    const membership = await this.prisma.organizationMember.findFirst({
-      where: {
-        archivedAt: null,
-        isActive: true,
-        role: Role.COACH,
-        user: { supabaseUid: context.subject },
-      },
-      select: { id: true, organizationId: true },
-    });
-    if (!membership) {
-      throw new ForbiddenException('Coach membership not found');
-    }
-    return membership;
   }
 }

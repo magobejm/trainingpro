@@ -7,13 +7,15 @@ type Props = {
   trainingPlan?: { id: string; name: string };
   onAssign: () => void;
   onUnassign: () => void;
+  onOpenDetail: () => void;
 };
 
 const PLAN_ICON = '🏋️';
 
 export function ClientProfileTrainingPlan(props: Props): React.JSX.Element {
+  const canOpenDetail = Boolean(props.trainingPlan?.id);
   return (
-    <Pressable style={styles.detailCard}>
+    <Pressable onPress={canOpenDetail ? props.onOpenDetail : undefined} style={styles.detailCard}>
       <PlanInfo name={props.trainingPlan?.name} t={props.t} />
       <PlanActions
         onAssign={props.onAssign}

@@ -15,7 +15,11 @@ import { ClientProfileKpiCards } from './components/ClientProfileKpiCards';
 import { EditClientProfileModal } from './components/EditClientProfileModal';
 import { ClientProfileTrainingPlan } from './components/ClientProfileTrainingPlan';
 import { PlanSelectionModal } from './components/PlanSelectionModal';
-import { useRoutineTemplatesQuery } from '../../data/hooks/useRoutineTemplates';
+import { ClientTrainingPlanDetailModal } from './components/ClientTrainingPlanDetailModal';
+import {
+  useRoutineTemplatesQuery,
+  type RoutineTemplateView,
+} from '../../data/hooks/useRoutineTemplates';
 import { ClientProfileSummary } from './components/ClientProfileSummary';
 import { pickImageFile } from './client-profile.avatar';
 import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-profile.form';
@@ -67,6 +71,7 @@ function useProfileState() {
   const [resetPassword, setResetPassword] = useState<null | string>(null);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
   const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
+  const [isPlanDetailVisible, setIsPlanDetailVisible] = useState(false);
 
   return {
     editing,
@@ -75,12 +80,14 @@ function useProfileState() {
     resetPassword,
     selectedObjectiveId,
     isPlanModalVisible,
+    isPlanDetailVisible,
     setEditing,
     setErrors,
     setForm,
     setResetPassword,
     setSelectedObjectiveId,
     setIsPlanModalVisible,
+    setIsPlanDetailVisible,
   };
 }
 
@@ -106,7 +113,7 @@ interface ViewModelInput {
   onArchived?: () => void;
   query: ReturnType<typeof useClientByIdQuery>;
   objectives: Array<{ id: string; label: string }>;
-  routineTemplates: Array<{ id: string; name: string }>;
+  routineTemplates: Array<RoutineTemplateView>;
   resetPassword: null | string;
   resetPasswordMutation: ReturnType<typeof useResetClientPasswordMutation>;
   setResetPassword: React.Dispatch<React.SetStateAction<null | string>>;
@@ -118,12 +125,19 @@ interface ViewModelInput {
   uploadAvatarMutation: ReturnType<typeof useUploadClientAvatarMutation>;
   isPlanModalVisible: boolean;
   setIsPlanModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  isPlanDetailVisible: boolean;
+  setIsPlanDetailVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function buildViewModel(input: ViewModelInput) {
   const objectiveOptions = readObjectiveOptions(input.query.data, input.objectives);
   const client = input.query.data;
-  const { updateMutation, setIsPlanModalVisible } = input;
+  const { updateMutation, setIsPlanModalVisible, setIsPlanDetailVisible } = input;
+  const selectedPlanId = client?.trainingPlan?.id;
+  const planDetail =
+    selectedPlanId && input.routineTemplates.length > 0
+      ? (input.routineTemplates.find((tpl) => tpl.id === selectedPlanId) ?? null)
+      : null;
 
   return {
     ...input,
@@ -134,8 +148,10 @@ function buildViewModel(input: ViewModelInput) {
     trainingPlan: client?.trainingPlan ?? undefined,
     onOpenEdit: () => input.setEditing(true),
     onAssignPlan: () => setIsPlanModalVisible(true),
+    onOpenPlanDetail: () => setIsPlanDetailVisible(true),
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     onSelectPlan: (pid: string) => void updateMutation.mutateAsync({ trainingPlanId: pid }),
+    planDetail,
   };
 }
 
@@ -174,6 +190,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
         trainingPlan={props.vm.trainingPlan}
         onAssign={props.vm.onAssignPlan}
         onUnassign={props.vm.onUnassignPlan}
+        onOpenDetail={props.vm.onOpenPlanDetail}
       />
       <ClientProfileDetailsList t={props.vm.t} />
       <ClientProfileKpiCards t={props.vm.t} />
@@ -183,6 +200,12 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
         t={props.vm.t}
         onClose={() => props.vm.setIsPlanModalVisible(false)}
         onSelect={props.vm.onSelectPlan}
+      />
+      <ClientTrainingPlanDetailModal
+        onClose={() => props.vm.setIsPlanDetailVisible(false)}
+        routine={props.vm.planDetail}
+        t={props.vm.t}
+        visible={props.vm.isPlanDetailVisible}
       />
     </View>
   );

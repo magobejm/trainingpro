@@ -6,25 +6,57 @@ export function useDayManagement(
   setDraft: React.Dispatch<React.SetStateAction<DraftState>>,
   setActiveDayIdx: React.Dispatch<React.SetStateAction<number>>,
   t: (k: string) => string,
+  prefixKey = 'coach.routine.dayPrefix',
 ) {
-  const addDay = useCallback(
-    () => setDraft((d) => ({ ...d, days: [...d.days, createEmptyDay(d.days.length + 1, t)] })),
-    [t, setDraft],
-  );
+  const addDay = useAddDay(setDraft, t, prefixKey);
+  const removeDay = useRemoveDay(setDraft, setActiveDayIdx, t, prefixKey);
+  const renameDay = useRenameDay(setDraft);
+  return { addDay, removeDay, renameDay };
+}
 
-  const removeDay = useCallback(
+function useAddDay(
+  setDraft: React.Dispatch<React.SetStateAction<DraftState>>,
+  t: (k: string) => string,
+  prefixKey: string,
+) {
+  return useCallback(
+    () =>
+      setDraft((d) => ({
+        ...d,
+        days: [...d.days, createEmptyDay(d.days.length + 1, t, prefixKey)],
+      })),
+    [prefixKey, t, setDraft],
+  );
+}
+
+function useRemoveDay(
+  setDraft: React.Dispatch<React.SetStateAction<DraftState>>,
+  setActiveDayIdx: React.Dispatch<React.SetStateAction<number>>,
+  t: (k: string) => string,
+  prefixKey: string,
+) {
+  return useCallback(
     (dayIdx: number) => {
-      setDraft((d) => {
-        const days = d.days.filter((_, i) => i !== dayIdx);
-        const nextDays: DraftDay[] = days.length === 0 ? [createEmptyDay(1, t)] : days;
-        return { ...d, days: nextDays };
-      });
+      setDraft((d) => removeDayByIndex(d, dayIdx, t, prefixKey));
       setActiveDayIdx((cur) => Math.max(0, cur - 1));
     },
-    [t, setDraft, setActiveDayIdx],
+    [prefixKey, t, setDraft, setActiveDayIdx],
   );
+}
 
-  const renameDay = useCallback(
+function removeDayByIndex(
+  draft: DraftState,
+  dayIdx: number,
+  t: (k: string) => string,
+  prefixKey: string,
+): DraftState {
+  const days = draft.days.filter((_, i) => i !== dayIdx);
+  const nextDays: DraftDay[] = days.length === 0 ? [createEmptyDay(1, t, prefixKey)] : days;
+  return { ...draft, days: nextDays };
+}
+
+function useRenameDay(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
+  return useCallback(
     (dayIdx: number, title: string) =>
       setDraft((d) => ({
         ...d,
@@ -32,6 +64,4 @@ export function useDayManagement(
       })),
     [setDraft],
   );
-
-  return { addDay, removeDay, renameDay };
 }

@@ -4,6 +4,7 @@ import { normalizeNullable } from './libraryCreateForm.utils';
 
 export type CardioCreateFormState = {
   description: string;
+  equipment: string;
   imageUrl: string;
   methodTypeId: string;
   name: string;
@@ -12,6 +13,7 @@ export type CardioCreateFormState = {
 
 export const EMPTY_CARDIO_FORM: CardioCreateFormState = {
   description: '',
+  equipment: '',
   imageUrl: '',
   methodTypeId: '',
   name: '',
@@ -21,6 +23,7 @@ export const EMPTY_CARDIO_FORM: CardioCreateFormState = {
 export function toCardioForm(item: CardioMethodLibraryItem): CardioCreateFormState {
   return {
     description: item.description ?? '',
+    equipment: item.equipment ?? '',
     imageUrl: item.media.url ?? '',
     methodTypeId: item.methodTypeId,
     name: item.name,
@@ -35,6 +38,7 @@ export function toCardioPayload(
 ): CardioMethodWriteInput {
   return {
     description: normalizeNullable(form.description),
+    equipment: normalizeNullable(form.equipment),
     mediaType: normalizeNullable(form.imageUrl) ? 'image' : null,
     mediaUrl: normalizeNullable(form.imageUrl),
     methodTypeId,

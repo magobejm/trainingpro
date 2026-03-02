@@ -9,21 +9,32 @@ interface DayHeaderProps {
   onRename: (v: string) => void;
   onRemove: () => void;
   t: (k: string) => string;
+  placeholderKey?: string;
+  deleteLabelKey?: string;
 }
 
-export function DayHeader({ title, readOnly, daysCount, onRename, onRemove, t }: DayHeaderProps) {
+export function DayHeader({
+  title,
+  readOnly,
+  daysCount,
+  onRename,
+  onRemove,
+  t,
+  placeholderKey = 'coach.routine.dayTitlePlaceholder',
+  deleteLabelKey = 'coach.routine.deleteDay',
+}: DayHeaderProps) {
   return (
     <View style={s.dayHeader}>
       <TextInput
         editable={!readOnly}
         onChangeText={onRename}
-        placeholder={t('coach.routine.dayTitlePlaceholder')}
+        placeholder={t(placeholderKey)}
         style={[s.input, { flex: 1 }, readOnly && { backgroundColor: '#f8fafc' }]}
         value={title}
       />
       {!readOnly && daysCount > 1 && (
         <Pressable onPress={onRemove} style={s.deleteDayBtn}>
-          <Text style={s.deleteDayText}>{t('coach.routine.deleteDay')}</Text>
+          <Text style={s.deleteDayText}>{t(deleteLabelKey)}</Text>
         </Pressable>
       )}
     </View>

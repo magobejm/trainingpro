@@ -1,6 +1,8 @@
 import React from 'react';
+import { TextInput } from 'react-native';
 import type { DraftBlock } from '../../RoutinePlanner.types';
 import { RoutineNumberField } from '../RoutineNumberField';
+import { s } from '../../RoutinePlanner.styles';
 
 interface BlockFieldsProps {
   block: DraftBlock;
@@ -10,79 +12,18 @@ interface BlockFieldsProps {
 }
 
 export function BlockFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  const isStrength = block.type === 'strength';
-  const isSport = block.type === 'sport';
-  const isTimed = ['cardio', 'plio', 'warmup'].includes(block.type);
-
-  return (
-    <>
-      {isStrength && (
-        <StrengthFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />
-      )}
-      {isTimed && (
-        <TimedFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />
-      )}
-      {isSport && (
-        <SportFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />
-      )}
-      {!isSport && (
-        <RestField block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />
-      )}
-      <RoutineNumberField
-        label={t('coach.routine.block.rpe')}
-        onChange={(v) => onUpdateField('targetRpe', v)}
-        readOnly={readOnly}
-        value={block.targetRpe}
-      />
-    </>
-  );
-}
-
-function StrengthFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  return (
-    <>
-      <RoutineNumberField
-        label={t('coach.routine.block.sets')}
-        onChange={(v) => onUpdateField('setsPlanned', v)}
-        readOnly={readOnly}
-        value={block.setsPlanned}
-      />
-      <RoutineNumberField
-        label={t('coach.routine.block.reps')}
-        onChange={(v) => onUpdateField('repsPlanned', v)}
-        readOnly={readOnly}
-        value={block.repsPlanned}
-      />
-      <RoutineNumberField
-        label={t('coach.routine.block.rir')}
-        onChange={(v) => onUpdateField('targetRir', v)}
-        readOnly={readOnly}
-        value={block.targetRir}
-      />
-    </>
-  );
-}
-
-function TimedFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  return (
-    <>
-      <RoutineNumberField
-        label={t('coach.routine.block.rounds')}
-        onChange={(v) => onUpdateField('roundsPlanned', v)}
-        readOnly={readOnly}
-        value={block.roundsPlanned}
-      />
-      <RoutineNumberField
-        label={t('coach.routine.block.work')}
-        onChange={(v) => onUpdateField('workSeconds', v)}
-        readOnly={readOnly}
-        value={block.workSeconds}
-      />
-    </>
-  );
-}
-
-function SportFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+  if (block.type === 'strength') {
+    return <StrengthFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  }
+  if (block.type === 'cardio') {
+    return <CardioFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  }
+  if (block.type === 'plio') {
+    return <PlioFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  }
+  if (block.type === 'warmup') {
+    return <MobilityFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  }
   return (
     <RoutineNumberField
       label={t('coach.routine.block.duration')}
@@ -93,13 +34,113 @@ function SportFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   );
 }
 
-function RestField({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+function StrengthFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+  const n = numberField(block, onUpdateField, readOnly, t);
+  const x = textField(block, onUpdateField, readOnly, t);
   return (
+    <>
+      {n('coach.routine.block.sets', 'setsPlanned')}
+      {x('coach.routine.block.repsRange', 'repsRange')}
+      {n('coach.routine.block.rest', 'restSeconds')}
+      {n('coach.routine.block.rpe', 'targetRpe')}
+      {n('coach.routine.block.rir', 'targetRir')}
+      {x('coach.routine.block.repsBySeries', 'repsPerSeries')}
+      {x('coach.routine.block.weightBySeries', 'weightPerSeriesKg')}
+    </>
+  );
+}
+
+function CardioFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+  const n = numberField(block, onUpdateField, readOnly, t);
+  const x = textField(block, onUpdateField, readOnly, t);
+  return (
+    <>
+      {n('coach.routine.block.sets', 'roundsPlanned')}
+      {x('coach.routine.block.workText', 'cardioWorkText')}
+      {n('coach.routine.block.rest', 'restSeconds')}
+      {n('coach.routine.block.intensityFcmax', 'intensityFcMax')}
+      {n('coach.routine.block.intensityFcreserva', 'intensityFcReserve')}
+      {n('coach.routine.block.heartRate', 'heartRate')}
+      {n('coach.routine.block.rpe', 'targetRpe')}
+      {n('coach.routine.block.totalTime', 'totalTimeSeconds')}
+    </>
+  );
+}
+
+function PlioFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+  const n = numberField(block, onUpdateField, readOnly, t);
+  const x = textField(block, onUpdateField, readOnly, t);
+  return (
+    <>
+      {n('coach.routine.block.sets', 'roundsPlanned')}
+      {x('coach.routine.block.repsRange', 'repsRange')}
+      {n('coach.routine.block.rpe', 'targetRpe')}
+      {n('coach.routine.block.reps', 'repsPlanned')}
+      {n('coach.routine.block.weightKg', 'weightKg')}
+      {n('coach.routine.block.rest', 'restSeconds')}
+    </>
+  );
+}
+
+function MobilityFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+  const n = numberField(block, onUpdateField, readOnly, t);
+  const x = textField(block, onUpdateField, readOnly, t);
+  return (
+    <>
+      {n('coach.routine.block.sets', 'roundsPlanned')}
+      {x('coach.routine.block.repsRange', 'repsRange')}
+      {n('coach.routine.block.reps', 'repsPlanned')}
+      {n('coach.routine.block.rpe', 'targetRpe')}
+      {n('coach.routine.block.rest', 'restSeconds')}
+    </>
+  );
+}
+
+function numberField(
+  block: DraftBlock,
+  onUpdateField: (f: keyof DraftBlock, v: unknown) => void,
+  readOnly: boolean,
+  t: (k: string) => string,
+) {
+  return (labelKey: string, field: keyof DraftBlock) => (
     <RoutineNumberField
-      label={t('coach.routine.block.rest')}
-      onChange={(v) => onUpdateField('restSeconds', v)}
+      label={t(labelKey)}
+      onChange={(v) => onUpdateField(field, v)}
       readOnly={readOnly}
-      value={block.restSeconds}
+      value={block[field] as number | undefined}
+    />
+  );
+}
+
+function textField(
+  block: DraftBlock,
+  onUpdateField: (f: keyof DraftBlock, v: unknown) => void,
+  readOnly: boolean,
+  t: (k: string) => string,
+) {
+  return (labelKey: string, field: keyof DraftBlock) => (
+    <TextField
+      label={t(labelKey)}
+      onChange={(v) => onUpdateField(field, v)}
+      readOnly={readOnly}
+      value={(block[field] as string | undefined) ?? ''}
+    />
+  );
+}
+
+function TextField(props: {
+  label: string;
+  onChange: (v: string) => void;
+  readOnly: boolean;
+  value?: string;
+}) {
+  return (
+    <TextInput
+      editable={!props.readOnly}
+      onChangeText={props.onChange}
+      placeholder={props.label}
+      style={s.numberInput}
+      value={props.value ?? ''}
     />
   );
 }

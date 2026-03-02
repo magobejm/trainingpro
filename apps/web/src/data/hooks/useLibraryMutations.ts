@@ -3,6 +3,7 @@ import { deleteItem, updateItem, useAuth, writeItem } from './library-mutations.
 
 export type CardioMethodWriteInput = {
   description?: null | string;
+  equipment?: null | string;
   mediaType?: null | string;
   mediaUrl?: null | string;
   methodTypeId: string;

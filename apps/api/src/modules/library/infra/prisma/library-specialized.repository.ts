@@ -10,13 +10,11 @@ import type {
 import type { SportWriteInput } from '../../domain/sport.input';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
 import {
-  mapPlioExercise,
-  mapWarmupExercise,
-  mapSport,
   normalizePlioExerciseInput,
   normalizeWarmupExerciseInput,
   normalizeSportInput,
 } from './library.mappers';
+import { mapPlioExercise, mapSport, mapWarmupExercise } from './library.specialized-mappers';
 import {
   buildPlioWhere,
   buildWarmupWhere,

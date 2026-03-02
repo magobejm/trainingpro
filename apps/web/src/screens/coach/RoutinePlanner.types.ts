@@ -14,7 +14,16 @@ export interface DraftBlock {
   // Strength fields
   setsPlanned?: number;
   repsPlanned?: number;
+  repsRange?: string;
   targetRir?: number;
+  repsPerSeries?: string;
+  weightPerSeriesKg?: string;
+  weightKg?: number;
+  cardioWorkText?: string;
+  intensityFcMax?: number;
+  intensityFcReserve?: number;
+  heartRate?: number;
+  totalTimeSeconds?: number;
   // Add meta for Plan 72–73
   isGlobal?: boolean;
   /** ID of the library item this block references (exercise, cardio method, plio, warmup, sport) */

@@ -30,6 +30,7 @@ const EXERCISE_FIELDS: FieldConfig[] = [
 const CARDIO_FIELDS: FieldConfig[] = [
   { field: 'name', placeholderKey: 'coach.library.cardio.namePlaceholder' },
   { field: 'methodTypeId', type: 'select' },
+  { field: 'equipment', placeholderKey: 'coach.library.exercises.equipmentPlaceholder' },
   {
     field: 'description',
     multiline: true,
@@ -72,19 +73,15 @@ const FOOD_FIELDS: FieldConfig[] = [
   { field: 'mediaType', placeholderKey: 'coach.library.foods.mediaTypePlaceholder' },
 ];
 
-const PLIO_WARMUP_FIELDS: FieldConfig[] = [
+const PLIO_FIELDS: FieldConfig[] = [
   { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
+  { field: 'plioType', type: 'select' },
+  { field: 'equipment', placeholderKey: 'coach.library.exercises.equipmentPlaceholder' },
   {
     field: 'description',
     multiline: true,
     numberOfLines: 2,
     placeholderKey: 'coach.library.exercises.instructionsPlaceholder',
-  },
-  {
-    field: 'notes',
-    multiline: true,
-    numberOfLines: 2,
-    placeholderKey: 'coach.library.foods.notesPlaceholder',
   },
 ];
 
@@ -126,8 +123,23 @@ export function FoodCreateFields(props: BaseProps): React.JSX.Element {
   return <FormFields {...props} fields={FOOD_FIELDS} options={{}} />;
 }
 
-export function PlioWarmupBaseFields(props: BaseProps): React.JSX.Element {
-  return <FormFields {...props} fields={PLIO_WARMUP_FIELDS} options={{}} />;
+export function PlioBaseFields(props: BaseProps): React.JSX.Element {
+  return <FormFields {...props} fields={PLIO_FIELDS} options={{}} />;
+}
+
+const MOBILITY_TYPE_FIELDS: FieldConfig[] = [
+  { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
+  { field: 'mobilityType', type: 'select' },
+  {
+    field: 'description',
+    multiline: true,
+    numberOfLines: 2,
+    placeholderKey: 'coach.library.exercises.instructionsPlaceholder',
+  },
+];
+
+export function MobilityBaseFields(props: BaseProps): React.JSX.Element {
+  return <FormFields {...props} fields={MOBILITY_TYPE_FIELDS} options={{}} />;
 }
 
 export function SportBaseFields(props: BaseProps): React.JSX.Element {
@@ -160,7 +172,7 @@ function renderInputField(field: FieldConfig, props: FieldsProps): React.JSX.Ele
 }
 
 function renderSelectField(field: FieldConfig, props: FieldsProps): React.JSX.Element {
-  const options = readOptions(field.field, props.options);
+  const options = readOptions(field.field, props.options, props.t);
   return (
     <View key={field.field} style={styles.selectWrap}>
       <Text style={styles.selectLabel}>{readSelectLabel(field.field, props.t)}</Text>
@@ -179,12 +191,27 @@ function renderSelectField(field: FieldConfig, props: FieldsProps): React.JSX.El
   );
 }
 
-function readOptions(field: string, options: CatalogProps): Option[] {
+function readOptions(field: string, options: CatalogProps, t: Translator): Option[] {
   if (field === 'muscleGroupId') {
     return options.muscleGroupOptions ?? [];
   }
   if (field === 'methodTypeId') {
     return options.methodTypeOptions ?? [];
+  }
+  if (field === 'mobilityType') {
+    return [
+      { id: 'undefined', label: t('coach.library.type.undefined') },
+      { id: 'completo', label: t('coach.library.mobility.type.completo') },
+      { id: 'parcial', label: t('coach.library.mobility.type.parcial') },
+      { id: 'minimo', label: t('coach.library.mobility.type.minimo') },
+    ];
+  }
+  if (field === 'plioType') {
+    return [
+      { id: 'undefined', label: t('coach.library.type.undefined') },
+      { id: 'explosivo', label: t('coach.library.plio.type.explosivo') },
+      { id: 'relajado', label: t('coach.library.plio.type.relajado') },
+    ];
   }
   return [];
 }
@@ -195,6 +222,12 @@ function readSelectLabel(field: string, t: Translator): string {
   }
   if (field === 'methodTypeId') {
     return t('coach.library.cardio.detail.methodType');
+  }
+  if (field === 'mobilityType') {
+    return t('coach.library.mobility.detail.type');
+  }
+  if (field === 'plioType') {
+    return t('coach.library.plio.detail.type');
   }
   return '';
 }

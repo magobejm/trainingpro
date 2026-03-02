@@ -1,10 +1,4 @@
-import {
-  LibraryItemScope,
-  type Food,
-  type PlioExercise,
-  type WarmupExercise,
-  type Sport,
-} from '@prisma/client';
+import { LibraryItemScope, type Food } from '@prisma/client';
 import type { CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodWriteInput } from '../../domain/food.input';
@@ -15,14 +9,13 @@ import type { CardioMethodLibraryItem } from '../../domain/entities/cardio-metho
 import type { ExerciseLibraryItem } from '../../domain/entities/exercise-library-item';
 import type { FoodLibraryItem } from '../../domain/entities/food-library-item';
 import type { LibraryCatalogItem } from '../../domain/entities/library-catalog-item';
-import type { PlioExerciseLibraryItem } from '../../domain/entities/plio-exercise-library-item';
-import type { WarmupExerciseLibraryItem } from '../../domain/entities/warmup-exercise-library-item';
-import type { SportLibraryItem } from '../../domain/entities/sport-library-item';
+import { normalizeMobilityType, normalizePlioType } from './library.specialized-mappers';
 
 type CardioMethodRow = {
   coachMembershipId: null | string;
   createdAt: Date;
   description: null | string;
+  equipment?: null | string;
   id: string;
   mediaType: null | string;
   mediaUrl: null | string;
@@ -61,6 +54,7 @@ export function mapCardioMethod(row: CardioMethodRow): CardioMethodLibraryItem {
     coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
     description: row.description,
+    equipment: row.equipment ?? null,
     id: row.id,
     media: { type: row.mediaType, url: row.mediaUrl },
     methodType: row.methodTypeRef.label,
@@ -181,9 +175,11 @@ export function normalizePlioExerciseInput(
 ): Partial<PlioExerciseWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
+    ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
+    ...(input.plioType !== undefined && { plioType: normalizePlioType(input.plioType) }),
     ...(input.notes !== undefined && { notes: toNullable(input.notes) }),
     ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
   };
@@ -200,10 +196,12 @@ export function normalizeWarmupExerciseInput(
 ): Partial<WarmupExerciseWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
+    ...(input.mobilityType !== undefined && {
+      mobilityType: normalizeMobilityType(input.mobilityType),
+    }),
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
-    ...(input.notes !== undefined && { notes: toNullable(input.notes) }),
     ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
   };
 }
@@ -260,48 +258,4 @@ function normalizeServingUnit(value: null | string | undefined): null | string {
     return 'porcion';
   }
   return null;
-}
-
-export function mapPlioExercise(row: PlioExercise): PlioExerciseLibraryItem {
-  return {
-    coachMembershipId: row.coachMembershipId,
-    createdAt: row.createdAt,
-    description: row.description,
-    id: row.id,
-    media: { type: row.mediaType, url: row.mediaUrl },
-    name: row.name,
-    notes: row.notes,
-    scope: row.scope === LibraryItemScope.COACH ? 'coach' : 'global',
-    updatedAt: row.updatedAt,
-    youtubeUrl: row.youtubeUrl,
-  };
-}
-
-export function mapWarmupExercise(row: WarmupExercise): WarmupExerciseLibraryItem {
-  return {
-    coachMembershipId: row.coachMembershipId,
-    createdAt: row.createdAt,
-    description: row.description,
-    id: row.id,
-    media: { type: row.mediaType, url: row.mediaUrl },
-    name: row.name,
-    notes: row.notes,
-    scope: row.scope === LibraryItemScope.COACH ? 'coach' : 'global',
-    updatedAt: row.updatedAt,
-    youtubeUrl: row.youtubeUrl,
-  };
-}
-
-export function mapSport(row: Sport): SportLibraryItem {
-  return {
-    coachMembershipId: row.coachMembershipId,
-    createdAt: row.createdAt,
-    description: row.description,
-    icon: row.icon,
-    id: row.id,
-    mediaUrl: row.mediaUrl,
-    name: row.name,
-    scope: toDomainScope(row.scope),
-    updatedAt: row.updatedAt,
-  };
 }

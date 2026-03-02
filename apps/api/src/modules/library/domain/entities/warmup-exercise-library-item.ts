@@ -6,8 +6,8 @@ export type WarmupExerciseLibraryItem = {
   description: null | string;
   id: string;
   media: LibraryMedia;
+  mobilityType: null | string;
   name: string;
-  notes: null | string;
   scope: 'coach' | 'global';
   updatedAt: Date;
   youtubeUrl: null | string;

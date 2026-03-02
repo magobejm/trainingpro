@@ -10,13 +10,10 @@ const FIELD_FIRST_NAME: keyof ClientForm = 'firstName';
 const FIELD_LAST_NAME: keyof ClientForm = 'lastName';
 const FIELD_EMAIL: keyof ClientForm = 'email';
 const FIELD_OBJECTIVE_ID: keyof ClientForm = 'objectiveId';
-const FIELD_HEIGHT_CM: keyof ClientForm = 'heightCm';
-const FIELD_WEIGHT_KG: keyof ClientForm = 'weightKg';
 const FIELD_BIRTH_DATE: keyof ClientForm = 'birthDate';
 const FIELD_PHONE: keyof ClientForm = 'phone';
 const FIELD_SEX: keyof ClientForm = 'sex';
 const KEYBOARD_EMAIL = 'email-address' as const;
-const KEYBOARD_NUMERIC = 'numeric' as const;
 const KEYBOARD_PHONE = 'phone-pad' as const;
 const INPUT_TYPE_DATE = 'date' as const;
 const SEX_UNSPECIFIED = '';
@@ -91,20 +88,35 @@ function renderMainModal(
       visible={props.visible}
     >
       <View style={styles.overlay}>
-        <View style={styles.card}>
-          <AvatarPreview avatarUrl={props.avatarUrl} t={props.t} />
-          <Header t={props.t} />
-          <ScrollView contentContainerStyle={styles.form} style={styles.scroll}>
-            <AvatarAction {...props} />
-            <Fields {...props} />
-            {props.saveError ? <ErrorMessage t={props.t} /> : null}
-          </ScrollView>
-          <Actions {...props} />
-          <ResetPasswordSection {...props} onRequestConfirm={() => confirm.setPendingAction('reset')} />
-          <ArchiveSection {...props} onRequestConfirm={() => confirm.setPendingAction('archive')} />
-        </View>
+        <MainCard confirm={confirm} props={props} />
       </View>
     </Modal>
+  );
+}
+
+function MainCard(props: {
+  confirm: ReturnType<typeof useConfirmState>;
+  props: Props;
+}): React.JSX.Element {
+  return (
+    <View style={styles.card}>
+      <AvatarPreview avatarUrl={props.props.avatarUrl} t={props.props.t} />
+      <Header t={props.props.t} />
+      <ScrollView contentContainerStyle={styles.form} style={styles.scroll}>
+        <AvatarAction {...props.props} />
+        <Fields {...props.props} />
+        {props.props.saveError ? <ErrorMessage t={props.props.t} /> : null}
+      </ScrollView>
+      <Actions {...props.props} />
+      <ResetPasswordSection
+        {...props.props}
+        onRequestConfirm={() => props.confirm.setPendingAction('reset')}
+      />
+      <ArchiveSection
+        {...props.props}
+        onRequestConfirm={() => props.confirm.setPendingAction('archive')}
+      />
+    </View>
   );
 }
 
@@ -142,7 +154,9 @@ function AvatarPreview(props: {
   if (!props.avatarUrl) {
     return (
       <View style={styles.avatarFallback}>
-        <Text style={styles.avatarFallbackLabel}>{props.t('coach.clientProfile.avatar.fallback')}</Text>
+        <Text style={styles.avatarFallbackLabel}>
+          {props.t('coach.clientProfile.avatar.fallback')}
+        </Text>
       </View>
     );
   }
@@ -182,8 +196,6 @@ function Fields(props: Props): React.JSX.Element {
       <Input field={FIELD_LAST_NAME} {...props} />
       <Input field={FIELD_EMAIL} {...props} keyboardType={KEYBOARD_EMAIL} />
       <ObjectiveField {...props} />
-      <Input field={FIELD_HEIGHT_CM} {...props} keyboardType={KEYBOARD_NUMERIC} />
-      <Input field={FIELD_WEIGHT_KG} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <DateField {...props} />
       <Input
         field={FIELD_PHONE}

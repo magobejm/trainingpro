@@ -75,7 +75,7 @@ export function mapWarmup(items: WarmupExerciseLibraryItem[]): LibraryItem[] {
     id: item.id,
     name: item.name,
     description: item.description ?? null,
-    notes: item.notes ?? null,
+    notes: null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
   }));

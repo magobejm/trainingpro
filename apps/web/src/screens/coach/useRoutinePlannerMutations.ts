@@ -20,6 +20,7 @@ export function useRoutinePlannerMutations(
   setActiveDay: (i: number) => void,
   setSuccess: (v: boolean) => void,
   t: (k: string) => string,
+  dayPrefixKey = 'coach.routine.dayPrefix',
 ) {
   const createMutation = useCreateRoutineTemplateMutation();
   const updateMutation = useUpdateRoutineTemplateMutation(editingId ?? '');
@@ -33,6 +34,7 @@ export function useRoutinePlannerMutations(
     setActiveDay,
     setSuccess,
     t,
+    dayPrefixKey,
     updateMutation,
     createMutation,
   });
@@ -48,17 +50,19 @@ interface SaveProps {
   setActiveDay: (i: number) => void;
   setSuccess: (v: boolean) => void;
   t: (k: string) => string;
+  dayPrefixKey: string;
   updateMutation: MutationHandler;
   createMutation: MutationHandler;
 }
 
 function useOnSave(props: SaveProps) {
-  const { draft, editingId, setDraft, setEditingId, setActiveDay, setSuccess, t } = props;
+  const { draft, editingId, setDraft, setEditingId, setActiveDay, setSuccess, t, dayPrefixKey } =
+    props;
   return useCallback(() => {
     const onSuccess = () => {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-      setDraft(createEmptyDraft(t));
+      setDraft(createEmptyDraft(t, dayPrefixKey));
       setEditingId(null);
       setActiveDay(0);
     };
@@ -72,6 +76,7 @@ function useOnSave(props: SaveProps) {
     draft,
     editingId,
     t,
+    dayPrefixKey,
     props.updateMutation,
     props.createMutation,
     setDraft,

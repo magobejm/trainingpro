@@ -8,16 +8,25 @@ interface RoutineNameInputProps {
   isReadOnly: boolean;
   setDraft: React.Dispatch<React.SetStateAction<DraftState>>;
   t: (k: string) => string;
+  labelKey?: string;
+  placeholderKey?: string;
 }
 
-export function RoutineNameInput({ name, isReadOnly, setDraft, t }: RoutineNameInputProps) {
+export function RoutineNameInput({
+  name,
+  isReadOnly,
+  setDraft,
+  t,
+  labelKey = 'coach.routine.name',
+  placeholderKey = 'coach.routine.namePlaceholder',
+}: RoutineNameInputProps) {
   return (
     <View style={s.card}>
-      <Text style={s.label}>{t('coach.routine.name')}</Text>
+      <Text style={s.label}>{t(labelKey)}</Text>
       <TextInput
         editable={!isReadOnly}
         onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
-        placeholder={t('coach.routine.namePlaceholder')}
+        placeholder={t(placeholderKey)}
         style={[s.input, isReadOnly && { backgroundColor: '#f8fafc' }]}
         value={name}
       />

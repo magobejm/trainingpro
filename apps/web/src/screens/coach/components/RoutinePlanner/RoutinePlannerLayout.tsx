@@ -13,6 +13,7 @@ import { ExercisePickerModal } from './ExercisePickerModal';
 import { mapTemplateToDraft } from '../../RoutinePlanner.helpers';
 import type { DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
+import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
 
 interface LayoutProps {
   t: (k: string, options?: { count: number }) => string;
@@ -53,6 +54,7 @@ interface LayoutProps {
     isPending: boolean;
     mutate: (id: string, opts?: { onSettled?: () => void }) => void;
   };
+  labels?: PlannerLabels;
 }
 
 type OpenPickerFn = (dayIdx: number, type: BlockType) => void;
@@ -63,14 +65,22 @@ function RoutineTopSection(props: {
   isReadOnly: boolean;
   name: string;
   setDraft: React.Dispatch<React.SetStateAction<DraftState>>;
+  labels: PlannerLabels;
 }) {
-  const { t, saveSuccess, isReadOnly, name, setDraft } = props;
+  const { t, saveSuccess, isReadOnly, name, setDraft, labels } = props;
   return (
     <>
-      <Text style={s.title}>{t('coach.routine.title')}</Text>
+      <Text style={s.title}>{t(labels.titleKey)}</Text>
       {saveSuccess && <SuccessBanner t={t} />}
       {isReadOnly && <ReadOnlyBadge t={t} />}
-      <RoutineNameInput isReadOnly={isReadOnly} name={name} setDraft={setDraft} t={t} />
+      <RoutineNameInput
+        isReadOnly={isReadOnly}
+        labelKey={labels.nameKey}
+        name={name}
+        placeholderKey={labels.namePlaceholderKey}
+        setDraft={setDraft}
+        t={t}
+      />
     </>
   );
 }
@@ -88,12 +98,13 @@ function buildDraftHandlers(draftState: LayoutProps['draftState'], onOpenPicker:
 }
 
 function RoutineMainSection(props: LayoutProps & { onOpenPicker: OpenPickerFn }) {
-  const { t, draftState, uiState, onOpenPicker } = props;
+  const { t, draftState, uiState, onOpenPicker, labels = ROUTINE_LABELS } = props;
   const isReadOnly = draftState.draft.scope === 'GLOBAL';
   return (
     <>
       <DayTabs
         activeIdx={draftState.activeDayIdx}
+        addLabelKey={labels.addContainerKey}
         days={draftState.draft.days}
         onAdd={draftState.addDay}
         onSelect={draftState.setActiveDayIdx}
@@ -106,6 +117,7 @@ function RoutineMainSection(props: LayoutProps & { onOpenPicker: OpenPickerFn })
         days={draftState.draft.days}
         draftState={buildDraftHandlers(draftState, onOpenPicker)}
         isReadOnly={isReadOnly}
+        labels={labels}
         setAddIdx={uiState.setAddIdx}
       />
     </>
@@ -155,12 +167,13 @@ function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutPr
 }
 
 export function RoutinePlannerLayout(props: LayoutProps) {
-  const { uiState, draftState, t } = props;
+  const { uiState, draftState, t, labels = ROUTINE_LABELS } = props;
   const { onOpenPicker, onPickerSelect } = usePickerHandlers(uiState, draftState);
   return (
     <ScrollView contentContainerStyle={s.page}>
       <RoutineTopSection
         isReadOnly={draftState.draft.scope === 'GLOBAL'}
+        labels={labels}
         name={draftState.draft.name}
         saveSuccess={uiState.saveSuccess}
         setDraft={draftState.setDraft}

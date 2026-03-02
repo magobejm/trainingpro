@@ -6,6 +6,7 @@ import type { BlockType, DraftBlock, DraftDay } from '../RoutinePlanner.types';
 import { DayHeader } from './RoutineDayCard/DayHeader';
 import { AddBlockSection } from './RoutineDayCard/AddBlockSection';
 import { BlockList } from './RoutineDayCard/BlockList';
+import type { PlannerLabels } from './RoutinePlanner/planner-labels';
 
 interface RoutineDayCardProps {
   day: DraftDay;
@@ -23,6 +24,7 @@ interface RoutineDayCardProps {
   onMoveBlock: (blockIdx: number, direction: -1 | 1) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlockToDay: (blockIdx: number, targetDayIdx: number) => void;
+  labels?: PlannerLabels;
 }
 
 export function RoutineDayCard(props: RoutineDayCardProps) {
@@ -38,6 +40,8 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         daysCount={props.daysCount}
         onRemove={props.onRemove}
         onRename={props.onRename}
+        deleteLabelKey={props.labels?.deleteContainerKey}
+        placeholderKey={props.labels?.containerPlaceholderKey}
         readOnly={!!readOnly}
         t={t}
         title={day.title}
@@ -58,7 +62,11 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
 function DayBlocksContent({ props, t }: { props: RoutineDayCardProps; t: (k: string) => string }) {
   const { day, readOnly, dayIdx, daysCount, dayLabels } = props;
   if (day.blocks.length === 0) {
-    return <Text style={s.emptyDay}>{t('coach.routine.emptyDay')}</Text>;
+    return (
+      <Text style={s.emptyDay}>
+        {t(props.labels?.emptyContainerKey ?? 'coach.routine.emptyDay')}
+      </Text>
+    );
   }
   return (
     <BlockList

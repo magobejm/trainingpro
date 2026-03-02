@@ -92,6 +92,7 @@ model Organization {
   warmupExercises WarmupExercise[]
   sports          Sport[]
   planTemplates PlanTemplate[]
+  warmupTemplates WarmupTemplate[]
   sessions     SessionInstance[]
   incidents    Incident[]
   weeklyReports WeeklyReport[]
@@ -133,6 +134,7 @@ model OrganizationMember {
   warmupExercises WarmupExercise[] @relation("coach_warmup_exercises")
   sports          Sport[]       @relation("coach_sports")
   planTemplates  PlanTemplate[] @relation("coach_plan_templates")
+  warmupTemplates WarmupTemplate[] @relation("coach_warmup_templates")
   sessions       SessionInstance[]
   incidents      Incident[]
   weeklyReports  WeeklyReport[]
@@ -265,6 +267,7 @@ model Exercise {
   coachMembership   OrganizationMember? @relation("coach_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   muscleGroupRef    ExerciseMuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Restrict)
   planStrengthExercises PlanStrengthExercise[]
+  warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_exercise_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_exercise_coach_archived")
@@ -280,6 +283,7 @@ model CardioMethod {
   name              String              @db.VarChar(120)
   methodTypeId      String              @map("method_type_id") @db.Uuid
   description       String?
+  equipment         String?             @db.VarChar(120)
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   mediaType         String?             @map("media_type") @db.VarChar(40)
   youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
@@ -292,6 +296,7 @@ model CardioMethod {
   coachMembership   OrganizationMember? @relation("coach_cardio_methods", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   methodTypeRef     CardioMethodType    @relation(fields: [methodTypeId], references: [id], onDelete: Restrict)
   planCardioBlocks  PlanCardioBlock[]
+  warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_cardio_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_cardio_coach_archived")
@@ -335,6 +340,8 @@ model PlioExercise {
   coachMembershipId String?             @map("coach_membership_id") @db.Uuid
   name              String              @db.VarChar(120)
   description       String?
+  equipment         String?             @db.VarChar(120)
+  plioType          String?             @map("plio_type") @db.VarChar(30)
   notes             String?
   youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
@@ -345,6 +352,7 @@ model PlioExercise {
   organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember? @relation("coach_plio_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   planPlioBlocks    PlanPlioBlock[]
+  warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_plio_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plio_coach_archived")
@@ -358,7 +366,7 @@ model WarmupExercise {
   coachMembershipId String?             @map("coach_membership_id") @db.Uuid
   name              String              @db.VarChar(120)
   description       String?
-  notes             String?
+  mobilityType      String?             @map("mobility_type") @db.VarChar(30)
   youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   mediaType         String?             @map("media_type") @db.VarChar(40)
@@ -368,6 +376,7 @@ model WarmupExercise {
   organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember? @relation("coach_warmup_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   planWarmupBlocks  PlanWarmupBlock[]
+  warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_warmup_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_coach_archived")
@@ -420,6 +429,62 @@ model PlanTemplate {
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
   @@map("plan_template")
+}
+
+model WarmupTemplate {
+  id                String              @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope    @default(COACH)
+  organizationId    String?             @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  name              String              @db.VarChar(120)
+  templateVersion   Int                 @default(1) @map("template_version")
+  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
+  createdBy         String?             @map("created_by") @db.Uuid
+  updatedBy         String?             @map("updated_by") @db.Uuid
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember? @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  items             WarmupTemplateItem[]
+
+  @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_warmup_template_coach_archived")
+  @@index([organizationId, archivedAt], map: "idx_warmup_template_org_archived")
+  @@map("warmup_template")
+}
+
+model WarmupTemplateItem {
+  id                    String         @id @default(uuid()) @db.Uuid
+  templateId            String         @map("template_id") @db.Uuid
+  blockType             String         @map("block_type") @db.VarChar(20)
+  sortOrder             Int            @default(0) @map("sort_order")
+  displayName           String         @map("display_name") @db.VarChar(120)
+  exerciseLibraryId     String?        @map("exercise_library_id") @db.Uuid
+  cardioMethodLibraryId String?        @map("cardio_method_library_id") @db.Uuid
+  plioExerciseLibraryId String?        @map("plio_exercise_library_id") @db.Uuid
+  warmupExerciseLibraryId String?      @map("warmup_exercise_library_id") @db.Uuid
+  setsPlanned           Int?           @map("sets_planned")
+  repsMin               Int?           @map("reps_min")
+  repsMax               Int?           @map("reps_max")
+  roundsPlanned         Int?           @map("rounds_planned")
+  workSeconds           Int?           @map("work_seconds")
+  restSeconds           Int?           @map("rest_seconds")
+  targetRpe             Int?           @map("target_rpe")
+  targetRir             Int?           @map("target_rir")
+  durationMinutes       Int?           @map("duration_minutes")
+  notes                 String?
+  metadataJson          Json?          @map("metadata_json")
+  archivedAt            DateTime?      @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  template              WarmupTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  libraryExercise       Exercise?      @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryCardioMethod   CardioMethod?  @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
+  libraryPlioExercise   PlioExercise?  @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryWarmupExercise WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+
+  @@index([templateId, archivedAt], map: "idx_warmup_template_item_template_archived")
+  @@map("warmup_template_item")
 }
 
 model PlanDay {

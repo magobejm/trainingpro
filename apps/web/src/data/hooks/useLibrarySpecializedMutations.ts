@@ -3,9 +3,11 @@ import { deleteItem, updateItem, useAuth, writeItem } from './library-mutations.
 
 export type PlioExerciseWriteInput = {
   description?: string | null;
+  equipment?: string | null;
   mediaType?: string | null;
   mediaUrl?: string | null;
   name: string;
+  plioType?: string | null;
   notes?: string | null;
   youtubeUrl?: string | null;
 };
@@ -14,8 +16,8 @@ export type WarmupExerciseWriteInput = {
   description?: string | null;
   mediaType?: string | null;
   mediaUrl?: string | null;
+  mobilityType?: string | null;
   name: string;
-  notes?: string | null;
   youtubeUrl?: string | null;
 };
 

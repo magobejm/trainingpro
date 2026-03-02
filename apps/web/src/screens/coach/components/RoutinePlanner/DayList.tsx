@@ -1,6 +1,7 @@
 import React from 'react';
 import type { DraftDay, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import { RoutineDayCard } from '../RoutineDayCard';
+import type { PlannerLabels } from './planner-labels';
 
 export interface DraftStateHandlers {
   onOpenPicker: (dayIdx: number, type: BlockType) => void;
@@ -19,10 +20,11 @@ interface DayListProps {
   setAddIdx: (i: number | null) => void;
   draftState: DraftStateHandlers;
   isReadOnly: boolean;
+  labels?: PlannerLabels;
 }
 
 export function DayList(props: DayListProps) {
-  const { days, activeDayIdx, addIdx, setAddIdx, draftState, isReadOnly } = props;
+  const { days, activeDayIdx, addIdx, setAddIdx, draftState, isReadOnly, labels } = props;
   const dayLabels = days.map((day) => day.title);
   return (
     <>
@@ -38,6 +40,7 @@ export function DayList(props: DayListProps) {
           isReadOnly={isReadOnly}
           key={day.id}
           setAddIdx={setAddIdx}
+          labels={labels}
         />
       ))}
     </>
@@ -54,6 +57,7 @@ interface ItemProps {
   draftState: DraftStateHandlers;
   isReadOnly: boolean;
   setAddIdx: (i: number | null) => void;
+  labels?: PlannerLabels;
 }
 
 const DayListItem = (p: ItemProps) => (
@@ -76,5 +80,6 @@ const DayListItem = (p: ItemProps) => (
     onSetAddBlockDayIdx={p.setAddIdx}
     onUpdateBlockField={(bid, f, v) => p.draftState.onUpdateBlockField(p.idx, bid, f, v)}
     readOnly={p.isReadOnly}
+    labels={p.labels}
   />
 );

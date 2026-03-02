@@ -21,13 +21,20 @@ import { PlansRulesService } from './domain/plans-rules.service';
 import { PlansRepositoryPrisma } from './infra/prisma/plans.repository.prisma';
 import { PlansCardioController } from './presentation/controllers/plans-cardio.controller';
 import { PlansRoutineController } from './presentation/controllers/plans-routine.controller';
+import { PlansWarmupController } from './presentation/controllers/plans-warmup.controller';
 import { PlansController } from './presentation/controllers/plans.controller';
 import { PlanAccessPolicy } from './domain/policies/plan-access.policy';
 import { PlanOwnershipGuard } from './presentation/guards/plan-ownership.guard';
+import { WarmupTemplatesService } from './application/services/warmup-templates.service';
 
 @Module({
   imports: [AuthModule],
-  controllers: [PlansController, PlansCardioController, PlansRoutineController],
+  controllers: [
+    PlansController,
+    PlansCardioController,
+    PlansRoutineController,
+    PlansWarmupController,
+  ],
   providers: [
     CreateCardioTemplateUseCase,
     CreateRoutineTemplateUseCase,
@@ -47,6 +54,7 @@ import { PlanOwnershipGuard } from './presentation/guards/plan-ownership.guard';
     CardioRulesService,
     PlansRulesService,
     PlansRepositoryPrisma,
+    WarmupTemplatesService,
     PlanAccessPolicy,
     PlanOwnershipGuard,
     {

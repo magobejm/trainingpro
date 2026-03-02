@@ -11,7 +11,7 @@ interface AddBlockSectionProps {
 }
 
 export function AddBlockSection({ isAdding, onAdd, onCancel, t }: AddBlockSectionProps) {
-  const types: BlockType[] = ['warmup', 'strength', 'cardio', 'plio', 'sport'];
+  const types: BlockType[] = ['warmup', 'strength', 'cardio', 'plio'];
   if (isAdding) {
     return (
       <View style={s.blockTypeRow}>

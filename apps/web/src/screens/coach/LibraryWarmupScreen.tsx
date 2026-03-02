@@ -9,12 +9,13 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { FilterChips } from '@trainerpro/ui';
 import { SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
-import { PlioWarmupBaseFields } from './components/LibraryCreateFormFields';
+import { MobilityBaseFields } from './components/LibraryCreateFormFields';
 import {
   useCreateWarmupExerciseMutation,
   useDeleteWarmupExerciseMutation,
@@ -44,6 +45,7 @@ const WARMUP_PLACEHOLDER = resolvePlaceholder();
 export function LibraryWarmupScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [expandedId, setExpandedId] = useState('');
 
   // State for CRUD
@@ -55,8 +57,16 @@ export function LibraryWarmupScreen(): React.JSX.Element {
   const [form, setForm] = useState<WarmupCreateFormState>(EMPTY_WARMUP_FORM);
   const [editingItem, setEditingItem] = useState<WarmupExerciseLibraryItem | null>(null);
 
-  const { data, isLoading } = useLibraryWarmupExercisesQuery({ query });
+  const mobilityType = activeFilter === 'all' ? undefined : activeFilter;
+  const { data, isLoading } = useLibraryWarmupExercisesQuery({ mobilityType, query });
   const items = data ?? [];
+  const chips = [
+    { id: 'all', label: t('coach.library.cardio.filters.all') },
+    { id: 'undefined', label: t('coach.library.type.undefined') },
+    { id: 'completo', label: t('coach.library.mobility.type.completo') },
+    { id: 'parcial', label: t('coach.library.mobility.type.parcial') },
+    { id: 'minimo', label: t('coach.library.mobility.type.minimo') },
+  ];
 
   const createMutation = useCreateWarmupExerciseMutation();
   const updateMutation = useUpdateWarmupExerciseMutation();
@@ -76,8 +86,8 @@ export function LibraryWarmupScreen(): React.JSX.Element {
     setForm({
       description: item.description ?? '',
       mediaUrl: item.media?.url ?? '',
+      mobilityType: item.mobilityType ?? 'undefined',
       name: item.name,
-      notes: item.notes ?? '',
       youtubeUrl: item.youtubeUrl ?? '',
     });
     setEditError('');
@@ -119,8 +129,8 @@ export function LibraryWarmupScreen(): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.title}>{t('coach.library.menu.warmup')}</Text>
-      <Text style={styles.subtitle}>{t('coach.library.exercises.subtitle')}</Text>
+      <Text style={styles.title}>{t('coach.library.menu.mobility')}</Text>
+      <Text style={styles.subtitle}>{t('coach.library.mobility.subtitle')}</Text>
 
       <View style={styles.card}>
         <SearchBar
@@ -128,13 +138,14 @@ export function LibraryWarmupScreen(): React.JSX.Element {
           placeholder={t('coach.library.exercises.searchPlaceholder')}
           value={query}
         />
+        <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
       </View>
 
       <LibraryCreateCta
         buttonLabel={t('coach.library.actions.create')}
         onPress={onOpenCreate}
-        subtitle={t('coach.library.exercises.cta.subtitle')}
-        title={t('coach.library.exercises.cta.title')}
+        subtitle={t('coach.library.mobility.subtitle')}
+        title={t('coach.library.mobility.title')}
       />
 
       <LibraryCreateModal
@@ -148,7 +159,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         title={t('coach.library.exercises.modal.title')}
         visible={createModalVisible}
       >
-        <PlioWarmupBaseFields
+        <MobilityBaseFields
           form={form as unknown as Record<string, string>}
           setField={setField}
           t={t}
@@ -175,7 +186,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         title={t('coach.library.exercises.editModal.title')}
         visible={editModalVisible}
       >
-        <PlioWarmupBaseFields
+        <MobilityBaseFields
           form={form as unknown as Record<string, string>}
           setField={setField}
           t={t}
@@ -211,7 +222,16 @@ export function LibraryWarmupScreen(): React.JSX.Element {
             <View key={item.id} style={gridStyles.gridItem}>
               <LibraryItemCard
                 deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                description={item.description || item.notes}
+                description={item.description}
+                descriptionLabelKey="coach.library.cardio.detail.description"
+                detailRows={[
+                  {
+                    labelKey: 'coach.library.mobility.detail.type',
+                    value: item.mobilityType
+                      ? t(`coach.library.mobility.type.${item.mobilityType}`)
+                      : null,
+                  },
+                ]}
                 expanded={expandedId === item.id}
                 imageUrl={item.media?.url || WARMUP_PLACEHOLDER}
                 name={item.name}
@@ -219,6 +239,11 @@ export function LibraryWarmupScreen(): React.JSX.Element {
                 onEdit={() => onOpenEdit(item)}
                 onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
                 scope={item.scope}
+                subtitle={
+                  item.mobilityType
+                    ? t(`coach.library.mobility.type.${item.mobilityType}`)
+                    : t('coach.library.type.undefined')
+                }
                 t={t}
                 youtubeUrl={item.youtubeUrl}
               />

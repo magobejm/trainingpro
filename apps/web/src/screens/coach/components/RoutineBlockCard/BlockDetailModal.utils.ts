@@ -83,7 +83,7 @@ export const mapPlio = (item: PlioExerciseLibraryItem): DetailItem => ({
 export const mapWarmup = (item: WarmupExerciseLibraryItem): DetailItem => ({
   name: item.name,
   description: item.description ?? null,
-  notes: item.notes ?? null,
+  notes: null,
   imageUrl: item.media?.url ?? null,
   youtubeUrl: item.youtubeUrl ?? null,
 });

@@ -31,6 +31,7 @@ export type ExerciseLibraryItem = {
 export type CardioMethodLibraryItem = {
   coachMembershipId: null | string;
   description: null | string;
+  equipment: null | string;
   id: string;
   media: LibraryMedia;
   methodType: string;
@@ -44,9 +45,11 @@ export type PlioExerciseLibraryItem = {
   coachMembershipId: null | string;
   createdAt: Date;
   description: null | string;
+  equipment: null | string;
   id: string;
   media: LibraryMedia;
   name: string;
+  plioType: null | string;
   notes: null | string;
   scope: Scope;
   updatedAt: Date;
@@ -59,8 +62,8 @@ export type WarmupExerciseLibraryItem = {
   description: null | string;
   id: string;
   media: LibraryMedia;
+  mobilityType: null | string;
   name: string;
-  notes: null | string;
   scope: Scope;
   updatedAt: Date;
   youtubeUrl: null | string;
@@ -145,6 +148,7 @@ export function useLibraryFoodsQuery(filter: {
 }
 
 export function useLibraryPlioExercisesQuery(filter: {
+  plioType?: string;
   query?: string;
 }): UseQueryResult<PlioExerciseLibraryItem[], Error> {
   const auth = useAuth();
@@ -156,6 +160,7 @@ export function useLibraryPlioExercisesQuery(filter: {
 }
 
 export function useLibraryWarmupExercisesQuery(filter: {
+  mobilityType?: string;
   query?: string;
 }): UseQueryResult<WarmupExerciseLibraryItem[], Error> {
   const auth = useAuth();

@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+
+const PLIO_TYPES = ['explosivo', 'relajado', 'undefined'] as const;
 
 export class CreatePlioExerciseDto {
   @IsNotEmpty()
@@ -9,6 +11,16 @@ export class CreatePlioExerciseDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  equipment?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(PLIO_TYPES)
+  plioType?: string;
 
   @IsOptional()
   @IsString()

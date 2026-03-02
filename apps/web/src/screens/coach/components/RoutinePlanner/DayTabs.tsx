@@ -9,9 +9,18 @@ interface DayTabsProps {
   onAdd: () => void;
   readOnly: boolean;
   t: (k: string) => string;
+  addLabelKey?: string;
 }
 
-export function DayTabs({ days, activeIdx, onSelect, onAdd, readOnly, t }: DayTabsProps) {
+export function DayTabs({
+  days,
+  activeIdx,
+  onSelect,
+  onAdd,
+  readOnly,
+  t,
+  addLabelKey = 'coach.routine.addDay',
+}: DayTabsProps) {
   return (
     <View style={s.dayTabRow}>
       {days.map((day, idx) => (
@@ -25,7 +34,7 @@ export function DayTabs({ days, activeIdx, onSelect, onAdd, readOnly, t }: DayTa
       ))}
       {!readOnly && (
         <Pressable onPress={onAdd} style={s.addDayBtn}>
-          <Text style={s.addDayText}>{`+ ${t('coach.routine.addDay')}`}</Text>
+          <Text style={s.addDayText}>{`+ ${t(addLabelKey)}`}</Text>
         </Pressable>
       )}
     </View>

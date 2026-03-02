@@ -56,16 +56,24 @@ export class LibrarySpecializedController {
   ) {}
 
   @Get('plyometrics')
-  async listPlioExercises(@Query('query') query: string, @Req() request: HttpAuthRequest) {
+  async listPlioExercises(
+    @Query('query') query: string,
+    @Query('plioType') plioType: string,
+    @Req() request: HttpAuthRequest,
+  ) {
     const auth = readAuthContext(request);
-    const items = await this.listPlioExercisesUseCase.execute(auth, { query });
+    const items = await this.listPlioExercisesUseCase.execute(auth, { plioType, query });
     return { items: items.map(toOutput) };
   }
 
   @Get('warmup')
-  async listWarmupExercises(@Query('query') query: string, @Req() request: HttpAuthRequest) {
+  async listWarmupExercises(
+    @Query('query') query: string,
+    @Query('mobilityType') mobilityType: string,
+    @Req() request: HttpAuthRequest,
+  ) {
     const auth = readAuthContext(request);
-    const items = await this.listWarmupExercisesUseCase.execute(auth, { query });
+    const items = await this.listWarmupExercisesUseCase.execute(auth, { mobilityType, query });
     return { items: items.map(toOutput) };
   }
 

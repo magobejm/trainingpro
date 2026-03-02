@@ -78,6 +78,10 @@ function CardDetailBox(props: DetailBoxProps) {
         label={props.t('coach.library.cardio.detail.description')}
         value={props.item.description ?? props.t('coach.library.cardio.detail.empty')}
       />
+      <DetailLine
+        label={props.t('coach.library.exercises.detail.equipment')}
+        value={props.item.equipment ?? props.t('coach.library.cardio.detail.empty')}
+      />
       <LibraryMediaViewer
         imageUrl={props.detailImageUrl}
         t={props.t}

@@ -11,6 +11,7 @@ import { LibraryMediaFields } from './LibraryMediaFields';
 
 type FormState = {
   description: string;
+  equipment: string;
   imageUrl: string;
   methodTypeId: string;
   name: string;

@@ -5,6 +5,7 @@ export class CreateCardioMethodDto {
   static schema = z
     .object({
       description: z.string().max(2000).nullable().optional(),
+      equipment: z.string().max(120).nullable().optional(),
       mediaType: z.string().max(40).nullable().optional(),
       mediaUrl: z.string().url().max(500).nullable().optional(),
       methodTypeId: z.string().uuid(),
@@ -22,6 +23,7 @@ export class CreateCardioMethodDto {
     });
 
   description?: null | string;
+  equipment?: null | string;
   mediaType?: null | string;
   mediaUrl?: null | string;
   methodTypeId!: string;

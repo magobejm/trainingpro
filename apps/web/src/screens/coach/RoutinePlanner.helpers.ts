@@ -6,17 +6,24 @@ let dayIdCounter = Date.now();
 export const nextBlockId = () => `b-${++blockIdCounter}`;
 export const nextDayId = () => `d-${++dayIdCounter}`;
 
-export function createEmptyDay(index: number, t: (k: string) => string): DraftDay {
+export function createEmptyDay(
+  index: number,
+  t: (k: string) => string,
+  prefixKey = 'coach.routine.dayPrefix',
+): DraftDay {
   return {
     blocks: [],
     id: nextDayId(),
-    title: `${t('coach.routine.dayPrefix')} ${index}`,
+    title: `${t(prefixKey)} ${index}`,
   };
 }
 
-export function createEmptyDraft(t: (k: string) => string): DraftState {
+export function createEmptyDraft(
+  t: (k: string) => string,
+  prefixKey = 'coach.routine.dayPrefix',
+): DraftState {
   return {
-    days: [createEmptyDay(1, t)],
+    days: [createEmptyDay(1, t, prefixKey)],
     name: '',
   };
 }
@@ -39,53 +46,135 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
   return base;
 }
 
+function parseRange(value?: string, fallback?: number): { max: null | number; min: null | number } {
+  const raw = value?.trim();
+  if (raw) {
+    const parts = raw.split('-').map((item) => Number(item.trim()));
+    const first = parts[0] ?? Number.NaN;
+    const second = parts[1] ?? Number.NaN;
+    if (Number.isFinite(first) && Number.isFinite(second)) {
+      const low = Math.min(first, second);
+      const high = Math.max(first, second);
+      return { max: high, min: low };
+    }
+    if (Number.isFinite(first)) {
+      return { max: first, min: first };
+    }
+  }
+  const one = fallback ?? null;
+  return { max: one, min: one };
+}
+
+function parseCsvNumbers(value?: string): number[] {
+  if (!value?.trim()) {
+    return [];
+  }
+  return value
+    .split(',')
+    .map((item) => Number(item.trim()))
+    .filter((item) => Number.isFinite(item) && item >= 0);
+}
+
+function appendMeta(
+  notes: string | undefined,
+  meta: Record<string, null | number | string | undefined>,
+) {
+  const safe = Object.fromEntries(
+    Object.entries(meta).filter(
+      ([, value]) => value !== undefined && value !== null && value !== '',
+    ),
+  );
+  if (Object.keys(safe).length === 0) {
+    return notes ?? '';
+  }
+  const prefix = notes?.trim() ? `${notes.trim()}\n` : '';
+  return `${prefix}[meta] ${JSON.stringify(safe)}`;
+}
+
 const mapStrength = (b: DraftBlock, si: number) => ({
+  ...parseStrengthValues(b),
   displayName: b.displayName,
   exerciseLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   sortOrder: si,
-  setsPlanned: b.setsPlanned ?? 3,
-  repsPlanned: b.repsPlanned ?? 10,
-  targetRir: b.targetRir ?? null,
-  targetRpe: b.targetRpe ?? null,
-  restSeconds: b.restSeconds ?? 60,
-  notes: b.notes ?? '',
+  notes: appendMeta(b.notes, { repsPorSerie: b.repsPerSeries }),
 });
 
+function parseStrengthValues(b: DraftBlock) {
+  const range = parseRange(b.repsRange, b.repsPlanned ?? 10);
+  const perSeriesWeights = parseCsvNumbers(b.weightPerSeriesKg);
+  const sharedWeight = perSeriesWeights[0] ?? null;
+  const rangeList = perSeriesWeights.map((value) => ({ maxKg: value, minKg: value }));
+  return {
+    perSetWeightRanges: rangeList.length > 1 ? rangeList : [],
+    repsMax: range.max,
+    repsMin: range.min,
+    restSeconds: b.restSeconds ?? 60,
+    setsPlanned: b.setsPlanned ?? 3,
+    targetRir: b.targetRir ?? null,
+    targetRpe: b.targetRpe ?? null,
+    weightRangeMaxKg: sharedWeight,
+    weightRangeMinKg: sharedWeight,
+  };
+}
+
 const mapCardio = (b: DraftBlock, si: number) => ({
+  ...parseCardioValues(b),
   displayName: b.displayName,
   cardioMethodLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'work', mode: 'COACH_INPUT' as const }],
   methodType: 'interval',
-  restSeconds: b.restSeconds ?? 30,
-  roundsPlanned: b.roundsPlanned ?? 3,
   sortOrder: si,
-  targetRpe: b.targetRpe ?? null,
-  workSeconds: b.workSeconds ?? 30,
-  notes: b.notes ?? '',
+  notes: appendMeta(b.notes, {
+    trabajo: b.cardioWorkText,
+    intensidadFcMax: b.intensityFcMax,
+    intensidadFcReserva: b.intensityFcReserve,
+    pulsaciones: b.heartRate,
+  }),
 });
+
+function parseCardioValues(b: DraftBlock) {
+  return {
+    restSeconds: b.restSeconds ?? 30,
+    roundsPlanned: b.roundsPlanned ?? 3,
+    targetDistanceMeters: null,
+    targetRpe: b.targetRpe ?? null,
+    workSeconds: b.totalTimeSeconds ?? b.workSeconds ?? 30,
+  };
+}
 
 const mapPlio = (b: DraftBlock, si: number) => ({
+  ...parsePlioValues(b),
   displayName: b.displayName,
   plioExerciseLibraryId: b.libraryId ?? null,
-  restSeconds: b.restSeconds ?? 30,
-  roundsPlanned: b.roundsPlanned ?? 3,
   sortOrder: si,
-  targetRpe: b.targetRpe ?? null,
-  workSeconds: b.workSeconds ?? 30,
-  notes: b.notes ?? '',
+  notes: appendMeta(b.notes, { pesoKg: b.weightKg }),
 });
 
+function parsePlioValues(b: DraftBlock) {
+  return {
+    restSeconds: b.restSeconds ?? 30,
+    roundsPlanned: b.roundsPlanned ?? 3,
+    targetRpe: b.targetRpe ?? null,
+    workSeconds: b.workSeconds ?? 30,
+  };
+}
+
 const mapWarmup = (b: DraftBlock, si: number) => ({
+  ...parseWarmupValues(b),
   displayName: b.displayName,
   warmupExerciseLibraryId: b.libraryId ?? null,
-  restSeconds: b.restSeconds ?? 30,
-  roundsPlanned: b.roundsPlanned ?? 3,
   sortOrder: si,
-  targetRpe: b.targetRpe ?? null,
-  workSeconds: b.workSeconds ?? 30,
   notes: b.notes ?? '',
 });
+function parseWarmupValues(b: DraftBlock) {
+  return {
+    restSeconds: b.restSeconds ?? 30,
+    roundsPlanned: b.roundsPlanned ?? 3,
+    targetRpe: b.targetRpe ?? null,
+    workSeconds: b.workSeconds ?? 30,
+  };
+}
 
 export function buildRoutinePayload(draft: DraftState) {
   return {

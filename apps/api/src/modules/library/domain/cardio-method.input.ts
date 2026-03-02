@@ -5,6 +5,7 @@ export type CardioMethodFilter = {
 
 export type CardioMethodWriteInput = {
   description?: null | string;
+  equipment?: null | string;
   mediaType?: null | string;
   mediaUrl?: null | string;
   youtubeUrl?: null | string;

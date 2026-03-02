@@ -4,6 +4,7 @@ export type CardioMethodLibraryItem = {
   coachMembershipId: null | string;
   createdAt: Date;
   description: null | string;
+  equipment: null | string;
   id: string;
   media: LibraryMedia;
   youtubeUrl: null | string;

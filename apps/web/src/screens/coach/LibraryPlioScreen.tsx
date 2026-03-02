@@ -9,12 +9,13 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { FilterChips } from '@trainerpro/ui';
 import { SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
-import { PlioWarmupBaseFields } from './components/LibraryCreateFormFields';
+import { PlioBaseFields } from './components/LibraryCreateFormFields';
 import {
   useCreatePlioExerciseMutation,
   useDeletePlioExerciseMutation,
@@ -44,6 +45,7 @@ const PLIO_PLACEHOLDER = resolvePlaceholder();
 export function LibraryPlioScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
   const [expandedId, setExpandedId] = useState('');
 
   // State for CRUD
@@ -55,8 +57,15 @@ export function LibraryPlioScreen(): React.JSX.Element {
   const [form, setForm] = useState<PlioCreateFormState>(EMPTY_PLIO_FORM);
   const [editingItem, setEditingItem] = useState<PlioExerciseLibraryItem | null>(null);
 
-  const { data, isLoading } = useLibraryPlioExercisesQuery({ query });
+  const plioType = activeFilter === 'all' ? undefined : activeFilter;
+  const { data, isLoading } = useLibraryPlioExercisesQuery({ plioType, query });
   const items = data ?? [];
+  const chips = [
+    { id: 'all', label: t('coach.library.cardio.filters.all') },
+    { id: 'undefined', label: t('coach.library.type.undefined') },
+    { id: 'explosivo', label: t('coach.library.plio.type.explosivo') },
+    { id: 'relajado', label: t('coach.library.plio.type.relajado') },
+  ];
 
   const createMutation = useCreatePlioExerciseMutation();
   const updateMutation = useUpdatePlioExerciseMutation();
@@ -75,9 +84,10 @@ export function LibraryPlioScreen(): React.JSX.Element {
     setEditingItem(item);
     setForm({
       description: item.description ?? '',
+      equipment: item.equipment ?? '',
       mediaUrl: item.media?.url ?? '',
       name: item.name,
-      notes: item.notes ?? '',
+      plioType: item.plioType ?? 'undefined',
       youtubeUrl: item.youtubeUrl ?? '',
     });
     setEditError('');
@@ -128,6 +138,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
           placeholder={t('coach.library.exercises.searchPlaceholder')}
           value={query}
         />
+        <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
       </View>
 
       <LibraryCreateCta
@@ -148,7 +159,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
         title={t('coach.library.exercises.modal.title')}
         visible={createModalVisible}
       >
-        <PlioWarmupBaseFields
+        <PlioBaseFields
           form={form as unknown as Record<string, string>}
           setField={setField}
           t={t}
@@ -175,7 +186,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
         title={t('coach.library.exercises.editModal.title')}
         visible={editModalVisible}
       >
-        <PlioWarmupBaseFields
+        <PlioBaseFields
           form={form as unknown as Record<string, string>}
           setField={setField}
           t={t}
@@ -212,6 +223,19 @@ export function LibraryPlioScreen(): React.JSX.Element {
               <LibraryItemCard
                 deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
                 description={item.description || item.notes}
+                descriptionLabelKey="coach.library.cardio.detail.description"
+                detailRows={[
+                  {
+                    labelKey: 'coach.library.plio.detail.type',
+                    value: item.plioType ? t(`coach.library.plio.type.${item.plioType}`) : null,
+                  },
+                  { labelKey: 'coach.library.exercises.detail.equipment', value: item.equipment },
+                ]}
+                subtitle={`${item.equipment ?? ''}${item.equipment ? ' · ' : ''}${
+                  item.plioType
+                    ? t(`coach.library.plio.type.${item.plioType}`)
+                    : t('coach.library.type.undefined')
+                }`}
                 expanded={expandedId === item.id}
                 imageUrl={item.media?.url || PLIO_PLACEHOLDER}
                 name={item.name}

@@ -33,17 +33,25 @@ export function buildFoodWhere(coachMembershipId: string, filter: FoodFilter) {
 }
 
 export function buildPlioWhere(coachMembershipId: string, filter: PlioExerciseFilter) {
-  return {
+  const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
     name: containsFilter(filter.query),
-  } satisfies Prisma.PlioExerciseWhereInput;
+  } as Record<string, unknown>;
+  if (filter.plioType?.trim()) {
+    base.plioType = equalsFilter(filter.plioType);
+  }
+  return base as Prisma.PlioExerciseWhereInput;
 }
 
 export function buildWarmupWhere(coachMembershipId: string, filter: WarmupExerciseFilter) {
-  return {
+  const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
     name: containsFilter(filter.query),
-  } satisfies Prisma.WarmupExerciseWhereInput;
+  } as Record<string, unknown>;
+  if (filter.mobilityType?.trim()) {
+    base.mobilityType = equalsFilter(filter.mobilityType);
+  }
+  return base as Prisma.WarmupExerciseWhereInput;
 }
 
 export function buildSportWhere(coachMembershipId: string, query?: string) {

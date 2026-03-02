@@ -8,6 +8,8 @@ import { readFrontEnv } from '../../../data/env';
 type Props = {
   deleting?: boolean;
   description?: string | null;
+  descriptionLabelKey?: string;
+  detailRows?: ReadonlyArray<{ labelKey: string; value: null | string | undefined }>;
   expanded: boolean;
   imageUrl?: string | null;
   name: string;
@@ -65,6 +67,8 @@ function CardInfo({
 type CardBodyProps = {
   name: string;
   description: string | null | undefined;
+  descriptionLabelKey?: string;
+  detailRows?: ReadonlyArray<{ labelKey: string; value: null | string | undefined }>;
   coachOwned: boolean;
   expanded: boolean;
   onDelete?: () => void;
@@ -89,6 +93,8 @@ function CardBody(props: CardBodyProps) {
       />
       <CardDetails
         description={props.description}
+        descriptionLabelKey={props.descriptionLabelKey}
+        detailRows={props.detailRows}
         expanded={props.expanded}
         imageUrl={props.detailImageUrl}
         t={props.t}
@@ -115,7 +121,9 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
       <CardBody
         coachOwned={coachOwned}
         description={props.description}
+        descriptionLabelKey={props.descriptionLabelKey}
         detailImageUrl={detailImageUrl}
+        detailRows={props.detailRows}
         expanded={props.expanded}
         name={props.name}
         onDelete={props.onDelete}

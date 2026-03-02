@@ -11,7 +11,6 @@ import { LibraryExercisesScreen } from './screens/coach/LibraryExercisesScreen';
 import { LibraryFoodsScreen } from './screens/coach/LibraryFoodsScreen';
 import { LibraryPlioScreen } from './screens/coach/LibraryPlioScreen';
 import { LibraryWarmupScreen } from './screens/coach/LibraryWarmupScreen';
-import { LibrarySportsScreen } from './screens/coach/LibrarySportsScreen';
 import { PlanBuilderCardioScreen } from './screens/coach/PlanBuilderCardioScreen';
 import { PlanBuilderDietScreen } from './screens/coach/PlanBuilderDietScreen';
 import { PlanBuilderStrengthScreen } from './screens/coach/PlanBuilderStrengthScreen';
@@ -21,6 +20,7 @@ import { IncidentsScreen } from './screens/coach/IncidentsScreen';
 import { ChatScreen } from './screens/coach/ChatScreen';
 import { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';
 import { RoutinePlannerScreen } from './screens/coach/RoutinePlannerScreen';
+import { WarmupPlannerScreen } from './screens/coach/WarmupPlannerScreen';
 import { useAuthStore } from './store/auth.store';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
@@ -168,8 +168,8 @@ function resolveCoachLibraryScreen(route: ShellRoute): null | React.JSX.Element 
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.warmup') return <LibraryWarmupScreen />;
-  if (route === 'coach.library.sports') return <LibrarySportsScreen />;
   if (route === 'coach.routine.planner') return <RoutinePlannerScreen />;
+  if (route === 'coach.warmup.planner') return <WarmupPlannerScreen />;
   return null;
 }
 
@@ -215,9 +215,9 @@ function resolveNavItems(role: 'admin' | 'client' | 'coach' | any): ShellNavItem
     { icon: '🏃', id: 'coach.library.cardio', labelKey: 'app.nav.coach.library.cardio' },
     { icon: '🪂', id: 'coach.library.plyometrics', labelKey: 'app.nav.coach.library.plyometrics' },
     { icon: '🤸', id: 'coach.library.warmup', labelKey: 'app.nav.coach.library.warmup' },
-    { icon: '⚽', id: 'coach.library.sports', labelKey: 'app.nav.coach.library.sports' },
     { icon: '🥗', id: 'coach.library.foods', labelKey: 'app.nav.coach.library.foods' },
     { icon: '📋', id: 'coach.routine.planner', labelKey: 'app.nav.coach.routine.planner' },
+    { icon: '🔥', id: 'coach.warmup.planner', labelKey: 'app.nav.coach.warmup.planner' },
     { icon: '🧩', id: 'coach.builder.strength', labelKey: 'app.nav.coach.builder.strength' },
     { icon: '⏱️', id: 'coach.builder.cardio', labelKey: 'app.nav.coach.builder.cardio' },
     { icon: '🥙', id: 'coach.builder.diet', labelKey: 'app.nav.coach.builder.diet' },

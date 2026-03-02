@@ -1,4 +1,6 @@
-import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
+
+const MOBILITY_TYPES = ['completo', 'parcial', 'minimo', 'undefined'] as const;
 
 export class CreateWarmupExerciseDto {
   @IsNotEmpty()
@@ -12,7 +14,8 @@ export class CreateWarmupExerciseDto {
 
   @IsOptional()
   @IsString()
-  notes?: string;
+  @IsIn(MOBILITY_TYPES)
+  mobilityType?: string;
 
   @IsOptional()
   @IsString()

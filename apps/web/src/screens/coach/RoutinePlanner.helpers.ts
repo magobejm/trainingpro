@@ -1,4 +1,8 @@
 import type { BlockType, DraftBlock, DraftDay, DraftState } from './RoutinePlanner.types';
+import {
+  mapTemplateBlock,
+  mapWarmupTemplateItemsToBlocks as mapWarmupTemplateItemsToBlocksImpl,
+} from './RoutinePlanner.template-mapper';
 
 let blockIdCounter = Date.now();
 let dayIdCounter = Date.now();
@@ -148,7 +152,11 @@ const mapPlio = (b: DraftBlock, si: number) => ({
   displayName: b.displayName,
   plioExerciseLibraryId: b.libraryId ?? null,
   sortOrder: si,
-  notes: appendMeta(b.notes, { pesoKg: b.weightKg }),
+  notes: appendMeta(b.notes, {
+    pesoKg: b.weightKg,
+    rangoReps: b.repsRange,
+    repeticiones: b.repsPlanned,
+  }),
 });
 
 function parsePlioValues(b: DraftBlock) {
@@ -165,7 +173,10 @@ const mapWarmup = (b: DraftBlock, si: number) => ({
   displayName: b.displayName,
   warmupExerciseLibraryId: b.libraryId ?? null,
   sortOrder: si,
-  notes: b.notes ?? '',
+  notes: appendMeta(b.notes, {
+    rangoReps: b.repsRange,
+    repeticiones: b.repsPlanned,
+  }),
 });
 function parseWarmupValues(b: DraftBlock) {
   return {
@@ -221,19 +232,6 @@ interface TemplateData {
   days: TemplateDayData[];
 }
 
-/** Maps the per-type FK field name to the generic `libraryId` on DraftBlock. */
-function extractLibraryId(type: BlockType, item: TemplateBlockData): string | undefined {
-  const fieldMap: Record<BlockType, string> = {
-    strength: 'exerciseLibraryId',
-    cardio: 'cardioMethodLibraryId',
-    plio: 'plioExerciseLibraryId',
-    warmup: 'warmupExerciseLibraryId',
-    sport: 'sportLibraryId',
-  };
-  const val = item[fieldMap[type]];
-  return typeof val === 'string' ? val : undefined;
-}
-
 function mapBlocksFromTemplate(d: TemplateDayData): DraftBlock[] {
   const types: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport'];
   const keys: (keyof TemplateDayData)[] = [
@@ -249,17 +247,17 @@ function mapBlocksFromTemplate(d: TemplateDayData): DraftBlock[] {
     const type = types[idx] as BlockType;
     const items = d[key] as TemplateBlockData[] | undefined;
     (items ?? []).forEach((item) => {
-      const libraryId = extractLibraryId(type, item);
-      blocks.push({
-        ...createBlock(type, item.displayName),
-        ...item,
-        type,
-        ...(libraryId ? { libraryId } : {}),
-      } as DraftBlock);
+      blocks.push(mapTemplateBlock(type, item, createBlock));
     });
   });
 
   return blocks.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+}
+
+export function mapWarmupTemplateItemsToBlocks(
+  items: Array<{ blockType: 'cardio' | 'mobility' | 'plio' | 'strength'; [key: string]: unknown }>,
+): DraftBlock[] {
+  return mapWarmupTemplateItemsToBlocksImpl(items, createBlock, nextBlockId);
 }
 
 export function mapTemplateToDraft(tpl: TemplateData): DraftState {

@@ -22,7 +22,9 @@ import { DeletePlioExerciseUseCase } from '../../application/use-cases/delete-pl
 import { DeleteWarmupExerciseUseCase } from '../../application/use-cases/delete-warmup-exercise.usecase';
 import { DeleteSportUseCase } from '../../application/use-cases/delete-sport.usecase';
 import { ListPlioExercisesUseCase } from '../../application/use-cases/list-plio-exercises.usecase';
+import { ListPlioTypesUseCase } from '../../application/use-cases/list-plio-types.usecase';
 import { ListWarmupExercisesUseCase } from '../../application/use-cases/list-warmup-exercises.usecase';
+import { ListMobilityTypesUseCase } from '../../application/use-cases/list-mobility-types.usecase';
 import { ListSportsUseCase } from '../../application/use-cases/list-sports.usecase';
 import { UpdatePlioExerciseUseCase } from '../../application/use-cases/update-plio-exercise.usecase';
 import { UpdateWarmupExerciseUseCase } from '../../application/use-cases/update-warmup-exercise.usecase';
@@ -48,6 +50,8 @@ export class LibrarySpecializedController {
     private readonly deleteWarmupExerciseUseCase: DeleteWarmupExerciseUseCase,
     private readonly deleteSportUseCase: DeleteSportUseCase,
     private readonly listPlioExercisesUseCase: ListPlioExercisesUseCase,
+    private readonly listPlioTypesUseCase: ListPlioTypesUseCase,
+    private readonly listMobilityTypesUseCase: ListMobilityTypesUseCase,
     private readonly listWarmupExercisesUseCase: ListWarmupExercisesUseCase,
     private readonly listSportsUseCase: ListSportsUseCase,
     private readonly updatePlioExerciseUseCase: UpdatePlioExerciseUseCase,
@@ -66,6 +70,13 @@ export class LibrarySpecializedController {
     return { items: items.map(toOutput) };
   }
 
+  @Get('catalogs/plio-types')
+  async listPlioTypes(@Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const items = await this.listPlioTypesUseCase.execute(auth);
+    return { items };
+  }
+
   @Get('warmup')
   async listWarmupExercises(
     @Query('query') query: string,
@@ -75,6 +86,13 @@ export class LibrarySpecializedController {
     const auth = readAuthContext(request);
     const items = await this.listWarmupExercisesUseCase.execute(auth, { mobilityType, query });
     return { items: items.map(toOutput) };
+  }
+
+  @Get('catalogs/mobility-types')
+  async listMobilityTypes(@Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const items = await this.listMobilityTypesUseCase.execute(auth);
+    return { items };
   }
 
   @Get('sports')

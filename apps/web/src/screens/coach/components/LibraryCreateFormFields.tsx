@@ -102,8 +102,10 @@ type BaseProps = {
 };
 
 type CatalogProps = {
+  mobilityTypeOptions?: Option[];
   methodTypeOptions?: Option[];
   muscleGroupOptions?: Option[];
+  plioTypeOptions?: Option[];
 };
 
 type FieldsProps = BaseProps & {
@@ -123,8 +125,10 @@ export function FoodCreateFields(props: BaseProps): React.JSX.Element {
   return <FormFields {...props} fields={FOOD_FIELDS} options={{}} />;
 }
 
-export function PlioBaseFields(props: BaseProps): React.JSX.Element {
-  return <FormFields {...props} fields={PLIO_FIELDS} options={{}} />;
+export function PlioBaseFields(
+  props: BaseProps & Pick<CatalogProps, 'plioTypeOptions'>,
+): React.JSX.Element {
+  return <FormFields {...props} fields={PLIO_FIELDS} options={props} />;
 }
 
 const MOBILITY_TYPE_FIELDS: FieldConfig[] = [
@@ -138,8 +142,10 @@ const MOBILITY_TYPE_FIELDS: FieldConfig[] = [
   },
 ];
 
-export function MobilityBaseFields(props: BaseProps): React.JSX.Element {
-  return <FormFields {...props} fields={MOBILITY_TYPE_FIELDS} options={{}} />;
+export function MobilityBaseFields(
+  props: BaseProps & Pick<CatalogProps, 'mobilityTypeOptions'>,
+): React.JSX.Element {
+  return <FormFields {...props} fields={MOBILITY_TYPE_FIELDS} options={props} />;
 }
 
 export function SportBaseFields(props: BaseProps): React.JSX.Element {
@@ -199,19 +205,14 @@ function readOptions(field: string, options: CatalogProps, t: Translator): Optio
     return options.methodTypeOptions ?? [];
   }
   if (field === 'mobilityType') {
-    return [
-      { id: 'undefined', label: t('coach.library.type.undefined') },
-      { id: 'completo', label: t('coach.library.mobility.type.completo') },
-      { id: 'parcial', label: t('coach.library.mobility.type.parcial') },
-      { id: 'minimo', label: t('coach.library.mobility.type.minimo') },
-    ];
+    return (
+      options.mobilityTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
+    );
   }
   if (field === 'plioType') {
-    return [
-      { id: 'undefined', label: t('coach.library.type.undefined') },
-      { id: 'explosivo', label: t('coach.library.plio.type.explosivo') },
-      { id: 'relajado', label: t('coach.library.plio.type.relajado') },
-    ];
+    return (
+      options.plioTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
+    );
   }
   return [];
 }

@@ -23,6 +23,7 @@ import {
 } from '../../data/hooks/useLibrarySpecializedMutations';
 import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
 import {
+  useLibraryMobilityTypesQuery,
   useLibraryWarmupExercisesQuery,
   type WarmupExerciseLibraryItem,
 } from '../../data/hooks/useLibraryQuery';
@@ -60,12 +61,13 @@ export function LibraryWarmupScreen(): React.JSX.Element {
   const mobilityType = activeFilter === 'all' ? undefined : activeFilter;
   const { data, isLoading } = useLibraryWarmupExercisesQuery({ mobilityType, query });
   const items = data ?? [];
+  const mobilityTypeCatalog = useLibraryMobilityTypesQuery().data ?? [];
   const chips = [
     { id: 'all', label: t('coach.library.cardio.filters.all') },
-    { id: 'undefined', label: t('coach.library.type.undefined') },
-    { id: 'completo', label: t('coach.library.mobility.type.completo') },
-    { id: 'parcial', label: t('coach.library.mobility.type.parcial') },
-    { id: 'minimo', label: t('coach.library.mobility.type.minimo') },
+    ...mobilityTypeCatalog.map((item) => ({
+      id: item.id,
+      label: toMobilityTypeLabel(item.id, item.label, t),
+    })),
   ];
 
   const createMutation = useCreateWarmupExerciseMutation();
@@ -161,6 +163,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
       >
         <MobilityBaseFields
           form={form as unknown as Record<string, string>}
+          mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
           setField={setField}
           t={t}
         />
@@ -188,6 +191,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
       >
         <MobilityBaseFields
           form={form as unknown as Record<string, string>}
+          mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
           setField={setField}
           t={t}
         />
@@ -228,7 +232,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
                   {
                     labelKey: 'coach.library.mobility.detail.type',
                     value: item.mobilityType
-                      ? t(`coach.library.mobility.type.${item.mobilityType}`)
+                      ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
                       : null,
                   },
                 ]}
@@ -241,7 +245,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
                 scope={item.scope}
                 subtitle={
                   item.mobilityType
-                    ? t(`coach.library.mobility.type.${item.mobilityType}`)
+                    ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
                     : t('coach.library.type.undefined')
                 }
                 t={t}
@@ -260,6 +264,14 @@ const localStyles = StyleSheet.create({
     marginTop: 40,
   },
 });
+
+function toMobilityTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
+  if (id === 'undefined') return t('coach.library.type.undefined');
+  if (id === 'completo' || id === 'parcial' || id === 'minimo') {
+    return t(`coach.library.mobility.type.${id}`);
+  }
+  return fallback;
+}
 
 const gridStyles = StyleSheet.create({
   grid: {

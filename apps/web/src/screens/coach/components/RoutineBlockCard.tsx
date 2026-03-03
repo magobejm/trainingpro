@@ -55,7 +55,7 @@ function RoutineBlockCardView({
 }) {
   return (
     <View style={s.blockCard}>
-      <BlockHeaderSection props={props} state={state} />
+      <BlockHeaderSection props={props} state={state} t={t} />
       <BlockContent
         props={props}
         setShowDetails={state.setShowDetails}
@@ -75,14 +75,17 @@ function RoutineBlockCardView({
 function BlockHeaderSection({
   props,
   state,
+  t,
 }: {
   props: RoutineBlockCardProps;
   state: ReturnType<typeof useBlockCardState>;
+  t: (k: string) => string;
 }) {
   return (
     <BlockHeader
       daysCount={props.daysCount}
       displayName={props.block.displayName}
+      importedFromWarmup={props.block.fromWarmupTemplate}
       isFirst={props.isFirst}
       isLast={props.isLast}
       onMove={props.onMove}
@@ -91,6 +94,7 @@ function BlockHeaderSection({
       onShowDetail={() => state.setShowDetailModal(true)}
       onUpdateName={(v) => props.onUpdateField('displayName', v)}
       readOnly={!!props.readOnly}
+      t={t}
       type={props.block.type}
     />
   );

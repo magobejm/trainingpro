@@ -7,6 +7,7 @@ import { BlockActions } from './BlockActions';
 interface BlockHeaderProps {
   type: BlockType;
   displayName: string;
+  importedFromWarmup?: boolean;
   readOnly: boolean;
   onUpdateName: (v: string) => void;
   daysCount: number;
@@ -16,6 +17,7 @@ interface BlockHeaderProps {
   onRemove: () => void;
   onShowMove: () => void;
   onShowDetail: () => void;
+  t: (k: string) => string;
 }
 
 const typeEmoji: Record<BlockType, string> = {
@@ -39,6 +41,7 @@ export function BlockHeader(props: BlockHeaderProps) {
       <Pressable accessibilityLabel="view-details" onPress={props.onShowDetail} style={s.moveBtn}>
         <Text style={s.moveBtnText}>{'\uD83D\uDD0D'}</Text>
       </Pressable>
+      <WarmupImportedTag imported={props.importedFromWarmup} t={props.t} />
       {!props.readOnly && (
         <BlockActions
           daysCount={props.daysCount}
@@ -52,3 +55,31 @@ export function BlockHeader(props: BlockHeaderProps) {
     </View>
   );
 }
+
+function WarmupImportedTag(props: {
+  imported?: boolean;
+  t: (k: string) => string;
+}): React.JSX.Element | null {
+  if (!props.imported) return null;
+  return (
+    <View style={styles.tag}>
+      <Text style={styles.tagText}>{props.t('coach.routine.block.warmupImported')}</Text>
+    </View>
+  );
+}
+
+const styles = {
+  tag: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 6,
+    marginRight: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  tagText: {
+    color: '#92400e',
+    fontSize: 10,
+    fontWeight: '700' as const,
+    textTransform: 'uppercase' as const,
+  },
+};

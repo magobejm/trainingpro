@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import type { DraftBlock } from '../../RoutinePlanner.types';
 import { RoutineNumberField } from '../RoutineNumberField';
 import { s } from '../../RoutinePlanner.styles';
@@ -135,12 +135,23 @@ function TextField(props: {
   value?: string;
 }) {
   return (
-    <TextInput
-      editable={!props.readOnly}
-      onChangeText={props.onChange}
-      placeholder={props.label}
-      style={s.numberInput}
-      value={props.value ?? ''}
-    />
+    <View style={s.numberField}>
+      <Text style={s.numberLabel}>{props.label}</Text>
+      <TextInput
+        editable={!props.readOnly}
+        onChangeText={props.onChange}
+        placeholder={props.label}
+        style={styles.textInput}
+        value={props.value ?? ''}
+      />
+    </View>
   );
 }
+
+const styles = {
+  textInput: {
+    ...s.numberInput,
+    minWidth: 180,
+    textAlign: 'left' as const,
+  },
+};

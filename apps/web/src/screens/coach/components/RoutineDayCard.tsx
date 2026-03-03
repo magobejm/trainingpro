@@ -19,6 +19,7 @@ interface RoutineDayCardProps {
   onRename: (title: string) => void;
   onRemove: () => void;
   onAddBlock: (type: BlockType) => void;
+  onAddWarmupTemplate?: () => void;
   onSetAddBlockDayIdx: (idx: number | null) => void;
   onUpdateBlockField: (blockId: string, field: keyof DraftBlock, value: unknown) => void;
   onMoveBlock: (blockIdx: number, direction: -1 | 1) => void;
@@ -51,6 +52,7 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         <AddBlockSection
           isAdding={isAdding}
           onAdd={props.onAddBlock}
+          onAddWarmupTemplate={props.onAddWarmupTemplate}
           onCancel={() => props.onSetAddBlockDayIdx(isAdding ? null : dayIdx)}
           t={t}
         />

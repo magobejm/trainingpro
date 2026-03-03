@@ -54,7 +54,7 @@ export class WarmupTemplatesService {
       FROM warmup_template
       WHERE archived_at IS NULL
         AND (coach_membership_id = $1::uuid OR scope = 'GLOBAL')
-      ORDER BY updated_at DESC`,
+      ORDER BY lower(name) ASC`,
       membership.id,
     );
     if (options?.summary) {
@@ -92,7 +92,7 @@ export class WarmupTemplatesService {
   }
 
   async update(context: AuthContext, templateId: string, input: Input) {
-    await this.assertOwnedTemplate(context, templateId);
+    await this.assertMutableTemplate(context, templateId);
     await this.prisma.$executeRawUnsafe(
       `UPDATE warmup_template
        SET name = $1, template_version = template_version + 1, updated_at = now()
@@ -105,7 +105,7 @@ export class WarmupTemplatesService {
   }
 
   async delete(context: AuthContext, templateId: string): Promise<void> {
-    await this.assertOwnedTemplate(context, templateId);
+    await this.assertMutableTemplate(context, templateId);
     await this.prisma.$executeRawUnsafe(
       `UPDATE warmup_template SET archived_at = now() WHERE id = $1::uuid`,
       templateId,
@@ -172,6 +172,27 @@ export class WarmupTemplatesService {
     if (!rows[0]?.id) {
       throw new NotFoundException('Warmup template not found');
     }
+  }
+
+  private async assertMutableTemplate(context: AuthContext, templateId: string): Promise<void> {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.$queryRawUnsafe<{ id: string; scope: 'COACH' | 'GLOBAL' }[]>(
+      `SELECT id, scope
+       FROM warmup_template
+       WHERE id = $1::uuid
+         AND archived_at IS NULL
+         AND (coach_membership_id = $2::uuid OR scope = 'GLOBAL')`,
+      templateId,
+      membership.id,
+    );
+    const template = rows[0];
+    if (!template) {
+      throw new NotFoundException('Warmup template not found');
+    }
+    if (template.scope === 'GLOBAL') {
+      throw new ForbiddenException('Global warmup templates are read-only');
+    }
+    await this.assertOwnedTemplate(context, templateId);
   }
 
   private async replaceItems(templateId: string, items: UpsertWarmupTemplateDto['items']) {

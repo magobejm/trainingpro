@@ -19,7 +19,9 @@ import { ListExerciseMuscleGroupsUseCase } from './application/use-cases/list-ex
 import { ListExercisesUseCase } from './application/use-cases/list-exercises.usecase';
 import { ListFoodsUseCase } from './application/use-cases/list-foods.usecase';
 import { ListPlioExercisesUseCase } from './application/use-cases/list-plio-exercises.usecase';
+import { ListPlioTypesUseCase } from './application/use-cases/list-plio-types.usecase';
 import { ListWarmupExercisesUseCase } from './application/use-cases/list-warmup-exercises.usecase';
+import { ListMobilityTypesUseCase } from './application/use-cases/list-mobility-types.usecase';
 import { ListSportsUseCase } from './application/use-cases/list-sports.usecase';
 import { UpdateCardioMethodUseCase } from './application/use-cases/update-cardio-method.usecase';
 import { UpdateExerciseUseCase } from './application/use-cases/update-exercise.usecase';
@@ -65,6 +67,8 @@ import { LibraryMediaController } from './presentation/controllers/library-media
     ListExercisesUseCase,
     ListFoodsUseCase,
     ListPlioExercisesUseCase,
+    ListPlioTypesUseCase,
+    ListMobilityTypesUseCase,
     ListWarmupExercisesUseCase,
     ListSportsUseCase,
     UpdateCardioMethodUseCase,

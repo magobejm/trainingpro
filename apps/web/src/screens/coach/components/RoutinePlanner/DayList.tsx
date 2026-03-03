@@ -5,6 +5,7 @@ import type { PlannerLabels } from './planner-labels';
 
 export interface DraftStateHandlers {
   onOpenPicker: (dayIdx: number, type: BlockType) => void;
+  onOpenWarmupTemplatePicker?: (dayIdx: number) => void;
   onMoveBlock: (dayIdx: number, blockIdx: number, dir: -1 | 1) => void;
   onMoveBlockToDay: (fromIdx: number, bIdx: number, toIdx: number) => void;
   removeDay: (dayIdx: number) => void;
@@ -70,6 +71,10 @@ const DayListItem = (p: ItemProps) => (
     daysCount={p.daysCount}
     onAddBlock={(type) => {
       p.draftState.onOpenPicker(p.idx, type);
+      p.setAddIdx(null);
+    }}
+    onAddWarmupTemplate={() => {
+      p.draftState.onOpenWarmupTemplatePicker?.(p.idx);
       p.setAddIdx(null);
     }}
     onMoveBlock={(bIdx, dir) => p.draftState.onMoveBlock(p.idx, bIdx, dir)}

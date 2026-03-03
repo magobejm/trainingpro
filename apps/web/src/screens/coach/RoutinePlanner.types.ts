@@ -2,7 +2,9 @@ export type BlockType = 'cardio' | 'plio' | 'sport' | 'strength' | 'warmup';
 
 export interface DraftBlock {
   displayName: string;
+  fromWarmupTemplate?: boolean;
   id: string;
+  warmupTemplateName?: string;
   type: BlockType;
   durationMinutes?: number;
   notes?: string;

@@ -42,6 +42,7 @@ export interface LibraryRepositoryPort {
     context: AuthContext,
     filter: CardioMethodFilter,
   ): Promise<CardioMethodLibraryItem[]>;
+  listMobilityTypes(context: AuthContext): Promise<LibraryCatalogItem[]>;
   listExerciseMuscleGroups(): Promise<LibraryCatalogItem[]>;
   listExercises(context: AuthContext, filter: ExerciseFilter): Promise<ExerciseLibraryItem[]>;
   listFoods(context: AuthContext, filter: FoodFilter): Promise<FoodLibraryItem[]>;
@@ -49,6 +50,7 @@ export interface LibraryRepositoryPort {
     context: AuthContext,
     filter: PlioExerciseFilter,
   ): Promise<PlioExerciseLibraryItem[]>;
+  listPlioTypes(context: AuthContext): Promise<LibraryCatalogItem[]>;
   listWarmupExercises(
     context: AuthContext,
     filter: WarmupExerciseFilter,

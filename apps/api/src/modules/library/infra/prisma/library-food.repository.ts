@@ -38,7 +38,7 @@ export class LibraryFoodRepository extends LibraryBaseRepository {
   async listFoods(context: AuthContext, filter: FoodFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.food.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildFoodWhere(membership.id, filter),
     });
     return rows.map(mapFood);

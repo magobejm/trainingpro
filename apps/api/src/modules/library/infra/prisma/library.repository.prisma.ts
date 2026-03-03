@@ -133,11 +133,15 @@ export class LibraryRepositoryPrisma
   async listCardioMethods(context: AuthContext, filter: CardioMethodFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.cardioMethod.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildCardioMethodWhere(membership.id, filter),
       include: CARDIO_METHOD_WITH_CATALOG,
     });
     return rows.map(mapCardioMethod);
+  }
+
+  async listMobilityTypes(context: AuthContext) {
+    return this.specializedRepo.listMobilityTypes(context);
   }
 
   async listExerciseMuscleGroups() {
@@ -151,7 +155,7 @@ export class LibraryRepositoryPrisma
   async listExercises(context: AuthContext, filter: ExerciseFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.exercise.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildExerciseWhere(membership.id, filter),
       include: EXERCISE_WITH_CATALOG,
     });
@@ -164,6 +168,10 @@ export class LibraryRepositoryPrisma
 
   async listPlioExercises(context: AuthContext, filter: PlioExerciseFilter) {
     return this.specializedRepo.listPlioExercises(context, filter);
+  }
+
+  async listPlioTypes(context: AuthContext) {
+    return this.specializedRepo.listPlioTypes(context);
   }
 
   async listWarmupExercises(context: AuthContext, filter: WarmupExerciseFilter) {

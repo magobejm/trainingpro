@@ -8,6 +8,7 @@ import type {
   WarmupExerciseWriteInput,
 } from '../../domain/warmup-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
+import type { LibraryCatalogItem } from '../../domain/entities/library-catalog-item';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
 import {
   normalizePlioExerciseInput,
@@ -35,7 +36,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
   async listPlioExercises(context: AuthContext, filter: PlioExerciseFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.plioExercise.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildPlioWhere(membership.id, filter),
     });
     return rows.map(mapPlioExercise);
@@ -44,7 +45,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
   async listWarmupExercises(context: AuthContext, filter: WarmupExerciseFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.warmupExercise.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildWarmupWhere(membership.id, filter),
     });
     return rows.map(mapWarmupExercise);
@@ -53,10 +54,32 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
   async listSports(context: AuthContext, query?: string) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.sport.findMany({
-      orderBy: [{ scope: 'asc' }, { name: 'asc' }],
+      orderBy: [{ name: 'asc' }],
       where: buildSportWhere(membership.id, query),
     });
     return rows.map(mapSport);
+  }
+
+  async listPlioTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.plioExercise.findMany({
+      distinct: ['plioType'],
+      orderBy: [{ plioType: 'asc' }],
+      select: { plioType: true },
+      where: buildPlioWhere(membership.id, {}),
+    });
+    return mapEnumCatalog(rows.map((row) => row.plioType ?? 'undefined'));
+  }
+
+  async listMobilityTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.warmupExercise.findMany({
+      distinct: ['mobilityType'],
+      orderBy: [{ mobilityType: 'asc' }],
+      select: { mobilityType: true },
+      where: buildWarmupWhere(membership.id, {}),
+    });
+    return mapEnumCatalog(rows.map((row) => row.mobilityType ?? 'undefined'));
   }
 
   async createPlioExercise(context: AuthContext, input: PlioExerciseWriteInput) {
@@ -201,4 +224,15 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     }
     return row;
   }
+}
+
+function mapEnumCatalog(rawValues: string[]): LibraryCatalogItem[] {
+  const values = Array.from(new Set(['undefined', ...rawValues]))
+    .filter((value) => value.trim().length > 0)
+    .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  return values.map((value) => ({
+    id: value,
+    isDefault: value === 'undefined',
+    label: value,
+  }));
 }

@@ -108,6 +108,14 @@ export function useLibraryExerciseMuscleGroupsQuery(): UseQueryResult<LibraryCat
   return useCatalogQuery('muscle-groups');
 }
 
+export function useLibraryPlioTypesQuery(): UseQueryResult<LibraryCatalogItem[], Error> {
+  return useCatalogQuery('plio-types');
+}
+
+export function useLibraryMobilityTypesQuery(): UseQueryResult<LibraryCatalogItem[], Error> {
+  return useCatalogQuery('mobility-types');
+}
+
 export function useLibraryCardioMethodsQuery(filter: {
   methodTypeId?: string;
   query?: string;
@@ -181,7 +189,7 @@ export function useLibrarySportsQuery(): UseQueryResult<SportLibraryItem[], Erro
 }
 
 function useCatalogQuery(
-  resource: 'cardio-method-types' | 'muscle-groups',
+  resource: 'cardio-method-types' | 'mobility-types' | 'muscle-groups' | 'plio-types',
 ): UseQueryResult<LibraryCatalogItem[], Error> {
   const auth = useAuth();
   return useQuery({

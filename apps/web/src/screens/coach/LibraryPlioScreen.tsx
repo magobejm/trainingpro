@@ -23,6 +23,7 @@ import {
 } from '../../data/hooks/useLibrarySpecializedMutations';
 import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
 import {
+  useLibraryPlioTypesQuery,
   useLibraryPlioExercisesQuery,
   type PlioExerciseLibraryItem,
 } from '../../data/hooks/useLibraryQuery';
@@ -60,11 +61,13 @@ export function LibraryPlioScreen(): React.JSX.Element {
   const plioType = activeFilter === 'all' ? undefined : activeFilter;
   const { data, isLoading } = useLibraryPlioExercisesQuery({ plioType, query });
   const items = data ?? [];
+  const plioTypeCatalog = useLibraryPlioTypesQuery().data ?? [];
   const chips = [
     { id: 'all', label: t('coach.library.cardio.filters.all') },
-    { id: 'undefined', label: t('coach.library.type.undefined') },
-    { id: 'explosivo', label: t('coach.library.plio.type.explosivo') },
-    { id: 'relajado', label: t('coach.library.plio.type.relajado') },
+    ...plioTypeCatalog.map((item) => ({
+      id: item.id,
+      label: toPlioTypeLabel(item.id, item.label, t),
+    })),
   ];
 
   const createMutation = useCreatePlioExerciseMutation();
@@ -161,6 +164,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
       >
         <PlioBaseFields
           form={form as unknown as Record<string, string>}
+          plioTypeOptions={chips.filter((item) => item.id !== 'all')}
           setField={setField}
           t={t}
         />
@@ -188,6 +192,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
       >
         <PlioBaseFields
           form={form as unknown as Record<string, string>}
+          plioTypeOptions={chips.filter((item) => item.id !== 'all')}
           setField={setField}
           t={t}
         />
@@ -227,13 +232,13 @@ export function LibraryPlioScreen(): React.JSX.Element {
                 detailRows={[
                   {
                     labelKey: 'coach.library.plio.detail.type',
-                    value: item.plioType ? t(`coach.library.plio.type.${item.plioType}`) : null,
+                    value: item.plioType ? toPlioTypeLabel(item.plioType, item.plioType, t) : null,
                   },
                   { labelKey: 'coach.library.exercises.detail.equipment', value: item.equipment },
                 ]}
                 subtitle={`${item.equipment ?? ''}${item.equipment ? ' · ' : ''}${
                   item.plioType
-                    ? t(`coach.library.plio.type.${item.plioType}`)
+                    ? toPlioTypeLabel(item.plioType, item.plioType, t)
                     : t('coach.library.type.undefined')
                 }`}
                 expanded={expandedId === item.id}
@@ -259,6 +264,14 @@ const localStyles = StyleSheet.create({
     marginTop: 40,
   },
 });
+
+function toPlioTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
+  if (id === 'undefined') return t('coach.library.type.undefined');
+  if (id === 'explosivo' || id === 'relajado') {
+    return t(`coach.library.plio.type.${id}`);
+  }
+  return fallback;
+}
 
 const gridStyles = StyleSheet.create({
   grid: {

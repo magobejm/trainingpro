@@ -56,7 +56,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     const m = await this.resolveCoachMembership(ctx);
     const rows = await this.prisma.planTemplate.findMany({
       include: opts?.summary ? undefined : routineTemplateInclude(),
-      orderBy: [{ kind: 'asc' }, { updatedAt: 'desc' }],
+      orderBy: [{ name: 'asc' }],
       where: {
         archivedAt: null,
         kind: TemplateKind.ROUTINE,

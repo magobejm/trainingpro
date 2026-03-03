@@ -1,23 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-const COLORS = {
-  accent: '#1c74e9',
-  navBorder: '#1e2a3a',
-  text: '#ffffff',
-  textMuted: '#9aa5b1',
-};
-const BRAND_ICON = '🏋️';
-
 export function SidebarIdentity(props: { roleLabel: string; title: string }): React.JSX.Element {
   return (
     <View style={styles.identityCard}>
-      <View style={styles.avatarStub}>
-        <Text style={styles.brandIcon}>{BRAND_ICON}</Text>
-      </View>
+      <View style={styles.avatarStub} />
       <View style={styles.identityTextWrap}>
         <Text style={styles.logo}>{props.title}</Text>
-        <Text style={styles.role}>{props.roleLabel}</Text>
       </View>
     </View>
   );
@@ -44,34 +33,22 @@ export function TopBar(props: { roleLabel: string; title: string }): React.JSX.E
 
 const styles = StyleSheet.create({
   avatarStub: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderRadius: 10,
-    height: 38,
-    justifyContent: 'center',
-    width: 38,
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
+    height: 44,
+    width: 44,
   },
   identityCard: {
     alignItems: 'center',
-    backgroundColor: '#111a27',
-    borderColor: COLORS.navBorder,
-    borderRadius: 14,
-    borderWidth: 1,
     flexDirection: 'row',
-    gap: 10,
-    padding: 10,
-  },
-  brandIcon: {
-    color: '#ffffff',
-    fontSize: 16,
-    lineHeight: 18,
+    gap: 12,
   },
   identityTextWrap: {
     flex: 1,
   },
   logo: {
-    color: COLORS.text,
-    fontSize: 20,
+    color: '#1e293b',
+    fontSize: 22,
     fontWeight: '800',
   },
   onlineDot: {
@@ -79,11 +56,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     height: 8,
     width: 8,
-  },
-  role: {
-    color: COLORS.textMuted,
-    fontSize: 12,
-    fontWeight: '600',
   },
   topbar: {
     alignItems: 'center',

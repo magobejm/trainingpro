@@ -9,11 +9,15 @@ import type {
 } from '../../../../data/hooks/useLibraryQuery';
 
 export type DetailItem = {
+  id: string;
   name: string;
   description: string | null;
   notes: string | null;
   imageUrl: string | null;
   youtubeUrl: string | null;
+  muscleGroup?: string;
+  methodType?: string;
+  equipment?: string | null;
 };
 
 export type LibraryItemUnion =
@@ -37,7 +41,8 @@ function resolveApiBaseUrl(): string {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const PLACEHOLDERS: Record<BlockType, string> = {
-  strength: `${API_BASE_URL}/assets/placeholders/plan-bg.jpg`,
+  strength:
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
   warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
@@ -57,38 +62,50 @@ export function getFullUrl(blockType: BlockType, url: string | null | undefined)
 }
 
 export const mapExercise = (item: ExerciseLibraryItem): DetailItem => ({
+  id: item.id,
   name: item.name,
   description: item.instructions ?? null,
   notes: null,
   imageUrl: item.media?.url ?? null,
   youtubeUrl: item.youtubeUrl ?? null,
+  muscleGroup: item.muscleGroup,
+  equipment: item.equipment,
 });
 
 export const mapCardio = (item: CardioMethodLibraryItem): DetailItem => ({
+  id: item.id,
   name: item.name,
   description: item.description ?? null,
   notes: null,
   imageUrl: item.media?.url ?? null,
   youtubeUrl: item.youtubeUrl ?? null,
+  methodType: item.methodType,
+  equipment: item.equipment,
 });
 
 export const mapPlio = (item: PlioExerciseLibraryItem): DetailItem => ({
+  id: item.id,
   name: item.name,
   description: item.description ?? null,
   notes: item.notes ?? null,
   imageUrl: item.media?.url ?? null,
   youtubeUrl: item.youtubeUrl ?? null,
+  methodType: item.plioType ?? undefined,
+  equipment: item.equipment,
 });
 
 export const mapWarmup = (item: WarmupExerciseLibraryItem): DetailItem => ({
+  id: item.id,
   name: item.name,
   description: item.description ?? null,
   notes: null,
   imageUrl: item.media?.url ?? null,
   youtubeUrl: item.youtubeUrl ?? null,
+  methodType: item.mobilityType ?? undefined,
 });
 
 export const mapSport = (item: SportLibraryItem): DetailItem => ({
+  id: item.id,
   name: item.name,
   description: item.description ?? null,
   notes: null,

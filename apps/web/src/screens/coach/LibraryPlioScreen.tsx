@@ -142,6 +142,8 @@ export function LibraryPlioScreen(): React.JSX.Element {
                 <LibraryItemCard
                   category="plio"
                   deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
+                  equipment={item.equipment}
+                  expanded={expandedId === item.id}
                   imageUrl={item.media?.url}
                   name={item.name}
                   onDelete={() => setPendingDeleteId(item.id)}
@@ -154,7 +156,6 @@ export function LibraryPlioScreen(): React.JSX.Element {
                       : t('coach.library.type.undefined')
                   }
                   t={t}
-                  expanded={expandedId === item.id}
                 />
               </View>
             ))}
@@ -213,6 +214,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
         }
         mediaContent={
           <LibraryMediaFields
+            category="plio"
             imageUrl={form.mediaUrl}
             isUploading={uploadImageMutation.isPending}
             onUpload={() => onUploadImage(true)}

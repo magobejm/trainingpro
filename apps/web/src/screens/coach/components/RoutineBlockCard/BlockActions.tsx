@@ -9,30 +9,23 @@ interface BlockActionsProps {
   onMove: (d: -1 | 1) => void;
   onRemove: () => void;
   onShowMove: () => void;
+  onShowDetail?: () => void;
+  readOnly?: boolean;
 }
+
+const ICON_DETAIL = '🔍';
+const ICON_REMOVE = '✕';
 
 export function BlockActions(props: BlockActionsProps) {
   return (
     <View style={s.blockActions}>
-      <MoveButtons props={props} />
-      {props.daysCount > 1 && (
-        <ActionButton label={'\u21c6'} onPress={props.onShowMove} testID="move-to-another-day" />
+      {props.onShowDetail && (
+        <ActionButton label={ICON_DETAIL} onPress={props.onShowDetail} testID="view-details" />
       )}
-      <ActionButton isRemove label={'\u2715'} onPress={props.onRemove} testID="remove-block" />
+      {!props.readOnly && (
+        <ActionButton isRemove label={ICON_REMOVE} onPress={props.onRemove} testID="remove-block" />
+      )}
     </View>
-  );
-}
-
-function MoveButtons({ props }: { props: BlockActionsProps }) {
-  return (
-    <>
-      {!props.isFirst && (
-        <ActionButton label={'\u2191'} onPress={() => props.onMove(-1)} testID="move-up" />
-      )}
-      {!props.isLast && (
-        <ActionButton label={'\u2193'} onPress={() => props.onMove(1)} testID="move-down" />
-      )}
-    </>
   );
 }
 
@@ -48,9 +41,9 @@ function ActionButton({ label, onPress, testID, isRemove }: ActionBtnProps) {
     <Pressable
       accessibilityLabel={testID}
       onPress={onPress}
-      style={isRemove ? s.removeBtn : s.moveBtn}
+      style={isRemove ? s.removeBtn : s.viewDetailBtn}
     >
-      <Text style={s.moveBtnText}>{label}</Text>
+      <Text style={isRemove ? s.removeBtnText : s.viewDetailBtnText}>{label}</Text>
     </Pressable>
   );
 }

@@ -1,12 +1,14 @@
 import { StyleSheet } from 'react-native';
 
 const COLORS = {
-  accent: '#1c74e9',
-  bg: '#f6f7f8',
-  nav: '#0d121a',
-  navBorder: '#1e2a3a',
-  shell: '#f6f7f8',
-  textMuted: '#9aa5b1',
+  accent: '#3b82f6',
+  bg: '#f8fafc',
+  nav: '#ffffff',
+  navBorder: '#f1f5f9',
+  shell: '#f8fafc',
+  textMuted: '#64748b',
+  textActive: '#3b82f6',
+  textDefault: '#1e293b',
   white: '#ffffff',
 };
 
@@ -14,69 +16,65 @@ export const styles = StyleSheet.create({
   content: {
     backgroundColor: COLORS.bg,
     flex: 1,
-    padding: 16,
   },
   contentBody: {
     backgroundColor: COLORS.shell,
     flex: 1,
-    marginTop: 12,
   },
   logoutButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.accent,
+    backgroundColor: COLORS.white,
+    borderColor: '#e2e8f0',
+    borderWidth: 1,
     borderRadius: 10,
     justifyContent: 'center',
     minHeight: 42,
+    marginTop: 16,
   },
   logoutLabel: {
-    color: COLORS.white,
+    color: '#ef4444',
     fontSize: 13,
-    fontWeight: '800',
+    fontWeight: '600',
   },
   navButton: {
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   navButtonActive: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: '#eff6ff',
   },
   navIcon: {
-    color: '#e6ecf7',
-    fontSize: 13,
-    lineHeight: 15,
+    fontSize: 18,
+    lineHeight: 20,
+    marginRight: 12,
   },
   navIconActive: {
-    color: COLORS.accent,
+    //
   },
   navIconBadge: {
-    alignItems: 'center',
-    backgroundColor: '#1f2a3a',
-    borderRadius: 999,
-    height: 24,
-    justifyContent: 'center',
-    width: 24,
+    // removed badge styling, keeping it flat
   },
   navIconBadgeActive: {
-    backgroundColor: COLORS.white,
+    //
   },
   navLabel: {
     color: COLORS.textMuted,
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '500',
   },
   navLabelActive: {
-    color: COLORS.white,
+    color: COLORS.textActive,
+    fontWeight: '700',
   },
   navList: {
     flex: 1,
     gap: 8,
-    marginTop: 14,
+    marginTop: 40,
   },
   navRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 9,
   },
   page: {
     backgroundColor: COLORS.bg,
@@ -87,8 +85,7 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.nav,
     borderColor: COLORS.navBorder,
     borderRightWidth: 1,
-    maxWidth: 290,
-    minWidth: 260,
-    padding: 16,
+    width: 300,
+    padding: 32,
   },
 });

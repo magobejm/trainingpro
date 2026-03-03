@@ -5,6 +5,9 @@ export interface LibraryItem {
   name: string;
   description: string | null;
   notes: string | null;
+  muscleGroup?: string;
+  methodType?: string;
+  equipment?: null | string;
   imageUrl: string | null;
   youtubeUrl: string | null;
 }

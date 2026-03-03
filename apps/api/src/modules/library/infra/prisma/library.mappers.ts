@@ -120,6 +120,7 @@ export function normalizeCardioMethodInput(
 ): Partial<CardioMethodWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
+    ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.methodTypeId !== undefined && { methodTypeId: input.methodTypeId.trim() }),

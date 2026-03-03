@@ -146,6 +146,7 @@ function RoutineTabs(props: {
       days={props.draftState.draft.days}
       onAdd={props.draftState.addDay}
       onSelect={props.draftState.setActiveDayIdx}
+      onMoveBlockToDay={props.draftState.onMoveBlockToDay}
       readOnly={props.isReadOnly}
       t={props.t}
     />

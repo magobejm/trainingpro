@@ -1,5 +1,5 @@
 import React from 'react';
-import { TextInput, View, Text, Pressable } from 'react-native';
+import { View, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 import { BlockActions } from './BlockActions';
@@ -20,38 +20,39 @@ interface BlockHeaderProps {
   t: (k: string) => string;
 }
 
-const typeEmoji: Record<BlockType, string> = {
-  cardio: '🏃',
-  plio: '🪂',
-  sport: '⚽',
-  strength: '🏋️',
-  warmup: '🤸',
+const tagColors: Record<BlockType, { bg: string; text: string }> = {
+  cardio: { bg: '#dbeafe', text: '#2563eb' },
+  plio: { bg: '#fef3c7', text: '#d97706' },
+  sport: { bg: '#f1f5f9', text: '#64748b' },
+  strength: { bg: '#f3e8ff', text: '#9333ea' },
+  warmup: { bg: '#ecfccb', text: '#16a34a' },
 };
+const DRAG_HANDLE_ICON = '⠿';
 
 export function BlockHeader(props: BlockHeaderProps) {
+  const tagColor = tagColors[props.type] || { bg: '#f1f5f9', text: '#64748b' };
   return (
     <View style={s.blockHeader}>
-      <Text style={s.blockEmoji}>{typeEmoji[props.type]}</Text>
-      <TextInput
-        editable={!props.readOnly}
-        onChangeText={props.onUpdateName}
-        style={[s.input, { flex: 1 }, props.readOnly && { backgroundColor: '#f8fafc' }]}
-        value={props.displayName}
-      />
-      <Pressable accessibilityLabel="view-details" onPress={props.onShowDetail} style={s.moveBtn}>
-        <Text style={s.moveBtnText}>{'\uD83D\uDD0D'}</Text>
-      </Pressable>
+      <Text style={s.dragHandle}>{DRAG_HANDLE_ICON}</Text>
+      <Text numberOfLines={1} style={s.blockName}>
+        {props.displayName}
+      </Text>
+      <View style={[s.blockTag, { backgroundColor: tagColor.bg }]}>
+        <Text style={[s.blockTagText, { color: tagColor.text }]}>
+          {props.t(`coach.routine.blockType.${props.type}`)}
+        </Text>
+      </View>
       <WarmupImportedTag imported={props.importedFromWarmup} t={props.t} />
-      {!props.readOnly && (
-        <BlockActions
-          daysCount={props.daysCount}
-          isFirst={props.isFirst}
-          isLast={props.isLast}
-          onMove={props.onMove}
-          onRemove={props.onRemove}
-          onShowMove={props.onShowMove}
-        />
-      )}
+      <BlockActions
+        daysCount={props.daysCount}
+        isFirst={props.isFirst}
+        isLast={props.isLast}
+        onMove={props.onMove}
+        onRemove={props.onRemove}
+        onShowMove={props.onShowMove}
+        onShowDetail={props.onShowDetail}
+        readOnly={props.readOnly}
+      />
     </View>
   );
 }

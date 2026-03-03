@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { useUserSettings } from '../data/hooks/useUserSettings';
+import { styles } from './SidebarUserPanel.styles';
 
-const GEAR_ICON = '⚙️';
 const MODAL_ANIMATION = 'fade' as const;
 
 type Props = {
@@ -46,14 +46,23 @@ function SidebarUserPanelView(props: ViewModel): React.JSX.Element {
   return (
     <>
       <View style={styles.card}>
-        <Image source={{ uri: props.avatarUrl }} style={styles.avatar} />
-        <View style={styles.info}>
-          <Text numberOfLines={1} style={styles.name}>{props.displayName}</Text>
-          <Text numberOfLines={1} style={styles.email}>{props.form.email}</Text>
+        <View style={styles.userTop}>
+          <View style={styles.avatarWrap}>
+            <Image source={{ uri: props.avatarUrl }} style={styles.avatar} />
+          </View>
+          <View style={styles.info}>
+            <Text numberOfLines={1} style={styles.name}>
+              {props.displayName}
+            </Text>
+            <Text numberOfLines={1} style={styles.email}>
+              {props.form.email}
+            </Text>
+          </View>
+          <Pressable onPress={props.onOpen} style={styles.gearButton}>
+            {/* eslint-disable-next-line no-restricted-syntax */}
+            <Text style={styles.gearIcon}>⚙️</Text>
+          </Pressable>
         </View>
-        <Pressable onPress={props.onOpen} style={styles.gearButton}>
-          <Text style={styles.gearIcon}>{GEAR_ICON}</Text>
-        </Pressable>
       </View>
       <EditProfileModal {...props} />
     </>
@@ -171,143 +180,3 @@ function readFileAsDataUrl(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'flex-end',
-    marginTop: 10,
-  },
-  avatar: {
-    borderRadius: 999,
-    height: 40,
-    width: 40,
-  },
-  avatarEditor: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  avatarLarge: {
-    borderRadius: 999,
-    height: 72,
-    width: 72,
-  },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: '#edf3fb',
-    borderColor: '#d6e2f2',
-    borderRadius: 10,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: 12,
-  },
-  cancelLabel: {
-    color: '#38557f',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  card: {
-    alignItems: 'center',
-    backgroundColor: '#111a27',
-    borderColor: '#1e2a3a',
-    borderRadius: 12,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 10,
-    padding: 10,
-  },
-  changeAvatarButton: {
-    alignItems: 'center',
-    backgroundColor: '#edf3fb',
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: 12,
-  },
-  changeAvatarLabel: {
-    color: '#1c3f74',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  email: {
-    color: '#9aa5b1',
-    fontSize: 11,
-  },
-  fieldLabel: {
-    color: '#3b4f70',
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
-  fields: {
-    gap: 9,
-  },
-  gearButton: {
-    alignItems: 'center',
-    backgroundColor: '#1f2a3a',
-    borderRadius: 999,
-    height: 30,
-    justifyContent: 'center',
-    width: 30,
-  },
-  gearIcon: {
-    color: '#dce8ff',
-    fontSize: 14,
-  },
-  info: {
-    flex: 1,
-  },
-  input: {
-    backgroundColor: '#f4f8ff',
-    borderColor: '#d7e2f3',
-    borderRadius: 9,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  inputReadonly: {
-    backgroundColor: '#edf2f8',
-    color: '#5f6f84',
-  },
-  modalCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    gap: 10,
-    maxWidth: 420,
-    padding: 16,
-    width: '100%',
-  },
-  modalTitle: {
-    color: '#111418',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  name: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(11, 17, 24, 0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: '#1c74e9',
-    borderRadius: 10,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: 12,
-  },
-  saveLabel: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-});

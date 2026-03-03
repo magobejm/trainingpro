@@ -18,7 +18,8 @@ function resolveApiBaseUrl(): string {
 export const API_BASE_URL = resolveApiBaseUrl();
 
 const PLACEHOLDERS: Record<BlockType, string> = {
-  strength: `${API_BASE_URL}/assets/placeholders/plan-bg.jpg`,
+  strength:
+    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
   warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
@@ -45,6 +46,8 @@ export function mapExercises(items: ExerciseLibraryItem[]): LibraryItem[] {
     notes: null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
+    muscleGroup: item.muscleGroup,
+    equipment: item.equipment,
   }));
 }
 
@@ -56,6 +59,8 @@ export function mapCardio(items: CardioMethodLibraryItem[]): LibraryItem[] {
     notes: null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
+    methodType: item.methodType,
+    equipment: item.equipment,
   }));
 }
 
@@ -67,6 +72,8 @@ export function mapPlio(items: PlioExerciseLibraryItem[]): LibraryItem[] {
     notes: item.notes ?? null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
+    methodType: item.plioType,
+    equipment: item.equipment,
   }));
 }
 
@@ -78,6 +85,7 @@ export function mapWarmup(items: WarmupExerciseLibraryItem[]): LibraryItem[] {
     notes: null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
+    methodType: item.mobilityType,
   }));
 }
 

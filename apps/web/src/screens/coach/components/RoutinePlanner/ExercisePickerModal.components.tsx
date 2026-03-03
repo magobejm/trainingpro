@@ -4,6 +4,7 @@ import {
   FlatList,
   Image,
   Pressable,
+  StyleSheet,
   Text,
   View,
   type ImageProps,
@@ -139,20 +140,117 @@ export const DetailPanel = (p: DetailPanelProps) => {
       </View>
     );
   }
-  const desc = p.item.description || p.t('coach.routine.picker.details.descriptionEmpty');
+  const categoryLabel = p.blockType === 'strength' ? p.item.muscleGroup : p.item.methodType;
+  const equipmentLabel = readEquipmentLabel(p);
+  const description = readDescription(p);
+  return renderDetailPanel(p, categoryLabel, equipmentLabel, description);
+};
+
+function readDescription(p: DetailPanelProps): string {
+  return p.item?.description || p.t('coach.routine.picker.details.descriptionEmpty');
+}
+
+function readEquipmentLabel(p: DetailPanelProps): null | string {
+  if (!p.item?.equipment) return null;
+  return `${p.t('coach.library.exercises.detail.equipment')} ${p.item.equipment}`;
+}
+
+function renderDetailPanel(
+  p: DetailPanelProps,
+  categoryLabel: null | string | undefined,
+  equipmentLabel: null | string,
+  description: string,
+) {
+  if (!p.item) return null;
+
   return (
     <View style={s.detailPanel}>
-      <Text style={s.detailTitle}>{p.t('coach.routine.picker.details.title')}</Text>
-      <Text style={s.detailName}>{p.item.name}</Text>
-      <DetailSection label={p.t('coach.routine.picker.details.description')} value={desc} />
-      {p.item.notes && (
-        <DetailSection label={p.t('coach.routine.picker.details.notes')} value={p.item.notes} />
-      )}
-      <LibraryMediaViewer
-        imageUrl={getFullUrl(p.blockType, p.item.imageUrl)}
+      <MediaSection
+        blockType={p.blockType}
+        imageUrl={p.item.imageUrl}
         t={p.t}
         youtubeUrl={p.item.youtubeUrl || null}
       />
+      <View style={s.detailContent}>
+        <Text style={s.detailName}>{p.item.name}</Text>
+        <DetailTags categoryLabel={categoryLabel} equipmentLabel={equipmentLabel} />
+        <DetailSection
+          label={p.t('coach.routine.picker.details.description')}
+          value={description}
+        />
+        {p.item.notes ? (
+          <DetailSection label={p.t('coach.routine.picker.details.notes')} value={p.item.notes} />
+        ) : null}
+      </View>
     </View>
   );
-};
+}
+
+function MediaSection(props: {
+  blockType: BlockType;
+  imageUrl: null | string;
+  t: (k: string) => string;
+  youtubeUrl: null | string;
+}) {
+  return (
+    <View style={s.detailMediaWrapper}>
+      <LibraryMediaViewer
+        category={props.blockType}
+        fullWidth={true}
+        imageUrl={getFullUrl(props.blockType, props.imageUrl)}
+        t={props.t}
+        youtubeUrl={props.youtubeUrl}
+      />
+    </View>
+  );
+}
+
+function DetailTags(props: {
+  categoryLabel: null | string | undefined;
+  equipmentLabel: null | string;
+}) {
+  return (
+    <View style={tagStyles.tagsRow}>
+      {props.categoryLabel ? (
+        <View style={[tagStyles.tag, tagStyles.primaryTag]}>
+          <Text style={tagStyles.primaryTagText}>{props.categoryLabel}</Text>
+        </View>
+      ) : null}
+      {props.equipmentLabel ? (
+        <View style={[tagStyles.tag, tagStyles.secondaryTag]}>
+          <Text style={tagStyles.secondaryTagText}>{props.equipmentLabel}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+const tagStyles = StyleSheet.create({
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  tag: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  primaryTag: {
+    backgroundColor: '#dbeafe',
+  },
+  primaryTagText: {
+    color: '#2563eb',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  secondaryTag: {
+    backgroundColor: '#f3e8ff',
+  },
+  secondaryTagText: {
+    color: '#9333ea',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+});

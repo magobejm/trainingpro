@@ -107,43 +107,73 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
           <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text>
         ) : null}
         {vm.orderedBlocks.map((block, index) => (
-          <RoutineBlockCard
-            block={block}
-            dayIdx={0}
-            dayLabels={['']}
-            daysCount={1}
-            isFirst={index === 0}
-            isLast={index === vm.orderedBlocks.length - 1}
+          <div
             key={block.id}
-            onMove={(direction) =>
-              vm.isReadOnlyDraft
-                ? undefined
-                : vm.setDraft((state) => ({
-                    ...state,
-                    blocks: moveBlocks(state.blocks, index, direction),
-                  }))
-            }
-            onMoveToDay={() => undefined}
-            onRemove={() =>
-              vm.isReadOnlyDraft
-                ? undefined
-                : vm.setDraft((state) => ({
-                    ...state,
-                    blocks: state.blocks.filter((item) => item.id !== block.id),
-                  }))
-            }
-            onUpdateField={(field, value) =>
-              vm.isReadOnlyDraft
-                ? undefined
-                : vm.setDraft((state) => ({
-                    ...state,
-                    blocks: state.blocks.map((item) =>
-                      item.id === block.id ? { ...item, [field]: value } : item,
-                    ),
-                  }))
-            }
-            readOnly={vm.isReadOnlyDraft}
-          />
+            draggable={!vm.isReadOnlyDraft}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', index.toString());
+              e.dataTransfer.effectAllowed = 'move';
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              e.dataTransfer.dropEffect = 'move';
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              if (vm.isReadOnlyDraft) return;
+              const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
+              if (!isNaN(fromIndex) && fromIndex !== index) {
+                vm.setDraft((state) => {
+                  const newBlocks = [...state.blocks].sort(
+                    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+                  );
+                  const [moved] = newBlocks.splice(fromIndex, 1);
+                  if (moved) {
+                    newBlocks.splice(index, 0, moved);
+                  }
+                  return { ...state, blocks: newBlocks.map((b, i) => ({ ...b, sortOrder: i })) };
+                });
+              }
+            }}
+            style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
+          >
+            <RoutineBlockCard
+              block={block}
+              dayIdx={0}
+              dayLabels={['']}
+              daysCount={1}
+              isFirst={index === 0}
+              isLast={index === vm.orderedBlocks.length - 1}
+              onMove={(direction) =>
+                vm.isReadOnlyDraft
+                  ? undefined
+                  : vm.setDraft((state) => ({
+                      ...state,
+                      blocks: moveBlocks(state.blocks, index, direction),
+                    }))
+              }
+              onMoveToDay={() => undefined}
+              onRemove={() =>
+                vm.isReadOnlyDraft
+                  ? undefined
+                  : vm.setDraft((state) => ({
+                      ...state,
+                      blocks: state.blocks.filter((item) => item.id !== block.id),
+                    }))
+              }
+              onUpdateField={(field, value) =>
+                vm.isReadOnlyDraft
+                  ? undefined
+                  : vm.setDraft((state) => ({
+                      ...state,
+                      blocks: state.blocks.map((item) =>
+                        item.id === block.id ? { ...item, [field]: value } : item,
+                      ),
+                    }))
+              }
+              readOnly={vm.isReadOnlyDraft}
+            />
+          </div>
         ))}
         {vm.isReadOnlyDraft ? null : (
           <AddBlockSection

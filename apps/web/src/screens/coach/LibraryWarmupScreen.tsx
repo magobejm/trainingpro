@@ -139,6 +139,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
                 <LibraryItemCard
                   category="warmup"
                   deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
+                  expanded={expandedId === item.id}
                   imageUrl={item.media?.url}
                   name={item.name}
                   onDelete={() => setPendingDeleteId(item.id)}
@@ -151,7 +152,6 @@ export function LibraryWarmupScreen(): React.JSX.Element {
                       : t('coach.library.type.undefined')
                   }
                   t={t}
-                  expanded={expandedId === item.id}
                 />
               </View>
             ))}
@@ -210,6 +210,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         }
         mediaContent={
           <LibraryMediaFields
+            category="warmup"
             imageUrl={form.mediaUrl}
             isUploading={uploadImageMutation.isPending}
             onUpload={() => onUploadImage(true)}

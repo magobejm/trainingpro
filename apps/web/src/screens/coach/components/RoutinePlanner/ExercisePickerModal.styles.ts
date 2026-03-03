@@ -103,12 +103,20 @@ export const s = StyleSheet.create({
     fontWeight: '700',
   },
   detailPanel: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    gap: 12,
-    padding: 16,
+    overflow: 'hidden',
+  },
+  detailMediaWrapper: {
+    height: 240,
+    width: '100%',
+    backgroundColor: '#0f172a',
+  },
+  detailContent: {
+    padding: 24,
+    gap: 16,
   },
   detailSection: {
     gap: 6,

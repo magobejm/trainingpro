@@ -143,13 +143,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   tagSecondary: {
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#f3e8ff',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   tagSecondaryText: {
-    color: '#64748b',
+    color: '#9333ea',
     fontSize: 12,
     fontWeight: '600',
   },

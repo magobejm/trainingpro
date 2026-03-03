@@ -21,6 +21,7 @@ type Props = {
   t: (key: string) => string;
   youtubeUrl?: string | null;
   category?: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  equipment?: null | string;
 };
 
 function resolveApiBaseUrl(): string {
@@ -42,31 +43,39 @@ function getFullUrl(url: string | null | undefined, category?: string): string {
 export function LibraryItemCard(props: Props): React.JSX.Element {
   const coachOwned = props.scope === 'coach';
   const imageUrl = getFullUrl(props.imageUrl, props.category);
+  const equipment = props.equipment;
 
   return (
     <Pressable
       onPress={props.onToggle}
       style={[styles.card, props.deleting && styles.deletingCard]}
     >
-      <CardImage
-        imageUrl={imageUrl}
-        name={props.name}
-        scope={props.scope}
-        subtitle={props.subtitle}
-        t={props.t}
-      />
+      <CardImage imageUrl={imageUrl} name={props.name} scope={props.scope} t={props.t} />
       <View style={styles.content}>
         <Text numberOfLines={1} style={styles.name}>
           {props.name}
         </Text>
-        <View style={styles.tagsRow}>
-          <View style={styles.tagPrimary}>
-            <Text style={styles.tagPrimaryText}>{props.subtitle}</Text>
-          </View>
-        </View>
+        <Tags subtitle={props.subtitle} equipment={equipment} />
         <CardFooter coachOwned={coachOwned} onDelete={props.onDelete} onEdit={props.onEdit} />
       </View>
     </Pressable>
+  );
+}
+
+function Tags(props: { equipment?: null | string; subtitle?: null | string }): React.JSX.Element {
+  return (
+    <View style={styles.tagsRow}>
+      {props.subtitle ? (
+        <View style={styles.tagPrimary}>
+          <Text style={styles.tagPrimaryText}>{props.subtitle}</Text>
+        </View>
+      ) : null}
+      {props.equipment ? (
+        <View style={styles.tagSecondary}>
+          <Text style={styles.tagSecondaryText}>{props.equipment}</Text>
+        </View>
+      ) : null}
+    </View>
   );
 }
 
@@ -93,6 +102,7 @@ const styles = StyleSheet.create({
   tagsRow: {
     flexDirection: 'row',
     gap: 8,
+    flexWrap: 'wrap',
   },
   tagPrimary: {
     backgroundColor: '#f1f5f9',
@@ -102,6 +112,17 @@ const styles = StyleSheet.create({
   },
   tagPrimaryText: {
     color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  tagSecondary: {
+    backgroundColor: '#f3e8ff',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagSecondaryText: {
+    color: '#9333ea',
     fontSize: 12,
     fontWeight: '600',
   },

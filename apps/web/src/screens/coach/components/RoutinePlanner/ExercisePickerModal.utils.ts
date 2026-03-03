@@ -72,7 +72,7 @@ export function mapPlio(items: PlioExerciseLibraryItem[]): LibraryItem[] {
     notes: item.notes ?? null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
-    methodType: item.plioType,
+    methodType: item.plioType ?? undefined,
     equipment: item.equipment,
   }));
 }
@@ -85,7 +85,7 @@ export function mapWarmup(items: WarmupExerciseLibraryItem[]): LibraryItem[] {
     notes: null,
     imageUrl: item.media?.url ?? null,
     youtubeUrl: item.youtubeUrl ?? null,
-    methodType: item.mobilityType,
+    methodType: item.mobilityType ?? undefined,
   }));
 }
 

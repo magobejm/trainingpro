@@ -1,9 +1,9 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Pressable, DimensionValue } from 'react-native';
 import { CardImage } from './LibraryItemCard/CardImage';
 import { CardFooter } from './LibraryItemCard/CardFooter';
-import { CardDetails } from './LibraryItemCard/CardDetails';
 import { readFrontEnv } from '../../../data/env';
+import { resolvePlaceholder } from './LibraryMediaViewer';
 
 type Props = {
   deleting?: boolean;
@@ -20,6 +20,7 @@ type Props = {
   subtitle?: string | null;
   t: (key: string) => string;
   youtubeUrl?: string | null;
+  category?: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
 };
 
 function resolveApiBaseUrl(): string {
@@ -29,88 +30,24 @@ function resolveApiBaseUrl(): string {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
-const PLACEHOLDER_IMAGE = `${API_BASE_URL}/assets/placeholders/plan-bg.jpg`;
 
-function getFullUrl(url: string | null | undefined): string {
-  if (!url || url.trim() === '') return PLACEHOLDER_IMAGE;
+function getFullUrl(url: string | null | undefined, category?: string): string {
+  if (!url || url.trim() === '') {
+    return resolvePlaceholder(category);
+  }
   if (url.startsWith('http') || url.startsWith('data:')) return url;
   return `${API_BASE_URL}${url.startsWith('/') ? url : `/${url}`}`;
 }
 
-function isPlaceholderUrl(url: string | null | undefined): boolean {
-  if (!url) return true;
-  const lower = url.toLowerCase();
-  return lower.includes('placeholder') || lower.includes('plan-bg.jpg');
-}
-
-function CardInfo({
-  name,
-  description,
-  t,
-}: {
-  name: string;
-  description: string | null | undefined;
-  t: (k: string) => string;
-}) {
-  return (
-    <>
-      <Text numberOfLines={1} style={styles.name}>
-        {name}
-      </Text>
-      <Text numberOfLines={2} style={styles.description}>
-        {description || t('coach.library.exercises.detail.empty')}
-      </Text>
-    </>
-  );
-}
-
-type CardBodyProps = {
-  name: string;
-  description: string | null | undefined;
-  descriptionLabelKey?: string;
-  detailRows?: ReadonlyArray<{ labelKey: string; value: null | string | undefined }>;
-  coachOwned: boolean;
-  expanded: boolean;
-  onDelete?: () => void;
-  onEdit?: () => void;
-  onToggle: () => void;
-  detailImageUrl: string | null;
-  youtubeUrl?: string | null;
-  t: (key: string) => string;
-};
-
-function CardBody(props: CardBodyProps) {
-  return (
-    <View style={styles.content}>
-      <CardInfo description={props.description} name={props.name} t={props.t} />
-      <CardFooter
-        coachOwned={props.coachOwned}
-        expanded={props.expanded}
-        onDelete={props.onDelete}
-        onEdit={props.onEdit}
-        onToggle={props.onToggle}
-        t={props.t}
-      />
-      <CardDetails
-        description={props.description}
-        descriptionLabelKey={props.descriptionLabelKey}
-        detailRows={props.detailRows}
-        expanded={props.expanded}
-        imageUrl={props.detailImageUrl}
-        t={props.t}
-        youtubeUrl={props.youtubeUrl}
-      />
-    </View>
-  );
-}
-
 export function LibraryItemCard(props: Props): React.JSX.Element {
   const coachOwned = props.scope === 'coach';
-  const imageUrl = getFullUrl(props.imageUrl);
-  const detailImageUrl = !isPlaceholderUrl(props.imageUrl) ? imageUrl : null;
+  const imageUrl = getFullUrl(props.imageUrl, props.category);
 
   return (
-    <View style={[styles.card, props.deleting && styles.deletingCard]}>
+    <Pressable
+      onPress={props.onToggle}
+      style={[styles.card, props.deleting && styles.deletingCard]}
+    >
       <CardImage
         imageUrl={imageUrl}
         name={props.name}
@@ -118,21 +55,18 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
         subtitle={props.subtitle}
         t={props.t}
       />
-      <CardBody
-        coachOwned={coachOwned}
-        description={props.description}
-        descriptionLabelKey={props.descriptionLabelKey}
-        detailImageUrl={detailImageUrl}
-        detailRows={props.detailRows}
-        expanded={props.expanded}
-        name={props.name}
-        onDelete={props.onDelete}
-        onEdit={props.onEdit}
-        onToggle={props.onToggle}
-        t={props.t}
-        youtubeUrl={props.youtubeUrl}
-      />
-    </View>
+      <View style={styles.content}>
+        <Text numberOfLines={1} style={styles.name}>
+          {props.name}
+        </Text>
+        <View style={styles.tagsRow}>
+          <View style={styles.tagPrimary}>
+            <Text style={styles.tagPrimaryText}>{props.subtitle}</Text>
+          </View>
+        </View>
+        <CardFooter coachOwned={coachOwned} onDelete={props.onDelete} onEdit={props.onEdit} />
+      </View>
+    </Pressable>
   );
 }
 
@@ -143,14 +77,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    width: '100%',
+    width: '100%' as DimensionValue,
+    flexDirection: 'column',
   },
   deletingCard: { opacity: 0.5 },
-  content: { padding: 16 },
-  name: { color: '#0f172a', fontSize: 16, fontWeight: '700' },
-  description: { color: '#64748b', fontSize: 13, lineHeight: 18, marginTop: 4 },
+  content: {
+    padding: 20,
+    gap: 12,
+  },
+  name: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  tagPrimary: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagPrimaryText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });

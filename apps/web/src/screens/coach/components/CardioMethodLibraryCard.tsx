@@ -1,16 +1,15 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View, DimensionValue } from 'react-native';
-import { LibraryMediaViewer } from './LibraryMediaViewer';
 import { readFrontEnv } from '../../../data/env';
 import type { CardioMethodLibraryItem } from '../../../data/hooks/useLibraryQuery';
+import { resolvePlaceholder } from './LibraryMediaViewer';
 
 type Props = {
   deleting: boolean;
-  expanded: boolean;
   item: CardioMethodLibraryItem;
   onDelete: () => void;
   onEdit: () => void;
-  onToggle: () => void;
+  onPress: () => void;
   t: (key: string) => string;
 };
 
@@ -21,269 +20,154 @@ function resolveApiBaseUrl(): string {
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
-const PLACEHOLDER_IMAGE = `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`;
-const ICON_EDIT = '✎';
-const ICON_DELETE = '✕';
 
 function getFullUrl(url: string | null | undefined): string {
-  if (!url || typeof url !== 'string' || url.trim() === '') return PLACEHOLDER_IMAGE;
+  if (!url || typeof url !== 'string' || url.trim() === '') {
+    return resolvePlaceholder('cardio');
+  }
   if (url.startsWith('http') || url.startsWith('data:')) return url;
   const cleanPath = url.startsWith('/') ? url : `/${url}`;
   return `${API_BASE_URL}${cleanPath}`;
 }
 
+const ICON_EDIT = '✏️';
+const ICON_DELETE = '🗑️';
+const IMAGE_BLUR_RADIUS = 16;
+
+// eslint-disable-next-line max-lines-per-function
 export function CardioMethodLibraryCard(props: Props): React.JSX.Element {
   const coachOwned = props.item.scope.trim().toLowerCase() === 'coach';
-  const detailImageUrl = props.item.media?.url ? getFullUrl(props.item.media.url) : null;
+  const imageUrl = getFullUrl(props.item.media?.url);
 
   return (
-    <View style={styles.card}>
-      <CardHeader coachOwned={coachOwned} item={props.item} t={props.t} />
+    <Pressable onPress={props.onPress} style={styles.card}>
+      <View style={styles.imageContainer}>
+        <Image
+          blurRadius={IMAGE_BLUR_RADIUS}
+          // eslint-disable-next-line no-restricted-syntax
+          resizeMode="cover"
+          source={{ uri: imageUrl }}
+          style={styles.imageBackdrop}
+        />
+        <View style={styles.imageShade} />
+        {/* eslint-disable-next-line no-restricted-syntax */}
+        <Image resizeMode="contain" source={{ uri: imageUrl }} style={styles.image} />
+      </View>
+
       <View style={styles.content}>
-        <Text numberOfLines={1} style={styles.name}>
+        <Text numberOfLines={1} style={styles.title}>
           {props.item.name}
         </Text>
-        <Text numberOfLines={2} style={styles.description}>
-          {props.item.description || props.t('coach.library.cardio.detail.empty')}
-        </Text>
-        <CardFooter
-          coachOwned={coachOwned}
-          expanded={props.expanded}
-          onDelete={props.onDelete}
-          onEdit={props.onEdit}
-          onToggle={props.onToggle}
-          t={props.t}
-        />
-        {props.expanded && (
-          <CardDetailBox detailImageUrl={detailImageUrl} item={props.item} t={props.t} />
+
+        <View style={styles.tagsRow}>
+          <View style={styles.tagPrimary}>
+            <Text style={styles.tagPrimaryText}>{props.item.methodType}</Text>
+          </View>
+          {props.item.equipment && (
+            <View style={styles.tagSecondary}>
+              <Text style={styles.tagSecondaryText}>{props.item.equipment}</Text>
+            </View>
+          )}
+        </View>
+
+        {coachOwned && (
+          <View style={styles.actionsRow}>
+            <Pressable onPress={props.onEdit} style={styles.actionBtn}>
+              {/* eslint-disable-next-line no-restricted-syntax */}
+              <Text style={styles.actionIcon}>{ICON_EDIT}</Text>
+            </Pressable>
+            <Pressable onPress={props.onDelete} style={[styles.actionBtn, styles.actionDelete]}>
+              {/* eslint-disable-next-line no-restricted-syntax */}
+              <Text style={styles.actionIcon}>{ICON_DELETE}</Text>
+            </Pressable>
+          </View>
         )}
       </View>
-    </View>
-  );
-}
-
-type DetailBoxProps = {
-  detailImageUrl: string | null;
-  item: CardioMethodLibraryItem;
-  t: (key: string) => string;
-};
-function CardDetailBox(props: DetailBoxProps) {
-  return (
-    <View style={styles.detailBox}>
-      <DetailLine
-        label={props.t('coach.library.cardio.detail.methodType')}
-        value={props.item.methodType}
-      />
-      <DetailLine
-        label={props.t('coach.library.cardio.detail.description')}
-        value={props.item.description ?? props.t('coach.library.cardio.detail.empty')}
-      />
-      <DetailLine
-        label={props.t('coach.library.exercises.detail.equipment')}
-        value={props.item.equipment ?? props.t('coach.library.cardio.detail.empty')}
-      />
-      <LibraryMediaViewer
-        imageUrl={props.detailImageUrl}
-        t={props.t}
-        youtubeUrl={props.item.youtubeUrl ?? null}
-      />
-    </View>
-  );
-}
-
-type HeaderProps = {
-  coachOwned: boolean;
-  item: CardioMethodLibraryItem;
-  t: (key: string) => string;
-};
-function CardHeader(props: HeaderProps): React.JSX.Element {
-  const imageUrl = getFullUrl(props.item.media?.url);
-  const scopeLabel = props.coachOwned
-    ? props.t('coach.library.exercises.badge.mine')
-    : props.t('coach.library.scope.global');
-
-  return (
-    <View style={styles.imageContainer}>
-      <Image accessibilityLabel={props.item.name} source={{ uri: imageUrl }} style={styles.image} />
-      <View style={styles.badgesOverlay}>
-        <View style={styles.categoryBadge}>
-          <Text style={styles.badgeText}>{props.item.methodType.toUpperCase()}</Text>
-        </View>
-      </View>
-      <View style={styles.scopeBadgeContainer}>
-        <View style={[styles.scopeBadge, props.coachOwned ? styles.mineBadge : styles.globalBadge]}>
-          <Text style={styles.scopeBadgeText}>{scopeLabel}</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-type FooterProps = {
-  coachOwned: boolean;
-  expanded: boolean;
-  onDelete: () => void;
-  onEdit: () => void;
-  onToggle: () => void;
-  t: (key: string) => string;
-};
-function CardFooter(props: FooterProps): React.JSX.Element {
-  const toggleLabel = props.expanded
-    ? props.t('coach.library.cardio.actions.hideDetail')
-    : props.t('coach.library.cardio.actions.viewDetail');
-  return (
-    <View style={styles.footer}>
-      <Pressable onPress={props.onToggle} style={styles.detailsButton}>
-        <Text style={styles.detailsButtonText}>{toggleLabel}</Text>
-      </Pressable>
-      {props.coachOwned && (
-        <View style={styles.adminActions}>
-          <Pressable onPress={props.onEdit} style={styles.iconButton}>
-            <Text style={styles.iconText}>{ICON_EDIT}</Text>
-          </Pressable>
-          <Pressable onPress={props.onDelete} style={[styles.iconButton, styles.deleteButton]}>
-            <Text style={styles.iconText}>{ICON_DELETE}</Text>
-          </Pressable>
-        </View>
-      )}
-    </View>
-  );
-}
-
-function DetailLine({ label, value }: { label: string; value?: string }): React.JSX.Element {
-  return (
-    <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
-      {value ? <Text style={styles.detailValue}>{value}</Text> : null}
-    </View>
+    </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  adminActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  badgeText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  badgesOverlay: {
-    flexDirection: 'row',
-    gap: 4,
-    left: 10,
-    position: 'absolute',
-    top: 10,
-  },
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 15,
-    width: '100%',
-  },
-  categoryBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  content: {
-    padding: 16,
-  },
-  description: {
-    color: '#64748b',
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 4,
-  },
-  detailsButton: {
-    paddingVertical: 4,
-  },
-  detailsButtonText: {
-    color: '#1c74e9',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  deleteButton: {
-    backgroundColor: '#fee2e2',
-  },
-  footer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-  },
-  globalBadge: {
-    backgroundColor: '#f1f5f9',
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-  },
-  iconText: {
-    fontSize: 14,
-  },
-  image: {
-    aspectRatio: 16 / 9,
     width: '100%' as DimensionValue,
-    minHeight: 180,
-    backgroundColor: '#f1f5f9',
+    flexDirection: 'column',
   },
   imageContainer: {
+    width: '100%' as DimensionValue,
+    height: 200,
+    backgroundColor: '#0f172a',
     position: 'relative',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  mineBadge: {
-    backgroundColor: '#dbeafe',
+  imageBackdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
-  name: {
-    color: '#0f172a',
-    fontSize: 16,
+  imageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(7, 12, 20, 0.2)',
+  },
+  image: {
+    width: '100%' as DimensionValue,
+    height: '100%' as DimensionValue,
+  },
+  content: {
+    padding: 20,
+    gap: 12,
+  },
+  title: {
+    fontSize: 18,
     fontWeight: '700',
-  },
-  scopeBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  scopeBadgeContainer: {
-    bottom: 10,
-    position: 'absolute',
-    right: 10,
-  },
-  scopeBadgeText: {
     color: '#1e293b',
-    fontSize: 10,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  tagPrimary: {
+    backgroundColor: '#ecfdf5',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  tagPrimaryText: {
+    color: '#059669',
+    fontSize: 12,
     fontWeight: '600',
   },
-  detailBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    gap: 12,
-    marginTop: 16,
-    padding: 12,
+  tagSecondary: {
+    backgroundColor: '#f1f5f9',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  detailRow: {
-    gap: 4,
-  },
-  detailLabel: {
+  tagSecondaryText: {
     color: '#64748b',
-    fontSize: 11,
-    fontWeight: '700',
-    textTransform: 'uppercase',
+    fontSize: 12,
+    fontWeight: '600',
   },
-  detailValue: {
-    color: '#1e293b',
-    fontSize: 13,
+  actionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 8,
+  },
+  actionBtn: {
+    backgroundColor: '#f1f5f9',
+    padding: 8,
+    borderRadius: 8,
+  },
+  actionDelete: {
+    backgroundColor: '#fee2e2',
+  },
+  actionIcon: {
+    fontSize: 14,
   },
 });

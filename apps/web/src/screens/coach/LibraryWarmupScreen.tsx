@@ -8,11 +8,10 @@ import {
   Text,
   View,
   ActivityIndicator,
+  Pressable,
 } from 'react-native';
-import { FilterChips } from '@trainerpro/ui';
-import { SearchBar } from '@trainerpro/ui';
+import { FilterChips, SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
-import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
 import { MobilityBaseFields } from './components/LibraryCreateFormFields';
@@ -29,19 +28,10 @@ import {
 } from '../../data/hooks/useLibraryQuery';
 import { libraryStyles as styles } from './library-screen.styles';
 import { LibraryItemCard } from './components/LibraryItemCard';
-import { readFrontEnv } from '../../data/env';
+import { LibraryItemDetailModal } from './components/LibraryItemDetailModal';
 import { EMPTY_WARMUP_FORM, type WarmupCreateFormState } from './LibraryWarmupScreen.create';
 import { createFieldSetter } from './libraryCreateForm.utils';
 import { uploadLibraryMediaImage } from './library-media.upload';
-
-function resolvePlaceholder(): string {
-  const env = readFrontEnv();
-  const url = env.EXPO_PUBLIC_API_BASE_URL ?? 'http://127.0.0.1:8080';
-  const apiBase = url.endsWith('/') ? url.slice(0, -1) : url;
-  return `${apiBase}/assets/placeholders/warmup-placeholder.png`;
-}
-
-const WARMUP_PLACEHOLDER = resolvePlaceholder();
 
 export function LibraryWarmupScreen(): React.JSX.Element {
   const { t } = useTranslation();
@@ -59,16 +49,18 @@ export function LibraryWarmupScreen(): React.JSX.Element {
   const [editingItem, setEditingItem] = useState<WarmupExerciseLibraryItem | null>(null);
 
   const mobilityType = activeFilter === 'all' ? undefined : activeFilter;
-  const { data, isLoading } = useLibraryWarmupExercisesQuery({ mobilityType, query });
+  const { data, isLoading } = useLibraryWarmupExercisesQuery({ query, mobilityType });
   const items = data ?? [];
   const mobilityTypeCatalog = useLibraryMobilityTypesQuery().data ?? [];
   const chips = [
     { id: 'all', label: t('coach.library.cardio.filters.all') },
     ...mobilityTypeCatalog.map((item) => ({
       id: item.id,
-      label: toMobilityTypeLabel(item.id, item.label, t),
+      label: toWarmupTypeLabel(item.id, item.label, t),
     })),
   ];
+
+  const expandedItem = items.find((i) => i.id === expandedId) || null;
 
   const createMutation = useCreateWarmupExerciseMutation();
   const updateMutation = useUpdateWarmupExerciseMutation();
@@ -88,8 +80,8 @@ export function LibraryWarmupScreen(): React.JSX.Element {
     setForm({
       description: item.description ?? '',
       mediaUrl: item.media?.url ?? '',
-      mobilityType: item.mobilityType ?? 'undefined',
       name: item.name,
+      mobilityType: item.mobilityType ?? 'undefined',
       youtubeUrl: item.youtubeUrl ?? '',
     });
     setEditError('');
@@ -99,9 +91,7 @@ export function LibraryWarmupScreen(): React.JSX.Element {
   const onCreate = () => {
     if (!form.name.trim()) return;
     createMutation.mutate(form, {
-      onSuccess: () => {
-        setCreateModalVisible(false);
-      },
+      onSuccess: () => setCreateModalVisible(false),
       onError: (err) => setCreateError(err.message),
     });
   };
@@ -130,25 +120,44 @@ export function LibraryWarmupScreen(): React.JSX.Element {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.title}>{t('coach.library.menu.mobility')}</Text>
-      <Text style={styles.subtitle}>{t('coach.library.mobility.subtitle')}</Text>
+    <View style={styles.page}>
+      <TopBar onOpenCreate={onOpenCreate} query={query} setQuery={setQuery} t={t} />
 
-      <View style={styles.card}>
-        <SearchBar
-          onChangeText={setQuery}
-          placeholder={t('coach.library.exercises.searchPlaceholder')}
-          value={query}
-        />
-        <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.filtersWrapper}>
+          <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
+        </View>
 
-      <LibraryCreateCta
-        buttonLabel={t('coach.library.actions.create')}
-        onPress={onOpenCreate}
-        subtitle={t('coach.library.mobility.subtitle')}
-        title={t('coach.library.mobility.title')}
-      />
+        {isLoading ? (
+          <ActivityIndicator size="large" style={localStyles.loader} color="#1c74e9" />
+        ) : items.length === 0 ? (
+          <Text style={styles.empty}>{t('coach.library.empty')}</Text>
+        ) : (
+          <View style={gridStyles.grid}>
+            {items.map((item) => (
+              <View key={item.id} style={gridStyles.gridItem}>
+                <LibraryItemCard
+                  category="warmup"
+                  deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
+                  imageUrl={item.media?.url}
+                  name={item.name}
+                  onDelete={() => setPendingDeleteId(item.id)}
+                  onEdit={() => onOpenEdit(item)}
+                  onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
+                  scope={item.scope}
+                  subtitle={
+                    item.mobilityType
+                      ? toWarmupTypeLabel(item.mobilityType, item.mobilityType, t)
+                      : t('coach.library.type.undefined')
+                  }
+                  t={t}
+                  expanded={expandedId === item.id}
+                />
+              </View>
+            ))}
+          </View>
+        )}
+      </ScrollView>
 
       <LibraryCreateModal
         cancelLabel={t('coach.clients.modal.cancel')}
@@ -157,26 +166,30 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         onSubmit={onCreate}
         submitLabel={t('coach.library.actions.create')}
         submittingLabel={t('coach.library.exercises.modal.creating')}
-        subtitle={t('coach.library.exercises.modal.subtitle')}
         title={t('coach.library.exercises.modal.title')}
         visible={createModalVisible}
-      >
-        <MobilityBaseFields
-          form={form as unknown as Record<string, string>}
-          mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
-          setField={setField}
-          t={t}
-        />
-        <LibraryMediaFields
-          imageUrl={form.mediaUrl}
-          isUploading={uploadImageMutation.isPending}
-          onUpload={() => onUploadImage(false)}
-          setYoutubeUrl={setField('youtubeUrl')}
-          t={t}
-          youtubeUrl={form.youtubeUrl}
-        />
-        {createError ? <Text style={styles.error}>{t(createError)}</Text> : null}
-      </LibraryCreateModal>
+        formContent={
+          <MobilityBaseFields
+            form={form as unknown as Record<string, string>}
+            mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
+            setField={setField}
+            t={t}
+          />
+        }
+        mediaContent={
+          <LibraryMediaFields
+            category="warmup"
+            imageUrl={form.mediaUrl}
+            isUploading={uploadImageMutation.isPending}
+            onUpload={() => onUploadImage(false)}
+            onRemoveImage={() => setField('mediaUrl')('')}
+            setYoutubeUrl={setField('youtubeUrl')}
+            t={t}
+            youtubeUrl={form.youtubeUrl}
+          />
+        }
+        errorContent={createError ? <Text style={styles.error}>{t(createError)}</Text> : null}
+      />
 
       <LibraryCreateModal
         cancelLabel={t('coach.clients.modal.cancel')}
@@ -185,26 +198,46 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         onSubmit={onSaveEdit}
         submitLabel={t('coach.library.exercises.editModal.save')}
         submittingLabel={t('coach.library.exercises.editModal.saving')}
-        subtitle={t('coach.library.exercises.editModal.subtitle')}
         title={t('coach.library.exercises.editModal.title')}
         visible={editModalVisible}
-      >
-        <MobilityBaseFields
-          form={form as unknown as Record<string, string>}
-          mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
-          setField={setField}
-          t={t}
-        />
-        <LibraryMediaFields
-          imageUrl={form.mediaUrl}
-          isUploading={uploadImageMutation.isPending}
-          onUpload={() => onUploadImage(true)}
-          setYoutubeUrl={setField('youtubeUrl')}
-          t={t}
-          youtubeUrl={form.youtubeUrl}
-        />
-        {editError ? <Text style={styles.error}>{t(editError)}</Text> : null}
-      </LibraryCreateModal>
+        formContent={
+          <MobilityBaseFields
+            form={form as unknown as Record<string, string>}
+            mobilityTypeOptions={chips.filter((item) => item.id !== 'all')}
+            setField={setField}
+            t={t}
+          />
+        }
+        mediaContent={
+          <LibraryMediaFields
+            imageUrl={form.mediaUrl}
+            isUploading={uploadImageMutation.isPending}
+            onUpload={() => onUploadImage(true)}
+            onRemoveImage={() => setField('mediaUrl')('')}
+            setYoutubeUrl={setField('youtubeUrl')}
+            t={t}
+            youtubeUrl={form.youtubeUrl}
+          />
+        }
+        errorContent={editError ? <Text style={styles.error}>{t(editError)}</Text> : null}
+      />
+
+      <LibraryItemDetailModal
+        item={
+          expandedItem
+            ? {
+                ...expandedItem,
+                description: expandedItem.description,
+                methodType: expandedItem.mobilityType
+                  ? toWarmupTypeLabel(expandedItem.mobilityType, expandedItem.mobilityType, t)
+                  : undefined,
+              }
+            : null
+        }
+        onClose={() => setExpandedId('')}
+        t={t}
+        type="warmup"
+      />
 
       <ActionConfirmModal
         cancelLabel={t('coach.clients.modal.cancel')}
@@ -215,60 +248,76 @@ export function LibraryWarmupScreen(): React.JSX.Element {
         title={t('coach.library.confirm.title')}
         visible={Boolean(pendingDeleteId)}
       />
-
-      {isLoading ? (
-        <ActivityIndicator size="large" style={localStyles.loader} color="#1c74e9" />
-      ) : items.length === 0 ? (
-        <Text style={styles.empty}>{t('coach.library.empty')}</Text>
-      ) : (
-        <View style={gridStyles.grid}>
-          {items.map((item) => (
-            <View key={item.id} style={gridStyles.gridItem}>
-              <LibraryItemCard
-                deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                description={item.description}
-                descriptionLabelKey="coach.library.cardio.detail.description"
-                detailRows={[
-                  {
-                    labelKey: 'coach.library.mobility.detail.type',
-                    value: item.mobilityType
-                      ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
-                      : null,
-                  },
-                ]}
-                expanded={expandedId === item.id}
-                imageUrl={item.media?.url || WARMUP_PLACEHOLDER}
-                name={item.name}
-                onDelete={() => setPendingDeleteId(item.id)}
-                onEdit={() => onOpenEdit(item)}
-                onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
-                scope={item.scope}
-                subtitle={
-                  item.mobilityType
-                    ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
-                    : t('coach.library.type.undefined')
-                }
-                t={t}
-                youtubeUrl={item.youtubeUrl}
-              />
-            </View>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+    </View>
   );
 }
 
-const localStyles = StyleSheet.create({
-  loader: {
-    marginTop: 40,
+function TopBar({
+  t,
+  query,
+  setQuery,
+  onOpenCreate,
+}: {
+  t: (key: string) => string;
+  query: string;
+  setQuery: (value: string) => void;
+  onOpenCreate: () => void;
+}) {
+  // eslint-disable-next-line no-restricted-syntax
+  const newText = '+ Nuevo Movilidad';
+  // eslint-disable-next-line no-restricted-syntax
+  const titleText = 'Movilidad';
+  return (
+    <View style={topBarStyles.container}>
+      <Text style={topBarStyles.title}>{titleText}</Text>
+      <View style={topBarStyles.actions}>
+        <View style={topBarStyles.searchWrapper}>
+          <SearchBar
+            onChangeText={setQuery}
+            placeholder={t('coach.library.exercises.searchPlaceholder')}
+            value={query}
+          />
+        </View>
+        <Pressable onPress={onOpenCreate} style={topBarStyles.createBtn}>
+          <Text style={topBarStyles.createBtnText}>{newText}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const topBarStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 24,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    width: '100%',
   },
+  title: { fontSize: 24, fontWeight: '700', color: '#1e293b' },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  searchWrapper: { width: 320 },
+  createBtn: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  createBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
 });
 
-function toMobilityTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
+const localStyles = StyleSheet.create({
+  loader: { marginTop: 40 },
+});
+
+function toWarmupTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
   if (id === 'undefined') return t('coach.library.type.undefined');
-  if (id === 'completo' || id === 'parcial' || id === 'minimo') {
-    return t(`coach.library.mobility.type.${id}`);
+  if (id === 'warmup' || id === 'mobility' || id === 'plio' || id === 'cardio' || id === 'sport') {
+    return t(`coach.library.warmup.type.${id}`);
   }
   return fallback;
 }
@@ -277,16 +326,8 @@ const gridStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -10,
-    marginTop: 10,
+    gap: 24,
     width: '100%' as DimensionValue,
   },
-  gridItem: {
-    flexBasis: '25%' as DimensionValue,
-    flexGrow: 1,
-    maxWidth: 400,
-    minWidth: 280,
-    padding: 10,
-    width: '100%' as DimensionValue,
-  },
+  gridItem: { width: 340 },
 });

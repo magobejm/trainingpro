@@ -9,24 +9,26 @@ interface CardImageProps {
   t: (k: string) => string;
 }
 
-export function CardImage({ name, imageUrl, subtitle, scope, t }: CardImageProps) {
-  const coachOwned = scope === 'coach';
+const IMAGE_BLUR_RADIUS = 16;
+
+export function CardImage({ imageUrl, subtitle }: CardImageProps) {
   return (
     <View style={styles.imageContainer}>
-      <Image accessibilityLabel={name} source={{ uri: imageUrl }} style={styles.image} />
+      <Image
+        blurRadius={IMAGE_BLUR_RADIUS}
+        // eslint-disable-next-line no-restricted-syntax
+        resizeMode="cover"
+        source={{ uri: imageUrl }}
+        style={styles.imageBackdrop}
+      />
+      <View style={styles.imageShade} />
+      {/* eslint-disable-next-line no-restricted-syntax */}
+      <Image resizeMode="contain" source={{ uri: imageUrl }} style={styles.image} />
+
       {subtitle && (
         <View style={styles.badgesOverlay}>
           <View style={styles.categoryBadge}>
             <Text style={styles.badgeText}>{subtitle.toUpperCase()}</Text>
-          </View>
-        </View>
-      )}
-      {scope && (
-        <View style={styles.scopeBadgeContainer}>
-          <View style={[styles.scopeBadge, coachOwned ? styles.mineBadge : styles.globalBadge]}>
-            <Text style={styles.scopeBadgeText}>
-              {t(coachOwned ? 'coach.library.exercises.badge.mine' : 'coach.library.scope.global')}
-            </Text>
           </View>
         </View>
       )}
@@ -36,51 +38,39 @@ export function CardImage({ name, imageUrl, subtitle, scope, t }: CardImageProps
 
 const styles = StyleSheet.create({
   imageContainer: {
+    width: '100%' as DimensionValue,
+    height: 200,
+    backgroundColor: '#0f172a',
     position: 'relative',
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  imageBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  imageShade: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(7, 12, 20, 0.2)',
   },
   image: {
-    aspectRatio: 16 / 9,
     width: '100%' as DimensionValue,
-    minHeight: 180,
-    backgroundColor: '#f1f5f9',
+    height: '100%' as DimensionValue,
   },
   badgesOverlay: {
-    flexDirection: 'row',
-    gap: 4,
-    left: 10,
     position: 'absolute',
-    top: 10,
+    top: 12,
+    left: 12,
   },
   categoryBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 4,
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    borderRadius: 6,
+    paddingHorizontal: 10,
     paddingVertical: 4,
   },
   badgeText: {
     color: '#ffffff',
     fontSize: 10,
     fontWeight: '700',
-  },
-  scopeBadgeContainer: {
-    bottom: 10,
-    position: 'absolute',
-    right: 10,
-  },
-  scopeBadge: {
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  mineBadge: {
-    backgroundColor: '#dbeafe',
-  },
-  globalBadge: {
-    backgroundColor: '#f1f5f9',
-  },
-  scopeBadgeText: {
-    color: '#1e293b',
-    fontSize: 10,
-    fontWeight: '600',
   },
 });

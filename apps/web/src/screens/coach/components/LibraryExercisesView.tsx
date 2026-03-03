@@ -1,14 +1,14 @@
 import React from 'react';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
-import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import type { ExerciseCreateFormState } from '../LibraryExercisesScreen.create';
 import { libraryStyles as styles } from '../library-screen.styles';
 import { ExerciseLibraryCard } from './ExerciseLibraryCard';
 import { ExerciseBaseFields } from './LibraryCreateFormFields';
-import { LibraryCreateCta } from './LibraryCreateCta';
 import { LibraryCreateModal } from './LibraryCreateModal';
 import { LibraryMediaFields } from './LibraryMediaFields';
+import { LibraryItemDetailModal } from './LibraryItemDetailModal';
 
 type Props = {
   activeFilter: string;
@@ -47,64 +47,109 @@ type Props = {
 };
 
 export function LibraryExercisesView(props: Props): React.JSX.Element {
+  const expandedItem = props.items.find((i) => i.id === props.expandedId) || null;
+
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.title}>{props.t('coach.library.exercises.title')}</Text>
-      <Text style={styles.subtitle}>{props.t('coach.library.exercises.subtitle')}</Text>
-      <SearchCard {...props} />
-      <CreateCta {...props} />
+    <View style={styles.page}>
+      <TopBar {...props} />
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.filtersWrapper}>
+          <FilterChips
+            activeId={props.activeFilter}
+            items={props.chips}
+            onSelect={props.onSelectFilter}
+          />
+        </View>
+        {renderList(props)}
+      </ScrollView>
       <CreateModal {...props} />
       <EditModal {...props} />
-      {renderList(props)}
-    </ScrollView>
-  );
-}
-
-function SearchCard(props: Props): React.JSX.Element {
-  return (
-    <View style={styles.card}>
-      <SearchBar
-        onChangeText={props.setQuery}
-        placeholder={props.t('coach.library.exercises.searchPlaceholder')}
-        value={props.query}
-      />
-      <FilterChips
-        activeId={props.activeFilter}
-        items={props.chips}
-        onSelect={props.onSelectFilter}
+      <LibraryItemDetailModal
+        item={expandedItem}
+        onClose={() => props.onToggleDetail(props.expandedId)}
+        t={props.t}
+        // eslint-disable-next-line no-restricted-syntax
+        type="strength"
       />
     </View>
   );
 }
 
-function CreateCta(props: Props): React.JSX.Element {
+function TopBar(props: Props): React.JSX.Element {
+  // eslint-disable-next-line no-restricted-syntax
+  const newText = '+ Nuevo Ejercicio';
   return (
-    <LibraryCreateCta
-      buttonLabel={props.t('coach.library.actions.create')}
-      onPress={props.onOpenCreateModal}
-      subtitle={props.t('coach.library.exercises.cta.subtitle')}
-      title={props.t('coach.library.exercises.cta.title')}
-    />
+    <View style={topBarStyles.container}>
+      <Text style={topBarStyles.title}>{props.t('coach.library.exercises.title')}</Text>
+      <View style={topBarStyles.actions}>
+        <View style={topBarStyles.searchWrapper}>
+          <SearchBar
+            onChangeText={props.setQuery}
+            placeholder={props.t('coach.library.exercises.searchPlaceholder')}
+            value={props.query}
+          />
+        </View>
+        <Pressable onPress={props.onOpenCreateModal} style={topBarStyles.createBtn}>
+          <Text style={topBarStyles.createBtnText}>{newText}</Text>
+        </Pressable>
+      </View>
+    </View>
   );
 }
+
+const topBarStyles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 24,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    width: '100%',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  searchWrapper: {
+    width: 320,
+  },
+  createBtn: {
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  createBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+});
 
 function CreateModal(props: Props): React.JSX.Element {
   return (
     <LibraryCreateModal
       cancelLabel={props.t('coach.clients.modal.cancel')}
+      errorContent={renderError(props.createError, props.t)}
+      formContent={<ExerciseBaseFields {...buildBaseProps(props, true)} />}
       isSubmitting={props.createSubmitting}
+      mediaContent={renderMedia(props, true)}
       onClose={props.onCloseCreateModal}
       onSubmit={props.onCreate}
       submitLabel={props.t('coach.library.actions.create')}
       submittingLabel={props.t('coach.library.exercises.modal.creating')}
-      subtitle={props.t('coach.library.exercises.modal.subtitle')}
       title={props.t('coach.library.exercises.modal.title')}
       visible={props.createModalVisible}
-    >
-      <ExerciseBaseFields {...buildBaseProps(props, true)} />
-      {renderMedia(props, true)}
-      {renderError(props.createError, props.t)}
-    </LibraryCreateModal>
+    />
   );
 }
 
@@ -112,19 +157,17 @@ function EditModal(props: Props): React.JSX.Element {
   return (
     <LibraryCreateModal
       cancelLabel={props.t('coach.clients.modal.cancel')}
+      errorContent={renderError(props.editError, props.t)}
+      formContent={<ExerciseBaseFields {...buildBaseProps(props, false)} />}
       isSubmitting={props.editSubmitting}
+      mediaContent={renderMedia(props, false)}
       onClose={props.onCloseEditModal}
       onSubmit={props.onSaveEdit}
       submitLabel={props.t('coach.library.exercises.editModal.save')}
       submittingLabel={props.t('coach.library.exercises.editModal.saving')}
-      subtitle={props.t('coach.library.exercises.editModal.subtitle')}
       title={props.t('coach.library.exercises.editModal.title')}
       visible={props.editModalVisible}
-    >
-      <ExerciseBaseFields {...buildBaseProps(props, false)} />
-      {renderMedia(props, false)}
-      {renderError(props.editError, props.t)}
-    </LibraryCreateModal>
+    />
   );
 }
 
@@ -139,11 +182,10 @@ function renderList(props: Props): React.JSX.Element {
         <View key={item.id} style={gridStyles.gridItem}>
           <ExerciseLibraryCard
             deleting={props.deletingId === item.id}
-            expanded={props.expandedId === item.id}
             item={item}
             onDelete={() => props.onDelete(item.id)}
             onEdit={() => props.onEdit(item)}
-            onToggle={() => props.onToggleDetail(item.id)}
+            onPress={() => props.onToggleDetail(item.id)}
             t={props.t}
           />
         </View>
@@ -156,17 +198,11 @@ const gridStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -10,
-    marginTop: 10,
+    gap: 24,
     width: '100%' as DimensionValue,
   },
   gridItem: {
-    flexBasis: '25%' as DimensionValue,
-    flexGrow: 1,
-    maxWidth: 400,
-    minWidth: 280,
-    padding: 10,
-    width: '100%' as DimensionValue,
+    width: 340,
   },
 });
 
@@ -181,12 +217,16 @@ function buildBaseProps(props: Props, createMode: boolean) {
 
 function renderMedia(props: Props, createMode: boolean): React.JSX.Element {
   const form = createMode ? props.createForm : props.editForm;
+  const setField = createMode ? props.onSetCreateField : props.onSetEditField;
   return (
     <LibraryMediaFields
+      // eslint-disable-next-line no-restricted-syntax
+      category="strength"
       imageUrl={form.imageUrl}
       isUploading={createMode ? props.createUploading : props.editUploading}
+      onRemoveImage={() => setField('imageUrl')('')}
       onUpload={createMode ? props.onUploadCreateImage : props.onUploadEditImage}
-      setYoutubeUrl={(createMode ? props.onSetCreateField : props.onSetEditField)('youtubeUrl')}
+      setYoutubeUrl={setField('youtubeUrl')}
       t={props.t}
       youtubeUrl={form.youtubeUrl}
     />

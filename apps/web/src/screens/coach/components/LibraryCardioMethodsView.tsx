@@ -84,8 +84,6 @@ export function LibraryCardioMethodsView(props: Props): React.JSX.Element {
 }
 
 function TopBar(props: Props): React.JSX.Element {
-  // eslint-disable-next-line no-restricted-syntax
-  const newText = '+ Nuevo Método';
   return (
     <View style={topBarStyles.container}>
       <Text style={topBarStyles.title}>{props.t('coach.library.cardio.title')}</Text>
@@ -98,7 +96,7 @@ function TopBar(props: Props): React.JSX.Element {
           />
         </View>
         <Pressable onPress={props.onOpenCreateModal} style={topBarStyles.createBtn}>
-          <Text style={topBarStyles.createBtnText}>{newText}</Text>
+          <Text style={topBarStyles.createBtnText}>{props.t('coach.library.actions.create')}</Text>
         </Pressable>
       </View>
     </View>
@@ -131,7 +129,7 @@ const topBarStyles = StyleSheet.create({
     width: 320,
   },
   createBtn: {
-    backgroundColor: '#10b981', // Green for cardio
+    backgroundColor: '#3b82f6',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,

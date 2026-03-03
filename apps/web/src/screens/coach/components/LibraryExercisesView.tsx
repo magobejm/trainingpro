@@ -76,8 +76,6 @@ export function LibraryExercisesView(props: Props): React.JSX.Element {
 }
 
 function TopBar(props: Props): React.JSX.Element {
-  // eslint-disable-next-line no-restricted-syntax
-  const newText = '+ Nuevo Ejercicio';
   return (
     <View style={topBarStyles.container}>
       <Text style={topBarStyles.title}>{props.t('coach.library.exercises.title')}</Text>
@@ -90,7 +88,7 @@ function TopBar(props: Props): React.JSX.Element {
           />
         </View>
         <Pressable onPress={props.onOpenCreateModal} style={topBarStyles.createBtn}>
-          <Text style={topBarStyles.createBtnText}>{newText}</Text>
+          <Text style={topBarStyles.createBtnText}>{props.t('coach.library.actions.create')}</Text>
         </Pressable>
       </View>
     </View>

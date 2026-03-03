@@ -266,10 +266,9 @@ function TopBar({
   setQuery: (value: string) => void;
   onOpenCreate: () => void;
 }) {
-  const newText = '+ Nuevo Pliométrico';
   return (
     <View style={topBarStyles.container}>
-      <Text style={topBarStyles.title}>{t('coach.library.menu.plio')}</Text>
+      <Text style={topBarStyles.title}>{t('coach.library.plyometrics.title')}</Text>
       <View style={topBarStyles.actions}>
         <View style={topBarStyles.searchWrapper}>
           <SearchBar
@@ -279,7 +278,7 @@ function TopBar({
           />
         </View>
         <Pressable onPress={onOpenCreate} style={topBarStyles.createBtn}>
-          <Text style={topBarStyles.createBtnText}>{newText}</Text>
+          <Text style={topBarStyles.createBtnText}>{t('coach.library.actions.create')}</Text>
         </Pressable>
       </View>
     </View>

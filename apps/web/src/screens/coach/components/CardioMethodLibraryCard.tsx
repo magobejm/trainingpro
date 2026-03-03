@@ -132,13 +132,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   tagPrimary: {
-    backgroundColor: '#ecfdf5',
+    backgroundColor: '#dbeafe',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   tagPrimaryText: {
-    color: '#059669',
+    color: '#2563eb',
     fontSize: 12,
     fontWeight: '600',
   },

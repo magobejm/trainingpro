@@ -34,103 +34,89 @@ function DaySection({ day, t }: { day: RoutineDayInput; t: Translate }) {
 }
 
 function DayBlockGroups({ day, t }: { day: RoutineDayInput; t: Translate }) {
-  const groups = buildDayGroups(day, t);
+  const blocks = buildOrderedBlocks(day, t);
   return (
-    <>
-      {groups.map((group) => (
-        <BlockGroup blocks={group.blocks} key={group.key} label={group.label} t={t} />
-      ))}
-    </>
+    <BlockGroup blocks={blocks} label={t('coach.clientProfile.details.trainingPlan.title')} t={t} />
   );
 }
 
-function buildDayGroups(day: RoutineDayInput, t: Translate) {
-  return [
-    buildStrengthGroup(day, t),
-    buildCardioGroup(day, t),
-    buildPlioGroup(day, t),
-    buildWarmupGroup(day, t),
-    buildSportGroup(day, t),
-  ];
-}
-
-function buildStrengthGroup(day: RoutineDayInput, t: Translate) {
+function mapStrengthBlocks(day: RoutineDayInput, t: Translate) {
   const repsRange = (b: RoutineStrengthBlockInput) =>
     formatRepsRange(b.repsMin ?? null, b.repsMax ?? null);
-  return {
-    key: 'strength',
-    label: t('coach.routine.blockType.strength'),
-    blocks: day.exercises?.map((b: RoutineStrengthBlockInput) => ({
-      name: b.displayName,
-      meta: [
-        fieldLabel(t('coach.routine.block.sets'), b.setsPlanned),
-        fieldLabel(t('coach.routine.block.reps'), repsRange(b)),
-        fieldLabel(t('coach.routine.block.rpe'), b.targetRpe),
-      ],
-    })),
-  };
+  return (day.exercises ?? []).map((b: RoutineStrengthBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.strength')),
+    meta: [
+      fieldLabel(t('coach.routine.block.sets'), b.setsPlanned),
+      fieldLabel(t('coach.routine.block.reps'), repsRange(b)),
+      fieldLabel(t('coach.routine.block.rpe'), b.targetRpe),
+    ],
+    sortOrder: b.sortOrder ?? 0,
+  }));
 }
 
-function buildCardioGroup(day: RoutineDayInput, t: Translate) {
-  return {
-    key: 'cardio',
-    label: t('coach.routine.blockType.cardio'),
-    blocks: day.cardioBlocks?.map((b: RoutineCardioBlockInput) => ({
-      name: b.displayName,
-      meta: [
-        fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
-        fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-        fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
-      ],
-    })),
-  };
+function mapCardioBlocks(day: RoutineDayInput, t: Translate) {
+  return (day.cardioBlocks ?? []).map((b: RoutineCardioBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.cardio')),
+    meta: [
+      fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
+      fieldLabel(t('coach.routine.block.work'), b.workSeconds),
+      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
+    ],
+    sortOrder: b.sortOrder ?? 0,
+  }));
 }
 
-function buildPlioGroup(day: RoutineDayInput, t: Translate) {
-  return {
-    key: 'plio',
-    label: t('coach.routine.blockType.plio'),
-    blocks: day.plioBlocks?.map((b: RoutinePlioBlockInput) => ({
-      name: b.displayName,
-      meta: [
-        fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
-        fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-        fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
-      ],
-    })),
-  };
+function mapPlioBlocks(day: RoutineDayInput, t: Translate) {
+  return (day.plioBlocks ?? []).map((b: RoutinePlioBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.plio')),
+    meta: [
+      fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
+      fieldLabel(t('coach.routine.block.work'), b.workSeconds),
+      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
+    ],
+    sortOrder: b.sortOrder ?? 0,
+  }));
 }
 
-function buildWarmupGroup(day: RoutineDayInput, t: Translate) {
-  return {
-    key: 'warmup',
-    label: t('coach.routine.blockType.warmup'),
-    blocks: day.warmupBlocks?.map((b: RoutineWarmupBlockInput) => ({
-      name: b.displayName,
-      meta: [
-        fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
-        fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-        fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
-      ],
-    })),
-  };
+function mapWarmupBlocks(day: RoutineDayInput, t: Translate) {
+  return (day.warmupBlocks ?? []).map((b: RoutineWarmupBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.warmup')),
+    meta: [
+      fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
+      fieldLabel(t('coach.routine.block.work'), b.workSeconds),
+      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
+    ],
+    sortOrder: b.sortOrder ?? 0,
+  }));
 }
 
-function buildSportGroup(day: RoutineDayInput, t: Translate) {
-  return {
-    key: 'sport',
-    label: t('coach.routine.blockType.sport'),
-    blocks: day.sportBlocks?.map((b: RoutineSportBlockInput) => ({
-      name: b.displayName,
-      meta: [
-        fieldLabel(t('coach.routine.block.duration'), b.durationMinutes),
-        fieldLabel(t('coach.routine.block.rpe'), b.targetRpe),
-      ],
-    })),
-  };
+function mapSportBlocks(day: RoutineDayInput, t: Translate) {
+  return (day.sportBlocks ?? []).map((b: RoutineSportBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.sport')),
+    meta: [
+      fieldLabel(t('coach.routine.block.duration'), b.durationMinutes),
+      fieldLabel(t('coach.routine.block.rpe'), b.targetRpe),
+    ],
+    sortOrder: b.sortOrder ?? 0,
+  }));
+}
+
+function buildOrderedBlocks(day: RoutineDayInput, t: Translate) {
+  return [
+    ...mapStrengthBlocks(day, t),
+    ...mapCardioBlocks(day, t),
+    ...mapPlioBlocks(day, t),
+    ...mapWarmupBlocks(day, t),
+    ...mapSportBlocks(day, t),
+  ].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function decorateBlockName(name: string, typeLabel: string): string {
+  return `${name} (${typeLabel})`;
 }
 
 type BlockInfo = {
+  sortOrder?: number;
   name: string;
   meta: Array<{ label: string; value: number | string | null | undefined }>;
 };

@@ -118,14 +118,32 @@ function textField(
   readOnly: boolean,
   t: (k: string) => string,
 ) {
+  const onTextChange = buildTextUpdater(onUpdateField);
   return (labelKey: string, field: keyof DraftBlock) => (
     <TextField
       label={t(labelKey)}
-      onChange={(v) => onUpdateField(field, v)}
+      onChange={(v) => onTextChange(field, v)}
       readOnly={readOnly}
       value={(block[field] as string | undefined) ?? ''}
     />
   );
+}
+
+function buildTextUpdater(onUpdateField: (f: keyof DraftBlock, v: unknown) => void) {
+  return (field: keyof DraftBlock, value: string) => {
+    if (field === 'repsRange' && !isValidRepsRangeInput(value)) {
+      return;
+    }
+    onUpdateField(field, value);
+  };
+}
+
+function isValidRepsRangeInput(value: string): boolean {
+  const raw = value.trim();
+  if (!raw) {
+    return true;
+  }
+  return /^\d+(\s*-\s*\d*)?$/.test(raw);
 }
 
 function TextField(props: {

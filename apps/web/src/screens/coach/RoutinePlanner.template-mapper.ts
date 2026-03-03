@@ -81,6 +81,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
     : [];
   return {
     ...base,
+    ...readWarmupImportFlags(meta),
     repsPlanned: toNumber(item.repsMax),
     repsRange: parseRangeText(toNumber(item.repsMin), toNumber(item.repsMax)),
     restSeconds: toNumber(item.restSeconds),
@@ -97,6 +98,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
 function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap): DraftBlock {
   return {
     ...base,
+    ...readWarmupImportFlags(meta),
     cardioWorkText: toStringValue(meta.trabajo),
     heartRate: toNumber(meta.pulsaciones),
     intensityFcMax: toNumber(meta.intensidadFcMax),
@@ -111,6 +113,7 @@ function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
 function mapPlioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap): DraftBlock {
   return {
     ...base,
+    ...readWarmupImportFlags(meta),
     repsPlanned: toNumber(meta.repeticiones),
     repsRange: toStringValue(meta.rangoReps),
     restSeconds: toNumber(item.restSeconds),
@@ -123,11 +126,23 @@ function mapPlioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap):
 function mapWarmupBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap): DraftBlock {
   return {
     ...base,
+    ...readWarmupImportFlags(meta),
     repsPlanned: toNumber(meta.repeticiones),
     repsRange: toStringValue(meta.rangoReps),
     restSeconds: toNumber(item.restSeconds),
     roundsPlanned: toNumber(item.roundsPlanned),
+    warmupTemplateName: toStringValue(meta.nombreCalentamiento),
     workSeconds: toNumber(item.workSeconds),
+  };
+}
+
+function readWarmupImportFlags(
+  meta: MetaMap,
+): Pick<DraftBlock, 'fromWarmupTemplate' | 'warmupTemplateName'> {
+  const imported = toNumber(meta.deCalentamiento) === 1;
+  return {
+    fromWarmupTemplate: imported || undefined,
+    warmupTemplateName: toStringValue(meta.nombreCalentamiento),
   };
 }
 

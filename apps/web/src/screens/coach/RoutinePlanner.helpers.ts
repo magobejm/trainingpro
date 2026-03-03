@@ -53,6 +53,9 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
 function parseRange(value?: string, fallback?: number): { max: null | number; min: null | number } {
   const raw = value?.trim();
   if (raw) {
+    if (!isCompleteRepsRange(raw)) {
+      return fallbackToSingleValue(fallback);
+    }
     const parts = raw.split('-').map((item) => Number(item.trim()));
     const first = parts[0] ?? Number.NaN;
     const second = parts[1] ?? Number.NaN;
@@ -65,6 +68,14 @@ function parseRange(value?: string, fallback?: number): { max: null | number; mi
       return { max: first, min: first };
     }
   }
+  return fallbackToSingleValue(fallback);
+}
+
+function isCompleteRepsRange(value: string): boolean {
+  return /^\d+(\s*-\s*\d+)?$/.test(value);
+}
+
+function fallbackToSingleValue(fallback?: number): { max: null | number; min: null | number } {
   const one = fallback ?? null;
   return { max: one, min: one };
 }
@@ -101,7 +112,10 @@ const mapStrength = (b: DraftBlock, si: number) => ({
   exerciseLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   sortOrder: si,
-  notes: appendMeta(b.notes, { repsPorSerie: b.repsPerSeries }),
+  notes: appendMeta(b.notes, {
+    ...readWarmupImportMeta(b),
+    repsPorSerie: b.repsPerSeries,
+  }),
 });
 
 function parseStrengthValues(b: DraftBlock) {
@@ -130,6 +144,7 @@ const mapCardio = (b: DraftBlock, si: number) => ({
   methodType: 'interval',
   sortOrder: si,
   notes: appendMeta(b.notes, {
+    ...readWarmupImportMeta(b),
     trabajo: b.cardioWorkText,
     intensidadFcMax: b.intensityFcMax,
     intensidadFcReserva: b.intensityFcReserve,
@@ -153,6 +168,7 @@ const mapPlio = (b: DraftBlock, si: number) => ({
   plioExerciseLibraryId: b.libraryId ?? null,
   sortOrder: si,
   notes: appendMeta(b.notes, {
+    ...readWarmupImportMeta(b),
     pesoKg: b.weightKg,
     rangoReps: b.repsRange,
     repeticiones: b.repsPlanned,
@@ -174,6 +190,7 @@ const mapWarmup = (b: DraftBlock, si: number) => ({
   warmupExerciseLibraryId: b.libraryId ?? null,
   sortOrder: si,
   notes: appendMeta(b.notes, {
+    ...readWarmupImportMeta(b),
     rangoReps: b.repsRange,
     repeticiones: b.repsPlanned,
   }),
@@ -189,25 +206,55 @@ function parseWarmupValues(b: DraftBlock) {
 
 export function buildRoutinePayload(draft: DraftState) {
   return {
-    days: draft.days.map((day, idx) => ({
-      dayIndex: idx + 1,
-      exercises: day.blocks.filter((b) => b.type === 'strength').map(mapStrength),
-      cardioBlocks: day.blocks.filter((b) => b.type === 'cardio').map(mapCardio),
-      plioBlocks: day.blocks.filter((b) => b.type === 'plio').map(mapPlio),
-      warmupBlocks: day.blocks.filter((b) => b.type === 'warmup').map(mapWarmup),
-      sportBlocks: day.blocks
-        .filter((b) => b.type === 'sport')
-        .map((b, si) => ({
-          displayName: b.displayName,
-          sportLibraryId: b.libraryId ?? null,
-          durationMinutes: b.durationMinutes ?? 30,
-          sortOrder: si,
-          targetRpe: b.targetRpe ?? null,
-          notes: b.notes ?? '',
-        })),
-      title: day.title,
-    })),
+    days: draft.days.map((day, idx) => mapRoutineDay(day, idx)),
     name: draft.name,
+  };
+}
+
+function mapRoutineDay(day: DraftDay, index: number) {
+  const mapped = {
+    cardioBlocks: [] as ReturnType<typeof mapCardio>[],
+    exercises: [] as ReturnType<typeof mapStrength>[],
+    plioBlocks: [] as ReturnType<typeof mapPlio>[],
+    sportBlocks: [] as Array<{
+      displayName: string;
+      durationMinutes: number;
+      notes: string;
+      sortOrder: number;
+      sportLibraryId: null | string;
+      targetRpe: null | number;
+    }>,
+    warmupBlocks: [] as ReturnType<typeof mapWarmup>[],
+  };
+  day.blocks.forEach((block, sortOrder) => {
+    if (block.type === 'strength') mapped.exercises.push(mapStrength(block, sortOrder));
+    if (block.type === 'cardio') mapped.cardioBlocks.push(mapCardio(block, sortOrder));
+    if (block.type === 'plio') mapped.plioBlocks.push(mapPlio(block, sortOrder));
+    if (block.type === 'warmup') mapped.warmupBlocks.push(mapWarmup(block, sortOrder));
+    if (block.type === 'sport') mapped.sportBlocks.push(mapSport(block, sortOrder));
+  });
+  return {
+    ...mapped,
+    dayIndex: index + 1,
+    title: day.title,
+  };
+}
+
+function mapSport(block: DraftBlock, sortOrder: number) {
+  return {
+    displayName: block.displayName,
+    durationMinutes: block.durationMinutes ?? 30,
+    notes: block.notes ?? '',
+    sortOrder,
+    sportLibraryId: block.libraryId ?? null,
+    targetRpe: block.targetRpe ?? null,
+  };
+}
+
+function readWarmupImportMeta(block: DraftBlock): Record<string, number | string | undefined> {
+  return {
+    deCalentamiento: block.fromWarmupTemplate ? 1 : undefined,
+    nombreCalentamiento: block.warmupTemplateName,
   };
 }
 

@@ -22,6 +22,38 @@ export const s = StyleSheet.create({
     fontSize: 14,
     color: '#1e293b',
   },
+  inputReadOnly: {
+    backgroundColor: '#f8fafc',
+  },
+  objectiveChipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 4,
+  },
+  objectiveChip: {
+    backgroundColor: '#f1f5f9',
+    borderColor: '#dbe4ef',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  objectiveChipSelected: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#93c5fd',
+  },
+  objectiveChipDisabled: {
+    opacity: 0.55,
+  },
+  objectiveChipText: {
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  objectiveChipTextSelected: {
+    color: '#1d4ed8',
+  },
   successBanner: { backgroundColor: '#dcfce7', borderRadius: 8, padding: 12 },
   successText: { color: '#166534', fontWeight: '600', textAlign: 'center' },
 

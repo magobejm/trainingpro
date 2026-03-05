@@ -13,6 +13,10 @@ export function routineTemplateInclude() {
   const where = { archivedAt: null };
   const orderBy = { sortOrder: 'asc' as const };
   return {
+    assignedClients: {
+      select: { id: true },
+      where: { archivedAt: null },
+    },
     days: {
       include: {
         cardioBlocks: { include: { fieldModes: true }, orderBy, where },
@@ -27,24 +31,46 @@ export function routineTemplateInclude() {
   };
 }
 
-type RoutineRow = Prisma.PlanTemplateGetPayload<{
+export type RoutineRow = Prisma.PlanTemplateGetPayload<{
   include: ReturnType<typeof routineTemplateInclude>;
 }>;
 
-export function mapRoutineTemplate(row: RoutineRow) {
+export type RoutineTemplateMetadata = {
+  expectedCompletionDays: null | number;
+  objectiveIds: string[];
+  objectives: Array<{
+    code: string;
+    id: string;
+    isDefault: boolean;
+    label: string;
+    sortOrder: number;
+  }>;
+};
+
+export function mapRoutineTemplate(row: RoutineRow, metadata?: RoutineTemplateMetadata) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const r = row as any;
+  const safeMetadata = metadata ?? emptyRoutineMetadata();
   return {
+    assignedClientsCount: row.assignedClients.length,
     coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
     days: row.days.map(mapRoutineDay),
+    expectedCompletionDays: safeMetadata.expectedCompletionDays,
     id: row.id,
+    isAssigned: row.assignedClients.length > 0,
     name: row.name,
+    objectiveIds: safeMetadata.objectiveIds,
+    objectives: safeMetadata.objectives,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     scope: r.scope ?? 'COACH',
     templateVersion: row.templateVersion,
     updatedAt: row.updatedAt,
   };
+}
+
+export function emptyRoutineMetadata(): RoutineTemplateMetadata {
+  return { expectedCompletionDays: null, objectiveIds: [], objectives: [] };
 }
 
 function mapRoutineDay(day: any) {

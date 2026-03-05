@@ -143,6 +143,12 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  clientNote: {
+    color: '#475569',
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 2,
+  },
   page: {
     gap: 10,
   },

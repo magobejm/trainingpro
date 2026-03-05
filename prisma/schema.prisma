@@ -210,6 +210,7 @@ model ClientObjective {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
   clients    Client[]
+  routineTemplates PlanTemplateObjective[]
 
   @@index([sortOrder], map: "idx_client_objective_sort")
   @@index([isDefault], map: "idx_client_objective_default")
@@ -413,6 +414,7 @@ model PlanTemplate {
   coachMembershipId String?             @map("coach_membership_id") @db.Uuid
   kind              TemplateKind        @default(STRENGTH)
   name              String              @db.VarChar(120)
+  expectedCompletionDays Int?           @map("expected_completion_days")
   templateVersion   Int                 @default(1) @map("template_version")
   archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
   createdBy         String?             @map("created_by") @db.Uuid
@@ -422,6 +424,7 @@ model PlanTemplate {
   organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember? @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   days              PlanDay[]
+  routineObjectives PlanTemplateObjective[]
   sessions          SessionInstance[]
   assignedClients   Client[]
 
@@ -429,6 +432,20 @@ model PlanTemplate {
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
   @@map("plan_template")
+}
+
+model PlanTemplateObjective {
+  id          String         @id @default(uuid()) @db.Uuid
+  templateId  String         @map("template_id") @db.Uuid
+  objectiveId String         @map("objective_id") @db.Uuid
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  template    PlanTemplate   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  objective   ClientObjective @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
+
+  @@unique([templateId, objectiveId], map: "uq_plan_template_objective")
+  @@index([templateId], map: "idx_plan_template_objective_template")
+  @@index([objectiveId], map: "idx_plan_template_objective_objective")
+  @@map("plan_template_objective")
 }
 
 model WarmupTemplate {

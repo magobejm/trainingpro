@@ -9,7 +9,7 @@ import { buildRoutinePayload, createEmptyDraft } from './RoutinePlanner.helpers'
 import type { DraftState } from './RoutinePlanner.types';
 
 interface MutationHandler {
-  mutate: (input: UpsertRoutineInput, options?: { onSuccess?: () => void }) => void;
+  mutateAsync: (input: UpsertRoutineInput) => Promise<{ id: string }>;
 }
 
 export function useRoutinePlannerMutations(
@@ -20,6 +20,7 @@ export function useRoutinePlannerMutations(
   setActiveDay: (i: number) => void,
   setSuccess: (v: boolean) => void,
   t: (k: string) => string,
+  onAfterSave?: (templateId: string) => Promise<void> | void,
   dayPrefixKey = 'coach.routine.dayPrefix',
 ) {
   const createMutation = useCreateRoutineTemplateMutation();
@@ -34,6 +35,7 @@ export function useRoutinePlannerMutations(
     setActiveDay,
     setSuccess,
     t,
+    onAfterSave,
     dayPrefixKey,
     updateMutation,
     createMutation,
@@ -50,6 +52,7 @@ interface SaveProps {
   setActiveDay: (i: number) => void;
   setSuccess: (v: boolean) => void;
   t: (k: string) => string;
+  onAfterSave?: (templateId: string) => Promise<void> | void;
   dayPrefixKey: string;
   updateMutation: MutationHandler;
   createMutation: MutationHandler;
@@ -58,20 +61,17 @@ interface SaveProps {
 function useOnSave(props: SaveProps) {
   const { draft, editingId, setDraft, setEditingId, setActiveDay, setSuccess, t, dayPrefixKey } =
     props;
-  return useCallback(() => {
-    const onSuccess = () => {
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
-      setDraft(createEmptyDraft(t, dayPrefixKey));
-      setEditingId(null);
-      setActiveDay(0);
-    };
+  return useCallback(async () => {
     const payload = buildRoutinePayload(draft);
-    if (editingId) {
-      props.updateMutation.mutate(payload, { onSuccess });
-    } else {
-      props.createMutation.mutate(payload, { onSuccess });
-    }
+    const saved = editingId
+      ? await props.updateMutation.mutateAsync(payload)
+      : await props.createMutation.mutateAsync(payload);
+    await props.onAfterSave?.(saved.id);
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+    setDraft(createEmptyDraft(t, dayPrefixKey));
+    setEditingId(null);
+    setActiveDay(0);
   }, [
     draft,
     editingId,
@@ -79,6 +79,7 @@ function useOnSave(props: SaveProps) {
     dayPrefixKey,
     props.updateMutation,
     props.createMutation,
+    props.onAfterSave,
     setDraft,
     setEditingId,
     setActiveDay,

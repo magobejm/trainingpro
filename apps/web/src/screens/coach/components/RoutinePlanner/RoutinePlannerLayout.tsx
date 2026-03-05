@@ -1,9 +1,6 @@
 import React, { useRef } from 'react';
-import { ScrollView, Text } from 'react-native';
+import { ScrollView } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
-import { SuccessBanner } from './SuccessBanner';
-import { ReadOnlyBadge } from './ReadOnlyBadge';
-import { RoutineNameInput } from './RoutineNameInput';
 import { DayTabs } from './DayTabs';
 import { DayList } from './DayList';
 import { SaveButton } from './SaveButton';
@@ -19,9 +16,14 @@ import {
 } from '../../../../data/hooks/useWarmupTemplates';
 import { RoutinePlannerModals } from './RoutinePlannerModals';
 import { createWarmupTemplateSelector } from './RoutinePlannerLayout.helpers';
+import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 
 interface LayoutProps {
-  t: (k: string, options?: { count: number }) => string;
+  clientContextId?: null | string;
+  clientContextName?: null | string;
+  objectiveOptions: Array<{ id: string; label: string }>;
+  onAssignTemplate?: (templateId: string) => Promise<void>;
+  t: (k: string, options?: Record<string, unknown>) => string;
   uiState: {
     editingId: string | null;
     setEditingId: (id: string | null) => void;
@@ -65,32 +67,6 @@ interface LayoutProps {
 }
 
 type OpenPickerFn = (dayIdx: number, type: BlockType) => void;
-
-function RoutineTopSection(props: {
-  t: (k: string) => string;
-  saveSuccess: boolean;
-  isReadOnly: boolean;
-  name: string;
-  setDraft: React.Dispatch<React.SetStateAction<DraftState>>;
-  labels: PlannerLabels;
-}) {
-  const { t, saveSuccess, isReadOnly, name, setDraft, labels } = props;
-  return (
-    <>
-      <Text style={s.title}>{t(labels.titleKey)}</Text>
-      {saveSuccess && <SuccessBanner t={t} />}
-      {isReadOnly && <ReadOnlyBadge t={t} />}
-      <RoutineNameInput
-        isReadOnly={isReadOnly}
-        labelKey={labels.nameKey}
-        name={name}
-        placeholderKey={labels.namePlaceholderKey}
-        setDraft={setDraft}
-        t={t}
-      />
-    </>
-  );
-}
 
 function buildDraftHandlers(
   draftState: LayoutProps['draftState'],
@@ -137,7 +113,7 @@ function RoutineTabs(props: {
   draftState: LayoutProps['draftState'];
   isReadOnly: boolean;
   labels: PlannerLabels;
-  t: (k: string) => string;
+  t: (k: string, options?: Record<string, unknown>) => string;
 }) {
   return (
     <DayTabs
@@ -180,18 +156,18 @@ function RoutineDayList(props: {
 }
 
 function RoutineFooterSection(props: LayoutProps) {
-  const { t, draftState, uiState, onSave, templates, deleteMutation } = props;
+  const { t, draftState, uiState, templates, deleteMutation } = props;
   const isReadOnly = draftState.draft.scope === 'GLOBAL';
+  const onLoadTemplate = buildTemplateLoader(uiState.setEditingId, draftState);
   return (
     <>
-      {!isReadOnly && <SaveButton isEditing={!!uiState.editingId} onSave={onSave} t={t} />}
+      {!isReadOnly && <SaveActionButton props={props} />}
       <RoutineList
+        clientContextId={props.clientContextId}
+        clientContextName={props.clientContextName}
+        onAssignTemplate={props.onAssignTemplate}
         onDelete={uiState.setDeletingId}
-        onLoad={(tpl) => {
-          uiState.setEditingId(tpl.id);
-          draftState.setDraft(mapTemplateToDraft(tpl));
-          draftState.setActiveDayIdx(0);
-        }}
+        onLoad={onLoadTemplate}
         t={t}
         templates={templates}
       />
@@ -203,6 +179,29 @@ function RoutineFooterSection(props: LayoutProps) {
       />
     </>
   );
+}
+
+function SaveActionButton(props: { props: LayoutProps }) {
+  const { clientContextName, onSave, t, uiState } = props.props;
+  return (
+    <SaveButton
+      clientContextName={clientContextName}
+      isEditing={!!uiState.editingId}
+      onSave={onSave}
+      t={t}
+    />
+  );
+}
+
+function buildTemplateLoader(
+  setEditingId: (id: string | null) => void,
+  draftState: LayoutProps['draftState'],
+) {
+  return (tpl: RoutineTemplateView) => {
+    setEditingId(tpl.id);
+    draftState.setDraft(mapTemplateToDraft(tpl));
+    draftState.setActiveDayIdx(0);
+  };
 }
 
 function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutProps['draftState']) {
@@ -281,10 +280,12 @@ function RoutineLayoutSections(props: {
   const { draftState, uiState, t, labels = ROUTINE_LABELS } = props.props;
   return (
     <>
-      <RoutineTopSection
+      <RoutinePlannerTopSection
+        draft={draftState.draft}
         isReadOnly={draftState.draft.scope === 'GLOBAL'}
         labels={labels}
         name={draftState.draft.name}
+        objectiveOptions={props.props.objectiveOptions}
         saveSuccess={uiState.saveSuccess}
         setDraft={draftState.setDraft}
         t={t}

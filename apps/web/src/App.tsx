@@ -36,6 +36,7 @@ import {
   type ShellRoute,
   usePersistentShellRoute,
 } from './layout/usePersistentShellRoute';
+import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
 
 export function App(): React.JSX.Element {
   useSessionSync();
@@ -93,26 +94,64 @@ function Shell(props: {
   activeRole: 'admin' | 'client' | 'coach';
   onLogout: () => Promise<void>;
 }): React.JSX.Element {
+  const vm = useShellViewModel(props.activeRole);
+  return <ShellView {...vm} onLogout={props.onLogout} />;
+}
+
+function useShellViewModel(activeRole: 'admin' | 'client' | 'coach') {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
-  const navItems = useMemo(() => resolveNavItems(props.activeRole), [props.activeRole]);
-  const [route, setRoute] = usePersistentShellRoute(props.activeRole, navItems);
+  const clearRoutinePlannerContext = useRoutinePlannerContextStore((state) => state.clear);
+  const navItems = useMemo(() => resolveNavItems(activeRole), [activeRole]);
+  const [route, setRoute] = usePersistentShellRoute(activeRole, navItems);
+  const onSetRoute = (nextRoute: ShellRoute) => {
+    if (nextRoute === 'coach.routine.planner') {
+      clearRoutinePlannerContext();
+    }
+    setRoute(nextRoute);
+  };
+  return { activeRole, email: meQuery.data?.email ?? '', navItems, onSetRoute, route, setRoute, t };
+}
+
+function ShellView(props: {
+  activeRole: 'admin' | 'client' | 'coach';
+  email: string;
+  navItems: ShellNavItem[];
+  onLogout: () => Promise<void>;
+  onSetRoute: (nextRoute: ShellRoute) => void;
+  route: ShellRoute;
+  setRoute: (route: ShellRoute) => void;
+  t: (key: string) => string;
+}) {
   return (
     <View style={styles.page}>
       <ShellSidebar
         activeRole={props.activeRole}
-        email={meQuery.data?.email ?? ''}
-        navItems={navItems}
+        email={props.email}
+        navItems={props.navItems}
         onLogout={() => void props.onLogout()}
-        route={route}
-        setRoute={setRoute}
+        route={props.route}
+        setRoute={props.onSetRoute}
       />
-      <View style={styles.content}>
-        <TopBar
-          roleLabel={t(`auth.role.${props.activeRole}`)}
-          title={t('screen.dashboard.title')}
-        />
-        <View style={styles.contentBody}>{resolveRouteScreen(route, props.activeRole)}</View>
+      <ShellContentArea {...props} />
+    </View>
+  );
+}
+
+function ShellContentArea(props: {
+  activeRole: 'admin' | 'client' | 'coach';
+  route: ShellRoute;
+  setRoute: (route: ShellRoute) => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <View style={styles.content}>
+      <TopBar
+        roleLabel={props.t(`auth.role.${props.activeRole}`)}
+        title={props.t('screen.dashboard.title')}
+      />
+      <View style={styles.contentBody}>
+        {resolveRouteScreen(props.route, props.activeRole, props.setRoute)}
       </View>
     </View>
   );
@@ -147,28 +186,35 @@ function renderNavButtons(
 function resolveRouteScreen(
   route: ShellRoute,
   role: 'admin' | 'client' | 'coach',
+  setRoute: (route: ShellRoute) => void,
 ): React.JSX.Element {
   if (role === 'admin') {
     return route === 'admin.subscription' ? <SubscriptionScreen /> : <CoachesScreen />;
   }
-  return resolveCoachRouteScreen(route);
+  return resolveCoachRouteScreen(route, setRoute);
 }
 
-function resolveCoachRouteScreen(route: ShellRoute): React.JSX.Element {
+function resolveCoachRouteScreen(
+  route: ShellRoute,
+  setRoute: (route: ShellRoute) => void,
+): React.JSX.Element {
   const coachScreen =
-    resolveCoachLibraryScreen(route) ??
+    resolveCoachLibraryScreen(route, setRoute) ??
     resolveCoachBuilderScreen(route) ??
     resolveCoachMonitoringScreen(route);
-  return coachScreen ?? <ClientsScreen />;
+  return coachScreen ?? <ClientsScreen onRouteChange={setRoute} />;
 }
 
-function resolveCoachLibraryScreen(route: ShellRoute): null | React.JSX.Element {
+function resolveCoachLibraryScreen(
+  route: ShellRoute,
+  setRoute: (route: ShellRoute) => void,
+): null | React.JSX.Element {
   if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.warmup') return <LibraryWarmupScreen />;
-  if (route === 'coach.routine.planner') return <RoutinePlannerScreen />;
+  if (route === 'coach.routine.planner') return <RoutinePlannerScreen onRouteChange={setRoute} />;
   if (route === 'coach.warmup.planner') return <WarmupPlannerScreen />;
   return null;
 }

@@ -8,49 +8,57 @@ import {
   useUpdateClientMutation,
   useUploadClientAvatarMutation,
 } from '../../data/hooks/useClientMutations';
-import { resolveRandomAvatarUrl } from '../../data/avatar-default';
 import { useClientByIdQuery, useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
 import { ClientProfileDetailsList } from './components/ClientProfileDetailsList';
 import { ClientProfileKpiCards } from './components/ClientProfileKpiCards';
 import { EditClientProfileModal } from './components/EditClientProfileModal';
 import { ClientProfileTrainingPlan } from './components/ClientProfileTrainingPlan';
-import { PlanSelectionModal } from './components/PlanSelectionModal';
-import { ClientTrainingPlanDetailModal } from './components/ClientTrainingPlanDetailModal';
-import {
-  useRoutineTemplatesQuery,
-  type RoutineTemplateView,
-} from '../../data/hooks/useRoutineTemplates';
+import { ClientProfileNoteModal } from './components/ClientProfileNoteModal';
 import { ClientProfileSummary } from './components/ClientProfileSummary';
-import { pickImageFile } from './client-profile.avatar';
 import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-profile.form';
 import { type FormErrors, validateClientProfileForm } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
+import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
+import type { ShellRoute } from '../../layout/usePersistentShellRoute';
+import {
+  archiveClient,
+  assignRandomAvatar,
+  clearFieldErrorAndSetValue,
+  resetClientPassword,
+  uploadAvatarFromPicker,
+} from './ClientProfileScreen.actions';
 
 type Props = {
   clientId: string;
   onArchived?: () => void;
+  onRouteChange?: (route: ShellRoute) => void;
 };
 
 export function ClientProfileScreen(props: Props): React.JSX.Element {
-  const vm = useClientProfileModel(props.clientId, props.onArchived);
+  const vm = useClientProfileModel(props.clientId, props.onArchived, props.onRouteChange);
   return <ClientProfileView vm={vm} />;
 }
 
-function useClientProfileModel(clientId: string, onArchived?: () => void) {
+function useClientProfileModel(
+  clientId: string,
+  onArchived?: () => void,
+  onRouteChange?: (route: ShellRoute) => void,
+) {
   const { t } = useTranslation();
   const query = useClientByIdQuery(clientId);
   const objectivesQuery = useClientObjectivesQuery();
-  const routineTemplatesQuery = useRoutineTemplatesQuery();
+  const openForClient = useRoutinePlannerContextStore((state) => state.openForClient);
   const mutations = useProfileMutations(clientId);
   const state = useProfileState();
-  useSyncFormFromQuery(query.data, state.setForm, state.setErrors);
+  useSyncFormFromQuery(query.data, state.setForm, state.setErrors, state.setNoteDraft);
   return buildViewModel({
     ...mutations,
     ...state,
     onArchived,
+    onRouteChange,
     query,
     objectives: objectivesQuery.data ?? [],
-    routineTemplates: routineTemplatesQuery.data ?? [],
+    openForClient,
     t,
   });
 }
@@ -68,26 +76,23 @@ function useProfileState() {
   const [form, setForm] = useState(emptyForm());
   const [errors, setErrors] = useState<FormErrors>({});
   const [editing, setEditing] = useState(false);
+  const [editingNote, setEditingNote] = useState(false);
+  const [noteDraft, setNoteDraft] = useState('');
   const [resetPassword, setResetPassword] = useState<null | string>(null);
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
-  const [isPlanModalVisible, setIsPlanModalVisible] = useState(false);
-  const [isPlanDetailVisible, setIsPlanDetailVisible] = useState(false);
 
   return {
     editing,
+    editingNote,
     errors,
     form,
+    noteDraft,
     resetPassword,
-    selectedObjectiveId,
-    isPlanModalVisible,
-    isPlanDetailVisible,
     setEditing,
+    setEditingNote,
     setErrors,
     setForm,
+    setNoteDraft,
     setResetPassword,
-    setSelectedObjectiveId,
-    setIsPlanModalVisible,
-    setIsPlanDetailVisible,
   };
 }
 
@@ -95,27 +100,38 @@ function useSyncFormFromQuery(
   queryData: ReturnType<typeof useClientByIdQuery>['data'],
   setForm: React.Dispatch<React.SetStateAction<ClientForm>>,
   setErrors: React.Dispatch<React.SetStateAction<FormErrors>>,
+  setNoteDraft: React.Dispatch<React.SetStateAction<string>>,
 ): void {
   useEffect(() => {
     if (!queryData) {
       return;
     }
     setForm(toForm(queryData));
+    setNoteDraft(queryData.notes ?? '');
     setErrors({});
-  }, [queryData, setErrors, setForm]);
+  }, [queryData, setErrors, setForm, setNoteDraft]);
 }
 
 interface ViewModelInput {
   archiveMutation: ReturnType<typeof useArchiveClientMutation>;
   editing: boolean;
+  editingNote: boolean;
   errors: FormErrors;
   form: ClientForm;
+  noteDraft: string;
   onArchived?: () => void;
+  onRouteChange?: (route: ShellRoute) => void;
+  openForClient: (
+    clientId: string,
+    clientDisplayName: string,
+    initialTemplateId?: null | string,
+  ) => void;
   query: ReturnType<typeof useClientByIdQuery>;
   objectives: Array<{ id: string; label: string }>;
-  routineTemplates: Array<RoutineTemplateView>;
   resetPassword: null | string;
   resetPasswordMutation: ReturnType<typeof useResetClientPasswordMutation>;
+  setEditingNote: React.Dispatch<React.SetStateAction<boolean>>;
+  setNoteDraft: React.Dispatch<React.SetStateAction<string>>;
   setResetPassword: React.Dispatch<React.SetStateAction<null | string>>;
   setEditing: React.Dispatch<React.SetStateAction<boolean>>;
   setErrors: React.Dispatch<React.SetStateAction<FormErrors>>;
@@ -123,21 +139,14 @@ interface ViewModelInput {
   t: ReturnType<typeof useTranslation>['t'];
   updateMutation: ReturnType<typeof useUpdateClientMutation>;
   uploadAvatarMutation: ReturnType<typeof useUploadClientAvatarMutation>;
-  isPlanModalVisible: boolean;
-  setIsPlanModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  isPlanDetailVisible: boolean;
-  setIsPlanDetailVisible: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function buildViewModel(input: ViewModelInput) {
-  const objectiveOptions = readObjectiveOptions(input.query.data, input.objectives);
   const client = input.query.data;
-  const { updateMutation, setIsPlanModalVisible, setIsPlanDetailVisible } = input;
-  const selectedPlanId = client?.trainingPlan?.id;
-  const planDetail =
-    selectedPlanId && input.routineTemplates.length > 0
-      ? (input.routineTemplates.find((tpl) => tpl.id === selectedPlanId) ?? null)
-      : null;
+  const objectiveOptions = readObjectiveOptions(input.query.data, input.objectives);
+  const { updateMutation } = input;
+  const noteActions = buildNoteActions(input, updateMutation);
+  const onOpenRoutinePlanner = buildOpenRoutinePlannerAction(input);
 
   return {
     ...input,
@@ -147,11 +156,41 @@ function buildViewModel(input: ViewModelInput) {
     saveSuccess: updateMutation.isSuccess,
     trainingPlan: client?.trainingPlan ?? undefined,
     onOpenEdit: () => input.setEditing(true),
-    onAssignPlan: () => setIsPlanModalVisible(true),
-    onOpenPlanDetail: () => setIsPlanDetailVisible(true),
+    onOpenRoutinePlanner,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
-    onSelectPlan: (pid: string) => void updateMutation.mutateAsync({ trainingPlanId: pid }),
-    planDetail,
+    ...noteActions,
+  };
+}
+
+function buildNoteActions(
+  input: ViewModelInput,
+  updateMutation: ReturnType<typeof useUpdateClientMutation>,
+) {
+  return {
+    onChangeNote: (value: string) => input.setNoteDraft(value),
+    onCloseNote: () => input.setEditingNote(false),
+    onDeleteNote: async () => {
+      await updateMutation.mutateAsync({ notes: null });
+      input.setNoteDraft('');
+      input.setEditingNote(false);
+    },
+    onOpenNote: () => input.setEditingNote(true),
+    onSaveNote: async () => {
+      await updateMutation.mutateAsync({ notes: input.noteDraft.trim() || null });
+      input.setEditingNote(false);
+    },
+  };
+}
+
+function buildOpenRoutinePlannerAction(input: ViewModelInput): () => void {
+  return () => {
+    const client = input.query.data;
+    if (!client) {
+      return;
+    }
+    const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
+    input.openForClient(client.id, clientDisplayName, client.trainingPlan?.id ?? null);
+    input.onRouteChange?.('coach.routine.planner');
   };
 }
 
@@ -188,24 +227,21 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       <ClientProfileTrainingPlan
         t={props.vm.t}
         trainingPlan={props.vm.trainingPlan}
-        onAssign={props.vm.onAssignPlan}
+        onOpenPlanner={props.vm.onOpenRoutinePlanner}
         onUnassign={props.vm.onUnassignPlan}
-        onOpenDetail={props.vm.onOpenPlanDetail}
       />
       <ClientProfileDetailsList t={props.vm.t} />
       <ClientProfileKpiCards t={props.vm.t} />
       <ProfileEditModal vm={props.vm} />
-      <PlanSelectionModal
-        visible={props.vm.isPlanModalVisible}
+      <ClientProfileNoteModal
+        draft={props.vm.noteDraft}
+        isSaving={props.vm.isSaving}
+        onChange={props.vm.onChangeNote}
+        onClose={props.vm.onCloseNote}
+        onDelete={props.vm.onDeleteNote}
+        onSave={props.vm.onSaveNote}
         t={props.vm.t}
-        onClose={() => props.vm.setIsPlanModalVisible(false)}
-        onSelect={props.vm.onSelectPlan}
-      />
-      <ClientTrainingPlanDetailModal
-        onClose={() => props.vm.setIsPlanDetailVisible(false)}
-        routine={props.vm.planDetail}
-        t={props.vm.t}
-        visible={props.vm.isPlanDetailVisible}
+        visible={props.vm.editingNote}
       />
     </View>
   );
@@ -217,6 +253,7 @@ function SummarySection(props: { vm: ViewModel }): React.JSX.Element {
       <ClientProfileSummary
         client={props.vm.query.data!}
         onEdit={() => props.vm.setEditing(true)}
+        onEditNote={props.vm.onOpenNote}
         t={props.vm.t}
         weightDraftKg={props.vm.form.weightKg}
       />
@@ -238,7 +275,9 @@ function ProfileEditModal(props: { vm: ViewModel }): React.JSX.Element {
       isSaving={props.vm.isSaving}
       isUploading={props.vm.uploadAvatarMutation.isPending}
       onArchive={() => void archiveClient(props.vm)}
-      onChange={(key, value) => setField(props.vm.setErrors, props.vm.setForm, key, value)}
+      onChange={(key, value) =>
+        clearFieldErrorAndSetValue(props.vm.setErrors, props.vm.setForm, key, value)
+      }
       onClose={() => props.vm.setEditing(false)}
       onPickRandomAvatar={() => void assignRandomAvatar(props.vm)}
       onResetPassword={() => void resetClientPassword(props.vm)}
@@ -253,23 +292,6 @@ function ProfileEditModal(props: { vm: ViewModel }): React.JSX.Element {
   );
 }
 
-function setField(
-  setErrors: ViewModel['setErrors'],
-  setForm: ViewModel['setForm'],
-  key: keyof ClientForm,
-  value: string,
-): void {
-  setErrors((previous) => {
-    if (!previous[key]) {
-      return previous;
-    }
-    const next = { ...previous };
-    delete next[key];
-    return next;
-  });
-  setForm((prev) => ({ ...prev, [key]: value }));
-}
-
 async function saveProfile(vm: ViewModel): Promise<void> {
   const errors = validateClientProfileForm(vm.form, vm.t);
   if (Object.keys(errors).length > 0) {
@@ -279,27 +301,4 @@ async function saveProfile(vm: ViewModel): Promise<void> {
   await vm.updateMutation.mutateAsync(toUpdateInput(vm.form));
   vm.setErrors({});
   vm.setEditing(false);
-}
-
-async function uploadAvatarFromPicker(vm: ViewModel): Promise<void> {
-  const file = await pickImageFile();
-  if (!file) {
-    return;
-  }
-  await vm.uploadAvatarMutation.mutateAsync(file);
-}
-
-async function assignRandomAvatar(vm: ViewModel): Promise<void> {
-  await vm.updateMutation.mutateAsync({ avatarUrl: resolveRandomAvatarUrl() });
-}
-
-async function archiveClient(vm: ViewModel): Promise<void> {
-  await vm.archiveMutation.mutateAsync(vm.query.data!.id);
-  vm.setEditing(false);
-  vm.onArchived?.();
-}
-
-async function resetClientPassword(vm: ViewModel): Promise<void> {
-  const response = await vm.resetPasswordMutation.mutateAsync(vm.query.data!.id);
-  vm.setResetPassword(response.temporaryPassword);
 }

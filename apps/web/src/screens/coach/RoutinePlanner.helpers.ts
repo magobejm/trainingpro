@@ -1,8 +1,6 @@
 import type { BlockType, DraftBlock, DraftDay, DraftState } from './RoutinePlanner.types';
-import {
-  mapTemplateBlock,
-  mapWarmupTemplateItemsToBlocks as mapWarmupTemplateItemsToBlocksImpl,
-} from './RoutinePlanner.template-mapper';
+import { mapTemplateToDraft as mapTemplateToDraftImpl } from './RoutinePlanner.draft-mapper';
+import { mapWarmupTemplateItemsToBlocks as mapWarmupTemplateItemsToBlocksImpl } from './RoutinePlanner.template-mapper';
 
 let blockIdCounter = Date.now();
 let dayIdCounter = Date.now();
@@ -28,7 +26,9 @@ export function createEmptyDraft(
 ): DraftState {
   return {
     days: [createEmptyDay(1, t, prefixKey)],
+    expectedCompletionDays: null,
     name: '',
+    objectiveIds: [],
   };
 }
 
@@ -207,7 +207,9 @@ function parseWarmupValues(b: DraftBlock) {
 export function buildRoutinePayload(draft: DraftState) {
   return {
     days: draft.days.map((day, idx) => mapRoutineDay(day, idx)),
+    expectedCompletionDays: draft.expectedCompletionDays ?? null,
     name: draft.name,
+    objectiveIds: draft.objectiveIds ?? [],
   };
 }
 
@@ -258,63 +260,19 @@ function readWarmupImportMeta(block: DraftBlock): Record<string, number | string
   };
 }
 
-interface TemplateBlockData {
-  displayName: string;
-  sortOrder: number;
-  [key: string]: unknown;
-}
-
-interface TemplateDayData {
-  title: string;
-  exercises?: TemplateBlockData[];
-  cardioBlocks?: TemplateBlockData[];
-  plioBlocks?: TemplateBlockData[];
-  warmupBlocks?: TemplateBlockData[];
-  sportBlocks?: TemplateBlockData[];
-}
-
-interface TemplateData {
-  name: string;
-  scope: string;
-  days: TemplateDayData[];
-}
-
-function mapBlocksFromTemplate(d: TemplateDayData): DraftBlock[] {
-  const types: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport'];
-  const keys: (keyof TemplateDayData)[] = [
-    'exercises',
-    'cardioBlocks',
-    'plioBlocks',
-    'warmupBlocks',
-    'sportBlocks',
-  ];
-  const blocks: DraftBlock[] = [];
-
-  keys.forEach((key, idx) => {
-    const type = types[idx] as BlockType;
-    const items = d[key] as TemplateBlockData[] | undefined;
-    (items ?? []).forEach((item) => {
-      blocks.push(mapTemplateBlock(type, item, createBlock));
-    });
-  });
-
-  return blocks.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-}
-
 export function mapWarmupTemplateItemsToBlocks(
-  items: Array<{ blockType: 'cardio' | 'mobility' | 'plio' | 'strength'; [key: string]: unknown }>,
+  items: Array<{
+    blockType: 'cardio' | 'mobility' | 'plio' | 'strength';
+    [key: string]: unknown;
+  }>,
 ): DraftBlock[] {
   return mapWarmupTemplateItemsToBlocksImpl(items, createBlock, nextBlockId);
 }
 
-export function mapTemplateToDraft(tpl: TemplateData): DraftState {
-  return {
-    days: tpl.days.map((d) => ({
-      blocks: mapBlocksFromTemplate(d),
-      id: nextDayId(),
-      title: d.title,
-    })),
-    name: tpl.name,
-    scope: tpl.scope as 'COACH' | 'GLOBAL',
-  };
+export function mapTemplateToDraft(tpl: unknown): DraftState {
+  return mapTemplateToDraftImpl(
+    tpl as Parameters<typeof mapTemplateToDraftImpl>[0],
+    createBlock,
+    nextDayId,
+  );
 }

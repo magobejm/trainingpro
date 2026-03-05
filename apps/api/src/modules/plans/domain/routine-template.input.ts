@@ -75,4 +75,6 @@ export type RoutineDayInput = {
 export type RoutineTemplateWriteInput = {
   days: RoutineDayInput[];
   name: string;
+  objectiveIds?: string[];
+  expectedCompletionDays?: null | number;
 };

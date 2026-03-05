@@ -1,36 +1,48 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import '../../i18n';
-import {
-  useCreateClientMutation,
-} from '../../data/hooks/useClientMutations';
+import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { styles } from './clients-screen.styles';
 import { ClientProfileScreen } from './ClientProfileScreen';
+import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
 import { CreateClientModal } from './components/CreateClientModal';
 import { CreateClientResultBanner } from './components/CreateClientResultBanner';
 import { EmptyClientSelectionPanel } from './components/EmptyClientSelectionPanel';
 import { useClientCreateForm } from './useClientCreateForm';
+import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 
-export function ClientsScreen(): React.JSX.Element {
-  const vm = useClientsViewModel();
+type Props = {
+  onRouteChange?: (route: ShellRoute) => void;
+};
+
+export function ClientsScreen(props: Props): React.JSX.Element {
+  const vm = useClientsViewModel(props.onRouteChange);
   return <ClientsView {...vm} />;
 }
 
-function useClientsViewModel() {
+function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const { t } = useTranslation();
   const clientsQuery = useClientsQuery();
   const createMutation = useCreateClientMutation();
   const form = useClientCreateForm(createMutation);
   const [selectedClientId, setSelectedClientId] = useState('');
+  const consumeClientId = useRoutinePlannerContextStore((state) => state.consumeClientId);
+  useEffect(() => {
+    const clientIdFromPlanner = consumeClientId();
+    if (clientIdFromPlanner) {
+      setSelectedClientId(clientIdFromPlanner);
+    }
+  }, [consumeClientId]);
   return {
     ...form,
     clients: clientsQuery.data ?? [],
     clientsError: clientsQuery.error,
     clientsLoading: clientsQuery.isLoading,
     onSelectClient: setSelectedClientId,
+    onRouteChange,
     selectedClientId,
     t,
   };
@@ -148,6 +160,10 @@ function renderProfile(props: ViewProps): React.JSX.Element {
     return <EmptyClientSelectionPanel t={props.t} />;
   }
   return (
-    <ClientProfileScreen clientId={props.selectedClientId} onArchived={() => props.onSelectClient('')} />
+    <ClientProfileScreen
+      clientId={props.selectedClientId}
+      onArchived={() => props.onSelectClient('')}
+      onRouteChange={props.onRouteChange}
+    />
   );
 }

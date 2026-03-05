@@ -78,14 +78,27 @@ export type RoutineDayInput = {
 
 export type UpsertRoutineInput = {
   days: RoutineDayInput[];
+  expectedCompletionDays?: null | number;
   name: string;
+  objectiveIds?: string[];
 };
 
 export type RoutineTemplateView = {
+  assignedClientsCount?: number;
   coachMembershipId: null | string;
   days: RoutineDayInput[];
+  expectedCompletionDays?: null | number;
   id: string;
+  isAssigned?: boolean;
   name: string;
+  objectiveIds?: string[];
+  objectives?: Array<{
+    code: string;
+    id: string;
+    isDefault: boolean;
+    label: string;
+    sortOrder: number;
+  }>;
   scope: 'COACH' | 'GLOBAL';
   templateVersion: number;
 };

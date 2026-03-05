@@ -40,6 +40,8 @@ export interface DraftDay {
 
 export interface DraftState {
   days: DraftDay[];
+  expectedCompletionDays?: null | number;
   name: string;
+  objectiveIds?: string[];
   scope?: 'GLOBAL' | 'COACH';
 }

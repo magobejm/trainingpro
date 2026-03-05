@@ -87,9 +87,13 @@ const daySchema = z.object({
 export class UpsertRoutineTemplateDto {
   static schema = z.object({
     days: z.array(daySchema).min(1),
+    expectedCompletionDays: z.number().int().min(1).max(365).nullable().optional(),
     name: z.string().trim().min(1).max(120),
+    objectiveIds: z.array(z.string().uuid()).max(3).optional().default([]),
   });
 
   days!: z.infer<typeof UpsertRoutineTemplateDto.schema>['days'];
+  expectedCompletionDays?: null | number;
   name!: string;
+  objectiveIds?: string[];
 }

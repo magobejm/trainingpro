@@ -3,12 +3,12 @@ import { StyleSheet } from 'react-native';
 const COLORS = {
   accent: '#3b82f6',
   bg: '#f8fafc',
-  nav: '#ffffff',
-  navBorder: '#f1f5f9',
+  nav: '#0f172a',
+  navBorder: '#1e293b',
   shell: '#f8fafc',
-  textMuted: '#64748b',
-  textActive: '#3b82f6',
-  textDefault: '#1e293b',
+  textMuted: '#94a3b8',
+  textActive: '#e2e8f0',
+  textDefault: '#e2e8f0',
   white: '#ffffff',
 };
 
@@ -23,8 +23,8 @@ export const styles = StyleSheet.create({
   },
   logoutButton: {
     alignItems: 'center',
-    backgroundColor: COLORS.white,
-    borderColor: '#e2e8f0',
+    backgroundColor: '#1e293b',
+    borderColor: '#334155',
     borderWidth: 1,
     borderRadius: 10,
     justifyContent: 'center',
@@ -32,17 +32,17 @@ export const styles = StyleSheet.create({
     marginTop: 16,
   },
   logoutLabel: {
-    color: '#ef4444',
+    color: '#fda4af',
     fontSize: 13,
     fontWeight: '600',
   },
   navButton: {
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
   },
   navButtonActive: {
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#2563eb',
   },
   navIcon: {
     fontSize: 18,
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     marginRight: 12,
   },
   navIconActive: {
-    //
+    color: '#ffffff',
   },
   navIconBadge: {
     // removed badge styling, keeping it flat
@@ -60,17 +60,17 @@ export const styles = StyleSheet.create({
   },
   navLabel: {
     color: COLORS.textMuted,
-    fontSize: 15,
-    fontWeight: '500',
+    fontSize: 14,
+    fontWeight: '600',
   },
   navLabelActive: {
-    color: COLORS.textActive,
+    color: '#ffffff',
     fontWeight: '700',
   },
   navList: {
     flex: 1,
     gap: 8,
-    marginTop: 40,
+    marginTop: 24,
   },
   navRow: {
     alignItems: 'center',
@@ -85,7 +85,7 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.nav,
     borderColor: COLORS.navBorder,
     borderRightWidth: 1,
-    width: 300,
-    padding: 32,
+    width: 290,
+    padding: 20,
   },
 });

@@ -8,10 +8,16 @@ import {
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ClientCreateInput } from '../../domain/client-create.input';
+import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 import type { ClientObjective } from '../../domain/client-objective';
 import type { ClientsRepositoryPort } from '../../domain/clients-repository.port';
+import {
+  listClientManagementSections,
+  replaceClientManagementSections,
+  seedMissingClientManagementSections,
+} from './client-management-sections.prisma';
 import {
   type ClientDataPayload,
   mapClient,
@@ -99,6 +105,17 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     return client ? mapClient(client) : null;
   }
 
+  async getClientManagementSections(
+    context: AuthContext,
+    clientId: string,
+  ): Promise<ClientManagementSection[]> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      return listClientManagementSections(tx, clientId);
+    });
+  }
+
   async listClientsByCoach(context: AuthContext): Promise<Client[]> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const clients = await this.prisma.client.findMany({
@@ -113,6 +130,18 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       orderBy: { createdAt: 'desc' },
     });
     return clients.map(mapClient);
+  }
+
+  async saveClientManagementSections(
+    context: AuthContext,
+    clientId: string,
+    items: ClientManagementSection[],
+  ): Promise<ClientManagementSection[]> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      return replaceClientManagementSections(tx, clientId, items);
+    });
   }
 
   async updateClient(
@@ -197,9 +226,12 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       updatedBy,
     );
     if (restored) {
+      await seedMissingClientManagementSections(tx, restored.id);
       return restored;
     }
-    return this.createNewClient(tx, membership, clientData, audit);
+    const created = await this.createNewClient(tx, membership, clientData, audit);
+    await seedMissingClientManagementSections(tx, created.id);
+    return created;
   }
 
   private createNewClient(

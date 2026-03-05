@@ -24,9 +24,14 @@ export function ClientProfileSummary(props: Props): React.JSX.Element {
 function resolveMeta(props: Props) {
   return {
     ageLabel: resolveAgeLabel(props.client.birthDate, props.t),
+    fcMaxLabel: resolveOptionalMetric(props.client.fcMax, 'bpm', props.t),
+    fcRestLabel: resolveOptionalMetric(props.client.fcRest, 'bpm', props.t),
+    fitnessLevel: resolveFitnessLevel(props.client.fitnessLevel, props.t),
     fullName: `${props.client.firstName} ${props.client.lastName}`.trim(),
     heightLabel: resolveHeightLabel(props.client.heightCm, props.t),
+    hipLabel: resolveOptionalMetric(props.client.hipCm, 'cm', props.t),
     objective: props.client.objective ?? props.t('coach.clientProfile.notReported'),
+    waistLabel: resolveOptionalMetric(props.client.waistCm, 'cm', props.t),
     weightLabel: resolveWeightLabel(props.client.weightKg, props.weightDraftKg, props.t),
   };
 }
@@ -45,8 +50,13 @@ function IdentityBlock(props: Props & { meta: ReturnType<typeof resolveMeta> }):
         ) : null}
         <StatsRow
           ageLabel={props.meta.ageLabel}
+          fcMaxLabel={props.meta.fcMaxLabel}
+          fcRestLabel={props.meta.fcRestLabel}
+          fitnessLevel={props.meta.fitnessLevel}
           heightLabel={props.meta.heightLabel}
+          hipLabel={props.meta.hipLabel}
           t={props.t}
+          waistLabel={props.meta.waistLabel}
           weightLabel={props.meta.weightLabel}
         />
       </View>
@@ -91,8 +101,13 @@ function Avatar(props: {
 
 function StatsRow(props: {
   ageLabel: string;
+  fcMaxLabel: string;
+  fcRestLabel: string;
+  fitnessLevel: string;
   heightLabel: string;
+  hipLabel: string;
   t: (key: string) => string;
+  waistLabel: string;
   weightLabel: string;
 }): React.JSX.Element {
   return (
@@ -100,6 +115,13 @@ function StatsRow(props: {
       <StatPill text={`${props.t('coach.clientProfile.stats.height')}: ${props.heightLabel}`} />
       <StatPill text={`${props.t('coach.clientProfile.stats.weight')}: ${props.weightLabel}`} />
       <StatPill text={`${props.t('coach.clientProfile.stats.age')}: ${props.ageLabel}`} />
+      <StatPill text={`${props.t('coach.clientProfile.stats.waist')}: ${props.waistLabel}`} />
+      <StatPill text={`${props.t('coach.clientProfile.stats.hip')}: ${props.hipLabel}`} />
+      <StatPill text={`${props.t('coach.clientProfile.stats.fcMax')}: ${props.fcMaxLabel}`} />
+      <StatPill text={`${props.t('coach.clientProfile.stats.fcRest')}: ${props.fcRestLabel}`} />
+      <StatPill
+        text={`${props.t('coach.clientProfile.stats.fitnessLevel')}: ${props.fitnessLevel}`}
+      />
     </View>
   );
 }
@@ -163,4 +185,28 @@ function resolveWeightLabel(
     return t('coach.clientProfile.stats.weightValue', { value: `${persistedWeightKg}` });
   }
   return t('coach.clientProfile.notReported');
+}
+
+function resolveOptionalMetric(
+  value: null | number | undefined,
+  suffix: string,
+  t: (key: string) => string,
+): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return t('coach.clientProfile.notReported');
+  }
+  return `${value}${suffix}`;
+}
+
+function resolveFitnessLevel(value: null | string | undefined, t: (key: string) => string): string {
+  if (!value) {
+    return t('coach.clientProfile.fitness.unspecified');
+  }
+  const map: Record<string, string> = {
+    advanced: 'coach.clientProfile.fitness.advanced',
+    beginner: 'coach.clientProfile.fitness.beginner',
+    elite: 'coach.clientProfile.fitness.elite',
+    intermediate: 'coach.clientProfile.fitness.intermediate',
+  };
+  return t(map[value] ?? 'coach.clientProfile.fitness.unspecified');
 }

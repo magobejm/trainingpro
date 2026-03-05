@@ -6,13 +6,19 @@ const DIR_RIGHT = 'right' as const;
 
 export type ClientSelectorItem = {
   avatarUrl: null | string;
-  email: string;
   id: string;
   name: string;
+  objective?: string;
+  progressTitle?: string;
+  progressLabel?: string;
+  statusTone?: 'success' | 'warning';
+  weightLabel?: string;
+  weightTitle?: string;
 };
 
 type Props = {
   emptyLabel: string;
+  headerContent?: React.ReactNode;
   items: ClientSelectorItem[];
   loading: boolean;
   onSelect: (id: string) => void;
@@ -31,31 +37,56 @@ export function ClientSelectionStrip(props: Props): React.JSX.Element {
 }
 
 function HorizontalList(props: Props): React.JSX.Element {
-  const scrollRef = useRef<ScrollView>(null);
-  const offsetRef = useRef(0);
-  const dragStartRef = useRef(0);
-  const dragOffsetRef = useRef(0);
-  const panResponder = createPanResponder(dragOffsetRef, dragStartRef, offsetRef, scrollRef);
+  const vm = useHorizontalListModel(props.onSelect);
   return (
     <View style={styles.wrap}>
-      <ArrowControls offsetRef={offsetRef} scrollRef={scrollRef} show={props.showArrows} />
+      <ArrowControls
+        headerContent={props.headerContent}
+        offsetRef={vm.offsetRef}
+        scrollRef={vm.scrollRef}
+        show={props.showArrows}
+      />
       <CardsRow
-        offsetRef={offsetRef}
-        panHandlers={panResponder.panHandlers}
+        offsetRef={vm.offsetRef}
+        panHandlers={vm.panHandlers}
+        onSelect={vm.guardedSelect}
         props={props}
-        scrollRef={scrollRef}
+        scrollRef={vm.scrollRef}
       />
     </View>
   );
 }
 
+function useHorizontalListModel(onSelect: (id: string) => void) {
+  const scrollRef = useRef<ScrollView>(null);
+  const offsetRef = useRef(0);
+  const dragStartRef = useRef(0);
+  const dragOffsetRef = useRef(0);
+  const blockSelectionRef = useRef(false);
+  const panResponder = createPanResponder(
+    blockSelectionRef,
+    dragOffsetRef,
+    dragStartRef,
+    offsetRef,
+    scrollRef,
+  );
+  const guardedSelect = (id: string) => {
+    if (blockSelectionRef.current) {
+      return;
+    }
+    onSelect(id);
+  };
+  return { guardedSelect, offsetRef, panHandlers: panResponder.panHandlers, scrollRef };
+}
+
 function CardsRow(props: {
   offsetRef: React.RefObject<number>;
+  onSelect: (id: string) => void;
   panHandlers: ReturnType<typeof PanResponder.create>['panHandlers'];
   props: Props;
   scrollRef: React.RefObject<ScrollView | null>;
 }): React.JSX.Element {
-  const cards = renderClientCards(props.props);
+  const cards = renderClientCards(props.props, props.onSelect);
   return (
     <View {...props.panHandlers} style={styles.dragArea}>
       <ScrollView
@@ -71,30 +102,37 @@ function CardsRow(props: {
   );
 }
 
-function renderClientCards(props: Props): React.JSX.Element[] {
+function renderClientCards(props: Props, onSelect: (id: string) => void): React.JSX.Element[] {
   return props.items.map((item) => (
     <ClientRowCard
       avatarUrl={item.avatarUrl}
-      email={item.email}
       id={item.id}
       key={item.id}
       name={item.name}
-      onSelect={props.onSelect}
+      onSelect={onSelect}
+      objective={item.objective}
+      progressLabel={item.progressLabel}
+      progressTitle={item.progressTitle}
       selected={props.selectedId === item.id}
+      statusTone={item.statusTone ?? 'success'}
+      weightLabel={item.weightLabel}
+      weightTitle={item.weightTitle}
     />
   ));
 }
 
 function ArrowControls(props: {
+  headerContent?: React.ReactNode;
   offsetRef: React.RefObject<number>;
   scrollRef: React.RefObject<ScrollView | null>;
   show?: boolean;
 }): React.JSX.Element {
   if (!props.show) {
-    return <View style={styles.headerRow} />;
+    return <View style={styles.headerRow}>{props.headerContent}</View>;
   }
   return (
     <View style={styles.headerRow}>
+      <View style={styles.headerContentWrap}>{props.headerContent}</View>
       <View style={styles.arrowWrap}>
         <Arrow
           direction={DIR_LEFT}
@@ -128,6 +166,7 @@ function scrollBy(
 }
 
 function createPanResponder(
+  blockSelectionRef: React.RefObject<boolean>,
   dragOffsetRef: React.RefObject<number>,
   dragStartRef: React.RefObject<number>,
   offsetRef: React.RefObject<number>,
@@ -136,14 +175,21 @@ function createPanResponder(
   return PanResponder.create({
     onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dx) > 4,
     onPanResponderGrant: (_, gestureState) => {
+      blockSelectionRef.current = false;
       dragOffsetRef.current = offsetRef.current;
       dragStartRef.current = gestureState.x0;
     },
     onPanResponderMove: (_, gestureState) => {
+      blockSelectionRef.current = true;
       const delta = gestureState.moveX - dragStartRef.current;
       const nextX = Math.max(0, dragOffsetRef.current - delta);
       offsetRef.current = nextX;
       scrollRef.current?.scrollTo({ animated: false, x: nextX });
+    },
+    onPanResponderRelease: () => {
+      setTimeout(() => {
+        blockSelectionRef.current = false;
+      }, 0);
     },
     onStartShouldSetPanResponder: () => false,
   });
@@ -172,6 +218,9 @@ const styles = StyleSheet.create({
   arrowWrap: {
     flexDirection: 'row',
     gap: 8,
+  },
+  headerContentWrap: {
+    flex: 1,
   },
   dragArea: {
     width: '100%',

@@ -1,33 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   useCreateClientMutation,
   useResetClientPasswordMutation,
   type CreateClientResult,
 } from '../../data/hooks/useClientMutations';
+import { listAvailableAvatarUrls } from '../../data/avatar-default';
 
 type CreateMutation = ReturnType<typeof useCreateClientMutation>;
 type ResetMutation = ReturnType<typeof useResetClientPasswordMutation>;
 
 type FormState = {
+  availableAvatars: string[];
+  avatarUrl: string;
   confirmEmail: string;
   email: string;
   emailMismatch: boolean;
   firstName: string;
   lastName: string;
   modalVisible: boolean;
+  objectiveId: string;
   result: CreateClientResult | null;
   setConfirmEmail: (value: string) => void;
+  setAvatarUrl: (value: string) => void;
   setEmail: (value: string) => void;
   setEmailMismatch: (value: boolean) => void;
   setFirstName: (value: string) => void;
   setLastName: (value: string) => void;
   setModalVisible: (value: boolean) => void;
+  setObjectiveId: (value: string) => void;
   setResult: (value: CreateClientResult | null) => void;
 };
 
-export function useClientCreateForm(createMutation: CreateMutation) {
+export function useClientCreateForm(
+  createMutation: CreateMutation,
+  objectiveOptions: Array<{ id: string }>,
+) {
   const resetPasswordMutation = useResetClientPasswordMutation();
-  const state = useFormState();
+  const state = useFormState(objectiveOptions);
   const actions = createFormActions(createMutation, resetPasswordMutation, state);
   return {
     ...actions,
@@ -38,30 +47,61 @@ export function useClientCreateForm(createMutation: CreateMutation) {
   };
 }
 
-function useFormState(): FormState {
+function useFormState(objectiveOptions: Array<{ id: string }>): FormState {
+  const emailState = useEmailState();
+  const nameState = useNameState();
+  const avatarState = useAvatarState();
+  const objectiveState = useObjectiveState(objectiveOptions);
+  const modalState = useModalResultState();
+  useSyncEmailMismatch(emailState);
+  return { ...avatarState, ...emailState, ...nameState, ...objectiveState, ...modalState };
+}
+
+function useEmailState() {
   const [confirmEmail, setConfirmEmail] = useState('');
   const [email, setEmail] = useState('');
   const [emailMismatch, setEmailMismatch] = useState(false);
+  return { confirmEmail, email, emailMismatch, setConfirmEmail, setEmail, setEmailMismatch };
+}
+
+function useSyncEmailMismatch(state: {
+  confirmEmail: string;
+  email: string;
+  setEmailMismatch: (value: boolean) => void;
+}): void {
+  useEffect(() => {
+    const hasBoth = state.email.trim().length > 0 && state.confirmEmail.trim().length > 0;
+    state.setEmailMismatch(hasBoth && !emailsMatch(state.email, state.confirmEmail));
+  }, [state.confirmEmail, state.email, state.setEmailMismatch]);
+}
+
+function useNameState() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [result, setResult] = useState<CreateClientResult | null>(null);
+  return { firstName, lastName, setFirstName, setLastName };
+}
+
+function useAvatarState() {
+  const availableAvatars = listAvailableAvatarUrls();
+  const [avatarUrl, setAvatarUrl] = useState(availableAvatars[0] ?? '');
+  return { availableAvatars, avatarUrl, setAvatarUrl };
+}
+
+function useObjectiveState(objectiveOptions: Array<{ id: string }>) {
+  const defaultObjectiveId = objectiveOptions[0]?.id ?? '';
+  const [objectiveId, setObjectiveId] = useState(defaultObjectiveId);
+  useEffect(() => {
+    if (!objectiveId && defaultObjectiveId) {
+      setObjectiveId(defaultObjectiveId);
+    }
+  }, [defaultObjectiveId, objectiveId]);
+  return { objectiveId, setObjectiveId };
+}
+
+function useModalResultState() {
   const [modalVisible, setModalVisible] = useState(false);
-  return {
-    confirmEmail,
-    email,
-    emailMismatch,
-    firstName,
-    lastName,
-    modalVisible,
-    result,
-    setConfirmEmail,
-    setEmail,
-    setEmailMismatch,
-    setFirstName,
-    setLastName,
-    setModalVisible,
-    setResult,
-  };
+  const [result, setResult] = useState<CreateClientResult | null>(null);
+  return { modalVisible, result, setModalVisible, setResult };
 }
 
 function createFormActions(
@@ -78,15 +118,29 @@ function createFormActions(
     onCreate: () =>
       createClient(createMutation, state, () => {
         state.setConfirmEmail('');
+        state.setAvatarUrl(state.availableAvatars[0] ?? '');
         state.setEmail('');
         state.setEmailMismatch(false);
         state.setFirstName('');
         state.setLastName('');
         state.setModalVisible(false);
       }),
-    onOpenModal: () => state.setModalVisible(true),
+    onOpenModal: () => {
+      resetFormState(state);
+      state.setModalVisible(true);
+    },
     onResetPassword: () => resetClientPassword(resetMutation, state),
   };
+}
+
+function resetFormState(state: FormState): void {
+  state.setAvatarUrl(state.availableAvatars[0] ?? '');
+  state.setConfirmEmail('');
+  state.setEmail('');
+  state.setEmailMismatch(false);
+  state.setFirstName('');
+  state.setLastName('');
+  state.setResult(null);
 }
 
 function createClient(
@@ -104,9 +158,11 @@ function createClient(
   state.setEmailMismatch(false);
   createMutation.mutate(
     {
+      avatarUrl: state.avatarUrl || undefined,
       email: state.email,
       firstName: state.firstName,
       lastName: state.lastName,
+      objectiveId: state.objectiveId || undefined,
     },
     {
       onSuccess: (created) => {

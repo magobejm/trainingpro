@@ -7,6 +7,10 @@ const FIELD_LAST_NAME: keyof ClientForm = 'lastName';
 const FIELD_EMAIL: keyof ClientForm = 'email';
 const FIELD_HEIGHT_CM: keyof ClientForm = 'heightCm';
 const FIELD_WEIGHT_KG: keyof ClientForm = 'weightKg';
+const FIELD_WAIST_CM: keyof ClientForm = 'waistCm';
+const FIELD_HIP_CM: keyof ClientForm = 'hipCm';
+const FIELD_FC_MAX: keyof ClientForm = 'fcMax';
+const FIELD_FC_REST: keyof ClientForm = 'fcRest';
 const FIELD_BIRTH_DATE: keyof ClientForm = 'birthDate';
 const FIELD_PHONE: keyof ClientForm = 'phone';
 const FIELD_SEX: keyof ClientForm = 'sex';
@@ -26,6 +30,10 @@ export function validateClientProfileForm(
   validateDate(errors, form.birthDate, t);
   validateNumber(errors, FIELD_HEIGHT_CM, form.heightCm, 80, 260, t);
   validateNumber(errors, FIELD_WEIGHT_KG, form.weightKg, 20, 400, t);
+  validateNumber(errors, FIELD_WAIST_CM, form.waistCm, 40, 220, t);
+  validateNumber(errors, FIELD_HIP_CM, form.hipCm, 40, 220, t);
+  validateNumber(errors, FIELD_FC_MAX, form.fcMax, 80, 250, t);
+  validateNumber(errors, FIELD_FC_REST, form.fcRest, 30, 160, t);
   validatePhone(errors, form.phone, t);
   validateSex(errors, form.sex, t);
   return errors;
@@ -42,11 +50,7 @@ function validateRequired(
   }
 }
 
-function validateEmail(
-  errors: FormErrors,
-  email: string,
-  t: (key: string) => string,
-): void {
+function validateEmail(errors: FormErrors, email: string, t: (key: string) => string): void {
   if (email.trim().length === 0 || errors[FIELD_EMAIL]) {
     return;
   }
@@ -56,11 +60,7 @@ function validateEmail(
   }
 }
 
-function validateDate(
-  errors: FormErrors,
-  value: string,
-  t: (key: string) => string,
-): void {
+function validateDate(errors: FormErrors, value: string, t: (key: string) => string): void {
   const trimmed = value.trim();
   if (trimmed.length === 0) {
     return;
@@ -93,11 +93,7 @@ function validateNumber(
   }
 }
 
-function validatePhone(
-  errors: FormErrors,
-  phone: string,
-  t: (key: string) => string,
-): void {
+function validatePhone(errors: FormErrors, phone: string, t: (key: string) => string): void {
   const trimmed = phone.trim();
   if (trimmed.length === 0) {
     return;
@@ -108,11 +104,7 @@ function validatePhone(
   }
 }
 
-function validateSex(
-  errors: FormErrors,
-  value: string,
-  t: (key: string) => string,
-): void {
+function validateSex(errors: FormErrors, value: string, t: (key: string) => string): void {
   const allowed = ['', SEX_MALE, SEX_FEMALE, SEX_OTHER];
   if (!allowed.includes(value)) {
     errors[FIELD_SEX] = t('coach.clientProfile.validation.sex');

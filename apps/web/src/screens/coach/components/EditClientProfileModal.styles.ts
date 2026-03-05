@@ -211,6 +211,10 @@ export const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
   },
+  textArea: {
+    minHeight: 72,
+    textAlignVertical: 'top',
+  },
 });
 
 export const selectStyle: CSSProperties = {

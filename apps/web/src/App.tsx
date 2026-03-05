@@ -78,7 +78,7 @@ function ShellSidebar(props: {
   const { t } = useTranslation();
   return (
     <View style={styles.sidebar}>
-      <SidebarIdentity roleLabel={t(`auth.role.${props.activeRole}`)} title={t('app.title')} />
+      <SidebarIdentity roleLabel={t('app.brand.subtitle')} title={t('app.title')} />
       <View style={styles.navList}>
         {renderNavButtons(props.navItems, props.route, props.setRoute, t)}
       </View>

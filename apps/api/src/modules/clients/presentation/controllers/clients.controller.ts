@@ -21,14 +21,18 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { ArchiveClientUseCase } from '../../application/use-cases/archive-client.usecase';
 import { CreateClientUseCase } from '../../application/use-cases/create-client.usecase';
 import { GetClientUseCase } from '../../application/use-cases/get-client.usecase';
+import { GetClientManagementSectionsUseCase } from '../../application/use-cases/get-client-management-sections.usecase';
 import { ListClientsUseCase } from '../../application/use-cases/list-clients.usecase';
 import { ListClientObjectivesUseCase } from '../../application/use-cases/list-client-objectives.usecase';
 import { ResetClientPasswordUseCase } from '../../application/use-cases/reset-client-password.usecase';
+import { SaveClientManagementSectionsUseCase } from '../../application/use-cases/save-client-management-sections.usecase';
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
 import { UploadClientAvatarUseCase } from '../../application/use-cases/upload-client-avatar.usecase';
 import type { Client } from '../../domain/client';
+import type { ClientManagementSection } from '../../domain/client-management-section';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
 import { CreateClientDto } from '../dto/create-client.dto';
+import { UpdateClientManagementSectionsDto } from '../dto/update-client-management-sections.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
 import { ClientOwnershipGuard } from '../guards/client-ownership.guard';
 
@@ -47,9 +51,11 @@ export class ClientsController {
     private readonly archiveClientUseCase: ArchiveClientUseCase,
     private readonly createClientUseCase: CreateClientUseCase,
     private readonly getClientUseCase: GetClientUseCase,
+    private readonly getClientManagementSectionsUseCase: GetClientManagementSectionsUseCase,
     private readonly listClientsUseCase: ListClientsUseCase,
     private readonly listClientObjectivesUseCase: ListClientObjectivesUseCase,
     private readonly resetClientPasswordUseCase: ResetClientPasswordUseCase,
+    private readonly saveClientManagementSectionsUseCase: SaveClientManagementSectionsUseCase,
     private readonly updateClientUseCase: UpdateClientUseCase,
     private readonly uploadClientAvatarUseCase: UploadClientAvatarUseCase,
   ) {}
@@ -89,6 +95,14 @@ export class ClientsController {
     };
   }
 
+  @Get(':clientId/management-sections')
+  @UseGuards(ClientOwnershipGuard)
+  async getManagementSections(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const items = await this.getClientManagementSectionsUseCase.execute(auth, params.clientId);
+    return { items: items.map(mapManagementSection) };
+  }
+
   @Patch(':clientId')
   @UseGuards(ClientOwnershipGuard)
   async update(
@@ -103,6 +117,22 @@ export class ClientsController {
       mapUpdateDto(body),
     );
     return mapClientOutput(updated);
+  }
+
+  @Patch(':clientId/management-sections')
+  @UseGuards(ClientOwnershipGuard)
+  async updateManagementSections(
+    @Param() params: ClientIdParamDto,
+    @Body() body: UpdateClientManagementSectionsDto,
+    @Req() request: HttpAuthRequest,
+  ) {
+    const auth = readAuthContext(request);
+    const items = await this.saveClientManagementSectionsUseCase.execute(
+      auth,
+      params.clientId,
+      body.items,
+    );
+    return { items: items.map(mapManagementSection) };
   }
 
   @Post(':clientId/avatar')
@@ -152,6 +182,18 @@ function mapCreateDto(body: CreateClientDto) {
 }
 
 function mapClientOutput(client: Client) {
+  return { ...mapClientCoreOutput(client), ...mapClientProfileOutput(client) };
+}
+
+function mapManagementSection(item: ClientManagementSection) {
+  return {
+    archived: item.archived,
+    code: item.code,
+    sortOrder: item.sortOrder,
+  };
+}
+
+function mapClientCoreOutput(client: Client) {
   return {
     avatarUrl: client.avatarUrl ?? resolveDefaultAvatarUrl(client.id),
     birthDate: formatDate(client.birthDate),
@@ -175,6 +217,19 @@ function mapClientOutput(client: Client) {
   };
 }
 
+function mapClientProfileOutput(client: Client) {
+  return {
+    allergies: client.allergies,
+    fcMax: client.fcMax,
+    fcRest: client.fcRest,
+    fitnessLevel: client.fitnessLevel,
+    hipCm: client.hipCm,
+    injuries: client.injuries,
+    secondaryObjectives: client.secondaryObjectives,
+    waistCm: client.waistCm,
+  };
+}
+
 function formatDate(date: Date | null): string | null {
   if (!date) return null;
   if (!(date instanceof Date) || isNaN(date.getTime())) return null;
@@ -186,34 +241,10 @@ function formatIso(date: Date | string): string {
 }
 
 function resolveDefaultAvatarUrl(clientId: string): string {
-  const names = [
-    'avatar-01.png',
-    'avatar-02.png',
-    'avatar-03.png',
-    'avatar-04.png',
-    'avatar-05.png',
-    'avatar-06.png',
-    'avatar-07.png',
-    'avatar-08.png',
-    'pixar-1.png',
-    'pixar-2.png',
-    'pixar-3.png',
-    'pixar-4.png',
-    'pixar-5.png',
-    'pixar-6.png',
-  ];
-  const index = hashSeed(clientId) % names.length;
-  return `${resolvePublicAssetBaseUrl()}/assets/avatars/${names[index]}`;
+  void clientId;
+  return `${resolvePublicAssetBaseUrl()}/assets/avatars/pixar-robot-neutral.svg`;
 }
 
 function resolvePublicAssetBaseUrl(): string {
   return process.env.PUBLIC_ASSET_BASE_URL ?? `http://localhost:${process.env.PORT ?? 8080}`;
-}
-
-function hashSeed(input: string): number {
-  let value = 0;
-  for (let index = 0; index < input.length; index += 1) {
-    value = (value * 31 + input.charCodeAt(index)) >>> 0;
-  }
-  return value;
 }

@@ -17,9 +17,9 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#1e293b',
     borderWidth: 2,
-    borderColor: '#3b82f6',
+    borderColor: '#334155',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -53,8 +53,8 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   card: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#f1f5f9',
+    backgroundColor: '#0b1220',
+    borderColor: '#1e293b',
     borderRadius: 20,
     borderWidth: 1,
     padding: 20,
@@ -74,7 +74,7 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   email: {
-    color: '#64748b',
+    color: '#94a3b8',
     fontSize: 12,
   },
   fieldLabel: {
@@ -88,14 +88,14 @@ export const styles = StyleSheet.create({
   },
   gearButton: {
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#1e293b',
     borderRadius: 8,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
   gearIcon: {
-    color: '#64748b',
+    color: '#cbd5e1',
     fontSize: 16,
   },
   info: {
@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
   name: {
-    color: '#1e293b',
+    color: '#f8fafc',
     fontSize: 14,
     fontWeight: '700',
   },

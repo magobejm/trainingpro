@@ -7,6 +7,7 @@ export function SidebarIdentity(props: { roleLabel: string; title: string }): Re
       <View style={styles.avatarStub} />
       <View style={styles.identityTextWrap}>
         <Text style={styles.logo}>{props.title}</Text>
+        <Text style={styles.logoSubtitle}>{props.roleLabel}</Text>
       </View>
     </View>
   );
@@ -33,10 +34,12 @@ export function TopBar(props: { roleLabel: string; title: string }): React.JSX.E
 
 const styles = StyleSheet.create({
   avatarStub: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
-    height: 44,
-    width: 44,
+    alignItems: 'center',
+    backgroundColor: '#2563eb',
+    borderRadius: 10,
+    height: 34,
+    justifyContent: 'center',
+    width: 34,
   },
   identityCard: {
     alignItems: 'center',
@@ -47,9 +50,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    color: '#1e293b',
-    fontSize: 22,
+    color: '#ffffff',
+    fontSize: 26,
     fontWeight: '800',
+  },
+  logoSubtitle: {
+    color: '#94a3b8',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    marginTop: -1,
+    textTransform: 'uppercase',
   },
   onlineDot: {
     backgroundColor: '#23b26d',

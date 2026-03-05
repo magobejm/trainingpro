@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { CreateClientAvatarPicker } from './CreateClientAvatarPicker';
 
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
@@ -8,6 +9,8 @@ const EMAIL_PROPS = {
 const MODAL_ANIMATION = 'fade' as const;
 
 type Props = {
+  availableAvatars: string[];
+  avatarUrl: string;
   confirmEmail: string;
   email: string;
   emailMismatch: boolean;
@@ -15,12 +18,16 @@ type Props = {
   isFormValid: boolean;
   isSubmitting: boolean;
   lastName: string;
+  objectiveId: string;
+  objectiveOptions: Array<{ id: string; label: string }>;
   onClose: () => void;
   onConfirmEmailChange: (value: string) => void;
   onCreate: () => void;
   onEmailChange: (value: string) => void;
   onFirstNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
+  onObjectiveChange: (value: string) => void;
+  onSelectAvatar: (value: string) => void;
   t: (key: string) => string;
   visible: boolean;
 };
@@ -58,6 +65,13 @@ function ModalFields(props: Props): React.JSX.Element {
     <>
       <EmailFields {...props} />
       <TextFields {...props} />
+      <ObjectiveField {...props} />
+      <CreateClientAvatarPicker
+        avatars={props.availableAvatars}
+        onSelect={props.onSelectAvatar}
+        selectedAvatarUrl={props.avatarUrl}
+        t={props.t}
+      />
     </>
   );
 }
@@ -102,6 +116,25 @@ function EmailFields(props: Props): React.JSX.Element {
         <Text style={styles.error}>{props.t('coach.clients.form.confirmEmailMismatch')}</Text>
       ) : null}
     </>
+  );
+}
+
+function ObjectiveField(props: Props): React.JSX.Element {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{props.t('coach.clients.form.objective')}</Text>
+      <select
+        onChange={(event) => props.onObjectiveChange(event.target.value)}
+        style={selectStyle}
+        value={props.objectiveId}
+      >
+        {props.objectiveOptions.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </View>
   );
 }
 
@@ -160,6 +193,14 @@ const styles = StyleSheet.create({
     padding: 18,
     width: '100%',
   },
+  field: {
+    gap: 4,
+  },
+  label: {
+    color: '#5e7088',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   input: {
     backgroundColor: '#f4f8ff',
     borderColor: '#d4e0ef',
@@ -210,3 +251,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
+
+const selectStyle = {
+  backgroundColor: '#f4f8ff',
+  border: '1px solid #d4e0ef',
+  borderRadius: 10,
+  boxSizing: 'border-box' as const,
+  color: '#1b2434',
+  minHeight: 40,
+  outline: 'none',
+  padding: '8px 12px',
+  width: '100%',
+};

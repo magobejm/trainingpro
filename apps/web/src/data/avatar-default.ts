@@ -1,6 +1,7 @@
 import { readFrontEnv } from './env';
 
 const AVATAR_NAMES = [
+  'pixar-robot-neutral.svg',
   'avatar-01.png',
   'avatar-02.png',
   'avatar-03.png',
@@ -17,10 +18,15 @@ const AVATAR_NAMES = [
   'pixar-6.png',
 ];
 
-export function resolveDefaultAvatarUrl(seed: string): string {
+export function listAvailableAvatarUrls(): string[] {
   const baseUrl = resolveAvatarBaseUrl();
-  const index = hashSeed(seed) % AVATAR_NAMES.length;
-  return `${baseUrl}/assets/avatars/${AVATAR_NAMES[index]}`;
+  return AVATAR_NAMES.map((name) => `${baseUrl}/assets/avatars/${name}`);
+}
+
+export function resolveDefaultAvatarUrl(seed: string): string {
+  void seed;
+  const baseUrl = resolveAvatarBaseUrl();
+  return `${baseUrl}/assets/avatars/pixar-robot-neutral.svg`;
 }
 
 export function resolveRandomAvatarUrl(): string {
@@ -32,12 +38,4 @@ export function resolveRandomAvatarUrl(): string {
 function resolveAvatarBaseUrl(): string {
   const env = readFrontEnv();
   return env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-}
-
-function hashSeed(input: string): number {
-  let value = 0;
-  for (let index = 0; index < input.length; index += 1) {
-    value = (value * 31 + input.charCodeAt(index)) >>> 0;
-  }
-  return value;
 }

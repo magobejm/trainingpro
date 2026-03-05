@@ -9,12 +9,10 @@ import {
   useUploadClientAvatarMutation,
 } from '../../data/hooks/useClientMutations';
 import { useClientByIdQuery, useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
-import { ClientProfileDetailsList } from './components/ClientProfileDetailsList';
-import { ClientProfileKpiCards } from './components/ClientProfileKpiCards';
 import { EditClientProfileModal } from './components/EditClientProfileModal';
-import { ClientProfileTrainingPlan } from './components/ClientProfileTrainingPlan';
 import { ClientProfileNoteModal } from './components/ClientProfileNoteModal';
 import { ClientProfileSummary } from './components/ClientProfileSummary';
+import { ClientProfileSectionsBoard } from './components/ClientProfileSectionsBoard';
 import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-profile.form';
 import { type FormErrors, validateClientProfileForm } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
@@ -224,14 +222,14 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
   return (
     <View style={styles.page}>
       <SummarySection vm={props.vm} />
-      <ClientProfileTrainingPlan
+      <ClientProfileSectionsBoard
+        clientId={props.vm.query.data!.id}
+        hasTrainingPlan={Boolean(props.vm.trainingPlan)}
+        onOpenTrainingPlanner={props.vm.onOpenRoutinePlanner}
+        onUnassignTrainingPlan={props.vm.onUnassignPlan}
         t={props.vm.t}
-        trainingPlan={props.vm.trainingPlan}
-        onOpenPlanner={props.vm.onOpenRoutinePlanner}
-        onUnassign={props.vm.onUnassignPlan}
+        trainingPlanName={props.vm.trainingPlan?.name}
       />
-      <ClientProfileDetailsList t={props.vm.t} />
-      <ClientProfileKpiCards t={props.vm.t} />
       <ProfileEditModal vm={props.vm} />
       <ClientProfileNoteModal
         draft={props.vm.noteDraft}

@@ -1,15 +1,23 @@
 export type ClientCreateInput = {
+  allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: Date | null;
   clientSupabaseUid?: string;
   email: string;
+  fcMax?: number | null;
+  fcRest?: number | null;
   firstName: string;
+  fitnessLevel?: null | string;
   heightCm?: number | null;
+  hipCm?: number | null;
+  injuries?: null | string;
   lastName: string;
   notes?: null | string;
   objectiveId?: null | string;
   phone?: null | string;
+  secondaryObjectives?: string[];
   sex?: null | string;
+  waistCm?: number | null;
   weightKg?: number | null;
   trainingPlanId?: string | null;
 };

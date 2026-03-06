@@ -19,6 +19,7 @@ const FIELD_FC_REST: keyof ClientForm = 'fcRest';
 const FIELD_FITNESS_LEVEL: keyof ClientForm = 'fitnessLevel';
 const FIELD_INJURIES: keyof ClientForm = 'injuries';
 const FIELD_ALLERGIES: keyof ClientForm = 'allergies';
+const FIELD_CONSIDERATIONS: keyof ClientForm = 'considerations';
 const FIELD_SECONDARY_OBJECTIVES: keyof ClientForm = 'secondaryObjectives';
 const KEYBOARD_EMAIL = 'email-address' as const;
 const KEYBOARD_PHONE = 'phone-pad' as const;
@@ -40,6 +41,11 @@ type ObjectiveOption = { id: string; label: string };
 type Props = {
   errors: FieldErrors;
   form: ClientForm;
+  includeAdvancedTextAreas?: boolean;
+  includeBirthDateField?: boolean;
+  includeBodyMetrics?: boolean;
+  includeFitnessField?: boolean;
+  includeObjectiveField?: boolean;
   objectiveOptions: ObjectiveOption[];
   onChange: (key: keyof ClientForm, value: string) => void;
   t: (key: string, params?: Record<string, number | string>) => string;
@@ -48,28 +54,62 @@ type Props = {
 export function ProfileFieldsSection(props: Props): React.JSX.Element {
   return (
     <>
+      <BaseFields props={props} />
+      <BodyMetricFields props={props} />
+      <FooterFields props={props} />
+    </>
+  );
+}
+
+function BaseFields({ props }: { props: Props }): React.JSX.Element {
+  return (
+    <>
       <Input field={FIELD_FIRST_NAME} {...props} />
       <Input field={FIELD_LAST_NAME} {...props} />
       <Input field={FIELD_EMAIL} {...props} keyboardType={KEYBOARD_EMAIL} />
-      <ObjectiveField {...props} />
-      <DateField {...props} />
+      {props.includeObjectiveField !== false ? <ObjectiveField {...props} /> : null}
+      {props.includeBirthDateField !== false ? <DateField {...props} /> : null}
       <Input
         field={FIELD_PHONE}
         {...props}
         keyboardType={KEYBOARD_PHONE}
         placeholder={props.t('coach.clientProfile.fields.phone.placeholder')}
       />
+    </>
+  );
+}
+
+function BodyMetricFields({ props }: { props: Props }): React.JSX.Element {
+  if (props.includeBodyMetrics === false) return <></>;
+  return (
+    <>
       <Input field={FIELD_HEIGHT_CM} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <Input field={FIELD_WEIGHT_KG} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <Input field={FIELD_WAIST_CM} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <Input field={FIELD_HIP_CM} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <Input field={FIELD_FC_MAX} {...props} keyboardType={KEYBOARD_NUMERIC} />
       <Input field={FIELD_FC_REST} {...props} keyboardType={KEYBOARD_NUMERIC} />
+    </>
+  );
+}
+
+function FooterFields({ props }: { props: Props }): React.JSX.Element {
+  return (
+    <>
       <SexField {...props} />
-      <FitnessField {...props} />
+      {props.includeFitnessField !== false ? <FitnessField {...props} /> : null}
+      {props.includeAdvancedTextAreas !== false ? <AdvancedTextAreas props={props} /> : null}
+    </>
+  );
+}
+
+function AdvancedTextAreas({ props }: { props: Props }): React.JSX.Element {
+  return (
+    <>
       <TextArea field={FIELD_SECONDARY_OBJECTIVES} {...props} />
       <TextArea field={FIELD_INJURIES} {...props} />
       <TextArea field={FIELD_ALLERGIES} {...props} />
+      <TextArea field={FIELD_CONSIDERATIONS} {...props} />
     </>
   );
 }

@@ -5,6 +5,7 @@ export class CreateClientDto {
     allergies: z.string().max(2000).nullable().optional(),
     avatarUrl: z.string().url().max(500).nullable().optional(),
     birthDate: z.string().date().optional(),
+    considerations: z.string().max(2000).nullable().optional(),
     email: z.string().email(),
     fcMax: z.number().int().min(80).max(250).nullable().optional(),
     fcRest: z.number().int().min(30).max(160).nullable().optional(),
@@ -26,6 +27,7 @@ export class CreateClientDto {
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: string;
+  considerations?: null | string;
   email!: string;
   fcMax?: number | null;
   fcRest?: number | null;

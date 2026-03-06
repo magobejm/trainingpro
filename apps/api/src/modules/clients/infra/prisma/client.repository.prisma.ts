@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import {
   buildArchiveAuditFields,
@@ -9,6 +9,7 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
+import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 import type { ClientObjective } from '../../domain/client-objective';
@@ -16,27 +17,28 @@ import type { ClientsRepositoryPort } from '../../domain/clients-repository.port
 import {
   listClientManagementSections,
   replaceClientManagementSections,
-  seedMissingClientManagementSections,
 } from './client-management-sections.prisma';
 import {
-  type ClientDataPayload,
+  mapProgressPhoto,
   mapClient,
   mapObjective,
   normalizeCreateInput,
   normalizeUpdateInput,
 } from './client.repository.prisma.mappers';
+import { createClientRecord, resolveObjectiveId } from './client.repository.prisma.helpers';
 import {
   decrementClientCount,
-  ensureClientCapacity,
-  ensureClientMembership,
-  ensureEmailNotUsedByPrivilegedMembership,
-  ensureUniqueClientEmail,
-  incrementClientCount,
   readActiveClient,
   resolveCoachMembership,
-  tryRestoreArchivedClient,
-  type CoachMembership,
 } from './client.repository.prisma.ops';
+
+const CLIENT_WITH_RELATIONS_INCLUDE = {
+  objectiveRef: true,
+  progressPhotos: {
+    orderBy: { createdAt: 'asc' as const },
+  },
+  trainingPlan: { select: { id: true, name: true } },
+} as const;
 
 @Injectable()
 export class ClientRepositoryPrisma implements ClientsRepositoryPort {
@@ -74,18 +76,17 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     const membership = await resolveCoachMembership(context, this.prisma);
     const audit = buildCreateAuditFields(context);
     const normalizedInput = normalizeCreateInput(input);
-    const created = await this.runCreateClientTransaction(
+    const created = await createClientRecord(
+      this.prisma,
       membership,
       normalizedInput,
       audit.updatedBy,
       audit,
+      CLIENT_WITH_RELATIONS_INCLUDE,
     );
     const hydrated = await this.prisma.client.findUnique({
       where: { id: created.id, coachMembershipId: membership.id, archivedAt: null },
-      include: {
-        objectiveRef: true,
-        trainingPlan: { select: { id: true, name: true } },
-      },
+      include: CLIENT_WITH_RELATIONS_INCLUDE,
     });
     if (!hydrated) {
       throw new NotFoundException('Client not found after create');
@@ -93,14 +94,47 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     return mapClient(hydrated);
   }
 
+  async createProgressPhoto(
+    context: AuthContext,
+    clientId: string,
+    imageUrl: string,
+  ): Promise<ClientProgressPhoto> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      const created = await tx.clientProgressPhoto.create({
+        data: {
+          archived: false,
+          clientId,
+          imageUrl,
+        },
+      });
+      return mapProgressPhoto(created);
+    });
+  }
+
+  async deleteProgressPhoto(
+    context: AuthContext,
+    clientId: string,
+    photoId: string,
+  ): Promise<void> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    await this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      const deleted = await tx.clientProgressPhoto.deleteMany({
+        where: { clientId, id: photoId },
+      });
+      if (deleted.count === 0) {
+        throw new NotFoundException('Progress photo not found');
+      }
+    });
+  }
+
   async getClientById(context: AuthContext, clientId: string): Promise<Client | null> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const client = await this.prisma.client.findFirst({
       where: { id: clientId, archivedAt: null, coachMembershipId: membership.id },
-      include: {
-        objectiveRef: true,
-        trainingPlan: { select: { id: true, name: true } },
-      },
+      include: CLIENT_WITH_RELATIONS_INCLUDE,
     });
     return client ? mapClient(client) : null;
   }
@@ -119,10 +153,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async listClientsByCoach(context: AuthContext): Promise<Client[]> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const clients = await this.prisma.client.findMany({
-      include: {
-        objectiveRef: true,
-        trainingPlan: { select: { id: true, name: true } },
-      },
+      include: CLIENT_WITH_RELATIONS_INCLUDE,
       where: {
         archivedAt: null,
         coachMembershipId: membership.id,
@@ -130,6 +161,18 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       orderBy: { createdAt: 'desc' },
     });
     return clients.map(mapClient);
+  }
+
+  async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      const items = await tx.clientProgressPhoto.findMany({
+        where: { clientId },
+        orderBy: { createdAt: 'asc' },
+      });
+      return items.map(mapProgressPhoto);
+    });
   }
 
   async saveClientManagementSections(
@@ -165,12 +208,25 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           ...buildUpdateAuditFields(context),
         },
         include: {
-          objectiveRef: true,
-          trainingPlan: { select: { id: true, name: true } },
+          ...CLIENT_WITH_RELATIONS_INCLUDE,
         },
       });
     });
     return mapClient(updated);
+  }
+
+  async setProgressPhotoArchived(
+    context: AuthContext,
+    clientId: string,
+    photoId: string,
+    archived: boolean,
+  ): Promise<ClientProgressPhoto> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      await updateProgressPhotoArchived(tx, clientId, photoId, archived);
+      return mapProgressPhoto(await readProgressPhotoOrThrow(tx, photoId));
+    });
   }
 
   async listObjectives(): Promise<ClientObjective[]> {
@@ -179,105 +235,27 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     });
     return rows.map(mapObjective);
   }
+}
 
-  private runCreateClientTransaction(
-    membership: CoachMembership,
-    normalizedInput: ReturnType<typeof normalizeCreateInput>,
-    updatedBy: string,
-    audit: ReturnType<typeof buildCreateAuditFields>,
-  ) {
-    const { clientSupabaseUid, objectiveId, ...clientData } = normalizedInput;
-    return this.prisma.$transaction(async (tx) => {
-      await this.ensureCreatePreconditions(tx, membership, clientData.email, clientSupabaseUid);
-      const resolvedObjectiveId = await resolveObjectiveId(tx, objectiveId);
-      const payload: ClientDataPayload = {
-        ...clientData,
-        objectiveId: resolvedObjectiveId,
-      };
-      const client = await this.createOrRestoreClient(tx, membership, payload, audit, updatedBy);
-      await incrementClientCount(tx, membership.organizationId);
-      return client;
-    });
-  }
-
-  private async ensureCreatePreconditions(
-    tx: Parameters<typeof ensureClientCapacity>[0],
-    membership: CoachMembership,
-    email: string,
-    clientSupabaseUid?: string,
-  ): Promise<void> {
-    await ensureClientCapacity(tx, membership.organizationId);
-    await ensureEmailNotUsedByPrivilegedMembership(tx, membership.organizationId, email);
-    await ensureUniqueClientEmail(tx, membership.organizationId, email);
-    await ensureClientMembership(tx, membership.organizationId, { clientSupabaseUid, email });
-  }
-
-  private async createOrRestoreClient(
-    tx: Parameters<typeof tryRestoreArchivedClient>[0],
-    membership: CoachMembership,
-    clientData: ClientDataPayload,
-    audit: ReturnType<typeof buildCreateAuditFields>,
-    updatedBy: string,
-  ) {
-    const restored = await tryRestoreArchivedClient(
-      tx,
-      membership.organizationId,
-      clientData,
-      updatedBy,
-    );
-    if (restored) {
-      await seedMissingClientManagementSections(tx, restored.id);
-      return restored;
-    }
-    const created = await this.createNewClient(tx, membership, clientData, audit);
-    await seedMissingClientManagementSections(tx, created.id);
-    return created;
-  }
-
-  private createNewClient(
-    tx: Prisma.TransactionClient,
-    membership: CoachMembership,
-    clientData: ClientDataPayload,
-    audit: ReturnType<typeof buildCreateAuditFields>,
-  ) {
-    const { objectiveId, trainingPlanId, ...rest } = clientData;
-    return tx.client.create({
-      data: {
-        ...audit,
-        ...rest,
-        coachMembershipId: membership.id,
-        objectiveId,
-        organizationId: membership.organizationId,
-        trainingPlanId: trainingPlanId ?? null,
-      },
-      include: {
-        objectiveRef: true,
-        trainingPlan: { select: { id: true, name: true } },
-      },
-    });
+async function updateProgressPhotoArchived(
+  tx: Prisma.TransactionClient,
+  clientId: string,
+  photoId: string,
+  archived: boolean,
+): Promise<void> {
+  const updated = await tx.clientProgressPhoto.updateMany({
+    where: { clientId, id: photoId },
+    data: { archived },
+  });
+  if (updated.count === 0) {
+    throw new NotFoundException('Progress photo not found');
   }
 }
 
-async function resolveObjectiveId(
-  tx: Prisma.TransactionClient | PrismaService,
-  inputObjectiveId: null | string,
-): Promise<string> {
-  if (inputObjectiveId) {
-    const selected = await tx.clientObjective.findUnique({
-      where: { id: inputObjectiveId },
-      select: { id: true },
-    });
-    if (selected) {
-      return selected.id;
-    }
+async function readProgressPhotoOrThrow(tx: Prisma.TransactionClient, photoId: string) {
+  const photo = await tx.clientProgressPhoto.findUnique({ where: { id: photoId } });
+  if (!photo) {
+    throw new NotFoundException('Progress photo not found');
   }
-  const fallback = await tx.clientObjective.findFirst({
-    where: { isDefault: true },
-    orderBy: [{ sortOrder: 'asc' }, { label: 'asc' }],
-    select: { id: true },
-  });
-  if (!fallback) {
-    throw new ForbiddenException('Default client objective not found');
-  }
-  return fallback.id;
+  return photo;
 }

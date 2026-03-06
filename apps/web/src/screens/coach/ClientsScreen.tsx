@@ -6,6 +6,7 @@ import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { styles } from './clients-screen.styles';
 import { ClientProfileScreen } from './ClientProfileScreen';
+import { ClientProfileEditScreen } from './ClientProfileEditScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { ClientsDirectoryPanel } from './components/ClientsDirectoryPanel';
 import { CreateClientModal } from './components/CreateClientModal';
@@ -17,7 +18,7 @@ import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
 };
-type ScreenMode = 'list' | 'profile';
+type ScreenMode = 'list' | 'profile' | 'profileEdit';
 type SelectedClient = {
   avatarUrl: null | string;
   email: string;
@@ -83,7 +84,12 @@ function buildClientsViewModel(
 function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
   return {
     onBackToList: () => backToList(state),
+    onBackToProfile: () => state.setScreenMode('profile'),
     onClearSelectedClient: () => state.setSelectedClientId(''),
+    onOpenProfileEdit: (clientId: string) => {
+      state.setSelectedClientId(clientId);
+      state.setScreenMode('profileEdit');
+    },
     onSelectClient: (clientId: string) => selectClient(state, clientId),
   };
 }
@@ -142,7 +148,10 @@ function ClientsView(props: ViewProps): React.JSX.Element {
 }
 
 function renderMainContent(props: ViewProps): React.JSX.Element {
-  if (props.screenMode === 'profile' && props.selectedClientId) {
+  if (
+    (props.screenMode === 'profile' || props.screenMode === 'profileEdit') &&
+    props.selectedClientId
+  ) {
     return renderProfilePage(props);
   }
   return (
@@ -244,28 +253,47 @@ function renderProfile(props: ViewProps): React.JSX.Element {
         props.onClearSelectedClient();
         props.onBackToList();
       }}
+      onOpenEditScreen={props.onOpenProfileEdit}
       onRouteChange={props.onRouteChange}
+    />
+  );
+}
+
+function renderProfileEdit(props: ViewProps): React.JSX.Element {
+  return (
+    <ClientProfileEditScreen
+      clientId={props.selectedClientId}
+      onArchived={() => {
+        props.onClearSelectedClient();
+        props.onBackToList();
+      }}
+      onBack={props.onBackToProfile}
     />
   );
 }
 
 function renderProfilePage(props: ViewProps): React.JSX.Element {
   const currentLabel = props.selectedClientName || props.t('coach.clients.title');
+  const lastCrumb =
+    props.screenMode === 'profileEdit'
+      ? props.t('coach.clientProfile.edit.title')
+      : props.t('coach.clientProfile.title');
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable onPress={props.onBackToList} style={styles.backButton}>
+        <Pressable
+          onPress={props.screenMode === 'profileEdit' ? props.onBackToProfile : props.onBackToList}
+          style={styles.backButton}
+        >
           <Text style={styles.backLabel}>{props.t('common.back')}</Text>
         </Pressable>
         <Text style={styles.breadcrumb}>
-          {formatBreadcrumb([
-            props.t('coach.clients.title'),
-            currentLabel,
-            props.t('coach.clientProfile.title'),
-          ])}
+          {formatBreadcrumb([props.t('coach.clients.title'), currentLabel, lastCrumb])}
         </Text>
       </View>
-      <View style={styles.profileCard}>{renderProfile(props)}</View>
+      <View style={styles.profileCard}>
+        {props.screenMode === 'profileEdit' ? renderProfileEdit(props) : renderProfile(props)}
+      </View>
     </>
   );
 }

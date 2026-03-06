@@ -3,6 +3,7 @@ export type ClientCreateInput = {
   avatarUrl?: null | string;
   birthDate?: Date | null;
   clientSupabaseUid?: string;
+  considerations?: null | string;
   email: string;
   fcMax?: number | null;
   fcRest?: number | null;

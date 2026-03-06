@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { syncAvatarInCache, syncClientInCache } from './useClientMutations.cache';
 
 export type CreateClientInput = {
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: null | string;
+  considerations?: null | string;
   email: string;
   fcMax?: null | number;
   fcRest?: null | number;
@@ -26,6 +28,10 @@ export type CreateClientInput = {
 
 export type UpdateClientInput = Partial<CreateClientInput> & {
   trainingPlanId?: string | null;
+};
+
+export type CreateClientProgressPhotoInput = {
+  imageUrl: string;
 };
 
 export type CreateClientResult = {
@@ -94,6 +100,51 @@ export function useUploadClientAvatarMutation(clientId: string) {
     onSuccess: (result) => {
       syncAvatarInCache(queryClient, clientId, result.avatarUrl);
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
+    },
+  });
+}
+
+export function useCreateClientProgressPhotoMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CreateClientProgressPhotoInput) =>
+      createClientProgressPhoto(auth, clientId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
+    },
+  });
+}
+
+export function useArchiveClientProgressPhotoMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => setClientProgressPhotoArchived(auth, clientId, photoId, true),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
+    },
+  });
+}
+
+export function useRestoreClientProgressPhotoMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (photoId: string) => setClientProgressPhotoArchived(auth, clientId, photoId, false),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
+    },
+  });
+}
+
+export function useUploadClientProgressPhotoMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (file: File) => uploadClientProgressPhoto(auth, clientId, file),
+    onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
     },
   });
@@ -172,63 +223,52 @@ async function resetClientPassword(
   );
 }
 
-function syncAvatarInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
+async function createClientProgressPhoto(
+  auth: ReturnType<typeof useAuth>,
   clientId: string,
-  avatarUrl: string,
-): void {
-  updateDetailAvatar(queryClient, clientId, avatarUrl);
-  updateListAvatar(queryClient, clientId, avatarUrl);
-}
-
-function syncClientInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  clientId: string,
-  input: UpdateClientInput,
-): void {
-  queryClient.setQueriesData({ queryKey: ['clients', 'detail', clientId] }, (previous) => {
-    if (!isObject(previous)) {
-      return previous;
-    }
-    return { ...previous, ...input };
-  });
-}
-
-function updateDetailAvatar(
-  queryClient: ReturnType<typeof useQueryClient>,
-  clientId: string,
-  avatarUrl: string,
-): void {
-  queryClient.setQueriesData({ queryKey: ['clients', 'detail', clientId] }, (previous) => {
-    if (!isObject(previous)) {
-      return previous;
-    }
-    return { ...previous, avatarUrl };
-  });
-}
-
-function updateListAvatar(
-  queryClient: ReturnType<typeof useQueryClient>,
-  clientId: string,
-  avatarUrl: string,
-): void {
-  queryClient.setQueriesData({ queryKey: ['clients', 'list'] }, (previous) => {
-    if (!Array.isArray(previous)) {
-      return previous;
-    }
-    return previous.map((item) => updateListItemAvatar(item, clientId, avatarUrl));
-  });
-}
-
-function updateListItemAvatar(item: unknown, clientId: string, avatarUrl: string): unknown {
-  if (!isObject(item) || item.id !== clientId) {
-    return item;
+  input: CreateClientProgressPhotoInput,
+): Promise<void> {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
   }
-  return { ...item, avatarUrl };
+  await createApiClient(auth).post(`/clients/${clientId}/progress-photos`, input);
 }
 
-function isObject(value: unknown): value is { avatarUrl?: string; id?: string } {
-  return typeof value === 'object' && value !== null;
+async function setClientProgressPhotoArchived(
+  auth: ReturnType<typeof useAuth>,
+  clientId: string,
+  photoId: string,
+  archived: boolean,
+): Promise<void> {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  const path = `/clients/${clientId}/progress-photos/${photoId}`;
+  await createApiClient(auth).patch(path, { archived });
+}
+
+async function uploadClientProgressPhoto(
+  auth: ReturnType<typeof useAuth>,
+  clientId: string,
+  file: File,
+): Promise<void> {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  const form = new FormData();
+  form.append('file', file);
+  const uploadUrl = `${resolveApiBaseUrl()}/clients/${clientId}/progress-photos/upload`;
+  const response = await fetch(uploadUrl, {
+    body: form,
+    headers: {
+      Authorization: `Bearer ${auth.accessToken}`,
+      'X-Active-Role': auth.activeRole,
+    },
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Progress photo upload failed');
+  }
 }
 
 function resolveApiBaseUrl(): string {

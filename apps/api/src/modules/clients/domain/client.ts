@@ -1,7 +1,10 @@
+import type { ClientProgressPhoto } from './client-progress-photo';
+
 export type Client = {
   avatarUrl: null | string;
   birthDate: Date | null;
   coachMembershipId: string;
+  considerations: null | string;
   createdAt: Date;
   email: string;
   fcMax: null | number;
@@ -23,6 +26,7 @@ export type Client = {
   updatedAt: Date;
   waistCm: null | number;
   weightKg: null | number;
+  progressPhotos: ClientProgressPhoto[];
   allergies: null | string;
   trainingPlanId: string | null;
   trainingPlan?: { id: string; name: string };

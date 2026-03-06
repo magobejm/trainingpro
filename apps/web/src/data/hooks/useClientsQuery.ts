@@ -7,6 +7,7 @@ export type ClientView = {
   avatarUrl: null | string;
   birthDate: null | string;
   coachMembershipId: string;
+  considerations: null | string;
   createdAt: string;
   email: string;
   fcMax: null | number;
@@ -31,6 +32,17 @@ export type ClientView = {
   trainingPlanId: string | null;
   trainingPlan?: { id: string; name: string };
   objectiveOptions?: ClientObjectiveView[];
+  progressPhotos: ClientProgressPhotoView[];
+};
+
+export type ClientProgressPhotoView = {
+  archived: boolean;
+  clientId: string;
+  createdAt: string;
+  id: string;
+  imagePath?: string;
+  imageUrl: string;
+  updatedAt: string;
 };
 
 type ListClientsResponse = {

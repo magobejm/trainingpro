@@ -2,6 +2,7 @@ export type ClientUpdateInput = {
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: Date | null;
+  considerations?: null | string;
   email?: string;
   fcMax?: number | null;
   fcRest?: number | null;

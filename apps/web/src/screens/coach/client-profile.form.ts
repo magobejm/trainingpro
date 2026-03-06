@@ -3,7 +3,9 @@ import type { useClientByIdQuery } from '../../data/hooks/useClientsQuery';
 
 export type ClientForm = {
   allergies: string;
+  avatarUrl: string;
   birthDate: string;
+  considerations: string;
   email: string;
   fcMax: string;
   fcRest: string;
@@ -13,6 +15,7 @@ export type ClientForm = {
   hipCm: string;
   injuries: string;
   lastName: string;
+  notes: string;
   objectiveId: string;
   phone: string;
   secondaryObjectives: string;
@@ -24,7 +27,9 @@ export type ClientForm = {
 export function emptyForm(): ClientForm {
   return {
     allergies: '',
+    avatarUrl: '',
     birthDate: '',
+    considerations: '',
     email: '',
     fcMax: '',
     fcRest: '',
@@ -34,6 +39,7 @@ export function emptyForm(): ClientForm {
     hipCm: '',
     injuries: '',
     lastName: '',
+    notes: '',
     objectiveId: '',
     phone: '',
     secondaryObjectives: '',
@@ -49,7 +55,9 @@ export function toForm(
   const weight = toStringNumber(client.weightKg);
   return {
     allergies: client.allergies ?? '',
+    avatarUrl: client.avatarUrl ?? '',
     birthDate: client.birthDate ?? '',
+    considerations: client.considerations ?? '',
     email: client.email,
     fcMax: toStringNumber(client.fcMax),
     fcRest: toStringNumber(client.fcRest),
@@ -59,6 +67,7 @@ export function toForm(
     hipCm: client.hipCm ? `${client.hipCm}` : '',
     injuries: client.injuries ?? '',
     lastName: client.lastName,
+    notes: client.notes ?? '',
     objectiveId: client.objectiveId,
     phone: client.phone ?? '',
     secondaryObjectives: (client.secondaryObjectives ?? []).join(', '),
@@ -71,7 +80,9 @@ export function toForm(
 export function toUpdateInput(form: ClientForm): UpdateClientInput {
   return {
     allergies: normalizeNullableString(form.allergies),
+    avatarUrl: normalizeNullableString(form.avatarUrl),
     birthDate: normalizeString(form.birthDate),
+    considerations: normalizeNullableString(form.considerations),
     email: normalizeString(form.email),
     fcMax: toNumber(form.fcMax),
     fcRest: toNumber(form.fcRest),
@@ -81,6 +92,7 @@ export function toUpdateInput(form: ClientForm): UpdateClientInput {
     hipCm: toNumber(form.hipCm),
     injuries: normalizeNullableString(form.injuries),
     lastName: normalizeString(form.lastName),
+    notes: normalizeNullableString(form.notes),
     objectiveId: normalizeNullableString(form.objectiveId),
     phone: normalizeNullableString(form.phone),
     secondaryObjectives: parseSecondaryObjectives(form.secondaryObjectives),

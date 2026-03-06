@@ -130,6 +130,65 @@ function Test-PortListening([int]$Port) {
   return [bool]$line
 }
 
+function Wait-TcpReady([string]$TargetHost, [int]$Port, [int]$TimeoutSec = 45) {
+  $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  while ((Get-Date) -lt $deadline) {
+    if (Test-TcpPort -TargetHost $TargetHost -Port $Port) {
+      return $true
+    }
+    Start-Sleep -Milliseconds 800
+  }
+  return $false
+}
+
+function Start-DatabaseStackIfPossible([hashtable]$Target) {
+  if (-not $Target) {
+    return $false
+  }
+
+  $localHosts = @("127.0.0.1", "localhost", "::1")
+  if ($Target.Host -notin $localHosts) {
+    return $false
+  }
+
+  if ($Target.Port -eq 54322) {
+    $supabaseCmd = Get-Command supabase -ErrorAction SilentlyContinue
+    $npxCmd = Get-Command npx -ErrorAction SilentlyContinue
+    if (-not $supabaseCmd -and -not $npxCmd) {
+      throw "No se encontro ni supabase CLI ni npx. Instala Node.js (con npx) o Supabase CLI."
+    }
+
+    $useNpx = -not [bool]$supabaseCmd
+    function Invoke-Supabase([string]$Action) {
+      if ($useNpx) {
+        & npx supabase@latest $Action
+      } else {
+        & supabase $Action
+      }
+    }
+
+    if ($useNpx) {
+      Write-Output "Database unreachable at $($Target.Host):$($Target.Port). Attempting: npx supabase@latest start"
+    } else {
+      Write-Output "Database unreachable at $($Target.Host):$($Target.Port). Attempting: supabase start"
+    }
+    Invoke-Supabase -Action "start"
+
+    if ($LASTEXITCODE -ne 0) {
+      Write-Warning "Supabase start failed. Trying automatic recovery: stop + start."
+      Invoke-Supabase -Action "stop"
+      Invoke-Supabase -Action "start"
+      if ($LASTEXITCODE -ne 0) {
+        throw "No se pudo arrancar Supabase. Verifica Docker Desktop (Engine running) y ejecuta manualmente: npx supabase@latest start --debug"
+      }
+    }
+
+    return $true
+  }
+
+  return $false
+}
+
 Write-Output "Preparing clean start for API/Web..."
 
 $dbUrl = $env:DATABASE_URL
@@ -139,7 +198,14 @@ if (-not $dbUrl) {
 if ($dbUrl) {
   $target = Parse-DatabaseTarget -DatabaseUrl $dbUrl
   if ($target -and -not (Test-TcpPort -TargetHost $target.Host -Port $target.Port)) {
-    throw "Database is unreachable at $($target.Host):$($target.Port). Start your local DB/Supabase stack first."
+    $started = Start-DatabaseStackIfPossible -Target $target
+    if ($started) {
+      if (-not (Wait-TcpReady -TargetHost $target.Host -Port $target.Port -TimeoutSec 60)) {
+        throw "Database still unreachable at $($target.Host):$($target.Port) after auto-start."
+      }
+    } else {
+      throw "Database is unreachable at $($target.Host):$($target.Port). Start your local DB/Supabase stack first."
+    }
   }
 }
 

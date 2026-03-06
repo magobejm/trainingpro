@@ -154,16 +154,14 @@ export const styles = StyleSheet.create({
   },
   primaryAction: {
     alignItems: 'center',
-    backgroundColor: '#f3f6fb',
-    borderColor: '#d7e2f1',
+    backgroundColor: '#1c74e9',
     borderRadius: 10,
-    borderWidth: 1,
     justifyContent: 'center',
     minHeight: 38,
     paddingHorizontal: 12,
   },
   primaryActionLabel: {
-    color: '#314c73',
+    color: '#ffffff',
     fontSize: 12,
     fontWeight: '800',
   },

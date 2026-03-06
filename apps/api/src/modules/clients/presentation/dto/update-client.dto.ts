@@ -5,6 +5,7 @@ export class UpdateClientDto {
     allergies: z.string().max(2000).nullable().optional(),
     avatarUrl: z.string().url().max(500).nullable().optional(),
     birthDate: z.string().date().nullable().optional(),
+    considerations: z.string().max(2000).nullable().optional(),
     email: z.string().email().optional(),
     fcMax: z.number().int().min(80).max(250).nullable().optional(),
     fcRest: z.number().int().min(30).max(160).nullable().optional(),
@@ -27,6 +28,7 @@ export class UpdateClientDto {
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: null | string;
+  considerations?: null | string;
   email?: string;
   fcMax?: number | null;
   fcRest?: number | null;

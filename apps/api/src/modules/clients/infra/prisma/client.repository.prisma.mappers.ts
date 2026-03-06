@@ -1,19 +1,23 @@
 import { Prisma } from '@prisma/client';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientObjective } from '../../domain/client-objective';
+import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 
 type PrismaClientWithObjective = Prisma.ClientGetPayload<{
   include: {
     objectiveRef: true;
+    progressPhotos: true;
     trainingPlan: { select: { id: true; name: true } };
   };
 }>;
 
 type PrismaObjectiveModel = Prisma.ClientObjectiveGetPayload<Record<string, never>>;
+type PrismaProgressPhotoModel = Prisma.ClientProgressPhotoGetPayload<Record<string, never>>;
 type ClientProfileExtras = {
   allergies?: null | string;
+  considerations?: null | string;
   fcMax?: null | number;
   fcRest?: null | number;
   fitnessLevel?: null | string;
@@ -45,6 +49,7 @@ function mapCoreClient(
     avatarUrl: row.avatarUrl,
     birthDate: row.birthDate,
     coachMembershipId: row.coachMembershipId,
+    considerations: row.considerations,
     createdAt: row.createdAt,
     email: row.email,
     firstName: row.firstName,
@@ -75,8 +80,20 @@ function mapProfileClient(row: PrismaClientWithObjective) {
     fitnessLevel: extras.fitnessLevel ?? null,
     hipCm: extras.hipCm ?? null,
     injuries: extras.injuries ?? null,
+    progressPhotos: row.progressPhotos.map(mapProgressPhoto),
     secondaryObjectives: extras.secondaryObjectives ?? [],
     waistCm: extras.waistCm ?? null,
+  };
+}
+
+export function mapProgressPhoto(row: PrismaProgressPhotoModel): ClientProgressPhoto {
+  return {
+    archived: row.archived,
+    clientId: row.clientId,
+    createdAt: row.createdAt,
+    id: row.id,
+    imageUrl: row.imageUrl,
+    updatedAt: row.updatedAt,
   };
 }
 
@@ -101,6 +118,7 @@ export function normalizeCreateInput(input: ClientCreateInput) {
     avatarUrl: input.avatarUrl ?? null,
     birthDate: input.birthDate ?? null,
     clientSupabaseUid: input.clientSupabaseUid,
+    considerations: input.considerations ?? null,
     email: input.email.trim().toLowerCase(),
     fcMax: input.fcMax ?? null,
     fcRest: input.fcRest ?? null,
@@ -126,6 +144,7 @@ export function normalizeUpdateInput(input: ClientUpdateInput): Prisma.ClientUpd
   assignIfDefined(payload, 'allergies', input.allergies);
   assignIfDefined(payload, 'avatarUrl', input.avatarUrl);
   assignIfDefined(payload, 'birthDate', input.birthDate);
+  assignIfDefined(payload, 'considerations', input.considerations);
   assignIfDefined(payload, 'fcMax', input.fcMax);
   assignIfDefined(payload, 'fcRest', input.fcRest);
   assignIfDefined(payload, 'fitnessLevel', input.fitnessLevel);

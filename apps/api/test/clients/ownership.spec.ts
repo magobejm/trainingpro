@@ -4,29 +4,29 @@ import { AppModule } from '../../src/app.module';
 import { TOKEN_VERIFIER } from '../../src/modules/auth/domain/token-verifier.token';
 import type { TokenVerifierPort } from '../../src/modules/auth/domain/token-verifier.port';
 import { CLIENTS_REPOSITORY } from '../../src/modules/clients/domain/clients-repository.port';
+import { mapClientFromSeed } from './helpers/client-fixtures';
 
 type FakeClient = {
   coach: string;
   id: string;
 };
 
+async function bootstrap() {
+  const repository = createOwnershipRepository();
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule],
+  })
+    .overrideProvider(TOKEN_VERIFIER)
+    .useValue(createVerifier())
+    .overrideProvider(CLIENTS_REPOSITORY)
+    .useValue(repository)
+    .compile();
+  const app = moduleRef.createNestApplication();
+  await app.init();
+  return app;
+}
+
 describe('Clients ownership', () => {
-  async function bootstrap() {
-    const repository = createOwnershipRepository();
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
-    })
-      .overrideProvider(TOKEN_VERIFIER)
-      .useValue(createVerifier())
-      .overrideProvider(CLIENTS_REPOSITORY)
-      .useValue(repository)
-      .compile();
-
-    const app = moduleRef.createNestApplication();
-    await app.init();
-    return app;
-  }
-
   it('blocks coach A from reading coach B client', async () => {
     const app = await bootstrap();
     await request(app.getHttpServer())
@@ -58,7 +58,7 @@ function createOwnershipRepository() {
       throw new Error('not used');
     },
     getClientById: async (_context: { subject: string }, clientId: string) =>
-      mapClient(clients.find((client) => client.id === clientId) ?? null),
+      mapClientFromSeed(clients.find((client) => client.id === clientId) ?? null),
     listClientsByCoach: async () => [],
   };
 }
@@ -70,27 +70,5 @@ function createVerifier(): TokenVerifierPort {
       roles: ['coach'],
       subject: token,
     }),
-  };
-}
-
-function mapClient(row: FakeClient | null) {
-  if (!row) {
-    return null;
-  }
-  return {
-    birthDate: null,
-    coachMembershipId: `membership-${row.coach}`,
-    createdAt: new Date(),
-    email: `${row.id}@fitcoach.local`,
-    firstName: 'Fake',
-    heightCm: null,
-    id: row.id,
-    lastName: 'Client',
-    notes: null,
-    objective: null,
-    organizationId: 'org-1',
-    phone: null,
-    sex: null,
-    updatedAt: new Date(),
   };
 }

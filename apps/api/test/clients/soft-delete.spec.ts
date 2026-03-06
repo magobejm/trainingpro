@@ -3,6 +3,7 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { TOKEN_VERIFIER } from '../../src/modules/auth/domain/token-verifier.token';
 import { CLIENTS_REPOSITORY } from '../../src/modules/clients/domain/clients-repository.port';
+import { mapClientFromSeed } from './helpers/client-fixtures';
 
 type MemoryClient = {
   archived: boolean;
@@ -10,29 +11,28 @@ type MemoryClient = {
   id: string;
 };
 
-describe('Clients soft delete', () => {
-  async function bootstrap() {
-    const repository = createSoftDeleteRepository();
-    const moduleRef = await Test.createTestingModule({
-      imports: [AppModule],
+async function bootstrap() {
+  const repository = createSoftDeleteRepository();
+  const moduleRef = await Test.createTestingModule({
+    imports: [AppModule],
+  })
+    .overrideProvider(TOKEN_VERIFIER)
+    .useValue({
+      verify: async () => ({
+        email: 'coach-a@fitcoach.local',
+        roles: ['coach'],
+        subject: 'coach-a',
+      }),
     })
-      .overrideProvider(TOKEN_VERIFIER)
-      .useValue({
-        verify: async () => ({
-          email: 'coach-a@fitcoach.local',
-          roles: ['coach'],
-          subject: 'coach-a',
-        }),
-      })
-      .overrideProvider(CLIENTS_REPOSITORY)
-      .useValue(repository)
-      .compile();
+    .overrideProvider(CLIENTS_REPOSITORY)
+    .useValue(repository)
+    .compile();
+  const app = moduleRef.createNestApplication();
+  await app.init();
+  return app;
+}
 
-    const app = moduleRef.createNestApplication();
-    await app.init();
-    return app;
-  }
-
+describe('Clients soft delete', () => {
   it('hides archived client from list and get', async () => {
     const app = await bootstrap();
     await request(app.getHttpServer())
@@ -75,33 +75,11 @@ function createSoftDeleteRepository() {
     },
     getClientById: async (_context: { subject: string }, clientId: string) => {
       const client = clients.find((item) => item.id === clientId && !item.archived);
-      return mapClient(client ?? null);
+      return mapClientFromSeed(client ?? null);
     },
     listClientsByCoach: async (context: { subject: string }) => {
       const visible = clients.filter((item) => item.coach === context.subject && !item.archived);
-      return visible.map((item) => mapClient(item)).filter(Boolean);
+      return visible.map((item) => mapClientFromSeed(item)).filter(Boolean);
     },
-  };
-}
-
-function mapClient(row: MemoryClient | null) {
-  if (!row) {
-    return null;
-  }
-  return {
-    birthDate: null,
-    coachMembershipId: `membership-${row.coach}`,
-    createdAt: new Date(),
-    email: `${row.id}@fitcoach.local`,
-    firstName: 'Fake',
-    heightCm: null,
-    id: row.id,
-    lastName: 'Client',
-    notes: null,
-    objective: null,
-    organizationId: 'org-1',
-    phone: null,
-    sex: null,
-    updatedAt: new Date(),
   };
 }

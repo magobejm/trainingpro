@@ -172,6 +172,7 @@ model Client {
   objectiveId       String             @map("objective_id") @db.Uuid
   trainingPlanId    String?            @map("training_plan_id") @db.Uuid
   notes             String?
+  considerations    String?
   phone             String?            @db.VarChar(30)
   sex               String?            @db.VarChar(30)
   waistCm           Int?               @map("waist_cm")
@@ -196,6 +197,7 @@ model Client {
   objectiveRef      ClientObjective    @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
   trainingPlan      PlanTemplate?      @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
   managementSections ClientManagementSection[]
+  progressPhotos    ClientProgressPhoto[]
   sessions          SessionInstance[]
   incidents         Incident[]
   weeklyReports     WeeklyReport[]
@@ -223,6 +225,19 @@ model ClientManagementSection {
   @@unique([clientId, code], map: "uq_client_management_section_client_code")
   @@index([clientId, archived, sortOrder], map: "idx_client_management_section_lookup")
   @@map("client_management_section")
+}
+
+model ClientProgressPhoto {
+  id         String   @id @default(uuid()) @db.Uuid
+  clientId   String   @map("client_id") @db.Uuid
+  imageUrl   String   @map("image_url") @db.VarChar(500)
+  archived   Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, archived, createdAt], map: "idx_client_progress_photo_client_archived_created")
+  @@map("client_progress_photo")
 }
 
 model ClientObjective {

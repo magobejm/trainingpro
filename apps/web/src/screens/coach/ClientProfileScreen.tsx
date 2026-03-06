@@ -29,11 +29,17 @@ import {
 type Props = {
   clientId: string;
   onArchived?: () => void;
+  onOpenEditScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
 };
 
 export function ClientProfileScreen(props: Props): React.JSX.Element {
-  const vm = useClientProfileModel(props.clientId, props.onArchived, props.onRouteChange);
+  const vm = useClientProfileModel(
+    props.clientId,
+    props.onArchived,
+    props.onRouteChange,
+    props.onOpenEditScreen,
+  );
   return <ClientProfileView vm={vm} />;
 }
 
@@ -41,6 +47,7 @@ function useClientProfileModel(
   clientId: string,
   onArchived?: () => void,
   onRouteChange?: (route: ShellRoute) => void,
+  onOpenEditScreen?: (clientId: string) => void,
 ) {
   const { t } = useTranslation();
   const query = useClientByIdQuery(clientId);
@@ -53,6 +60,7 @@ function useClientProfileModel(
     ...mutations,
     ...state,
     onArchived,
+    onOpenEditScreen,
     onRouteChange,
     query,
     objectives: objectivesQuery.data ?? [],
@@ -118,6 +126,7 @@ interface ViewModelInput {
   form: ClientForm;
   noteDraft: string;
   onArchived?: () => void;
+  onOpenEditScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
   openForClient: (
     clientId: string,
@@ -153,7 +162,8 @@ function buildViewModel(input: ViewModelInput) {
     saveError: updateMutation.isError,
     saveSuccess: updateMutation.isSuccess,
     trainingPlan: client?.trainingPlan ?? undefined,
-    onOpenEdit: () => input.setEditing(true),
+    onOpenEdit: () =>
+      input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true),
     onOpenRoutinePlanner,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     ...noteActions,
@@ -250,8 +260,7 @@ function SummarySection(props: { vm: ViewModel }): React.JSX.Element {
     <View style={styles.summaryCard}>
       <ClientProfileSummary
         client={props.vm.query.data!}
-        onEdit={() => props.vm.setEditing(true)}
-        onEditNote={props.vm.onOpenNote}
+        onEdit={props.vm.onOpenEdit}
         t={props.vm.t}
         weightDraftKg={props.vm.form.weightKg}
       />

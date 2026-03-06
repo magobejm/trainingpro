@@ -6,7 +6,6 @@ import { styles } from '../ClientProfileScreen.styles';
 type Props = {
   client: ClientView;
   onEdit: () => void;
-  onEditNote: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   weightDraftKg: string;
 };
@@ -16,7 +15,7 @@ export function ClientProfileSummary(props: Props): React.JSX.Element {
   return (
     <View style={styles.summaryRow}>
       <IdentityBlock meta={meta} {...props} />
-      <ActionsBlock onEdit={props.onEdit} onEditNote={props.onEditNote} t={props.t} />
+      <ActionsBlock onEdit={props.onEdit} t={props.t} />
     </View>
   );
 }
@@ -66,18 +65,12 @@ function IdentityBlock(props: Props & { meta: ReturnType<typeof resolveMeta> }):
 
 function ActionsBlock(props: {
   onEdit: () => void;
-  onEditNote: () => void;
   t: (key: string) => string;
 }): React.JSX.Element {
   return (
     <View style={styles.actionsColumn}>
       <Pressable onPress={props.onEdit} style={styles.primaryAction}>
         <Text style={styles.primaryActionLabel}>{props.t('coach.clientProfile.actions.edit')}</Text>
-      </Pressable>
-      <Pressable onPress={props.onEditNote} style={styles.secondaryAction}>
-        <Text style={styles.secondaryActionLabel}>
-          {props.t('coach.clientProfile.actions.notes')}
-        </Text>
       </Pressable>
     </View>
   );

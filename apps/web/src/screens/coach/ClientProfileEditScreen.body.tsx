@@ -7,6 +7,7 @@ import { ProgressPhotosPanel } from './ClientProfileEditScreen.progress';
 import type { Labels } from './ClientProfileEditScreen.labels';
 import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks';
 import { ICON_ALERT, ICON_IDEA, ICON_INJURY, ICON_NOTE } from './ClientProfileEditScreen.utils';
+import { AccountCard } from './ClientProfileEditScreen.account';
 
 type Vm = ReturnType<typeof useClientProfileEditState>;
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -175,7 +176,7 @@ function SideColumn(props: {
     <View style={styles.sideColumn}>
       <FitnessCard labels={props.labels} t={props.t} vm={vm} />
       <HealthCards labels={props.labels} vm={vm} />
-      <AccountCard labels={props.labels} onArchived={props.onArchived} vm={vm} />
+      <AccountCard labels={props.labels} onArchived={props.onArchived} t={props.t} vm={vm} />
     </View>
   );
 }
@@ -237,41 +238,6 @@ function FitnessCard(props: { labels: Labels; t: Translate; vm: Vm }): React.JSX
       </select>
     </View>
   );
-}
-
-function AccountCard(props: {
-  labels: Labels;
-  onArchived?: () => void;
-  vm: Vm;
-}): React.JSX.Element {
-  const vm = props.vm;
-  return (
-    <View style={styles.card}>
-      <Text style={styles.label}>{props.labels.accountTitle}</Text>
-      <View style={styles.row}>
-        <Pressable onPress={() => void resetPassword(vm)} style={styles.secondaryButton}>
-          <Text style={styles.secondaryLabel}>{props.labels.resetPassword}</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => void vm.actions.archiveClient().then(() => props.onArchived?.())}
-          style={styles.dangerButton}
-        >
-          <Text style={styles.dangerLabel}>{props.labels.archiveClient}</Text>
-        </Pressable>
-      </View>
-      {vm.state.tempPassword ? (
-        <Text style={styles.helperText}>
-          {props.labels.tempPasswordLine(vm.state.tempPassword)}
-        </Text>
-      ) : null}
-    </View>
-  );
-}
-
-function resetPassword(vm: Vm): Promise<void> {
-  return vm.actions.resetPassword().then((result) => {
-    vm.state.setTempPassword((result as { temporaryPassword: string }).temporaryPassword);
-  }) as Promise<void>;
 }
 
 function setFormField(vm: Vm, field: string, value: string): void {

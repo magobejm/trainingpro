@@ -8,10 +8,10 @@ import { detailModalStyles as s, theme } from './UnifiedExerciseDetailModal.styl
 
 const MEDIA_RESIZE_MODE = 'contain' as const;
 const MODAL_ANIM = 'fade' as const;
-// eslint-disable-next-line max-len
-const YT_REGEX =
-  /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([^& \n<?]+)/;
-
+const YT_REGEX = new RegExp(
+  '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/watch\\?v=|' +
+    'youtu\\.be\\/|youtube\\.com\\/embed\\/|youtube\\.com\\/shorts\\/)([^& \\n<?]+)',
+);
 export interface ItemWithExtras extends UnifiedExerciseItem {
   alias?: string;
   equipmentRef?: { label: string };

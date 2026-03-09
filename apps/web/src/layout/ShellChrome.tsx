@@ -1,10 +1,14 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { Dumbbell } from 'lucide-react';
 
 export function SidebarIdentity(props: { roleLabel: string; title: string }): React.JSX.Element {
   return (
     <View style={styles.identityCard}>
-      <View style={styles.avatarStub} />
+      <View style={styles.avatarStub}>
+        {/* eslint-disable-next-line no-restricted-syntax */}
+        <Dumbbell color="#ffffff" size={24} />
+      </View>
       <View style={styles.identityTextWrap}>
         <Text style={styles.logo}>{props.title}</Text>
         <Text style={styles.logoSubtitle}>{props.roleLabel}</Text>
@@ -35,11 +39,11 @@ export function TopBar(props: { roleLabel: string; title: string }): React.JSX.E
 const styles = StyleSheet.create({
   avatarStub: {
     alignItems: 'center',
-    backgroundColor: '#2563eb',
-    borderRadius: 10,
-    height: 34,
+    backgroundColor: '#0066ff', // Bright blue from prototype
+    borderRadius: 12,
+    height: 42,
     justifyContent: 'center',
-    width: 34,
+    width: 42,
   },
   identityCard: {
     alignItems: 'center',

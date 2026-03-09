@@ -5,7 +5,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
   envPrefix: ['VITE_', 'EXPO_PUBLIC_'],
   optimizeDeps: {
-    include: ['@react-native/normalize-colors', 'react-native-web'],
+    include: ['react-native-web'],
   },
   plugins: [react()],
   resolve: {

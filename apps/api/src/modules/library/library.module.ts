@@ -39,6 +39,8 @@ import { LibraryController } from './presentation/controllers/library.controller
 import { LibraryFoodController } from './presentation/controllers/library-food.controller';
 import { LibrarySpecializedController } from './presentation/controllers/library-specialized.controller';
 import { LibraryMediaController } from './presentation/controllers/library-media.controller';
+import { LibraryUnifiedController } from './presentation/controllers/library-unified.controller';
+import { LibraryUnifiedService } from './application/library-unified.service';
 
 @Module({
   imports: [AuthModule, FilesModule],
@@ -47,8 +49,10 @@ import { LibraryMediaController } from './presentation/controllers/library-media
     LibraryFoodController,
     LibrarySpecializedController,
     LibraryMediaController,
+    LibraryUnifiedController,
   ],
   providers: [
+    LibraryUnifiedService,
     CreateCardioMethodUseCase,
     CreateExerciseUseCase,
     CreateFoodUseCase,

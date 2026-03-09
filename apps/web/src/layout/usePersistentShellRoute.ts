@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 type AdminRoute = 'admin.coaches' | 'admin.subscription';
 type CoachRoute =
   | 'coach.clients'
   | 'coach.library.cardio'
   | 'coach.library.exercises'
+  | 'coach.library.unified'
   | 'coach.library.foods'
   | 'coach.library.plyometrics'
   | 'coach.library.warmup'
@@ -22,9 +23,10 @@ type CoachRoute =
 export type ShellRoute = AdminRoute | CoachRoute;
 
 export type ShellNavItem = {
-  icon: string;
+  icon: (props: { color: string; size: number }) => React.ReactNode;
   id: ShellRoute;
   labelKey: string;
+  badgeColor?: string; // e.g. 'bg-blue-50', 'bg-emerald-50' equivalent in hex
 };
 
 const SHELL_ROUTE_STORAGE_KEY = 'trainerpro.shell.route';
@@ -52,11 +54,7 @@ function resolveInitialRoute(navItems: ShellNavItem[], defaultRoute: ShellRoute)
   return navItems[0]?.id ?? defaultRoute;
 }
 
-function ensureAllowedRoute(
-  route: ShellRoute,
-  navItems: ShellNavItem[],
-  defaultRoute: ShellRoute,
-): ShellRoute {
+function ensureAllowedRoute(route: ShellRoute, navItems: ShellNavItem[], defaultRoute: ShellRoute): ShellRoute {
   if (isRouteAllowed(route, navItems)) {
     return route;
   }
@@ -96,6 +94,7 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.clients' ||
     route === 'coach.library.cardio' ||
     route === 'coach.library.exercises' ||
+    route === 'coach.library.unified' ||
     route === 'coach.library.foods' ||
     route === 'coach.library.plyometrics' ||
     route === 'coach.library.warmup' ||

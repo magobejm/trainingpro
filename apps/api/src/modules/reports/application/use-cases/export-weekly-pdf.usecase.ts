@@ -2,11 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  CardioLogRow,
-  SessionSrpeRow,
-  StrengthLogRow,
-} from '../../../progress/domain/progress.models';
+import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../../progress/domain/progress.models';
 import { aggregateCardioWeekly } from '../../../progress/domain/metrics/cardio-weekly.metric';
 import { aggregateSrpeWeekly } from '../../../progress/domain/metrics/srpe';
 import { aggregateStrengthWeekly } from '../../../progress/domain/metrics/strength-weekly.metric';
@@ -76,11 +72,7 @@ export class ExportWeeklyPdfUseCase {
     });
   }
 
-  private async readStrengthRows(
-    clientId: string,
-    from: Date,
-    to: Date,
-  ): Promise<StrengthLogRow[]> {
+  private async readStrengthRows(clientId: string, from: Date, to: Date): Promise<StrengthLogRow[]> {
     const rows = await this.prisma.setLog.findMany({
       where: buildDateWhere(clientId, from, to),
       select: {
@@ -90,9 +82,7 @@ export class ExportWeeklyPdfUseCase {
         weightDoneKg: true,
       },
     });
-    const map = await this.readMuscleGroupMap(
-      rows.map((row) => row.sessionItem.sourceExerciseId),
-    );
+    const map = await this.readMuscleGroupMap(rows.map((row) => row.sessionItem.sourceExerciseId));
     return rows.map((row) => ({
       muscleGroup: map.get(row.sessionItem.sourceExerciseId ?? '') ?? 'UNKNOWN',
       repsDone: row.repsDone,
@@ -101,11 +91,7 @@ export class ExportWeeklyPdfUseCase {
     }));
   }
 
-  private async readCardioRows(
-    clientId: string,
-    from: Date,
-    to: Date,
-  ): Promise<CardioLogRow[]> {
+  private async readCardioRows(clientId: string, from: Date, to: Date): Promise<CardioLogRow[]> {
     const rows = await this.prisma.intervalLog.findMany({
       where: buildDateWhere(clientId, from, to),
       select: {
@@ -117,9 +103,7 @@ export class ExportWeeklyPdfUseCase {
         sessionCardioBlock: { select: { sourceCardioMethodId: true } },
       },
     });
-    const map = await this.readMethodTypeMap(
-      rows.map((row) => row.sessionCardioBlock.sourceCardioMethodId),
-    );
+    const map = await this.readMethodTypeMap(rows.map((row) => row.sessionCardioBlock.sourceCardioMethodId));
     return rows.map((row) => ({
       avgHeartRate: row.avgHeartRate,
       distanceDoneMeters: row.distanceDoneMeters,
@@ -172,9 +156,9 @@ export class ExportWeeklyPdfUseCase {
     }
     const exercises = await this.prisma.exercise.findMany({
       where: { id: { in: unique } },
-      select: { id: true, muscleGroupRef: { select: { label: true } } },
+      select: { id: true, muscleGroups: { include: { muscleGroup: { select: { label: true } } } } },
     });
-    return new Map(exercises.map((row) => [row.id, row.muscleGroupRef.label]));
+    return new Map(exercises.map((row) => [row.id, row.muscleGroups.map((mg) => mg.muscleGroup.label).join(', ')]));
   }
 }
 
@@ -201,10 +185,7 @@ function readDurationSeconds(
   if (startedAt && finishedAt && finishedAt > startedAt) {
     return Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000);
   }
-  const intervalDuration = intervalLogs.reduce(
-    (sum, row) => sum + (row.durationSecondsDone ?? 0),
-    0,
-  );
+  const intervalDuration = intervalLogs.reduce((sum, row) => sum + (row.durationSecondsDone ?? 0), 0);
   return intervalDuration > 0 ? intervalDuration : null;
 }
 
@@ -273,31 +254,21 @@ function buildWeeklyReportLine(report: {
   return `${left} ${middle} ${right}`;
 }
 
-function appendStrengthLines(
-  lines: string[],
-  points: ReturnType<typeof aggregateStrengthWeekly>,
-): void {
+function appendStrengthLines(lines: string[], points: ReturnType<typeof aggregateStrengthWeekly>): void {
   lines.push('--- Progreso fuerza ---');
   for (const point of points.slice(0, 8)) {
     lines.push(`${point.weekStart} ${point.muscleGroup} volume:${Math.round(point.volumeKg)}`);
   }
 }
 
-function appendCardioLines(
-  lines: string[],
-  points: ReturnType<typeof aggregateCardioWeekly>,
-): void {
+function appendCardioLines(lines: string[], points: ReturnType<typeof aggregateCardioWeekly>): void {
   lines.push('--- Progreso cardio ---');
   for (const point of points.slice(0, 8)) {
     lines.push(buildCardioLine(point));
   }
 }
 
-function buildCardioLine(point: {
-  methodType: string;
-  totalDurationSeconds: number;
-  weekStart: string;
-}): string {
+function buildCardioLine(point: { methodType: string; totalDurationSeconds: number; weekStart: string }): string {
   const minutes = Math.round(point.totalDurationSeconds / 60);
   return `${point.weekStart} ${point.methodType} min:${minutes}`;
 }

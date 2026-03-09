@@ -88,3 +88,47 @@ export function useUpdateExerciseMutation() {
     },
   });
 }
+
+// === UNIFIED MODAL HOOKS ===
+
+export type UnifiedExerciseDto = {
+  category: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  name: string;
+  mediaUrl?: string | null;
+  youtubeUrl?: string | null;
+  instructions?: string | null;
+  equipmentId?: string | null;
+
+  // Conditional attributes
+  muscleGroupIds?: string[];
+  movementPatternId?: string | null;
+  anatomicalPlaneId?: string | null;
+
+  cardioTypeId?: string | null;
+  plioTypeId?: string | null;
+  mobilityTypeId?: string | null;
+  sportTypeId?: string | null;
+};
+
+export function useCreateUnifiedExerciseMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UnifiedExerciseDto) => writeItem(auth, 'exercises/unified', 'POST', input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['library'] });
+    },
+  });
+}
+
+export function useUpdateUnifiedExerciseMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { itemId: string; payload: UnifiedExerciseDto }) =>
+      updateItem(auth, 'exercises/unified', input.itemId, input.payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['library'] });
+    },
+  });
+}

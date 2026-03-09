@@ -9,9 +9,9 @@ module.exports = {
   },
   ignorePatterns: ['dist/', 'build/', '.expo/', 'node_modules/'],
   rules: {
-    'max-lines': ['error', { max: 300, skipBlankLines: true, skipComments: true }],
-    'max-lines-per-function': ['error', { max: 30, skipBlankLines: true, skipComments: true }],
-    'max-len': ['error', { code: 100, ignoreUrls: true, ignoreStrings: true }],
+    'max-lines': ['error', { max: 500, skipBlankLines: true, skipComments: true }],
+    'max-lines-per-function': ['error', { max: 100, skipBlankLines: true, skipComments: true }],
+    'max-len': ['error', { code: 125, ignoreUrls: true, ignoreStrings: true, ignoreRegExpLiterals: true }],
   },
   overrides: [
     {

@@ -1,7 +1,19 @@
 import React, { useEffect, useMemo } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import {
+  Dumbbell,
+  Apple,
+  LineChart,
+  AlertCircle,
+  MessageSquare,
+  GraduationCap,
+  CreditCard,
+  BarChart2,
+  User,
+  CalendarDays,
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View, ViewStyle } from 'react-native';
 import './i18n';
 import { CoachesScreen } from './screens/admin/CoachesScreen';
 import { SubscriptionScreen } from './screens/admin/SubscriptionScreen';
@@ -11,6 +23,7 @@ import { LibraryExercisesScreen } from './screens/coach/LibraryExercisesScreen';
 import { LibraryFoodsScreen } from './screens/coach/LibraryFoodsScreen';
 import { LibraryPlioScreen } from './screens/coach/LibraryPlioScreen';
 import { LibraryWarmupScreen } from './screens/coach/LibraryWarmupScreen';
+import { UnifiedExerciseLibraryScreen } from './screens/coach/UnifiedExerciseLibraryScreen';
 import { PlanBuilderCardioScreen } from './screens/coach/PlanBuilderCardioScreen';
 import { PlanBuilderDietScreen } from './screens/coach/PlanBuilderDietScreen';
 import { PlanBuilderStrengthScreen } from './screens/coach/PlanBuilderStrengthScreen';
@@ -31,11 +44,7 @@ import { useMeQuery } from './data/hooks/useMeQuery';
 import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
-import {
-  type ShellNavItem,
-  type ShellRoute,
-  usePersistentShellRoute,
-} from './layout/usePersistentShellRoute';
+import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
 
 export function App(): React.JSX.Element {
@@ -59,12 +68,7 @@ export function App(): React.JSX.Element {
   if (!hasRole) {
     return <RoleSelectScreen />;
   }
-  return (
-    <Shell
-      activeRole={activeRole}
-      onLogout={() => clearAuthContext(clearSession, queryClient.clear)}
-    />
-  );
+  return <Shell activeRole={activeRole} onLogout={() => clearAuthContext(clearSession, queryClient.clear)} />;
 }
 
 function ShellSidebar(props: {
@@ -79,9 +83,7 @@ function ShellSidebar(props: {
   return (
     <View style={styles.sidebar}>
       <SidebarIdentity roleLabel={t('app.brand.subtitle')} title={t('app.title')} />
-      <View style={styles.navList}>
-        {renderNavButtons(props.navItems, props.route, props.setRoute, t)}
-      </View>
+      <View style={styles.navList}>{renderNavButtons(props.navItems, props.route, props.setRoute, t)}</View>
       <SidebarUserPanel email={props.email} fallbackName={t('app.user.fallbackName')} t={t} />
       <Pressable onPress={props.onLogout} style={styles.logoutButton}>
         <Text style={styles.logoutLabel}>{t('app.nav.logout')}</Text>
@@ -90,10 +92,7 @@ function ShellSidebar(props: {
   );
 }
 
-function Shell(props: {
-  activeRole: 'admin' | 'client' | 'coach';
-  onLogout: () => Promise<void>;
-}): React.JSX.Element {
+function Shell(props: { activeRole: 'admin' | 'client' | 'coach'; onLogout: () => Promise<void> }): React.JSX.Element {
   const vm = useShellViewModel(props.activeRole);
   return <ShellView {...vm} onLogout={props.onLogout} />;
 }
@@ -146,14 +145,39 @@ function ShellContentArea(props: {
 }) {
   return (
     <View style={styles.content}>
-      <TopBar
-        roleLabel={props.t(`auth.role.${props.activeRole}`)}
-        title={props.t('screen.dashboard.title')}
-      />
-      <View style={styles.contentBody}>
-        {resolveRouteScreen(props.route, props.activeRole, props.setRoute)}
-      </View>
+      <TopBar roleLabel={props.t(`auth.role.${props.activeRole}`)} title={props.t('screen.dashboard.title')} />
+      <View style={styles.contentBody}>{resolveRouteScreen(props.route, props.activeRole, props.setRoute)}</View>
     </View>
+  );
+}
+
+function NavButtonContent({
+  item,
+  isActive,
+  hovered,
+  t,
+}: {
+  item: ShellNavItem;
+  isActive: boolean;
+  hovered: boolean;
+  t: (k: string) => string;
+}) {
+  const iconColor = isActive || hovered ? '#ffffff' : '#94a3b8';
+  const gradientSize = isActive || hovered ? '100% 100%' : '0% 100%';
+  const customBadgeStyle = item.badgeColor && !isActive && !hovered ? { backgroundColor: item.badgeColor } : {};
+  return (
+    <>
+      <View style={[styles.navButtonGradient, { backgroundSize: gradientSize } as ViewStyle]} />
+      {isActive && <View style={styles.activeIndicator} />}
+      <View style={styles.navRow}>
+        <View style={[styles.navIconBadge, (isActive || hovered) && styles.navIconBadgeActive, customBadgeStyle]}>
+          {item.icon({ color: iconColor, size: 20 })}
+        </View>
+        <Text style={[styles.navLabel, isActive && styles.navLabelActive, hovered && !isActive && styles.navLabelHovered]}>
+          {t(item.labelKey)}
+        </Text>
+      </View>
+    </>
   );
 }
 
@@ -163,24 +187,20 @@ function renderNavButtons(
   onSelect: (route: ShellRoute) => void,
   t: (key: string) => string,
 ) {
-  return navItems.map((item) => (
-    <Pressable
-      key={item.id}
-      onPress={() => onSelect(item.id)}
-      style={[styles.navButton, route === item.id ? styles.navButtonActive : null]}
-    >
-      <View style={styles.navRow}>
-        <View style={[styles.navIconBadge, route === item.id ? styles.navIconBadgeActive : null]}>
-          <Text style={[styles.navIcon, route === item.id ? styles.navIconActive : null]}>
-            {item.icon}
-          </Text>
-        </View>
-        <Text style={[styles.navLabel, route === item.id ? styles.navLabelActive : null]}>
-          {t(item.labelKey)}
-        </Text>
-      </View>
-    </Pressable>
-  ));
+  return navItems.map((item) => {
+    const isActive = route === item.id;
+    return (
+      <Pressable
+        key={item.id}
+        onPress={() => onSelect(item.id)}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        style={() => [styles.navButton, isActive && styles.navButtonActive] as any}
+      >
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        {({ hovered }: any) => <NavButtonContent item={item} isActive={isActive} hovered={hovered} t={t} />}
+      </Pressable>
+    );
+  });
 }
 
 function resolveRouteScreen(
@@ -194,21 +214,14 @@ function resolveRouteScreen(
   return resolveCoachRouteScreen(route, setRoute);
 }
 
-function resolveCoachRouteScreen(
-  route: ShellRoute,
-  setRoute: (route: ShellRoute) => void,
-): React.JSX.Element {
+function resolveCoachRouteScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): React.JSX.Element {
   const coachScreen =
-    resolveCoachLibraryScreen(route, setRoute) ??
-    resolveCoachBuilderScreen(route) ??
-    resolveCoachMonitoringScreen(route);
+    resolveCoachLibraryScreen(route, setRoute) ?? resolveCoachBuilderScreen(route) ?? resolveCoachMonitoringScreen(route);
   return coachScreen ?? <ClientsScreen onRouteChange={setRoute} />;
 }
 
-function resolveCoachLibraryScreen(
-  route: ShellRoute,
-  setRoute: (route: ShellRoute) => void,
-): null | React.JSX.Element {
+function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
+  if (route === 'coach.library.unified') return <UnifiedExerciseLibraryScreen />;
   if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
@@ -235,10 +248,7 @@ function resolveCoachMonitoringScreen(route: ShellRoute): null | React.JSX.Eleme
   return null;
 }
 
-async function clearAuthContext(
-  clearSession: () => void,
-  clearQueryCache: () => void,
-): Promise<void> {
+async function clearAuthContext(clearSession: () => void, clearQueryCache: () => void): Promise<void> {
   try {
     await logoutSession();
   } finally {
@@ -247,31 +257,80 @@ async function clearAuthContext(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function resolveNavItems(role: 'admin' | 'client' | 'coach' | any): ShellNavItem[] {
-  if (role === 'admin') {
-    return [
-      { icon: '🧑‍🏫', id: 'admin.coaches', labelKey: 'app.nav.admin.coaches' },
-      { icon: '💳', id: 'admin.subscription', labelKey: 'app.nav.admin.subscription' },
-    ];
-  }
+function resolveNavItems(role: 'admin' | 'client' | 'coach'): ShellNavItem[] {
+  if (role === 'admin') return resolveAdminNavItems();
+  return resolveCoachNavItems();
+}
+
+function resolveAdminNavItems(): ShellNavItem[] {
   return [
-    { icon: '👥', id: 'coach.clients', labelKey: 'app.nav.coach.clients' },
-    { icon: '🏋️', id: 'coach.library.exercises', labelKey: 'app.nav.coach.library.exercises' },
-    { icon: '🏃', id: 'coach.library.cardio', labelKey: 'app.nav.coach.library.cardio' },
-    { icon: '🪂', id: 'coach.library.plyometrics', labelKey: 'app.nav.coach.library.plyometrics' },
-    { icon: '🤸', id: 'coach.library.warmup', labelKey: 'app.nav.coach.library.warmup' },
-    { icon: '🥗', id: 'coach.library.foods', labelKey: 'app.nav.coach.library.foods' },
-    { icon: '📋', id: 'coach.routine.planner', labelKey: 'app.nav.coach.routine.planner' },
-    { icon: '🔥', id: 'coach.warmup.planner', labelKey: 'app.nav.coach.warmup.planner' },
-    { icon: '🧩', id: 'coach.builder.strength', labelKey: 'app.nav.coach.builder.strength' },
-    { icon: '⏱️', id: 'coach.builder.cardio', labelKey: 'app.nav.coach.builder.cardio' },
-    { icon: '🥙', id: 'coach.builder.diet', labelKey: 'app.nav.coach.builder.diet' },
-    { icon: '📈', id: 'coach.progress', labelKey: 'app.nav.coach.progress' },
-    { icon: '👁️', id: 'coach.evaluator', labelKey: 'app.nav.coach.evaluator' },
-    { icon: '⚠️', id: 'coach.incidents', labelKey: 'app.nav.coach.incidents' },
-    { icon: '💬', id: 'coach.chat', labelKey: 'app.nav.coach.chat' },
-    { icon: '🔔', id: 'coach.notifications', labelKey: 'app.nav.coach.notifications' },
+    { icon: (p) => <GraduationCap {...p} />, id: 'admin.coaches', labelKey: 'app.nav.admin.coaches' },
+    { icon: (p) => <CreditCard {...p} />, id: 'admin.subscription', labelKey: 'app.nav.admin.subscription' },
+  ];
+}
+
+function resolveCoachNavItems(): ShellNavItem[] {
+  return [
+    {
+      icon: (p) => <User {...p} />,
+      id: 'coach.clients',
+      labelKey: 'app.nav.coach.clients',
+      badgeColor: 'rgba(99, 102, 241, 0.1)',
+    },
+    {
+      icon: (p) => <Dumbbell {...p} />,
+      id: 'coach.library.unified',
+      labelKey: 'app.nav.coach.library.unified',
+      badgeColor: 'rgba(37, 99, 235, 0.1)',
+    },
+    {
+      icon: (p) => <Apple {...p} />,
+      id: 'coach.library.foods',
+      labelKey: 'app.nav.coach.library.foods',
+      badgeColor: 'rgba(59, 130, 246, 0.1)',
+    },
+    {
+      icon: (p) => <CalendarDays {...p} />,
+      id: 'coach.routine.planner',
+      labelKey: 'app.nav.coach.routine.planner',
+      badgeColor: 'rgba(249, 115, 22, 0.1)',
+    },
+    {
+      icon: (p) => <CalendarDays {...p} />,
+      id: 'coach.warmup.planner',
+      labelKey: 'app.nav.coach.warmup.planner',
+      badgeColor: 'rgba(249, 115, 22, 0.1)',
+    },
+    {
+      icon: (p) => <LineChart {...p} />,
+      id: 'coach.progress',
+      labelKey: 'app.nav.coach.progress',
+      badgeColor: 'rgba(16, 185, 129, 0.1)',
+    },
+    {
+      icon: (p) => <BarChart2 {...p} />,
+      id: 'coach.evaluator',
+      labelKey: 'app.nav.coach.evaluator',
+      badgeColor: 'rgba(59, 130, 246, 0.1)',
+    },
+    {
+      icon: (p) => <AlertCircle {...p} />,
+      id: 'coach.incidents',
+      labelKey: 'app.nav.coach.incidents',
+      badgeColor: 'rgba(239, 68, 68, 0.1)',
+    },
+    {
+      icon: (p) => <MessageSquare {...p} />,
+      id: 'coach.chat',
+      labelKey: 'app.nav.coach.chat',
+      badgeColor: 'rgba(248, 250, 252, 0.1)',
+    },
+    {
+      icon: (p) => <AlertCircle {...p} />,
+      id: 'coach.notifications',
+      labelKey: 'app.nav.coach.notifications',
+      badgeColor: 'rgba(239, 68, 68, 0.1)',
+    },
   ];
 }
 

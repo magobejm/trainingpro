@@ -1,19 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioMethodFilter, CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseFilter, ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodFilter, FoodWriteInput } from '../../domain/food.input';
 import type { PlioExerciseFilter, PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
-import type {
-  WarmupExerciseFilter,
-  WarmupExerciseWriteInput,
-} from '../../domain/warmup-exercise.input';
+import type { WarmupExerciseFilter, WarmupExerciseWriteInput } from '../../domain/warmup-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
 import type { LibraryRepositoryPort } from '../../domain/library-repository.port';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
@@ -39,14 +33,11 @@ const CARDIO_METHOD_WITH_CATALOG = {
 } as const;
 
 const EXERCISE_WITH_CATALOG = {
-  muscleGroupRef: { select: { label: true } },
+  muscleGroups: { include: { muscleGroup: { select: { id: true, label: true } } } },
 } as const;
 
 @Injectable()
-export class LibraryRepositoryPrisma
-  extends LibraryBaseRepository
-  implements LibraryRepositoryPort
-{
+export class LibraryRepositoryPrisma extends LibraryBaseRepository implements LibraryRepositoryPort {
   constructor(
     private readonly policy: LibraryEditPolicy,
     prisma: PrismaService,
@@ -74,7 +65,6 @@ export class LibraryRepositoryPrisma
 
   async createExercise(context: AuthContext, input: ExerciseWriteInput) {
     const membership = await this.resolveCoachMembership(context);
-    await this.assertExerciseMuscleGroupExists(input.muscleGroupId);
     const row = await this.prisma.exercise.create({
       data: {
         ...buildCreateAuditFields(context),
@@ -194,19 +184,11 @@ export class LibraryRepositoryPrisma
     return this.specializedRepo.createSport(context, input);
   }
 
-  async updatePlioExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<PlioExerciseWriteInput>,
-  ) {
+  async updatePlioExercise(context: AuthContext, itemId: string, input: Partial<PlioExerciseWriteInput>) {
     return this.specializedRepo.updatePlioExercise(context, itemId, input);
   }
 
-  async updateWarmupExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<WarmupExerciseWriteInput>,
-  ) {
+  async updateWarmupExercise(context: AuthContext, itemId: string, input: Partial<WarmupExerciseWriteInput>) {
     return this.specializedRepo.updateWarmupExercise(context, itemId, input);
   }
 
@@ -226,11 +208,7 @@ export class LibraryRepositoryPrisma
     return this.specializedRepo.deleteSport(context, itemId);
   }
 
-  async updateCardioMethod(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<CardioMethodWriteInput>,
-  ) {
+  async updateCardioMethod(context: AuthContext, itemId: string, input: Partial<CardioMethodWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
     if (input.methodTypeId) {
       await this.assertCardioMethodTypeExists(input.methodTypeId);
@@ -247,9 +225,6 @@ export class LibraryRepositoryPrisma
 
   async updateExercise(context: AuthContext, itemId: string, input: Partial<ExerciseWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
-    if (input.muscleGroupId) {
-      await this.assertExerciseMuscleGroupExists(input.muscleGroupId);
-    }
     const row = await this.readExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
     const updated = await this.prisma.exercise.update({

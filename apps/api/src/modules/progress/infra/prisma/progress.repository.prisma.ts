@@ -2,15 +2,8 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  ProgressQuery,
-  ProgressRepositoryPort,
-} from '../../domain/progress-repository.port';
-import type {
-  CardioLogRow,
-  SessionSrpeRow,
-  StrengthLogRow,
-} from '../../domain/progress.models';
+import type { ProgressQuery, ProgressRepositoryPort } from '../../domain/progress-repository.port';
+import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../domain/progress.models';
 
 @Injectable()
 export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
@@ -53,11 +46,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       },
     });
     return sessions.map((session) => ({
-      durationSeconds: readDurationSeconds(
-        session.startedAt,
-        session.finishedAt,
-        session.intervalLogs,
-      ),
+      durationSeconds: readDurationSeconds(session.startedAt, session.finishedAt, session.intervalLogs),
       effortRpe: readSessionEffort(session.logs, session.intervalLogs),
       sessionDate: session.sessionDate,
     }));
@@ -106,9 +95,9 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     }
     const exercises = await this.prisma.exercise.findMany({
       where: { id: { in: ids } },
-      select: { id: true, muscleGroupRef: { select: { label: true } } },
+      select: { id: true, muscleGroups: { include: { muscleGroup: { select: { label: true } } } } },
     });
-    return new Map(exercises.map((row) => [row.id, row.muscleGroupRef.label]));
+    return new Map(exercises.map((row) => [row.id, row.muscleGroups.map((mg) => mg.muscleGroup.label).join(', ')]));
   }
 
   private async resolveClientId(context: AuthContext, inputClientId?: string): Promise<string> {
@@ -197,10 +186,7 @@ function readDurationSeconds(
   if (startedAt && finishedAt && finishedAt > startedAt) {
     return Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000);
   }
-  const intervalDuration = intervalLogs.reduce(
-    (sum, row) => sum + (row.durationSecondsDone ?? 0),
-    0,
-  );
+  const intervalDuration = intervalLogs.reduce((sum, row) => sum + (row.durationSecondsDone ?? 0), 0);
   return intervalDuration > 0 ? intervalDuration : null;
 }
 

@@ -54,13 +54,10 @@ function RowMain(props: {
   return (
     <>
       <Text style={styles.dragHandle}>{'⋮⋮'}</Text>
-      <View style={styles.iconShell}>
-        <Text style={styles.iconLabel}>{props.item.icon}</Text>
+      <View style={[styles.iconShell, { backgroundColor: props.item.badgeColor }]}>
+        {props.item.icon({ color: props.item.iconColor || '#64748b', size: 18 })}
       </View>
-      <Pressable
-        onPress={() => onOpenSection(props.item.id, props.onOpenTrainingPlanner)}
-        style={styles.rowText}
-      >
+      <Pressable onPress={() => onOpenSection(props.item.id, props.onOpenTrainingPlanner)} style={styles.rowText}>
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
         <Text style={styles.rowSubtitle}>{subtitle}</Text>
       </Pressable>
@@ -85,15 +82,11 @@ function RowMenu(props: {
     <div style={style}>
       {props.sectionId === 'training' && props.hasTrainingPlan ? (
         <Pressable onPress={props.onUnassignTrainingPlan} style={styles.menuAction}>
-          <Text style={styles.menuActionLabel}>
-            {props.t('coach.clientProfile.sections.actions.unassignTraining')}
-          </Text>
+          <Text style={styles.menuActionLabel}>{props.t('coach.clientProfile.sections.actions.unassignTraining')}</Text>
         </Pressable>
       ) : null}
       <Pressable onPress={props.onArchive} style={styles.menuAction}>
-        <Text style={styles.menuActionLabel}>
-          {props.t('coach.clientProfile.sections.actions.archive')}
-        </Text>
+        <Text style={styles.menuActionLabel}>{props.t('coach.clientProfile.sections.actions.archive')}</Text>
       </Pressable>
     </div>
   );
@@ -107,10 +100,8 @@ function readDragProps(
   return {
     draggable: true,
     onDragOver: onDragOverRow,
-    onDragStart: (event: React.DragEvent<HTMLDivElement>) =>
-      onDragStartRow(event, itemId, rowIndex),
-    onDrop: (event: React.DragEvent<HTMLDivElement>) =>
-      onDropRow(event, rowIndex, onDropReorderByIndex),
+    onDragStart: (event: React.DragEvent<HTMLDivElement>) => onDragStartRow(event, itemId, rowIndex),
+    onDrop: (event: React.DragEvent<HTMLDivElement>) => onDropRow(event, rowIndex, onDropReorderByIndex),
   };
 }
 
@@ -118,11 +109,7 @@ function onOpenSection(id: SectionId, onOpenTrainingPlanner: () => void): void {
   if (id === 'training') onOpenTrainingPlanner();
 }
 
-function readSubtitle(
-  item: SectionItem,
-  trainingPlanName: string | undefined,
-  t: Props['t'],
-): string {
+function readSubtitle(item: SectionItem, trainingPlanName: string | undefined, t: Props['t']): string {
   if (item.id !== 'training') return t(item.emptyKey);
   return trainingPlanName || t(item.emptyKey);
 }
@@ -132,11 +119,7 @@ function onDragOverRow(event: React.DragEvent<HTMLDivElement>): void {
   event.dataTransfer.dropEffect = 'move';
 }
 
-function onDragStartRow(
-  event: React.DragEvent<HTMLDivElement>,
-  itemId: SectionId,
-  rowIndex: number,
-): void {
+function onDragStartRow(event: React.DragEvent<HTMLDivElement>, itemId: SectionId, rowIndex: number): void {
   const payload = JSON.stringify({ rowIndex, sectionId: itemId });
   event.dataTransfer.effectAllowed = 'move';
   event.dataTransfer.setData('text/plain', payload);

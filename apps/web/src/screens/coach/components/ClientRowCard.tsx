@@ -16,11 +16,15 @@ type Props = {
 };
 
 export function ClientRowCard(props: Props): React.JSX.Element {
+  const [hovered, setHovered] = React.useState(false);
   const view = readCardView(props);
+  const rowStyle = readRowStyle(hovered, props.selected);
   return (
     <Pressable
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
       onPress={() => props.onSelect(props.id)}
-      style={[styles.row, props.selected ? styles.rowSelected : null]}
+      style={rowStyle}
     >
       <View style={styles.avatarWrap}>
         <AvatarBadge label={props.name} statusTone={props.statusTone} url={props.avatarUrl} />
@@ -42,6 +46,10 @@ export function ClientRowCard(props: Props): React.JSX.Element {
   );
 }
 
+function readRowStyle(hovered: boolean, selected: boolean) {
+  return [styles.row, hovered ? styles.rowHover : null, selected ? styles.rowSelected : null];
+}
+
 function readCardView(props: Props): { showDetails: boolean } {
   return {
     showDetails: Boolean(props.objective || props.weightLabel || props.progressLabel),
@@ -57,13 +65,8 @@ function MetricsRow(props: { props: Props }): React.JSX.Element {
   );
 }
 
-function AvatarBadge(props: {
-  label: string;
-  statusTone: 'success' | 'warning';
-  url: null | string;
-}): React.JSX.Element {
-  const dotStyle =
-    props.statusTone === 'success' ? styles.statusDotSuccess : styles.statusDotWarning;
+function AvatarBadge(props: { label: string; statusTone: 'success' | 'warning'; url: null | string }): React.JSX.Element {
+  const dotStyle = props.statusTone === 'success' ? styles.statusDotSuccess : styles.statusDotWarning;
   if (props.url) {
     return (
       <View style={styles.avatarRing}>
@@ -184,6 +187,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
+    transform: [{ translateY: 0 }],
+    transitionDuration: '140ms',
+    transitionProperty: 'transform, box-shadow, border-color',
+    transitionTimingFunction: 'ease-out',
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any,
+  rowHover: {
+    shadowOpacity: 0.09,
+    shadowRadius: 24,
+    transform: [{ translateY: -6 }],
   },
   rowSelected: {
     backgroundColor: '#f8fbff',

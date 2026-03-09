@@ -1,0 +1,15 @@
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:26:1: This line has a length of 119. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:37:1: This line has a length of 110. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:39:1: This line has a length of 110. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:69:1: This line has a length of 133. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:71:1: This line has a length of 136. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\UnifiedExerciseModal.tsx:76:1: This line has a length of 108. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\components\MuscleMultiSelect.tsx:98:1: This line has a length of 105. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\components\MuscleMultiSelect.tsx:104:1: This line has a length of 112. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\components\MuscleMultiSelect.tsx:108:1: This line has a length of 134. Maximum allowed is 100. [Error/max-len]
+C:\personal\trainingpro\apps\web\src\screens\coach\components\MuscleMultiSelect.tsx:109:1: This line has a length of 115. Maximum allowed is 100. [Error/max-len]
+
+10 problems
+undefined
+C:\personal\trainingpro\apps\web:
+ÔÇëERR_PNPM_RECURSIVE_EXEC_FIRST_FAILÔÇë Command failed with exit code 1: eslint src/screens/coach/UnifiedExerciseModal.tsx src/screens/coach/components/MuscleMultiSelect.tsx --format unix

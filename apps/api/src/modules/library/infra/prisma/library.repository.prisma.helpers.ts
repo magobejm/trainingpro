@@ -17,7 +17,9 @@ export function buildCardioMethodWhere(coachMembershipId: string, filter: Cardio
 export function buildExerciseWhere(coachMembershipId: string, filter: ExerciseFilter) {
   return {
     ...buildLibraryScopeWhere(coachMembershipId),
-    muscleGroupId: equalsFilter(filter.muscleGroupId),
+    ...(filter.muscleGroupId && {
+      muscleGroups: { some: { muscleGroupId: filter.muscleGroupId } },
+    }),
     name: containsFilter(filter.query),
   } satisfies Prisma.ExerciseWhereInput;
 }
@@ -65,10 +67,7 @@ export function toDomainScope(scope: LibraryItemScope): 'coach' | 'global' {
   return scope === LibraryItemScope.COACH ? 'coach' : 'global';
 }
 
-export async function assertCatalogExists(
-  read: () => Promise<null | unknown>,
-  message: string,
-): Promise<void> {
+export async function assertCatalogExists(read: () => Promise<null | unknown>, message: string): Promise<void> {
   const row = await read();
   if (!row) {
     throw new NotFoundException(message);

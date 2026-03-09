@@ -1,15 +1,22 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, max-len */
-import { FieldMode, LibraryItemScope, PrismaClient } from '@prisma/client';
+import { LibraryItemScope, PrismaClient } from '@prisma/client';
 import { CARDIO_METHOD_TYPES_V1 } from './seeds/v1-cardio-method-types.seed';
 import { CARDIO_METHODS_V1 } from './seeds/v1-cardio-methods.seed';
 import { CLIENT_OBJECTIVES_V1 } from './seeds/v1-client-objectives.seed';
+import { EXERCISE_EQUIPMENT_V1 } from './seeds/v1-exercise-equipment.seed';
 import { EXERCISE_MUSCLE_GROUPS_V1 } from './seeds/v1-exercise-muscle-groups.seed';
 import { EXERCISES_V1 } from './seeds/v1-exercises.seed';
 import { FOODS_V1 } from './seeds/v1-foods.seed';
+import { MOBILITY_TYPES_V1 } from './seeds/v1-mobility-types.seed';
 import { PLIO_EXERCISES_V1 } from './seeds/v1-plio-exercises.seed';
+import { PLIO_TYPES_V1 } from './seeds/v1-plio-types.seed';
+import { SPORT_TYPES_V1 } from './seeds/v1-sport-types.seed';
 import { WARMUP_EXERCISES_V1 } from './seeds/v1-warmup-exercises.seed';
 import { SPORTS_V1 } from './seeds/v1-sports.seed';
 import { ROUTINE_TEMPLATES_V1 } from './seeds/v1-routine-templates.seed';
+import { seedMovementPatterns } from './seeds/v3-movement-patterns.seed';
+import { seedAnatomicalPlanes } from './seeds/v3-anatomical-planes.seed';
+import { mapDayForSeed, readRequiredId } from './seeds/seed-utils';
 
 const prisma = new PrismaClient();
 
@@ -17,6 +24,12 @@ async function main(): Promise<void> {
   await seedClientObjectives();
   await seedExerciseMuscleGroups();
   await seedCardioMethodTypes();
+  await seedExerciseEquipment();
+  await seedPlioTypes();
+  await seedMobilityTypes();
+  await seedSportTypes();
+  await seedMovementPatterns(prisma);
+  await seedAnatomicalPlanes(prisma);
   await seedExercises();
   await seedCardioMethods();
   await seedFoods();
@@ -66,7 +79,7 @@ async function seedCardioMethodTypes(): Promise<void> {
 }
 
 async function seedCardioMethods(): Promise<void> {
-  const typeIndex = await readCardioMethodTypeIndex();
+  const typeIndex = await readCatalogIndex('cardioMethodType');
   for (const item of CARDIO_METHODS_V1) {
     await prisma.cardioMethod.upsert({
       where: { id: item.id },
@@ -86,112 +99,85 @@ async function seedCardioMethods(): Promise<void> {
   }
 }
 
+async function seedExerciseEquipment(): Promise<void> {
+  for (const item of EXERCISE_EQUIPMENT_V1) {
+    await prisma.exerciseEquipment.upsert({
+      where: { code: item.code },
+      create: item,
+      update: item,
+    });
+  }
+}
+
+async function seedPlioTypes(): Promise<void> {
+  for (const item of PLIO_TYPES_V1) {
+    await prisma.plioTypeRef.upsert({
+      where: { code: item.code },
+      create: item,
+      update: item,
+    });
+  }
+}
+
+async function seedMobilityTypes(): Promise<void> {
+  for (const item of MOBILITY_TYPES_V1) {
+    await prisma.mobilityTypeRef.upsert({
+      where: { code: item.code },
+      create: item,
+      update: item,
+    });
+  }
+}
+
+async function seedSportTypes(): Promise<void> {
+  for (const item of SPORT_TYPES_V1) {
+    await prisma.sportTypeRef.upsert({
+      where: { code: item.code },
+      create: item,
+      update: item,
+    });
+  }
+}
+
 async function seedExercises(): Promise<void> {
-  const groupIndex = await readExerciseMuscleGroupIndex();
+  const groupIndex = await readCatalogIndex('exerciseMuscleGroup');
   for (const item of EXERCISES_V1) {
     await prisma.exercise.upsert({
       where: { id: item.id },
-      create: {
-        id: item.id,
-        muscleGroupId: readRequiredId(groupIndex, item.muscleGroupCode),
-        name: item.name,
-        scope: LibraryItemScope.GLOBAL,
-      },
-      update: {
-        archivedAt: null,
-        muscleGroupId: readRequiredId(groupIndex, item.muscleGroupCode),
-        name: item.name,
-        scope: LibraryItemScope.GLOBAL,
-      },
+      create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL },
+      update: { archivedAt: null, name: item.name, scope: LibraryItemScope.GLOBAL },
     });
+    for (const code of item.muscleGroupCodes) {
+      const muscleGroupId = readRequiredId(groupIndex, code);
+      await prisma.exerciseMuscleGroupAssignment.upsert({
+        where: { exerciseId_muscleGroupId: { exerciseId: item.id, muscleGroupId } },
+        create: { exerciseId: item.id, muscleGroupId },
+        update: {},
+      });
+    }
   }
 }
 
 async function seedFoods(): Promise<void> {
   for (const item of FOODS_V1) {
-    await upsertFood(item);
+    const data = {
+      name: item.name,
+      servingUnit: item.servingUnit,
+      foodType: item.foodType,
+      foodCategory: item.foodCategory,
+      caloriesKcal: item.caloriesKcal,
+      proteinG: item.proteinG,
+      carbsG: item.carbsG,
+      fatG: item.fatG,
+      notes: item.notes ?? null,
+      scope: LibraryItemScope.GLOBAL,
+    };
+    await prisma.food.upsert({
+      where: { id: item.id },
+      create: { id: item.id, ...data },
+      update: { archivedAt: null, ...data },
+    });
   }
-}
-
-async function upsertFood(item: (typeof FOODS_V1)[number]): Promise<void> {
-  const data = {
-    name: item.name,
-    servingUnit: item.servingUnit,
-    foodType: item.foodType,
-    foodCategory: item.foodCategory,
-    caloriesKcal: item.caloriesKcal,
-    proteinG: item.proteinG,
-    carbsG: item.carbsG,
-    fatG: item.fatG,
-    notes: item.notes ?? null,
-    scope: LibraryItemScope.GLOBAL,
-  };
-  await prisma.food.upsert({
-    where: { id: item.id },
-    create: { id: item.id, ...data },
-    update: { archivedAt: null, ...data },
-  });
-}
-
-function mapExercisesForSeed(exercises: any[]) {
-  return {
-    create: (exercises ?? []).map((e) => ({
-      displayName: e.displayName,
-      sortOrder: e.sortOrder,
-      fieldModes: {
-        create: e.fieldModes.map((fm: any) => ({
-          fieldKey: fm.fieldKey,
-          mode: fm.mode as FieldMode,
-        })),
-      },
-    })),
-  };
-}
-
-function mapCardioBlocksForSeed(cardioBlocks: any[]) {
-  return {
-    create: (cardioBlocks ?? []).map((c: any) => ({
-      displayName: c.displayName,
-      sortOrder: c.sortOrder,
-      workSeconds: c.workSeconds,
-      restSeconds: c.restSeconds,
-      fieldModes: {
-        create: (c.fieldModes ?? []).map((fm: any) => ({
-          fieldKey: fm.fieldKey,
-          mode: fm.mode as FieldMode,
-        })),
-      },
-    })),
-  };
-}
-
-function mapTimedBlocksForSeed(blocks: any[]) {
-  return {
-    create: (blocks ?? []).map((b: any) => ({
-      displayName: b.displayName,
-      sortOrder: b.sortOrder,
-      workSeconds: b.workSeconds,
-      restSeconds: b.restSeconds,
-    })),
-  };
-}
-
-function mapDayForSeed(day: (typeof ROUTINE_TEMPLATES_V1)[number]['days'][number]) {
-  return {
-    title: day.title,
-    dayIndex: day.dayIndex,
-    exercises: mapExercisesForSeed(day.exercises as any[]),
-    cardioBlocks: mapCardioBlocksForSeed(day.cardioBlocks as any[]),
-    plioBlocks: mapTimedBlocksForSeed(day.plioBlocks as any[]),
-    warmupBlocks: mapTimedBlocksForSeed(day.warmupBlocks as any[]),
-    sportBlocks: {
-      create: (day.sportBlocks ?? []).map((s) => ({
-        displayName: s.displayName,
-        sortOrder: s.sortOrder,
-        durationMinutes: s.durationMinutes,
-      })),
-    },
-  };
 }
 
 async function seedRoutineTemplates(): Promise<void> {
@@ -203,10 +189,6 @@ async function seedRoutineTemplates(): Promise<void> {
         name: tpl.name,
         kind: tpl.kind as any,
         scope: LibraryItemScope.GLOBAL,
-        organizationId: null,
-        coachMembershipId: null,
-        createdBy: null,
-        updatedBy: null,
         days: { create: tpl.days.map(mapDayForSeed) },
       },
       update: { name: tpl.name, scope: LibraryItemScope.GLOBAL },
@@ -240,18 +222,8 @@ async function seedWarmupExercises(): Promise<void> {
   for (const item of WARMUP_EXERCISES_V1) {
     await prisma.warmupExercise.upsert({
       where: { id: item.id },
-      create: {
-        id: item.id,
-        name: item.name,
-        notes: item.notes ?? null,
-        scope: LibraryItemScope.GLOBAL,
-      },
-      update: {
-        archivedAt: null,
-        name: item.name,
-        notes: item.notes ?? null,
-        scope: LibraryItemScope.GLOBAL,
-      },
+      create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL },
+      update: { archivedAt: null, name: item.name, scope: LibraryItemScope.GLOBAL },
     });
   }
 }
@@ -260,38 +232,15 @@ async function seedSports(): Promise<void> {
   for (const item of SPORTS_V1) {
     await prisma.sport.upsert({
       where: { id: item.id },
-      create: {
-        id: item.id,
-        name: item.name,
-        icon: item.icon,
-        description: item.description ?? null,
-      },
-      update: {
-        archivedAt: null,
-        name: item.name,
-        icon: item.icon,
-        description: item.description ?? null,
-      },
+      create: { id: item.id, name: item.name, icon: item.icon, description: item.description ?? null },
+      update: { archivedAt: null, name: item.name, icon: item.icon, description: item.description ?? null },
     });
   }
 }
 
-async function readCardioMethodTypeIndex(): Promise<Map<string, string>> {
-  const rows = await prisma.cardioMethodType.findMany({ select: { code: true, id: true } });
-  return new Map(rows.map((row) => [row.code, row.id]));
-}
-
-async function readExerciseMuscleGroupIndex(): Promise<Map<string, string>> {
-  const rows = await prisma.exerciseMuscleGroup.findMany({ select: { code: true, id: true } });
-  return new Map(rows.map((row) => [row.code, row.id]));
-}
-
-function readRequiredId(index: Map<string, string>, code: string): string {
-  const id = index.get(code);
-  if (id) {
-    return id;
-  }
-  throw new Error(`Missing catalog seed for code: ${code}`);
+async function readCatalogIndex(model: 'cardioMethodType' | 'exerciseMuscleGroup'): Promise<Map<string, string>> {
+  const rows = await (prisma[model] as any).findMany({ select: { code: true, id: true } });
+  return new Map(rows.map((row: any) => [row.code, row.id]));
 }
 
 main()

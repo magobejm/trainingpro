@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider   = "prisma-client-js"
   engineType = "binary"
 }
 
@@ -78,27 +78,27 @@ enum NotificationTopic {
 }
 
 model Organization {
-  id           String                   @id @default(uuid()) @db.Uuid
-  name         String                   @db.VarChar(120)
-  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
-  members      OrganizationMember[]
-  subscription OrganizationSubscription?
-  clients      Client[]
-  exercises    Exercise[]
-  cardioMethods CardioMethod[]
-  foods        Food[]
-  plioExercises PlioExercise[]
-  warmupExercises WarmupExercise[]
-  sports          Sport[]
-  planTemplates PlanTemplate[]
-  warmupTemplates WarmupTemplate[]
-  sessions     SessionInstance[]
-  incidents    Incident[]
-  weeklyReports WeeklyReport[]
-  chatThreads  ChatThread[]
+  id                       String                    @id @default(uuid()) @db.Uuid
+  name                     String                    @db.VarChar(120)
+  createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  members                  OrganizationMember[]
+  subscription             OrganizationSubscription?
+  clients                  Client[]
+  exercises                Exercise[]
+  cardioMethods            CardioMethod[]
+  foods                    Food[]
+  plioExercises            PlioExercise[]
+  warmupExercises          WarmupExercise[]
+  sports                   Sport[]
+  planTemplates            PlanTemplate[]
+  warmupTemplates          WarmupTemplate[]
+  sessions                 SessionInstance[]
+  incidents                Incident[]
+  weeklyReports            WeeklyReport[]
+  chatThreads              ChatThread[]
   notificationDeviceTokens NotificationDeviceToken[]
-  notificationEventLogs NotificationEventLog[]
+  notificationEventLogs    NotificationEventLog[]
 
   @@map("organization")
 }
@@ -116,32 +116,32 @@ model User {
 }
 
 model OrganizationMember {
-  id             String       @id @default(uuid()) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  userId         String       @map("user_id") @db.Uuid
-  role           Role
-  isActive       Boolean      @default(true) @map("is_active")
-  archivedAt     DateTime?    @map("archived_at") @db.Timestamptz(6)
-  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  managedClients Client[]     @relation("coach_managed_clients")
-  exercises      Exercise[]   @relation("coach_exercises")
-  cardioMethods  CardioMethod[] @relation("coach_cardio_methods")
-  foods          Food[]       @relation("coach_foods")
-  plioExercises  PlioExercise[] @relation("coach_plio_exercises")
-  warmupExercises WarmupExercise[] @relation("coach_warmup_exercises")
-  sports          Sport[]       @relation("coach_sports")
-  planTemplates  PlanTemplate[] @relation("coach_plan_templates")
-  warmupTemplates WarmupTemplate[] @relation("coach_warmup_templates")
-  sessions       SessionInstance[]
-  incidents      Incident[]
-  weeklyReports  WeeklyReport[]
-  chatThreads    ChatThread[]         @relation("coach_chat_threads")
+  id                       String                    @id @default(uuid()) @db.Uuid
+  organizationId           String                    @map("organization_id") @db.Uuid
+  userId                   String                    @map("user_id") @db.Uuid
+  role                     Role
+  isActive                 Boolean                   @default(true) @map("is_active")
+  archivedAt               DateTime?                 @map("archived_at") @db.Timestamptz(6)
+  createdAt                DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization             Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  managedClients           Client[]                  @relation("coach_managed_clients")
+  exercises                Exercise[]                @relation("coach_exercises")
+  cardioMethods            CardioMethod[]            @relation("coach_cardio_methods")
+  foods                    Food[]                    @relation("coach_foods")
+  plioExercises            PlioExercise[]            @relation("coach_plio_exercises")
+  warmupExercises          WarmupExercise[]          @relation("coach_warmup_exercises")
+  sports                   Sport[]                   @relation("coach_sports")
+  planTemplates            PlanTemplate[]            @relation("coach_plan_templates")
+  warmupTemplates          WarmupTemplate[]          @relation("coach_warmup_templates")
+  sessions                 SessionInstance[]
+  incidents                Incident[]
+  weeklyReports            WeeklyReport[]
+  chatThreads              ChatThread[]              @relation("coach_chat_threads")
   notificationDeviceTokens NotificationDeviceToken[]
-  notificationPreferences NotificationPreference[]
-  notificationEventLogs NotificationEventLog[]
+  notificationPreferences  NotificationPreference[]
+  notificationEventLogs    NotificationEventLog[]
 
   @@unique([organizationId, userId, role], map: "uq_org_user_role")
   @@index([organizationId, role], map: "idx_org_member_org_role")
@@ -162,46 +162,46 @@ model OrganizationSubscription {
 }
 
 model Client {
-  id                String             @id @default(uuid()) @db.Uuid
-  organizationId    String             @map("organization_id") @db.Uuid
-  coachMembershipId String             @map("coach_membership_id") @db.Uuid
-  email             String             @db.VarChar(320)
-  avatarUrl         String?            @map("avatar_url") @db.VarChar(500)
-  firstName         String             @map("first_name") @db.VarChar(80)
-  lastName          String             @map("last_name") @db.VarChar(80)
-  objectiveId       String             @map("objective_id") @db.Uuid
-  trainingPlanId    String?            @map("training_plan_id") @db.Uuid
-  notes             String?
-  considerations    String?
-  phone             String?            @db.VarChar(30)
-  sex               String?            @db.VarChar(30)
-  waistCm           Int?               @map("waist_cm")
-  hipCm             Int?               @map("hip_cm")
-  fcMax             Int?               @map("fc_max")
-  fcRest            Int?               @map("fc_rest")
-  fitnessLevel      String?            @map("fitness_level") @db.VarChar(30)
-  secondaryObjectives String[]         @default([]) @map("secondary_objectives")
-  injuries          String?
-  allergies         String?
-  birthDate         DateTime?          @map("birth_date") @db.Date
-  heightCm          Int?               @map("height_cm")
-  weightKg          Decimal?           @map("weight_kg") @db.Decimal(6, 2)
-  createdBy         String             @map("created_by") @db.Uuid
-  updatedBy         String             @map("updated_by") @db.Uuid
-  archivedBy        String?            @map("archived_by") @db.Uuid
-  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  coachMembership   OrganizationMember @relation("coach_managed_clients", fields: [coachMembershipId], references: [id], onDelete: Restrict)
-  objectiveRef      ClientObjective    @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
-  trainingPlan      PlanTemplate?      @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
-  managementSections ClientManagementSection[]
-  progressPhotos    ClientProgressPhoto[]
-  sessions          SessionInstance[]
-  incidents         Incident[]
-  weeklyReports     WeeklyReport[]
-  chatThreads       ChatThread[]       @relation("client_chat_threads")
+  id                    String                    @id @default(uuid()) @db.Uuid
+  organizationId        String                    @map("organization_id") @db.Uuid
+  coachMembershipId     String                    @map("coach_membership_id") @db.Uuid
+  email                 String                    @db.VarChar(320)
+  avatarUrl             String?                   @map("avatar_url") @db.VarChar(500)
+  firstName             String                    @map("first_name") @db.VarChar(80)
+  lastName              String                    @map("last_name") @db.VarChar(80)
+  objectiveId           String                    @map("objective_id") @db.Uuid
+  trainingPlanId        String?                   @map("training_plan_id") @db.Uuid
+  notes                 String?
+  considerations        String?
+  phone                 String?                   @db.VarChar(30)
+  sex                   String?                   @db.VarChar(30)
+  waistCm               Int?                      @map("waist_cm")
+  hipCm                 Int?                      @map("hip_cm")
+  fcMax                 Int?                      @map("fc_max")
+  fcRest                Int?                      @map("fc_rest")
+  fitnessLevel          String?                   @map("fitness_level") @db.VarChar(30)
+  secondaryObjectives   String[]                  @default([]) @map("secondary_objectives")
+  injuries              String?
+  allergies             String?
+  birthDate             DateTime?                 @map("birth_date") @db.Date
+  heightCm              Int?                      @map("height_cm")
+  weightKg              Decimal?                  @map("weight_kg") @db.Decimal(6, 2)
+  createdBy             String                    @map("created_by") @db.Uuid
+  updatedBy             String                    @map("updated_by") @db.Uuid
+  archivedBy            String?                   @map("archived_by") @db.Uuid
+  archivedAt            DateTime?                 @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization          Organization              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  coachMembership       OrganizationMember        @relation("coach_managed_clients", fields: [coachMembershipId], references: [id], onDelete: Restrict)
+  objectiveRef          ClientObjective           @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
+  trainingPlan          PlanTemplate?             @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
+  managementSections    ClientManagementSection[]
+  progressPhotos        ClientProgressPhoto[]
+  sessions              SessionInstance[]
+  incidents             Incident[]
+  weeklyReports         WeeklyReport[]
+  chatThreads           ChatThread[]              @relation("client_chat_threads")
   notificationEventLogs NotificationEventLog[]
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
@@ -213,14 +213,14 @@ model Client {
 }
 
 model ClientManagementSection {
-  id         String   @id @default(uuid()) @db.Uuid
-  clientId   String   @map("client_id") @db.Uuid
-  code       String   @db.VarChar(40)
-  sortOrder  Int      @default(0) @map("sort_order")
-  archived   Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  clientId  String   @map("client_id") @db.Uuid
+  code      String   @db.VarChar(40)
+  sortOrder Int      @default(0) @map("sort_order")
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@unique([clientId, code], map: "uq_client_management_section_client_code")
   @@index([clientId, archived, sortOrder], map: "idx_client_management_section_lookup")
@@ -228,27 +228,27 @@ model ClientManagementSection {
 }
 
 model ClientProgressPhoto {
-  id         String   @id @default(uuid()) @db.Uuid
-  clientId   String   @map("client_id") @db.Uuid
-  imageUrl   String   @map("image_url") @db.VarChar(500)
-  archived   Boolean  @default(false)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid()) @db.Uuid
+  clientId  String   @map("client_id") @db.Uuid
+  imageUrl  String   @map("image_url") @db.VarChar(500)
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId, archived, createdAt], map: "idx_client_progress_photo_client_archived_created")
   @@map("client_progress_photo")
 }
 
 model ClientObjective {
-  id         String   @id @default(uuid()) @db.Uuid
-  code       String   @unique @db.VarChar(80)
-  label      String   @unique @db.VarChar(120)
-  sortOrder  Int      @default(0) @map("sort_order")
-  isDefault  Boolean  @default(false) @map("is_default")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  clients    Client[]
+  id               String                  @id @default(uuid()) @db.Uuid
+  code             String                  @unique @db.VarChar(80)
+  label            String                  @unique @db.VarChar(120)
+  sortOrder        Int                     @default(0) @map("sort_order")
+  isDefault        Boolean                 @default(false) @map("is_default")
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  clients          Client[]
   routineTemplates PlanTemplateObjective[]
 
   @@index([sortOrder], map: "idx_client_objective_sort")
@@ -257,14 +257,14 @@ model ClientObjective {
 }
 
 model ExerciseMuscleGroup {
-  id         String   @id @default(uuid()) @db.Uuid
-  code       String   @unique @db.VarChar(80)
-  label      String   @unique @db.VarChar(120)
-  sortOrder  Int      @default(0) @map("sort_order")
-  isDefault  Boolean  @default(false) @map("is_default")
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  exercises  Exercise[]
+  id          String                          @id @default(uuid()) @db.Uuid
+  code        String                          @unique @db.VarChar(80)
+  label       String                          @unique @db.VarChar(120)
+  sortOrder   Int                             @default(0) @map("sort_order")
+  isDefault   Boolean                         @default(false) @map("is_default")
+  createdAt   DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  assignments ExerciseMuscleGroupAssignment[]
 
   @@index([sortOrder], map: "idx_exercise_muscle_group_sort")
   @@index([isDefault], map: "idx_exercise_muscle_group_default")
@@ -286,61 +286,174 @@ model CardioMethodType {
   @@map("cardio_method_type")
 }
 
+model ExerciseEquipment {
+  id            String         @id @default(uuid()) @db.Uuid
+  code          String         @unique @db.VarChar(80)
+  label         String         @unique @db.VarChar(120)
+  sortOrder     Int            @default(0) @map("sort_order")
+  isDefault     Boolean        @default(false) @map("is_default")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  exercises     Exercise[]
+  cardioMethods CardioMethod[]
+  plioExercises PlioExercise[]
+
+  @@index([sortOrder], map: "idx_exercise_equipment_sort")
+  @@index([isDefault], map: "idx_exercise_equipment_default")
+  @@map("exercise_equipment")
+}
+
+model PlioTypeRef {
+  id            String         @id @default(uuid()) @db.Uuid
+  code          String         @unique @db.VarChar(80)
+  label         String         @unique @db.VarChar(120)
+  sortOrder     Int            @default(0) @map("sort_order")
+  isDefault     Boolean        @default(false) @map("is_default")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  plioExercises PlioExercise[]
+
+  @@index([sortOrder], map: "idx_plio_type_sort")
+  @@index([isDefault], map: "idx_plio_type_default")
+  @@map("plio_type")
+}
+
+model MobilityTypeRef {
+  id              String           @id @default(uuid()) @db.Uuid
+  code            String           @unique @db.VarChar(80)
+  label           String           @unique @db.VarChar(120)
+  sortOrder       Int              @default(0) @map("sort_order")
+  isDefault       Boolean          @default(false) @map("is_default")
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  warmupExercises WarmupExercise[]
+
+  @@index([sortOrder], map: "idx_mobility_type_sort")
+  @@index([isDefault], map: "idx_mobility_type_default")
+  @@map("mobility_type")
+}
+
+model SportTypeRef {
+  id        String   @id @default(uuid()) @db.Uuid
+  code      String   @unique @db.VarChar(80)
+  label     String   @unique @db.VarChar(120)
+  sortOrder Int      @default(0) @map("sort_order")
+  isDefault Boolean  @default(false) @map("is_default")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  sports    Sport[]
+
+  @@index([sortOrder], map: "idx_sport_type_sort")
+  @@index([isDefault], map: "idx_sport_type_default")
+  @@map("sport_type")
+}
+
+model MovementPattern {
+  id        String     @id @default(uuid()) @db.Uuid
+  code      String     @unique @db.VarChar(80)
+  label     String     @unique @db.VarChar(120)
+  sortOrder Int        @default(0) @map("sort_order")
+  isDefault Boolean    @default(false) @map("is_default")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  exercises Exercise[]
+
+  @@index([sortOrder], map: "idx_movement_pattern_sort")
+  @@index([isDefault], map: "idx_movement_pattern_default")
+  @@map("movement_pattern")
+}
+
+model AnatomicalPlane {
+  id        String     @id @default(uuid()) @db.Uuid
+  code      String     @unique @db.VarChar(80)
+  label     String     @unique @db.VarChar(120)
+  sortOrder Int        @default(0) @map("sort_order")
+  isDefault Boolean    @default(false) @map("is_default")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  exercises Exercise[]
+
+  @@index([sortOrder], map: "idx_anatomical_plane_sort")
+  @@index([isDefault], map: "idx_anatomical_plane_default")
+  @@map("anatomical_plane")
+}
+
+model ExerciseMuscleGroupAssignment {
+  exerciseId    String              @map("exercise_id") @db.Uuid
+  muscleGroupId String              @map("muscle_group_id") @db.Uuid
+  exercise      Exercise            @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  muscleGroup   ExerciseMuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Cascade)
+
+  @@id([exerciseId, muscleGroupId])
+  @@index([muscleGroupId], map: "idx_emga_muscle_group")
+  @@map("exercise_muscle_group_assignment")
+}
+
 model Exercise {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  name              String              @db.VarChar(120)
-  muscleGroupId     String              @map("muscle_group_id") @db.Uuid
-  equipment         String?             @db.VarChar(80)
-  instructions      String?
-  mediaUrl          String?             @map("media_url") @db.VarChar(500)
-  mediaType         String?             @map("media_type") @db.VarChar(40)
-  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
-  createdBy         String?             @map("created_by") @db.Uuid
-  updatedBy         String?             @map("updated_by") @db.Uuid
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  muscleGroupRef    ExerciseMuscleGroup @relation(fields: [muscleGroupId], references: [id], onDelete: Restrict)
+  id                    String                          @id @default(uuid()) @db.Uuid
+  scope                 LibraryItemScope
+  organizationId        String?                         @map("organization_id") @db.Uuid
+  coachMembershipId     String?                         @map("coach_membership_id") @db.Uuid
+  name                  String                          @db.VarChar(120)
+  equipmentId           String?                         @map("equipment_id") @db.Uuid
+  equipment             String?                         @db.VarChar(80)
+  instructions          String?
+  mediaUrl              String?                         @map("media_url") @db.VarChar(500)
+  mediaType             String?                         @map("media_type") @db.VarChar(40)
+  youtubeUrl            String?                         @map("youtube_url") @db.VarChar(500)
+  movementPatternId     String?                         @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId     String?                         @map("anatomical_plane_id") @db.Uuid
+  createdBy             String?                         @map("created_by") @db.Uuid
+  updatedBy             String?                         @map("updated_by") @db.Uuid
+  archivedAt            DateTime?                       @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization          Organization?                   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership       OrganizationMember?             @relation("coach_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  equipmentRef          ExerciseEquipment?              @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  movementPatternRef    MovementPattern?                @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef    AnatomicalPlane?                @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
+  muscleGroups          ExerciseMuscleGroupAssignment[]
   planStrengthExercises PlanStrengthExercise[]
-  warmupTemplateItems WarmupTemplateItem[]
+  warmupTemplateItems   WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_exercise_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_exercise_coach_archived")
-  @@index([muscleGroupId], map: "idx_exercise_muscle_group")
+  @@index([equipmentId], map: "idx_exercise_equipment")
+  @@index([movementPatternId], map: "idx_exercise_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_exercise_anatomical_plane")
   @@map("exercise")
 }
 
 model CardioMethod {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  name              String              @db.VarChar(120)
-  methodTypeId      String              @map("method_type_id") @db.Uuid
-  description       String?
-  equipment         String?             @db.VarChar(120)
-  mediaUrl          String?             @map("media_url") @db.VarChar(500)
-  mediaType         String?             @map("media_type") @db.VarChar(40)
-  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
-  createdBy         String?             @map("created_by") @db.Uuid
-  updatedBy         String?             @map("updated_by") @db.Uuid
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_cardio_methods", fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  methodTypeRef     CardioMethodType    @relation(fields: [methodTypeId], references: [id], onDelete: Restrict)
-  planCardioBlocks  PlanCardioBlock[]
+  id                  String               @id @default(uuid()) @db.Uuid
+  scope               LibraryItemScope
+  organizationId      String?              @map("organization_id") @db.Uuid
+  coachMembershipId   String?              @map("coach_membership_id") @db.Uuid
+  name                String               @db.VarChar(120)
+  methodTypeId        String               @map("method_type_id") @db.Uuid
+  equipmentId         String?              @map("equipment_id") @db.Uuid
+  description         String?
+  equipment           String?              @db.VarChar(120)
+  mediaUrl            String?              @map("media_url") @db.VarChar(500)
+  mediaType           String?              @map("media_type") @db.VarChar(40)
+  youtubeUrl          String?              @map("youtube_url") @db.VarChar(500)
+  createdBy           String?              @map("created_by") @db.Uuid
+  updatedBy           String?              @map("updated_by") @db.Uuid
+  archivedAt          DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization        Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership     OrganizationMember?  @relation("coach_cardio_methods", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  methodTypeRef       CardioMethodType     @relation(fields: [methodTypeId], references: [id], onDelete: Restrict)
+  equipmentRef        ExerciseEquipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  planCardioBlocks    PlanCardioBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_cardio_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_cardio_coach_archived")
   @@index([methodTypeId], map: "idx_cardio_method_type")
+  @@index([equipmentId], map: "idx_cardio_equipment")
   @@map("cardio_method")
 }
 
@@ -374,52 +487,61 @@ model Food {
 }
 
 model PlioExercise {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope    @default(GLOBAL)
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  name              String              @db.VarChar(120)
-  description       String?
-  equipment         String?             @db.VarChar(120)
-  plioType          String?             @map("plio_type") @db.VarChar(30)
-  notes             String?
-  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
-  mediaUrl          String?             @map("media_url") @db.VarChar(500)
-  mediaType         String?             @map("media_type") @db.VarChar(40)
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_plio_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  planPlioBlocks    PlanPlioBlock[]
+  id                  String               @id @default(uuid()) @db.Uuid
+  scope               LibraryItemScope     @default(GLOBAL)
+  organizationId      String?              @map("organization_id") @db.Uuid
+  coachMembershipId   String?              @map("coach_membership_id") @db.Uuid
+  name                String               @db.VarChar(120)
+  description         String?
+  plioTypeId          String?              @map("plio_type_id") @db.Uuid
+  equipmentId         String?              @map("equipment_id") @db.Uuid
+  equipment           String?              @db.VarChar(120)
+  plioType            String?              @map("plio_type") @db.VarChar(30)
+  notes               String?
+  youtubeUrl          String?              @map("youtube_url") @db.VarChar(500)
+  mediaUrl            String?              @map("media_url") @db.VarChar(500)
+  mediaType           String?              @map("media_type") @db.VarChar(40)
+  archivedAt          DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization        Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership     OrganizationMember?  @relation("coach_plio_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  plioTypeRef         PlioTypeRef?         @relation(fields: [plioTypeId], references: [id], onDelete: SetNull)
+  equipmentRef        ExerciseEquipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  planPlioBlocks      PlanPlioBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_plio_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plio_coach_archived")
+  @@index([plioTypeId], map: "idx_plio_type")
+  @@index([equipmentId], map: "idx_plio_equipment")
   @@map("plio_exercise")
 }
 
 model WarmupExercise {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope    @default(GLOBAL)
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  name              String              @db.VarChar(120)
-  description       String?
-  mobilityType      String?             @map("mobility_type") @db.VarChar(30)
-  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
-  mediaUrl          String?             @map("media_url") @db.VarChar(500)
-  mediaType         String?             @map("media_type") @db.VarChar(40)
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_warmup_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  planWarmupBlocks  PlanWarmupBlock[]
+  id                  String               @id @default(uuid()) @db.Uuid
+  scope               LibraryItemScope     @default(GLOBAL)
+  organizationId      String?              @map("organization_id") @db.Uuid
+  coachMembershipId   String?              @map("coach_membership_id") @db.Uuid
+  name                String               @db.VarChar(120)
+  description         String?
+  mobilityTypeId      String?              @map("mobility_type_id") @db.Uuid
+  mobilityType        String?              @map("mobility_type") @db.VarChar(30)
+  youtubeUrl          String?              @map("youtube_url") @db.VarChar(500)
+  mediaUrl            String?              @map("media_url") @db.VarChar(500)
+  mediaType           String?              @map("media_type") @db.VarChar(40)
+  archivedAt          DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization        Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership     OrganizationMember?  @relation("coach_warmup_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  mobilityTypeRefRel  MobilityTypeRef?     @relation(fields: [mobilityTypeId], references: [id], onDelete: SetNull)
+  planWarmupBlocks    PlanWarmupBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_warmup_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_coach_archived")
+  @@index([mobilityTypeId], map: "idx_warmup_mobility_type")
   @@map("warmup_exercise")
 }
 
@@ -430,6 +552,7 @@ model Sport {
   coachMembershipId String?             @map("coach_membership_id") @db.Uuid
   name              String              @db.VarChar(120)
   icon              String              @db.VarChar(10)
+  sportTypeId       String?             @map("sport_type_id") @db.Uuid
   description       String?
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
@@ -437,35 +560,35 @@ model Sport {
   updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember? @relation("coach_sports", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  sportTypeRef      SportTypeRef?       @relation(fields: [sportTypeId], references: [id], onDelete: SetNull)
   planSportBlocks   PlanSportBlock[]
 
   @@index([scope, archivedAt], map: "idx_sport_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_sport_coach_archived")
+  @@index([sportTypeId], map: "idx_sport_type")
   @@map("sport")
 }
 
-
-
 model PlanTemplate {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope    @default(COACH)
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  kind              TemplateKind        @default(STRENGTH)
-  name              String              @db.VarChar(120)
-  expectedCompletionDays Int?           @map("expected_completion_days")
-  templateVersion   Int                 @default(1) @map("template_version")
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdBy         String?             @map("created_by") @db.Uuid
-  updatedBy         String?             @map("updated_by") @db.Uuid
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  days              PlanDay[]
-  routineObjectives PlanTemplateObjective[]
-  sessions          SessionInstance[]
-  assignedClients   Client[]
+  id                     String                  @id @default(uuid()) @db.Uuid
+  scope                  LibraryItemScope        @default(COACH)
+  organizationId         String?                 @map("organization_id") @db.Uuid
+  coachMembershipId      String?                 @map("coach_membership_id") @db.Uuid
+  kind                   TemplateKind            @default(STRENGTH)
+  name                   String                  @db.VarChar(120)
+  expectedCompletionDays Int?                    @map("expected_completion_days")
+  templateVersion        Int                     @default(1) @map("template_version")
+  archivedAt             DateTime?               @map("archived_at") @db.Timestamptz(6)
+  createdBy              String?                 @map("created_by") @db.Uuid
+  updatedBy              String?                 @map("updated_by") @db.Uuid
+  createdAt              DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization           Organization?           @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership        OrganizationMember?     @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  days                   PlanDay[]
+  routineObjectives      PlanTemplateObjective[]
+  sessions               SessionInstance[]
+  assignedClients        Client[]
 
   @@index([scope, archivedAt], map: "idx_plan_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
@@ -474,11 +597,11 @@ model PlanTemplate {
 }
 
 model PlanTemplateObjective {
-  id          String         @id @default(uuid()) @db.Uuid
-  templateId  String         @map("template_id") @db.Uuid
-  objectiveId String         @map("objective_id") @db.Uuid
-  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  template    PlanTemplate   @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  id          String          @id @default(uuid()) @db.Uuid
+  templateId  String          @map("template_id") @db.Uuid
+  objectiveId String          @map("objective_id") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  template    PlanTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
   objective   ClientObjective @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
 
   @@unique([templateId, objectiveId], map: "uq_plan_template_objective")
@@ -488,19 +611,19 @@ model PlanTemplateObjective {
 }
 
 model WarmupTemplate {
-  id                String              @id @default(uuid()) @db.Uuid
-  scope             LibraryItemScope    @default(COACH)
-  organizationId    String?             @map("organization_id") @db.Uuid
-  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
-  name              String              @db.VarChar(120)
-  templateVersion   Int                 @default(1) @map("template_version")
-  archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdBy         String?             @map("created_by") @db.Uuid
-  updatedBy         String?             @map("updated_by") @db.Uuid
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership   OrganizationMember? @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  id                String               @id @default(uuid()) @db.Uuid
+  scope             LibraryItemScope     @default(COACH)
+  organizationId    String?              @map("organization_id") @db.Uuid
+  coachMembershipId String?              @map("coach_membership_id") @db.Uuid
+  name              String               @db.VarChar(120)
+  templateVersion   Int                  @default(1) @map("template_version")
+  archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdBy         String?              @map("created_by") @db.Uuid
+  updatedBy         String?              @map("updated_by") @db.Uuid
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership   OrganizationMember?  @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   items             WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
@@ -510,81 +633,81 @@ model WarmupTemplate {
 }
 
 model WarmupTemplateItem {
-  id                    String         @id @default(uuid()) @db.Uuid
-  templateId            String         @map("template_id") @db.Uuid
-  blockType             String         @map("block_type") @db.VarChar(20)
-  sortOrder             Int            @default(0) @map("sort_order")
-  displayName           String         @map("display_name") @db.VarChar(120)
-  exerciseLibraryId     String?        @map("exercise_library_id") @db.Uuid
-  cardioMethodLibraryId String?        @map("cardio_method_library_id") @db.Uuid
-  plioExerciseLibraryId String?        @map("plio_exercise_library_id") @db.Uuid
-  warmupExerciseLibraryId String?      @map("warmup_exercise_library_id") @db.Uuid
-  setsPlanned           Int?           @map("sets_planned")
-  repsMin               Int?           @map("reps_min")
-  repsMax               Int?           @map("reps_max")
-  roundsPlanned         Int?           @map("rounds_planned")
-  workSeconds           Int?           @map("work_seconds")
-  restSeconds           Int?           @map("rest_seconds")
-  targetRpe             Int?           @map("target_rpe")
-  targetRir             Int?           @map("target_rir")
-  durationMinutes       Int?           @map("duration_minutes")
-  notes                 String?
-  metadataJson          Json?          @map("metadata_json")
-  archivedAt            DateTime?      @map("archived_at") @db.Timestamptz(6)
-  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  template              WarmupTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  libraryExercise       Exercise?      @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
-  libraryCardioMethod   CardioMethod?  @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
-  libraryPlioExercise   PlioExercise?  @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
-  libraryWarmupExercise WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+  id                      String          @id @default(uuid()) @db.Uuid
+  templateId              String          @map("template_id") @db.Uuid
+  blockType               String          @map("block_type") @db.VarChar(20)
+  sortOrder               Int             @default(0) @map("sort_order")
+  displayName             String          @map("display_name") @db.VarChar(120)
+  exerciseLibraryId       String?         @map("exercise_library_id") @db.Uuid
+  cardioMethodLibraryId   String?         @map("cardio_method_library_id") @db.Uuid
+  plioExerciseLibraryId   String?         @map("plio_exercise_library_id") @db.Uuid
+  warmupExerciseLibraryId String?         @map("warmup_exercise_library_id") @db.Uuid
+  setsPlanned             Int?            @map("sets_planned")
+  repsMin                 Int?            @map("reps_min")
+  repsMax                 Int?            @map("reps_max")
+  roundsPlanned           Int?            @map("rounds_planned")
+  workSeconds             Int?            @map("work_seconds")
+  restSeconds             Int?            @map("rest_seconds")
+  targetRpe               Int?            @map("target_rpe")
+  targetRir               Int?            @map("target_rir")
+  durationMinutes         Int?            @map("duration_minutes")
+  notes                   String?
+  metadataJson            Json?           @map("metadata_json")
+  archivedAt              DateTime?       @map("archived_at") @db.Timestamptz(6)
+  createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  template                WarmupTemplate  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  libraryExercise         Exercise?       @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryCardioMethod     CardioMethod?   @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
+  libraryPlioExercise     PlioExercise?   @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryWarmupExercise   WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([templateId, archivedAt], map: "idx_warmup_template_item_template_archived")
   @@map("warmup_template_item")
 }
 
 model PlanDay {
-  id             String               @id @default(uuid()) @db.Uuid
-  templateId     String               @map("template_id") @db.Uuid
-  dayIndex       Int                  @map("day_index")
-  title          String               @db.VarChar(120)
-  archivedAt     DateTime?            @map("archived_at") @db.Timestamptz(6)
-  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
-  template       PlanTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  exercises      PlanStrengthExercise[]
-  cardioBlocks   PlanCardioBlock[]
-  plioBlocks     PlanPlioBlock[]
-  warmupBlocks   PlanWarmupBlock[]
-  sportBlocks    PlanSportBlock[]
+  id           String                 @id @default(uuid()) @db.Uuid
+  templateId   String                 @map("template_id") @db.Uuid
+  dayIndex     Int                    @map("day_index")
+  title        String                 @db.VarChar(120)
+  archivedAt   DateTime?              @map("archived_at") @db.Timestamptz(6)
+  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  template     PlanTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  exercises    PlanStrengthExercise[]
+  cardioBlocks PlanCardioBlock[]
+  plioBlocks   PlanPlioBlock[]
+  warmupBlocks PlanWarmupBlock[]
+  sportBlocks  PlanSportBlock[]
 
-  @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
   @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
+  @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
   @@map("plan_day")
 }
 
 model PlanStrengthExercise {
-  id                    String             @id @default(uuid()) @db.Uuid
-  dayId                 String             @map("day_id") @db.Uuid
-  exerciseLibraryId     String?            @map("exercise_library_id") @db.Uuid
-  sortOrder             Int                @default(0) @map("sort_order")
-  displayName           String             @map("display_name") @db.VarChar(120)
-  setsPlanned           Int?               @map("sets_planned")
-  repsMin               Int?               @map("reps_min")
-  repsMax               Int?               @map("reps_max")
-  weightRangeMinKg      Decimal?           @map("weight_range_min_kg") @db.Decimal(6, 2)
-  weightRangeMaxKg      Decimal?           @map("weight_range_max_kg") @db.Decimal(6, 2)
-  perSetWeightRangesJson Json?             @map("per_set_weight_ranges_json")
-  targetRpe             Int?               @map("target_rpe")
-  targetRir             Int?               @map("target_rir")
-  restSeconds           Int?               @default(0) @map("rest_seconds")
-  notes                 String?
-  archivedAt            DateTime?          @map("archived_at") @db.Timestamptz(6)
-  createdAt             DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  day                   PlanDay            @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  libraryExercise       Exercise?          @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
-  fieldModes            FieldModeSetting[]
+  id                     String             @id @default(uuid()) @db.Uuid
+  dayId                  String             @map("day_id") @db.Uuid
+  exerciseLibraryId      String?            @map("exercise_library_id") @db.Uuid
+  sortOrder              Int                @default(0) @map("sort_order")
+  displayName            String             @map("display_name") @db.VarChar(120)
+  setsPlanned            Int?               @map("sets_planned")
+  repsMin                Int?               @map("reps_min")
+  repsMax                Int?               @map("reps_max")
+  weightRangeMinKg       Decimal?           @map("weight_range_min_kg") @db.Decimal(6, 2)
+  weightRangeMaxKg       Decimal?           @map("weight_range_max_kg") @db.Decimal(6, 2)
+  perSetWeightRangesJson Json?              @map("per_set_weight_ranges_json")
+  targetRpe              Int?               @map("target_rpe")
+  targetRir              Int?               @map("target_rir")
+  restSeconds            Int?               @default(0) @map("rest_seconds")
+  notes                  String?
+  archivedAt             DateTime?          @map("archived_at") @db.Timestamptz(6)
+  createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                    PlanDay            @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryExercise        Exercise?          @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
+  fieldModes             FieldModeSetting[]
 
   @@index([dayId, archivedAt], map: "idx_plan_strength_day_archived")
   @@map("plan_strength_exercise")
@@ -605,22 +728,22 @@ model FieldModeSetting {
 }
 
 model PlanCardioBlock {
-  id                    String                 @id @default(uuid()) @db.Uuid
-  dayId                 String                 @map("day_id") @db.Uuid
-  cardioMethodLibraryId String?                @map("cardio_method_library_id") @db.Uuid
-  sortOrder             Int                    @default(0) @map("sort_order")
-  displayName           String                 @map("display_name") @db.VarChar(120)
-  roundsPlanned         Int                    @default(1) @map("rounds_planned")
-  workSeconds           Int                    @map("work_seconds")
-  restSeconds           Int                    @default(0) @map("rest_seconds")
-  targetDistanceMeters  Int?                   @map("target_distance_meters")
-  targetRpe             Int?                   @map("target_rpe")
+  id                    String                   @id @default(uuid()) @db.Uuid
+  dayId                 String                   @map("day_id") @db.Uuid
+  cardioMethodLibraryId String?                  @map("cardio_method_library_id") @db.Uuid
+  sortOrder             Int                      @default(0) @map("sort_order")
+  displayName           String                   @map("display_name") @db.VarChar(120)
+  roundsPlanned         Int                      @default(1) @map("rounds_planned")
+  workSeconds           Int                      @map("work_seconds")
+  restSeconds           Int                      @default(0) @map("rest_seconds")
+  targetDistanceMeters  Int?                     @map("target_distance_meters")
+  targetRpe             Int?                     @map("target_rpe")
   notes                 String?
-  archivedAt            DateTime?              @map("archived_at") @db.Timestamptz(6)
-  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  day                   PlanDay                @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  libraryCardioMethod   CardioMethod?          @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
+  archivedAt            DateTime?                @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                   PlanDay                  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryCardioMethod   CardioMethod?            @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
   fieldModes            CardioFieldModeSetting[]
 
   @@index([dayId, archivedAt], map: "idx_plan_cardio_day_archived")
@@ -642,42 +765,42 @@ model CardioFieldModeSetting {
 }
 
 model PlanPlioBlock {
-  id                    String         @id @default(uuid()) @db.Uuid
-  dayId                 String         @map("day_id") @db.Uuid
-  plioExerciseLibraryId String?        @map("plio_exercise_library_id") @db.Uuid
-  sortOrder             Int            @default(0) @map("sort_order")
-  displayName           String         @map("display_name") @db.VarChar(120)
-  roundsPlanned         Int            @default(1) @map("rounds_planned")
-  workSeconds           Int            @map("work_seconds")
-  restSeconds           Int            @default(0) @map("rest_seconds")
-  targetRpe             Int?           @map("target_rpe")
+  id                    String        @id @default(uuid()) @db.Uuid
+  dayId                 String        @map("day_id") @db.Uuid
+  plioExerciseLibraryId String?       @map("plio_exercise_library_id") @db.Uuid
+  sortOrder             Int           @default(0) @map("sort_order")
+  displayName           String        @map("display_name") @db.VarChar(120)
+  roundsPlanned         Int           @default(1) @map("rounds_planned")
+  workSeconds           Int           @map("work_seconds")
+  restSeconds           Int           @default(0) @map("rest_seconds")
+  targetRpe             Int?          @map("target_rpe")
   notes                 String?
-  archivedAt            DateTime?      @map("archived_at") @db.Timestamptz(6)
-  createdAt             DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  day                   PlanDay        @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  libraryPlioExercise   PlioExercise?  @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
+  archivedAt            DateTime?     @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                   PlanDay       @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryPlioExercise   PlioExercise? @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([dayId, archivedAt], map: "idx_plan_plio_day_archived")
   @@map("plan_plio_block")
 }
 
 model PlanWarmupBlock {
-  id                      String           @id @default(uuid()) @db.Uuid
-  dayId                   String           @map("day_id") @db.Uuid
-  warmupExerciseLibraryId String?          @map("warmup_exercise_library_id") @db.Uuid
-  sortOrder               Int              @default(0) @map("sort_order")
-  displayName             String           @map("display_name") @db.VarChar(120)
-  roundsPlanned           Int              @default(1) @map("rounds_planned")
-  workSeconds             Int              @map("work_seconds")
-  restSeconds             Int              @default(0) @map("rest_seconds")
-  targetRpe               Int?             @map("target_rpe")
+  id                      String          @id @default(uuid()) @db.Uuid
+  dayId                   String          @map("day_id") @db.Uuid
+  warmupExerciseLibraryId String?         @map("warmup_exercise_library_id") @db.Uuid
+  sortOrder               Int             @default(0) @map("sort_order")
+  displayName             String          @map("display_name") @db.VarChar(120)
+  roundsPlanned           Int             @default(1) @map("rounds_planned")
+  workSeconds             Int             @map("work_seconds")
+  restSeconds             Int             @default(0) @map("rest_seconds")
+  targetRpe               Int?            @map("target_rpe")
   notes                   String?
-  archivedAt              DateTime?        @map("archived_at") @db.Timestamptz(6)
-  createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  day                     PlanDay          @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  libraryWarmupExercise   WarmupExercise?  @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+  archivedAt              DateTime?       @map("archived_at") @db.Timestamptz(6)
+  createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                     PlanDay         @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  libraryWarmupExercise   WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([dayId, archivedAt], map: "idx_plan_warmup_day_archived")
   @@map("plan_warmup_block")
@@ -703,34 +826,34 @@ model PlanSportBlock {
 }
 
 model SessionInstance {
-  id                  String              @id @default(uuid()) @db.Uuid
-  organizationId      String              @map("organization_id") @db.Uuid
-  coachMembershipId   String              @map("coach_membership_id") @db.Uuid
-  clientId            String              @map("client_id") @db.Uuid
-  sourceTemplateId    String              @map("source_template_id") @db.Uuid
-  sourceTemplateVersion Int               @map("source_template_version")
-  sessionDate         DateTime            @map("session_date") @db.Date
-  startedAt           DateTime?           @map("started_at") @db.Timestamptz(6)
-  finishedAt          DateTime?           @map("finished_at") @db.Timestamptz(6)
-  isCompleted         Boolean             @default(false) @map("is_completed")
-  isIncomplete        Boolean             @default(false) @map("is_incomplete")
-  finishComment       String?             @map("finish_comment")
-  status              SessionStatus       @default(PENDING)
-  archivedAt          DateTime?           @map("archived_at") @db.Timestamptz(6)
-  createdBy           String              @map("created_by") @db.Uuid
-  updatedBy           String              @map("updated_by") @db.Uuid
-  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  coachMembership     OrganizationMember  @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
-  client              Client              @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  template            PlanTemplate        @relation(fields: [sourceTemplateId], references: [id], onDelete: Restrict)
-  items               SessionStrengthItem[]
-  cardioBlocks        SessionCardioBlock[]
-  logs                SetLog[]
-  intervalLogs        IntervalLog[]
-  incidents           Incident[]
-  weeklyReports       WeeklyReport[]
+  id                    String                @id @default(uuid()) @db.Uuid
+  organizationId        String                @map("organization_id") @db.Uuid
+  coachMembershipId     String                @map("coach_membership_id") @db.Uuid
+  clientId              String                @map("client_id") @db.Uuid
+  sourceTemplateId      String                @map("source_template_id") @db.Uuid
+  sourceTemplateVersion Int                   @map("source_template_version")
+  sessionDate           DateTime              @map("session_date") @db.Date
+  startedAt             DateTime?             @map("started_at") @db.Timestamptz(6)
+  finishedAt            DateTime?             @map("finished_at") @db.Timestamptz(6)
+  isCompleted           Boolean               @default(false) @map("is_completed")
+  isIncomplete          Boolean               @default(false) @map("is_incomplete")
+  finishComment         String?               @map("finish_comment")
+  status                SessionStatus         @default(PENDING)
+  archivedAt            DateTime?             @map("archived_at") @db.Timestamptz(6)
+  createdBy             String                @map("created_by") @db.Uuid
+  updatedBy             String                @map("updated_by") @db.Uuid
+  createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  coachMembership       OrganizationMember    @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
+  client                Client                @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  template              PlanTemplate          @relation(fields: [sourceTemplateId], references: [id], onDelete: Restrict)
+  items                 SessionStrengthItem[]
+  cardioBlocks          SessionCardioBlock[]
+  logs                  SetLog[]
+  intervalLogs          IntervalLog[]
+  incidents             Incident[]
+  weeklyReports         WeeklyReport[]
 
   @@unique([clientId, sessionDate], map: "uq_session_client_date")
   @@index([coachMembershipId, sessionDate], map: "idx_session_coach_date")
@@ -739,40 +862,40 @@ model SessionInstance {
 }
 
 model SessionStrengthItem {
-  id                 String       @id @default(uuid()) @db.Uuid
-  sessionId          String       @map("session_id") @db.Uuid
-  sourceExerciseId   String?      @map("source_exercise_id") @db.Uuid
-  displayName        String       @map("display_name") @db.VarChar(120)
-  sortOrder          Int          @default(0) @map("sort_order")
-  setsPlanned        Int?         @map("sets_planned")
-  repsMin            Int?         @map("reps_min")
-  repsMax            Int?         @map("reps_max")
-  weightRangeMinKg   Decimal?     @map("weight_range_min_kg") @db.Decimal(6, 2)
-  weightRangeMaxKg   Decimal?     @map("weight_range_max_kg") @db.Decimal(6, 2)
-  perSetRangesJson   Json?        @map("per_set_ranges_json")
-  archivedAt         DateTime?    @map("archived_at") @db.Timestamptz(6)
-  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  session            SessionInstance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  logs               SetLog[]
-  incidents          Incident[]
+  id               String          @id @default(uuid()) @db.Uuid
+  sessionId        String          @map("session_id") @db.Uuid
+  sourceExerciseId String?         @map("source_exercise_id") @db.Uuid
+  displayName      String          @map("display_name") @db.VarChar(120)
+  sortOrder        Int             @default(0) @map("sort_order")
+  setsPlanned      Int?            @map("sets_planned")
+  repsMin          Int?            @map("reps_min")
+  repsMax          Int?            @map("reps_max")
+  weightRangeMinKg Decimal?        @map("weight_range_min_kg") @db.Decimal(6, 2)
+  weightRangeMaxKg Decimal?        @map("weight_range_max_kg") @db.Decimal(6, 2)
+  perSetRangesJson Json?           @map("per_set_ranges_json")
+  archivedAt       DateTime?       @map("archived_at") @db.Timestamptz(6)
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  session          SessionInstance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  logs             SetLog[]
+  incidents        Incident[]
 
   @@index([sessionId, archivedAt], map: "idx_session_item_session_archived")
   @@map("session_strength_item")
 }
 
 model SetLog {
-  id                 String      @id @default(uuid()) @db.Uuid
-  sessionId          String      @map("session_id") @db.Uuid
-  sessionItemId      String      @map("session_item_id") @db.Uuid
-  setIndex           Int         @map("set_index")
-  repsDone           Int?        @map("reps_done")
-  weightDoneKg       Decimal?    @map("weight_done_kg") @db.Decimal(6, 2)
-  effortRpe          Int?        @map("effort_rpe")
-  createdAt          DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime    @updatedAt @map("updated_at") @db.Timestamptz(6)
-  session            SessionInstance   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionItem        SessionStrengthItem @relation(fields: [sessionItemId], references: [id], onDelete: Cascade)
+  id            String              @id @default(uuid()) @db.Uuid
+  sessionId     String              @map("session_id") @db.Uuid
+  sessionItemId String              @map("session_item_id") @db.Uuid
+  setIndex      Int                 @map("set_index")
+  repsDone      Int?                @map("reps_done")
+  weightDoneKg  Decimal?            @map("weight_done_kg") @db.Decimal(6, 2)
+  effortRpe     Int?                @map("effort_rpe")
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  session       SessionInstance     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionItem   SessionStrengthItem @relation(fields: [sessionItemId], references: [id], onDelete: Cascade)
 
   @@unique([sessionItemId, setIndex], map: "uq_set_log_item_set")
   @@index([sessionId], map: "idx_set_log_session")
@@ -780,21 +903,21 @@ model SetLog {
 }
 
 model SessionCardioBlock {
-  id                   String           @id @default(uuid()) @db.Uuid
-  sessionId            String           @map("session_id") @db.Uuid
-  sourceCardioBlockId  String?          @map("source_cardio_block_id") @db.Uuid
-  sourceCardioMethodId String?          @map("source_cardio_method_id") @db.Uuid
-  displayName          String           @map("display_name") @db.VarChar(120)
-  sortOrder            Int              @default(0) @map("sort_order")
-  roundsPlanned        Int              @default(1) @map("rounds_planned")
-  workSeconds          Int              @map("work_seconds")
-  restSeconds          Int              @default(0) @map("rest_seconds")
-  targetDistanceMeters Int?             @map("target_distance_meters")
-  targetRpe            Int?             @map("target_rpe")
-  archivedAt           DateTime?        @map("archived_at") @db.Timestamptz(6)
-  createdAt            DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  session              SessionInstance  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id                   String          @id @default(uuid()) @db.Uuid
+  sessionId            String          @map("session_id") @db.Uuid
+  sourceCardioBlockId  String?         @map("source_cardio_block_id") @db.Uuid
+  sourceCardioMethodId String?         @map("source_cardio_method_id") @db.Uuid
+  displayName          String          @map("display_name") @db.VarChar(120)
+  sortOrder            Int             @default(0) @map("sort_order")
+  roundsPlanned        Int             @default(1) @map("rounds_planned")
+  workSeconds          Int             @map("work_seconds")
+  restSeconds          Int             @default(0) @map("rest_seconds")
+  targetDistanceMeters Int?            @map("target_distance_meters")
+  targetRpe            Int?            @map("target_rpe")
+  archivedAt           DateTime?       @map("archived_at") @db.Timestamptz(6)
+  createdAt            DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+  session              SessionInstance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   intervalLogs         IntervalLog[]
 
   @@index([sessionId, archivedAt], map: "idx_session_cardio_session_archived")
@@ -802,18 +925,18 @@ model SessionCardioBlock {
 }
 
 model IntervalLog {
-  id                  String            @id @default(uuid()) @db.Uuid
-  sessionId           String            @map("session_id") @db.Uuid
-  sessionCardioBlockId String           @map("session_cardio_block_id") @db.Uuid
-  intervalIndex       Int               @map("interval_index")
-  distanceDoneMeters  Int?              @map("distance_done_meters")
-  durationSecondsDone Int?              @map("duration_seconds_done")
-  effortRpe           Int?              @map("effort_rpe")
-  avgHeartRate        Int?              @map("avg_heart_rate")
-  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  session             SessionInstance   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  sessionCardioBlock  SessionCardioBlock @relation(fields: [sessionCardioBlockId], references: [id], onDelete: Cascade)
+  id                   String             @id @default(uuid()) @db.Uuid
+  sessionId            String             @map("session_id") @db.Uuid
+  sessionCardioBlockId String             @map("session_cardio_block_id") @db.Uuid
+  intervalIndex        Int                @map("interval_index")
+  distanceDoneMeters   Int?               @map("distance_done_meters")
+  durationSecondsDone  Int?               @map("duration_seconds_done")
+  effortRpe            Int?               @map("effort_rpe")
+  avgHeartRate         Int?               @map("avg_heart_rate")
+  createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  session              SessionInstance    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionCardioBlock   SessionCardioBlock @relation(fields: [sessionCardioBlockId], references: [id], onDelete: Cascade)
 
   @@unique([sessionCardioBlockId, intervalIndex], map: "uq_interval_log_block_interval")
   @@index([sessionId], map: "idx_interval_log_session")
@@ -821,29 +944,29 @@ model IntervalLog {
 }
 
 model Incident {
-  id                String             @id @default(uuid()) @db.Uuid
-  organizationId    String             @map("organization_id") @db.Uuid
-  coachMembershipId String             @map("coach_membership_id") @db.Uuid
-  clientId          String             @map("client_id") @db.Uuid
-  sessionId         String?            @map("session_id") @db.Uuid
-  sessionItemId     String?            @map("session_item_id") @db.Uuid
-  severity          IncidentSeverity   @default(MEDIUM)
-  status            IncidentStatus     @default(OPEN)
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @map("organization_id") @db.Uuid
+  coachMembershipId String               @map("coach_membership_id") @db.Uuid
+  clientId          String               @map("client_id") @db.Uuid
+  sessionId         String?              @map("session_id") @db.Uuid
+  sessionItemId     String?              @map("session_item_id") @db.Uuid
+  severity          IncidentSeverity     @default(MEDIUM)
+  status            IncidentStatus       @default(OPEN)
   description       String
-  tag               String?            @db.VarChar(60)
-  coachResponse     String?            @map("coach_response")
-  adjustmentDraft   String?            @map("adjustment_draft")
-  coachAlertedAt    DateTime?          @map("coach_alerted_at") @db.Timestamptz(6)
-  reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
-  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
-  createdBy         String             @map("created_by") @db.Uuid
-  updatedBy         String             @map("updated_by") @db.Uuid
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
-  coachMembership   OrganizationMember @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
-  client            Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  session           SessionInstance?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  tag               String?              @db.VarChar(60)
+  coachResponse     String?              @map("coach_response")
+  adjustmentDraft   String?              @map("adjustment_draft")
+  coachAlertedAt    DateTime?            @map("coach_alerted_at") @db.Timestamptz(6)
+  reviewedAt        DateTime?            @map("reviewed_at") @db.Timestamptz(6)
+  archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdBy         String               @map("created_by") @db.Uuid
+  updatedBy         String               @map("updated_by") @db.Uuid
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  coachMembership   OrganizationMember   @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
+  client            Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  session           SessionInstance?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   sessionItem       SessionStrengthItem? @relation(fields: [sessionItemId], references: [id], onDelete: SetNull)
   actions           IncidentAction[]
 
@@ -854,39 +977,39 @@ model Incident {
 }
 
 model IncidentAction {
-  id         String             @id @default(uuid()) @db.Uuid
-  incidentId String             @map("incident_id") @db.Uuid
-  actionType IncidentActionType @map("action_type")
-  payloadJson Json?             @map("payload_json")
-  createdBy  String             @map("created_by") @db.Uuid
-  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  incident   Incident           @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  id          String             @id @default(uuid()) @db.Uuid
+  incidentId  String             @map("incident_id") @db.Uuid
+  actionType  IncidentActionType @map("action_type")
+  payloadJson Json?              @map("payload_json")
+  createdBy   String             @map("created_by") @db.Uuid
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  incident    Incident           @relation(fields: [incidentId], references: [id], onDelete: Cascade)
 
   @@index([incidentId, createdAt], map: "idx_incident_action_incident_created")
   @@map("incident_action")
 }
 
 model WeeklyReport {
-  id                String           @id @default(uuid()) @db.Uuid
-  organizationId    String           @map("organization_id") @db.Uuid
-  coachMembershipId String           @map("coach_membership_id") @db.Uuid
-  clientId          String           @map("client_id") @db.Uuid
-  weekStartDate     DateTime         @map("week_start_date") @db.Date
-  reportDate        DateTime         @map("report_date") @db.Date
-  sourceSessionId   String?          @map("source_session_id") @db.Uuid
+  id                String             @id @default(uuid()) @db.Uuid
+  organizationId    String             @map("organization_id") @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  clientId          String             @map("client_id") @db.Uuid
+  weekStartDate     DateTime           @map("week_start_date") @db.Date
+  reportDate        DateTime           @map("report_date") @db.Date
+  sourceSessionId   String?            @map("source_session_id") @db.Uuid
   mood              Int?
   energy            Int?
-  sleepHours        Decimal?         @map("sleep_hours") @db.Decimal(4, 2)
-  adherencePercent  Int?             @map("adherence_percent")
+  sleepHours        Decimal?           @map("sleep_hours") @db.Decimal(4, 2)
+  adherencePercent  Int?               @map("adherence_percent")
   notes             String?
-  createdBy         String           @map("created_by") @db.Uuid
-  updatedBy         String           @map("updated_by") @db.Uuid
-  createdAt         DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  createdBy         String             @map("created_by") @db.Uuid
+  updatedBy         String             @map("updated_by") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   coachMembership   OrganizationMember @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
-  client            Client           @relation(fields: [clientId], references: [id], onDelete: Restrict)
-  sourceSession     SessionInstance? @relation(fields: [sourceSessionId], references: [id], onDelete: SetNull)
+  client            Client             @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  sourceSession     SessionInstance?   @relation(fields: [sourceSessionId], references: [id], onDelete: SetNull)
 
   @@unique([clientId, weekStartDate], map: "uq_weekly_report_client_week")
   @@index([coachMembershipId, weekStartDate], map: "idx_weekly_report_coach_week")
@@ -950,18 +1073,18 @@ model ChatAttachment {
 }
 
 model NotificationDeviceToken {
-  id                String             @id @default(uuid()) @db.Uuid
-  organizationId    String             @map("organization_id") @db.Uuid
-  membershipId      String?            @map("membership_id") @db.Uuid
-  role              Role
-  token             String             @unique @db.VarChar(255)
-  platform          String             @db.VarChar(30)
-  isActive          Boolean            @default(true) @map("is_active")
-  lastSeenAt        DateTime?          @map("last_seen_at") @db.Timestamptz(6)
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  membership        OrganizationMember? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  membershipId   String?             @map("membership_id") @db.Uuid
+  role           Role
+  token          String              @unique @db.VarChar(255)
+  platform       String              @db.VarChar(30)
+  isActive       Boolean             @default(true) @map("is_active")
+  lastSeenAt     DateTime?           @map("last_seen_at") @db.Timestamptz(6)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  membership     OrganizationMember? @relation(fields: [membershipId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, role, isActive], map: "idx_notification_device_org_role_active")
   @@index([membershipId, isActive], map: "idx_notification_device_membership_active")
@@ -983,17 +1106,17 @@ model NotificationPreference {
 }
 
 model NotificationEventLog {
-  id                String             @id @default(uuid()) @db.Uuid
-  organizationId    String             @map("organization_id") @db.Uuid
-  coachMembershipId String?            @map("coach_membership_id") @db.Uuid
-  clientId          String?            @map("client_id") @db.Uuid
+  id                String              @id @default(uuid()) @db.Uuid
+  organizationId    String              @map("organization_id") @db.Uuid
+  coachMembershipId String?             @map("coach_membership_id") @db.Uuid
+  clientId          String?             @map("client_id") @db.Uuid
   topic             NotificationTopic
-  dedupeKey         String?            @unique @map("dedupe_key") @db.VarChar(180)
-  payloadJson       Json?              @map("payload_json")
-  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  dedupeKey         String?             @unique @map("dedupe_key") @db.VarChar(180)
+  payloadJson       Json?               @map("payload_json")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization      Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   coachMembership   OrganizationMember? @relation(fields: [coachMembershipId], references: [id], onDelete: SetNull)
-  client            Client?            @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  client            Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   @@index([organizationId, topic, createdAt], map: "idx_notification_event_org_topic_created")
   @@index([coachMembershipId, topic, createdAt], map: "idx_notification_event_coach_topic_created")

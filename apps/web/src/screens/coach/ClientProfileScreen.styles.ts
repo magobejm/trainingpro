@@ -178,23 +178,42 @@ export const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  statPill: {
-    backgroundColor: '#f3f7fd',
-    borderColor: '#dce6f4',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  headerMetricsText: {
+    color: '#336699', // A slate/blue hue derived from the prototype picture
+    fontSize: 18,
+    marginTop: 2,
   },
-  statPillLabel: {
-    color: '#455a75',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  statsRow: {
+  headerTagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+    marginTop: 6,
+  },
+  headerTag: {
+    backgroundColor: '#f1f5f9', // Light slate/gray typical for such tags
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  headerTagText: {
+    color: '#1e40af', // Deep blue typical for bold tags
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+  },
+  headerTagSecondary: {
+    backgroundColor: '#fff7ed',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  headerTagTextSecondary: {
+    color: '#c2410c',
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   success: {
     color: '#1f7a45',

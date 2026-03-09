@@ -35,8 +35,7 @@ type ExerciseRow = {
   instructions: null | string;
   mediaType: null | string;
   mediaUrl: null | string;
-  muscleGroupId: string;
-  muscleGroupRef: { label: string };
+  muscleGroups: { muscleGroup: { id: string; label: string } }[];
   name: string;
   scope: LibraryItemScope;
   updatedAt: Date;
@@ -74,8 +73,8 @@ export function mapExercise(row: ExerciseRow): ExerciseLibraryItem {
     id: row.id,
     instructions: row.instructions,
     media: { type: row.mediaType, url: row.mediaUrl },
-    muscleGroup: row.muscleGroupRef.label,
-    muscleGroupId: row.muscleGroupId,
+    muscleGroup: row.muscleGroups.map((mg) => mg.muscleGroup.label).join(', '),
+    muscleGroupId: row.muscleGroups[0]?.muscleGroup.id ?? '',
     name: row.name,
     scope: toDomainScope(row.scope),
     updatedAt: row.updatedAt,
@@ -112,12 +111,8 @@ export function mapCatalogItem(row: CatalogRow): LibraryCatalogItem {
 }
 
 export function normalizeCardioMethodInput(input: CardioMethodWriteInput): CardioMethodWriteInput;
-export function normalizeCardioMethodInput(
-  input: Partial<CardioMethodWriteInput>,
-): Partial<CardioMethodWriteInput>;
-export function normalizeCardioMethodInput(
-  input: Partial<CardioMethodWriteInput>,
-): Partial<CardioMethodWriteInput> {
+export function normalizeCardioMethodInput(input: Partial<CardioMethodWriteInput>): Partial<CardioMethodWriteInput>;
+export function normalizeCardioMethodInput(input: Partial<CardioMethodWriteInput>): Partial<CardioMethodWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
     ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
@@ -130,18 +125,13 @@ export function normalizeCardioMethodInput(
 }
 
 export function normalizeExerciseInput(input: ExerciseWriteInput): ExerciseWriteInput;
-export function normalizeExerciseInput(
-  input: Partial<ExerciseWriteInput>,
-): Partial<ExerciseWriteInput>;
-export function normalizeExerciseInput(
-  input: Partial<ExerciseWriteInput>,
-): Partial<ExerciseWriteInput> {
+export function normalizeExerciseInput(input: Partial<ExerciseWriteInput>): Partial<ExerciseWriteInput>;
+export function normalizeExerciseInput(input: Partial<ExerciseWriteInput>): Partial<ExerciseWriteInput> {
   return {
     ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
     ...(input.instructions !== undefined && { instructions: toNullable(input.instructions) }),
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
-    ...(input.muscleGroupId !== undefined && { muscleGroupId: input.muscleGroupId.trim() }),
     ...(input.name !== undefined && { name: input.name.trim() }),
     ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
   };
@@ -168,12 +158,8 @@ export function normalizeFoodInput(input: Partial<FoodWriteInput>): Partial<Food
 }
 
 export function normalizePlioExerciseInput(input: PlioExerciseWriteInput): PlioExerciseWriteInput;
-export function normalizePlioExerciseInput(
-  input: Partial<PlioExerciseWriteInput>,
-): Partial<PlioExerciseWriteInput>;
-export function normalizePlioExerciseInput(
-  input: Partial<PlioExerciseWriteInput>,
-): Partial<PlioExerciseWriteInput> {
+export function normalizePlioExerciseInput(input: Partial<PlioExerciseWriteInput>): Partial<PlioExerciseWriteInput>;
+export function normalizePlioExerciseInput(input: Partial<PlioExerciseWriteInput>): Partial<PlioExerciseWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
     ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
@@ -186,15 +172,9 @@ export function normalizePlioExerciseInput(
   };
 }
 
-export function normalizeWarmupExerciseInput(
-  input: WarmupExerciseWriteInput,
-): WarmupExerciseWriteInput;
-export function normalizeWarmupExerciseInput(
-  input: Partial<WarmupExerciseWriteInput>,
-): Partial<WarmupExerciseWriteInput>;
-export function normalizeWarmupExerciseInput(
-  input: Partial<WarmupExerciseWriteInput>,
-): Partial<WarmupExerciseWriteInput> {
+export function normalizeWarmupExerciseInput(input: WarmupExerciseWriteInput): WarmupExerciseWriteInput;
+export function normalizeWarmupExerciseInput(input: Partial<WarmupExerciseWriteInput>): Partial<WarmupExerciseWriteInput>;
+export function normalizeWarmupExerciseInput(input: Partial<WarmupExerciseWriteInput>): Partial<WarmupExerciseWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
     ...(input.mobilityType !== undefined && {

@@ -18,7 +18,7 @@ const C_RED = '#ef4444';
 const REMODE_CVR = 'cover' as const;
 const REMODE_CNT = 'contain' as const;
 
-export type CategoryKey = 'muscleGroups' | 'cardioMethodTypes' | 'plioTypes' | 'mobilityTypes' | 'sportTypes';
+export type CategoryKey = 'muscleGroups' | 'cardioMethodTypes' | 'isometricTypes' | 'plioTypes' | 'mobilityTypes' | 'sportTypes';
 
 export type CategoryMeta = {
   key: CategoryKey;
@@ -44,6 +44,12 @@ export const CATEGORIES: CategoryMeta[] = [
     key: 'plioTypes',
     labelKey: 'coach.library.categories.plioTypes',
     filterKey: 'plioTypeIds',
+    icon: <Zap size={16} color={C_BLUE} />,
+  },
+  {
+    key: 'isometricTypes',
+    labelKey: 'coach.library.categories.isometricTypes',
+    filterKey: 'isometricTypeIds',
     icon: <Zap size={16} color={C_BLUE} />,
   },
   {

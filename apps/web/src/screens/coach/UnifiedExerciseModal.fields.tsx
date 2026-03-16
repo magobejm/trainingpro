@@ -2,53 +2,26 @@ import React from 'react';
 import { View, Text, TextInput } from 'react-native';
 import { FormSelect } from './components/UnifiedExerciseFormSelect';
 import { MuscleMultiSelect } from './components/MuscleMultiSelect';
-import { ExerciseCategory } from './hooks/useUnifiedExerciseForm';
 import { styles } from './UnifiedExerciseModal.styles';
-import { EquipmentProps, BasicInfoProps, CatFieldsProps, DescProps, BioProps } from './UnifiedExerciseModal.components';
+import { EquipmentProps, CatFieldsProps, DescProps, BioProps } from './UnifiedExerciseModal.components';
 
-export function EquipmentSection({ equipmentId, options, onChange, onFocus, t }: EquipmentProps) {
+export function EquipmentSection({ equipmentId, options, onChange, onFocus, t, style }: EquipmentProps) {
   return (
-    <View style={styles.fieldSection}>
-      <Text style={styles.label}>{t('coach.library.fields.equipmentLabel')}</Text>
-      <FormSelect
-        options={options}
-        value={equipmentId}
-        onSelect={onChange}
-        placeholder={t('coach.library.fields.unspecified')}
-        onFocus={onFocus}
-      />
+    <View style={[styles.cardContainer, style]}>
+      <View style={styles.fieldSection}>
+        <Text style={styles.label}>{t('coach.library.fields.equipmentLabel')}</Text>
+        <FormSelect
+          options={options}
+          value={equipmentId}
+          onSelect={onChange}
+          onFocus={onFocus}
+        />
+      </View>
     </View>
   );
 }
 
-const EMPTY_CAT = '' as const;
 
-export function BasicInfoSection({ name, category, categories, onChange, onFocus, t }: BasicInfoProps) {
-  return (
-    <>
-      <View style={styles.fieldSection}>
-        <Text style={styles.label}>{t('coach.library.fields.nameLabel')}</Text>
-        <TextInput
-          style={styles.input}
-          placeholder={t('coach.library.fields.namePlaceholder')}
-          value={name}
-          onChangeText={(v) => onChange('name', v)}
-          onFocus={onFocus}
-        />
-      </View>
-      <View style={[styles.fieldSection, { zIndex: 100 }]}>
-        <Text style={styles.label}>{t('coach.library.fields.categoryLabel')}</Text>
-        <FormSelect
-          options={categories}
-          value={category}
-          placeholder={EMPTY_CAT}
-          onSelect={(val) => onChange('category', val as ExerciseCategory)}
-          onFocus={onFocus}
-        />
-      </View>
-    </>
-  );
-}
 
 function StrengthFields({ props }: { props: CatFieldsProps }) {
   return (
@@ -67,7 +40,7 @@ function StrengthFields({ props }: { props: CatFieldsProps }) {
   );
 }
 
-function CardioPlioFields({ props, u }: { props: CatFieldsProps; u: string }) {
+function CardioPlioFields({ props }: { props: CatFieldsProps }) {
   const { formState, mappedCatalogs, handleChange, onFocus, t } = props;
   if (formState.category === 'cardio') {
     return (
@@ -77,7 +50,6 @@ function CardioPlioFields({ props, u }: { props: CatFieldsProps; u: string }) {
           options={mappedCatalogs.cardioTypes || []}
           value={formState.cardioTypeId}
           onSelect={(v) => handleChange('cardioTypeId', v)}
-          placeholder={u}
           onFocus={onFocus}
         />
       </>
@@ -90,14 +62,13 @@ function CardioPlioFields({ props, u }: { props: CatFieldsProps; u: string }) {
         options={mappedCatalogs.plioTypes || []}
         value={formState.plioTypeId}
         onSelect={(v) => handleChange('plioTypeId', v)}
-        placeholder={u}
         onFocus={onFocus}
       />
     </>
   );
 }
 
-function WarmupSportFields({ props, u }: { props: CatFieldsProps; u: string }) {
+function WarmupSportFields({ props }: { props: CatFieldsProps }) {
   const { formState, mappedCatalogs, handleChange, onFocus, t } = props;
   if (formState.category === 'warmup') {
     return (
@@ -107,7 +78,6 @@ function WarmupSportFields({ props, u }: { props: CatFieldsProps; u: string }) {
           options={mappedCatalogs.mobilityTypes || []}
           value={formState.mobilityTypeId}
           onSelect={(v) => handleChange('mobilityTypeId', v)}
-          placeholder={u}
           onFocus={onFocus}
         />
       </>
@@ -120,7 +90,21 @@ function WarmupSportFields({ props, u }: { props: CatFieldsProps; u: string }) {
         options={mappedCatalogs.sportTypes || []}
         value={formState.sportTypeId}
         onSelect={(v) => handleChange('sportTypeId', v)}
-        placeholder={u}
+        onFocus={onFocus}
+      />
+    </>
+  );
+}
+
+function IsometricFields({ props }: { props: CatFieldsProps }) {
+  const { formState, mappedCatalogs, handleChange, onFocus, t } = props;
+  return (
+    <>
+      <Text style={styles.label}>{t('coach.library.fields.isometricTypeLabel')}</Text>
+      <FormSelect
+        options={mappedCatalogs.isometricTypes || []}
+        value={formState.isometricTypeId}
+        onSelect={(v) => handleChange('isometricTypeId', v)}
         onFocus={onFocus}
       />
     </>
@@ -129,29 +113,45 @@ function WarmupSportFields({ props, u }: { props: CatFieldsProps; u: string }) {
 
 export function CategorySpecificFields(props: CatFieldsProps) {
   const cat = props.formState.category;
-  const u = props.t('coach.library.fields.unspecified');
   return (
-    <View style={[styles.fieldSection, { zIndex: 90 }]}>
+    <View style={{ zIndex: 90 }}>
       {cat === 'strength' && <StrengthFields props={props} />}
-      {(cat === 'cardio' || cat === 'plio') && <CardioPlioFields props={props} u={u} />}
-      {(cat === 'warmup' || cat === 'sport') && <WarmupSportFields props={props} u={u} />}
+      {(cat === 'cardio' || cat === 'plio') && <CardioPlioFields props={props} />}
+      {(cat === 'warmup' || cat === 'sport') && <WarmupSportFields props={props} />}
+      {cat === 'isometric' && <IsometricFields props={props} />}
     </View>
   );
 }
 
-export function DescriptionSection({ instructions, onChange, onFocus, t }: DescProps) {
+export function DescriptionSection({ instructions, coachInstructions, onChange, onFocus, t, style }: DescProps) {
   return (
-    <View style={styles.fieldSection}>
-      <Text style={styles.label}>{t('coach.library.fields.descriptionLabel')}</Text>
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder={t('coach.library.fields.descriptionPlaceholder')}
-        multiline
-        numberOfLines={6}
-        value={instructions || ''}
-        onChangeText={onChange}
-        onFocus={onFocus}
-      />
+    <View style={[styles.cardContainer, style]}>
+      <View style={styles.row}>
+        <View style={[{ flex: 1, marginRight: 12 }]}>
+          <Text style={styles.label}>{t('coach.library.fields.descriptionLabel')}</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder={t('coach.library.fields.descriptionPlaceholder')}
+            multiline
+            numberOfLines={6}
+            value={instructions || ''}
+            onChangeText={(v) => onChange('instructions', v)}
+            onFocus={onFocus}
+          />
+        </View>
+        <View style={[{ flex: 1, marginLeft: 12 }]}>
+          <Text style={styles.label}>{t('coach.library.fields.coachInstructionsLabel')}</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder={t('coach.library.fields.coachInstructionsPlaceholder')}
+            multiline
+            numberOfLines={6}
+            value={coachInstructions || ''}
+            onChangeText={(v) => onChange('coachInstructions', v)}
+            onFocus={onFocus}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -163,29 +163,26 @@ export function BiomechanicsSection({
   onChange,
   onFocus,
   t,
+  style
 }: BioProps) {
-  const u = t('coach.library.fields.unspecified');
   return (
-    <View style={styles.biomechBlock}>
-      <Text style={styles.sectionTitle}>{t('coach.library.sections.biomechanics')}</Text>
+    <View style={[styles.cardContainer, styles.biomechBlock, style]}>
       <View style={styles.row}>
-        <View style={[styles.fieldSection, { flex: 1, marginRight: 8 }]}>
+        <View style={[{ flex: 1, marginRight: 12 }]}>
           <Text style={styles.label}>{t('coach.library.fields.movementPatternLabel')}</Text>
           <FormSelect
             options={mappedCatalogs.movementPatterns || []}
             value={movementPatternId}
             onSelect={(v) => onChange('movementPatternId', v)}
-            placeholder={u}
             onFocus={onFocus}
           />
         </View>
-        <View style={[styles.fieldSection, { flex: 1, marginLeft: 8 }]}>
+        <View style={[{ flex: 1, marginLeft: 12 }]}>
           <Text style={styles.label}>{t('coach.library.fields.anatomicalPlaneLabel')}</Text>
           <FormSelect
             options={mappedCatalogs.anatomicalPlanes || []}
             value={anatomicalPlaneId}
             onSelect={(v) => onChange('anatomicalPlaneId', v)}
-            placeholder={u}
             onFocus={onFocus}
           />
         </View>

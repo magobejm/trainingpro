@@ -73,6 +73,18 @@ const FOOD_FIELDS: FieldConfig[] = [
   { field: 'mediaType', placeholderKey: 'coach.library.foods.mediaTypePlaceholder' },
 ];
 
+const ISOMETRIC_FIELDS: FieldConfig[] = [
+  { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
+  { field: 'isometricType', type: 'select' },
+  { field: 'equipment', placeholderKey: 'coach.library.exercises.equipmentPlaceholder' },
+  {
+    field: 'description',
+    multiline: true,
+    numberOfLines: 2,
+    placeholderKey: 'coach.library.exercises.instructionsPlaceholder',
+  },
+];
+
 const PLIO_FIELDS: FieldConfig[] = [
   { field: 'name', placeholderKey: 'coach.library.exercises.namePlaceholder' },
   { field: 'plioType', type: 'select' },
@@ -102,6 +114,7 @@ type BaseProps = {
 };
 
 type CatalogProps = {
+  isometricTypeOptions?: Option[];
   mobilityTypeOptions?: Option[];
   methodTypeOptions?: Option[];
   muscleGroupOptions?: Option[];
@@ -123,6 +136,12 @@ export function CardioBaseFields(props: BaseProps & CatalogProps): React.JSX.Ele
 
 export function FoodCreateFields(props: BaseProps): React.JSX.Element {
   return <FormFields {...props} fields={FOOD_FIELDS} options={{}} />;
+}
+
+export function IsometricBaseFields(
+  props: BaseProps & Pick<CatalogProps, 'isometricTypeOptions'>,
+): React.JSX.Element {
+  return <FormFields {...props} fields={ISOMETRIC_FIELDS} options={props} />;
 }
 
 export function PlioBaseFields(
@@ -204,6 +223,11 @@ function readOptions(field: string, options: CatalogProps, t: Translator): Optio
   if (field === 'methodTypeId') {
     return options.methodTypeOptions ?? [];
   }
+  if (field === 'isometricType') {
+    return (
+      options.isometricTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
+    );
+  }
   if (field === 'mobilityType') {
     return (
       options.mobilityTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
@@ -223,6 +247,9 @@ function readSelectLabel(field: string, t: Translator): string {
   }
   if (field === 'methodTypeId') {
     return t('coach.library.cardio.detail.methodType');
+  }
+  if (field === 'isometricType') {
+    return t('coach.library.isometric.detail.type');
   }
   if (field === 'mobilityType') {
     return t('coach.library.mobility.detail.type');

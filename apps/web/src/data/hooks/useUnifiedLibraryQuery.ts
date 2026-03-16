@@ -17,6 +17,7 @@ export type AllCatalogs = {
   cardioMethodTypes: CatalogItem[];
   plioTypes: CatalogItem[];
   mobilityTypes: CatalogItem[];
+  isometricTypes: CatalogItem[];
   sportTypes: CatalogItem[];
   equipmentTypes: CatalogItem[];
   movementPatterns: CatalogItem[];
@@ -30,6 +31,7 @@ export type UnifiedExerciseItem = {
   mediaUrl: string | null;
   youtubeUrl?: string | null;
   instructions?: string | null;
+  coachInstructions?: string | null;
   equipmentId?: string | null;
   tags: string[];
   scope?: string;
@@ -43,6 +45,15 @@ export type UnifiedExerciseItem = {
   plioTypeId?: string | null;
   mobilityTypeId?: string | null;
   sportTypeId?: string | null;
+
+  // Relation objects
+  equipmentRef?: { label: string };
+  movementPatternRef?: { label: string };
+  anatomicalPlaneRef?: { label: string };
+  methodTypeRef?: { label: string };
+  plioTypeRef?: { label: string };
+  mobilityTypeRef?: { label: string };
+  sportTypeRef?: { label: string };
 };
 
 /* ── Hooks ──────────────────────────────────────────────── */
@@ -65,6 +76,7 @@ export type UnifiedExercisesFilter = {
   baseCategory?: string;
   muscleGroupIds?: string[];
   cardioTypeIds?: string[];
+  isometricTypeIds?: string[];
   plioTypeIds?: string[];
   mobilityTypeIds?: string[];
   sportTypeIds?: string[];
@@ -82,6 +94,7 @@ export function useUnifiedExercisesQuery(filter: UnifiedExercisesFilter): UseQue
       if (filter.baseCategory) params.append('baseCategory', filter.baseCategory);
       if (filter.muscleGroupIds?.length) params.append('muscleGroupIds', filter.muscleGroupIds.join(','));
       if (filter.cardioTypeIds?.length) params.append('cardioTypeIds', filter.cardioTypeIds.join(','));
+      if (filter.isometricTypeIds?.length) params.append('isometricTypeIds', filter.isometricTypeIds.join(','));
       if (filter.plioTypeIds?.length) params.append('plioTypeIds', filter.plioTypeIds.join(','));
       if (filter.mobilityTypeIds?.length) params.append('mobilityTypeIds', filter.mobilityTypeIds.join(','));
       if (filter.sportTypeIds?.length) params.append('sportTypeIds', filter.sportTypeIds.join(','));

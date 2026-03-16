@@ -1,8 +1,9 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException } from '@nestjs/common';
 import { LibraryItemScope } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { LibrarySeedService } from './library-seed.service';
 
-export type UnifiedCategory = 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+export type UnifiedCategory = 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport' | 'isometric';
 
 export interface UnifiedExerciseDto {
   category: UnifiedCategory;
@@ -17,7 +18,9 @@ export interface UnifiedExerciseDto {
   cardioTypeId?: string;
   plioTypeId?: string;
   mobilityTypeId?: string;
+  isometricTypeId?: string;
   sportTypeId?: string;
+  coachInstructions?: string;
 }
 
 type NameFilter = { contains: string; mode: 'insensitive' } | undefined;
@@ -27,18 +30,23 @@ type Row = any;
 
 @Injectable()
 export class LibraryUnifiedService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly seedService: LibrarySeedService,
+  ) {}
 
   async listAllCatalogs() {
+    const alpha = [{ isDefault: 'desc' as const }, { label: 'asc' as const }];
     const queries = [
-      this.prisma.exerciseMuscleGroup.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.cardioMethodType.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.plioTypeRef.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.mobilityTypeRef.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.sportTypeRef.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.exerciseEquipment.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.movementPattern.findMany({ orderBy: { sortOrder: 'asc' } }),
-      this.prisma.anatomicalPlane.findMany({ orderBy: { sortOrder: 'asc' } }),
+      this.prisma.exerciseMuscleGroup.findMany({ orderBy: alpha }),
+      this.prisma.cardioMethodType.findMany({ orderBy: alpha }),
+      this.prisma.plioTypeRef.findMany({ orderBy: alpha }),
+      this.prisma.mobilityTypeRef.findMany({ orderBy: alpha }),
+      this.prisma.isometricTypeRef.findMany({ orderBy: alpha }),
+      this.prisma.sportTypeRef.findMany({ orderBy: alpha }),
+      this.prisma.exerciseEquipment.findMany({ orderBy: alpha }),
+      this.prisma.movementPattern.findMany({ orderBy: alpha }),
+      this.prisma.anatomicalPlane.findMany({ orderBy: alpha }),
     ];
     const r = await Promise.all(queries);
     const pick = (items: Row[]) =>
@@ -54,10 +62,11 @@ export class LibraryUnifiedService {
       cardioMethodTypes: pick(r[1] ?? []),
       plioTypes: pick(r[2] ?? []),
       mobilityTypes: pick(r[3] ?? []),
-      sportTypes: pick(r[4] ?? []),
-      equipmentTypes: pick(r[5] ?? []),
-      movementPatterns: pick(r[6] ?? []),
-      anatomicalPlanes: pick(r[7] ?? []),
+      isometricTypes: pick(r[4] ?? []),
+      sportTypes: pick(r[5] ?? []),
+      equipmentTypes: pick(r[6] ?? []),
+      movementPatterns: pick(r[7] ?? []),
+      anatomicalPlanes: pick(r[8] ?? []),
     };
   }
 
@@ -65,9 +74,9 @@ export class LibraryUnifiedService {
     const toArr = (v?: string) =>
       v
         ? v
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
         : undefined;
     const name: NameFilter = filters.search ? { contains: filters.search, mode: 'insensitive' } : undefined;
     const mg = toArr(filters.muscleGroupIds),
@@ -81,7 +90,8 @@ export class LibraryUnifiedService {
     if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, name, mg, eq);
     if (!cat || cat === 'cardioMethodTypes') await this.fetchCardio(results, name, ct, eq);
     if (!cat || cat === 'plioTypes') await this.fetchPlio(results, name, pt, eq);
-    if (!cat || cat === 'mobilityTypes') await this.fetchWarmup(results, name, mt);
+    if (!cat || cat === 'mobilityTypes') await this.fetchMobility(results, name, mt);
+    if (!cat || cat === 'isometricTypes') await this.fetchIsometric(results, name, toArr(filters.isometricTypeIds));
     if (!cat || cat === 'sportTypes') await this.fetchSports(results, name, st);
     return { items: results };
   }
@@ -94,7 +104,12 @@ export class LibraryUnifiedService {
         ...(mg && { muscleGroups: { some: { muscleGroupId: { in: mg } } } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
-      include: { muscleGroups: { include: { muscleGroup: true } }, equipmentRef: true },
+      include: {
+        muscleGroups: { include: { muscleGroup: true } },
+        equipmentRef: true,
+        movementPatternRef: true,
+        anatomicalPlaneRef: true,
+      },
       orderBy: { name: 'asc' },
     });
     res.push(
@@ -105,9 +120,14 @@ export class LibraryUnifiedService {
         mediaUrl: e.mediaUrl,
         youtubeUrl: e.youtubeUrl,
         instructions: e.instructions,
+        coachInstructions: e.coachInstructions,
         equipmentId: e.equipmentId,
         movementPatternId: e.movementPatternId,
         anatomicalPlaneId: e.anatomicalPlaneId,
+        equipmentRef: e.equipmentRef,
+        movementPatternRef: e.movementPatternRef,
+        anatomicalPlaneRef: e.anatomicalPlaneRef,
+        muscleGroups: e.muscleGroups,
         tags: [...e.muscleGroups.map((m) => m.muscleGroup.label), ...(e.equipmentRef ? [e.equipmentRef.label] : [])],
         scope: e.scope,
       })),
@@ -122,7 +142,12 @@ export class LibraryUnifiedService {
         ...(ct && { methodTypeId: { in: ct } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
-      include: { methodTypeRef: true, equipmentRef: true },
+      include: {
+        methodTypeRef: true,
+        equipmentRef: true,
+        movementPatternRef: true,
+        anatomicalPlaneRef: true,
+      },
       orderBy: { name: 'asc' },
     });
     res.push(
@@ -133,8 +158,15 @@ export class LibraryUnifiedService {
         mediaUrl: c.mediaUrl,
         youtubeUrl: c.youtubeUrl,
         instructions: c.description,
+        coachInstructions: c.coachInstructions,
         equipmentId: c.equipmentId,
         methodTypeId: c.methodTypeId,
+        movementPatternId: c.movementPatternId,
+        anatomicalPlaneId: c.anatomicalPlaneId,
+        methodTypeRef: c.methodTypeRef,
+        equipmentRef: c.equipmentRef,
+        movementPatternRef: c.movementPatternRef,
+        anatomicalPlaneRef: c.anatomicalPlaneRef,
         tags: [c.methodTypeRef.label, ...(c.equipmentRef ? [c.equipmentRef.label] : [])],
         scope: c.scope,
       })),
@@ -149,7 +181,7 @@ export class LibraryUnifiedService {
         ...(pt && { plioTypeId: { in: pt } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
-      include: { plioTypeRef: true, equipmentRef: true },
+      include: { plioTypeRef: true, equipmentRef: true, movementPatternRef: true, anatomicalPlaneRef: true },
       orderBy: { name: 'asc' },
     });
     res.push(
@@ -160,18 +192,25 @@ export class LibraryUnifiedService {
         mediaUrl: p.mediaUrl,
         youtubeUrl: p.youtubeUrl,
         instructions: p.description,
+        coachInstructions: p.coachInstructions,
         equipmentId: p.equipmentId,
         plioTypeId: p.plioTypeId,
+        movementPatternId: p.movementPatternId,
+        anatomicalPlaneId: p.anatomicalPlaneId,
+        plioTypeRef: p.plioTypeRef,
+        equipmentRef: p.equipmentRef,
+        movementPatternRef: p.movementPatternRef,
+        anatomicalPlaneRef: p.anatomicalPlaneRef,
         tags: [...(p.plioTypeRef ? [p.plioTypeRef.label] : []), ...(p.equipmentRef ? [p.equipmentRef.label] : [])],
         scope: p.scope,
       })),
     );
   }
 
-  private async fetchWarmup(res: Row[], name: NameFilter, mt: IdList) {
-    const data = await this.prisma.warmupExercise.findMany({
+  private async fetchMobility(res: Row[], name: NameFilter, mt: IdList) {
+    const data = await this.prisma.mobilityExercise.findMany({
       where: { archivedAt: null, ...(name && { name }), ...(mt && { mobilityTypeId: { in: mt } }) },
-      include: { mobilityTypeRefRel: true },
+      include: { mobilityTypeRefRel: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
     res.push(
@@ -182,9 +221,53 @@ export class LibraryUnifiedService {
         mediaUrl: w.mediaUrl,
         youtubeUrl: w.youtubeUrl,
         instructions: w.description,
+        coachInstructions: w.coachInstructions,
+        equipmentId: w.equipmentId,
         mobilityTypeId: w.mobilityTypeId,
-        tags: [...(w.mobilityTypeRefRel ? [w.mobilityTypeRefRel.label] : [])],
+        movementPatternId: w.movementPatternId,
+        anatomicalPlaneId: w.anatomicalPlaneId,
+        mobilityTypeRef: w.mobilityTypeRefRel,
+        equipmentRef: w.equipmentRef,
+        movementPatternRef: w.movementPatternRef,
+        anatomicalPlaneRef: w.anatomicalPlaneRef,
+        tags: [
+          ...(w.mobilityTypeRefRel ? [w.mobilityTypeRefRel.label] : []),
+          ...(w.equipmentRef ? [w.equipmentRef.label] : []),
+        ],
         scope: w.scope,
+      })),
+    );
+  }
+
+  private async fetchIsometric(res: Row[], name: NameFilter, it: IdList) {
+    const data = await this.prisma.isometricExercise.findMany({
+      where: {
+        archivedAt: null,
+        ...(name && { name }),
+        ...(it && { isometricTypeId: { in: it } }),
+      },
+      include: { isometricTypeRef: true, equipmentRef: true, movementPatternRef: true, anatomicalPlaneRef: true },
+      orderBy: { name: 'asc' },
+    });
+    res.push(
+      ...data.map((i) => ({
+        id: i.id,
+        kind: 'isometric',
+        name: i.name,
+        mediaUrl: i.mediaUrl,
+        youtubeUrl: i.youtubeUrl,
+        instructions: i.description,
+        coachInstructions: i.coachInstructions,
+        equipmentId: i.equipmentId,
+        isometricTypeId: i.isometricTypeId,
+        movementPatternId: i.movementPatternId,
+        anatomicalPlaneId: i.anatomicalPlaneId,
+        isometricTypeRef: i.isometricTypeRef,
+        equipmentRef: i.equipmentRef,
+        movementPatternRef: i.movementPatternRef,
+        anatomicalPlaneRef: i.anatomicalPlaneRef,
+        tags: [...(i.isometricTypeRef ? [i.isometricTypeRef.label] : []), ...(i.equipmentRef ? [i.equipmentRef.label] : [])],
+        scope: i.scope,
       })),
     );
   }
@@ -192,7 +275,7 @@ export class LibraryUnifiedService {
   private async fetchSports(res: Row[], name: NameFilter, st: IdList) {
     const data = await this.prisma.sport.findMany({
       where: { archivedAt: null, ...(name && { name }), ...(st && { sportTypeId: { in: st } }) },
-      include: { sportTypeRef: true },
+      include: { sportTypeRef: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
     res.push(
@@ -204,8 +287,16 @@ export class LibraryUnifiedService {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         youtubeUrl: (s as any).youtubeUrl,
         instructions: s.description,
+        coachInstructions: s.coachInstructions,
+        equipmentId: s.equipmentId,
         sportTypeId: s.sportTypeId,
-        tags: [...(s.sportTypeRef ? [s.sportTypeRef.label] : [])],
+        movementPatternId: s.movementPatternId,
+        anatomicalPlaneId: s.anatomicalPlaneId,
+        sportTypeRef: s.sportTypeRef,
+        equipmentRef: s.equipmentRef,
+        movementPatternRef: s.movementPatternRef,
+        anatomicalPlaneRef: s.anatomicalPlaneRef,
+        tags: [...(s.sportTypeRef ? [s.sportTypeRef.label] : []), ...(s.equipmentRef ? [s.equipmentRef.label] : [])],
         scope: s.scope,
       })),
     );
@@ -230,7 +321,9 @@ export class LibraryUnifiedService {
       case 'plio':
         return this.createPlio(base, dto);
       case 'warmup':
-        return this.createWarmup(base, dto);
+        return this.createMobility(base, dto);
+      case 'isometric':
+        return this.createIsometric(base, dto);
       case 'sport':
         return this.createSport(base, dto);
       default:
@@ -246,19 +339,30 @@ export class LibraryUnifiedService {
         movementPatternId: dto.movementPatternId ?? null,
         anatomicalPlaneId: dto.anatomicalPlaneId ?? null,
         instructions: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
         muscleGroups: { create: (dto.muscleGroupIds ?? []).map((id) => ({ muscleGroupId: id })) },
       },
     });
   }
-  private createCardio(base: Row, dto: UnifiedExerciseDto) {
+  private async createCardio(base: Row, dto: UnifiedExerciseDto) {
+    const methodTypeId = dto.cardioTypeId ?? await this.resolveDefaultCardioMethodTypeId();
     return this.prisma.cardioMethod.create({
       data: {
         ...base,
-        methodTypeId: dto.cardioTypeId!,
-        equipmentId: dto.equipmentId ?? null,
+        methodTypeId,
+        equipmentId: dto.equipmentId || null,
+        movementPatternId: dto.movementPatternId || null,
+        anatomicalPlaneId: dto.anatomicalPlaneId || null,
         description: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
       },
     });
+  }
+
+  private async resolveDefaultCardioMethodTypeId(): Promise<string> {
+    const row = await this.prisma.cardioMethodType.findFirst({ where: { isDefault: true } });
+    if (!row) throw new BadRequestException('No default cardio method type found');
+    return row.id;
   }
   private createPlio(base: Row, dto: UnifiedExerciseDto) {
     return this.prisma.plioExercise.create({
@@ -266,18 +370,50 @@ export class LibraryUnifiedService {
         ...base,
         plioTypeId: dto.plioTypeId!,
         equipmentId: dto.equipmentId ?? null,
+        movementPatternId: dto.movementPatternId ?? null,
+        anatomicalPlaneId: dto.anatomicalPlaneId ?? null,
         description: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
       },
     });
   }
-  private createWarmup(base: Row, dto: UnifiedExerciseDto) {
-    return this.prisma.warmupExercise.create({
-      data: { ...base, mobilityTypeId: dto.mobilityTypeId!, description: dto.instructions ?? null },
+  private createMobility(base: Row, dto: UnifiedExerciseDto) {
+    return this.prisma.mobilityExercise.create({
+      data: {
+        ...base,
+        mobilityTypeId: dto.mobilityTypeId ?? null,
+        movementPatternId: dto.movementPatternId ?? null,
+        anatomicalPlaneId: dto.anatomicalPlaneId ?? null,
+        description: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
+      },
     });
   }
+  private createIsometric(base: Row, dto: UnifiedExerciseDto) {
+    return this.prisma.isometricExercise.create({
+      data: {
+        ...base,
+        isometricTypeId: dto.isometricTypeId ?? null,
+        equipmentId: dto.equipmentId ?? null,
+        movementPatternId: dto.movementPatternId ?? null,
+        anatomicalPlaneId: dto.anatomicalPlaneId ?? null,
+        description: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
+      },
+    });
+  }
+
   private createSport(base: Row, dto: UnifiedExerciseDto) {
     return this.prisma.sport.create({
-      data: { ...base, sportTypeId: dto.sportTypeId!, description: dto.instructions ?? null, icon: 'Activity' },
+      data: {
+        ...base,
+        sportTypeId: dto.sportTypeId!,
+        movementPatternId: dto.movementPatternId ?? null,
+        anatomicalPlaneId: dto.anatomicalPlaneId ?? null,
+        description: dto.instructions ?? null,
+        coachInstructions: dto.coachInstructions ?? null,
+        icon: 'Activity',
+      },
     });
   }
 
@@ -290,38 +426,42 @@ export class LibraryUnifiedService {
       ...(dto.mediaUrl !== undefined && { mediaUrl: dto.mediaUrl, mediaType: dto.mediaUrl ? 'image' : null }),
       ...(dto.youtubeUrl !== undefined && { youtubeUrl: dto.youtubeUrl }),
     };
+    const extBase = {
+      ...base,
+      movementPatternId: dto.movementPatternId,
+      anatomicalPlaneId: dto.anatomicalPlaneId,
+      description: dto.instructions,
+      coachInstructions: dto.coachInstructions,
+    };
     switch (dto.category) {
       case 'strength':
         return this.updateStrength(id, base, dto);
-      case 'cardio':
+      case 'cardio': {
+        const methodTypeId = dto.cardioTypeId ?? await this.resolveDefaultCardioMethodTypeId();
         return this.prisma.cardioMethod.update({
           where: { id },
-          data: {
-            ...base,
-            methodTypeId: dto.cardioTypeId!,
-            equipmentId: dto.equipmentId,
-            description: dto.instructions,
-          },
+          data: { ...extBase, methodTypeId, equipmentId: dto.equipmentId },
         });
+      }
       case 'plio':
         return this.prisma.plioExercise.update({
           where: { id },
-          data: {
-            ...base,
-            plioTypeId: dto.plioTypeId!,
-            equipmentId: dto.equipmentId,
-            description: dto.instructions,
-          },
+          data: { ...extBase, plioTypeId: dto.plioTypeId!, equipmentId: dto.equipmentId },
         });
       case 'warmup':
-        return this.prisma.warmupExercise.update({
+        return this.prisma.mobilityExercise.update({
           where: { id },
-          data: { ...base, mobilityTypeId: dto.mobilityTypeId!, description: dto.instructions },
+          data: { ...extBase, mobilityTypeId: dto.mobilityTypeId ?? null },
+        });
+      case 'isometric':
+        return this.prisma.isometricExercise.update({
+          where: { id },
+          data: { ...extBase, isometricTypeId: dto.isometricTypeId, equipmentId: dto.equipmentId },
         });
       case 'sport':
         return this.prisma.sport.update({
           where: { id },
-          data: { ...base, sportTypeId: dto.sportTypeId!, description: dto.instructions },
+          data: { ...extBase, sportTypeId: dto.sportTypeId! },
         });
       default:
         throw new BadRequestException('Valid category required');
@@ -338,46 +478,22 @@ export class LibraryUnifiedService {
         movementPatternId: dto.movementPatternId,
         anatomicalPlaneId: dto.anatomicalPlaneId,
         instructions: dto.instructions,
+        coachInstructions: dto.coachInstructions,
         muscleGroups: { create: (dto.muscleGroupIds ?? []).map((mgId) => ({ muscleGroupId: mgId })) },
       },
     });
   }
 
   async seedBiomechanics() {
-    const patterns = [
-      { code: 'horizontal_push', label: 'Empuje horizontal', sortOrder: 1 },
-      { code: 'vertical_push', label: 'Empuje vertical', sortOrder: 2 },
-      { code: 'horizontal_pull', label: 'Tracción horizontal', sortOrder: 3 },
-      { code: 'vertical_pull', label: 'Tracción vertical', sortOrder: 4 },
-      { code: 'knee_dominant', label: 'Dominante de rodilla', sortOrder: 5 },
-      { code: 'hip_hinge', label: 'Bisagra de cadera', sortOrder: 6 },
-      { code: 'hip_thrust', label: 'Empuje de cadera', sortOrder: 7 },
-      { code: 'rotation_anti', label: 'Rotación/Anti-rotación', sortOrder: 8 },
-      { code: 'stabilization', label: 'Estabilización', sortOrder: 9 },
-      { code: 'locomotion', label: 'Locomoción y transporte', sortOrder: 10 },
-      { code: 'elbow_flexion', label: 'Flexión de codo', sortOrder: 11 },
-      { code: 'elbow_extension', label: 'Extensión de codo', sortOrder: 12 },
-    ];
-    const planes = [
-      { code: 'sagittal', label: 'Sagital', sortOrder: 1 },
-      { code: 'frontal', label: 'Frontal', sortOrder: 2 },
-      { code: 'transverse', label: 'Transversal', sortOrder: 3 },
-    ];
-    for (const p of patterns) {
-      await this.prisma.movementPattern.upsert({
-        where: { code: p.code },
-        update: { label: p.label, sortOrder: p.sortOrder },
-        create: { ...p, isDefault: false },
-      });
-    }
-    for (const p of planes) {
-      await this.prisma.anatomicalPlane.upsert({
-        where: { code: p.code },
-        update: { label: p.label, sortOrder: p.sortOrder },
-        create: { ...p, isDefault: false },
-      });
-    }
-    return { success: true };
+    return this.seedService.seedBiomechanics();
+  }
+
+  async seedMobilityLibrary() {
+    return this.seedService.seedMobilityLibrary();
+  }
+
+  async seedSportsLibrary() {
+    return this.seedService.seedSportsLibrary();
   }
 
   private async getMembership(authSubject: string) {

@@ -11,8 +11,9 @@ import {
 } from '../../data/hooks/useUnifiedLibraryQuery';
 import { useDeleteExerciseMutation, useDeleteCardioMethodMutation } from '../../data/hooks/useLibraryMutations';
 import {
+  useDeleteIsometricExerciseMutation,
   useDeletePlioExerciseMutation,
-  useDeleteWarmupExerciseMutation,
+  useDeleteMobilityExerciseMutation,
   useDeleteSportMutation,
 } from '../../data/hooks/useLibrarySpecializedMutations';
 import { CATEGORIES, CategoryKey } from './UnifiedExerciseLibraryScreen.components';
@@ -23,8 +24,9 @@ export function useLibraryScreenState() {
   const { data: catalogs } = useAllCatalogsQuery();
   const deleteExercise = useDeleteExerciseMutation();
   const deleteCardio = useDeleteCardioMethodMutation();
+  const deleteIsometric = useDeleteIsometricExerciseMutation();
   const deletePlio = useDeletePlioExerciseMutation();
-  const deleteWarmup = useDeleteWarmupExerciseMutation();
+  const deleteMobility = useDeleteMobilityExerciseMutation();
   const deleteSport = useDeleteSportMutation();
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -36,6 +38,8 @@ export function useLibraryScreenState() {
         const client = createApiClient(auth);
         await client.post('/library/exercises/fix-memberships');
         await client.post('/library/seed-biomechanics');
+        await client.post('/library/seed-mobility-library');
+        await client.post('/library/seed-sports-library');
         void queryClient.invalidateQueries({ queryKey: ['library'] });
         void queryClient.invalidateQueries({ queryKey: ['catalogs'] });
       } catch (e) {
@@ -79,11 +83,13 @@ export function useLibraryScreenState() {
         ? ('cardio' as const)
         : expandedCategory === 'plioTypes'
           ? ('plio' as const)
-          : expandedCategory === 'mobilityTypes'
-            ? ('warmup' as const)
-            : expandedCategory === 'sportTypes'
-              ? ('sport' as const)
-              : undefined;
+          : expandedCategory === 'isometricTypes'
+            ? ('isometric' as const)
+            : expandedCategory === 'mobilityTypes'
+              ? ('warmup' as const)
+              : expandedCategory === 'sportTypes'
+                ? ('sport' as const)
+                : undefined;
 
   const clearAllFilters = useCallback(() => {
     if (expandedCategory) {
@@ -121,8 +127,9 @@ export function useLibraryScreenState() {
 
     if (kind === 'exercise') mutationItem = deleteExercise;
     else if (kind === 'cardio') mutationItem = deleteCardio;
+    else if (kind === 'isometric') mutationItem = deleteIsometric;
     else if (kind === 'plio') mutationItem = deletePlio;
-    else if (kind === 'warmup') mutationItem = deleteWarmup;
+    else if (kind === 'warmup') mutationItem = deleteMobility;
     else if (kind === 'sport') mutationItem = deleteSport;
 
     if (mutationItem) {
@@ -133,7 +140,7 @@ export function useLibraryScreenState() {
         },
       });
     }
-  }, [pendingDelete, deleteExercise, deleteCardio, deletePlio, deleteWarmup, deleteSport]);
+  }, [pendingDelete, deleteExercise, deleteCardio, deleteIsometric, deletePlio, deleteMobility, deleteSport]);
 
   return {
     t,

@@ -9,6 +9,6 @@ export type CardioMethodWriteInput = {
   mediaType?: null | string;
   mediaUrl?: null | string;
   youtubeUrl?: null | string;
-  methodTypeId: string;
+  methodTypeId?: string;
   name: string;
 };

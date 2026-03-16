@@ -317,7 +317,7 @@ const localStyles = StyleSheet.create({
 
 function toPlioTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
   if (id === 'undefined') return t('coach.library.type.undefined');
-  if (id === 'explosivo' || id === 'relajado') {
+  if (id === 'intensive' || id === 'extensive' || id === 'explosivo' || id === 'relajado') {
     return t(`coach.library.plio.type.${id}`);
   }
   return fallback;

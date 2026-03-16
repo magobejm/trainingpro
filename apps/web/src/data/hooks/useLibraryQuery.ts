@@ -56,7 +56,22 @@ export type PlioExerciseLibraryItem = {
   youtubeUrl: null | string;
 };
 
-export type WarmupExerciseLibraryItem = {
+export type IsometricExerciseLibraryItem = {
+  coachMembershipId: null | string;
+  createdAt: Date;
+  description: null | string;
+  equipment: null | string;
+  id: string;
+  isometricType: null | string;
+  media: LibraryMedia;
+  name: string;
+  notes: null | string;
+  scope: Scope;
+  updatedAt: Date;
+  youtubeUrl: null | string;
+};
+
+export type MobilityExerciseLibraryItem = {
   coachMembershipId: null | string;
   createdAt: Date;
   description: null | string;
@@ -108,6 +123,10 @@ export function useLibraryExerciseMuscleGroupsQuery(): UseQueryResult<LibraryCat
   return useCatalogQuery('muscle-groups');
 }
 
+export function useLibraryIsometricTypesQuery(): UseQueryResult<LibraryCatalogItem[], Error> {
+  return useCatalogQuery('isometric-types');
+}
+
 export function useLibraryPlioTypesQuery(): UseQueryResult<LibraryCatalogItem[], Error> {
   return useCatalogQuery('plio-types');
 }
@@ -155,6 +174,18 @@ export function useLibraryFoodsQuery(filter: {
   });
 }
 
+export function useLibraryIsometricExercisesQuery(filter: {
+  isometricType?: string;
+  query?: string;
+}): UseQueryResult<IsometricExerciseLibraryItem[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchLibraryList<IsometricExerciseLibraryItem>(auth, '/library/isometrics', filter),
+    queryKey: ['library', 'isometrics', filter, auth?.activeRole, auth?.accessToken],
+  });
+}
+
 export function useLibraryPlioExercisesQuery(filter: {
   plioType?: string;
   query?: string;
@@ -167,15 +198,15 @@ export function useLibraryPlioExercisesQuery(filter: {
   });
 }
 
-export function useLibraryWarmupExercisesQuery(filter: {
+export function useLibraryMobilityExercisesQuery(filter: {
   mobilityType?: string;
   query?: string;
-}): UseQueryResult<WarmupExerciseLibraryItem[], Error> {
+}): UseQueryResult<MobilityExerciseLibraryItem[], Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => fetchLibraryList<WarmupExerciseLibraryItem>(auth, '/library/warmup', filter),
-    queryKey: ['library', 'warmup', filter, auth?.activeRole, auth?.accessToken],
+    queryFn: () => fetchLibraryList<MobilityExerciseLibraryItem>(auth, '/library/mobility', filter),
+    queryKey: ['library', 'mobility', filter, auth?.activeRole, auth?.accessToken],
   });
 }
 
@@ -189,7 +220,7 @@ export function useLibrarySportsQuery(): UseQueryResult<SportLibraryItem[], Erro
 }
 
 function useCatalogQuery(
-  resource: 'cardio-method-types' | 'mobility-types' | 'muscle-groups' | 'plio-types',
+  resource: 'cardio-method-types' | 'isometric-types' | 'mobility-types' | 'muscle-groups' | 'plio-types',
 ): UseQueryResult<LibraryCatalogItem[], Error> {
   const auth = useAuth();
   return useQuery({

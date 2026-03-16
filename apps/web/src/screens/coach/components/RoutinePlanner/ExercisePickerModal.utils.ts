@@ -4,7 +4,7 @@ import type {
   ExerciseLibraryItem,
   CardioMethodLibraryItem,
   PlioExerciseLibraryItem,
-  WarmupExerciseLibraryItem,
+  MobilityExerciseLibraryItem,
   SportLibraryItem,
 } from '../../../../data/hooks/useLibraryQuery';
 import type { LibraryItem } from './ExercisePickerModal.types';
@@ -77,7 +77,7 @@ export function mapPlio(items: PlioExerciseLibraryItem[]): LibraryItem[] {
   }));
 }
 
-export function mapWarmup(items: WarmupExerciseLibraryItem[]): LibraryItem[] {
+export function mapWarmup(items: MobilityExerciseLibraryItem[]): LibraryItem[] {
   return items.map((item) => ({
     id: item.id,
     name: item.name,

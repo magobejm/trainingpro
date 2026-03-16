@@ -19,7 +19,7 @@ interface FormSelectProps {
   options: SelectOption[];
   value?: string | null;
   onSelect: (val: string) => void;
-  placeholder: string;
+  placeholder?: string;
   onFocus?: () => void;
 }
 
@@ -29,7 +29,7 @@ export function FormSelect({ options, value, onSelect, placeholder, onFocus }: F
   return (
     <View style={styles.pickerContainer}>
       <select value={value || ''} onChange={(e) => onSelect(e.target.value)} onFocus={onFocus} style={selectStyle}>
-        <option value={EMPTY_VAL}>{placeholder}</option>
+        {placeholder ? <option value={EMPTY_VAL}>{placeholder}</option> : null}
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>
             {opt.label}

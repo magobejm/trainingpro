@@ -3,6 +3,8 @@ logs
 .worktrees
 docs
 /plans/
+.claude/*
+tmp/*
 # Env files
 .env
 .env.*

@@ -2,23 +2,26 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import type { IsometricExerciseFilter, IsometricExerciseWriteInput } from '../../domain/isometric-exercise.input';
 import type { PlioExerciseFilter, PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
 import type {
-  WarmupExerciseFilter,
-  WarmupExerciseWriteInput,
-} from '../../domain/warmup-exercise.input';
+  MobilityExerciseFilter,
+  MobilityExerciseWriteInput,
+} from '../../domain/mobility-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
 import type { LibraryCatalogItem } from '../../domain/entities/library-catalog-item';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
 import {
+  normalizeIsometricExerciseInput,
   normalizePlioExerciseInput,
-  normalizeWarmupExerciseInput,
+  normalizeMobilityExerciseInput,
   normalizeSportInput,
 } from './library.mappers';
-import { mapPlioExercise, mapSport, mapWarmupExercise } from './library.specialized-mappers';
+import { mapIsometricExercise, mapPlioExercise, mapSport, mapMobilityExercise } from './library.specialized-mappers';
 import {
+  buildIsometricWhere,
   buildPlioWhere,
-  buildWarmupWhere,
+  buildMobilityWhere,
   buildSportWhere,
   toDomainScope,
 } from './library.repository.prisma.helpers';
@@ -33,6 +36,64 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     super(prisma);
   }
 
+  async listIsometricExercises(context: AuthContext, filter: IsometricExerciseFilter) {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.isometricExercise.findMany({
+      orderBy: [{ name: 'asc' }],
+      where: buildIsometricWhere(membership.id, filter),
+    });
+    return rows.map(mapIsometricExercise);
+  }
+
+  async listIsometricTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
+    const membership = await this.resolveCoachMembership(context);
+    const rows = await this.prisma.isometricExercise.findMany({
+      distinct: ['isometricType'],
+      orderBy: [{ isometricType: 'asc' }],
+      select: { isometricType: true },
+      where: buildIsometricWhere(membership.id, {}),
+    });
+    return mapEnumCatalog(rows.map((row) => row.isometricType ?? 'undefined'));
+  }
+
+  async createIsometricExercise(context: AuthContext, input: IsometricExerciseWriteInput) {
+    const membership = await this.resolveCoachMembership(context);
+    const row = await this.prisma.isometricExercise.create({
+      data: {
+        ...normalizeIsometricExerciseInput(input),
+        coachMembershipId: membership.id,
+        organizationId: membership.organizationId,
+        scope: LibraryItemScope.COACH,
+      },
+    });
+    return mapIsometricExercise(row);
+  }
+
+  async updateIsometricExercise(
+    context: AuthContext,
+    itemId: string,
+    input: Partial<IsometricExerciseWriteInput>,
+  ) {
+    const membership = await this.resolveCoachMembership(context);
+    const row = await this.readIsometricExerciseForUpdate(itemId);
+    this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    const updated = await this.prisma.isometricExercise.update({
+      where: { id: itemId },
+      data: normalizeIsometricExerciseInput(input),
+    });
+    return mapIsometricExercise(updated);
+  }
+
+  async deleteIsometricExercise(context: AuthContext, itemId: string) {
+    const membership = await this.resolveCoachMembership(context);
+    const row = await this.readIsometricExerciseForUpdate(itemId);
+    this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.prisma.isometricExercise.update({
+      where: { id: itemId },
+      data: { archivedAt: new Date() },
+    });
+  }
+
   async listPlioExercises(context: AuthContext, filter: PlioExerciseFilter) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.plioExercise.findMany({
@@ -42,13 +103,13 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return rows.map(mapPlioExercise);
   }
 
-  async listWarmupExercises(context: AuthContext, filter: WarmupExerciseFilter) {
+  async listMobilityExercises(context: AuthContext, filter: MobilityExerciseFilter) {
     const membership = await this.resolveCoachMembership(context);
-    const rows = await this.prisma.warmupExercise.findMany({
+    const rows = await this.prisma.mobilityExercise.findMany({
       orderBy: [{ name: 'asc' }],
-      where: buildWarmupWhere(membership.id, filter),
+      where: buildMobilityWhere(membership.id, filter),
     });
-    return rows.map(mapWarmupExercise);
+    return rows.map(mapMobilityExercise);
   }
 
   async listSports(context: AuthContext, query?: string) {
@@ -73,11 +134,11 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
 
   async listMobilityTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
     const membership = await this.resolveCoachMembership(context);
-    const rows = await this.prisma.warmupExercise.findMany({
+    const rows = await this.prisma.mobilityExercise.findMany({
       distinct: ['mobilityType'],
       orderBy: [{ mobilityType: 'asc' }],
       select: { mobilityType: true },
-      where: buildWarmupWhere(membership.id, {}),
+      where: buildMobilityWhere(membership.id, {}),
     });
     return mapEnumCatalog(rows.map((row) => row.mobilityType ?? 'undefined'));
   }
@@ -95,17 +156,17 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return mapPlioExercise(row);
   }
 
-  async createWarmupExercise(context: AuthContext, input: WarmupExerciseWriteInput) {
+  async createMobilityExercise(context: AuthContext, input: MobilityExerciseWriteInput) {
     const membership = await this.resolveCoachMembership(context);
-    const row = await this.prisma.warmupExercise.create({
+    const row = await this.prisma.mobilityExercise.create({
       data: {
-        ...normalizeWarmupExerciseInput(input),
+        ...normalizeMobilityExerciseInput(input),
         coachMembershipId: membership.id,
         organizationId: membership.organizationId,
         scope: LibraryItemScope.COACH,
       },
     });
-    return mapWarmupExercise(row);
+    return mapMobilityExercise(row);
   }
 
   async createSport(context: AuthContext, input: SportWriteInput) {
@@ -136,19 +197,19 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return mapPlioExercise(updated);
   }
 
-  async updateWarmupExercise(
+  async updateMobilityExercise(
     context: AuthContext,
     itemId: string,
-    input: Partial<WarmupExerciseWriteInput>,
+    input: Partial<MobilityExerciseWriteInput>,
   ) {
     const membership = await this.resolveCoachMembership(context);
-    const row = await this.readWarmupExerciseForUpdate(itemId);
+    const row = await this.readMobilityExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
-    const updated = await this.prisma.warmupExercise.update({
+    const updated = await this.prisma.mobilityExercise.update({
       where: { id: itemId },
-      data: normalizeWarmupExerciseInput(input),
+      data: normalizeMobilityExerciseInput(input),
     });
-    return mapWarmupExercise(updated);
+    return mapMobilityExercise(updated);
   }
 
   async updateSport(context: AuthContext, itemId: string, input: Partial<SportWriteInput>) {
@@ -172,11 +233,11 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     });
   }
 
-  async deleteWarmupExercise(context: AuthContext, itemId: string) {
+  async deleteMobilityExercise(context: AuthContext, itemId: string) {
     const membership = await this.resolveCoachMembership(context);
-    const row = await this.readWarmupExerciseForUpdate(itemId);
+    const row = await this.readMobilityExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
-    await this.prisma.warmupExercise.update({
+    await this.prisma.mobilityExercise.update({
       where: { id: itemId },
       data: { archivedAt: new Date() },
     });
@@ -192,6 +253,17 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     });
   }
 
+  private async readIsometricExerciseForUpdate(itemId: string) {
+    const row = await this.prisma.isometricExercise.findFirst({
+      where: { archivedAt: null, id: itemId },
+      select: { coachMembershipId: true, scope: true },
+    });
+    if (!row) {
+      throw new NotFoundException('Isometric exercise not found');
+    }
+    return row;
+  }
+
   private async readPlioExerciseForUpdate(itemId: string) {
     const row = await this.prisma.plioExercise.findFirst({
       where: { archivedAt: null, id: itemId },
@@ -203,13 +275,13 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return row;
   }
 
-  private async readWarmupExerciseForUpdate(itemId: string) {
-    const row = await this.prisma.warmupExercise.findFirst({
+  private async readMobilityExerciseForUpdate(itemId: string) {
+    const row = await this.prisma.mobilityExercise.findFirst({
       where: { archivedAt: null, id: itemId },
       select: { coachMembershipId: true, scope: true },
     });
     if (!row) {
-      throw new NotFoundException('Warmup exercise not found');
+      throw new NotFoundException('Mobility exercise not found');
     }
     return row;
   }

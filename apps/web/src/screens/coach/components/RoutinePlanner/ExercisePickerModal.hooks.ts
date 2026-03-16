@@ -4,7 +4,7 @@ import {
   useLibraryExercisesQuery,
   useLibraryCardioMethodsQuery,
   useLibraryPlioExercisesQuery,
-  useLibraryWarmupExercisesQuery,
+  useLibraryMobilityExercisesQuery,
   useLibrarySportsQuery,
 } from '../../../../data/hooks/useLibraryQuery';
 import type { LibraryItem } from './ExercisePickerModal.types';
@@ -24,7 +24,7 @@ export function useLibraryItems(
   const str = useLibraryExercisesQuery({ query: blockType === 'strength' ? query : undefined });
   const car = useLibraryCardioMethodsQuery({ query: blockType === 'cardio' ? query : undefined });
   const plio = useLibraryPlioExercisesQuery({ query: blockType === 'plio' ? query : undefined });
-  const warm = useLibraryWarmupExercisesQuery({
+  const warm = useLibraryMobilityExercisesQuery({
     query: blockType === 'warmup' ? query : undefined,
   });
   const sport = useLibrarySportsQuery();

@@ -8,6 +8,8 @@ import { EXERCISE_MUSCLE_GROUPS_V1 } from './seeds/v1-exercise-muscle-groups.see
 import { EXERCISES_V1 } from './seeds/v1-exercises.seed';
 import { FOODS_V1 } from './seeds/v1-foods.seed';
 import { MOBILITY_TYPES_V1 } from './seeds/v1-mobility-types.seed';
+import { ISOMETRIC_EXERCISES_V1 } from './seeds/v1-isometric-exercises.seed';
+import { ISOMETRIC_TYPES_V1 } from './seeds/v1-isometric-types.seed';
 import { PLIO_EXERCISES_V1 } from './seeds/v1-plio-exercises.seed';
 import { PLIO_TYPES_V1 } from './seeds/v1-plio-types.seed';
 import { SPORT_TYPES_V1 } from './seeds/v1-sport-types.seed';
@@ -33,7 +35,9 @@ async function main(): Promise<void> {
   await seedExercises();
   await seedCardioMethods();
   await seedFoods();
+  await seedIsometricTypes();
   await seedPlioExercises();
+  await seedIsometricExercises();
   await seedWarmupExercises();
   await seedSports();
   await seedRoutineTemplates();
@@ -69,6 +73,8 @@ async function seedExerciseMuscleGroups(): Promise<void> {
 }
 
 async function seedCardioMethodTypes(): Promise<void> {
+  // Rename legacy sin_definir → undefined to match catalog convention
+  await prisma.cardioMethodType.deleteMany({ where: { code: 'sin_definir' } });
   for (const item of CARDIO_METHOD_TYPES_V1) {
     await prisma.cardioMethodType.upsert({
       where: { code: item.code },
@@ -80,7 +86,12 @@ async function seedCardioMethodTypes(): Promise<void> {
 
 async function seedCardioMethods(): Promise<void> {
   const typeIndex = await readCatalogIndex('cardioMethodType');
+  const equipmentIndex = await readCatalogIndex('exerciseEquipment');
+
+  await prisma.cardioMethod.deleteMany({ where: { scope: LibraryItemScope.GLOBAL } });
+
   for (const item of CARDIO_METHODS_V1) {
+    const equipmentId = equipmentIndex.get(item.equipmentCode) ?? null;
     await prisma.cardioMethod.upsert({
       where: { id: item.id },
       create: {
@@ -88,12 +99,19 @@ async function seedCardioMethods(): Promise<void> {
         methodTypeId: readRequiredId(typeIndex, item.methodTypeCode),
         name: item.name,
         scope: LibraryItemScope.GLOBAL,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
       },
       update: {
         archivedAt: null,
         methodTypeId: readRequiredId(typeIndex, item.methodTypeCode),
         name: item.name,
-        scope: LibraryItemScope.GLOBAL,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
       },
     });
   }
@@ -141,11 +159,40 @@ async function seedSportTypes(): Promise<void> {
 
 async function seedExercises(): Promise<void> {
   const groupIndex = await readCatalogIndex('exerciseMuscleGroup');
+  const equipmentIndex = await readCatalogIndex('exerciseEquipment');
+  const patternIndex = await readCatalogIndex('movementPattern');
+  const planeIndex = await readCatalogIndex('anatomicalPlane');
+
+  // Delete all existing global exercises (and their assignments via cascade)
+  await prisma.exercise.deleteMany({ where: { scope: LibraryItemScope.GLOBAL } });
+
   for (const item of EXERCISES_V1) {
+    const equipmentId = equipmentIndex.get(item.equipmentCode) ?? null;
+    const movementPatternId = patternIndex.get(item.movementPatternCode) ?? null;
+    const anatomicalPlaneId = planeIndex.get(item.anatomicalPlaneCode) ?? null;
     await prisma.exercise.upsert({
       where: { id: item.id },
-      create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL },
-      update: { archivedAt: null, name: item.name, scope: LibraryItemScope.GLOBAL },
+      create: {
+        id: item.id,
+        name: item.name,
+        scope: LibraryItemScope.GLOBAL,
+        equipmentId,
+        movementPatternId,
+        anatomicalPlaneId,
+        instructions: item.instructions ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
+      },
+      update: {
+        archivedAt: null,
+        name: item.name,
+        equipmentId,
+        movementPatternId,
+        anatomicalPlaneId,
+        instructions: item.instructions ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
+      },
     });
     for (const code of item.muscleGroupCodes) {
       const muscleGroupId = readRequiredId(groupIndex, code);
@@ -196,22 +243,84 @@ async function seedRoutineTemplates(): Promise<void> {
   }
 }
 
+async function seedIsometricTypes(): Promise<void> {
+  for (const item of ISOMETRIC_TYPES_V1) {
+    await (prisma as any).isometricTypeRef.upsert({
+      where: { code: item.code },
+      create: item,
+      update: item,
+    });
+  }
+}
+
 async function seedPlioExercises(): Promise<void> {
+  const equipmentIndex = await readCatalogIndex('exerciseEquipment');
+  const plioTypeIndex = await readCatalogIndex('plioTypeRef' as any);
+
+  await prisma.plioExercise.deleteMany({ where: { scope: LibraryItemScope.GLOBAL } });
+
   for (const item of PLIO_EXERCISES_V1) {
+    const equipmentId = equipmentIndex.get(item.equipmentCode) ?? null;
+    const plioTypeId = plioTypeIndex.get(item.plioTypeCode) ?? null;
     await prisma.plioExercise.upsert({
       where: { id: item.id },
       create: {
         id: item.id,
         name: item.name,
-        notes: item.notes ?? null,
-        youtubeUrl: item.youtubeUrl ?? null,
+        plioTypeId,
+        plioType: item.plioTypeCode,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
         scope: LibraryItemScope.GLOBAL,
       },
       update: {
         archivedAt: null,
         name: item.name,
-        notes: item.notes ?? null,
-        youtubeUrl: item.youtubeUrl ?? null,
+        plioTypeId,
+        plioType: item.plioTypeCode,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
+        scope: LibraryItemScope.GLOBAL,
+      },
+    });
+  }
+}
+
+async function seedIsometricExercises(): Promise<void> {
+  const equipmentIndex = await readCatalogIndex('exerciseEquipment');
+  const isoTypeIndex = await readCatalogIndex('isometricTypeRef' as any);
+
+  await (prisma as any).isometricExercise.deleteMany({ where: { scope: LibraryItemScope.GLOBAL } });
+
+  for (const item of ISOMETRIC_EXERCISES_V1) {
+    const equipmentId = equipmentIndex.get(item.equipmentCode) ?? null;
+    const isometricTypeId = isoTypeIndex.get(item.isometricTypeCode) ?? null;
+    await (prisma as any).isometricExercise.upsert({
+      where: { id: item.id },
+      create: {
+        id: item.id,
+        name: item.name,
+        isometricTypeId,
+        isometricType: item.isometricTypeCode,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
+        scope: LibraryItemScope.GLOBAL,
+      },
+      update: {
+        archivedAt: null,
+        name: item.name,
+        isometricTypeId,
+        isometricType: item.isometricTypeCode,
+        equipmentId,
+        description: item.description ?? null,
+        coachInstructions: item.coachInstructions ?? null,
+        youtubeUrl: item.youtubeUrl,
         scope: LibraryItemScope.GLOBAL,
       },
     });
@@ -238,8 +347,8 @@ async function seedSports(): Promise<void> {
   }
 }
 
-async function readCatalogIndex(model: 'cardioMethodType' | 'exerciseMuscleGroup'): Promise<Map<string, string>> {
-  const rows = await (prisma[model] as any).findMany({ select: { code: true, id: true } });
+async function readCatalogIndex(model: string): Promise<Map<string, string>> {
+  const rows = await (prisma as any)[model].findMany({ select: { code: true, id: true } });
   return new Map(rows.map((row: any) => [row.code, row.id]));
 }
 

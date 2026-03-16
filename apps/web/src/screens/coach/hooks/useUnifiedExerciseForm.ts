@@ -9,6 +9,7 @@ export interface UnifiedExerciseFormState {
   mediaUrl?: string;
   youtubeUrl?: string;
   instructions?: string;
+  coachInstructions?: string;
   equipmentId?: string;
 
   // Strengh
@@ -20,6 +21,7 @@ export interface UnifiedExerciseFormState {
   cardioTypeId?: string;
   plioTypeId?: string;
   mobilityTypeId?: string;
+  isometricTypeId?: string;
   sportTypeId?: string;
 }
 
@@ -30,23 +32,26 @@ export interface UnifiedExerciseItem {
   mediaUrl?: string | null;
   youtubeUrl?: string | null;
   instructions?: string | null;
+  coachInstructions?: string | null;
   description?: string | null;
   equipmentId?: string | null;
-  equipmentRef?: { id: string };
+  equipmentRef?: { id?: string; label?: string };
   muscleGroups?: { muscleGroupId: string }[];
   movementPatternId?: string | null;
-  movementPatternRef?: { id: string };
+  movementPatternRef?: { id?: string; label?: string };
   anatomicalPlaneId?: string | null;
-  anatomicalPlaneRef?: { id: string };
+  anatomicalPlaneRef?: { id?: string; label?: string };
   methodTypeId?: string | null;
-  methodTypeRef?: { id: string };
+  methodTypeRef?: { id?: string; label?: string };
   plioTypeId?: string | null;
-  plioTypeRef?: { id: string };
+  plioTypeRef?: { id?: string; label?: string };
   mobilityTypeId?: string | null;
-  mobilityTypeRef?: { id: string };
-  mobilityTypeRefRel?: { id: string };
+  mobilityTypeRef?: { id?: string; label?: string };
+  mobilityTypeRefRel?: { id?: string; label?: string };
+  isometricTypeId?: string | null;
+  isometricTypeRef?: { id?: string; label?: string };
   sportTypeId?: string | null;
-  sportTypeRef?: { id: string };
+  sportTypeRef?: { id?: string; label?: string };
 }
 
 const DEFAULT_STATE: UnifiedExerciseFormState = {
@@ -72,6 +77,7 @@ const hydrateState = (
     mediaUrl: item.mediaUrl || undefined,
     youtubeUrl: item.youtubeUrl || undefined,
     instructions: item.description || item.instructions || undefined,
+    coachInstructions: item.coachInstructions || undefined,
     equipmentId: item.equipmentId || item.equipmentRef?.id,
 
     // Biomechanical & specific types
@@ -81,6 +87,7 @@ const hydrateState = (
     cardioTypeId: item.methodTypeId || item.methodTypeRef?.id,
     plioTypeId: item.plioTypeId || item.plioTypeRef?.id,
     mobilityTypeId: item.mobilityTypeId || item.mobilityTypeRef?.id || item.mobilityTypeRefRel?.id,
+    isometricTypeId: item.isometricTypeId || item.isometricTypeRef?.id,
     sportTypeId: item.sportTypeId || item.sportTypeRef?.id,
   };
 };

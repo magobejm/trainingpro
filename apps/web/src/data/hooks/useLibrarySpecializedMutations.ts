@@ -1,6 +1,17 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { deleteItem, updateItem, useAuth, writeItem } from './library-mutations.helpers';
 
+export type IsometricExerciseWriteInput = {
+  description?: string | null;
+  equipment?: string | null;
+  isometricType?: string | null;
+  mediaType?: string | null;
+  mediaUrl?: string | null;
+  name: string;
+  notes?: string | null;
+  youtubeUrl?: string | null;
+};
+
 export type PlioExerciseWriteInput = {
   description?: string | null;
   equipment?: string | null;
@@ -12,7 +23,7 @@ export type PlioExerciseWriteInput = {
   youtubeUrl?: string | null;
 };
 
-export type WarmupExerciseWriteInput = {
+export type MobilityExerciseWriteInput = {
   description?: string | null;
   mediaType?: string | null;
   mediaUrl?: string | null;
@@ -28,6 +39,40 @@ export type SportWriteInput = {
   name: string;
 };
 
+export function useCreateIsometricExerciseMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: IsometricExerciseWriteInput) => writeItem(auth, 'isometrics', 'POST', input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['library'] });
+    },
+  });
+}
+
+export function useDeleteIsometricExerciseMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemId: string) => deleteItem(auth, 'isometrics', itemId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['library'] });
+    },
+  });
+}
+
+export function useUpdateIsometricExerciseMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { itemId: string; payload: Partial<IsometricExerciseWriteInput> }) =>
+      updateItem(auth, 'isometrics', input.itemId, input.payload),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['library'] });
+    },
+  });
+}
+
 export function useCreatePlioExerciseMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -39,11 +84,11 @@ export function useCreatePlioExerciseMutation() {
   });
 }
 
-export function useCreateWarmupExerciseMutation() {
+export function useCreateMobilityExerciseMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: WarmupExerciseWriteInput) => writeItem(auth, 'warmup', 'POST', input),
+    mutationFn: (input: MobilityExerciseWriteInput) => writeItem(auth, 'mobility', 'POST', input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['library'] });
     },
@@ -72,11 +117,11 @@ export function useDeletePlioExerciseMutation() {
   });
 }
 
-export function useDeleteWarmupExerciseMutation() {
+export function useDeleteMobilityExerciseMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (itemId: string) => deleteItem(auth, 'warmup', itemId),
+    mutationFn: (itemId: string) => deleteItem(auth, 'mobility', itemId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['library'] });
     },
@@ -106,12 +151,12 @@ export function useUpdatePlioExerciseMutation() {
   });
 }
 
-export function useUpdateWarmupExerciseMutation() {
+export function useUpdateMobilityExerciseMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: { itemId: string; payload: Partial<WarmupExerciseWriteInput> }) =>
-      updateItem(auth, 'warmup', input.itemId, input.payload),
+    mutationFn: (input: { itemId: string; payload: Partial<MobilityExerciseWriteInput> }) =>
+      updateItem(auth, 'mobility', input.itemId, input.payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['library'] });
     },

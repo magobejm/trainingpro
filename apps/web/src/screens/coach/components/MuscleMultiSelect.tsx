@@ -65,11 +65,9 @@ function SelectHeader(props: {
         {selectedOptions.length === 0 ? (
           <Text style={styles.multiSelectPlaceholder}>{placeholder}</Text>
         ) : (
-          <View style={styles.tagContainer}>
-            {selectedOptions.map((opt) => (
-              <SelectedTag key={opt.value} label={opt.label} onRemove={() => onToggle(opt.value, options)} />
-            ))}
-          </View>
+          selectedOptions.map((opt) => (
+            <SelectedTag key={opt.value} label={opt.label} onRemove={() => onToggle(opt.value, options)} />
+          ))
         )}
       </View>
       <View style={{ transform: [{ rotate: expanded ? '90deg' : '0deg' }] }}>
@@ -132,8 +130,9 @@ const styles = StyleSheet.create({
   multiSelectHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     padding: 10,
+    paddingVertical: 12,
     minHeight: 44,
     borderWidth: 1,
     borderColor: MODAL_THEME.colors.border,
@@ -144,15 +143,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
   },
   multiSelectPlaceholder: {
     fontSize: 14,
     color: MODAL_THEME.colors.textSecondary,
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 4,
+    paddingVertical: 2,
   },
   tag: {
     backgroundColor: '#dbeafe',
@@ -164,6 +160,8 @@ const styles = StyleSheet.create({
     borderColor: '#bfdbfe',
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 6,
+    marginVertical: 2,
   },
   tagText: {
     fontSize: 12,

@@ -13,8 +13,8 @@ export const styles = StyleSheet.create({
   } as object,
   modalContainer: {
     width: '100%',
-    maxWidth: 900,
-    backgroundColor: MODAL_THEME.colors.background,
+    maxWidth: 1000,
+    backgroundColor: '#f5f7fa', // Light gray background for the overall modal
     borderRadius: MODAL_THEME.borderRadius.lg,
     maxHeight: '90%',
     display: 'flex',
@@ -22,16 +22,23 @@ export const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 24,
+    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderColor: MODAL_THEME.colors.border,
+    zIndex: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: MODAL_THEME.colors.text,
+    marginLeft: 16,
   },
   closeBtn: {
     padding: 4,
@@ -42,18 +49,19 @@ export const styles = StyleSheet.create({
   bodyContent: {
     padding: 20,
   },
-  columns: {
+  gridRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'stretch',
     gap: 24,
+    marginBottom: 24,
   },
-  leftCol: {
-    flex: 1,
+  gridColLeft: {
+    flex: 1.2,
     minWidth: 280,
   },
-  rightCol: {
-    flex: 2,
-    minWidth: 320,
+  gridColRight: {
+    flex: 2.2,
+    minWidth: 400,
   },
   row: {
     flexDirection: 'row',
@@ -62,23 +70,33 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: MODAL_THEME.colors.textSecondary,
-    marginBottom: 4,
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    color: '#8b9bb4',
+    marginBottom: 8,
   },
   input: {
-    borderWidth: 1,
-    borderColor: MODAL_THEME.colors.border,
+    borderWidth: 0,
     borderRadius: MODAL_THEME.borderRadius.md,
-    padding: 12,
-    fontSize: 14,
+    padding: 16,
+    fontSize: 15,
+    fontWeight: '500',
     color: MODAL_THEME.colors.text,
-    backgroundColor: MODAL_THEME.colors.surface,
+    backgroundColor: '#f8fafc',
   },
   textArea: {
-    minHeight: 120,
+    minHeight: 320,
     textAlignVertical: 'top',
+  },
+  cardContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    flex: 1,
   },
   mediaBox: {
     borderWidth: 2,
@@ -91,10 +109,27 @@ export const styles = StyleSheet.create({
     backgroundColor: MODAL_THEME.colors.surface,
     overflow: 'hidden',
   },
+  mediaUploadIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#eef3fb',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  mediaUploadTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: MODAL_THEME.colors.text,
+    marginBottom: 6,
+  },
   mediaHelp: {
-    marginTop: 8,
-    color: MODAL_THEME.colors.textSecondary,
-    fontSize: 14,
+    color: '#8b9bb4',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   mediaPreviewContainer: {
     width: '100%',
@@ -151,10 +186,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
   biomechBlock: {
-    marginTop: 8,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderColor: MODAL_THEME.colors.border,
+    // Left empty or removed border since it's a card now
   },
   sectionTitle: {
     fontSize: 16,

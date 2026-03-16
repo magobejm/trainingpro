@@ -1,4 +1,2 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateWarmupExerciseDto } from './create-warmup-exercise.dto';
-
-export class UpdateWarmupExerciseDto extends PartialType(CreateWarmupExerciseDto) {}
+// @deprecated — use update-mobility-exercise.dto.ts
+export { UpdateMobilityExerciseDto as UpdateWarmupExerciseDto } from './update-mobility-exercise.dto';

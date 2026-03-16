@@ -17,7 +17,7 @@ type Props = {
   t: (key: string) => string;
   youtubeUrl: null | string;
   fullWidth?: boolean;
-  category?: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
 };
 
 export function resolvePlaceholder(category?: string): string {
@@ -28,6 +28,8 @@ export function resolvePlaceholder(category?: string): string {
   switch (category) {
     case 'cardio':
       return `${apiBase}/assets/placeholders/cardio-bg.jpg`;
+    case 'isometric':
+      return `${apiBase}/assets/placeholders/isometric-placeholder.png`;
     case 'plio':
       return `${apiBase}/assets/placeholders/plio-placeholder.png`;
     case 'warmup':

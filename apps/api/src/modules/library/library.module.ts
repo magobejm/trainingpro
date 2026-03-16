@@ -1,18 +1,22 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { FilesModule } from '../files/files.module';
+import { CreateIsometricExerciseUseCase } from './application/use-cases/create-isometric-exercise.usecase';
 import { CreateCardioMethodUseCase } from './application/use-cases/create-cardio-method.usecase';
 import { CreateExerciseUseCase } from './application/use-cases/create-exercise.usecase';
 import { CreateFoodUseCase } from './application/use-cases/create-food.usecase';
 import { CreatePlioExerciseUseCase } from './application/use-cases/create-plio-exercise.usecase';
-import { CreateWarmupExerciseUseCase } from './application/use-cases/create-warmup-exercise.usecase';
+import { CreateMobilityExerciseUseCase } from './application/use-cases/create-mobility-exercise.usecase';
 import { CreateSportUseCase } from './application/use-cases/create-sport.usecase';
+import { DeleteIsometricExerciseUseCase } from './application/use-cases/delete-isometric-exercise.usecase';
 import { DeleteCardioMethodUseCase } from './application/use-cases/delete-cardio-method.usecase';
 import { DeleteExerciseUseCase } from './application/use-cases/delete-exercise.usecase';
 import { DeleteFoodUseCase } from './application/use-cases/delete-food.usecase';
 import { DeletePlioExerciseUseCase } from './application/use-cases/delete-plio-exercise.usecase';
-import { DeleteWarmupExerciseUseCase } from './application/use-cases/delete-warmup-exercise.usecase';
+import { DeleteMobilityExerciseUseCase } from './application/use-cases/delete-mobility-exercise.usecase';
 import { DeleteSportUseCase } from './application/use-cases/delete-sport.usecase';
+import { ListIsometricExercisesUseCase } from './application/use-cases/list-isometric-exercises.usecase';
+import { ListIsometricTypesUseCase } from './application/use-cases/list-isometric-types.usecase';
 import { ListCardioMethodTypesUseCase } from './application/use-cases/list-cardio-method-types.usecase';
 import { ListCardioMethodsUseCase } from './application/use-cases/list-cardio-methods.usecase';
 import { ListExerciseMuscleGroupsUseCase } from './application/use-cases/list-exercise-muscle-groups.usecase';
@@ -20,14 +24,15 @@ import { ListExercisesUseCase } from './application/use-cases/list-exercises.use
 import { ListFoodsUseCase } from './application/use-cases/list-foods.usecase';
 import { ListPlioExercisesUseCase } from './application/use-cases/list-plio-exercises.usecase';
 import { ListPlioTypesUseCase } from './application/use-cases/list-plio-types.usecase';
-import { ListWarmupExercisesUseCase } from './application/use-cases/list-warmup-exercises.usecase';
+import { ListMobilityExercisesUseCase } from './application/use-cases/list-mobility-exercises.usecase';
 import { ListMobilityTypesUseCase } from './application/use-cases/list-mobility-types.usecase';
 import { ListSportsUseCase } from './application/use-cases/list-sports.usecase';
+import { UpdateIsometricExerciseUseCase } from './application/use-cases/update-isometric-exercise.usecase';
 import { UpdateCardioMethodUseCase } from './application/use-cases/update-cardio-method.usecase';
 import { UpdateExerciseUseCase } from './application/use-cases/update-exercise.usecase';
 import { UpdateFoodUseCase } from './application/use-cases/update-food.usecase';
 import { UpdatePlioExerciseUseCase } from './application/use-cases/update-plio-exercise.usecase';
-import { UpdateWarmupExerciseUseCase } from './application/use-cases/update-warmup-exercise.usecase';
+import { UpdateMobilityExerciseUseCase } from './application/use-cases/update-mobility-exercise.usecase';
 import { UpdateSportUseCase } from './application/use-cases/update-sport.usecase';
 import { UploadLibraryMediaImageUseCase } from './application/use-cases/upload-library-media-image.usecase';
 import { LIBRARY_REPOSITORY } from './domain/library-repository.port';
@@ -41,6 +46,7 @@ import { LibrarySpecializedController } from './presentation/controllers/library
 import { LibraryMediaController } from './presentation/controllers/library-media.controller';
 import { LibraryUnifiedController } from './presentation/controllers/library-unified.controller';
 import { LibraryUnifiedService } from './application/library-unified.service';
+import { LibrarySeedService } from './application/library-seed.service';
 
 @Module({
   imports: [AuthModule, FilesModule],
@@ -53,18 +59,23 @@ import { LibraryUnifiedService } from './application/library-unified.service';
   ],
   providers: [
     LibraryUnifiedService,
+    LibrarySeedService,
+    CreateIsometricExerciseUseCase,
     CreateCardioMethodUseCase,
     CreateExerciseUseCase,
     CreateFoodUseCase,
     CreatePlioExerciseUseCase,
-    CreateWarmupExerciseUseCase,
+    CreateMobilityExerciseUseCase,
     CreateSportUseCase,
+    DeleteIsometricExerciseUseCase,
     DeleteCardioMethodUseCase,
     DeleteExerciseUseCase,
     DeleteFoodUseCase,
     DeletePlioExerciseUseCase,
-    DeleteWarmupExerciseUseCase,
+    DeleteMobilityExerciseUseCase,
     DeleteSportUseCase,
+    ListIsometricExercisesUseCase,
+    ListIsometricTypesUseCase,
     ListCardioMethodTypesUseCase,
     ListCardioMethodsUseCase,
     ListExerciseMuscleGroupsUseCase,
@@ -73,13 +84,14 @@ import { LibraryUnifiedService } from './application/library-unified.service';
     ListPlioExercisesUseCase,
     ListPlioTypesUseCase,
     ListMobilityTypesUseCase,
-    ListWarmupExercisesUseCase,
+    ListMobilityExercisesUseCase,
     ListSportsUseCase,
+    UpdateIsometricExerciseUseCase,
     UpdateCardioMethodUseCase,
     UpdateExerciseUseCase,
     UpdateFoodUseCase,
     UpdatePlioExerciseUseCase,
-    UpdateWarmupExerciseUseCase,
+    UpdateMobilityExerciseUseCase,
     UpdateSportUseCase,
     UploadLibraryMediaImageUseCase,
     LibraryEditPolicy,

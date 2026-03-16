@@ -8,7 +8,7 @@ export class CreateCardioMethodDto {
       equipment: z.string().max(120).nullable().optional(),
       mediaType: z.string().max(40).nullable().optional(),
       mediaUrl: z.string().url().max(500).nullable().optional(),
-      methodTypeId: z.string().uuid(),
+      methodTypeId: z.string().uuid().optional(),
       name: z.string().trim().min(1).max(120),
       youtubeUrl: z.string().url().max(500).nullable().optional(),
     })
@@ -26,7 +26,7 @@ export class CreateCardioMethodDto {
   equipment?: null | string;
   mediaType?: null | string;
   mediaUrl?: null | string;
-  methodTypeId!: string;
+  methodTypeId?: string;
   name!: string;
   youtubeUrl?: null | string;
 }

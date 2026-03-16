@@ -6,7 +6,7 @@ import {
   useLibraryExercisesQuery,
   useLibraryCardioMethodsQuery,
   useLibraryPlioExercisesQuery,
-  useLibraryWarmupExercisesQuery,
+  useLibraryMobilityExercisesQuery,
   useLibrarySportsQuery,
 } from '../../../../data/hooks/useLibraryQuery';
 import {
@@ -30,7 +30,7 @@ function useLibrarySources(type: string, query: string) {
   const s = useLibraryExercisesQuery({ query: type === 'strength' ? query : undefined });
   const c = useLibraryCardioMethodsQuery({ query: type === 'cardio' ? query : undefined });
   const p = useLibraryPlioExercisesQuery({ query: type === 'plio' ? query : undefined });
-  const w = useLibraryWarmupExercisesQuery({ query: type === 'warmup' ? query : undefined });
+  const w = useLibraryMobilityExercisesQuery({ query: type === 'warmup' ? query : undefined });
   const sp = useLibrarySportsQuery();
   const mapper = <T extends LibraryItemUnion>(m: (item: T) => DetailItem) =>
     m as (item: LibraryItemUnion) => DetailItem;

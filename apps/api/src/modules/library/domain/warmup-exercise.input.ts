@@ -1,13 +1,2 @@
-export type WarmupExerciseFilter = {
-  mobilityType?: string;
-  query?: string;
-};
-
-export type WarmupExerciseWriteInput = {
-  name: string;
-  description?: null | string;
-  mobilityType?: null | string;
-  youtubeUrl?: null | string;
-  mediaUrl?: null | string;
-  mediaType?: null | string;
-};
+// @deprecated — use mobility-exercise.input.ts
+export type { MobilityExerciseFilter as WarmupExerciseFilter, MobilityExerciseWriteInput as WarmupExerciseWriteInput } from './mobility-exercise.input';

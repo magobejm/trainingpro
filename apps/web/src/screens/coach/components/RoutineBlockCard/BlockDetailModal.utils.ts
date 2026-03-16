@@ -4,7 +4,7 @@ import type {
   ExerciseLibraryItem,
   CardioMethodLibraryItem,
   PlioExerciseLibraryItem,
-  WarmupExerciseLibraryItem,
+  MobilityExerciseLibraryItem,
   SportLibraryItem,
 } from '../../../../data/hooks/useLibraryQuery';
 
@@ -24,7 +24,7 @@ export type LibraryItemUnion =
   | ExerciseLibraryItem
   | CardioMethodLibraryItem
   | PlioExerciseLibraryItem
-  | WarmupExerciseLibraryItem
+  | MobilityExerciseLibraryItem
   | SportLibraryItem;
 
 export type DetailSource = {
@@ -94,7 +94,7 @@ export const mapPlio = (item: PlioExerciseLibraryItem): DetailItem => ({
   equipment: item.equipment,
 });
 
-export const mapWarmup = (item: WarmupExerciseLibraryItem): DetailItem => ({
+export const mapWarmup = (item: MobilityExerciseLibraryItem): DetailItem => ({
   id: item.id,
   name: item.name,
   description: item.description ?? null,

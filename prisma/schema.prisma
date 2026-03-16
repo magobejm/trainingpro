@@ -89,7 +89,8 @@ model Organization {
   cardioMethods            CardioMethod[]
   foods                    Food[]
   plioExercises            PlioExercise[]
-  warmupExercises          WarmupExercise[]
+  mobilityExercises        MobilityExercise[]
+  isometricExercises       IsometricExercise[]
   sports                   Sport[]
   planTemplates            PlanTemplate[]
   warmupTemplates          WarmupTemplate[]
@@ -131,7 +132,8 @@ model OrganizationMember {
   cardioMethods            CardioMethod[]            @relation("coach_cardio_methods")
   foods                    Food[]                    @relation("coach_foods")
   plioExercises            PlioExercise[]            @relation("coach_plio_exercises")
-  warmupExercises          WarmupExercise[]          @relation("coach_warmup_exercises")
+  mobilityExercises        MobilityExercise[]        @relation("coach_mobility_exercises")
+  isometricExercises       IsometricExercise[]       @relation("coach_isometric_exercises")
   sports                   Sport[]                   @relation("coach_sports")
   planTemplates            PlanTemplate[]            @relation("coach_plan_templates")
   warmupTemplates          WarmupTemplate[]          @relation("coach_warmup_templates")
@@ -294,9 +296,12 @@ model ExerciseEquipment {
   isDefault     Boolean        @default(false) @map("is_default")
   createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
-  exercises     Exercise[]
-  cardioMethods CardioMethod[]
-  plioExercises PlioExercise[]
+  exercises           Exercise[]
+  cardioMethods       CardioMethod[]
+  plioExercises       PlioExercise[]
+  isometricExercises  IsometricExercise[]
+  mobilityExercises   MobilityExercise[]  @relation("mobility_equipment")
+  sports              Sport[]             @relation("sport_equipment")
 
   @@index([sortOrder], map: "idx_exercise_equipment_sort")
   @@index([isDefault], map: "idx_exercise_equipment_default")
@@ -326,11 +331,65 @@ model MobilityTypeRef {
   isDefault       Boolean          @default(false) @map("is_default")
   createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
-  warmupExercises WarmupExercise[]
+  mobilityExercises MobilityExercise[]
 
   @@index([sortOrder], map: "idx_mobility_type_sort")
   @@index([isDefault], map: "idx_mobility_type_default")
   @@map("mobility_type")
+}
+
+model IsometricTypeRef {
+  id                  String              @id @default(uuid()) @db.Uuid
+  code                String              @unique @db.VarChar(80)
+  label               String              @unique @db.VarChar(120)
+  sortOrder           Int                 @default(0) @map("sort_order")
+  isDefault           Boolean             @default(false) @map("is_default")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  isometricExercises  IsometricExercise[]
+
+  @@index([sortOrder], map: "idx_isometric_type_sort")
+  @@index([isDefault], map: "idx_isometric_type_default")
+  @@map("isometric_type")
+}
+
+model IsometricExercise {
+  id                  String             @id @default(uuid()) @db.Uuid
+  scope               LibraryItemScope
+  organizationId      String?            @map("organization_id") @db.Uuid
+  coachMembershipId   String?            @map("coach_membership_id") @db.Uuid
+  name                String             @db.VarChar(120)
+  isometricTypeId     String?            @map("isometric_type_id") @db.Uuid
+  isometricType       String?            @map("isometric_type") @db.VarChar(30)
+  equipmentId         String?            @map("equipment_id") @db.Uuid
+  equipment           String?            @db.VarChar(120)
+  movementPatternId   String?            @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId   String?            @map("anatomical_plane_id") @db.Uuid
+  description         String?
+  coachInstructions   String?            @map("coach_instructions")
+  notes               String?
+  youtubeUrl          String?            @map("youtube_url") @db.VarChar(500)
+  mediaUrl            String?            @map("media_url") @db.VarChar(500)
+  mediaType           String?            @map("media_type") @db.VarChar(40)
+  createdBy           String?            @map("created_by") @db.Uuid
+  updatedBy           String?            @map("updated_by") @db.Uuid
+  archivedAt          DateTime?          @map("archived_at") @db.Timestamptz(6)
+  createdAt           DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization        Organization?      @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  coachMembership     OrganizationMember? @relation("coach_isometric_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  isometricTypeRef    IsometricTypeRef?  @relation(fields: [isometricTypeId], references: [id], onDelete: SetNull)
+  equipmentRef        ExerciseEquipment? @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  movementPatternRef  MovementPattern?   @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef  AnatomicalPlane?   @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
+
+  @@index([scope, archivedAt], map: "idx_isometric_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_isometric_coach_archived")
+  @@index([isometricTypeId], map: "idx_isometric_type_fk")
+  @@index([equipmentId], map: "idx_isometric_equipment")
+  @@index([movementPatternId], map: "idx_isometric_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_isometric_anatomical_plane")
+  @@map("isometric_exercise")
 }
 
 model SportTypeRef {
@@ -356,7 +415,12 @@ model MovementPattern {
   isDefault Boolean    @default(false) @map("is_default")
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  exercises Exercise[]
+  exercises          Exercise[]
+  cardioMethods      CardioMethod[]
+  plioExercises      PlioExercise[]
+  mobilityExercises  MobilityExercise[]
+  isometricExercises IsometricExercise[]
+  sports             Sport[]
 
   @@index([sortOrder], map: "idx_movement_pattern_sort")
   @@index([isDefault], map: "idx_movement_pattern_default")
@@ -371,7 +435,12 @@ model AnatomicalPlane {
   isDefault Boolean    @default(false) @map("is_default")
   createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
-  exercises Exercise[]
+  exercises          Exercise[]
+  cardioMethods      CardioMethod[]
+  plioExercises      PlioExercise[]
+  mobilityExercises  MobilityExercise[]
+  isometricExercises IsometricExercise[]
+  sports             Sport[]
 
   @@index([sortOrder], map: "idx_anatomical_plane_sort")
   @@index([isDefault], map: "idx_anatomical_plane_default")
@@ -398,6 +467,7 @@ model Exercise {
   equipmentId           String?                         @map("equipment_id") @db.Uuid
   equipment             String?                         @db.VarChar(80)
   instructions          String?
+  coachInstructions     String?                         @map("coach_instructions")
   mediaUrl              String?                         @map("media_url") @db.VarChar(500)
   mediaType             String?                         @map("media_type") @db.VarChar(40)
   youtubeUrl            String?                         @map("youtube_url") @db.VarChar(500)
@@ -434,6 +504,7 @@ model CardioMethod {
   methodTypeId        String               @map("method_type_id") @db.Uuid
   equipmentId         String?              @map("equipment_id") @db.Uuid
   description         String?
+  coachInstructions   String?              @map("coach_instructions")
   equipment           String?              @db.VarChar(120)
   mediaUrl            String?              @map("media_url") @db.VarChar(500)
   mediaType           String?              @map("media_type") @db.VarChar(40)
@@ -447,6 +518,10 @@ model CardioMethod {
   coachMembership     OrganizationMember?  @relation("coach_cardio_methods", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   methodTypeRef       CardioMethodType     @relation(fields: [methodTypeId], references: [id], onDelete: Restrict)
   equipmentRef        ExerciseEquipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  movementPatternId   String?              @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId   String?              @map("anatomical_plane_id") @db.Uuid
+  movementPatternRef  MovementPattern?     @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef  AnatomicalPlane?     @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
   planCardioBlocks    PlanCardioBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
@@ -454,6 +529,8 @@ model CardioMethod {
   @@index([coachMembershipId, archivedAt], map: "idx_cardio_coach_archived")
   @@index([methodTypeId], map: "idx_cardio_method_type")
   @@index([equipmentId], map: "idx_cardio_equipment")
+  @@index([movementPatternId], map: "idx_cardio_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_cardio_anatomical_plane")
   @@map("cardio_method")
 }
 
@@ -493,10 +570,13 @@ model PlioExercise {
   coachMembershipId   String?              @map("coach_membership_id") @db.Uuid
   name                String               @db.VarChar(120)
   description         String?
+  coachInstructions   String?              @map("coach_instructions")
   plioTypeId          String?              @map("plio_type_id") @db.Uuid
   equipmentId         String?              @map("equipment_id") @db.Uuid
   equipment           String?              @db.VarChar(120)
   plioType            String?              @map("plio_type") @db.VarChar(30)
+  movementPatternId   String?              @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId   String?              @map("anatomical_plane_id") @db.Uuid
   notes               String?
   youtubeUrl          String?              @map("youtube_url") @db.VarChar(500)
   mediaUrl            String?              @map("media_url") @db.VarChar(500)
@@ -508,6 +588,8 @@ model PlioExercise {
   coachMembership     OrganizationMember?  @relation("coach_plio_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   plioTypeRef         PlioTypeRef?         @relation(fields: [plioTypeId], references: [id], onDelete: SetNull)
   equipmentRef        ExerciseEquipment?   @relation(fields: [equipmentId], references: [id], onDelete: SetNull)
+  movementPatternRef  MovementPattern?     @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef  AnatomicalPlane?     @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
   planPlioBlocks      PlanPlioBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
@@ -515,18 +597,23 @@ model PlioExercise {
   @@index([coachMembershipId, archivedAt], map: "idx_plio_coach_archived")
   @@index([plioTypeId], map: "idx_plio_type")
   @@index([equipmentId], map: "idx_plio_equipment")
+  @@index([movementPatternId], map: "idx_plio_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_plio_anatomical_plane")
   @@map("plio_exercise")
 }
 
-model WarmupExercise {
+model MobilityExercise {
   id                  String               @id @default(uuid()) @db.Uuid
   scope               LibraryItemScope     @default(GLOBAL)
   organizationId      String?              @map("organization_id") @db.Uuid
   coachMembershipId   String?              @map("coach_membership_id") @db.Uuid
   name                String               @db.VarChar(120)
   description         String?
+  coachInstructions   String?              @map("coach_instructions")
   mobilityTypeId      String?              @map("mobility_type_id") @db.Uuid
   mobilityType        String?              @map("mobility_type") @db.VarChar(30)
+  movementPatternId   String?              @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId   String?              @map("anatomical_plane_id") @db.Uuid
   youtubeUrl          String?              @map("youtube_url") @db.VarChar(500)
   mediaUrl            String?              @map("media_url") @db.VarChar(500)
   mediaType           String?              @map("media_type") @db.VarChar(40)
@@ -534,15 +621,22 @@ model WarmupExercise {
   createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization        Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
-  coachMembership     OrganizationMember?  @relation("coach_warmup_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  coachMembership     OrganizationMember?  @relation("coach_mobility_exercises", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  equipmentId         String?              @map("equipment_id") @db.Uuid
   mobilityTypeRefRel  MobilityTypeRef?     @relation(fields: [mobilityTypeId], references: [id], onDelete: SetNull)
+  movementPatternRef  MovementPattern?     @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef  AnatomicalPlane?     @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
+  equipmentRef        ExerciseEquipment?   @relation("mobility_equipment", fields: [equipmentId], references: [id], onDelete: SetNull)
   planWarmupBlocks    PlanWarmupBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
-  @@index([scope, archivedAt], map: "idx_warmup_scope_archived")
-  @@index([coachMembershipId, archivedAt], map: "idx_warmup_coach_archived")
-  @@index([mobilityTypeId], map: "idx_warmup_mobility_type")
-  @@map("warmup_exercise")
+  @@index([scope, archivedAt], map: "idx_mobility_scope_archived")
+  @@index([coachMembershipId, archivedAt], map: "idx_mobility_coach_archived")
+  @@index([mobilityTypeId], map: "idx_mobility_type")
+  @@index([movementPatternId], map: "idx_mobility_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_mobility_anatomical_plane")
+  @@index([equipmentId], map: "idx_mobility_equipment")
+  @@map("mobility_exercise")
 }
 
 model Sport {
@@ -554,18 +648,28 @@ model Sport {
   icon              String              @db.VarChar(10)
   sportTypeId       String?             @map("sport_type_id") @db.Uuid
   description       String?
+  coachInstructions String?             @map("coach_instructions")
+  movementPatternId String?             @map("movement_pattern_id") @db.Uuid
+  anatomicalPlaneId String?             @map("anatomical_plane_id") @db.Uuid
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   organization      Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember? @relation("coach_sports", fields: [coachMembershipId], references: [id], onDelete: SetNull)
+  equipmentId       String?             @map("equipment_id") @db.Uuid
   sportTypeRef      SportTypeRef?       @relation(fields: [sportTypeId], references: [id], onDelete: SetNull)
+  movementPatternRef MovementPattern?   @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
+  anatomicalPlaneRef AnatomicalPlane?   @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
+  equipmentRef      ExerciseEquipment?  @relation("sport_equipment", fields: [equipmentId], references: [id], onDelete: SetNull)
   planSportBlocks   PlanSportBlock[]
 
   @@index([scope, archivedAt], map: "idx_sport_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_sport_coach_archived")
   @@index([sportTypeId], map: "idx_sport_type")
+  @@index([movementPatternId], map: "idx_sport_movement_pattern")
+  @@index([anatomicalPlaneId], map: "idx_sport_anatomical_plane")
+  @@index([equipmentId], map: "idx_sport_equipment")
   @@map("sport")
 }
 
@@ -660,7 +764,7 @@ model WarmupTemplateItem {
   libraryExercise         Exercise?       @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
   libraryCardioMethod     CardioMethod?   @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
   libraryPlioExercise     PlioExercise?   @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
-  libraryWarmupExercise   WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryWarmupExercise   MobilityExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([templateId, archivedAt], map: "idx_warmup_template_item_template_archived")
   @@map("warmup_template_item")
@@ -800,7 +904,7 @@ model PlanWarmupBlock {
   createdAt               DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   day                     PlanDay         @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  libraryWarmupExercise   WarmupExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryWarmupExercise   MobilityExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([dayId, archivedAt], map: "idx_plan_warmup_day_archived")
   @@map("plan_warmup_block")

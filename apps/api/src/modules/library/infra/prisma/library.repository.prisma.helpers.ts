@@ -3,8 +3,9 @@ import { LibraryItemScope, Prisma } from '@prisma/client';
 import type { CardioMethodFilter } from '../../domain/cardio-method.input';
 import type { ExerciseFilter } from '../../domain/exercise.input';
 import type { FoodFilter } from '../../domain/food.input';
+import type { IsometricExerciseFilter } from '../../domain/isometric-exercise.input';
 import type { PlioExerciseFilter } from '../../domain/plio-exercise.input';
-import type { WarmupExerciseFilter } from '../../domain/warmup-exercise.input';
+import type { MobilityExerciseFilter } from '../../domain/mobility-exercise.input';
 
 export function buildCardioMethodWhere(coachMembershipId: string, filter: CardioMethodFilter) {
   return {
@@ -45,7 +46,7 @@ export function buildPlioWhere(coachMembershipId: string, filter: PlioExerciseFi
   return base as Prisma.PlioExerciseWhereInput;
 }
 
-export function buildWarmupWhere(coachMembershipId: string, filter: WarmupExerciseFilter) {
+export function buildMobilityWhere(coachMembershipId: string, filter: MobilityExerciseFilter) {
   const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
     name: containsFilter(filter.query),
@@ -53,7 +54,18 @@ export function buildWarmupWhere(coachMembershipId: string, filter: WarmupExerci
   if (filter.mobilityType?.trim()) {
     base.mobilityType = equalsFilter(filter.mobilityType);
   }
-  return base as Prisma.WarmupExerciseWhereInput;
+  return base as Prisma.MobilityExerciseWhereInput;
+}
+
+export function buildIsometricWhere(coachMembershipId: string, filter: IsometricExerciseFilter) {
+  const base = {
+    ...buildLibraryScopeWhere(coachMembershipId),
+    name: containsFilter(filter.query),
+  } as Record<string, unknown>;
+  if (filter.isometricType?.trim()) {
+    base.isometricType = equalsFilter(filter.isometricType);
+  }
+  return base as Prisma.IsometricExerciseWhereInput;
 }
 
 export function buildSportWhere(coachMembershipId: string, query?: string) {

@@ -3,13 +3,14 @@ import type { CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodWriteInput } from '../../domain/food.input';
 import type { PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
-import type { WarmupExerciseWriteInput } from '../../domain/warmup-exercise.input';
+import type { MobilityExerciseWriteInput } from '../../domain/mobility-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
 import type { CardioMethodLibraryItem } from '../../domain/entities/cardio-method-library-item';
 import type { ExerciseLibraryItem } from '../../domain/entities/exercise-library-item';
 import type { FoodLibraryItem } from '../../domain/entities/food-library-item';
 import type { LibraryCatalogItem } from '../../domain/entities/library-catalog-item';
-import { normalizeMobilityType, normalizePlioType } from './library.specialized-mappers';
+import { normalizeMobilityType, normalizePlioType, normalizeIsometricType } from './library.specialized-mappers';
+import type { IsometricExerciseWriteInput } from '../../domain/isometric-exercise.input';
 
 type CardioMethodRow = {
   coachMembershipId: null | string;
@@ -172,9 +173,13 @@ export function normalizePlioExerciseInput(input: Partial<PlioExerciseWriteInput
   };
 }
 
-export function normalizeWarmupExerciseInput(input: WarmupExerciseWriteInput): WarmupExerciseWriteInput;
-export function normalizeWarmupExerciseInput(input: Partial<WarmupExerciseWriteInput>): Partial<WarmupExerciseWriteInput>;
-export function normalizeWarmupExerciseInput(input: Partial<WarmupExerciseWriteInput>): Partial<WarmupExerciseWriteInput> {
+export function normalizeMobilityExerciseInput(input: MobilityExerciseWriteInput): MobilityExerciseWriteInput;
+export function normalizeMobilityExerciseInput(
+  input: Partial<MobilityExerciseWriteInput>,
+): Partial<MobilityExerciseWriteInput>;
+export function normalizeMobilityExerciseInput(
+  input: Partial<MobilityExerciseWriteInput>,
+): Partial<MobilityExerciseWriteInput> {
   return {
     ...(input.description !== undefined && { description: toNullable(input.description) }),
     ...(input.mobilityType !== undefined && {
@@ -183,6 +188,25 @@ export function normalizeWarmupExerciseInput(input: Partial<WarmupExerciseWriteI
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
+    ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
+  };
+}
+
+export function normalizeIsometricExerciseInput(input: IsometricExerciseWriteInput): IsometricExerciseWriteInput;
+export function normalizeIsometricExerciseInput(
+  input: Partial<IsometricExerciseWriteInput>,
+): Partial<IsometricExerciseWriteInput>;
+export function normalizeIsometricExerciseInput(
+  input: Partial<IsometricExerciseWriteInput>,
+): Partial<IsometricExerciseWriteInput> {
+  return {
+    ...(input.description !== undefined && { description: toNullable(input.description) }),
+    ...(input.equipment !== undefined && { equipment: toNullable(input.equipment) }),
+    ...(input.isometricType !== undefined && { isometricType: normalizeIsometricType(input.isometricType) }),
+    ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
+    ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
+    ...(input.name !== undefined && { name: input.name.trim() }),
+    ...(input.notes !== undefined && { notes: toNullable(input.notes) }),
     ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
   };
 }

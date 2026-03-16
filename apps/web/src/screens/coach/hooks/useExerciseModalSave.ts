@@ -39,6 +39,7 @@ export function useExerciseModalSave({ formState, selectedFile, itemToEdit, onSu
       setIsUploading(false);
     }
     const payload = { ...formState, mediaUrl: finalMediaUrl };
+    console.log('[useExerciseModalSave] Saving payload:', JSON.stringify(payload, null, 2));
     const opts = { onSuccess };
     if (itemToEdit) {
       updateMutation.mutate(

@@ -19,7 +19,7 @@ type Props = {
   setYoutubeUrl?: (value: string) => void;
   t: (key: string) => string;
   youtubeUrl?: string;
-  category?: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
 };
 
 const IMAGE_BLUR_RADIUS = 16;

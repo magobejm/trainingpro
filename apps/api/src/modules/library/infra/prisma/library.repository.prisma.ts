@@ -6,8 +6,9 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioMethodFilter, CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseFilter, ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodFilter, FoodWriteInput } from '../../domain/food.input';
+import type { IsometricExerciseFilter, IsometricExerciseWriteInput } from '../../domain/isometric-exercise.input';
 import type { PlioExerciseFilter, PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
-import type { WarmupExerciseFilter, WarmupExerciseWriteInput } from '../../domain/warmup-exercise.input';
+import type { MobilityExerciseFilter, MobilityExerciseWriteInput } from '../../domain/mobility-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
 import type { LibraryRepositoryPort } from '../../domain/library-repository.port';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
@@ -49,11 +50,13 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
 
   async createCardioMethod(context: AuthContext, input: CardioMethodWriteInput) {
     const membership = await this.resolveCoachMembership(context);
-    await this.assertCardioMethodTypeExists(input.methodTypeId);
+    const methodTypeId = input.methodTypeId ?? await this.resolveDefaultCardioMethodTypeId();
+    await this.assertCardioMethodTypeExists(methodTypeId);
     const row = await this.prisma.cardioMethod.create({
       data: {
         ...buildCreateAuditFields(context),
         ...normalizeCardioMethodInput(input),
+        methodTypeId,
         coachMembershipId: membership.id,
         organizationId: membership.organizationId,
         scope: LibraryItemScope.COACH,
@@ -156,6 +159,26 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.foodRepo.listFoods(context, filter);
   }
 
+  async listIsometricExercises(context: AuthContext, filter: IsometricExerciseFilter) {
+    return this.specializedRepo.listIsometricExercises(context, filter);
+  }
+
+  async listIsometricTypes(context: AuthContext) {
+    return this.specializedRepo.listIsometricTypes(context);
+  }
+
+  async createIsometricExercise(context: AuthContext, input: IsometricExerciseWriteInput) {
+    return this.specializedRepo.createIsometricExercise(context, input);
+  }
+
+  async updateIsometricExercise(context: AuthContext, itemId: string, input: Partial<IsometricExerciseWriteInput>) {
+    return this.specializedRepo.updateIsometricExercise(context, itemId, input);
+  }
+
+  async deleteIsometricExercise(context: AuthContext, itemId: string) {
+    return this.specializedRepo.deleteIsometricExercise(context, itemId);
+  }
+
   async listPlioExercises(context: AuthContext, filter: PlioExerciseFilter) {
     return this.specializedRepo.listPlioExercises(context, filter);
   }
@@ -164,8 +187,8 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.specializedRepo.listPlioTypes(context);
   }
 
-  async listWarmupExercises(context: AuthContext, filter: WarmupExerciseFilter) {
-    return this.specializedRepo.listWarmupExercises(context, filter);
+  async listMobilityExercises(context: AuthContext, filter: MobilityExerciseFilter) {
+    return this.specializedRepo.listMobilityExercises(context, filter);
   }
 
   async listSports(context: AuthContext, query?: string) {
@@ -176,8 +199,8 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.specializedRepo.createPlioExercise(context, input);
   }
 
-  async createWarmupExercise(context: AuthContext, input: WarmupExerciseWriteInput) {
-    return this.specializedRepo.createWarmupExercise(context, input);
+  async createMobilityExercise(context: AuthContext, input: MobilityExerciseWriteInput) {
+    return this.specializedRepo.createMobilityExercise(context, input);
   }
 
   async createSport(context: AuthContext, input: SportWriteInput) {
@@ -188,8 +211,8 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.specializedRepo.updatePlioExercise(context, itemId, input);
   }
 
-  async updateWarmupExercise(context: AuthContext, itemId: string, input: Partial<WarmupExerciseWriteInput>) {
-    return this.specializedRepo.updateWarmupExercise(context, itemId, input);
+  async updateMobilityExercise(context: AuthContext, itemId: string, input: Partial<MobilityExerciseWriteInput>) {
+    return this.specializedRepo.updateMobilityExercise(context, itemId, input);
   }
 
   async updateSport(context: AuthContext, itemId: string, input: Partial<SportWriteInput>) {
@@ -200,8 +223,8 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.specializedRepo.deletePlioExercise(context, itemId);
   }
 
-  async deleteWarmupExercise(context: AuthContext, itemId: string) {
-    return this.specializedRepo.deleteWarmupExercise(context, itemId);
+  async deleteMobilityExercise(context: AuthContext, itemId: string) {
+    return this.specializedRepo.deleteMobilityExercise(context, itemId);
   }
 
   async deleteSport(context: AuthContext, itemId: string) {
@@ -237,6 +260,14 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
 
   async updateFood(context: AuthContext, itemId: string, input: Partial<FoodWriteInput>) {
     return this.foodRepo.updateFood(context, itemId, input);
+  }
+
+  private async resolveDefaultCardioMethodTypeId(): Promise<string> {
+    const row = await this.prisma.cardioMethodType.findFirst({ where: { isDefault: true } });
+    if (!row) {
+      throw new Error('No default cardio method type found');
+    }
+    return row.id;
   }
 
   private async assertCardioMethodTypeExists(methodTypeId: string): Promise<void> {

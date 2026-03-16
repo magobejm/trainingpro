@@ -1,6 +1,9 @@
-echo "🏋️‍♀️ TrainerPro: Ejecutando verificaciones Pre-Commit..."
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
 
-# 1. Lint & Format (solo en archivos modificados)
+echo "TrainerPro: Ejecutando verificaciones Pre-Commit..."
+
+# 1. Lint & format (solo archivos modificados)
 pnpm lint-staged
 
 # 2. Typecheck (todo el workspace)

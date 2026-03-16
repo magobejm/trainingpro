@@ -36,4 +36,14 @@ export class LibraryUnifiedController {
   async seedBiomechanics() {
     return this.service.seedBiomechanics();
   }
+
+  @Post('seed-mobility-library')
+  async seedMobilityLibrary() {
+    return this.service.seedMobilityLibrary();
+  }
+
+  @Post('seed-sports-library')
+  async seedSportsLibrary() {
+    return this.service.seedSportsLibrary();
+  }
 }

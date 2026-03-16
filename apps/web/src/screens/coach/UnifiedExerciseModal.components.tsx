@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput, Image, TouchableOpacity } from 'react-native';
-import { X, UploadCloud, PlayCircle } from 'lucide-react';
+import { View, Text, Pressable, TextInput, Image, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
+import { X, UploadCloud, PlayCircle, ChevronLeft } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SelectOption, MODAL_THEME } from './UnifiedExerciseModal.types';
 import { UnifiedExerciseFormState } from './hooks/useUnifiedExerciseForm';
@@ -9,18 +9,20 @@ import { styles } from './UnifiedExerciseModal.styles';
 type TFn = (key: string) => string;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type HandleChange = (k: any, v: any) => void;
-type FileRef = React.RefObject<HTMLInputElement | null>;
 
 export interface MediaProps {
-  formState: { mediaUrl?: string | null; youtubeUrl?: string | null };
-  handleChange: HandleChange;
-  fileInputRef: FileRef;
-  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  youtubeId: string | null | undefined;
-  videoPlaying: boolean;
-  setVideoPlaying: (v: boolean) => void;
+  formState: UnifiedExerciseFormState;
+  handleChange: <K extends keyof UnifiedExerciseFormState>(key: K, value: UnifiedExerciseFormState[K]) => void;
+  fileInputRef?: React.RefObject<HTMLInputElement | null>;
+  handleFileChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  youtubeId?: string | null;
+  videoPlaying?: boolean;
+  setVideoPlaying?: (playing: boolean) => void;
   closeMuscles: () => void;
-  t: TFn;
+  t: (k: string) => string;
+  onlyImage?: boolean;
+  onlyVideo?: boolean;
+  style?: ViewStyle;
 }
 
 export interface EquipmentProps {
@@ -29,6 +31,7 @@ export interface EquipmentProps {
   onChange: (v: string) => void;
   onFocus: () => void;
   t: TFn;
+  style?: ViewStyle;
 }
 
 export interface BasicInfoProps {
@@ -38,6 +41,7 @@ export interface BasicInfoProps {
   onChange: HandleChange;
   onFocus: () => void;
   t: TFn;
+  style?: ViewStyle;
 }
 
 export interface CatFieldsProps {
@@ -53,21 +57,27 @@ export interface CatFieldsProps {
 
 export interface DescProps {
   instructions: string | null | undefined;
-  onChange: (v: string) => void;
+  coachInstructions: string | null | undefined;
+  onChange: HandleChange;
   onFocus: () => void;
   t: TFn;
+  style?: StyleProp<ViewStyle>;
 }
 
 export interface BioProps {
   movementPatternId: string | null | undefined;
   anatomicalPlaneId: string | null | undefined;
-  mappedCatalogs: { [k: string]: SelectOption[] | undefined };
+  mappedCatalogs: {
+    movementPatterns?: SelectOption[];
+    anatomicalPlanes?: SelectOption[];
+  };
   onChange: HandleChange;
   onFocus: () => void;
   t: TFn;
+  style?: StyleProp<ViewStyle>;
 }
 
-export interface FooterProps {
+export interface HeaderProps {
   isEdit: boolean;
   onSave: () => void;
   onClose: () => void;
@@ -117,14 +127,18 @@ export function CustomButton({
   );
 }
 
-export function ModalHeader({ isEdit, onClose, t }: { isEdit: boolean; onClose: () => void; t: TFn }) {
+export function ModalHeader({ isEdit, onSave, onClose, isPending, canSave, t }: HeaderProps) {
   const title = isEdit ? t('coach.library.modal.editTitle') : t('coach.library.modal.createTitle');
+  const saveTitle = isEdit ? t('coach.library.actions.saveChanges') : t('coach.library.actions.createExercise');
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>{title}</Text>
-      <Pressable onPress={onClose} style={styles.closeBtn}>
-        <X size={24} color={MODAL_THEME.colors.textSecondary} />
-      </Pressable>
+      <View style={styles.headerLeft}>
+        <Pressable onPress={onClose} style={styles.closeBtn}>
+          <ChevronLeft size={24} color={MODAL_THEME.colors.textSecondary} />
+        </Pressable>
+        <Text style={styles.title}>{title}</Text>
+      </View>
+      <CustomButton title={saveTitle} onPress={onSave} loading={isPending} disabled={!canSave} />
     </View>
   );
 }
@@ -144,7 +158,7 @@ export function ErrorBanner({ message, t, onClose }: ErrorBannerProps) {
 const FILE_TYPE = 'file' as const;
 const ACCEPT_IMAGES = 'image/*' as const;
 
-function ImagePreview({ uri, mediaHelp }: { uri?: string | null; mediaHelp: string }) {
+function ImagePreview({ uri, mediaHelp, t }: { uri?: string | null; mediaHelp: string; t: TFn }) {
   if (uri) {
     return (
       <View style={styles.mediaPreviewContainer}>
@@ -155,7 +169,10 @@ function ImagePreview({ uri, mediaHelp }: { uri?: string | null; mediaHelp: stri
   }
   return (
     <>
-      <UploadCloud size={32} color={MODAL_THEME.colors.textSecondary} />
+      <View style={styles.mediaUploadIconWrapper}>
+        <UploadCloud size={28} color={MODAL_THEME.colors.primary} />
+      </View>
+      <Text style={styles.mediaUploadTitle}>{t('common.uploadOrSelect')}</Text>
       <Text style={styles.mediaHelp}>{mediaHelp}</Text>
     </>
   );
@@ -167,24 +184,29 @@ function MediaImageSection({
   handleFileChange,
   closeMuscles,
   t,
-}: Omit<MediaProps, 'youtubeId' | 'videoPlaying' | 'setVideoPlaying' | 'handleChange'>) {
+}: Omit<MediaProps, 'youtubeId' | 'videoPlaying' | 'setVideoPlaying' | 'handleChange'> & {
+  fileInputRef: React.RefObject<HTMLInputElement | null>;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
   const triggerFilePicker = () => {
     closeMuscles();
     if (fileInputRef.current) fileInputRef.current.click();
   };
   return (
-    <View style={styles.fieldSection}>
-      <Text style={styles.label}>{t('coach.library.fields.imageLabel')}</Text>
-      <input
-        type={FILE_TYPE}
-        ref={fileInputRef}
-        style={{ display: 'none' }}
-        accept={ACCEPT_IMAGES}
-        onChange={handleFileChange}
-      />
-      <Pressable style={styles.mediaBox} onPress={triggerFilePicker}>
-        <ImagePreview uri={formState.mediaUrl} mediaHelp={t('coach.library.fields.imageHelp')} />
-      </Pressable>
+    <View style={styles.cardContainer}>
+      <View style={styles.fieldSection}>
+        <Text style={styles.label}>{t('coach.library.fields.imageLabel')}</Text>
+        <input
+          type={FILE_TYPE}
+          ref={fileInputRef as React.RefObject<HTMLInputElement>}
+          style={{ display: 'none' }}
+          accept={ACCEPT_IMAGES}
+          onChange={handleFileChange}
+        />
+        <Pressable style={styles.mediaBox} onPress={triggerFilePicker}>
+          <ImagePreview uri={formState.mediaUrl} mediaHelp={t('coach.library.fields.imageHelp')} t={t} />
+        </Pressable>
+      </View>
     </View>
   );
 }
@@ -229,13 +251,13 @@ function MediaVideoSection({
   formState,
   handleChange,
   youtubeId,
-  videoPlaying,
-  setVideoPlaying,
+  videoPlaying = false,
+  setVideoPlaying = () => { },
   closeMuscles,
   t,
 }: Omit<MediaProps, 'fileInputRef' | 'handleFileChange'>) {
   return (
-    <>
+    <View style={styles.cardContainer}>
       <View style={styles.fieldSection}>
         <Text style={styles.label}>{t('coach.library.fields.videoLabel')}</Text>
         <TextInput
@@ -251,27 +273,24 @@ function MediaVideoSection({
           <YTPlayer youtubeId={youtubeId} videoPlaying={videoPlaying} setVideoPlaying={setVideoPlaying} />
         </View>
       )}
-    </>
+    </View>
   );
 }
 
 export function MediaSection(props: MediaProps) {
+  const { onlyImage, onlyVideo } = props;
   return (
     <>
-      <MediaImageSection {...props} />
-      <MediaVideoSection {...props} />
+      {!onlyVideo && props.fileInputRef && props.handleFileChange && (
+        <MediaImageSection
+          {...props}
+          fileInputRef={props.fileInputRef!}
+          handleFileChange={props.handleFileChange!}
+        />
+      )}
+      {!onlyImage && (
+        <MediaVideoSection {...props} />
+      )}
     </>
-  );
-}
-
-const BTN_OUTLINE = 'outline' as const;
-
-export function ModalFooter({ isEdit, onSave, onClose, isPending, canSave, t }: FooterProps) {
-  const saveTitle = isEdit ? t('coach.library.actions.saveChanges') : t('coach.library.actions.createExercise');
-  return (
-    <View style={styles.footer}>
-      <CustomButton title={t('common.cancel')} variant={BTN_OUTLINE} onPress={onClose} />
-      <CustomButton title={saveTitle} onPress={onSave} loading={isPending} disabled={!canSave} />
-    </View>
   );
 }

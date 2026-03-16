@@ -20,7 +20,7 @@ type Props = {
   subtitle?: string | null;
   t: (key: string) => string;
   youtubeUrl?: string | null;
-  category?: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
   equipment?: null | string;
 };
 

@@ -1,14 +1,2 @@
-import type { LibraryMedia } from './library-media';
-
-export type WarmupExerciseLibraryItem = {
-  coachMembershipId: null | string;
-  createdAt: Date;
-  description: null | string;
-  id: string;
-  media: LibraryMedia;
-  mobilityType: null | string;
-  name: string;
-  scope: 'coach' | 'global';
-  updatedAt: Date;
-  youtubeUrl: null | string;
-};
+// @deprecated — use mobility-exercise-library-item.ts
+export type { MobilityExerciseLibraryItem as WarmupExerciseLibraryItem } from './mobility-exercise-library-item';

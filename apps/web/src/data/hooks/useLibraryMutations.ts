@@ -92,7 +92,7 @@ export function useUpdateExerciseMutation() {
 // === UNIFIED MODAL HOOKS ===
 
 export type UnifiedExerciseDto = {
-  category: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport';
+  category: 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport' | 'isometric';
   name: string;
   mediaUrl?: string | null;
   youtubeUrl?: string | null;
@@ -107,7 +107,9 @@ export type UnifiedExerciseDto = {
   cardioTypeId?: string | null;
   plioTypeId?: string | null;
   mobilityTypeId?: string | null;
+  isometricTypeId?: string | null;
   sportTypeId?: string | null;
+  coachInstructions?: string | null;
 };
 
 export function useCreateUnifiedExerciseMutation() {

@@ -18,8 +18,7 @@ function resolveApiBaseUrl(): string {
 export const API_BASE_URL = resolveApiBaseUrl();
 
 const PLACEHOLDERS: Record<BlockType, string> = {
-  strength:
-    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
+  strength: `${API_BASE_URL}/assets/placeholders/routine-placeholder.jpg`,
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
   warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,

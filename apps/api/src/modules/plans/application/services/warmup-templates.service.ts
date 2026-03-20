@@ -1,4 +1,5 @@
 /* eslint-disable max-lines-per-function */
+import { randomUUID } from 'crypto';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
@@ -22,17 +23,17 @@ export class WarmupTemplatesService {
 
   async create(context: AuthContext, input: Input) {
     const membership = await this.resolveCoachMembership(context);
-    const idRow = await this.prisma.$queryRawUnsafe<{ id: string }[]>(
+    const templateId = randomUUID();
+    await this.prisma.$executeRawUnsafe(
       `INSERT INTO warmup_template (
-        scope, organization_id, coach_membership_id, name, template_version, created_by, updated_by
-      ) VALUES ('COACH', $1::uuid, $2::uuid, $3, 1, $4::uuid, $4::uuid)
-      RETURNING id`,
+        id, scope, organization_id, coach_membership_id, name, template_version, created_by, updated_by, updated_at
+      ) VALUES ($1::uuid, 'COACH', $2::uuid, $3::uuid, $4, 1, $5::uuid, $5::uuid, now())`,
+      templateId,
       membership.organizationId,
       membership.id,
       input.name.trim(),
       context.subject,
     );
-    const templateId = idRow[0]?.id;
     if (!templateId) {
       throw new NotFoundException('Warmup template could not be created');
     }
@@ -106,10 +107,7 @@ export class WarmupTemplatesService {
 
   async delete(context: AuthContext, templateId: string): Promise<void> {
     await this.assertMutableTemplate(context, templateId);
-    await this.prisma.$executeRawUnsafe(
-      `UPDATE warmup_template SET archived_at = now() WHERE id = $1::uuid`,
-      templateId,
-    );
+    await this.prisma.$executeRawUnsafe(`UPDATE warmup_template SET archived_at = now() WHERE id = $1::uuid`, templateId);
   }
 
   private async loadTemplate(templateId: string) {
@@ -196,13 +194,11 @@ export class WarmupTemplatesService {
   }
 
   private async replaceItems(templateId: string, items: UpsertWarmupTemplateDto['items']) {
-    await this.prisma.$executeRawUnsafe(
-      `DELETE FROM warmup_template_item WHERE template_id = $1::uuid`,
-      templateId,
-    );
+    await this.prisma.$executeRawUnsafe(`DELETE FROM warmup_template_item WHERE template_id = $1::uuid`, templateId);
     for (const item of items) {
       await this.prisma.$executeRawUnsafe(
         `INSERT INTO warmup_template_item (
+          id,
           template_id,
           block_type,
           sort_order,
@@ -221,11 +217,13 @@ export class WarmupTemplatesService {
           target_rir,
           duration_minutes,
           notes,
-          metadata_json
+          metadata_json,
+          updated_at
         ) VALUES (
-          $1::uuid,$2,$3,$4,$5::uuid,$6::uuid,$7::uuid,$8::uuid,$9,$10,
-          $11,$12,$13,$14,$15,$16,$17,$18,$19::jsonb
+          $1::uuid,$2::uuid,$3,$4,$5,$6::uuid,$7::uuid,$8::uuid,$9::uuid,$10,$11,
+          $12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb,now()
         )`,
+        randomUUID(),
         templateId,
         item.blockType,
         item.sortOrder,

@@ -11,6 +11,7 @@ import {
   BarChart2,
   User,
   CalendarDays,
+  BookOpen,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View, ViewStyle } from 'react-native';
@@ -21,6 +22,7 @@ import { ClientsScreen } from './screens/coach/ClientsScreen';
 import { LibraryCardioMethodsScreen } from './screens/coach/LibraryCardioMethodsScreen';
 import { LibraryExercisesScreen } from './screens/coach/LibraryExercisesScreen';
 import { LibraryFoodsScreen } from './screens/coach/LibraryFoodsScreen';
+import { LibraryRoutinesScreen } from './screens/coach/LibraryRoutinesScreen';
 import { LibraryIsometricScreen } from './screens/coach/LibraryIsometricScreen';
 import { LibraryPlioScreen } from './screens/coach/LibraryPlioScreen';
 import { LibraryMobilityScreen } from './screens/coach/LibraryMobilityScreen';
@@ -227,6 +229,7 @@ function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRou
   if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
+  if (route === 'coach.library.routines') return <LibraryRoutinesScreen onRouteChange={setRoute} />;
   if (route === 'coach.library.isometrics') return <LibraryIsometricScreen />;
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.mobility') return <LibraryMobilityScreen />;
@@ -292,6 +295,12 @@ function resolveCoachNavItems(): ShellNavItem[] {
       id: 'coach.library.foods',
       labelKey: 'app.nav.coach.library.foods',
       badgeColor: 'rgba(59, 130, 246, 0.1)',
+    },
+    {
+      icon: (p) => <BookOpen {...p} />,
+      id: 'coach.library.routines',
+      labelKey: 'app.nav.coach.library.routines',
+      badgeColor: 'rgba(249, 115, 22, 0.1)',
     },
     {
       icon: (p) => <CalendarDays {...p} />,

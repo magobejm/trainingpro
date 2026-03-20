@@ -16,6 +16,7 @@ import { SPORT_TYPES_V1 } from './seeds/v1-sport-types.seed';
 import { WARMUP_EXERCISES_V1 } from './seeds/v1-warmup-exercises.seed';
 import { SPORTS_V1 } from './seeds/v1-sports.seed';
 import { ROUTINE_TEMPLATES_V1 } from './seeds/v1-routine-templates.seed';
+import { WARMUP_TEMPLATES_V1 } from './seeds/v1-warmup-templates.seed';
 import { seedMovementPatterns } from './seeds/v3-movement-patterns.seed';
 import { seedAnatomicalPlanes } from './seeds/v3-anatomical-planes.seed';
 import { mapDayForSeed, readRequiredId } from './seeds/seed-utils';
@@ -41,6 +42,7 @@ async function main(): Promise<void> {
   await seedWarmupExercises();
   await seedSports();
   await seedRoutineTemplates();
+  await seedWarmupTemplates();
 }
 
 async function seedClientObjectives(): Promise<void> {
@@ -343,6 +345,34 @@ async function seedSports(): Promise<void> {
       where: { id: item.id },
       create: { id: item.id, name: item.name, icon: item.icon, description: item.description ?? null },
       update: { archivedAt: null, name: item.name, icon: item.icon, description: item.description ?? null },
+    });
+  }
+}
+
+async function seedWarmupTemplates(): Promise<void> {
+  for (const tpl of WARMUP_TEMPLATES_V1) {
+    await (prisma as any).warmupTemplate.upsert({
+      where: { id: tpl.id },
+      create: {
+        id: tpl.id,
+        name: tpl.name,
+        scope: LibraryItemScope.GLOBAL,
+        items: {
+          create: tpl.items.map((item) => ({
+            blockType: 'mobility',
+            displayName: item.displayName,
+            sortOrder: item.sortOrder,
+            warmupExerciseLibraryId: item.warmupExerciseLibraryId,
+            roundsPlanned: item.roundsPlanned,
+            setsPlanned: item.setsPlanned ?? null,
+            repsMin: item.repsMin ?? null,
+            repsMax: item.repsMax ?? null,
+            workSeconds: item.workSeconds ?? null,
+            restSeconds: item.restSeconds ?? null,
+          })),
+        },
+      },
+      update: { name: tpl.name, scope: LibraryItemScope.GLOBAL },
     });
   }
 }

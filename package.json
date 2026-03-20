@@ -18,18 +18,18 @@
     "prepare": "husky || exit 0"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.89.0",
     "@nestjs/common": "^11.0.3",
     "@nestjs/core": "^11.0.3",
     "@prisma/client": "^6.16.3",
     "@supabase/supabase-js": "^2.57.4",
+    "@tanstack/react-query": "^5.89.0",
     "i18next": "^24.2.2",
     "jose": "^6.1.0",
     "react": "^19.0.0",
     "react-i18next": "^15.4.1",
     "react-native": "^0.77.0",
-    "zustand": "^5.0.8",
-    "zod": "^4.1.5"
+    "zod": "^4.1.5",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
@@ -41,8 +41,9 @@
     "eslint-config-prettier": "^10.0.1",
     "husky": "^9.1.7",
     "lint-staged": "^15.5.2",
-    "prisma": "^6.16.3",
     "prettier": "^3.5.0",
+    "prisma": "^6.16.3",
+    "sharp": "^0.34.5",
     "typescript": "^5.7.3"
   },
   "lint-staged": {

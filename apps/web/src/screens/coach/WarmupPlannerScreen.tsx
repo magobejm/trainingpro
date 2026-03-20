@@ -1,17 +1,11 @@
 /* eslint-disable max-lines-per-function */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { SearchBar } from '@trainerpro/ui';
 import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType } from './RoutinePlanner.types';
-import {
-  EMPTY_DRAFT,
-  fromTemplate,
-  moveBlocks,
-  toPayload,
-  type DraftState,
-} from './WarmupPlannerScreen.helpers';
+import { EMPTY_DRAFT, fromTemplate, moveBlocks, toPayload, type DraftState } from './WarmupPlannerScreen.helpers';
 import { s } from './RoutinePlanner.styles';
 import { AddBlockSection } from './components/RoutineDayCard/AddBlockSection';
 import { RoutineBlockCard } from './components/RoutineBlockCard';
@@ -24,6 +18,7 @@ import {
   useWarmupTemplatesQuery,
   type WarmupTemplateView,
 } from '../../data/hooks/useWarmupTemplates';
+import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 
 export function WarmupPlannerScreen(): React.JSX.Element {
   const vm = useWarmupPlannerViewModel();
@@ -49,6 +44,17 @@ function useWarmupPlannerViewModel() {
     [draft.blocks],
   );
   const filteredList = useMemo(() => filterWarmups(list, listQuery), [list, listQuery]);
+  const initialTemplateId = useWarmupPlannerContextStore((s) => s.initialTemplateId);
+  const clearWarmupContext = useWarmupPlannerContextStore((s) => s.clear);
+  useEffect(() => {
+    if (!initialTemplateId || list.length === 0) return;
+    const tpl = list.find((item) => item.id === initialTemplateId);
+    if (!tpl) return;
+    setEditingId(tpl.scope === 'GLOBAL' ? null : tpl.id);
+    setIsReadOnlyDraft(tpl.scope === 'GLOBAL');
+    setDraft(fromTemplate(tpl));
+    clearWarmupContext();
+  }, [initialTemplateId, list, clearWarmupContext]);
   return {
     createMutation,
     deleteMutation,
@@ -76,9 +82,7 @@ function useWarmupPlannerViewModel() {
 }
 
 function filterWarmups(list: WarmupTemplateView[], query: string): WarmupTemplateView[] {
-  const sorted = [...list].sort((a, b) =>
-    a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
-  );
+  const sorted = [...list].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
   const raw = query.trim().toLowerCase();
   if (!raw) {
     return sorted;
@@ -103,9 +107,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
       </View>
 
       <View style={s.card}>
-        {vm.orderedBlocks.length === 0 ? (
-          <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text>
-        ) : null}
+        {vm.orderedBlocks.length === 0 ? <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text> : null}
         {vm.orderedBlocks.map((block, index) => (
           <div
             key={block.id}
@@ -124,9 +126,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
               const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
               if (!isNaN(fromIndex) && fromIndex !== index) {
                 vm.setDraft((state) => {
-                  const newBlocks = [...state.blocks].sort(
-                    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-                  );
+                  const newBlocks = [...state.blocks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
                   const [moved] = newBlocks.splice(fromIndex, 1);
                   if (moved) {
                     newBlocks.splice(index, 0, moved);
@@ -166,9 +166,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
                   ? undefined
                   : vm.setDraft((state) => ({
                       ...state,
-                      blocks: state.blocks.map((item) =>
-                        item.id === block.id ? { ...item, [field]: value } : item,
-                      ),
+                      blocks: state.blocks.map((item) => (item.id === block.id ? { ...item, [field]: value } : item)),
                     }))
               }
               readOnly={vm.isReadOnlyDraft}
@@ -191,9 +189,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
       {vm.isReadOnlyDraft ? null : (
         <Pressable onPress={onSave} style={s.saveBtn}>
           <Text style={s.saveBtnText}>
-            {vm.isSaving
-              ? vm.t('coach.library.exercises.editModal.saving')
-              : vm.t('coach.warmupPlanner.save')}
+            {vm.isSaving ? vm.t('coach.library.exercises.editModal.saving') : vm.t('coach.warmupPlanner.save')}
           </Text>
         </Pressable>
       )}
@@ -209,9 +205,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
           <View key={template.id} style={s.templateItem}>
             <View style={{ flex: 1 }}>
               <Text style={s.templateName}>{template.name}</Text>
-              <Text style={s.templateMeta}>
-                {vm.t('coach.warmupPlanner.blocksCount', { count: template.items.length })}
-              </Text>
+              <Text style={s.templateMeta}>{vm.t('coach.warmupPlanner.blocksCount', { count: template.items.length })}</Text>
             </View>
             <View style={s.templateActions}>
               <Pressable
@@ -223,9 +217,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
                 style={s.editBtn}
               >
                 <Text style={s.editBtnText}>
-                  {template.scope === 'GLOBAL'
-                    ? vm.t('common.view')
-                    : vm.t('coach.routine.list.edit')}
+                  {template.scope === 'GLOBAL' ? vm.t('common.view') : vm.t('coach.routine.list.edit')}
                 </Text>
               </Pressable>
               {canDeleteTemplate(template) ? (
@@ -246,10 +238,7 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
           if (!type) return;
           vm.setDraft((state) => ({
             ...state,
-            blocks: [
-              ...state.blocks,
-              { ...createBlock(type, name), libraryId, sortOrder: state.blocks.length },
-            ],
+            blocks: [...state.blocks, { ...createBlock(type, name), libraryId, sortOrder: state.blocks.length }],
           }));
           vm.setPickerType(null);
         }}

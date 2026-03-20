@@ -7,11 +7,8 @@ type RoutinePlannerContextState = {
   consumeClientId: () => null | string;
   clear: () => void;
   clearInitialTemplate: () => void;
-  openForClient: (
-    clientId: string,
-    clientDisplayName: string,
-    initialTemplateId?: null | string,
-  ) => void;
+  openForClient: (clientId: string, clientDisplayName: string, initialTemplateId?: null | string) => void;
+  openForEdit: (templateId: string) => void;
 };
 
 export const useRoutinePlannerContextStore = create<RoutinePlannerContextState>((set) => ({
@@ -34,4 +31,5 @@ export const useRoutinePlannerContextStore = create<RoutinePlannerContextState>(
       clientId,
       initialTemplateId: initialTemplateId ?? null,
     }),
+  openForEdit: (templateId) => set({ clientDisplayName: null, clientId: null, initialTemplateId: templateId }),
 }));

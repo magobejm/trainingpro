@@ -1,7 +1,6 @@
 import React, { useRef } from 'react';
-import { ScrollView } from 'react-native';
+import { Pressable, ScrollView, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
-import { DayTabs } from './DayTabs';
 import { DayList } from './DayList';
 import { SaveButton } from './SaveButton';
 import { RoutineList } from './RoutineList';
@@ -10,10 +9,7 @@ import { mapTemplateToDraft } from '../../RoutinePlanner.helpers';
 import type { DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
-import {
-  useWarmupTemplatesQuery,
-  type WarmupTemplateView,
-} from '../../../../data/hooks/useWarmupTemplates';
+import { useWarmupTemplatesQuery, type WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { RoutinePlannerModals } from './RoutinePlannerModals';
 import { createWarmupTemplateSelector } from './RoutinePlannerLayout.helpers';
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
@@ -47,15 +43,12 @@ interface LayoutProps {
     removeDay: (dayIdx: number) => void;
     renameDay: (dayIdx: number, title: string) => void;
     onAddBlock: (dayIdx: number, type: BlockType, libraryId: string, name: string) => void;
-    onUpdateBlockField: (
-      dayIdx: number,
-      blockId: string,
-      field: keyof DraftBlock,
-      value: unknown,
-    ) => void;
+    onUpdateBlockField: (dayIdx: number, blockId: string, field: keyof DraftBlock, value: unknown) => void;
     onMoveBlock: (dayIdx: number, blockIdx: number, direction: -1 | 1) => void;
     onMoveBlockToDay: (fromIdx: number, bIdx: number, toIdx: number) => void;
     onRemoveBlock: (dayIdx: number, blockId: string) => void;
+    moveDay: (fromIdx: number, dir: -1 | 1) => void;
+    lastAddedBlockId: string | null;
   };
   onSave: () => void;
   templates: RoutineTemplateView[];
@@ -76,6 +69,7 @@ function buildDraftHandlers(
   return {
     onOpenPicker,
     onOpenWarmupTemplatePicker,
+    moveDay: draftState.moveDay,
     onMoveBlock: draftState.onMoveBlock,
     onMoveBlockToDay: draftState.onMoveBlockToDay,
     onRemoveBlock: draftState.onRemoveBlock,
@@ -95,7 +89,6 @@ function RoutineMainSection(
   const isReadOnly = draftState.draft.scope === 'GLOBAL';
   return (
     <>
-      <RoutineTabs draftState={draftState} isReadOnly={isReadOnly} labels={labels} t={t} />
       <RoutineDayList
         addIdx={uiState.addIdx}
         draftState={draftState}
@@ -105,27 +98,12 @@ function RoutineMainSection(
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
         setAddIdx={uiState.setAddIdx}
       />
+      {!isReadOnly && (
+        <Pressable onPress={draftState.addDay} style={s.addDayBtn}>
+          <Text style={s.addDayText}>{`+ ${t(labels.addContainerKey)}`}</Text>
+        </Pressable>
+      )}
     </>
-  );
-}
-
-function RoutineTabs(props: {
-  draftState: LayoutProps['draftState'];
-  isReadOnly: boolean;
-  labels: PlannerLabels;
-  t: (k: string, options?: Record<string, unknown>) => string;
-}) {
-  return (
-    <DayTabs
-      activeIdx={props.draftState.activeDayIdx}
-      addLabelKey={props.labels.addContainerKey}
-      days={props.draftState.draft.days}
-      onAdd={props.draftState.addDay}
-      onSelect={props.draftState.setActiveDayIdx}
-      onMoveBlockToDay={props.draftState.onMoveBlockToDay}
-      readOnly={props.isReadOnly}
-      t={props.t}
-    />
   );
 }
 
@@ -140,16 +118,12 @@ function RoutineDayList(props: {
 }) {
   return (
     <DayList
-      activeDayIdx={props.draftState.activeDayIdx}
       addIdx={props.addIdx}
       days={props.draftState.draft.days}
-      draftState={buildDraftHandlers(
-        props.draftState,
-        props.onOpenPicker,
-        props.onOpenWarmupTemplatePicker,
-      )}
+      draftState={buildDraftHandlers(props.draftState, props.onOpenPicker, props.onOpenWarmupTemplatePicker)}
       isReadOnly={props.isReadOnly}
       labels={props.labels}
+      lastAddedBlockId={props.draftState.lastAddedBlockId}
       setAddIdx={props.setAddIdx}
     />
   );
@@ -183,20 +157,10 @@ function RoutineFooterSection(props: LayoutProps) {
 
 function SaveActionButton(props: { props: LayoutProps }) {
   const { clientContextName, onSave, t, uiState } = props.props;
-  return (
-    <SaveButton
-      clientContextName={clientContextName}
-      isEditing={!!uiState.editingId}
-      onSave={onSave}
-      t={t}
-    />
-  );
+  return <SaveButton clientContextName={clientContextName} isEditing={!!uiState.editingId} onSave={onSave} t={t} />;
 }
 
-function buildTemplateLoader(
-  setEditingId: (id: string | null) => void,
-  draftState: LayoutProps['draftState'],
-) {
+function buildTemplateLoader(setEditingId: (id: string | null) => void, draftState: LayoutProps['draftState']) {
   return (tpl: RoutineTemplateView) => {
     setEditingId(tpl.id);
     draftState.setDraft(mapTemplateToDraft(tpl));
@@ -233,8 +197,10 @@ function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutPr
 export function RoutinePlannerLayout(props: LayoutProps) {
   const { uiState, draftState } = props;
   const warmupTemplates = useWarmupTemplatesQuery().data ?? [];
-  const { onOpenPicker, onOpenWarmupTemplatePicker, onPickerSelect, onSelectWarmupTemplate } =
-    usePickerHandlers(uiState, draftState);
+  const { onOpenPicker, onOpenWarmupTemplatePicker, onPickerSelect, onSelectWarmupTemplate } = usePickerHandlers(
+    uiState,
+    draftState,
+  );
   return renderLayout(
     props,
     onOpenPicker,

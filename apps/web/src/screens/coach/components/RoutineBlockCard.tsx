@@ -1,20 +1,22 @@
+/* eslint-disable max-lines-per-function */
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { s } from '../RoutinePlanner.styles';
-import type { DraftBlock } from '../RoutinePlanner.types';
+import type { BlockType, DraftBlock } from '../RoutinePlanner.types';
 import { MoveMenu } from './RoutineBlockCard/MoveMenu';
 import { BlockFields } from './RoutineBlockCard/BlockFields';
 import { BlockNotes } from './RoutineBlockCard/BlockNotes';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
-import { DetailsToggle } from './RoutineBlockCard/DetailsToggle';
 import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
+import { resolvePlaceholder } from './RoutinePlanner/ExercisePickerModal.utils';
 
 interface RoutineBlockCardProps {
   block: DraftBlock;
   dayIdx: number;
   isFirst: boolean;
   isLast: boolean;
+  isNew?: boolean;
   daysCount: number;
   dayLabels?: string[];
   readOnly?: boolean;
@@ -24,45 +26,73 @@ interface RoutineBlockCardProps {
   onMoveToDay: (targetDayIdx: number) => void;
 }
 
-export function RoutineBlockCard(props: RoutineBlockCardProps) {
-  const { t } = useTranslation();
-  const state = useBlockCardState();
-  return <RoutineBlockCardView props={props} state={state} t={t} />;
-}
-
-function useBlockCardState() {
+function useBlockCardState(isNew?: boolean) {
   const [showMove, setShowMove] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(!isNew);
+  const [isEditing, setIsEditing] = useState(false);
   return {
     showMove,
     setShowMove,
-    showDetails,
-    setShowDetails,
     showDetailModal,
     setShowDetailModal,
+    isCollapsed,
+    setIsCollapsed,
+    isEditing,
+    setIsEditing,
   };
 }
 
-function RoutineBlockCardView({
-  props,
-  state,
-  t,
-}: {
-  props: RoutineBlockCardProps;
-  state: ReturnType<typeof useBlockCardState>;
-  t: (k: string) => string;
-}) {
+export function RoutineBlockCard(props: RoutineBlockCardProps) {
+  const { t } = useTranslation();
+  const state = useBlockCardState(props.isNew);
+  const fieldsReadOnly = !!props.readOnly || !state.isEditing;
   return (
     <View style={s.blockCard}>
-      <BlockHeaderSection props={props} state={state} t={t} />
-      <BlockContent
-        props={props}
-        setShowDetails={state.setShowDetails}
-        showDetails={state.showDetails}
-        showMove={state.showMove}
+      <BlockHeader
+        daysCount={props.daysCount}
+        displayName={props.block.displayName}
+        importedFromWarmup={props.block.fromWarmupTemplate}
+        isCollapsed={state.isCollapsed}
+        isEditing={state.isEditing}
+        isFirst={props.isFirst}
+        isLast={props.isLast}
+        onMove={props.onMove}
+        onRemove={props.onRemove}
+        onShowMove={() => state.setShowMove(!state.showMove)}
+        onShowDetail={() => state.setShowDetailModal(true)}
+        onToggleCollapse={() => state.setIsCollapsed((v) => !v)}
+        onToggleEdit={() => state.setIsEditing((v) => !v)}
+        onUpdateName={(v) => props.onUpdateField('displayName', v)}
+        readOnly={!!props.readOnly}
         t={t}
+        type={props.block.type}
       />
+      {!state.isCollapsed && (
+        <>
+          {state.showMove && props.daysCount > 1 && (
+            <MoveMenu
+              dayIdx={props.dayIdx}
+              daysCount={props.daysCount}
+              dayLabels={props.dayLabels}
+              onMoveToDay={props.onMoveToDay}
+              t={t}
+            />
+          )}
+          <View style={s.blockBodyRow}>
+            <BlockImage blockType={props.block.type} />
+            <View style={s.blockBodyFieldsWrap}>
+              <BlockFields block={props.block} onUpdateField={props.onUpdateField} readOnly={fieldsReadOnly} t={t} />
+              <BlockNotes
+                notes={props.block.notes}
+                onUpdate={(v: string) => props.onUpdateField('notes', v)}
+                readOnly={fieldsReadOnly}
+                t={t}
+              />
+            </View>
+          </View>
+        </>
+      )}
       <BlockDetailModal
         block={props.block}
         onClose={() => state.setShowDetailModal(false)}
@@ -72,122 +102,12 @@ function RoutineBlockCardView({
   );
 }
 
-function BlockHeaderSection({
-  props,
-  state,
-  t,
-}: {
-  props: RoutineBlockCardProps;
-  state: ReturnType<typeof useBlockCardState>;
-  t: (k: string) => string;
-}) {
-  return (
-    <BlockHeader
-      daysCount={props.daysCount}
-      displayName={props.block.displayName}
-      importedFromWarmup={props.block.fromWarmupTemplate}
-      isFirst={props.isFirst}
-      isLast={props.isLast}
-      onMove={props.onMove}
-      onRemove={props.onRemove}
-      onShowMove={() => state.setShowMove(!state.showMove)}
-      onShowDetail={() => state.setShowDetailModal(true)}
-      onUpdateName={(v) => props.onUpdateField('displayName', v)}
-      readOnly={!!props.readOnly}
-      t={t}
-      type={props.block.type}
-    />
-  );
-}
+const RESIZE_MODE_COVER = 'cover' as const;
 
-function MoveSection({
-  show,
-  props,
-  t,
-}: {
-  show: boolean;
-  props: RoutineBlockCardProps;
-  t: (k: string) => string;
-}) {
-  if (!show || props.daysCount <= 1) return null;
+function BlockImage({ blockType }: { blockType: BlockType }) {
   return (
-    <MoveMenu
-      dayIdx={props.dayIdx}
-      daysCount={props.daysCount}
-      dayLabels={props.dayLabels}
-      onMoveToDay={props.onMoveToDay}
-      t={t}
-    />
-  );
-}
-
-function FieldsSection({
-  props,
-  showDetails,
-  setShowDetails,
-  t,
-}: {
-  props: RoutineBlockCardProps;
-  showDetails: boolean;
-  setShowDetails: (v: boolean) => void;
-  t: (k: string) => string;
-}) {
-  return (
-    <View style={s.blockFields}>
-      <BlockFields
-        block={props.block}
-        onUpdateField={props.onUpdateField}
-        readOnly={!!props.readOnly}
-        t={t}
-      />
-      <DetailsToggle onToggle={() => setShowDetails(!showDetails)} show={showDetails} t={t} />
+    <View style={s.blockImageWrap}>
+      <Image resizeMode={RESIZE_MODE_COVER} source={{ uri: resolvePlaceholder(blockType) }} style={s.blockBodyImage} />
     </View>
-  );
-}
-
-function NotesSection({
-  show,
-  props,
-  t,
-}: {
-  show: boolean;
-  props: RoutineBlockCardProps;
-  t: (k: string) => string;
-}) {
-  if (!show) return null;
-  return (
-    <BlockNotes
-      notes={props.block.notes}
-      onUpdate={(v: string) => props.onUpdateField('notes', v)}
-      readOnly={!!props.readOnly}
-      t={t}
-    />
-  );
-}
-
-function BlockContent({
-  props,
-  showMove,
-  showDetails,
-  setShowDetails,
-  t,
-}: {
-  props: RoutineBlockCardProps;
-  showMove: boolean;
-  showDetails: boolean;
-  setShowDetails: (v: boolean) => void;
-  t: (k: string) => string;
-}) {
-  return (
-    <>
-      <MoveSection props={props} show={showMove} t={t} />
-      <FieldsSection
-        props={props}
-        setShowDetails={setShowDetails}
-        showDetails={showDetails}
-        t={t}
-      />
-      <NotesSection props={props} show={showDetails} t={t} />
-    </>
   );
 }

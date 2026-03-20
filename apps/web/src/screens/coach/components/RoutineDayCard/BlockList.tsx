@@ -8,6 +8,7 @@ interface BlockListProps {
   daysCount: number;
   dayLabels?: string[];
   readOnly: boolean;
+  lastAddedBlockId?: string | null;
   onMoveBlock: (idx: number, dir: -1 | 1) => void;
   onMoveBlockToDay: (idx: number, target: number) => void;
   onRemoveBlock: (id: string) => void;
@@ -32,6 +33,7 @@ export const BlockList = (props: BlockListProps) => (
           dayLabels={props.dayLabels}
           isFirst={bIdx === 0}
           isLast={bIdx === props.blocks.length - 1}
+          isNew={block.id === props.lastAddedBlockId}
           onMove={(dir) => props.onMoveBlock(bIdx, dir)}
           onMoveToDay={(target) => props.onMoveBlockToDay(bIdx, target)}
           onRemove={() => props.onRemoveBlock(block.id)}

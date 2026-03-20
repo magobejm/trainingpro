@@ -12,26 +12,26 @@ export interface DraftStateHandlers {
   onRemoveBlock: (dayIdx: number, blockId: string) => void;
   renameDay: (dayIdx: number, title: string) => void;
   onUpdateBlockField: (dayIdx: number, blockId: string, f: keyof DraftBlock, v: unknown) => void;
+  moveDay: (fromIdx: number, dir: -1 | 1) => void;
 }
 
 interface DayListProps {
   days: DraftDay[];
-  activeDayIdx: number;
   addIdx: number | null;
   setAddIdx: (i: number | null) => void;
   draftState: DraftStateHandlers;
   isReadOnly: boolean;
   labels?: PlannerLabels;
+  lastAddedBlockId?: string | null;
 }
 
 export function DayList(props: DayListProps) {
-  const { days, activeDayIdx, addIdx, setAddIdx, draftState, isReadOnly, labels } = props;
+  const { days, addIdx, setAddIdx, draftState, isReadOnly, labels, lastAddedBlockId } = props;
   const dayLabels = days.map((day) => day.title);
   return (
     <>
       {days.map((day, idx) => (
         <DayListItem
-          activeDayIdx={activeDayIdx}
           addIdx={addIdx}
           day={day}
           dayLabels={dayLabels}
@@ -40,6 +40,7 @@ export function DayList(props: DayListProps) {
           idx={idx}
           isReadOnly={isReadOnly}
           key={day.id}
+          lastAddedBlockId={lastAddedBlockId}
           setAddIdx={setAddIdx}
           labels={labels}
         />
@@ -51,7 +52,6 @@ export function DayList(props: DayListProps) {
 interface ItemProps {
   day: DraftDay;
   idx: number;
-  activeDayIdx: number;
   addIdx: number | null;
   daysCount: number;
   dayLabels: string[];
@@ -59,16 +59,19 @@ interface ItemProps {
   isReadOnly: boolean;
   setAddIdx: (i: number | null) => void;
   labels?: PlannerLabels;
+  lastAddedBlockId?: string | null;
 }
 
 const DayListItem = (p: ItemProps) => (
   <RoutineDayCard
-    activeDayIdx={p.activeDayIdx}
     addBlockDayIdx={p.addIdx}
     day={p.day}
     dayIdx={p.idx}
     dayLabels={p.dayLabels}
     daysCount={p.daysCount}
+    isFirst={p.idx === 0}
+    isLast={p.idx === p.daysCount - 1}
+    lastAddedBlockId={p.lastAddedBlockId}
     onAddBlock={(type) => {
       p.draftState.onOpenPicker(p.idx, type);
       p.setAddIdx(null);
@@ -79,6 +82,7 @@ const DayListItem = (p: ItemProps) => (
     }}
     onMoveBlock={(bIdx, dir) => p.draftState.onMoveBlock(p.idx, bIdx, dir)}
     onMoveBlockToDay={(bIdx, target) => p.draftState.onMoveBlockToDay(p.idx, bIdx, target)}
+    onMoveDay={(dir) => p.draftState.moveDay(p.idx, dir)}
     onRemove={() => p.draftState.removeDay(p.idx)}
     onRemoveBlock={(blockId) => p.draftState.onRemoveBlock(p.idx, blockId)}
     onRename={(title) => p.draftState.renameDay(p.idx, title)}

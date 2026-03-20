@@ -8,6 +8,8 @@ interface BlockHeaderProps {
   type: BlockType;
   displayName: string;
   importedFromWarmup?: boolean;
+  isCollapsed: boolean;
+  isEditing: boolean;
   readOnly: boolean;
   onUpdateName: (v: string) => void;
   daysCount: number;
@@ -17,6 +19,8 @@ interface BlockHeaderProps {
   onRemove: () => void;
   onShowMove: () => void;
   onShowDetail: () => void;
+  onToggleCollapse: () => void;
+  onToggleEdit: () => void;
   t: (k: string) => string;
 }
 
@@ -38,29 +42,28 @@ export function BlockHeader(props: BlockHeaderProps) {
         {props.displayName}
       </Text>
       <View style={[s.blockTag, { backgroundColor: tagColor.bg }]}>
-        <Text style={[s.blockTagText, { color: tagColor.text }]}>
-          {props.t(`coach.routine.blockType.${props.type}`)}
-        </Text>
+        <Text style={[s.blockTagText, { color: tagColor.text }]}>{props.t(`coach.routine.blockType.${props.type}`)}</Text>
       </View>
       <WarmupImportedTag imported={props.importedFromWarmup} t={props.t} />
       <BlockActions
         daysCount={props.daysCount}
+        isCollapsed={props.isCollapsed}
+        isEditing={props.isEditing}
         isFirst={props.isFirst}
         isLast={props.isLast}
         onMove={props.onMove}
         onRemove={props.onRemove}
         onShowMove={props.onShowMove}
         onShowDetail={props.onShowDetail}
+        onToggleCollapse={props.onToggleCollapse}
+        onToggleEdit={props.onToggleEdit}
         readOnly={props.readOnly}
       />
     </View>
   );
 }
 
-function WarmupImportedTag(props: {
-  imported?: boolean;
-  t: (k: string) => string;
-}): React.JSX.Element | null {
+function WarmupImportedTag(props: { imported?: boolean; t: (k: string) => string }): React.JSX.Element | null {
   if (!props.imported) return null;
   return (
     <View style={styles.tag}>

@@ -1,31 +1,34 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import type { BlockType, DraftBlock, DraftState } from '../../RoutinePlanner.types';
-import { createBlock } from '../../RoutinePlanner.helpers';
+import { createBlock, nextBlockId } from '../../RoutinePlanner.helpers';
 
 export function useBlockManagement(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
-  const onAddBlock = useAddBlock(setDraft);
+  const [lastAddedBlockId, setLastAddedBlockId] = useState<string | null>(null);
+  const onAddBlock = useAddBlock(setDraft, setLastAddedBlockId);
   const onUpdateBlockField = useUpdateBlock(setDraft);
   const onRemoveBlock = useRemoveBlock(setDraft);
 
-  return { onAddBlock, onUpdateBlockField, onRemoveBlock };
+  return { onAddBlock, onUpdateBlockField, onRemoveBlock, lastAddedBlockId };
 }
 
-function useAddBlock(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
+function useAddBlock(setDraft: React.Dispatch<React.SetStateAction<DraftState>>, setLastAddedBlockId: (id: string) => void) {
   return useCallback(
     (dayIdx: number, type: BlockType, libraryId: string, displayName: string) => {
+      const newId = nextBlockId();
+      setLastAddedBlockId(newId);
       setDraft((d) => ({
         ...d,
         days: d.days.map((day, i) =>
           i === dayIdx
             ? {
                 ...day,
-                blocks: [...day.blocks, { ...createBlock(type, displayName), libraryId }],
+                blocks: [...day.blocks, { ...createBlock(type, displayName), libraryId, id: newId }],
               }
             : day,
         ),
       }));
     },
-    [setDraft],
+    [setDraft, setLastAddedBlockId],
   );
 }
 
@@ -53,9 +56,7 @@ function useRemoveBlock(setDraft: React.Dispatch<React.SetStateAction<DraftState
     (dayIdx: number, blockId: string) => {
       setDraft((d) => ({
         ...d,
-        days: d.days.map((dy, i) =>
-          i === dayIdx ? { ...dy, blocks: dy.blocks.filter((b) => b.id !== blockId) } : dy,
-        ),
+        days: d.days.map((dy, i) => (i === dayIdx ? { ...dy, blocks: dy.blocks.filter((b) => b.id !== blockId) } : dy)),
       }));
     },
     [setDraft],

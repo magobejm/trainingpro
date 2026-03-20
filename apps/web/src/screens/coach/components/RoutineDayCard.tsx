@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { s } from '../RoutinePlanner.styles';
@@ -13,7 +13,8 @@ interface RoutineDayCardProps {
   dayIdx: number;
   daysCount: number;
   dayLabels?: string[];
-  activeDayIdx: number;
+  isFirst: boolean;
+  isLast: boolean;
   addBlockDayIdx: number | null;
   readOnly?: boolean;
   onRename: (title: string) => void;
@@ -25,50 +26,62 @@ interface RoutineDayCardProps {
   onMoveBlock: (blockIdx: number, direction: -1 | 1) => void;
   onRemoveBlock: (blockId: string) => void;
   onMoveBlockToDay: (blockIdx: number, targetDayIdx: number) => void;
+  onMoveDay: (direction: -1 | 1) => void;
   labels?: PlannerLabels;
+  lastAddedBlockId?: string | null;
 }
 
 export function RoutineDayCard(props: RoutineDayCardProps) {
   const { t } = useTranslation();
-  if (props.dayIdx !== props.activeDayIdx) return null;
-
-  const { day, readOnly, addBlockDayIdx, dayIdx } = props;
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { day, readOnly, addBlockDayIdx, dayIdx, daysCount } = props;
   const isAdding = addBlockDayIdx === dayIdx;
 
+  const onAddBlockClick = () => {
+    setIsCollapsed(false);
+    props.onSetAddBlockDayIdx(isAdding ? null : dayIdx);
+  };
+
   return (
-    <View style={s.card}>
+    <View style={s.dayCardOuter}>
       <DayHeader
-        daysCount={props.daysCount}
+        blockCount={day.blocks.length}
+        dayNumber={dayIdx + 1}
+        daysCount={daysCount}
+        isCollapsed={isCollapsed}
+        isFirst={props.isFirst}
+        isLast={props.isLast}
+        onAddBlock={onAddBlockClick}
+        onMoveDay={props.onMoveDay}
         onRemove={props.onRemove}
         onRename={props.onRename}
-        deleteLabelKey={props.labels?.deleteContainerKey}
-        placeholderKey={props.labels?.containerPlaceholderKey}
+        onToggleCollapse={() => setIsCollapsed((v) => !v)}
         readOnly={!!readOnly}
         t={t}
         title={day.title}
       />
-      <DayBlocksContent props={props} t={t} />
-      {!readOnly && (
-        <AddBlockSection
-          isAdding={isAdding}
-          onAdd={props.onAddBlock}
-          onAddWarmupTemplate={props.onAddWarmupTemplate}
-          onCancel={() => props.onSetAddBlockDayIdx(isAdding ? null : dayIdx)}
-          t={t}
-        />
+      {!isCollapsed && (
+        <View style={s.dayCardBody}>
+          <DayBlocksContent props={props} t={t} />
+          {!readOnly && (
+            <AddBlockSection
+              isAdding={isAdding}
+              onAdd={props.onAddBlock}
+              onAddWarmupTemplate={props.onAddWarmupTemplate}
+              onCancel={() => props.onSetAddBlockDayIdx(isAdding ? null : dayIdx)}
+              t={t}
+            />
+          )}
+        </View>
       )}
     </View>
   );
 }
 
 function DayBlocksContent({ props, t }: { props: RoutineDayCardProps; t: (k: string) => string }) {
-  const { day, readOnly, dayIdx, daysCount, dayLabels } = props;
+  const { day, readOnly, dayIdx, daysCount, dayLabels, lastAddedBlockId } = props;
   if (day.blocks.length === 0) {
-    return (
-      <Text style={s.emptyDay}>
-        {t(props.labels?.emptyContainerKey ?? 'coach.routine.emptyDay')}
-      </Text>
-    );
+    return <Text style={s.emptyDay}>{t(props.labels?.emptyContainerKey ?? 'coach.routine.emptyDay')}</Text>;
   }
   return (
     <BlockList
@@ -76,6 +89,7 @@ function DayBlocksContent({ props, t }: { props: RoutineDayCardProps; t: (k: str
       dayIdx={dayIdx}
       daysCount={daysCount}
       dayLabels={dayLabels}
+      lastAddedBlockId={lastAddedBlockId}
       onMoveBlock={props.onMoveBlock}
       onMoveBlockToDay={props.onMoveBlockToDay}
       onRemoveBlock={props.onRemoveBlock}

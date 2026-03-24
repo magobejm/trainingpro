@@ -11,13 +11,7 @@ interface AddBlockSectionProps {
   t: (k: string) => string;
 }
 
-export function AddBlockSection({
-  isAdding,
-  onAdd,
-  onAddWarmupTemplate,
-  onCancel,
-  t,
-}: AddBlockSectionProps) {
+export function AddBlockSection({ isAdding, onAdd, onAddWarmupTemplate, onCancel, t }: AddBlockSectionProps) {
   if (isAdding) return renderTypeButtons(onAdd, onAddWarmupTemplate, onCancel, t);
   return (
     <Pressable onPress={onCancel} style={s.addBlockBtn}>
@@ -32,14 +26,9 @@ function renderTypeButtons(
   onCancel: () => void,
   t: (k: string) => string,
 ): React.JSX.Element {
-  const types: BlockType[] = ['warmup', 'strength', 'cardio', 'plio'];
+  const types: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'warmup'];
   return (
     <View style={s.blockTypeRow}>
-      {onAddWarmupTemplate ? (
-        <Pressable onPress={onAddWarmupTemplate} style={s.blockTypeBtn}>
-          <Text style={s.blockTypeBtnText}>{t('coach.routine.blockType.warmupTemplate')}</Text>
-        </Pressable>
-      ) : null}
       {types.map((bt) => (
         <Pressable key={bt} onPress={() => onAdd(bt)} style={s.blockTypeBtn}>
           <Text style={s.blockTypeBtnText}>{t(`coach.routine.blockType.${bt}`)}</Text>

@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SearchBar } from '@trainerpro/ui';
 import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType } from './RoutinePlanner.types';
 import { EMPTY_DRAFT, fromTemplate, moveBlocks, toPayload, type DraftState } from './WarmupPlannerScreen.helpers';
@@ -107,6 +106,13 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
       </View>
 
       <View style={s.card}>
+        {!vm.isReadOnlyDraft && (
+          <View style={s.dayHeaderRight}>
+            <Pressable onPress={() => vm.setShowTypeButtons(true)} style={s.dayAddExerciseBtn}>
+              <Text style={s.dayAddExerciseBtnText}>{`+ ${vm.t('coach.routine.addExercise')}`}</Text>
+            </Pressable>
+          </View>
+        )}
         {vm.orderedBlocks.length === 0 ? <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text> : null}
         {vm.orderedBlocks.map((block, index) => (
           <div
@@ -173,14 +179,14 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
             />
           </div>
         ))}
-        {vm.isReadOnlyDraft ? null : (
+        {!vm.isReadOnlyDraft && vm.showTypeButtons && (
           <AddBlockSection
             isAdding={vm.showTypeButtons}
             onAdd={(type) => {
               vm.setPickerType(type);
               vm.setShowTypeButtons(false);
             }}
-            onCancel={() => vm.setShowTypeButtons((value) => !value)}
+            onCancel={() => vm.setShowTypeButtons(false)}
             t={vm.t}
           />
         )}
@@ -193,42 +199,6 @@ function renderWarmupPlanner(vm: ReturnType<typeof useWarmupPlannerViewModel>): 
           </Text>
         </Pressable>
       )}
-
-      <View style={s.card}>
-        <Text style={s.label}>{vm.t('coach.warmupPlanner.savedList')}</Text>
-        <SearchBar
-          onChangeText={vm.setListQuery}
-          placeholder={vm.t('coach.warmupPlanner.searchPlaceholder')}
-          value={vm.listQuery}
-        />
-        {vm.filteredList.map((template) => (
-          <View key={template.id} style={s.templateItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={s.templateName}>{template.name}</Text>
-              <Text style={s.templateMeta}>{vm.t('coach.warmupPlanner.blocksCount', { count: template.items.length })}</Text>
-            </View>
-            <View style={s.templateActions}>
-              <Pressable
-                onPress={() => {
-                  vm.setEditingId(template.scope === 'GLOBAL' ? null : template.id);
-                  vm.setIsReadOnlyDraft(template.scope === 'GLOBAL');
-                  vm.setDraft(fromTemplate(template));
-                }}
-                style={s.editBtn}
-              >
-                <Text style={s.editBtnText}>
-                  {template.scope === 'GLOBAL' ? vm.t('common.view') : vm.t('coach.routine.list.edit')}
-                </Text>
-              </Pressable>
-              {canDeleteTemplate(template) ? (
-                <Pressable onPress={() => vm.setPendingDeleteId(template.id)} style={s.deleteBtn}>
-                  <Text style={s.deleteBtnText}>{vm.t('coach.routine.list.delete')}</Text>
-                </Pressable>
-              ) : null}
-            </View>
-          </View>
-        ))}
-      </View>
 
       <ExercisePickerModal
         blockType={vm.pickerType}

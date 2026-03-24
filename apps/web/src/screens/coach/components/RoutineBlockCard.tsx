@@ -7,6 +7,7 @@ import type { BlockType, DraftBlock } from '../RoutinePlanner.types';
 import { MoveMenu } from './RoutineBlockCard/MoveMenu';
 import { BlockFields } from './RoutineBlockCard/BlockFields';
 import { BlockNotes } from './RoutineBlockCard/BlockNotes';
+import { BlockNotesModal } from './RoutineBlockCard/BlockNotesModal';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
 import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
 import { resolvePlaceholder } from './RoutinePlanner/ExercisePickerModal.utils';
@@ -29,6 +30,7 @@ interface RoutineBlockCardProps {
 function useBlockCardState(isNew?: boolean) {
   const [showMove, setShowMove] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showNotesModal, setShowNotesModal] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(!isNew);
   const [isEditing, setIsEditing] = useState(false);
   return {
@@ -36,6 +38,8 @@ function useBlockCardState(isNew?: boolean) {
     setShowMove,
     showDetailModal,
     setShowDetailModal,
+    showNotesModal,
+    setShowNotesModal,
     isCollapsed,
     setIsCollapsed,
     isEditing,
@@ -80,15 +84,12 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
             />
           )}
           <View style={s.blockBodyRow}>
-            <BlockImage blockType={props.block.type} />
+            <View style={s.blockImageCol}>
+              <BlockImage blockType={props.block.type} />
+              <BlockNotes onOpenModal={() => state.setShowNotesModal(true)} t={t} />
+            </View>
             <View style={s.blockBodyFieldsWrap}>
               <BlockFields block={props.block} onUpdateField={props.onUpdateField} readOnly={fieldsReadOnly} t={t} />
-              <BlockNotes
-                notes={props.block.notes}
-                onUpdate={(v: string) => props.onUpdateField('notes', v)}
-                readOnly={fieldsReadOnly}
-                t={t}
-              />
             </View>
           </View>
         </>
@@ -97,6 +98,14 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
         block={props.block}
         onClose={() => state.setShowDetailModal(false)}
         visible={state.showDetailModal}
+      />
+      <BlockNotesModal
+        block={props.block}
+        isEditing={state.isEditing}
+        onClose={() => state.setShowNotesModal(false)}
+        onUpdate={(v) => props.onUpdateField('notes', v)}
+        t={t}
+        visible={state.showNotesModal}
       />
     </View>
   );

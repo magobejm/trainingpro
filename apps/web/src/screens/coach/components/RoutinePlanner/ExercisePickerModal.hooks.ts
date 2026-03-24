@@ -3,6 +3,7 @@ import type { BlockType } from '../../RoutinePlanner.types';
 import {
   useLibraryExercisesQuery,
   useLibraryCardioMethodsQuery,
+  useLibraryIsometricExercisesQuery,
   useLibraryPlioExercisesQuery,
   useLibraryMobilityExercisesQuery,
   useLibrarySportsQuery,
@@ -12,17 +13,16 @@ import {
   filterByQuery,
   mapCardio,
   mapExercises,
+  mapIsometric,
   mapPlio,
   mapSports,
   mapWarmup,
 } from './ExercisePickerModal.utils';
 
-export function useLibraryItems(
-  blockType: BlockType | null,
-  query: string,
-): { items: LibraryItem[]; isLoading: boolean } {
+export function useLibraryItems(blockType: BlockType | null, query: string): { items: LibraryItem[]; isLoading: boolean } {
   const str = useLibraryExercisesQuery({ query: blockType === 'strength' ? query : undefined });
   const car = useLibraryCardioMethodsQuery({ query: blockType === 'cardio' ? query : undefined });
+  const iso = useLibraryIsometricExercisesQuery({ query: blockType === 'isometric' ? query : undefined });
   const plio = useLibraryPlioExercisesQuery({ query: blockType === 'plio' ? query : undefined });
   const warm = useLibraryMobilityExercisesQuery({
     query: blockType === 'warmup' ? query : undefined,
@@ -34,6 +34,9 @@ export function useLibraryItems(
   }
   if (blockType === 'cardio') {
     return { items: filterByQuery(mapCardio(car.data ?? []), query), isLoading: car.isLoading };
+  }
+  if (blockType === 'isometric') {
+    return { items: filterByQuery(mapIsometric(iso.data ?? []), query), isLoading: iso.isLoading };
   }
   if (blockType === 'plio') {
     return { items: filterByQuery(mapPlio(plio.data ?? []), query), isLoading: plio.isLoading };

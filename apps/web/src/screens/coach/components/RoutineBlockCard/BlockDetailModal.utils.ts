@@ -1,11 +1,16 @@
 import { readFrontEnv } from '../../../../data/env';
-import type { BlockType } from '../../RoutinePlanner.types';
-import type {
-  ExerciseLibraryItem,
-  CardioMethodLibraryItem,
-  PlioExerciseLibraryItem,
-  MobilityExerciseLibraryItem,
-  SportLibraryItem,
+import type { BlockType, DraftBlock } from '../../RoutinePlanner.types';
+import {
+  useLibraryExercisesQuery,
+  useLibraryCardioMethodsQuery,
+  useLibraryPlioExercisesQuery,
+  useLibraryMobilityExercisesQuery,
+  useLibrarySportsQuery,
+  type ExerciseLibraryItem,
+  type CardioMethodLibraryItem,
+  type PlioExerciseLibraryItem,
+  type MobilityExerciseLibraryItem,
+  type SportLibraryItem,
 } from '../../../../data/hooks/useLibraryQuery';
 
 export type DetailItem = {
@@ -41,9 +46,9 @@ function resolveApiBaseUrl(): string {
 
 const API_BASE_URL = resolveApiBaseUrl();
 const PLACEHOLDERS: Record<BlockType, string> = {
-  strength:
-    'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
+  strength: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=800&auto=format&fit=crop',
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
+  isometric: `${API_BASE_URL}/assets/placeholders/isometric-placeholder.png`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
   warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
   sport: `${API_BASE_URL}/assets/placeholders/sports-placeholder.png`,
@@ -112,3 +117,27 @@ export const mapSport = (item: SportLibraryItem): DetailItem => ({
   imageUrl: item.mediaUrl ?? null,
   youtubeUrl: null,
 });
+
+export function useLibrarySources(type: string, query: string) {
+  const str = useLibraryExercisesQuery({ query: type === 'strength' ? query : undefined });
+  const car = useLibraryCardioMethodsQuery({ query: type === 'cardio' ? query : undefined });
+  const plio = useLibraryPlioExercisesQuery({ query: type === 'plio' ? query : undefined });
+  const warm = useLibraryMobilityExercisesQuery({ query: type === 'warmup' ? query : undefined });
+  const sport = useLibrarySportsQuery();
+  const mapper = <T extends LibraryItemUnion>(m: (item: T) => DetailItem) => m as (item: LibraryItemUnion) => DetailItem;
+  return {
+    strength: { items: str.data ?? [], isLoading: str.isLoading, map: mapper(mapExercise) },
+    cardio: { items: car.data ?? [], isLoading: car.isLoading, map: mapper(mapCardio) },
+    plio: { items: plio.data ?? [], isLoading: plio.isLoading, map: mapper(mapPlio) },
+    warmup: { items: warm.data ?? [], isLoading: warm.isLoading, map: mapper(mapWarmup) },
+    sport: { items: sport.data ?? [], isLoading: sport.isLoading, map: mapper(mapSport) },
+  };
+}
+
+export function useBlockDetail(block: DraftBlock): { item: DetailItem | null; isLoading: boolean } {
+  const sources = useLibrarySources(block.type, block.displayName);
+  const source = (sources as Record<string, DetailSource>)[block.type];
+  if (!source) return { item: null, isLoading: false };
+  const target = source.items.find((i) => i.id === block.libraryId || i.name === block.displayName) ?? null;
+  return { item: target ? source.map(target) : null, isLoading: source.isLoading };
+}

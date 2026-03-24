@@ -1,4 +1,4 @@
-export type BlockType = 'cardio' | 'plio' | 'sport' | 'strength' | 'warmup';
+export type BlockType = 'cardio' | 'isometric' | 'plio' | 'sport' | 'strength' | 'warmup';
 
 export interface DraftBlock {
   displayName: string;
@@ -38,10 +38,17 @@ export interface DraftDay {
   title: string;
 }
 
+export interface NeatItem {
+  id: string;
+  title: string;
+  description?: string;
+}
+
 export interface DraftState {
   days: DraftDay[];
   expectedCompletionDays?: null | number;
   name: string;
+  neats?: NeatItem[];
   objectiveIds?: string[];
   scope?: 'GLOBAL' | 'COACH';
 }

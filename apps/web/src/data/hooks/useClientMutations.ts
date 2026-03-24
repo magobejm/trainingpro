@@ -74,6 +74,19 @@ export function useUpdateClientMutation(clientId: string) {
   });
 }
 
+export function useAssignRoutineMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ clientId, templateId }: { clientId: string; templateId: string }) =>
+      updateClient(auth, clientId, { trainingPlanId: templateId }),
+    onSuccess: (_data, { clientId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
+    },
+  });
+}
+
 export function useArchiveClientMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -109,8 +122,7 @@ export function useCreateClientProgressPhotoMutation(clientId: string) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateClientProgressPhotoInput) =>
-      createClientProgressPhoto(auth, clientId, input),
+    mutationFn: (input: CreateClientProgressPhotoInput) => createClientProgressPhoto(auth, clientId, input),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
     },
@@ -166,32 +178,21 @@ async function archiveClient(auth: ReturnType<typeof useAuth>, clientId: string)
   await createApiClient(auth).delete<{ status: string }>(`/clients/${clientId}`);
 }
 
-async function createClient(
-  auth: ReturnType<typeof useAuth>,
-  input: CreateClientInput,
-): Promise<CreateClientResult> {
+async function createClient(auth: ReturnType<typeof useAuth>, input: CreateClientInput): Promise<CreateClientResult> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).post<CreateClientResult>('/clients', input);
 }
 
-async function updateClient(
-  auth: ReturnType<typeof useAuth>,
-  clientId: string,
-  input: UpdateClientInput,
-): Promise<void> {
+async function updateClient(auth: ReturnType<typeof useAuth>, clientId: string, input: UpdateClientInput): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
   await createApiClient(auth).patch(`/clients/${clientId}`, input);
 }
 
-async function uploadAvatar(
-  auth: ReturnType<typeof useAuth>,
-  clientId: string,
-  file: File,
-): Promise<{ avatarUrl: string }> {
+async function uploadAvatar(auth: ReturnType<typeof useAuth>, clientId: string, file: File): Promise<{ avatarUrl: string }> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -218,9 +219,7 @@ async function resetClientPassword(
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).post<{ temporaryPassword: string }>(
-    `/clients/${clientId}/reset-password`,
-  );
+  return createApiClient(auth).post<{ temporaryPassword: string }>(`/clients/${clientId}/reset-password`);
 }
 
 async function createClientProgressPhoto(
@@ -247,11 +246,7 @@ async function setClientProgressPhotoArchived(
   await createApiClient(auth).patch(path, { archived });
 }
 
-async function uploadClientProgressPhoto(
-  auth: ReturnType<typeof useAuth>,
-  clientId: string,
-  file: File,
-): Promise<void> {
+async function uploadClientProgressPhoto(auth: ReturnType<typeof useAuth>, clientId: string, file: File): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -276,11 +271,6 @@ function resolveApiBaseUrl(): string {
     process?: { env?: Record<string, string | undefined> };
   };
   const processEnv = scope.process?.env ?? {};
-  const metaEnv =
-    (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
-  return (
-    metaEnv.EXPO_PUBLIC_API_BASE_URL ??
-    processEnv.EXPO_PUBLIC_API_BASE_URL ??
-    'http://localhost:8080'
-  );
+  const metaEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
+  return metaEnv.EXPO_PUBLIC_API_BASE_URL ?? processEnv.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 }

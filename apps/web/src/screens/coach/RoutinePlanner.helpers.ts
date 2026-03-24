@@ -8,11 +8,7 @@ let dayIdCounter = Date.now();
 export const nextBlockId = () => `b-${++blockIdCounter}`;
 export const nextDayId = () => `d-${++dayIdCounter}`;
 
-export function createEmptyDay(
-  index: number,
-  t: (k: string) => string,
-  prefixKey = 'coach.routine.dayPrefix',
-): DraftDay {
+export function createEmptyDay(index: number, t: (k: string) => string, prefixKey = 'coach.routine.dayPrefix'): DraftDay {
   return {
     blocks: [],
     id: nextDayId(),
@@ -20,14 +16,12 @@ export function createEmptyDay(
   };
 }
 
-export function createEmptyDraft(
-  t: (k: string) => string,
-  prefixKey = 'coach.routine.dayPrefix',
-): DraftState {
+export function createEmptyDraft(t: (k: string) => string, prefixKey = 'coach.routine.dayPrefix'): DraftState {
   return {
     days: [createEmptyDay(1, t, prefixKey)],
     expectedCompletionDays: null,
     name: '',
+    neats: [],
     objectiveIds: [],
   };
 }
@@ -90,14 +84,9 @@ function parseCsvNumbers(value?: string): number[] {
     .filter((item) => Number.isFinite(item) && item >= 0);
 }
 
-function appendMeta(
-  notes: string | undefined,
-  meta: Record<string, null | number | string | undefined>,
-) {
+function appendMeta(notes: string | undefined, meta: Record<string, null | number | string | undefined>) {
   const safe = Object.fromEntries(
-    Object.entries(meta).filter(
-      ([, value]) => value !== undefined && value !== null && value !== '',
-    ),
+    Object.entries(meta).filter(([, value]) => value !== undefined && value !== null && value !== ''),
   );
   if (Object.keys(safe).length === 0) {
     return notes ?? '';
@@ -209,6 +198,7 @@ export function buildRoutinePayload(draft: DraftState) {
     days: draft.days.map((day, idx) => mapRoutineDay(day, idx)),
     expectedCompletionDays: draft.expectedCompletionDays ?? null,
     name: draft.name,
+    neats: (draft.neats ?? []).map((n) => ({ title: n.title, description: n.description ?? '' })),
     objectiveIds: draft.objectiveIds ?? [],
   };
 }
@@ -270,9 +260,5 @@ export function mapWarmupTemplateItemsToBlocks(
 }
 
 export function mapTemplateToDraft(tpl: unknown): DraftState {
-  return mapTemplateToDraftImpl(
-    tpl as Parameters<typeof mapTemplateToDraftImpl>[0],
-    createBlock,
-    nextDayId,
-  );
+  return mapTemplateToDraftImpl(tpl as Parameters<typeof mapTemplateToDraftImpl>[0], createBlock, nextDayId);
 }

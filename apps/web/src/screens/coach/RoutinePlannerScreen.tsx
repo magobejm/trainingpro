@@ -1,11 +1,9 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useUpdateClientMutation } from '../../data/hooks/useClientMutations';
+import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
+import { createEmptyDraft } from './RoutinePlanner.helpers';
 import { useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
-import {
-  useRoutineTemplatesQuery,
-  type RoutineTemplateView,
-} from '../../data/hooks/useRoutineTemplates';
+import { useRoutineTemplatesQuery, type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useRoutinePlannerDraft } from './useRoutinePlannerDraft';
@@ -27,10 +25,7 @@ function useRoutinePlannerScreenModel(onRouteChange?: (route: ShellRoute) => voi
   return buildLayoutModel({ ...model, t });
 }
 
-function useRoutinePlannerModelData(
-  onRouteChange: undefined | ((route: ShellRoute) => void),
-  t: (key: string) => string,
-) {
+function useRoutinePlannerModelData(onRouteChange: undefined | ((route: ShellRoute) => void), t: (key: string) => string) {
   const templates = useRoutineTemplatesQuery().data ?? [];
   const objectiveOptions = useClientObjectivesQuery().data ?? [];
   const plannerContext = usePlannerContextState();
@@ -80,7 +75,8 @@ function usePlannerSaveModel(
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
 ) {
   const updateClientMutation = useUpdateClientMutation(clientId ?? '');
-  const { deleteMutation, onSave } = useRoutineSaveHandler(
+  const assignMutation = useAssignRoutineMutation();
+  const { deleteMutation, onSave, onSaveCore } = useRoutineSaveHandler(
     clearInitialTemplate,
     clientId,
     draftState,
@@ -89,7 +85,40 @@ function usePlannerSaveModel(
     uiState,
     updateClientMutation,
   );
-  return { deleteMutation, onSave, updateClientMutation };
+  const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t);
+  const onAssignOnly = buildAssignOnly(assignMutation, uiState);
+  return { deleteMutation, onSave, onSaveAndAssign, onAssignOnly, updateClientMutation };
+}
+
+function buildAssignOnly(
+  assignMutation: ReturnType<typeof useAssignRoutineMutation>,
+  uiState: ReturnType<typeof useRoutinePlannerUIState>,
+) {
+  return async (clientId: string) => {
+    const editingId = uiState.editingId;
+    if (!editingId) return;
+    await assignMutation.mutateAsync({ clientId, templateId: editingId });
+    uiState.setSaveSuccess(true);
+    setTimeout(() => uiState.setSaveSuccess(false), 3000);
+  };
+}
+
+function buildSaveAndAssign(
+  onSaveCore: (name: string) => Promise<string>,
+  assignMutation: ReturnType<typeof useAssignRoutineMutation>,
+  draftState: ReturnType<typeof useRoutinePlannerDraft>,
+  uiState: ReturnType<typeof useRoutinePlannerUIState>,
+  t: (k: string) => string,
+) {
+  return async (name: string, assignClientId: string) => {
+    const templateId = await onSaveCore(name);
+    await assignMutation.mutateAsync({ clientId: assignClientId, templateId });
+    uiState.setSaveSuccess(true);
+    setTimeout(() => uiState.setSaveSuccess(false), 3000);
+    draftState.setDraft(createEmptyDraft(t));
+    uiState.setEditingId(null);
+    draftState.setActiveDayIdx(0);
+  };
 }
 
 function usePlannerDraftHydration(
@@ -99,13 +128,7 @@ function usePlannerDraftHydration(
   templates: Array<{ id: string } & Record<string, unknown>>,
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
 ) {
-  useHydrateDraftFromContext(
-    clearInitialTemplate,
-    draftState,
-    initialTemplateId,
-    templates,
-    uiState,
-  );
+  useHydrateDraftFromContext(clearInitialTemplate, draftState, initialTemplateId, templates, uiState);
 }
 
 function buildLayoutModel(params: {
@@ -114,6 +137,8 @@ function buildLayoutModel(params: {
   onRouteChange: undefined | ((route: ShellRoute) => void);
   objectiveOptions: Array<{ id: string; label: string }>;
   onSave: ReturnType<typeof useRoutineSaveHandler>['onSave'];
+  onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
+  onAssignOnly: (clientId: string) => Promise<void>;
   plannerContext: ReturnType<typeof usePlannerContextState>;
   t: (key: string) => string;
   templates: RoutineTemplateView[];
@@ -127,7 +152,9 @@ function buildLayoutModel(params: {
     draftState: params.draftState,
     objectiveOptions: params.objectiveOptions,
     onAssignTemplate: buildAssignTemplateHandler(params),
+    onAssignOnly: params.onAssignOnly,
     onSave: params.onSave,
+    onSaveAndAssign: params.onSaveAndAssign,
     t: params.t,
     templates: params.templates,
     uiState: params.uiState,

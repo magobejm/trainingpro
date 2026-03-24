@@ -3,6 +3,7 @@ import { readFrontEnv } from '../../../../data/env';
 import type {
   ExerciseLibraryItem,
   CardioMethodLibraryItem,
+  IsometricExerciseLibraryItem,
   PlioExerciseLibraryItem,
   MobilityExerciseLibraryItem,
   SportLibraryItem,
@@ -20,6 +21,7 @@ export const API_BASE_URL = resolveApiBaseUrl();
 const PLACEHOLDERS: Record<BlockType, string> = {
   strength: `${API_BASE_URL}/assets/placeholders/routine-placeholder.jpg`,
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
+  isometric: `${API_BASE_URL}/assets/placeholders/isometric-placeholder.png`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
   warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
   sport: `${API_BASE_URL}/assets/placeholders/sports-placeholder.png`,
@@ -60,6 +62,18 @@ export function mapCardio(items: CardioMethodLibraryItem[]): LibraryItem[] {
     youtubeUrl: item.youtubeUrl ?? null,
     methodType: item.methodType,
     equipment: item.equipment,
+  }));
+}
+
+export function mapIsometric(items: IsometricExerciseLibraryItem[]): LibraryItem[] {
+  return items.map((item) => ({
+    id: item.id,
+    name: item.name,
+    description: item.description ?? null,
+    notes: item.notes ?? null,
+    imageUrl: item.media?.url ?? null,
+    youtubeUrl: item.youtubeUrl ?? null,
+    methodType: item.isometricType ?? undefined,
   }));
 }
 

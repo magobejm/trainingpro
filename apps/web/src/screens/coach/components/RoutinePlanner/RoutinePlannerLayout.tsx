@@ -2,10 +2,7 @@ import React, { useRef } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
-import { SaveButton } from './SaveButton';
-import { RoutineList } from './RoutineList';
-import { DeleteConfirmModal } from './DeleteConfirmModal';
-import { mapTemplateToDraft } from '../../RoutinePlanner.helpers';
+import { SaveRoutineModal } from './SaveRoutineModal';
 import type { DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
@@ -13,6 +10,7 @@ import { useWarmupTemplatesQuery, type WarmupTemplateView } from '../../../../da
 import { RoutinePlannerModals } from './RoutinePlannerModals';
 import { createWarmupTemplateSelector } from './RoutinePlannerLayout.helpers';
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
+import { NeatSection } from './NeatSection';
 
 interface LayoutProps {
   clientContextId?: null | string;
@@ -33,6 +31,8 @@ interface LayoutProps {
     setPickerType: (t: BlockType | null) => void;
     showWarmupTemplatePicker: boolean;
     setShowWarmupTemplatePicker: (value: boolean) => void;
+    showSaveModal: boolean;
+    setShowSaveModal: (v: boolean) => void;
   };
   draftState: {
     draft: DraftState;
@@ -50,7 +50,9 @@ interface LayoutProps {
     moveDay: (fromIdx: number, dir: -1 | 1) => void;
     lastAddedBlockId: string | null;
   };
-  onSave: () => void;
+  onSave: (name: string) => void;
+  onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
+  onAssignOnly?: (clientId: string) => Promise<void>;
   templates: RoutineTemplateView[];
   deleteMutation: {
     isPending: boolean;
@@ -130,42 +132,25 @@ function RoutineDayList(props: {
 }
 
 function RoutineFooterSection(props: LayoutProps) {
-  const { t, draftState, uiState, templates, deleteMutation } = props;
-  const isReadOnly = draftState.draft.scope === 'GLOBAL';
-  const onLoadTemplate = buildTemplateLoader(uiState.setEditingId, draftState);
+  const { t, draftState, uiState } = props;
+  const isGlobal = draftState.draft.scope === 'GLOBAL';
   return (
     <>
-      {!isReadOnly && <SaveActionButton props={props} />}
-      <RoutineList
-        clientContextId={props.clientContextId}
-        clientContextName={props.clientContextName}
-        onAssignTemplate={props.onAssignTemplate}
-        onDelete={uiState.setDeletingId}
-        onLoad={onLoadTemplate}
+      <Pressable onPress={() => uiState.setShowSaveModal(true)} style={s.saveBtn}>
+        <Text style={s.saveBtnText}>{isGlobal ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
+      </Pressable>
+      <SaveRoutineModal
+        initialName={draftState.draft.name}
+        isGlobal={isGlobal}
+        onAssignOnly={props.onAssignOnly}
+        onClose={() => uiState.setShowSaveModal(false)}
+        onSave={props.onSave}
+        onSaveAndAssign={props.onSaveAndAssign}
         t={t}
-        templates={templates}
-      />
-      <DeleteConfirmModal
-        deletingId={uiState.deletingId}
-        mutation={deleteMutation}
-        setDeletingId={uiState.setDeletingId}
-        t={t}
+        visible={uiState.showSaveModal}
       />
     </>
   );
-}
-
-function SaveActionButton(props: { props: LayoutProps }) {
-  const { clientContextName, onSave, t, uiState } = props.props;
-  return <SaveButton clientContextName={clientContextName} isEditing={!!uiState.editingId} onSave={onSave} t={t} />;
-}
-
-function buildTemplateLoader(setEditingId: (id: string | null) => void, draftState: LayoutProps['draftState']) {
-  return (tpl: RoutineTemplateView) => {
-    setEditingId(tpl.id);
-    draftState.setDraft(mapTemplateToDraft(tpl));
-    draftState.setActiveDayIdx(0);
-  };
 }
 
 function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutProps['draftState']) {
@@ -250,7 +235,6 @@ function RoutineLayoutSections(props: {
         draft={draftState.draft}
         isReadOnly={draftState.draft.scope === 'GLOBAL'}
         labels={labels}
-        name={draftState.draft.name}
         objectiveOptions={props.props.objectiveOptions}
         saveSuccess={uiState.saveSuccess}
         setDraft={draftState.setDraft}
@@ -260,6 +244,12 @@ function RoutineLayoutSections(props: {
         {...props.props}
         onOpenPicker={props.onOpenPicker}
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
+      />
+      <NeatSection
+        isReadOnly={draftState.draft.scope === 'GLOBAL'}
+        neats={draftState.draft.neats ?? []}
+        onChange={(neats) => draftState.setDraft((prev) => ({ ...prev, neats }))}
+        t={t}
       />
       <RoutineFooterSection {...props.props} />
     </>

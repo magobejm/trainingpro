@@ -260,7 +260,12 @@ function RoutineCard(props: {
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
-    <Pressable onHoverIn={() => setHovered(true)} onHoverOut={() => setHovered(false)} style={ss.card}>
+    <Pressable
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      onPress={() => props.onEdit(tpl)}
+      style={ss.card}
+    >
       <CardTopBar
         canEdit={canEdit}
         icon={<Trophy color={C.blue} size={18} />}

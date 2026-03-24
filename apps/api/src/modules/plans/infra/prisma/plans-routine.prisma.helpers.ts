@@ -28,6 +28,7 @@ export function routineTemplateInclude() {
       orderBy: { dayIndex: 'asc' as const },
       where,
     },
+    neats: { orderBy },
   };
 }
 
@@ -60,6 +61,15 @@ export function mapRoutineTemplate(row: RoutineRow, metadata?: RoutineTemplateMe
     id: row.id,
     isAssigned: row.assignedClients.length > 0,
     name: row.name,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+    neats: ((r.neats ?? []) as any[]).map((n: any) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      id: n.id,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      title: n.title,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      description: n.description ?? '',
+    })),
     objectiveIds: safeMetadata.objectiveIds,
     objectives: safeMetadata.objectives,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -86,9 +96,7 @@ function mapRoutineDay(day: any) {
   };
 }
 
-function mapStrengthOutput(
-  e: Prisma.PlanStrengthExerciseGetPayload<{ include: { fieldModes: true } }>,
-) {
+function mapStrengthOutput(e: Prisma.PlanStrengthExerciseGetPayload<{ include: { fieldModes: true } }>) {
   return {
     displayName: e.displayName,
     exerciseLibraryId: e.exerciseLibraryId,
@@ -166,9 +174,7 @@ function mapSportOutput(b: any) {
 
 /* ── Create helpers ── */
 
-export function mapRoutineDayCreate(
-  day: RoutineDayInput,
-): Prisma.PlanDayCreateWithoutTemplateInput {
+export function mapRoutineDayCreate(day: RoutineDayInput): Prisma.PlanDayCreateWithoutTemplateInput {
   return {
     dayIndex: day.dayIndex,
     title: day.title.trim(),
@@ -180,9 +186,7 @@ export function mapRoutineDayCreate(
   } as any;
 }
 
-function mapStrengthCreate(
-  e: RoutineStrengthInput,
-): Prisma.PlanStrengthExerciseCreateWithoutDayInput {
+function mapStrengthCreate(e: RoutineStrengthInput): Prisma.PlanStrengthExerciseCreateWithoutDayInput {
   return {
     displayName: e.displayName.trim(),
     fieldModes: {

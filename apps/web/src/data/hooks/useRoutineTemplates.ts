@@ -76,10 +76,16 @@ export type RoutineDayInput = {
   warmupBlocks?: RoutineWarmupBlockInput[];
 };
 
+export type RoutineNeatInput = {
+  title: string;
+  description?: string;
+};
+
 export type UpsertRoutineInput = {
   days: RoutineDayInput[];
   expectedCompletionDays?: null | number;
   name: string;
+  neats?: RoutineNeatInput[];
   objectiveIds?: string[];
 };
 
@@ -91,6 +97,7 @@ export type RoutineTemplateView = {
   id: string;
   isAssigned?: boolean;
   name: string;
+  neats?: RoutineNeatInput[];
   objectiveIds?: string[];
   objectives?: Array<{
     code: string;
@@ -166,10 +173,7 @@ async function createRoutine(auth: Auth, input: UpsertRoutineInput) {
   return createApiClient(auth).post<RoutineTemplateView>('/plans/templates/routines', input);
 }
 
-async function listRoutines(
-  auth: Auth,
-  options?: { summary?: boolean },
-): Promise<RoutineTemplateView[]> {
+async function listRoutines(auth: Auth, options?: { summary?: boolean }): Promise<RoutineTemplateView[]> {
   if (!auth) throw new Error('Missing authenticated context');
   const res = await createApiClient(auth).get<ListResponse>(
     '/plans/templates/routines',
@@ -180,10 +184,7 @@ async function listRoutines(
 
 async function updateRoutine(auth: Auth, templateId: string, input: UpsertRoutineInput) {
   if (!auth) throw new Error('Missing authenticated context');
-  return createApiClient(auth).patch<RoutineTemplateView>(
-    `/plans/templates/routines/${templateId}`,
-    input,
-  );
+  return createApiClient(auth).patch<RoutineTemplateView>(`/plans/templates/routines/${templateId}`, input);
 }
 
 async function deleteRoutine(auth: Auth, templateId: string) {

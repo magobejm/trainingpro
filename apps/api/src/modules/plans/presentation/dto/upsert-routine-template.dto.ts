@@ -84,16 +84,23 @@ const daySchema = z.object({
   warmupBlocks: z.array(warmupSchema).optional().default([]),
 });
 
+const neatSchema = z.object({
+  description: z.string().max(1000).optional().default(''),
+  title: z.string().trim().min(1).max(200),
+});
+
 export class UpsertRoutineTemplateDto {
   static schema = z.object({
     days: z.array(daySchema).min(1),
     expectedCompletionDays: z.number().int().min(1).max(365).nullable().optional(),
     name: z.string().trim().min(1).max(120),
+    neats: z.array(neatSchema).max(20).optional().default([]),
     objectiveIds: z.array(z.string().uuid()).max(3).optional().default([]),
   });
 
   days!: z.infer<typeof UpsertRoutineTemplateDto.schema>['days'];
   expectedCompletionDays?: null | number;
   name!: string;
+  neats?: { description?: string; title: string }[];
   objectiveIds?: string[];
 }

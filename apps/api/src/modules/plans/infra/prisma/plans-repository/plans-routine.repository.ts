@@ -1,9 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../../common/audit/audit-fields';
 import { AuthContext } from '../../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import {
@@ -75,10 +72,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       where: {
         archivedAt: null,
         kind: TemplateKind.ROUTINE,
-        OR: [
-          { coachMembershipId: m.id, scope: LibraryItemScope.COACH },
-          { scope: LibraryItemScope.GLOBAL },
-        ],
+        OR: [{ coachMembershipId: m.id, scope: LibraryItemScope.COACH }, { scope: LibraryItemScope.GLOBAL }],
       },
     });
     const metadataByTemplate = await this.loadRoutineMetadata(rows.map((item) => item.id));
@@ -137,9 +131,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     });
   }
 
-  private async loadRoutineMetadata(
-    templateIds: string[],
-  ): Promise<Map<string, RoutineTemplateMetadata>> {
+  private async loadRoutineMetadata(templateIds: string[]): Promise<Map<string, RoutineTemplateMetadata>> {
     if (templateIds.length === 0) {
       return new Map();
     }
@@ -166,10 +158,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     `);
   }
 
-  private groupRoutineMetadata(
-    rows: RoutineMetadataRow[],
-    templateIds: string[],
-  ): Map<string, RoutineTemplateMetadata> {
+  private groupRoutineMetadata(rows: RoutineMetadataRow[], templateIds: string[]): Map<string, RoutineTemplateMetadata> {
     const map = this.createMetadataMap(templateIds);
     rows.forEach((row) => {
       const current = map.get(row.template_id) ?? emptyRoutineMetadata();
@@ -221,6 +210,18 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       await tx.$executeRaw`
         INSERT INTO plan_template_objective (template_id, objective_id)
         VALUES (${templateId}::uuid, ${objectiveId}::uuid)
+      `;
+    }
+    await tx.$executeRaw`
+      DELETE FROM plan_template_neat
+      WHERE template_id = ${templateId}::uuid
+    `;
+    const neats = input.neats ?? [];
+    for (let i = 0; i < neats.length; i++) {
+      const neat = neats[i]!;
+      await tx.$executeRaw`
+        INSERT INTO plan_template_neat (id, template_id, title, description, sort_order)
+        VALUES (gen_random_uuid(), ${templateId}::uuid, ${neat.title}, ${neat.description ?? null}, ${i})
       `;
     }
   }

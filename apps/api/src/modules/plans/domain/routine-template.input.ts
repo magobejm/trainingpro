@@ -72,9 +72,15 @@ export type RoutineDayInput = {
   warmupBlocks?: RoutineWarmupInput[];
 };
 
+export type RoutineNeatInput = {
+  title: string;
+  description?: string;
+};
+
 export type RoutineTemplateWriteInput = {
   days: RoutineDayInput[];
-  name: string;
-  objectiveIds?: string[];
   expectedCompletionDays?: null | number;
+  name: string;
+  neats?: RoutineNeatInput[];
+  objectiveIds?: string[];
 };

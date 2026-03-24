@@ -64,6 +64,7 @@ function extractLibraryId(type: BlockType, item: TemplateBlockData): string | un
   const fieldMap: Record<BlockType, string> = {
     strength: 'exerciseLibraryId',
     cardio: 'cardioMethodLibraryId',
+    isometric: 'isometricExerciseLibraryId',
     plio: 'plioExerciseLibraryId',
     warmup: 'warmupExerciseLibraryId',
     sport: 'sportLibraryId',
@@ -75,9 +76,7 @@ function extractLibraryId(type: BlockType, item: TemplateBlockData): string | un
 function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap): DraftBlock {
   const ranges = item.perSetWeightRangesJson as Array<{ maxKg?: number }> | undefined;
   const csvWeights = Array.isArray(ranges)
-    ? ranges
-        .map((entry) => toNumber(entry.maxKg))
-        .filter((entry): entry is number => entry !== undefined)
+    ? ranges.map((entry) => toNumber(entry.maxKg)).filter((entry): entry is number => entry !== undefined)
     : [];
   return {
     ...base,
@@ -89,9 +88,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
     targetRir: toNumber(item.targetRir),
     weightPerSeriesKg: csvWeights.length > 1 ? csvWeights.join(',') : undefined,
     weightKg: toNumber(item.weightRangeMaxKg),
-    ...(toStringValue(meta.repsPorSerie)
-      ? { repsPerSeries: toStringValue(meta.repsPorSerie) }
-      : {}),
+    ...(toStringValue(meta.repsPorSerie) ? { repsPerSeries: toStringValue(meta.repsPorSerie) } : {}),
   };
 }
 
@@ -136,9 +133,7 @@ function mapWarmupBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
   };
 }
 
-function readWarmupImportFlags(
-  meta: MetaMap,
-): Pick<DraftBlock, 'fromWarmupTemplate' | 'warmupTemplateName'> {
+function readWarmupImportFlags(meta: MetaMap): Pick<DraftBlock, 'fromWarmupTemplate' | 'warmupTemplateName'> {
   const imported = toNumber(meta.deCalentamiento) === 1;
   return {
     fromWarmupTemplate: imported || undefined,

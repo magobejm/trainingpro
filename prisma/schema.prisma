@@ -691,6 +691,7 @@ model PlanTemplate {
   coachMembership        OrganizationMember?     @relation("coach_plan_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   days                   PlanDay[]
   routineObjectives      PlanTemplateObjective[]
+  neats                  PlanTemplateNeat[]
   sessions               SessionInstance[]
   assignedClients        Client[]
 
@@ -698,6 +699,18 @@ model PlanTemplate {
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
   @@map("plan_template")
+}
+
+model PlanTemplateNeat {
+  id          String       @id @default(uuid()) @db.Uuid
+  templateId  String       @map("template_id") @db.Uuid
+  title       String       @db.VarChar(200)
+  description String?      @db.Text
+  sortOrder   Int          @default(0) @map("sort_order")
+  template    PlanTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId], map: "idx_plan_template_neat_template")
+  @@map("plan_template_neat")
 }
 
 model PlanTemplateObjective {

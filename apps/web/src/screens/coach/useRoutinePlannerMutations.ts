@@ -27,9 +27,10 @@ export function useRoutinePlannerMutations(
   const updateMutation = useUpdateRoutineTemplateMutation(editingId ?? '');
   const deleteMutation = useDeleteRoutineTemplateMutation();
 
+  const onSaveCore = useOnSaveCore({ draft, editingId, updateMutation, createMutation });
+
   const onSave = useOnSave({
-    draft,
-    editingId,
+    onSaveCore,
     setDraft,
     setEditingId,
     setActiveDay,
@@ -37,16 +38,34 @@ export function useRoutinePlannerMutations(
     t,
     onAfterSave,
     dayPrefixKey,
-    updateMutation,
-    createMutation,
   });
 
-  return { onSave, deleteMutation };
+  return { onSave, onSaveCore, deleteMutation };
+}
+
+interface SaveCoreProps {
+  draft: DraftState;
+  editingId: string | null;
+  updateMutation: MutationHandler;
+  createMutation: MutationHandler;
+}
+
+function useOnSaveCore(props: SaveCoreProps) {
+  const { draft, editingId } = props;
+  return useCallback(
+    async (name: string): Promise<string> => {
+      const payload = { ...buildRoutinePayload(draft), name };
+      const saved = editingId
+        ? await props.updateMutation.mutateAsync(payload)
+        : await props.createMutation.mutateAsync(payload);
+      return saved.id;
+    },
+    [draft, editingId, props.updateMutation, props.createMutation],
+  );
 }
 
 interface SaveProps {
-  draft: DraftState;
-  editingId: string | null;
+  onSaveCore: (name: string) => Promise<string>;
   setDraft: (d: DraftState) => void;
   setEditingId: (id: string | null) => void;
   setActiveDay: (i: number) => void;
@@ -54,35 +73,20 @@ interface SaveProps {
   t: (k: string) => string;
   onAfterSave?: (templateId: string) => Promise<void> | void;
   dayPrefixKey: string;
-  updateMutation: MutationHandler;
-  createMutation: MutationHandler;
 }
 
 function useOnSave(props: SaveProps) {
-  const { draft, editingId, setDraft, setEditingId, setActiveDay, setSuccess, t, dayPrefixKey } =
-    props;
-  return useCallback(async () => {
-    const payload = buildRoutinePayload(draft);
-    const saved = editingId
-      ? await props.updateMutation.mutateAsync(payload)
-      : await props.createMutation.mutateAsync(payload);
-    await props.onAfterSave?.(saved.id);
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
-    setDraft(createEmptyDraft(t, dayPrefixKey));
-    setEditingId(null);
-    setActiveDay(0);
-  }, [
-    draft,
-    editingId,
-    t,
-    dayPrefixKey,
-    props.updateMutation,
-    props.createMutation,
-    props.onAfterSave,
-    setDraft,
-    setEditingId,
-    setActiveDay,
-    setSuccess,
-  ]);
+  const { setDraft, setEditingId, setActiveDay, setSuccess, t, dayPrefixKey } = props;
+  return useCallback(
+    async (name: string) => {
+      const savedId = await props.onSaveCore(name);
+      await props.onAfterSave?.(savedId);
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+      setDraft(createEmptyDraft(t, dayPrefixKey));
+      setEditingId(null);
+      setActiveDay(0);
+    },
+    [props.onSaveCore, props.onAfterSave, setDraft, setEditingId, setActiveDay, setSuccess, t, dayPrefixKey],
+  );
 }

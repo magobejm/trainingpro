@@ -1,4 +1,4 @@
-import type { BlockType, DraftBlock, DraftState } from './RoutinePlanner.types';
+import type { BlockType, DraftBlock, DraftState, NeatItem } from './RoutinePlanner.types';
 import { mapTemplateBlock } from './RoutinePlanner.template-mapper';
 
 type TemplateBlockData = {
@@ -35,6 +35,7 @@ export function mapTemplateToDraft(
     })),
     expectedCompletionDays: readExpectedCompletionDays(tpl),
     name: tpl.name,
+    neats: readNeats(tpl),
     objectiveIds: readObjectiveIds(tpl),
     scope: tpl.scope as 'COACH' | 'GLOBAL',
   };
@@ -45,13 +46,7 @@ function mapBlocksFromTemplate(
   createBlock: (type: BlockType, displayName: string) => DraftBlock,
 ): DraftBlock[] {
   const blockTypes: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport'];
-  const blockKeys: (keyof TemplateDayData)[] = [
-    'exercises',
-    'cardioBlocks',
-    'plioBlocks',
-    'warmupBlocks',
-    'sportBlocks',
-  ];
+  const blockKeys: (keyof TemplateDayData)[] = ['exercises', 'cardioBlocks', 'plioBlocks', 'warmupBlocks', 'sportBlocks'];
   const blocks: DraftBlock[] = [];
   blockKeys.forEach((key, index) => {
     const type = blockTypes[index] as BlockType;
@@ -64,9 +59,19 @@ function mapBlocksFromTemplate(
 }
 
 function readExpectedCompletionDays(tpl: TemplateData): null | number {
-  const value = (tpl as TemplateData & { expectedCompletionDays?: null | number })
-    .expectedCompletionDays;
+  const value = (tpl as TemplateData & { expectedCompletionDays?: null | number }).expectedCompletionDays;
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readNeats(tpl: TemplateData): NeatItem[] {
+  const values = (tpl as TemplateData & { neats?: unknown }).neats;
+  if (!Array.isArray(values)) return [];
+  let counter = Date.now();
+  return values
+    .filter(
+      (item): item is { title: string; description?: string } => typeof (item as { title?: unknown }).title === 'string',
+    )
+    .map((item) => ({ id: `neat-${++counter}`, title: item.title, description: item.description ?? '' }));
 }
 
 function readObjectiveIds(tpl: TemplateData): string[] {

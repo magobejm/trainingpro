@@ -63,12 +63,12 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
       {!isCollapsed && (
         <View style={s.dayCardBody}>
           <DayBlocksContent props={props} t={t} />
-          {!readOnly && (
+          {!readOnly && isAdding && (
             <AddBlockSection
               isAdding={isAdding}
               onAdd={props.onAddBlock}
               onAddWarmupTemplate={props.onAddWarmupTemplate}
-              onCancel={() => props.onSetAddBlockDayIdx(isAdding ? null : dayIdx)}
+              onCancel={() => props.onSetAddBlockDayIdx(null)}
               t={t}
             />
           )}

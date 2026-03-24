@@ -379,6 +379,12 @@ export const s = StyleSheet.create({
     paddingBottom: 12,
     paddingTop: 4,
   },
+  blockImageCol: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 0,
+  },
   blockImageWrap: {
     width: 96,
     height: 96,

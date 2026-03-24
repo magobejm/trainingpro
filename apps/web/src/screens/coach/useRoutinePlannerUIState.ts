@@ -8,18 +8,21 @@ export function useRoutinePlannerUIState() {
   const [addIdx, setAddIdx] = useState<null | number>(null);
   const [pickerType, setPickerType] = useState<BlockType | null>(null);
   const [showWarmupTemplatePicker, setShowWarmupTemplatePicker] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
   return {
     addIdx,
     deletingId,
     editingId,
     pickerType,
+    showSaveModal,
     showWarmupTemplatePicker,
     saveSuccess,
     setAddIdx,
     setDeletingId,
     setEditingId,
     setPickerType,
+    setShowSaveModal,
     setShowWarmupTemplatePicker,
     setSaveSuccess,
   };

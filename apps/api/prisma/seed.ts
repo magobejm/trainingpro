@@ -352,7 +352,7 @@ async function seedIsometricExercises(): Promise<void> {
 
 async function seedWarmupExercises(): Promise<void> {
   for (const item of WARMUP_EXERCISES_V1) {
-    await prisma.warmupExercise.upsert({
+    await prisma.mobilityExercise.upsert({
       where: { id: item.id },
       create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL },
       update: { archivedAt: null, name: item.name, scope: LibraryItemScope.GLOBAL },

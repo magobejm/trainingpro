@@ -180,7 +180,7 @@ export function useRoutineObjectivesQuery(): UseQueryResult<RoutineObjectiveView
 async function fetchRoutineObjectives(auth: Auth): Promise<RoutineObjectiveView[]> {
   if (!auth) throw new Error('Missing authenticated context');
   const res = await createApiClient(auth).get<ListRoutineObjectivesResponse>('/plans/templates/routines/catalog/objectives');
-  return res.items;
+  return res.items.sort((a, b) => a.label.localeCompare(b.label, 'es'));
 }
 
 /* ── Auth helper ── */

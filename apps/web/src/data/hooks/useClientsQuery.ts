@@ -112,14 +112,10 @@ async function fetchClients(auth: ReturnType<typeof useAuth>): Promise<ClientVie
   return response.items;
 }
 
-async function fetchClientObjectives(
-  auth: ReturnType<typeof useAuth>,
-): Promise<ClientObjectiveView[]> {
+async function fetchClientObjectives(auth: ReturnType<typeof useAuth>): Promise<ClientObjectiveView[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const response = await createApiClient(auth).get<ListClientObjectivesResponse>(
-    '/clients/catalog/objectives',
-  );
-  return response.items;
+  const response = await createApiClient(auth).get<ListClientObjectivesResponse>('/clients/catalog/objectives');
+  return response.items.sort((a, b) => a.label.localeCompare(b.label, 'es'));
 }

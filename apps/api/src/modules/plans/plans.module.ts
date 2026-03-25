@@ -7,6 +7,7 @@ import { DeleteCardioTemplateUseCase } from './application/use-cases/delete-card
 import { DeleteRoutineTemplateUseCase } from './application/use-cases/delete-routine-template.usecase';
 import { DeleteTemplateUseCase } from './application/use-cases/delete-template.usecase';
 import { ListCardioTemplatesUseCase } from './application/use-cases/list-cardio-templates.usecase';
+import { ListRoutineObjectivesUseCase } from './application/use-cases/list-routine-objectives.usecase';
 import { ListRoutineTemplatesUseCase } from './application/use-cases/list-routine-templates.usecase';
 import { ListTemplatesUseCase } from './application/use-cases/list-templates.usecase';
 import { UpdateCardioTemplateUseCase } from './application/use-cases/update-cardio-template.usecase';
@@ -29,12 +30,7 @@ import { WarmupTemplatesService } from './application/services/warmup-templates.
 
 @Module({
   imports: [AuthModule],
-  controllers: [
-    PlansController,
-    PlansCardioController,
-    PlansRoutineController,
-    PlansWarmupController,
-  ],
+  controllers: [PlansController, PlansCardioController, PlansRoutineController, PlansWarmupController],
   providers: [
     CreateCardioTemplateUseCase,
     CreateRoutineTemplateUseCase,
@@ -43,6 +39,7 @@ import { WarmupTemplatesService } from './application/services/warmup-templates.
     DeleteRoutineTemplateUseCase,
     DeleteTemplateUseCase,
     ListCardioTemplatesUseCase,
+    ListRoutineObjectivesUseCase,
     ListRoutineTemplatesUseCase,
     ListTemplatesUseCase,
     UpdateCardioTemplateUseCase,

@@ -20,6 +20,7 @@ import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { CreateRoutineTemplateUseCase } from '../../application/use-cases/create-routine-template.usecase';
 import { DeleteRoutineTemplateUseCase } from '../../application/use-cases/delete-routine-template.usecase';
+import { ListRoutineObjectivesUseCase } from '../../application/use-cases/list-routine-objectives.usecase';
 import { ListRoutineTemplatesUseCase } from '../../application/use-cases/list-routine-templates.usecase';
 import { GetRoutineTemplateUseCase } from '../../application/use-cases/get-routine-template.usecase';
 import { UpdateRoutineTemplateUseCase } from '../../application/use-cases/update-routine-template.usecase';
@@ -33,10 +34,17 @@ export class PlansRoutineController {
   constructor(
     private readonly createUseCase: CreateRoutineTemplateUseCase,
     private readonly listUseCase: ListRoutineTemplatesUseCase,
+    private readonly listObjectivesUseCase: ListRoutineObjectivesUseCase,
     private readonly getUseCase: GetRoutineTemplateUseCase,
     private readonly updateUseCase: UpdateRoutineTemplateUseCase,
     private readonly deleteUseCase: DeleteRoutineTemplateUseCase,
   ) {}
+
+  @Get('catalog/objectives')
+  async listObjectives() {
+    const items = await this.listObjectivesUseCase.execute();
+    return { items };
+  }
 
   @Post()
   async create(@Body() body: UpsertRoutineTemplateDto, @Req() request: HttpAuthRequest) {

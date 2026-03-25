@@ -146,15 +146,25 @@ export class PlansRoutineRepository extends PlansBaseRepository {
         pt.id AS template_id,
         pt.expected_completion_days,
         pto.objective_id,
-        co.code AS objective_code,
-        co.label AS objective_label,
-        co.sort_order AS objective_sort_order,
-        co.is_default AS objective_is_default
+        ro.code AS objective_code,
+        ro.label AS objective_label,
+        ro.sort_order AS objective_sort_order,
+        ro.is_default AS objective_is_default
       FROM plan_template pt
       LEFT JOIN plan_template_objective pto ON pto.template_id = pt.id
-      LEFT JOIN client_objective co ON co.id = pto.objective_id
+      LEFT JOIN routine_objective ro ON ro.id = pto.objective_id
       WHERE pt.id IN (${Prisma.join(idsAsSql)})
-      ORDER BY co.sort_order ASC NULLS LAST, co.label ASC NULLS LAST
+      ORDER BY ro.sort_order ASC NULLS LAST, ro.label ASC NULLS LAST
+    `);
+  }
+
+  async listRoutineObjectives() {
+    return this.prisma.$queryRaw<
+      Array<{ id: string; code: string; label: string; sort_order: number; is_default: boolean }>
+    >(Prisma.sql`
+      SELECT id, code, label, sort_order, is_default
+      FROM routine_objective
+      ORDER BY sort_order ASC, label ASC
     `);
   }
 

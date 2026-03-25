@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -154,6 +154,33 @@ export function useDeleteRoutineTemplateMutation() {
       void qc.invalidateQueries({ queryKey: ['routine-templates'] });
     },
   });
+}
+
+/* ── Routine Objectives catalog ── */
+
+export type RoutineObjectiveView = {
+  code: string;
+  id: string;
+  isDefault: boolean;
+  label: string;
+  sortOrder: number;
+};
+
+type ListRoutineObjectivesResponse = { items: RoutineObjectiveView[] };
+
+export function useRoutineObjectivesQuery(): UseQueryResult<RoutineObjectiveView[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchRoutineObjectives(auth),
+    queryKey: ['routine-objectives', auth?.activeRole, auth?.accessToken],
+  });
+}
+
+async function fetchRoutineObjectives(auth: Auth): Promise<RoutineObjectiveView[]> {
+  if (!auth) throw new Error('Missing authenticated context');
+  const res = await createApiClient(auth).get<ListRoutineObjectivesResponse>('/plans/templates/routines/catalog/objectives');
+  return res.items;
 }
 
 /* ── Auth helper ── */

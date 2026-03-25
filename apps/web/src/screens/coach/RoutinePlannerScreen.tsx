@@ -2,8 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
 import { createEmptyDraft } from './RoutinePlanner.helpers';
-import { useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
-import { useRoutineTemplatesQuery, type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
+import {
+  useRoutineObjectivesQuery,
+  useRoutineTemplatesQuery,
+  type RoutineTemplateView,
+} from '../../data/hooks/useRoutineTemplates';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useRoutinePlannerDraft } from './useRoutinePlannerDraft';
@@ -27,7 +30,7 @@ function useRoutinePlannerScreenModel(onRouteChange?: (route: ShellRoute) => voi
 
 function useRoutinePlannerModelData(onRouteChange: undefined | ((route: ShellRoute) => void), t: (key: string) => string) {
   const templates = useRoutineTemplatesQuery().data ?? [];
-  const objectiveOptions = useClientObjectivesQuery().data ?? [];
+  const objectiveOptions = useRoutineObjectivesQuery().data ?? [];
   const plannerContext = usePlannerContextState();
   const draftState = useRoutinePlannerDraft(t);
   const uiState = useRoutinePlannerUIState();

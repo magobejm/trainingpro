@@ -23,10 +23,7 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
     this.strength = new PlansStrengthRepository(prisma);
   }
 
-  createCardioTemplate(
-    ctx: AuthContext,
-    i: PlanCardioTemplateWriteInput,
-  ): Promise<PlanCardioTemplate> {
+  createCardioTemplate(ctx: AuthContext, i: PlanCardioTemplateWriteInput): Promise<PlanCardioTemplate> {
     return this.cardio.createCardioTemplate(ctx, i);
   }
 
@@ -50,11 +47,7 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
     return this.strength.updateTemplate(ctx, id, i);
   }
 
-  updateCardioTemplate(
-    ctx: AuthContext,
-    id: string,
-    i: PlanCardioTemplateWriteInput,
-  ): Promise<PlanCardioTemplate> {
+  updateCardioTemplate(ctx: AuthContext, id: string, i: PlanCardioTemplateWriteInput): Promise<PlanCardioTemplate> {
     return this.cardio.updateCardioTemplate(ctx, id, i);
   }
 
@@ -92,5 +85,9 @@ export class PlansRepositoryPrisma implements PlansRepositoryPort {
 
   deleteRoutineTemplate(ctx: AuthContext, id: string): Promise<void> {
     return this.routine.deleteRoutineTemplate(ctx, id);
+  }
+
+  listRoutineObjectives() {
+    return this.routine.listRoutineObjectives();
   }
 }

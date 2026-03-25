@@ -3,6 +3,7 @@ import { LibraryItemScope, PrismaClient } from '@prisma/client';
 import { CARDIO_METHOD_TYPES_V1 } from './seeds/v1-cardio-method-types.seed';
 import { CARDIO_METHODS_V1 } from './seeds/v1-cardio-methods.seed';
 import { CLIENT_OBJECTIVES_V1 } from './seeds/v1-client-objectives.seed';
+import { ROUTINE_OBJECTIVES_V1 } from './seeds/v1-routine-objectives.seed';
 import { EXERCISE_EQUIPMENT_V1 } from './seeds/v1-exercise-equipment.seed';
 import { EXERCISE_MUSCLE_GROUPS_V1 } from './seeds/v1-exercise-muscle-groups.seed';
 import { EXERCISES_V1 } from './seeds/v1-exercises.seed';
@@ -25,6 +26,7 @@ const prisma = new PrismaClient();
 
 async function main(): Promise<void> {
   await seedClientObjectives();
+  await seedRoutineObjectives();
   await seedExerciseMuscleGroups();
   await seedCardioMethodTypes();
   await seedExerciseEquipment();
@@ -48,6 +50,25 @@ async function main(): Promise<void> {
 async function seedClientObjectives(): Promise<void> {
   for (const item of CLIENT_OBJECTIVES_V1) {
     await prisma.clientObjective.upsert({
+      where: { code: item.code },
+      create: {
+        code: item.code,
+        isDefault: item.isDefault,
+        label: item.label,
+        sortOrder: item.sortOrder,
+      },
+      update: {
+        isDefault: item.isDefault,
+        label: item.label,
+        sortOrder: item.sortOrder,
+      },
+    });
+  }
+}
+
+async function seedRoutineObjectives(): Promise<void> {
+  for (const item of ROUTINE_OBJECTIVES_V1) {
+    await (prisma as any).routineObjective.upsert({
       where: { code: item.code },
       create: {
         code: item.code,

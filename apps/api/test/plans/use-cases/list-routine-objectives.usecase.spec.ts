@@ -1,4 +1,4 @@
-import { ListRoutineObjectivesUseCase } from './list-routine-objectives.usecase';
+import { ListRoutineObjectivesUseCase } from '../../../src/modules/plans/application/use-cases/list-routine-objectives.usecase';
 
 type RawRow = {
   id: string;

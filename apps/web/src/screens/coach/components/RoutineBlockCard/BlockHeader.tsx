@@ -10,6 +10,7 @@ interface BlockHeaderProps {
   importedFromWarmup?: boolean;
   isCollapsed: boolean;
   isEditing: boolean;
+  isGrouped?: boolean;
   readOnly: boolean;
   onUpdateName: (v: string) => void;
   daysCount: number;
@@ -51,6 +52,7 @@ export function BlockHeader(props: BlockHeaderProps) {
         isCollapsed={props.isCollapsed}
         isEditing={props.isEditing}
         isFirst={props.isFirst}
+        isGrouped={props.isGrouped}
         isLast={props.isLast}
         onMove={props.onMove}
         onRemove={props.onRemove}

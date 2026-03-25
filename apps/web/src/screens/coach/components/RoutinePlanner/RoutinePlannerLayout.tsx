@@ -3,7 +3,7 @@ import { Pressable, ScrollView, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
 import { SaveRoutineModal } from './SaveRoutineModal';
-import type { DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
+import type { DraftDay, DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
 import { useWarmupTemplatesQuery, type WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
@@ -48,9 +48,10 @@ interface LayoutProps {
     onMoveBlockToDay: (fromIdx: number, bIdx: number, toIdx: number) => void;
     onRemoveBlock: (dayIdx: number, blockId: string) => void;
     moveDay: (fromIdx: number, dir: -1 | 1) => void;
+    updateDay: (dayIdx: number, updated: DraftDay) => void;
     lastAddedBlockId: string | null;
   };
-  onSave: (name: string) => void;
+  onSave: (name: string) => Promise<void>;
   onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
   onAssignOnly?: (clientId: string) => Promise<void>;
   templates: RoutineTemplateView[];
@@ -78,6 +79,7 @@ function buildDraftHandlers(
     onUpdateBlockField: draftState.onUpdateBlockField,
     removeDay: draftState.removeDay,
     renameDay: draftState.renameDay,
+    updateDay: draftState.updateDay,
   };
 }
 

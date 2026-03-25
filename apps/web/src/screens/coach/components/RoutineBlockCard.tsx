@@ -18,6 +18,7 @@ interface RoutineBlockCardProps {
   isFirst: boolean;
   isLast: boolean;
   isNew?: boolean;
+  isGrouped?: boolean;
   daysCount: number;
   dayLabels?: string[];
   readOnly?: boolean;
@@ -60,6 +61,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
         isCollapsed={state.isCollapsed}
         isEditing={state.isEditing}
         isFirst={props.isFirst}
+        isGrouped={props.isGrouped}
         isLast={props.isLast}
         onMove={props.onMove}
         onRemove={props.onRemove}

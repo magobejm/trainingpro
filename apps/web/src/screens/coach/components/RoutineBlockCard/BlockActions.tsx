@@ -6,6 +6,7 @@ interface BlockActionsProps {
   isCollapsed: boolean;
   isEditing: boolean;
   isFirst: boolean;
+  isGrouped?: boolean;
   isLast: boolean;
   daysCount: number;
   readOnly: boolean;
@@ -28,8 +29,8 @@ const ICON_COLLAPSED = '›';
 export function BlockActions(props: BlockActionsProps) {
   return (
     <View style={s.blockActions}>
-      {!props.readOnly && renderMoveButtons(props)}
-      {!props.readOnly && <View style={s.blockActionSep} />}
+      {!props.readOnly && !props.isGrouped && renderMoveButtons(props)}
+      {!props.readOnly && !props.isGrouped && <View style={s.blockActionSep} />}
       {props.onShowDetail && (
         <Pressable onPress={props.onShowDetail} style={s.viewDetailBtn}>
           <Text style={s.viewDetailBtnText}>{ICON_DETAIL}</Text>

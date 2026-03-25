@@ -57,6 +57,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const [query, setQuery] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<Tab>('routines');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const routines = useRoutineTemplatesQuery().data ?? [];
   const warmups = useWarmupTemplatesQuery().data ?? [];
   const exercises = useUnifiedExercisesQuery({}).data ?? [];
@@ -69,12 +70,26 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const deleteWarmup = useDeleteWarmupTemplateMutation();
   const filteredRoutines = useFiltered(routines, query);
   const filteredWarmups = useFiltered(warmups, query);
-  const onConfirmDelete = buildConfirmDelete(pendingDeleteId, deleteKind, deleteRoutine, deleteWarmup, setPendingDeleteId);
+  const pendingName = useMemo(() => {
+    const all = [...routines, ...warmups] as Array<{ id: string; name: string }>;
+    return all.find((r) => r.id === pendingDeleteId)?.name ?? '';
+  }, [pendingDeleteId, routines, warmups]);
+  const onConfirmDelete = buildConfirmDelete(
+    pendingDeleteId,
+    deleteKind,
+    deleteRoutine,
+    deleteWarmup,
+    setPendingDeleteId,
+    pendingName,
+    setDeleteError,
+  );
   return {
     filteredRoutines,
     filteredWarmups,
     mediaMap,
     onConfirmDelete,
+    deleteError,
+    setDeleteError,
     onCreateRoutine: () => {
       clearRoutine();
       onRouteChange('coach.routine.planner');
@@ -92,14 +107,17 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
       onRouteChange('coach.warmup.planner');
     },
     onDeleteRoutine: (id: string) => {
+      setDeleteError(null);
       setDeleteKind('routines');
       setPendingDeleteId(id);
     },
     onDeleteWarmup: (id: string) => {
+      setDeleteError(null);
       setDeleteKind('warmups');
       setPendingDeleteId(id);
     },
     pendingDeleteId,
+    pendingName,
     query,
     setQuery,
     setPendingDeleteId,
@@ -138,8 +156,12 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
       <ActionConfirmModal
         cancelLabel={vm.t('coach.routine.delete.cancel')}
         confirmLabel={vm.t('coach.routine.delete.action')}
+        errorMessage={vm.deleteError}
         message={vm.t('coach.routine.delete.confirm')}
-        onCancel={() => vm.setPendingDeleteId('')}
+        onCancel={() => {
+          vm.setDeleteError(null);
+          vm.setPendingDeleteId('');
+        }}
         onConfirm={vm.onConfirmDelete}
         title={vm.t('coach.routine.delete.title')}
         visible={Boolean(vm.pendingDeleteId)}
@@ -377,7 +399,9 @@ function useFiltered<T extends { name: string }>(items: T[], query: string): T[]
   }, [items, query]);
 }
 
-type DeleteMutation = { mutate: (id: string, opts: { onSuccess: () => void }) => void };
+type DeleteMutation = {
+  mutate: (id: string, opts: { onSuccess: () => void; onError: (err: unknown) => void }) => void;
+};
 
 function buildConfirmDelete(
   pendingDeleteId: string,
@@ -385,14 +409,26 @@ function buildConfirmDelete(
   deleteRoutine: DeleteMutation,
   deleteWarmup: DeleteMutation,
   setPendingDeleteId: (id: string) => void,
+  pendingName: string,
+  setDeleteError: (msg: string | null) => void,
 ) {
   return () => {
     if (!pendingDeleteId) return;
     const onSuccess = () => setPendingDeleteId('');
+    const onError = (err: unknown) => {
+      const raw = (err as { message?: string })?.message ?? '';
+      const isAssigned = raw.toLowerCase().includes('assigned');
+      const name = pendingName ? `"${pendingName}"` : 'esta rutina';
+      setDeleteError(
+        isAssigned
+          ? `No se puede eliminar ${name} porque está asignada a uno o más clientes activos. Desasígnala primero.`
+          : `No se pudo eliminar ${name}. ${raw}`,
+      );
+    };
     if (deleteKind === 'routines') {
-      deleteRoutine.mutate(pendingDeleteId, { onSuccess });
+      deleteRoutine.mutate(pendingDeleteId, { onSuccess, onError });
     } else {
-      deleteWarmup.mutate(pendingDeleteId, { onSuccess });
+      deleteWarmup.mutate(pendingDeleteId, { onSuccess, onError });
     }
   };
 }

@@ -10,7 +10,7 @@ import {
   mapRoutineTemplate,
   routineTemplateInclude,
 } from '../plans-routine.prisma.helpers';
-import { RoutineTemplateWriteInput } from '../../../domain/routine-template.input';
+import type { RoutineDayInput, RoutineTemplateWriteInput } from '../../../domain/routine-template.input';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
 
@@ -32,20 +32,80 @@ export class PlansRoutineRepository extends PlansBaseRepository {
 
   async createRoutineTemplate(ctx: AuthContext, input: RoutineTemplateWriteInput) {
     const m = await this.resolveCoachMembership(ctx);
-    const row = await this.prisma.planTemplate.create({
-      data: {
-        ...buildCreateAuditFields(ctx),
-        coachMembershipId: m.id,
-        days: { create: input.days.map(mapRoutineDayCreate) },
-        kind: TemplateKind.ROUTINE,
-        name: input.name.trim(),
-        organizationId: m.organizationId,
-      },
+    // #region agent log
+    let row: Awaited<ReturnType<typeof this.prisma.planTemplate.create>>;
+    try {
+      row = await this.prisma.planTemplate.create({
+        data: {
+          ...buildCreateAuditFields(ctx),
+          coachMembershipId: m.id,
+          days: { create: input.days.map(mapRoutineDayCreate) },
+          kind: TemplateKind.ROUTINE,
+          name: input.name.trim(),
+          organizationId: m.organizationId,
+        },
+        include: routineTemplateInclude(),
+      });
+    } catch (e: unknown) {
+      const err = e as Error & { code?: string; meta?: unknown };
+      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
+        body: JSON.stringify({
+          sessionId: 'dccd80',
+          location: 'plans-routine.repository.ts:planTemplate.create',
+          message: 'CREATE FAILED',
+          data: { msg: err.message, code: err.code, meta: err.meta },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      throw e;
+    }
+    // #endregion
+    try {
+      await this.persistRoutineMetadata(this.prisma, row.id, input);
+    } catch (e: unknown) {
+      const err = e as Error & { code?: string; meta?: unknown };
+      // #region agent log
+      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
+        body: JSON.stringify({
+          sessionId: 'dccd80',
+          location: 'plans-routine.repository.ts:persistRoutineMetadata',
+          message: 'METADATA FAILED',
+          data: { msg: err.message, code: err.code, meta: err.meta },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      throw e;
+    }
+    try {
+      await this.persistDayGroups(this.prisma, row.id, input.days);
+    } catch (e: unknown) {
+      const err = e as Error & { code?: string; meta?: unknown };
+      // #region agent log
+      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
+        body: JSON.stringify({
+          sessionId: 'dccd80',
+          location: 'plans-routine.repository.ts:persistDayGroups',
+          message: 'GROUPS FAILED',
+          data: { msg: err.message, code: err.code, meta: err.meta },
+          timestamp: Date.now(),
+        }),
+      }).catch(() => {});
+      // #endregion
+      throw e;
+    }
+    const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
+    const refreshed = await this.prisma.planTemplate.findUniqueOrThrow({
+      where: { id: row.id },
       include: routineTemplateInclude(),
     });
-    await this.persistRoutineMetadata(this.prisma, row.id, input);
-    const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
-    return mapRoutineTemplate(row, metadataByTemplate.get(row.id));
+    return mapRoutineTemplate(refreshed, metadataByTemplate.get(row.id));
   }
 
   async getRoutineTemplateById(ctx: AuthContext, id: string) {
@@ -103,8 +163,13 @@ export class PlansRoutineRepository extends PlansBaseRepository {
         include: routineTemplateInclude(),
       });
       await this.persistRoutineMetadata(tx, row.id, input);
+      await this.persistDayGroups(tx, row.id, input.days);
       const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
-      return mapRoutineTemplate(row, metadataByTemplate.get(row.id));
+      const refreshed = await tx.planTemplate.findUniqueOrThrow({
+        where: { id: row.id },
+        include: routineTemplateInclude(),
+      });
+      return mapRoutineTemplate(refreshed, metadataByTemplate.get(row.id));
     });
   }
 
@@ -129,6 +194,128 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       where: { id: cur.id },
       data: { archivedAt: new Date() },
     });
+  }
+
+  /**
+   * Second-pass group creation: creates plan_exercise_group rows keyed by clientId,
+   * then updates all block groupId FKs based on the clientId mapping.
+   */
+  private async persistDayGroups(
+    tx: Prisma.TransactionClient | PrismaService,
+    templateId: string,
+    days: RoutineDayInput[],
+  ): Promise<void> {
+    for (const dayInput of days) {
+      if (!dayInput.groups?.length) continue;
+
+      // Find the created day
+      const day = await tx.planDay.findFirst({
+        where: { templateId, dayIndex: dayInput.dayIndex },
+        select: { id: true },
+      });
+      if (!day) continue;
+
+      // Build clientId -> real UUID map
+      const clientIdToGroupId = new Map<string, string>();
+
+      for (const groupInput of dayInput.groups) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const created = await (tx as any).planExerciseGroup.create({
+          data: {
+            clientId: groupInput.clientId,
+            dayId: day.id,
+            groupType: groupInput.groupType,
+            note: groupInput.note ?? null,
+            sortOrder: groupInput.sortOrder,
+          },
+          select: { id: true, clientId: true },
+        });
+        if (created.clientId) {
+          clientIdToGroupId.set(created.clientId as string, created.id as string);
+        }
+      }
+
+      if (clientIdToGroupId.size === 0) continue;
+
+      // Update blocks' groupId for exercises
+      await this.updateBlockGroupIds(tx, day.id, dayInput, clientIdToGroupId);
+    }
+  }
+
+  private async updateBlockGroupIds(
+    tx: Prisma.TransactionClient | PrismaService,
+    dayId: string,
+    dayInput: RoutineDayInput,
+    clientIdToGroupId: Map<string, string>,
+  ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const txAny = tx as any;
+
+    // Strength exercises
+    for (const ex of dayInput.exercises ?? []) {
+      const groupId = this.resolveGroupId(ex.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planStrengthExercise.updateMany({
+          where: { dayId, sortOrder: ex.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+    // Cardio blocks
+    for (const b of dayInput.cardioBlocks ?? []) {
+      const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planCardioBlock.updateMany({
+          where: { dayId, sortOrder: b.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+    // Plio blocks
+    for (const b of dayInput.plioBlocks ?? []) {
+      const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planPlioBlock.updateMany({
+          where: { dayId, sortOrder: b.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+    // Warmup blocks
+    for (const b of dayInput.warmupBlocks ?? []) {
+      const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planWarmupBlock.updateMany({
+          where: { dayId, sortOrder: b.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+    // Sport blocks
+    for (const b of dayInput.sportBlocks ?? []) {
+      const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planSportBlock.updateMany({
+          where: { dayId, sortOrder: b.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+    // Isometric blocks
+    for (const b of dayInput.isometricBlocks ?? []) {
+      const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
+      if (groupId) {
+        await txAny.planIsometricBlock.updateMany({
+          where: { dayId, sortOrder: b.sortOrder },
+          data: { groupId },
+        });
+      }
+    }
+  }
+
+  private resolveGroupId(clientId: null | string | undefined, map: Map<string, string>): null | string {
+    if (!clientId) return null;
+    return map.get(clientId) ?? null;
   }
 
   private async loadRoutineMetadata(templateIds: string[]): Promise<Map<string, RoutineTemplateMetadata>> {

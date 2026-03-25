@@ -7,6 +7,7 @@ const MODAL_ANIMATION = 'fade' as const;
 type Props = {
   cancelLabel: string;
   confirmLabel: string;
+  errorMessage?: string | null;
   isLoading?: boolean;
   message: string;
   onCancel: () => void;
@@ -17,22 +18,38 @@ type Props = {
 
 export function ActionConfirmModal(props: Props): React.JSX.Element {
   return (
-    <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onCancel}
-      transparent
-      visible={props.visible}
-    >
+    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onCancel} transparent visible={props.visible}>
       <View style={styles.overlay}>
         <View style={styles.card}>
           <Text style={styles.title}>{props.title}</Text>
           <Text style={styles.message}>{props.message}</Text>
+          {props.errorMessage ? (
+            <View style={errorStyles.banner}>
+              <Text style={errorStyles.bannerText}>{props.errorMessage}</Text>
+            </View>
+          ) : null}
           <ActionButtons {...props} />
         </View>
       </View>
     </Modal>
   );
 }
+
+const errorStyles = {
+  banner: {
+    backgroundColor: '#fee2e2',
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  bannerText: {
+    color: '#991b1b',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+};
 
 function ActionButtons(
   props: Pick<Props, 'cancelLabel' | 'confirmLabel' | 'isLoading' | 'onCancel' | 'onConfirm'>,

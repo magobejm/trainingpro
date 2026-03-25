@@ -12,7 +12,19 @@ export function useDayManagement(
   const removeDay = useRemoveDay(setDraft, setActiveDayIdx, t, prefixKey);
   const renameDay = useRenameDay(setDraft);
   const moveDay = useMoveDay(setDraft);
-  return { addDay, removeDay, renameDay, moveDay };
+  const updateDay = useUpdateDay(setDraft);
+  return { addDay, removeDay, renameDay, moveDay, updateDay };
+}
+
+function useUpdateDay(setDraft: React.Dispatch<React.SetStateAction<DraftState>>) {
+  return useCallback(
+    (dayIdx: number, updated: DraftDay) =>
+      setDraft((d) => ({
+        ...d,
+        days: d.days.map((dy, i) => (i === dayIdx ? updated : dy)),
+      })),
+    [setDraft],
+  );
 }
 
 function useAddDay(setDraft: React.Dispatch<React.SetStateAction<DraftState>>, t: (k: string) => string, prefixKey: string) {

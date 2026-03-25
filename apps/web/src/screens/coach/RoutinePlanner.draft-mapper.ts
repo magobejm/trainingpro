@@ -1,10 +1,17 @@
-import type { BlockType, DraftBlock, DraftState, NeatItem } from './RoutinePlanner.types';
+import type { BlockType, DraftBlock, DraftExerciseGroup, DraftState, NeatItem } from './RoutinePlanner.types';
 import { mapTemplateBlock } from './RoutinePlanner.template-mapper';
 
 type TemplateBlockData = {
   displayName: string;
   sortOrder: number;
   [key: string]: unknown;
+};
+
+type TemplateGroupData = {
+  id: string;
+  groupType: string;
+  note?: null | string;
+  sortOrder: number;
 };
 
 type TemplateDayData = {
@@ -14,6 +21,8 @@ type TemplateDayData = {
   plioBlocks?: TemplateBlockData[];
   warmupBlocks?: TemplateBlockData[];
   sportBlocks?: TemplateBlockData[];
+  isometricBlocks?: TemplateBlockData[];
+  groups?: TemplateGroupData[];
 };
 
 type TemplateData = {
@@ -30,6 +39,7 @@ export function mapTemplateToDraft(
   return {
     days: tpl.days.map((day) => ({
       blocks: mapBlocksFromTemplate(day, createBlock),
+      groups: mapGroupsFromTemplate(day),
       id: nextDayId(),
       title: day.title,
     })),
@@ -41,12 +51,29 @@ export function mapTemplateToDraft(
   };
 }
 
+function mapGroupsFromTemplate(day: TemplateDayData): DraftExerciseGroup[] {
+  if (!day.groups?.length) return [];
+  return day.groups.map((g) => ({
+    id: g.id,
+    groupType: g.groupType as 'CIRCUIT' | 'SUPERSET',
+    note: g.note ?? undefined,
+    sortOrder: g.sortOrder,
+  }));
+}
+
 function mapBlocksFromTemplate(
   day: TemplateDayData,
   createBlock: (type: BlockType, displayName: string) => DraftBlock,
 ): DraftBlock[] {
-  const blockTypes: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport'];
-  const blockKeys: (keyof TemplateDayData)[] = ['exercises', 'cardioBlocks', 'plioBlocks', 'warmupBlocks', 'sportBlocks'];
+  const blockTypes: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport', 'isometric'];
+  const blockKeys: (keyof TemplateDayData)[] = [
+    'exercises',
+    'cardioBlocks',
+    'plioBlocks',
+    'warmupBlocks',
+    'sportBlocks',
+    'isometricBlocks',
+  ];
   const blocks: DraftBlock[] = [];
   blockKeys.forEach((key, index) => {
     const type = blockTypes[index] as BlockType;

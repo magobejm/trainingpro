@@ -1,14 +1,76 @@
 import type { FieldModeValue } from './entities/field-mode.entity';
 
+export type RoutineStrengthSetInput = {
+  setIndex: number;
+  reps?: null | number;
+  rpe?: null | number;
+  weightKg?: null | number;
+  rir?: null | number;
+  restSeconds?: null | number;
+  advancedTechnique?: null | string;
+  note?: null | string;
+};
+
+export type RoutineCardioSetInput = {
+  setIndex: number;
+  fcMaxPct?: null | number;
+  fcReservePct?: null | number;
+  heartRate?: null | number;
+  rpe?: null | number;
+  note?: null | string;
+};
+
+export type RoutinePlioSetInput = {
+  setIndex: number;
+  reps?: null | number;
+  rpe?: null | number;
+  weightKg?: null | number;
+  restSeconds?: null | number;
+  note?: null | string;
+};
+
+export type RoutineIsometricSetInput = {
+  setIndex: number;
+  rpe?: null | number;
+  durationSeconds?: null | number;
+  weightKg?: null | number;
+  restSeconds?: null | number;
+  note?: null | string;
+};
+
+export type RoutineWarmupSetInput = {
+  setIndex: number;
+  reps?: null | number;
+  rpe?: null | number;
+  rom?: null | string;
+  restSeconds?: null | number;
+  note?: null | string;
+};
+
+export type RoutineSportSetInput = {
+  setIndex: number;
+  reps?: null | number;
+  rpe?: null | number;
+  rir?: null | number;
+  weightKg?: null | number;
+  fcMaxPct?: null | number;
+  fcReservePct?: null | number;
+  heartRate?: null | number;
+  restSeconds?: null | number;
+  note?: null | string;
+};
+
 export type RoutineStrengthInput = {
   displayName: string;
   exerciseLibraryId?: null | string;
   fieldModes: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
   notes?: null | string;
   perSetWeightRanges?: { maxKg?: null | number; minKg?: null | number }[];
   repsMax?: null | number;
   repsMin?: null | number;
   restSeconds?: null | number;
+  sets?: RoutineStrengthSetInput[];
   setsPlanned?: null | number;
   sortOrder: number;
   targetRir?: null | number;
@@ -21,10 +83,12 @@ export type RoutineCardioInput = {
   cardioMethodLibraryId?: null | string;
   displayName: string;
   fieldModes: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
   methodType: string;
   notes?: null | string;
   restSeconds: number;
   roundsPlanned: number;
+  sets?: RoutineCardioSetInput[];
   sortOrder: number;
   targetDistanceMeters?: null | number;
   targetRpe?: null | number;
@@ -33,10 +97,13 @@ export type RoutineCardioInput = {
 
 export type RoutinePlioInput = {
   displayName: string;
+  fieldModes?: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
   notes?: null | string;
   plioExerciseLibraryId?: null | string;
   restSeconds: number;
   roundsPlanned: number;
+  sets?: RoutinePlioSetInput[];
   sortOrder: number;
   targetRpe?: null | number;
   workSeconds: number;
@@ -44,9 +111,12 @@ export type RoutinePlioInput = {
 
 export type RoutineWarmupInput = {
   displayName: string;
+  fieldModes?: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
   notes?: null | string;
   restSeconds: number;
   roundsPlanned: number;
+  sets?: RoutineWarmupSetInput[];
   sortOrder: number;
   targetRpe?: null | number;
   warmupExerciseLibraryId?: null | string;
@@ -56,16 +126,40 @@ export type RoutineWarmupInput = {
 export type RoutineSportInput = {
   displayName: string;
   durationMinutes: number;
+  fieldModes?: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
   notes?: null | string;
+  sets?: RoutineSportSetInput[];
   sortOrder: number;
   sportLibraryId?: null | string;
   targetRpe?: null | number;
+};
+
+export type RoutineIsometricInput = {
+  displayName: string;
+  fieldModes?: { fieldKey: string; mode: FieldModeValue }[];
+  groupId?: null | string;
+  isometricExerciseLibraryId?: null | string;
+  notes?: null | string;
+  sets?: RoutineIsometricSetInput[];
+  setsPlanned?: null | number;
+  sortOrder: number;
+  targetRpe?: null | number;
+};
+
+export type RoutineExerciseGroupInput = {
+  clientId: string;
+  groupType: 'CIRCUIT' | 'SUPERSET';
+  note?: null | string;
+  sortOrder: number;
 };
 
 export type RoutineDayInput = {
   cardioBlocks?: RoutineCardioInput[];
   dayIndex: number;
   exercises?: RoutineStrengthInput[];
+  groups?: RoutineExerciseGroupInput[];
+  isometricBlocks?: RoutineIsometricInput[];
   plioBlocks?: RoutinePlioInput[];
   sportBlocks?: RoutineSportInput[];
   title: string;

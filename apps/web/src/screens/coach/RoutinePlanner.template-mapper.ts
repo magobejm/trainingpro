@@ -1,4 +1,4 @@
-import type { BlockType, DraftBlock } from './RoutinePlanner.types';
+import type { BlockType, DraftBlock, DraftSet } from './RoutinePlanner.types';
 
 type MetaMap = Record<string, unknown>;
 type TemplateBlockData = {
@@ -18,6 +18,7 @@ export function mapTemplateBlock(
   const base = {
     ...createBlock(type, item.displayName),
     displayName: item.displayName,
+    groupId: toStringValue(item.groupId),
     libraryId: extractLibraryId(type, item),
     notes: metaParsed.baseNotes,
     sortOrder: toNumber(item.sortOrder),
@@ -28,7 +29,8 @@ export function mapTemplateBlock(
   if (type === 'cardio') return mapCardioBlock(base, item, metaParsed.meta);
   if (type === 'plio') return mapPlioBlock(base, item, metaParsed.meta);
   if (type === 'warmup') return mapWarmupBlock(base, item, metaParsed.meta);
-  return { ...base, durationMinutes: toNumber(item.durationMinutes) };
+  if (type === 'isometric') return mapIsometricBlock(base, item);
+  return { ...base, durationMinutes: toNumber(item.durationMinutes), sets: mapSets(item.sets) };
 }
 
 export function mapWarmupTemplateItemsToBlocks(
@@ -85,6 +87,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
     repsRange: parseRangeText(toNumber(item.repsMin), toNumber(item.repsMax)),
     restSeconds: toNumber(item.restSeconds),
     setsPlanned: toNumber(item.setsPlanned),
+    sets: mapSets(item.sets),
     targetRir: toNumber(item.targetRir),
     weightPerSeriesKg: csvWeights.length > 1 ? csvWeights.join(',') : undefined,
     weightKg: toNumber(item.weightRangeMaxKg),
@@ -102,6 +105,7 @@ function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
     intensityFcReserve: toNumber(meta.intensidadFcReserva),
     restSeconds: toNumber(item.restSeconds),
     roundsPlanned: toNumber(item.roundsPlanned),
+    sets: mapSets(item.sets),
     totalTimeSeconds: toNumber(item.workSeconds),
     workSeconds: toNumber(item.workSeconds),
   };
@@ -115,6 +119,7 @@ function mapPlioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap):
     repsRange: toStringValue(meta.rangoReps),
     restSeconds: toNumber(item.restSeconds),
     roundsPlanned: toNumber(item.roundsPlanned),
+    sets: mapSets(item.sets),
     weightKg: toNumber(meta.pesoKg),
     workSeconds: toNumber(item.workSeconds),
   };
@@ -128,9 +133,39 @@ function mapWarmupBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
     repsRange: toStringValue(meta.rangoReps),
     restSeconds: toNumber(item.restSeconds),
     roundsPlanned: toNumber(item.roundsPlanned),
+    sets: mapSets(item.sets),
     warmupTemplateName: toStringValue(meta.nombreCalentamiento),
     workSeconds: toNumber(item.workSeconds),
   };
+}
+
+function mapIsometricBlock(base: DraftBlock, item: TemplateBlockData): DraftBlock {
+  return {
+    ...base,
+    setsPlanned: toNumber(item.setsPlanned),
+    sets: mapSets(item.sets),
+  };
+}
+
+function mapSets(rawSets: unknown): DraftSet[] {
+  if (!Array.isArray(rawSets)) return [];
+  return rawSets
+    .filter((s): s is Record<string, unknown> => s !== null && typeof s === 'object')
+    .map((s) => ({
+      setIndex: toNumber(s.setIndex) ?? 0,
+      reps: toNumber(s.reps),
+      rpe: toNumber(s.rpe),
+      weightKg: toNumber(s.weightKg),
+      rir: toNumber(s.rir),
+      restSeconds: toNumber(s.restSeconds),
+      advancedTechnique: toStringValue(s.advancedTechnique),
+      note: toStringValue(s.note),
+      durationSeconds: toNumber(s.durationSeconds),
+      fcMaxPct: toNumber(s.fcMaxPct),
+      fcReservePct: toNumber(s.fcReservePct),
+      heartRate: toNumber(s.heartRate),
+      rom: toStringValue(s.rom),
+    }));
 }
 
 function readWarmupImportFlags(meta: MetaMap): Pick<DraftBlock, 'fromWarmupTemplate' | 'warmupTemplateName'> {

@@ -4,6 +4,7 @@ import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
 
 const MODAL_ANIM = 'fade' as const;
+const SCROLL_KEYBOARD_TAPS = 'handled' as const;
 const PLACEHOLDER_COLOR = '#94a3b8';
 const SEARCH_ICON = '🔍';
 const BACK_ICON = '‹';
@@ -13,7 +14,7 @@ interface SaveRoutineModalProps {
   initialName: string;
   isGlobal?: boolean;
   onClose: () => void;
-  onSave: (name: string) => void;
+  onSave: (name: string) => Promise<void>;
   onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
   onAssignOnly?: (clientId: string) => Promise<void>;
   t: (k: string, opts?: Record<string, unknown>) => string;
@@ -89,6 +90,8 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
   const [conflict, setConflict] = useState<ConflictState | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -97,6 +100,8 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       setSelectedClientId(null);
       setSelectedObjectiveId(null);
       setConflict(null);
+      setSaveError(null);
+      setIsSaving(false);
     }
   }, [visible, initialName]);
 
@@ -111,9 +116,18 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
     return matchesSearch && matchesObjective;
   });
 
-  function handleSaveOnly() {
-    onSave(name);
-    onClose();
+  async function handleSaveOnly() {
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      await onSave(name);
+      onClose();
+    } catch (err) {
+      const raw = (err as { message?: string })?.message ?? '';
+      setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleSaveAndAssign() {
@@ -129,15 +143,34 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       });
       return;
     }
-    await onSaveAndAssign(name, selectedClientId);
-    onClose();
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      await onSaveAndAssign(name, selectedClientId);
+      onClose();
+    } catch (err) {
+      const raw = (err as { message?: string })?.message ?? '';
+      setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   async function handleConflictConfirm() {
     if (!conflict) return;
-    await onSaveAndAssign(conflict.name, conflict.clientId);
-    setConflict(null);
-    onClose();
+    setSaveError(null);
+    setIsSaving(true);
+    try {
+      await onSaveAndAssign(conflict.name, conflict.clientId);
+      setConflict(null);
+      onClose();
+    } catch (err) {
+      const raw = (err as { message?: string })?.message ?? '';
+      setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
+      setConflict(null);
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (!visible) return null;
@@ -146,60 +179,66 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
     <Modal animationType={MODAL_ANIM} transparent visible={visible}>
       <Pressable onPress={onClose} style={styles.overlay}>
         <Pressable onPress={noop} style={styles.modal}>
-          <Pressable onPress={onClose} style={styles.backBtn}>
-            <Text style={styles.backIcon}>{BACK_ICON}</Text>
-            <Text style={styles.backText}>{t('coach.library.detail.back')}</Text>
-          </Pressable>
-          <Text style={styles.title}>
-            {isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
-          </Text>
-          {!isGlobal && (
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.name')}</Text>
-              <TextInput
-                onChangeText={setName}
-                placeholder={t('coach.routine.saveModal.namePlaceholder')}
-                placeholderTextColor={PLACEHOLDER_COLOR}
-                style={styles.input}
-                value={name}
-              />
-            </View>
-          )}
-          <View style={styles.field}>
-            <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.assignClient')}</Text>
-            <View style={styles.searchRow}>
-              <Text style={styles.searchIcon}>{SEARCH_ICON}</Text>
-              <TextInput
-                onChangeText={setSearch}
-                placeholder={t('coach.routine.saveModal.searchClient')}
-                placeholderTextColor={PLACEHOLDER_COLOR}
-                style={styles.searchInput}
-                value={search}
-              />
-            </View>
-            {objectives.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.objectiveFilterRow}
-                contentContainerStyle={styles.objectiveFilterContent}
-              >
-                {objectives.map((obj) => {
-                  const active = selectedObjectiveId === obj.id;
-                  return (
-                    <Pressable
-                      key={obj.id}
-                      onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
-                      style={[styles.objectiveChip, active && styles.objectiveChipActive]}
-                    >
-                      <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+          {/* ── Scrollable body ── */}
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.bodyContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
+          >
+            <Pressable onPress={onClose} style={styles.backBtn}>
+              <Text style={styles.backIcon}>{BACK_ICON}</Text>
+              <Text style={styles.backText}>{t('coach.library.detail.back')}</Text>
+            </Pressable>
+            <Text style={styles.title}>
+              {isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
+            </Text>
+            {!isGlobal && (
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.name')}</Text>
+                <TextInput
+                  onChangeText={setName}
+                  placeholder={t('coach.routine.saveModal.namePlaceholder')}
+                  placeholderTextColor={PLACEHOLDER_COLOR}
+                  style={styles.input}
+                  value={name}
+                />
+              </View>
             )}
-            <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
-            <ScrollView style={styles.clientList}>
+            <View style={styles.field}>
+              <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.assignClient')}</Text>
+              <View style={styles.searchRow}>
+                <Text style={styles.searchIcon}>{SEARCH_ICON}</Text>
+                <TextInput
+                  onChangeText={setSearch}
+                  placeholder={t('coach.routine.saveModal.searchClient')}
+                  placeholderTextColor={PLACEHOLDER_COLOR}
+                  style={styles.searchInput}
+                  value={search}
+                />
+              </View>
+              {objectives.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={styles.objectiveFilterRow}
+                  contentContainerStyle={styles.objectiveFilterContent}
+                >
+                  {objectives.map((obj) => {
+                    const active = selectedObjectiveId === obj.id;
+                    return (
+                      <Pressable
+                        key={obj.id}
+                        onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
+                        style={[styles.objectiveChip, active && styles.objectiveChipActive]}
+                      >
+                        <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
+              <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
               {filtered.map((client) => (
                 <ClientRow
                   client={client}
@@ -208,43 +247,60 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
                   onPress={() => setSelectedClientId((prev) => (prev === client.id ? null : client.id))}
                 />
               ))}
-            </ScrollView>
-          </View>
-          {conflict ? (
-            <ConflictWarning
-              conflict={conflict}
-              onCancel={() => setConflict(null)}
-              onConfirm={handleConflictConfirm}
-              t={t}
-            />
-          ) : isGlobal ? (
-            <View style={styles.footer}>
-              <Pressable
-                disabled={!selectedClientId}
-                onPress={async () => {
-                  if (!selectedClientId || !onAssignOnly) return;
-                  await onAssignOnly(selectedClientId);
-                  onClose();
-                }}
-                style={[styles.btnPrimary, !selectedClientId && styles.btnDisabled]}
-              >
-                <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
-              </Pressable>
             </View>
-          ) : (
-            <View style={styles.footer}>
-              <Pressable onPress={handleSaveOnly} style={styles.btnSecondary}>
-                <Text style={styles.btnSecondaryText}>{t('coach.routine.saveModal.saveOnly')}</Text>
-              </Pressable>
-              <Pressable
-                disabled={!selectedClientId}
-                onPress={handleSaveAndAssign}
-                style={[styles.btnPrimary, !selectedClientId && styles.btnDisabled]}
-              >
-                <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.saveAndAssign')}</Text>
-              </Pressable>
+            {conflict && (
+              <ConflictWarning
+                conflict={conflict}
+                onCancel={() => setConflict(null)}
+                onConfirm={handleConflictConfirm}
+                t={t}
+              />
+            )}
+          </ScrollView>
+
+          {/* ── Sticky footer ── */}
+          {saveError ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>{saveError}</Text>
             </View>
-          )}
+          ) : null}
+          {!conflict &&
+            (isGlobal ? (
+              <View style={styles.footer}>
+                <Pressable
+                  disabled={!selectedClientId || isSaving}
+                  onPress={async () => {
+                    if (!selectedClientId || !onAssignOnly) return;
+                    await onAssignOnly(selectedClientId);
+                    onClose();
+                  }}
+                  style={[styles.btnPrimary, (!selectedClientId || isSaving) && styles.btnDisabled]}
+                >
+                  <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.footer}>
+                <Pressable
+                  disabled={isSaving}
+                  onPress={handleSaveOnly}
+                  style={[styles.btnSecondary, isSaving && styles.btnDisabled]}
+                >
+                  <Text style={styles.btnSecondaryText}>
+                    {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveOnly')}
+                  </Text>
+                </Pressable>
+                <Pressable
+                  disabled={!selectedClientId || isSaving}
+                  onPress={handleSaveAndAssign}
+                  style={[styles.btnPrimary, (!selectedClientId || isSaving) && styles.btnDisabled]}
+                >
+                  <Text style={styles.btnPrimaryText}>
+                    {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}
+                  </Text>
+                </Pressable>
+              </View>
+            ))}
         </Pressable>
       </Pressable>
     </Modal>
@@ -261,10 +317,17 @@ const styles = StyleSheet.create({
   modal: {
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 24,
     width: 420,
     maxWidth: '92%',
-    maxHeight: '85%',
+    maxHeight: '88%',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  body: {
+    flex: 1,
+  },
+  bodyContent: {
+    padding: 24,
     gap: 16,
   },
   backBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
@@ -311,7 +374,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginTop: 8,
   },
-  clientList: { maxHeight: 200 },
   clientRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -336,7 +398,16 @@ const styles = StyleSheet.create({
   clientName: { flex: 1, fontSize: 14, color: '#1e293b' },
   clientNameSelected: { color: '#2563eb', fontWeight: '600' },
   checkIcon: { fontSize: 16, color: '#2563eb' },
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#fff',
+  },
   btnPrimary: {
     backgroundColor: '#3b82f6',
     borderRadius: 8,
@@ -356,4 +427,12 @@ const styles = StyleSheet.create({
   conflictBox: { gap: 12, backgroundColor: '#fef9c3', borderRadius: 8, padding: 12 },
   conflictText: { fontSize: 13, color: '#92400e', lineHeight: 20 },
   conflictBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
+  errorBanner: {
+    backgroundColor: '#fee2e2',
+    borderTopWidth: 1,
+    borderTopColor: '#fca5a5',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+  },
+  errorBannerText: { color: '#991b1b', fontSize: 13, lineHeight: 18 },
 });

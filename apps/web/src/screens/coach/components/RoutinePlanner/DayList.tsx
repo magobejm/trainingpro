@@ -13,6 +13,7 @@ export interface DraftStateHandlers {
   renameDay: (dayIdx: number, title: string) => void;
   onUpdateBlockField: (dayIdx: number, blockId: string, f: keyof DraftBlock, v: unknown) => void;
   moveDay: (fromIdx: number, dir: -1 | 1) => void;
+  updateDay: (dayIdx: number, updated: DraftDay) => void;
 }
 
 interface DayListProps {
@@ -88,6 +89,7 @@ const DayListItem = (p: ItemProps) => (
     onRename={(title) => p.draftState.renameDay(p.idx, title)}
     onSetAddBlockDayIdx={p.setAddIdx}
     onUpdateBlockField={(bid, f, v) => p.draftState.onUpdateBlockField(p.idx, bid, f, v)}
+    onUpdateDay={(updated) => p.draftState.updateDay(p.idx, updated)}
     readOnly={p.isReadOnly}
     labels={p.labels}
   />

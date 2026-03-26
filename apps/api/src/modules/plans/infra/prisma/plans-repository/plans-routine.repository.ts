@@ -405,8 +405,8 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     const objectiveIds = input.objectiveIds ?? [];
     for (const objectiveId of objectiveIds) {
       await tx.$executeRaw`
-        INSERT INTO plan_template_objective (template_id, objective_id)
-        VALUES (${templateId}::uuid, ${objectiveId}::uuid)
+        INSERT INTO plan_template_objective (id, template_id, objective_id)
+        VALUES (gen_random_uuid(), ${templateId}::uuid, ${objectiveId}::uuid)
       `;
     }
     await tx.$executeRaw`

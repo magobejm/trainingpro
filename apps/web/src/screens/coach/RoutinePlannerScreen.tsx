@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
-import { createEmptyDraft } from './RoutinePlanner.helpers';
+import { createEmptyDraft, mapTemplateToDraft } from './RoutinePlanner.helpers';
 import {
   useRoutineObjectivesQuery,
   useRoutineTemplatesQuery,
@@ -13,7 +13,6 @@ import { useRoutinePlannerDraft } from './useRoutinePlannerDraft';
 import { useRoutinePlannerMutations } from './useRoutinePlannerMutations';
 import { RoutinePlannerLayout } from './components/RoutinePlanner/RoutinePlannerLayout';
 import { useRoutinePlannerUIState } from './useRoutinePlannerUIState';
-import { mapTemplateToDraft } from './RoutinePlanner.helpers';
 
 type Props = { onRouteChange?: (route: ShellRoute) => void };
 
@@ -34,10 +33,11 @@ function useRoutinePlannerModelData(onRouteChange: undefined | ((route: ShellRou
   const plannerContext = usePlannerContextState();
   const draftState = useRoutinePlannerDraft(t);
   const uiState = useRoutinePlannerUIState();
-  hydratePlannerDraft(plannerContext, draftState, templates, uiState);
+  hydratePlannerDraft(plannerContext, draftState, templates, uiState, t);
   const saveModel = usePlannerSaveModel(
     plannerContext.clearInitialTemplate,
     plannerContext.clientId,
+    plannerContext.viewMode,
     draftState,
     onRouteChange,
     t,
@@ -59,19 +59,23 @@ function hydratePlannerDraft(
   draftState: ReturnType<typeof useRoutinePlannerDraft>,
   templates: RoutineTemplateView[],
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
+  t: (key: string) => string,
 ) {
-  usePlannerDraftHydration(
+  useHydrateDraftFromContext(
     plannerContext.clearInitialTemplate,
     draftState,
     plannerContext.initialTemplateId,
+    plannerContext.resetCounter,
     templates,
     uiState,
+    t,
   );
 }
 
 function usePlannerSaveModel(
   clearInitialTemplate: () => void,
   clientId: null | string,
+  viewMode: 'edit' | 'view' | null,
   draftState: ReturnType<typeof useRoutinePlannerDraft>,
   onRouteChange: undefined | ((route: ShellRoute) => void),
   t: (key: string) => string,
@@ -88,14 +92,15 @@ function usePlannerSaveModel(
     uiState,
     updateClientMutation,
   );
-  const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t);
-  const onAssignOnly = buildAssignOnly(assignMutation, uiState);
-  return { deleteMutation, onSave, onSaveAndAssign, onAssignOnly, updateClientMutation };
+  const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t, onRouteChange);
+  const onAssignOnly = buildAssignOnly(assignMutation, uiState, onRouteChange);
+  return { deleteMutation, onSave, onSaveAndAssign, onAssignOnly, updateClientMutation, viewMode };
 }
 
 function buildAssignOnly(
   assignMutation: ReturnType<typeof useAssignRoutineMutation>,
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
+  onRouteChange: undefined | ((route: ShellRoute) => void),
 ) {
   return async (clientId: string) => {
     const editingId = uiState.editingId;
@@ -103,6 +108,7 @@ function buildAssignOnly(
     await assignMutation.mutateAsync({ clientId, templateId: editingId });
     uiState.setSaveSuccess(true);
     setTimeout(() => uiState.setSaveSuccess(false), 3000);
+    onRouteChange?.('coach.library.routines');
   };
 }
 
@@ -112,6 +118,7 @@ function buildSaveAndAssign(
   draftState: ReturnType<typeof useRoutinePlannerDraft>,
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
   t: (k: string) => string,
+  onRouteChange: undefined | ((route: ShellRoute) => void),
 ) {
   return async (name: string, assignClientId: string) => {
     const templateId = await onSaveCore(name);
@@ -121,17 +128,8 @@ function buildSaveAndAssign(
     draftState.setDraft(createEmptyDraft(t));
     uiState.setEditingId(null);
     draftState.setActiveDayIdx(0);
+    onRouteChange?.('coach.library.routines');
   };
-}
-
-function usePlannerDraftHydration(
-  clearInitialTemplate: () => void,
-  draftState: ReturnType<typeof useRoutinePlannerDraft>,
-  initialTemplateId: null | string,
-  templates: Array<{ id: string } & Record<string, unknown>>,
-  uiState: ReturnType<typeof useRoutinePlannerUIState>,
-) {
-  useHydrateDraftFromContext(clearInitialTemplate, draftState, initialTemplateId, templates, uiState);
 }
 
 function buildLayoutModel(params: {
@@ -147,6 +145,7 @@ function buildLayoutModel(params: {
   templates: RoutineTemplateView[];
   uiState: ReturnType<typeof useRoutinePlannerUIState>;
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>;
+  viewMode: 'edit' | 'view' | null;
 }) {
   return {
     clientContextName: params.plannerContext.clientDisplayName,
@@ -156,11 +155,13 @@ function buildLayoutModel(params: {
     objectiveOptions: params.objectiveOptions,
     onAssignTemplate: buildAssignTemplateHandler(params),
     onAssignOnly: params.onAssignOnly,
+    onBack: params.plannerContext.clientId ? () => params.onRouteChange?.('coach.clients') : undefined,
     onSave: params.onSave,
     onSaveAndAssign: params.onSaveAndAssign,
     t: params.t,
     templates: params.templates,
     uiState: params.uiState,
+    viewOnlyMode: params.viewMode === 'view',
   };
 }
 
@@ -204,6 +205,8 @@ function usePlannerContextState() {
     clearInitialTemplate: useRoutinePlannerContextStore((state) => state.clearInitialTemplate),
     clientId: useRoutinePlannerContextStore((state) => state.clientId),
     initialTemplateId: useRoutinePlannerContextStore((state) => state.initialTemplateId),
+    resetCounter: useRoutinePlannerContextStore((state) => state.resetCounter),
+    viewMode: useRoutinePlannerContextStore((state) => state.viewMode),
   };
 }
 
@@ -211,8 +214,10 @@ function useHydrateDraftFromContext(
   clearInitialTemplate: () => void,
   draftState: ReturnType<typeof useRoutinePlannerDraft>,
   initialTemplateId: null | string,
+  resetCounter: number,
   templates: Array<{ id: string } & Record<string, unknown>>,
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
+  t: (key: string) => string,
 ) {
   React.useEffect(() => {
     if (!initialTemplateId || templates.length === 0) return;
@@ -223,6 +228,14 @@ function useHydrateDraftFromContext(
     draftState.setActiveDayIdx(0);
     clearInitialTemplate();
   }, [clearInitialTemplate, draftState, initialTemplateId, templates, uiState]);
+
+  React.useEffect(() => {
+    if (resetCounter > 0) {
+      uiState.setEditingId(null);
+      draftState.setDraft(createEmptyDraft(t));
+      draftState.setActiveDayIdx(0);
+    }
+  }, [resetCounter]);
 }
 
 function buildAfterSaveHandler(
@@ -232,10 +245,14 @@ function buildAfterSaveHandler(
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>,
 ) {
   return async (templateId: string) => {
-    if (!clientId) return;
-    await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
-    clearInitialTemplate();
-    onRouteChange?.('coach.clients');
+    if (clientId) {
+      await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
+      clearInitialTemplate();
+      onRouteChange?.('coach.clients');
+    } else {
+      // Always go back to the routine library after saving (new or edit)
+      onRouteChange?.('coach.library.routines');
+    }
   };
 }
 

@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type ViewStyle } from 'react-native';
-import { Trophy, Activity, Pencil, Trash2, Search, Plus } from 'lucide-react';
+import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
+import { C, ss } from './LibraryRoutinesScreen.styles';
+import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
+import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
 import {
   useRoutineTemplatesQuery,
   useDeleteRoutineTemplateMutation,
@@ -33,17 +35,6 @@ function apiBase(): string {
 const ROUTINE_PLACEHOLDER = () => `${apiBase()}/assets/placeholders/routine-placeholder.jpg`;
 const WARMUP_PLACEHOLDER = () => `${apiBase()}/assets/placeholders/warmup-placeholder.png`;
 
-const C = {
-  bg: '#f8fafc',
-  card: '#ffffff',
-  text: '#0f172a',
-  muted: '#64748b',
-  border: '#e2e8f0',
-  blue: '#3b82f6',
-  dot: '#f59e0b',
-  white: '#ffffff',
-};
-
 export function LibraryRoutinesScreen({ onRouteChange }: Props): React.JSX.Element {
   const vm = useViewModel(onRouteChange);
   return <ScreenView vm={vm} />;
@@ -62,10 +53,13 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const warmups = useWarmupTemplatesQuery().data ?? [];
   const exercises = useUnifiedExercisesQuery({}).data ?? [];
   const mediaMap = useMemo<MediaMap>(() => Object.fromEntries(exercises.map((e) => [e.id, e.mediaUrl])), [exercises]);
+  const clientId = useRoutinePlannerContextStore((s) => s.clientId);
   const openForEdit = useRoutinePlannerContextStore((s) => s.openForEdit);
+  const openForView = useRoutinePlannerContextStore((s) => s.openForView);
   const clearRoutine = useRoutinePlannerContextStore((s) => s.clear);
   const setWarmupInitial = useWarmupPlannerContextStore((s) => s.setInitialTemplate);
   const clearWarmup = useWarmupPlannerContextStore((s) => s.clear);
+  const assignRoutine = useAssignRoutineMutation();
   const deleteRoutine = useDeleteRoutineTemplateMutation();
   const deleteWarmup = useDeleteWarmupTemplateMutation();
   const filteredRoutines = useFiltered(routines, query);
@@ -84,6 +78,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     setDeleteError,
   );
   return {
+    clientId,
     filteredRoutines,
     filteredWarmups,
     mediaMap,
@@ -97,6 +92,17 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     onCreateWarmup: () => {
       clearWarmup();
       onRouteChange('coach.warmup.planner');
+    },
+    onAssignRoutine: (tpl: RoutineTemplateView) => {
+      if (!clientId) return;
+      void assignRoutine.mutateAsync({ clientId, templateId: tpl.id }).then(() => {
+        clearRoutine();
+        onRouteChange('coach.clients');
+      });
+    },
+    onViewRoutine: (tpl: RoutineTemplateView) => {
+      openForView(tpl.id);
+      onRouteChange('coach.routine.planner');
     },
     onEditRoutine: (tpl: RoutineTemplateView) => {
       openForEdit(tpl.id);
@@ -138,8 +144,11 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
       <TabBar tab={vm.tab} setTab={vm.setTab} t={vm.t} />
       {vm.tab === 'routines' ? (
         <RoutineGrid
+          clientId={vm.clientId}
           items={vm.filteredRoutines}
           mediaMap={vm.mediaMap}
+          onAssign={vm.onAssignRoutine}
+          onView={vm.onViewRoutine}
           onEdit={vm.onEditRoutine}
           onDelete={vm.onDeleteRoutine}
           t={vm.t}
@@ -218,8 +227,11 @@ function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (v: Tab) => void; t: T }
 /* ── Grids ── */
 
 function RoutineGrid(props: {
+  clientId: string | null;
   items: RoutineTemplateView[];
   mediaMap: MediaMap;
+  onAssign: (tpl: RoutineTemplateView) => void;
+  onView: (tpl: RoutineTemplateView) => void;
   onEdit: (tpl: RoutineTemplateView) => void;
   onDelete: (id: string) => void;
   t: T;
@@ -231,9 +243,12 @@ function RoutineGrid(props: {
     <View style={ss.grid}>
       {props.items.map((tpl) => (
         <RoutineCard
+          clientId={props.clientId}
           key={tpl.id}
           tpl={tpl}
           mediaUrl={pickRoutineImage(tpl, props.mediaMap)}
+          onAssign={props.onAssign}
+          onView={props.onView}
           onEdit={props.onEdit}
           onDelete={props.onDelete}
           t={props.t}
@@ -272,8 +287,11 @@ function WarmupGrid(props: {
 /* ── Cards ── */
 
 function RoutineCard(props: {
+  clientId: string | null;
   tpl: RoutineTemplateView;
   mediaUrl: string;
+  onAssign: (tpl: RoutineTemplateView) => void;
+  onView: (tpl: RoutineTemplateView) => void;
   onEdit: (tpl: RoutineTemplateView) => void;
   onDelete: (id: string) => void;
   t: T;
@@ -285,12 +303,13 @@ function RoutineCard(props: {
     <Pressable
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
-      onPress={() => props.onEdit(tpl)}
+      onPress={() => props.onView(tpl)}
       style={ss.card}
     >
       <CardTopBar
         canEdit={canEdit}
         icon={<Trophy color={C.blue} size={18} />}
+        onAssign={props.clientId ? () => props.onAssign(tpl) : undefined}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
       />
@@ -335,12 +354,23 @@ function WarmupCard(props: {
   );
 }
 
-function CardTopBar(props: { canEdit: boolean; icon: React.ReactNode; onEdit: () => void; onDelete: () => void }) {
+function CardTopBar(props: {
+  canEdit: boolean;
+  icon: React.ReactNode;
+  onAssign?: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
   return (
     <View style={ss.cardTop}>
       <View style={ss.dot} />
       {props.icon}
       <View style={{ flex: 1 }} />
+      {props.onAssign && (
+        <Pressable onPress={props.onAssign} style={ss.iconBtn}>
+          <UserPlus color={C.blue} size={16} />
+        </Pressable>
+      )}
       {props.canEdit ? (
         <>
           <Pressable onPress={props.onEdit} style={ss.iconBtn}>
@@ -432,89 +462,3 @@ function buildConfirmDelete(
     }
   };
 }
-
-/* ── Styles ── */
-
-const ss = StyleSheet.create({
-  container: { padding: 24, gap: 20, backgroundColor: C.bg, minHeight: '100%' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  title: { fontSize: 24, fontWeight: '700', color: C.text },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  searchContainer: {
-    alignItems: 'center',
-    backgroundColor: C.card,
-    borderColor: C.border,
-    borderRadius: 10,
-    borderWidth: 1,
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    width: 240,
-  },
-  searchInput: { color: C.text, flex: 1, fontSize: 13, outlineStyle: 'none' } as object,
-  createBtn: {
-    alignItems: 'center',
-    backgroundColor: C.blue,
-    borderRadius: 10,
-    flexDirection: 'row',
-    gap: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-  },
-  createBtnText: { color: C.white, fontWeight: '600', fontSize: 13 },
-  tabRow: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: C.border },
-  tab: { paddingHorizontal: 16, paddingVertical: 10 },
-  tabActive: { borderBottomWidth: 2, borderBottomColor: C.blue },
-  tabText: { fontSize: 14, fontWeight: '600', color: C.muted },
-  tabTextActive: { color: C.blue },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
-  empty: { color: C.muted, fontSize: 14, marginTop: 8 },
-  card: {
-    width: 'calc(25% - 18px)' as unknown as number,
-    backgroundColor: C.card,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.dot },
-  iconBtn: { padding: 4 },
-  cardImg: {
-    height: 160,
-    width: '100%',
-    backgroundColor: '#0f172a',
-    overflow: 'hidden',
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imgBackdrop: { ...StyleSheet.absoluteFillObject },
-  imgShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(7,12,20,0.2)' },
-  imgInner: {
-    width: '100%',
-    height: '100%',
-    transitionProperty: 'transform',
-    transitionDuration: '0.3s',
-    transitionTimingFunction: 'ease-in-out',
-  } as object,
-  imgInnerHovered: { transform: [{ scale: 1.12 }] },
-  cardBody: { padding: 12, gap: 6 },
-  cardName: { fontSize: 15, fontWeight: '700', color: C.text },
-  cardMeta: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  cardMetaBlue: { fontSize: 12, fontWeight: '600', color: C.blue },
-  cardMetaGray: { fontSize: 12, color: C.muted },
-});

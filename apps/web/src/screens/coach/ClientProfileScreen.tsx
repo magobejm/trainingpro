@@ -34,12 +34,7 @@ type Props = {
 };
 
 export function ClientProfileScreen(props: Props): React.JSX.Element {
-  const vm = useClientProfileModel(
-    props.clientId,
-    props.onArchived,
-    props.onRouteChange,
-    props.onOpenEditScreen,
-  );
+  const vm = useClientProfileModel(props.clientId, props.onArchived, props.onRouteChange, props.onOpenEditScreen);
   return <ClientProfileView vm={vm} />;
 }
 
@@ -52,19 +47,21 @@ function useClientProfileModel(
   const { t } = useTranslation();
   const query = useClientByIdQuery(clientId);
   const objectivesQuery = useClientObjectivesQuery();
-  const openForClient = useRoutinePlannerContextStore((state) => state.openForClient);
+  const openForView = useRoutinePlannerContextStore((state) => state.openForView);
+  const prepareClientAssignment = useRoutinePlannerContextStore((state) => state.prepareClientAssignment);
   const mutations = useProfileMutations(clientId);
   const state = useProfileState();
   useSyncFormFromQuery(query.data, state.setForm, state.setErrors, state.setNoteDraft);
   return buildViewModel({
-    ...mutations,
-    ...state,
     onArchived,
     onOpenEditScreen,
     onRouteChange,
     query,
     objectives: objectivesQuery.data ?? [],
-    openForClient,
+    openForView,
+    prepareClientAssignment,
+    ...mutations,
+    ...state,
     t,
   });
 }
@@ -128,11 +125,8 @@ interface ViewModelInput {
   onArchived?: () => void;
   onOpenEditScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
-  openForClient: (
-    clientId: string,
-    clientDisplayName: string,
-    initialTemplateId?: null | string,
-  ) => void;
+  openForView: (templateId: string, clientId?: string, clientDisplayName?: string) => void;
+  prepareClientAssignment: (clientId: string, clientDisplayName: string) => void;
   query: ReturnType<typeof useClientByIdQuery>;
   objectives: Array<{ id: string; label: string }>;
   resetPassword: null | string;
@@ -162,18 +156,14 @@ function buildViewModel(input: ViewModelInput) {
     saveError: updateMutation.isError,
     saveSuccess: updateMutation.isSuccess,
     trainingPlan: client?.trainingPlan ?? undefined,
-    onOpenEdit: () =>
-      input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true),
+    onOpenEdit: () => (input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true)),
     onOpenRoutinePlanner,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     ...noteActions,
   };
 }
 
-function buildNoteActions(
-  input: ViewModelInput,
-  updateMutation: ReturnType<typeof useUpdateClientMutation>,
-) {
+function buildNoteActions(input: ViewModelInput, updateMutation: ReturnType<typeof useUpdateClientMutation>) {
   return {
     onChangeNote: (value: string) => input.setNoteDraft(value),
     onCloseNote: () => input.setEditingNote(false),
@@ -193,12 +183,18 @@ function buildNoteActions(
 function buildOpenRoutinePlannerAction(input: ViewModelInput): () => void {
   return () => {
     const client = input.query.data;
-    if (!client) {
-      return;
+    if (!client) return;
+    if (client.trainingPlan?.id) {
+      // Has a routine → open the planner in view-only mode (read-only, no save/assign)
+      const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
+      input.openForView(client.trainingPlan.id, client.id, clientDisplayName);
+      input.onRouteChange?.('coach.routine.planner');
+    } else {
+      // No routine → go to library to pick/assign one
+      const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
+      input.prepareClientAssignment(client.id, clientDisplayName);
+      input.onRouteChange?.('coach.library.routines');
     }
-    const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
-    input.openForClient(client.id, clientDisplayName, client.trainingPlan?.id ?? null);
-    input.onRouteChange?.('coach.routine.planner');
   };
 }
 
@@ -264,9 +260,7 @@ function SummarySection(props: { vm: ViewModel }): React.JSX.Element {
         t={props.vm.t}
         weightDraftKg={props.vm.form.weightKg}
       />
-      {props.vm.saveSuccess ? (
-        <Text style={styles.success}>{props.vm.t('coach.clientProfile.saved')}</Text>
-      ) : null}
+      {props.vm.saveSuccess ? <Text style={styles.success}>{props.vm.t('coach.clientProfile.saved')}</Text> : null}
     </View>
   );
 }
@@ -282,9 +276,7 @@ function ProfileEditModal(props: { vm: ViewModel }): React.JSX.Element {
       isSaving={props.vm.isSaving}
       isUploading={props.vm.uploadAvatarMutation.isPending}
       onArchive={() => void archiveClient(props.vm)}
-      onChange={(key, value) =>
-        clearFieldErrorAndSetValue(props.vm.setErrors, props.vm.setForm, key, value)
-      }
+      onChange={(key, value) => clearFieldErrorAndSetValue(props.vm.setErrors, props.vm.setForm, key, value)}
       onClose={() => props.vm.setEditing(false)}
       onPickRandomAvatar={() => void assignRandomAvatar(props.vm)}
       onResetPassword={() => void resetClientPassword(props.vm)}

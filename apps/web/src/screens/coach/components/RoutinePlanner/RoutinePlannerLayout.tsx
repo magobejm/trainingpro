@@ -17,7 +17,9 @@ interface LayoutProps {
   clientContextName?: null | string;
   objectiveOptions: Array<{ id: string; label: string }>;
   onAssignTemplate?: (templateId: string) => Promise<void>;
+  onBack?: () => void;
   t: (k: string, options?: Record<string, unknown>) => string;
+  viewOnlyMode?: boolean;
   uiState: {
     editingId: string | null;
     setEditingId: (id: string | null) => void;
@@ -89,8 +91,8 @@ function RoutineMainSection(
     onOpenWarmupTemplatePicker: (dayIdx: number) => void;
   },
 ) {
-  const { t, draftState, uiState, labels = ROUTINE_LABELS } = props;
-  const isReadOnly = draftState.draft.scope === 'GLOBAL';
+  const { t, draftState, uiState, labels = ROUTINE_LABELS, viewOnlyMode } = props;
+  const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
   return (
     <>
       <RoutineDayList
@@ -134,16 +136,26 @@ function RoutineDayList(props: {
 }
 
 function RoutineFooterSection(props: LayoutProps) {
-  const { t, draftState, uiState } = props;
+  const { t, draftState, uiState, viewOnlyMode, onBack } = props;
   const isGlobal = draftState.draft.scope === 'GLOBAL';
+  // When in view-only mode from client profile (onBack provided), show only a back button
+  if (viewOnlyMode && onBack) {
+    return (
+      <Pressable onPress={onBack} style={[s.saveBtn, { backgroundColor: '#64748b' }]}>
+        <Text style={s.saveBtnText}>{t('common.back')}</Text>
+      </Pressable>
+    );
+  }
+  // In view-only mode from library, show Assign button
+  const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
       <Pressable onPress={() => uiState.setShowSaveModal(true)} style={s.saveBtn}>
-        <Text style={s.saveBtnText}>{isGlobal ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
+        <Text style={s.saveBtnText}>{showAssign ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
       </Pressable>
       <SaveRoutineModal
         initialName={draftState.draft.name}
-        isGlobal={isGlobal}
+        isGlobal={showAssign}
         onAssignOnly={props.onAssignOnly}
         onClose={() => uiState.setShowSaveModal(false)}
         onSave={props.onSave}
@@ -230,12 +242,14 @@ function RoutineLayoutSections(props: {
   onOpenWarmupTemplatePicker: (dayIdx: number) => void;
   props: LayoutProps;
 }) {
-  const { draftState, uiState, t, labels = ROUTINE_LABELS } = props.props;
+  const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode } = props.props;
+  const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
   return (
     <>
       <RoutinePlannerTopSection
         draft={draftState.draft}
-        isReadOnly={draftState.draft.scope === 'GLOBAL'}
+        editingId={uiState.editingId}
+        isReadOnly={isReadOnly}
         labels={labels}
         objectiveOptions={props.props.objectiveOptions}
         saveSuccess={uiState.saveSuccess}
@@ -248,7 +262,7 @@ function RoutineLayoutSections(props: {
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
       />
       <NeatSection
-        isReadOnly={draftState.draft.scope === 'GLOBAL'}
+        isReadOnly={isReadOnly}
         neats={draftState.draft.neats ?? []}
         onChange={(neats) => draftState.setDraft((prev) => ({ ...prev, neats }))}
         t={t}

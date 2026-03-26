@@ -26,71 +26,79 @@ interface DayListProps {
   lastAddedBlockId?: string | null;
 }
 
+const DAY_DRAG_KEY = 'application/day-index';
+
+function moveDayToIndex(moveDay: DraftStateHandlers['moveDay'], from: number, to: number) {
+  if (from === to) return;
+  const dir = from < to ? 1 : -1;
+  let idx = from;
+  while (idx !== to) {
+    moveDay(idx, dir);
+    idx += dir;
+  }
+}
+
 export function DayList(props: DayListProps) {
   const { days, addIdx, setAddIdx, draftState, isReadOnly, labels, lastAddedBlockId } = props;
   const dayLabels = days.map((day) => day.title);
+
+  const handleDayDrop = (targetIdx: number) => (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (isReadOnly) return;
+    const raw = event.dataTransfer.getData(DAY_DRAG_KEY);
+    const fromIdx = raw !== '' ? parseInt(raw, 10) : NaN;
+    if (!Number.isFinite(fromIdx) || fromIdx === targetIdx) return;
+    moveDayToIndex(draftState.moveDay, fromIdx, targetIdx);
+  };
+
   return (
     <>
       {days.map((day, idx) => (
-        <DayListItem
-          addIdx={addIdx}
-          day={day}
-          dayLabels={dayLabels}
-          daysCount={days.length}
-          draftState={draftState}
-          idx={idx}
-          isReadOnly={isReadOnly}
+        <div
           key={day.id}
-          lastAddedBlockId={lastAddedBlockId}
-          setAddIdx={setAddIdx}
-          labels={labels}
-        />
+          draggable={!isReadOnly}
+          onDragStart={(e) => {
+            e.dataTransfer.setData(DAY_DRAG_KEY, String(idx));
+            e.dataTransfer.effectAllowed = 'move';
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          }}
+          onDrop={handleDayDrop(idx)}
+          style={{ cursor: isReadOnly ? undefined : 'grab' }}
+        >
+          <RoutineDayCard
+            addBlockDayIdx={addIdx}
+            day={day}
+            dayIdx={idx}
+            dayLabels={dayLabels}
+            daysCount={days.length}
+            isFirst={idx === 0}
+            isLast={idx === days.length - 1}
+            lastAddedBlockId={lastAddedBlockId}
+            onAddBlock={(type) => {
+              draftState.onOpenPicker(idx, type);
+              setAddIdx(null);
+            }}
+            onAddWarmupTemplate={() => {
+              draftState.onOpenWarmupTemplatePicker?.(idx);
+              setAddIdx(null);
+            }}
+            onMoveBlock={(bIdx, dir) => draftState.onMoveBlock(idx, bIdx, dir)}
+            onMoveBlockToDay={(bIdx, target) => draftState.onMoveBlockToDay(idx, bIdx, target)}
+            onMoveDay={(dir) => draftState.moveDay(idx, dir)}
+            onRemove={() => draftState.removeDay(idx)}
+            onRemoveBlock={(blockId) => draftState.onRemoveBlock(idx, blockId)}
+            onRename={(title) => draftState.renameDay(idx, title)}
+            onSetAddBlockDayIdx={setAddIdx}
+            onUpdateBlockField={(bid, f, v) => draftState.onUpdateBlockField(idx, bid, f, v)}
+            onUpdateDay={(updated) => draftState.updateDay(idx, updated)}
+            readOnly={isReadOnly}
+            labels={labels}
+          />
+        </div>
       ))}
     </>
   );
 }
-
-interface ItemProps {
-  day: DraftDay;
-  idx: number;
-  addIdx: number | null;
-  daysCount: number;
-  dayLabels: string[];
-  draftState: DraftStateHandlers;
-  isReadOnly: boolean;
-  setAddIdx: (i: number | null) => void;
-  labels?: PlannerLabels;
-  lastAddedBlockId?: string | null;
-}
-
-const DayListItem = (p: ItemProps) => (
-  <RoutineDayCard
-    addBlockDayIdx={p.addIdx}
-    day={p.day}
-    dayIdx={p.idx}
-    dayLabels={p.dayLabels}
-    daysCount={p.daysCount}
-    isFirst={p.idx === 0}
-    isLast={p.idx === p.daysCount - 1}
-    lastAddedBlockId={p.lastAddedBlockId}
-    onAddBlock={(type) => {
-      p.draftState.onOpenPicker(p.idx, type);
-      p.setAddIdx(null);
-    }}
-    onAddWarmupTemplate={() => {
-      p.draftState.onOpenWarmupTemplatePicker?.(p.idx);
-      p.setAddIdx(null);
-    }}
-    onMoveBlock={(bIdx, dir) => p.draftState.onMoveBlock(p.idx, bIdx, dir)}
-    onMoveBlockToDay={(bIdx, target) => p.draftState.onMoveBlockToDay(p.idx, bIdx, target)}
-    onMoveDay={(dir) => p.draftState.moveDay(p.idx, dir)}
-    onRemove={() => p.draftState.removeDay(p.idx)}
-    onRemoveBlock={(blockId) => p.draftState.onRemoveBlock(p.idx, blockId)}
-    onRename={(title) => p.draftState.renameDay(p.idx, title)}
-    onSetAddBlockDayIdx={p.setAddIdx}
-    onUpdateBlockField={(bid, f, v) => p.draftState.onUpdateBlockField(p.idx, bid, f, v)}
-    onUpdateDay={(updated) => p.draftState.updateDay(p.idx, updated)}
-    readOnly={p.isReadOnly}
-    labels={p.labels}
-  />
-);

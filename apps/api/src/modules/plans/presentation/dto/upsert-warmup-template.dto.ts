@@ -8,6 +8,7 @@ const itemSchema = z.object({
   displayName: z.string().trim().min(1).max(120),
   durationMinutes: z.number().int().min(0).max(600).nullable().optional(),
   exerciseLibraryId: z.string().uuid().nullable().optional(),
+  lockedFields: z.array(z.string().max(80)).optional().default([]),
   metadataJson: z.record(z.string(), z.unknown()).nullable().optional(),
   notes: z.string().max(2000).nullable().optional(),
   plioExerciseLibraryId: z.string().uuid().nullable().optional(),

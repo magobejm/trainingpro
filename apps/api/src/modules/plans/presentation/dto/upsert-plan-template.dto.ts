@@ -16,6 +16,7 @@ const exerciseSchema = z.object({
   displayName: z.string().trim().min(1).max(120),
   exerciseLibraryId: z.string().uuid().nullable().optional(),
   fieldModes: z.array(fieldModeSchema).min(1),
+  lockedFields: z.array(z.string().max(80)).optional().default([]),
   notes: z.string().max(2000).nullable().optional(),
   perSetWeightRanges: z.array(perSetRangeSchema).optional(),
   repsMax: z.number().int().min(1).max(100).nullable().optional(),
@@ -47,6 +48,7 @@ export class UpsertPlanTemplateDto {
       displayName: string;
       exerciseLibraryId?: null | string;
       fieldModes: { fieldKey: string; mode: 'CLIENT_INPUT' | 'COACH_INPUT' | 'HIDDEN' }[];
+      lockedFields?: string[];
       notes?: null | string;
       perSetWeightRanges?: { maxKg?: null | number; minKg?: null | number }[];
       repsMax?: null | number;

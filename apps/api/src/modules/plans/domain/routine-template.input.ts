@@ -77,6 +77,7 @@ export type RoutineStrengthInput = {
   targetRpe?: null | number;
   weightRangeMaxKg?: null | number;
   weightRangeMinKg?: null | number;
+  lockedFields?: string[];
 };
 
 export type RoutineCardioInput = {
@@ -93,6 +94,7 @@ export type RoutineCardioInput = {
   targetDistanceMeters?: null | number;
   targetRpe?: null | number;
   workSeconds: number;
+  lockedFields?: string[];
 };
 
 export type RoutinePlioInput = {
@@ -107,6 +109,7 @@ export type RoutinePlioInput = {
   sortOrder: number;
   targetRpe?: null | number;
   workSeconds: number;
+  lockedFields?: string[];
 };
 
 export type RoutineWarmupInput = {
@@ -121,6 +124,7 @@ export type RoutineWarmupInput = {
   targetRpe?: null | number;
   warmupExerciseLibraryId?: null | string;
   workSeconds: number;
+  lockedFields?: string[];
 };
 
 export type RoutineSportInput = {
@@ -133,6 +137,7 @@ export type RoutineSportInput = {
   sortOrder: number;
   sportLibraryId?: null | string;
   targetRpe?: null | number;
+  lockedFields?: string[];
 };
 
 export type RoutineIsometricInput = {
@@ -145,6 +150,7 @@ export type RoutineIsometricInput = {
   setsPlanned?: null | number;
   sortOrder: number;
   targetRpe?: null | number;
+  lockedFields?: string[];
 };
 
 export type RoutineExerciseGroupInput = {

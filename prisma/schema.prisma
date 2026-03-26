@@ -841,6 +841,7 @@ model PlanStrengthExercise {
   targetRpe              Int?               @map("target_rpe")
   targetRir              Int?               @map("target_rir")
   restSeconds            Int?               @default(0) @map("rest_seconds")
+  lockedFieldsJson       Json?              @map("locked_fields_json")
   notes                  String?
   archivedAt             DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -882,6 +883,7 @@ model PlanCardioBlock {
   restSeconds           Int                      @default(0) @map("rest_seconds")
   targetDistanceMeters  Int?                     @map("target_distance_meters")
   targetRpe             Int?                     @map("target_rpe")
+  lockedFieldsJson      Json?                    @map("locked_fields_json")
   notes                 String?
   archivedAt            DateTime?                @map("archived_at") @db.Timestamptz(6)
   createdAt             DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -922,6 +924,7 @@ model PlanPlioBlock {
   workSeconds           Int                     @map("work_seconds")
   restSeconds           Int                     @default(0) @map("rest_seconds")
   targetRpe             Int?                    @map("target_rpe")
+  lockedFieldsJson      Json?                   @map("locked_fields_json")
   notes                 String?
   archivedAt            DateTime?               @map("archived_at") @db.Timestamptz(6)
   createdAt             DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -962,6 +965,7 @@ model PlanWarmupBlock {
   workSeconds             Int                       @map("work_seconds")
   restSeconds             Int                       @default(0) @map("rest_seconds")
   targetRpe               Int?                      @map("target_rpe")
+  lockedFieldsJson        Json?                     @map("locked_fields_json")
   notes                   String?
   archivedAt              DateTime?                 @map("archived_at") @db.Timestamptz(6)
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1000,6 +1004,7 @@ model PlanSportBlock {
   displayName     String                  @map("display_name") @db.VarChar(120)
   durationMinutes Int                     @map("duration_minutes")
   targetRpe       Int?                    @map("target_rpe")
+  lockedFieldsJson Json?                  @map("locked_fields_json")
   notes           String?
   archivedAt      DateTime?               @map("archived_at") @db.Timestamptz(6)
   createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1058,6 +1063,7 @@ model PlanIsometricBlock {
   sortOrder                   Int                         @default(0) @map("sort_order")
   displayName                 String                      @map("display_name") @db.VarChar(120)
   setsPlanned                 Int?                        @map("sets_planned")
+  lockedFieldsJson            Json?                       @map("locked_fields_json")
   notes                       String?
   archivedAt                  DateTime?                   @map("archived_at") @db.Timestamptz(6)
   createdAt                   DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)

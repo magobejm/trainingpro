@@ -1,20 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, max-len */
-import { FieldMode, Prisma } from '@prisma/client';
-import type {
-  RoutineCardioInput,
-  RoutineCardioSetInput,
-  RoutineDayInput,
-  RoutineIsometricInput,
-  RoutineIsometricSetInput,
-  RoutinePlioInput,
-  RoutinePlioSetInput,
-  RoutineSportInput,
-  RoutineSportSetInput,
-  RoutineStrengthInput,
-  RoutineStrengthSetInput,
-  RoutineWarmupInput,
-  RoutineWarmupSetInput,
-} from '../../domain/routine-template.input';
+import { Prisma } from '@prisma/client';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function routineTemplateInclude(): any {
@@ -151,6 +136,7 @@ function mapStrengthOutput(e: any) {
     fieldModes: e.fieldModes.map((m: any) => ({ fieldKey: m.fieldKey, mode: m.mode })),
     groupId: e.groupId ?? null,
     id: e.id,
+    lockedFields: readLockedFields(e.lockedFieldsJson),
     notes: e.notes,
     perSetWeightRangesJson: e.perSetWeightRangesJson,
     repsMax: e.repsMax,
@@ -193,6 +179,7 @@ function mapCardioOutput(b: any) {
     fieldModes: b.fieldModes.map((m: any) => ({ fieldKey: m.fieldKey, mode: m.mode })),
     groupId: b.groupId ?? null,
     id: b.id,
+    lockedFields: readLockedFields(b.lockedFieldsJson),
     notes: b.notes,
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
@@ -229,6 +216,7 @@ function mapPlioOutput(b: any) {
     groupId: b.groupId ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     id: b.id,
+    lockedFields: readLockedFields(b.lockedFieldsJson),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     notes: b.notes,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -271,6 +259,7 @@ function mapWarmupOutput(b: any) {
     groupId: b.groupId ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     id: b.id,
+    lockedFields: readLockedFields(b.lockedFieldsJson),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     notes: b.notes,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -316,6 +305,7 @@ function mapSportOutput(b: any) {
     groupId: b.groupId ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     id: b.id,
+    lockedFields: readLockedFields(b.lockedFieldsJson),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     notes: b.notes,
     sets: ((b.sets ?? []) as any[]).map(mapSportSetOutput),
@@ -362,6 +352,7 @@ function mapIsometricOutput(b: any) {
     id: b.id,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     isometricExerciseLibraryId: b.isometricExerciseLibraryId,
+    lockedFields: readLockedFields(b.lockedFieldsJson),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     notes: b.notes,
     sets: ((b.sets ?? []) as any[]).map(mapIsometricSetOutput),
@@ -390,221 +381,18 @@ function mapIsometricSetOutput(s: any) {
   };
 }
 
-/* ── Create helpers ── */
-
-/**
- * Creates day with all block types nested. Groups are NOT included here since they require
- * a two-pass creation (groups first → get real UUIDs → update block groupId FKs).
- * Call createDayGroups separately after the day is created.
- */
-export function mapRoutineDayCreate(day: RoutineDayInput): Prisma.PlanDayCreateWithoutTemplateInput {
-  return {
-    dayIndex: day.dayIndex,
-    title: day.title.trim(),
-    exercises: { create: (day.exercises ?? []).map((e) => mapStrengthCreate(e, null)) },
-    cardioBlocks: { create: (day.cardioBlocks ?? []).map((b) => mapCardioCreate(b, null)) },
-    plioBlocks: { create: (day.plioBlocks ?? []).map((b) => mapPlioCreate(b, null)) },
-    warmupBlocks: { create: (day.warmupBlocks ?? []).map((b) => mapWarmupCreate(b, null)) },
-    sportBlocks: { create: (day.sportBlocks ?? []).map((b) => mapSportCreate(b, null)) },
-    isometricBlocks: { create: (day.isometricBlocks ?? []).map((b) => mapIsometricCreate(b, null)) },
-  } as any;
-}
-
-export function mapStrengthCreate(
-  e: RoutineStrengthInput,
-  groupId: null | string,
-): Prisma.PlanStrengthExerciseCreateWithoutDayInput {
-  return {
-    displayName: e.displayName.trim(),
-    fieldModes: {
-      create: e.fieldModes.map((m: { fieldKey: string; mode: string }) => ({
-        fieldKey: m.fieldKey.trim(),
-        mode: m.mode as FieldMode,
-      })),
-    },
-    group: connectOptional(groupId),
-    libraryExercise: connectOptional(e.exerciseLibraryId),
-    notes: normalizeText(e.notes),
-    perSetWeightRangesJson: normalizePerSetRanges(e.perSetWeightRanges),
-    repsMax: e.repsMax ?? null,
-    repsMin: e.repsMin ?? null,
-    restSeconds: e.restSeconds ?? 0,
-    sets: { create: (e.sets ?? []).map(mapStrengthSetCreate) },
-    setsPlanned: e.setsPlanned ?? null,
-    sortOrder: e.sortOrder,
-    targetRir: e.targetRir ?? null,
-    targetRpe: e.targetRpe ?? null,
-    weightRangeMaxKg: toDecimal(e.weightRangeMaxKg),
-    weightRangeMinKg: toDecimal(e.weightRangeMinKg),
-  } as any;
-}
-
-function mapStrengthSetCreate(s: RoutineStrengthSetInput) {
-  return {
-    setIndex: s.setIndex,
-    reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
-    weightKg: toDecimal(s.weightKg),
-    rir: s.rir ?? null,
-    restSeconds: s.restSeconds ?? null,
-    advancedTechnique: s.advancedTechnique ?? null,
-    note: s.note ?? null,
-  };
-}
-
-export function mapCardioCreate(b: RoutineCardioInput, groupId: null | string): Prisma.PlanCardioBlockCreateWithoutDayInput {
-  return {
-    displayName: b.displayName.trim(),
-    fieldModes: {
-      create: b.fieldModes.map((m: { fieldKey: string; mode: string }) => ({
-        fieldKey: m.fieldKey.trim(),
-        mode: m.mode as FieldMode,
-      })),
-    },
-    group: connectOptional(groupId),
-    libraryCardioMethod: connectOptional(b.cardioMethodLibraryId),
-    notes: normalizeText(b.notes),
-    restSeconds: b.restSeconds,
-    roundsPlanned: b.roundsPlanned,
-    sets: { create: (b.sets ?? []).map(mapCardioSetCreate) },
-    sortOrder: b.sortOrder,
-    targetDistanceMeters: b.targetDistanceMeters ?? null,
-    targetRpe: b.targetRpe ?? null,
-    workSeconds: b.workSeconds,
-  } as any;
-}
-
-function mapCardioSetCreate(s: RoutineCardioSetInput) {
-  return {
-    setIndex: s.setIndex,
-    fcMaxPct: s.fcMaxPct ?? null,
-    fcReservePct: s.fcReservePct ?? null,
-    heartRate: s.heartRate ?? null,
-    rpe: s.rpe ?? null,
-    note: s.note ?? null,
-  };
-}
-
-export function mapPlioCreate(b: RoutinePlioInput, groupId: null | string): any {
-  return {
-    displayName: b.displayName.trim(),
-    fieldModes: { create: (b.fieldModes ?? []).map((m) => ({ fieldKey: m.fieldKey.trim(), mode: m.mode as FieldMode })) },
-    group: connectOptional(groupId),
-    libraryPlioExercise: connectOptional(b.plioExerciseLibraryId),
-    notes: normalizeText(b.notes),
-    restSeconds: b.restSeconds,
-    roundsPlanned: b.roundsPlanned,
-    sets: { create: (b.sets ?? []).map(mapPlioSetCreate) },
-    sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe ?? null,
-    workSeconds: b.workSeconds,
-  };
-}
-
-function mapPlioSetCreate(s: RoutinePlioSetInput) {
-  return {
-    setIndex: s.setIndex,
-    reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
-    weightKg: toDecimal(s.weightKg),
-    restSeconds: s.restSeconds ?? null,
-    note: s.note ?? null,
-  };
-}
-
-export function mapWarmupCreate(b: RoutineWarmupInput, groupId: null | string): any {
-  return {
-    displayName: b.displayName.trim(),
-    fieldModes: { create: (b.fieldModes ?? []).map((m) => ({ fieldKey: m.fieldKey.trim(), mode: m.mode as FieldMode })) },
-    group: connectOptional(groupId),
-    libraryWarmupExercise: connectOptional(b.warmupExerciseLibraryId),
-    notes: normalizeText(b.notes),
-    restSeconds: b.restSeconds,
-    roundsPlanned: b.roundsPlanned,
-    sets: { create: (b.sets ?? []).map(mapWarmupSetCreate) },
-    sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe ?? null,
-    workSeconds: b.workSeconds,
-  };
-}
-
-function mapWarmupSetCreate(s: RoutineWarmupSetInput) {
-  return {
-    setIndex: s.setIndex,
-    reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
-    rom: s.rom ?? null,
-    restSeconds: s.restSeconds ?? null,
-    note: s.note ?? null,
-  };
-}
-
-export function mapSportCreate(b: RoutineSportInput, groupId: null | string): any {
-  return {
-    displayName: b.displayName.trim(),
-    durationMinutes: b.durationMinutes,
-    fieldModes: { create: (b.fieldModes ?? []).map((m) => ({ fieldKey: m.fieldKey.trim(), mode: m.mode as FieldMode })) },
-    group: connectOptional(groupId),
-    librarySport: connectOptional(b.sportLibraryId),
-    notes: normalizeText(b.notes),
-    sets: { create: (b.sets ?? []).map(mapSportSetCreate) },
-    sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe ?? null,
-  };
-}
-
-function mapSportSetCreate(s: RoutineSportSetInput) {
-  return {
-    setIndex: s.setIndex,
-    reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
-    rir: s.rir ?? null,
-    weightKg: toDecimal(s.weightKg),
-    fcMaxPct: s.fcMaxPct ?? null,
-    fcReservePct: s.fcReservePct ?? null,
-    heartRate: s.heartRate ?? null,
-    restSeconds: s.restSeconds ?? null,
-    note: s.note ?? null,
-  };
-}
-
-export function mapIsometricCreate(b: RoutineIsometricInput, groupId: null | string): any {
-  return {
-    displayName: b.displayName.trim(),
-    fieldModes: { create: (b.fieldModes ?? []).map((m) => ({ fieldKey: m.fieldKey.trim(), mode: m.mode as FieldMode })) },
-    group: connectOptional(groupId),
-    libraryIsometricExercise: connectOptional(b.isometricExerciseLibraryId),
-    notes: normalizeText(b.notes),
-    sets: { create: (b.sets ?? []).map(mapIsometricSetCreate) },
-    setsPlanned: b.setsPlanned ?? null,
-    sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe ?? null,
-  };
-}
-
-function mapIsometricSetCreate(s: RoutineIsometricSetInput) {
-  return {
-    setIndex: s.setIndex,
-    rpe: s.rpe ?? null,
-    durationSeconds: s.durationSeconds ?? null,
-    weightKg: toDecimal(s.weightKg),
-    restSeconds: s.restSeconds ?? null,
-    note: s.note ?? null,
-  };
-}
-
 /* ── Utilities ── */
 
-function connectOptional(id: null | string | undefined) {
+export function connectOptional(id: null | string | undefined) {
   return id ? { connect: { id } } : undefined;
 }
 
-function normalizeText(v: null | string | undefined): null | string {
+export function normalizeText(v: null | string | undefined): null | string {
   const t = v?.trim();
   return t || null;
 }
 
-function normalizePerSetRanges(
+export function normalizePerSetRanges(
   ranges?: { maxKg?: null | number; minKg?: null | number }[],
 ): Prisma.InputJsonValue | undefined {
   if (!ranges || ranges.length === 0) return undefined;
@@ -614,6 +402,16 @@ function normalizePerSetRanges(
   })) as Prisma.InputJsonValue;
 }
 
-function toDecimal(v: null | number | undefined) {
+export function toDecimal(v: null | number | undefined) {
   return typeof v === 'number' ? new Prisma.Decimal(v) : null;
+}
+
+function readLockedFields(json: unknown): string[] {
+  if (!Array.isArray(json)) return [];
+  return json.filter((item): item is string => typeof item === 'string');
+}
+
+export function normalizeLockedFields(fields?: string[]): Prisma.InputJsonValue | typeof Prisma.JsonNull {
+  if (!fields || fields.length === 0) return Prisma.JsonNull;
+  return fields as unknown as Prisma.InputJsonValue;
 }

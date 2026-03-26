@@ -20,6 +20,7 @@ export function mapTemplateBlock(
     displayName: item.displayName,
     groupId: toStringValue(item.groupId),
     libraryId: extractLibraryId(type, item),
+    lockedFields: readLockedFieldsArray(item.lockedFields),
     notes: metaParsed.baseNotes,
     sortOrder: toNumber(item.sortOrder),
     targetRpe: toNumber(item.targetRpe),
@@ -211,4 +212,10 @@ function toNumber(value: unknown): number | undefined {
 
 function toStringValue(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function readLockedFieldsArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const filtered = value.filter((item): item is string => typeof item === 'string');
+  return filtered.length > 0 ? filtered : undefined;
 }

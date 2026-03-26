@@ -5,11 +5,11 @@ import { AuthContext } from '../../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import {
   emptyRoutineMetadata,
-  mapRoutineDayCreate,
   type RoutineTemplateMetadata,
   mapRoutineTemplate,
   routineTemplateInclude,
 } from '../plans-routine.prisma.helpers';
+import { mapRoutineDayCreate } from '../plans-routine.prisma.create-helpers';
 import type { RoutineDayInput, RoutineTemplateWriteInput } from '../../../domain/routine-template.input';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';

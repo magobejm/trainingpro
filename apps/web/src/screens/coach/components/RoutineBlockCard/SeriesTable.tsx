@@ -438,11 +438,14 @@ const st = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     gap: 2,
+    width: SERIES_COL_W - 4,
+    overflow: 'hidden' as const,
   },
   advancedLabel: {
     fontSize: 9,
     fontWeight: '700' as const,
     color: '#374151',
+    flexShrink: 1,
   },
   advancedRemoveIcon: {
     fontSize: 9,

@@ -38,13 +38,19 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
       <Pressable onPress={props.onToggleCollapse} style={s.dayCollapseBtn}>
         <Text style={s.dayCollapseBtnText}>{props.isCollapsed ? ICON_CLOSED : ICON_OPEN}</Text>
       </Pressable>
-      <View style={s.dayNumberBadge}>
-        <Text style={s.dayNumberBadgeText}>{badge}</Text>
-      </View>
-      <View style={s.dayTitleBlock}>
-        <Text style={s.dayTitleMain}>{dayLabel}</Text>
-        <Text style={s.dayTitleSub}>{props.t('coach.routine.exercisesAdded', { count: props.blockCount })}</Text>
-      </View>
+      {/* eslint-disable-next-line no-restricted-syntax */}
+      <Pressable
+        onPress={props.onToggleCollapse}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, cursor: 'pointer' } as never}
+      >
+        <View style={s.dayNumberBadge}>
+          <Text style={s.dayNumberBadgeText}>{badge}</Text>
+        </View>
+        <View style={s.dayTitleBlock}>
+          <Text style={s.dayTitleMain}>{dayLabel}</Text>
+          <Text style={s.dayTitleSub}>{props.t('coach.routine.exercisesAdded', { count: props.blockCount })}</Text>
+        </View>
+      </Pressable>
       <TextInput
         editable={!props.readOnly}
         onChangeText={props.onRename}

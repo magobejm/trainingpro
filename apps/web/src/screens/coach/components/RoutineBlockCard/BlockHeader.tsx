@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Pressable, View, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 import { BlockActions } from './BlockActions';
@@ -39,14 +39,20 @@ export function BlockHeader(props: BlockHeaderProps) {
   const tagColor = tagColors[props.type] || { bg: '#f1f5f9', text: '#64748b' };
   return (
     <View style={s.blockHeader}>
-      <Text style={s.dragHandle}>{DRAG_HANDLE_ICON}</Text>
-      <Text numberOfLines={1} style={s.blockName}>
-        {props.displayName}
-      </Text>
-      <View style={[s.blockTag, { backgroundColor: tagColor.bg }]}>
-        <Text style={[s.blockTagText, { color: tagColor.text }]}>{props.t(`coach.routine.blockType.${props.type}`)}</Text>
-      </View>
-      <WarmupImportedTag imported={props.importedFromWarmup} t={props.t} />
+      {/* eslint-disable-next-line no-restricted-syntax */}
+      <Pressable
+        onPress={props.onToggleCollapse}
+        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12, cursor: 'pointer' } as never}
+      >
+        <Text style={s.dragHandle}>{DRAG_HANDLE_ICON}</Text>
+        <Text numberOfLines={1} style={s.blockName}>
+          {props.displayName}
+        </Text>
+        <View style={[s.blockTag, { backgroundColor: tagColor.bg }]}>
+          <Text style={[s.blockTagText, { color: tagColor.text }]}>{props.t(`coach.routine.blockType.${props.type}`)}</Text>
+        </View>
+        <WarmupImportedTag imported={props.importedFromWarmup} t={props.t} />
+      </Pressable>
       <BlockActions
         daysCount={props.daysCount}
         isCollapsed={props.isCollapsed}

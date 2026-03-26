@@ -100,7 +100,7 @@ export function BlockFields({ block, readOnly, onUpdateField, t }: BlockFieldsPr
         <View style={bf.tableHeader}>
           <Text style={bf.tableTitle}>{t('coach.routine.block.sets')}</Text>
           <View style={{ flex: 1 }} />
-          {block.type === 'strength' && !readOnly && (
+          {!readOnly && (
             <TouchableOpacity
               onPress={() => setAdvancedEnabled((v) => !v)}
               style={[bf.advancedBtn, advancedEnabled && bf.advancedBtnActive]}

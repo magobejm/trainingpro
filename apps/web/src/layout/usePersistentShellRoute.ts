@@ -8,6 +8,7 @@ type CoachRoute =
   | 'coach.library.unified'
   | 'coach.library.foods'
   | 'coach.library.routines'
+  | 'coach.library.warmups'
   | 'coach.library.isometrics'
   | 'coach.library.plyometrics'
   | 'coach.library.mobility'
@@ -100,6 +101,7 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.library.unified' ||
     route === 'coach.library.foods' ||
     route === 'coach.library.routines' ||
+    route === 'coach.library.warmups' ||
     route === 'coach.library.isometrics' ||
     route === 'coach.library.plyometrics' ||
     route === 'coach.library.mobility' ||

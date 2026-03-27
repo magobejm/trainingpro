@@ -230,12 +230,13 @@ function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRou
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
   if (route === 'coach.library.routines') return <LibraryRoutinesScreen onRouteChange={setRoute} />;
+  if (route === 'coach.library.warmups') return <LibraryRoutinesScreen defaultTab={'warmups'} onRouteChange={setRoute} />;
   if (route === 'coach.library.isometrics') return <LibraryIsometricScreen />;
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.mobility') return <LibraryMobilityScreen />;
   if (route === 'coach.library.sports') return <LibrarySportsScreen />;
   if (route === 'coach.routine.planner') return <RoutinePlannerScreen onRouteChange={setRoute} />;
-  if (route === 'coach.warmup.planner') return <WarmupPlannerScreen />;
+  if (route === 'coach.warmup.planner') return <WarmupPlannerScreen onRouteChange={setRoute} />;
   return null;
 }
 

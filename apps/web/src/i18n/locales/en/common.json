@@ -481,6 +481,8 @@
   "coach.warmupPlanner.searchPlaceholder": "Search saved warmup...",
   "coach.warmupPlanner.blocksCount": "{{count}} blocks",
   "coach.warmupPlanner.save": "Save warm-up",
+  "coach.warmupPlanner.back": "Back to library",
+  "coach.warmupPlanner.saveModal.title": "Save warm-up",
   "coach.builder.dayTitleDefault": "Day 1",
   "coach.builder.save": "Save template",
   "coach.progress.title": "Client progress",

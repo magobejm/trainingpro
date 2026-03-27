@@ -36,7 +36,7 @@ export function mapTemplateBlock(
 
 export function mapWarmupTemplateItemsToBlocks(
   items: Array<{
-    blockType: 'cardio' | 'mobility' | 'plio' | 'strength';
+    blockType: string;
     [key: string]: unknown;
   }>,
   createBlock: (blockType: BlockType, displayName: string) => DraftBlock,
@@ -45,7 +45,7 @@ export function mapWarmupTemplateItemsToBlocks(
   return items
     .map((item) => normalizeWarmupTemplateItem(item))
     .map((item) => {
-      const mappedType = item.blockType === 'mobility' ? 'warmup' : item.blockType;
+      const mappedType: BlockType = item.blockType === 'mobility' ? 'warmup' : (item.blockType as BlockType);
       return mapTemplateBlock(mappedType, item, createBlock);
     })
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
@@ -53,9 +53,9 @@ export function mapWarmupTemplateItemsToBlocks(
 }
 
 function normalizeWarmupTemplateItem(item: {
-  blockType: 'cardio' | 'mobility' | 'plio' | 'strength';
+  blockType: string;
   [key: string]: unknown;
-}): TemplateBlockData & { blockType: 'cardio' | 'mobility' | 'plio' | 'strength' } {
+}): TemplateBlockData & { blockType: string } {
   return {
     ...item,
     displayName: toStringValue(item.displayName) ?? '',

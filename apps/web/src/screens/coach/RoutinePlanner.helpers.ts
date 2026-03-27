@@ -380,7 +380,7 @@ function readWarmupImportMeta(block: DraftBlock): Record<string, number | string
 
 export function mapWarmupTemplateItemsToBlocks(
   items: Array<{
-    blockType: 'cardio' | 'mobility' | 'plio' | 'strength';
+    blockType: string;
     [key: string]: unknown;
   }>,
 ): DraftBlock[] {

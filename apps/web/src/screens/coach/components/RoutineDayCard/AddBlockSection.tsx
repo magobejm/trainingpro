@@ -3,16 +3,19 @@ import { Pressable, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 
+const ALL_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'warmup'];
+
 interface AddBlockSectionProps {
   isAdding: boolean;
   onAdd: (type: BlockType) => void;
   onAddWarmupTemplate?: () => void;
   onCancel: () => void;
   t: (k: string) => string;
+  types?: BlockType[];
 }
 
-export function AddBlockSection({ isAdding, onAdd, onAddWarmupTemplate, onCancel, t }: AddBlockSectionProps) {
-  if (isAdding) return renderTypeButtons(onAdd, onAddWarmupTemplate, onCancel, t);
+export function AddBlockSection({ isAdding, onAdd, onAddWarmupTemplate, onCancel, t, types }: AddBlockSectionProps) {
+  if (isAdding) return renderTypeButtons(onAdd, onAddWarmupTemplate, onCancel, t, types ?? ALL_BLOCK_TYPES);
   return (
     <Pressable onPress={onCancel} style={s.addBlockBtn}>
       <Text style={s.addBlockText}>{`+ ${t('coach.routine.addBlock')}`}</Text>
@@ -25,8 +28,8 @@ function renderTypeButtons(
   onAddWarmupTemplate: undefined | (() => void),
   onCancel: () => void,
   t: (k: string) => string,
+  types: BlockType[],
 ): React.JSX.Element {
-  const types: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'warmup'];
   return (
     <View style={s.blockTypeRow}>
       {types.map((bt) => (

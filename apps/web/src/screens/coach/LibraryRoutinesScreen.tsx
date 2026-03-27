@@ -22,7 +22,7 @@ import { ActionConfirmModal } from './components/ActionConfirmModal';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 
 type Tab = 'routines' | 'warmups';
-type Props = { onRouteChange: (route: ShellRoute) => void };
+type Props = { defaultTab?: Tab; onRouteChange: (route: ShellRoute) => void };
 type T = (k: string, opts?: Record<string, unknown>) => string;
 type MediaMap = Record<string, string | null>;
 
@@ -35,16 +35,16 @@ function apiBase(): string {
 const ROUTINE_PLACEHOLDER = () => `${apiBase()}/assets/placeholders/routine-placeholder.jpg`;
 const WARMUP_PLACEHOLDER = () => `${apiBase()}/assets/placeholders/warmup-placeholder.png`;
 
-export function LibraryRoutinesScreen({ onRouteChange }: Props): React.JSX.Element {
-  const vm = useViewModel(onRouteChange);
+export function LibraryRoutinesScreen({ defaultTab = 'routines', onRouteChange }: Props): React.JSX.Element {
+  const vm = useViewModel(defaultTab, onRouteChange);
   return <ScreenView vm={vm} />;
 }
 
 /* ── View model ── */
 
-function useViewModel(onRouteChange: (route: ShellRoute) => void) {
+function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => void) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>('routines');
+  const [tab, setTab] = useState<Tab>(defaultTab);
   const [query, setQuery] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<Tab>('routines');
@@ -108,6 +108,10 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
       openForEdit(tpl.id);
       onRouteChange('coach.routine.planner');
     },
+    onViewWarmup: (tpl: WarmupTemplateView) => {
+      setWarmupInitial(tpl.id, true);
+      onRouteChange('coach.warmup.planner');
+    },
     onEditWarmup: (tpl: WarmupTemplateView) => {
       setWarmupInitial(tpl.id);
       onRouteChange('coach.warmup.planner');
@@ -157,6 +161,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
         <WarmupGrid
           items={vm.filteredWarmups}
           mediaMap={vm.mediaMap}
+          onView={vm.onViewWarmup}
           onEdit={vm.onEditWarmup}
           onDelete={vm.onDeleteWarmup}
           t={vm.t}
@@ -261,6 +266,7 @@ function RoutineGrid(props: {
 function WarmupGrid(props: {
   items: WarmupTemplateView[];
   mediaMap: MediaMap;
+  onView: (tpl: WarmupTemplateView) => void;
   onEdit: (tpl: WarmupTemplateView) => void;
   onDelete: (id: string) => void;
   t: T;
@@ -275,6 +281,7 @@ function WarmupGrid(props: {
           key={tpl.id}
           tpl={tpl}
           mediaUrl={pickWarmupImage(tpl, props.mediaMap)}
+          onView={props.onView}
           onEdit={props.onEdit}
           onDelete={props.onDelete}
           t={props.t}
@@ -330,6 +337,7 @@ function RoutineCard(props: {
 function WarmupCard(props: {
   tpl: WarmupTemplateView;
   mediaUrl: string;
+  onView: (tpl: WarmupTemplateView) => void;
   onEdit: (tpl: WarmupTemplateView) => void;
   onDelete: (id: string) => void;
   t: T;
@@ -338,7 +346,12 @@ function WarmupCard(props: {
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
-    <Pressable onHoverIn={() => setHovered(true)} onHoverOut={() => setHovered(false)} style={ss.card}>
+    <Pressable
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      onPress={() => props.onView(tpl)}
+      style={ss.card}
+    >
       <CardTopBar
         canEdit={canEdit}
         icon={<Activity color={C.blue} size={18} />}

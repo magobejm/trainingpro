@@ -2,12 +2,14 @@ import { create } from 'zustand';
 
 type WarmupPlannerContextState = {
   initialTemplateId: null | string;
-  setInitialTemplate: (id: string) => void;
+  viewOnly: boolean;
+  setInitialTemplate: (id: string, viewOnly?: boolean) => void;
   clear: () => void;
 };
 
 export const useWarmupPlannerContextStore = create<WarmupPlannerContextState>((set) => ({
   initialTemplateId: null,
-  setInitialTemplate: (id) => set({ initialTemplateId: id }),
-  clear: () => set({ initialTemplateId: null }),
+  viewOnly: false,
+  setInitialTemplate: (id, viewOnly = false) => set({ initialTemplateId: id, viewOnly }),
+  clear: () => set({ initialTemplateId: null, viewOnly: false }),
 }));

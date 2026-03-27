@@ -2,7 +2,21 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-type BlockType = 'cardio' | 'mobility' | 'plio' | 'strength';
+type BlockType = 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport' | 'strength';
+
+export type WarmupTemplateGroupInput = {
+  groupType: 'CIRCUIT';
+  id: string;
+  note?: null | string;
+  sortOrder: number;
+};
+
+export type WarmupTemplateGroupView = {
+  groupType: string;
+  id: string;
+  note?: null | string;
+  sortOrder: number;
+};
 
 export type WarmupTemplateItemInput = {
   blockType: BlockType;
@@ -10,6 +24,8 @@ export type WarmupTemplateItemInput = {
   displayName: string;
   durationMinutes?: null | number;
   exerciseLibraryId?: null | string;
+  groupId?: null | string;
+  isometricExerciseLibraryId?: null | string;
   metadataJson?: null | Record<string, unknown>;
   notes?: null | string;
   plioExerciseLibraryId?: null | string;
@@ -19,6 +35,7 @@ export type WarmupTemplateItemInput = {
   roundsPlanned?: null | number;
   setsPlanned?: null | number;
   sortOrder: number;
+  sportLibraryId?: null | string;
   targetRir?: null | number;
   targetRpe?: null | number;
   warmupExerciseLibraryId?: null | string;
@@ -26,6 +43,7 @@ export type WarmupTemplateItemInput = {
 };
 
 export type UpsertWarmupTemplateInput = {
+  groups?: WarmupTemplateGroupInput[];
   items: WarmupTemplateItemInput[];
   name: string;
 };
@@ -33,6 +51,7 @@ export type UpsertWarmupTemplateInput = {
 export type WarmupTemplateView = {
   coachMembershipId: null | string;
   createdAt: string;
+  groups: WarmupTemplateGroupView[];
   id: string;
   items: WarmupTemplateItemInput[];
   name: string;
@@ -93,10 +112,7 @@ function useAuth() {
 
 type Auth = ReturnType<typeof useAuth>;
 
-async function listTemplates(
-  auth: Auth,
-  options?: { summary?: boolean },
-): Promise<WarmupTemplateView[]> {
+async function listTemplates(auth: Auth, options?: { summary?: boolean }): Promise<WarmupTemplateView[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -118,10 +134,7 @@ async function updateTemplate(auth: Auth, templateId: string, input: UpsertWarmu
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).patch<WarmupTemplateView>(
-    `/plans/templates/warmups/${templateId}`,
-    input,
-  );
+  return createApiClient(auth).patch<WarmupTemplateView>(`/plans/templates/warmups/${templateId}`, input);
 }
 
 async function deleteTemplate(auth: Auth, templateId: string) {

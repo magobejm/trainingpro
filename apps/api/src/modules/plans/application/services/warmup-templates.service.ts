@@ -6,7 +6,7 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { UpsertWarmupTemplateDto } from '../../presentation/dto/upsert-warmup-template.dto';
 
-type Input = { items: UpsertWarmupTemplateDto['items']; name: string };
+type Input = { groups?: UpsertWarmupTemplateDto['groups']; items: UpsertWarmupTemplateDto['items']; name: string };
 type TemplateRow = {
   coachMembershipId: null | string;
   createdAt: Date;
@@ -37,7 +37,7 @@ export class WarmupTemplatesService {
     if (!templateId) {
       throw new NotFoundException('Warmup template could not be created');
     }
-    await this.replaceItems(templateId, input.items);
+    await this.replaceItems(templateId, input.items, input.groups);
     return this.getOne(context, templateId);
   }
 
@@ -101,7 +101,7 @@ export class WarmupTemplatesService {
       input.name.trim(),
       templateId,
     );
-    await this.replaceItems(templateId, input.items);
+    await this.replaceItems(templateId, input.items, input.groups);
     return this.getOne(context, templateId);
   }
 
@@ -135,6 +135,8 @@ export class WarmupTemplatesService {
         display_name AS "displayName",
         duration_minutes AS "durationMinutes",
         exercise_library_id AS "exerciseLibraryId",
+        group_id AS "groupId",
+        isometric_exercise_library_id AS "isometricExerciseLibraryId",
         metadata_json AS "metadataJson",
         notes,
         plio_exercise_library_id AS "plioExerciseLibraryId",
@@ -144,6 +146,7 @@ export class WarmupTemplatesService {
         rounds_planned AS "roundsPlanned",
         sets_planned AS "setsPlanned",
         sort_order AS "sortOrder",
+        sport_library_id AS "sportLibraryId",
         target_rir AS "targetRir",
         target_rpe AS "targetRpe",
         warmup_exercise_library_id AS "warmupExerciseLibraryId",
@@ -153,7 +156,18 @@ export class WarmupTemplatesService {
       ORDER BY sort_order ASC`,
       templateId,
     );
-    return { ...template, items };
+    const groups = await this.prisma.$queryRawUnsafe<unknown[]>(
+      `SELECT
+        id,
+        group_type AS "groupType",
+        note,
+        sort_order AS "sortOrder"
+      FROM warmup_template_group
+      WHERE template_id = $1::uuid
+      ORDER BY sort_order ASC`,
+      templateId,
+    );
+    return { ...template, groups, items };
   }
 
   private async assertOwnedTemplate(context: AuthContext, templateId: string): Promise<void> {
@@ -193,9 +207,31 @@ export class WarmupTemplatesService {
     await this.assertOwnedTemplate(context, templateId);
   }
 
-  private async replaceItems(templateId: string, items: UpsertWarmupTemplateDto['items']) {
+  private async replaceItems(
+    templateId: string,
+    items: UpsertWarmupTemplateDto['items'],
+    groups?: UpsertWarmupTemplateDto['groups'],
+  ) {
     await this.prisma.$executeRawUnsafe(`DELETE FROM warmup_template_item WHERE template_id = $1::uuid`, templateId);
+    await this.prisma.$executeRawUnsafe(`DELETE FROM warmup_template_group WHERE template_id = $1::uuid`, templateId);
+
+    const groupIdMap = new Map<string, string>();
+    for (const group of groups ?? []) {
+      const realId = randomUUID();
+      groupIdMap.set(group.id, realId);
+      await this.prisma.$executeRawUnsafe(
+        `INSERT INTO warmup_template_group (id, template_id, group_type, note, sort_order, updated_at)
+         VALUES ($1::uuid, $2::uuid, $3, $4, $5, now())`,
+        realId,
+        templateId,
+        group.groupType,
+        group.note ?? null,
+        group.sortOrder,
+      );
+    }
+
     for (const item of items) {
+      const resolvedGroupId = item.groupId ? (groupIdMap.get(item.groupId) ?? null) : null;
       await this.prisma.$executeRawUnsafe(
         `INSERT INTO warmup_template_item (
           id,
@@ -207,6 +243,9 @@ export class WarmupTemplatesService {
           cardio_method_library_id,
           plio_exercise_library_id,
           warmup_exercise_library_id,
+          isometric_exercise_library_id,
+          sport_library_id,
+          group_id,
           sets_planned,
           reps_min,
           reps_max,
@@ -220,8 +259,8 @@ export class WarmupTemplatesService {
           metadata_json,
           updated_at
         ) VALUES (
-          $1::uuid,$2::uuid,$3,$4,$5,$6::uuid,$7::uuid,$8::uuid,$9::uuid,$10,$11,
-          $12,$13,$14,$15,$16,$17,$18,$19,$20::jsonb,now()
+          $1::uuid,$2::uuid,$3,$4,$5,$6::uuid,$7::uuid,$8::uuid,$9::uuid,$10::uuid,$11::uuid,$12::uuid,
+          $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23::jsonb,now()
         )`,
         randomUUID(),
         templateId,
@@ -232,6 +271,9 @@ export class WarmupTemplatesService {
         item.cardioMethodLibraryId ?? null,
         item.plioExerciseLibraryId ?? null,
         item.warmupExerciseLibraryId ?? null,
+        item.isometricExerciseLibraryId ?? null,
+        item.sportLibraryId ?? null,
+        resolvedGroupId,
         item.setsPlanned ?? null,
         item.repsMin ?? null,
         item.repsMax ?? null,

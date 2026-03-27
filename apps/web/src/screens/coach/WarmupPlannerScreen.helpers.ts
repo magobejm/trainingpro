@@ -1,30 +1,48 @@
 import { mapWarmupTemplateItemsToBlocks } from './RoutinePlanner.helpers';
-import type { BlockType, DraftBlock } from './RoutinePlanner.types';
+import type { BlockType, DraftBlock, DraftExerciseGroup } from './RoutinePlanner.types';
 import { appendMeta, parseRange } from './WarmupPlanner.helpers';
 import type {
   UpsertWarmupTemplateInput,
+  WarmupTemplateGroupInput,
   WarmupTemplateItemInput,
   WarmupTemplateView,
 } from '../../data/hooks/useWarmupTemplates';
 
 export type DraftState = {
   blocks: DraftBlock[];
+  groups: DraftExerciseGroup[];
   name: string;
 };
 
-export const EMPTY_DRAFT: DraftState = { blocks: [], name: '' };
+export const EMPTY_DRAFT: DraftState = { blocks: [], groups: [], name: '' };
 
 export function fromTemplate(template: WarmupTemplateView): DraftState {
   return {
     blocks: mapWarmupTemplateItemsToBlocks(template.items),
+    groups: (template.groups ?? []).map((g) => ({
+      groupType: g.groupType as 'CIRCUIT' | 'SUPERSET',
+      id: g.id,
+      note: g.note ?? undefined,
+      sortOrder: g.sortOrder,
+    })),
     name: template.name,
   };
 }
 
 export function toPayload(draft: DraftState): UpsertWarmupTemplateInput {
   return {
+    groups: draft.groups.map(mapGroup),
     items: draft.blocks.map((block, index) => mapItem(block, index)),
     name: draft.name,
+  };
+}
+
+function mapGroup(group: DraftExerciseGroup): WarmupTemplateGroupInput {
+  return {
+    groupType: 'CIRCUIT',
+    id: group.id,
+    note: group.note ?? null,
+    sortOrder: group.sortOrder,
   };
 }
 
@@ -36,6 +54,8 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
     cardioMethodLibraryId: block.type === 'cardio' ? (block.libraryId ?? null) : null,
     displayName: block.displayName,
     exerciseLibraryId: block.type === 'strength' ? (block.libraryId ?? null) : null,
+    groupId: block.groupId ?? null,
+    isometricExerciseLibraryId: block.type === 'isometric' ? (block.libraryId ?? null) : null,
     metadataJson: null,
     notes,
     plioExerciseLibraryId: block.type === 'plio' ? (block.libraryId ?? null) : null,
@@ -45,6 +65,7 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
     roundsPlanned: block.roundsPlanned ?? null,
     setsPlanned: block.setsPlanned ?? null,
     sortOrder,
+    sportLibraryId: block.type === 'sport' ? (block.libraryId ?? null) : null,
     targetRir: block.targetRir ?? null,
     targetRpe: block.targetRpe ?? null,
     warmupExerciseLibraryId: block.type === 'warmup' ? (block.libraryId ?? null) : null,
@@ -80,7 +101,10 @@ export function moveBlocks(blocks: DraftBlock[], index: number, direction: -1 | 
   return clone.map((item, sortOrder) => ({ ...item, sortOrder }));
 }
 
-function mapTypeToApi(type: BlockType): 'cardio' | 'mobility' | 'plio' | 'strength' {
+function mapTypeToApi(type: BlockType): WarmupTemplateItemInput['blockType'] {
   if (type === 'warmup') return 'mobility';
-  return type === 'cardio' || type === 'plio' || type === 'strength' ? type : 'strength';
+  if (type === 'cardio' || type === 'isometric' || type === 'plio' || type === 'sport' || type === 'strength') {
+    return type;
+  }
+  return 'strength';
 }

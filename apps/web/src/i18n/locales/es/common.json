@@ -506,6 +506,8 @@
   "coach.warmupPlanner.searchPlaceholder": "Buscar calentamiento guardado...",
   "coach.warmupPlanner.blocksCount": "{{count}} bloques",
   "coach.warmupPlanner.save": "Guardar calentamiento",
+  "coach.warmupPlanner.back": "Volver a biblioteca",
+  "coach.warmupPlanner.saveModal.title": "Guardar calentamiento",
   "coach.builder.dayTitleDefault": "Día 1",
   "coach.routine.title": "Planificador de Rutinas",
   "coach.routine.name": "Nombre de la rutina",

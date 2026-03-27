@@ -747,6 +747,21 @@ model PlanTemplateObjective {
   @@map("plan_template_objective")
 }
 
+model WarmupTemplateGroup {
+  id         String               @id @default(uuid()) @db.Uuid
+  templateId String               @map("template_id") @db.Uuid
+  groupType  String               @map("group_type") @db.VarChar(20)
+  note       String?
+  sortOrder  Int                  @default(0) @map("sort_order")
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  template   WarmupTemplate       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  items      WarmupTemplateItem[]
+
+  @@index([templateId], map: "idx_warmup_template_group_template")
+  @@map("warmup_template_group")
+}
+
 model WarmupTemplate {
   id                String               @id @default(uuid()) @db.Uuid
   scope             LibraryItemScope     @default(COACH)
@@ -762,6 +777,7 @@ model WarmupTemplate {
   organization      Organization?        @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember?  @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   items             WarmupTemplateItem[]
+  groups            WarmupTemplateGroup[]
 
   @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_template_coach_archived")
@@ -778,7 +794,11 @@ model WarmupTemplateItem {
   exerciseLibraryId       String?         @map("exercise_library_id") @db.Uuid
   cardioMethodLibraryId   String?         @map("cardio_method_library_id") @db.Uuid
   plioExerciseLibraryId   String?         @map("plio_exercise_library_id") @db.Uuid
-  warmupExerciseLibraryId String?         @map("warmup_exercise_library_id") @db.Uuid
+  warmupExerciseLibraryId    String?         @map("warmup_exercise_library_id") @db.Uuid
+  isometricExerciseLibraryId String?         @map("isometric_exercise_library_id") @db.Uuid
+  sportLibraryId             String?         @map("sport_library_id") @db.Uuid
+  groupId                    String?         @map("group_id") @db.Uuid
+  group                      WarmupTemplateGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
   setsPlanned             Int?            @map("sets_planned")
   repsMin                 Int?            @map("reps_min")
   repsMax                 Int?            @map("reps_max")

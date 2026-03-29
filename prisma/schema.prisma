@@ -778,6 +778,7 @@ model WarmupTemplate {
   coachMembership   OrganizationMember?  @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   items             WarmupTemplateItem[]
   groups            WarmupTemplateGroup[]
+  dayWarmups        PlanDayWarmup[]
 
   @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_template_coach_archived")
@@ -824,25 +825,38 @@ model WarmupTemplateItem {
 }
 
 model PlanDay {
-  id           String                 @id @default(uuid()) @db.Uuid
-  templateId   String                 @map("template_id") @db.Uuid
-  dayIndex     Int                    @map("day_index")
-  title        String                 @db.VarChar(120)
-  archivedAt   DateTime?              @map("archived_at") @db.Timestamptz(6)
-  createdAt    DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt    DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
-  template         PlanTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  exercises        PlanStrengthExercise[]
-  cardioBlocks     PlanCardioBlock[]
-  plioBlocks       PlanPlioBlock[]
-  warmupBlocks     PlanWarmupBlock[]
-  sportBlocks      PlanSportBlock[]
-  isometricBlocks  PlanIsometricBlock[]
-  exerciseGroups   PlanExerciseGroup[]
+  id                 String                 @id @default(uuid()) @db.Uuid
+  templateId         String                 @map("template_id") @db.Uuid
+  dayIndex           Int                    @map("day_index")
+  title              String                 @db.VarChar(120)
+  archivedAt         DateTime?              @map("archived_at") @db.Timestamptz(6)
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  template           PlanTemplate           @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  warmups            PlanDayWarmup[]
+  exercises          PlanStrengthExercise[]
+  cardioBlocks       PlanCardioBlock[]
+  plioBlocks         PlanPlioBlock[]
+  warmupBlocks       PlanWarmupBlock[]
+  sportBlocks        PlanSportBlock[]
+  isometricBlocks    PlanIsometricBlock[]
+  exerciseGroups     PlanExerciseGroup[]
 
   @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
   @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
   @@map("plan_day")
+}
+
+model PlanDayWarmup {
+  id                 String          @id @default(uuid()) @db.Uuid
+  planDayId          String          @map("plan_day_id") @db.Uuid
+  warmupTemplateId   String          @map("warmup_template_id") @db.Uuid
+  sortOrder          Int             @default(0) @map("sort_order")
+  planDay            PlanDay         @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+  warmupTemplate     WarmupTemplate  @relation(fields: [warmupTemplateId], references: [id], onDelete: Cascade)
+
+  @@index([planDayId], map: "idx_plan_day_warmup_day")
+  @@map("plan_day_warmup")
 }
 
 model PlanStrengthExercise {

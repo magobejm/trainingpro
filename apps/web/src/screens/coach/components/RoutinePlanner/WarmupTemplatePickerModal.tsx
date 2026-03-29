@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { s } from '../../RoutinePlanner.styles';
+import { WarmupExerciseList } from './WarmupExerciseList';
 
 type Props = {
   onCancel: () => void;
@@ -15,12 +16,7 @@ const MODAL_ANIMATION = 'fade' as const;
 
 export function WarmupTemplatePickerModal(props: Props): React.JSX.Element {
   return (
-    <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onCancel}
-      transparent
-      visible={props.visible}
-    >
+    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onCancel} transparent visible={props.visible}>
       <PickerSheet {...props} />
     </Modal>
   );
@@ -33,12 +29,7 @@ function PickerSheet(props: Props): React.JSX.Element {
         <Text style={styles.title}>{props.t('coach.routine.warmupTemplatePicker.title')}</Text>
         <ScrollView style={styles.list}>
           {props.templates.map((template) => (
-            <TemplateRow
-              key={template.id}
-              onSelect={props.onSelect}
-              t={props.t}
-              template={template}
-            />
+            <TemplateRow key={template.id} onSelect={props.onSelect} t={props.t} template={template} />
           ))}
         </ScrollView>
         <Pressable onPress={props.onCancel} style={styles.cancelBtn}>
@@ -54,13 +45,27 @@ function TemplateRow(props: {
   t: (key: string, options?: { count: number }) => string;
   template: WarmupTemplateView;
 }): React.JSX.Element {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <Pressable onPress={() => props.onSelect(props.template)} style={styles.item}>
-      <Text style={styles.itemName}>{props.template.name}</Text>
-      <Text style={styles.itemMeta}>
-        {props.t('coach.warmupPlanner.blocksCount', { count: props.template.items.length })}
-      </Text>
-    </Pressable>
+    <View style={styles.item}>
+      <View style={styles.itemHeader}>
+        <Pressable onPress={() => setExpanded((v) => !v)} style={styles.itemLabelArea}>
+          <Text style={styles.itemName}>{props.template.name}</Text>
+          <Text style={styles.itemMeta}>
+            {props.t('coach.warmupPlanner.blocksCount', { count: props.template.items.length })}
+          </Text>
+        </Pressable>
+        <View style={styles.itemActions}>
+          <Pressable onPress={() => setExpanded((v) => !v)} style={styles.expandBtn}>
+            <Text style={styles.expandBtnText}>{expanded ? '▲' : '▼'}</Text>
+          </Pressable>
+          <Pressable onPress={() => props.onSelect(props.template)} style={styles.selectBtn}>
+            <Text style={styles.selectBtnText}>{props.t('coach.routine.warmup.select')}</Text>
+          </Pressable>
+        </View>
+      </View>
+      {expanded && <WarmupExerciseList items={props.template.items} groups={props.template.groups} />}
+    </View>
   );
 }
 
@@ -75,8 +80,8 @@ const styles = {
   sheet: {
     backgroundColor: '#fff',
     borderRadius: 14,
-    maxHeight: 560,
-    maxWidth: 560,
+    maxHeight: '90vh' as unknown as number,
+    maxWidth: 680,
     padding: 16,
     width: '100%' as const,
   },
@@ -87,7 +92,7 @@ const styles = {
     marginBottom: 12,
   },
   list: {
-    maxHeight: 420,
+    maxHeight: '80vh' as unknown as number,
   },
   item: {
     backgroundColor: '#f8fafc',
@@ -95,7 +100,16 @@ const styles = {
     borderRadius: 10,
     borderWidth: 1,
     marginBottom: 8,
+    overflow: 'hidden' as const,
+  },
+  itemHeader: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
     padding: 12,
+    gap: 8,
+  },
+  itemLabelArea: {
+    flex: 1,
   },
   itemName: {
     color: '#0f172a',
@@ -105,7 +119,30 @@ const styles = {
   itemMeta: {
     color: '#64748b',
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  itemActions: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
+  },
+  expandBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    backgroundColor: '#e2e8f0',
+  },
+  expandBtnText: { fontSize: 10, color: '#475569' },
+  selectBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    backgroundColor: '#3b82f6',
+  },
+  selectBtnText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600' as const,
   },
   cancelBtn: {
     ...s.deleteBtn,

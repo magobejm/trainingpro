@@ -359,6 +359,7 @@ function mapRoutineDay(day: DraftDay, index: number) {
     ...mapped,
     dayIndex: index + 1,
     title: day.title,
+    warmupTemplateIds: (day.warmupTemplates ?? []).map((t) => t.id),
   };
 }
 

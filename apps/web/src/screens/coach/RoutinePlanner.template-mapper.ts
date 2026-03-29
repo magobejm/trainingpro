@@ -46,20 +46,29 @@ export function mapWarmupTemplateItemsToBlocks(
     .map((item) => normalizeWarmupTemplateItem(item))
     .map((item) => {
       const mappedType: BlockType = item.blockType === 'mobility' ? 'warmup' : (item.blockType as BlockType);
-      return mapTemplateBlock(mappedType, item, createBlock);
+      return initSetsFromCount(mapTemplateBlock(mappedType, item, createBlock));
     })
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
     .map((block) => ({ ...block, id: nextBlockId() }));
+}
+
+function initSetsFromCount(block: DraftBlock): DraftBlock {
+  if ((block.sets?.length ?? 0) > 0) return block;
+  const count = block.setsPlanned ?? block.roundsPlanned;
+  if (!count || count <= 0) return block;
+  return { ...block, sets: Array.from({ length: count }, (_, i) => ({ setIndex: i })) };
 }
 
 function normalizeWarmupTemplateItem(item: {
   blockType: string;
   [key: string]: unknown;
 }): TemplateBlockData & { blockType: string } {
+  const meta = item.metadataJson as Record<string, unknown> | null | undefined;
   return {
     ...item,
     displayName: toStringValue(item.displayName) ?? '',
     sortOrder: toNumber(item.sortOrder) ?? 0,
+    sets: item.sets ?? meta?.sets,
   };
 }
 

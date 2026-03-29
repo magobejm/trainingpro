@@ -32,6 +32,12 @@ export function mapRoutineDayCreate(day: RoutineDayInput): Prisma.PlanDayCreateW
   return {
     dayIndex: day.dayIndex,
     title: day.title.trim(),
+    warmups: {
+      create: (day.warmupTemplateIds ?? []).map((id, i) => ({
+        warmupTemplateId: id,
+        sortOrder: i,
+      })),
+    },
     exercises: { create: (day.exercises ?? []).map((e) => mapStrengthCreate(e, null)) },
     cardioBlocks: { create: (day.cardioBlocks ?? []).map((b) => mapCardioCreate(b, null)) },
     plioBlocks: { create: (day.plioBlocks ?? []).map((b) => mapPlioCreate(b, null)) },

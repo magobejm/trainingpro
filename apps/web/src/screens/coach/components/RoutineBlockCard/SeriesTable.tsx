@@ -351,31 +351,30 @@ function SelectCell({
   readOnly?: boolean;
   selectPlaceholder: string;
 }) {
-  const [open, setOpen] = React.useState(false);
-  return (
-    <View>
-      <TouchableOpacity style={[st.cellInput, st.selectTrigger]} onPress={() => !readOnly && setOpen((v) => !v)}>
-        <Text style={{ fontSize: 12, color: value ? '#1e293b' : '#cbd5e1' }} numberOfLines={1}>
-          {value || selectPlaceholder}
-        </Text>
-      </TouchableOpacity>
-      {open && (
-        <View style={st.selectDropdown}>
-          {options.map((opt) => (
-            <TouchableOpacity
-              key={opt}
-              style={st.selectOption}
-              onPress={() => {
-                onChange(opt);
-                setOpen(false);
-              }}
-            >
-              <Text style={[st.selectOptionText, value === opt && st.selectOptionTextActive]}>{opt}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (React.createElement as any)(
+    'select',
+    {
+      value: value || '',
+      disabled: readOnly,
+      onChange: (e: { target: { value: string } }) => {
+        if (!readOnly) onChange(e.target.value);
+      },
+      style: {
+        fontSize: 12,
+        padding: '5px 4px',
+        border: '1px solid #e2e8f0',
+        borderRadius: 6,
+        backgroundColor: readOnly ? '#f8fafc' : '#fff',
+        color: value ? '#1e293b' : '#94a3b8',
+        width: '100%',
+        cursor: readOnly ? 'default' : 'pointer',
+        outline: 'none',
+        appearance: 'auto',
+      },
+    },
+    React.createElement('option', { value: '' }, selectPlaceholder),
+    ...options.map((opt) => React.createElement('option', { key: opt, value: opt }, opt)),
   );
 }
 
@@ -473,27 +472,35 @@ const st = {
   },
   cellInputReadOnly: { backgroundColor: '#f8fafc', color: '#64748b' },
   selectTrigger: { paddingHorizontal: 6 },
-  selectDropdown: {
-    position: 'absolute' as const,
-    top: 32,
-    left: 0,
-    zIndex: 99,
+  selectOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15,23,42,0.35)',
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+  },
+  selectSheet: {
     backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    minWidth: 100,
+    borderRadius: 12,
+    paddingVertical: 6,
+    minWidth: 160,
     shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
   },
   selectOption: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  selectOptionText: { fontSize: 12, color: '#475569' },
+  selectOptionActive: { backgroundColor: '#eff6ff' },
+  selectCancelOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    alignItems: 'center' as const,
+  },
+  selectCancelText: { fontSize: 13, color: '#94a3b8' },
+  selectOptionText: { fontSize: 14, color: '#475569', textAlign: 'center' as const },
   selectOptionTextActive: { color: '#3b82f6', fontWeight: '700' as const },
 };

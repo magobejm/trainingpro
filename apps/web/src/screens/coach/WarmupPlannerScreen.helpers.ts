@@ -56,7 +56,7 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
     exerciseLibraryId: block.type === 'strength' ? (block.libraryId ?? null) : null,
     groupId: block.groupId ?? null,
     isometricExerciseLibraryId: block.type === 'isometric' ? (block.libraryId ?? null) : null,
-    metadataJson: null,
+    metadataJson: block.sets && block.sets.length > 0 ? { sets: block.sets } : null,
     notes,
     plioExerciseLibraryId: block.type === 'plio' ? (block.libraryId ?? null) : null,
     repsMax: range.max,

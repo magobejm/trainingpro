@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
@@ -6,11 +6,12 @@ import { SaveRoutineModal } from './SaveRoutineModal';
 import type { DraftDay, DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
-import { useWarmupTemplatesQuery, type WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
+import { useWarmupTemplatesQuery } from '../../../../data/hooks/useWarmupTemplates';
 import { RoutinePlannerModals } from './RoutinePlannerModals';
-import { createWarmupTemplateSelector } from './RoutinePlannerLayout.helpers';
+import { createWarmupTemplateSelector, removeWarmupTemplateFromDay } from './RoutinePlannerLayout.helpers';
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
+import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
 
 interface LayoutProps {
   clientContextId?: null | string;
@@ -70,10 +71,14 @@ function buildDraftHandlers(
   draftState: LayoutProps['draftState'],
   onOpenPicker: OpenPickerFn,
   onOpenWarmupTemplatePicker: (dayIdx: number) => void,
+  onRemoveWarmupTemplate: (dayIdx: number, templateId: string) => void,
+  onViewWarmupTemplate: (dayIdx: number, templateId: string) => void,
 ) {
   return {
     onOpenPicker,
     onOpenWarmupTemplatePicker,
+    onRemoveWarmupTemplate,
+    onViewWarmupTemplate,
     moveDay: draftState.moveDay,
     onMoveBlock: draftState.onMoveBlock,
     onMoveBlockToDay: draftState.onMoveBlockToDay,
@@ -89,6 +94,8 @@ function RoutineMainSection(
   props: LayoutProps & {
     onOpenPicker: OpenPickerFn;
     onOpenWarmupTemplatePicker: (dayIdx: number) => void;
+    onRemoveWarmupTemplate: (dayIdx: number, templateId: string) => void;
+    onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   },
 ) {
   const { t, draftState, uiState, labels = ROUTINE_LABELS, viewOnlyMode } = props;
@@ -102,6 +109,8 @@ function RoutineMainSection(
         labels={labels}
         onOpenPicker={props.onOpenPicker}
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
+        onRemoveWarmupTemplate={props.onRemoveWarmupTemplate}
+        onViewWarmupTemplate={props.onViewWarmupTemplate}
         setAddIdx={uiState.setAddIdx}
       />
       {!isReadOnly && (
@@ -120,13 +129,21 @@ function RoutineDayList(props: {
   labels: PlannerLabels;
   onOpenPicker: OpenPickerFn;
   onOpenWarmupTemplatePicker: (dayIdx: number) => void;
+  onRemoveWarmupTemplate: (dayIdx: number, templateId: string) => void;
+  onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   setAddIdx: (i: number | null) => void;
 }) {
   return (
     <DayList
       addIdx={props.addIdx}
       days={props.draftState.draft.days}
-      draftState={buildDraftHandlers(props.draftState, props.onOpenPicker, props.onOpenWarmupTemplatePicker)}
+      draftState={buildDraftHandlers(
+        props.draftState,
+        props.onOpenPicker,
+        props.onOpenWarmupTemplatePicker,
+        props.onRemoveWarmupTemplate,
+        props.onViewWarmupTemplate,
+      )}
       isReadOnly={props.isReadOnly}
       labels={props.labels}
       lastAddedBlockId={props.draftState.lastAddedBlockId}
@@ -138,7 +155,6 @@ function RoutineDayList(props: {
 function RoutineFooterSection(props: LayoutProps) {
   const { t, draftState, uiState, viewOnlyMode, onBack } = props;
   const isGlobal = draftState.draft.scope === 'GLOBAL';
-  // When in view-only mode from client profile (onBack provided), show only a back button
   if (viewOnlyMode && onBack) {
     return (
       <Pressable onPress={onBack} style={[s.saveBtn, { backgroundColor: '#64748b' }]}>
@@ -146,7 +162,6 @@ function RoutineFooterSection(props: LayoutProps) {
       </Pressable>
     );
   }
-  // In view-only mode from library, show Assign button
   const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
@@ -169,6 +184,7 @@ function RoutineFooterSection(props: LayoutProps) {
 
 function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutProps['draftState']) {
   const pendingDayIdxRef = useRef<number>(0);
+  const [viewingWarmup, setViewingWarmup] = useState<{ dayIdx: number; templateId: string } | null>(null);
 
   function onOpenPicker(dayIdx: number, type: BlockType) {
     pendingDayIdxRef.current = dayIdx;
@@ -184,54 +200,70 @@ function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutPr
     pendingDayIdxRef.current = dayIdx;
     uiState.setShowWarmupTemplatePicker(true);
   };
+
   const onSelectWarmupTemplate = createWarmupTemplateSelector(
     draftState.setDraft,
     uiState.setShowWarmupTemplatePicker,
     pendingDayIdxRef,
   );
 
-  return { onOpenPicker, onOpenWarmupTemplatePicker, onPickerSelect, onSelectWarmupTemplate };
-}
+  const onRemoveWarmupTemplate = (dayIdx: number, templateId: string) => {
+    removeWarmupTemplateFromDay(draftState.setDraft, dayIdx, templateId);
+  };
 
-export function RoutinePlannerLayout(props: LayoutProps) {
-  const { uiState, draftState } = props;
-  const warmupTemplates = useWarmupTemplatesQuery().data ?? [];
-  const { onOpenPicker, onOpenWarmupTemplatePicker, onPickerSelect, onSelectWarmupTemplate } = usePickerHandlers(
-    uiState,
-    draftState,
-  );
-  return renderLayout(
-    props,
+  const onViewWarmupTemplate = (dayIdx: number, templateId: string) => {
+    setViewingWarmup({ dayIdx, templateId });
+  };
+
+  return {
     onOpenPicker,
     onOpenWarmupTemplatePicker,
     onPickerSelect,
     onSelectWarmupTemplate,
-    warmupTemplates,
-  );
+    onRemoveWarmupTemplate,
+    onViewWarmupTemplate,
+    viewingWarmup,
+    setViewingWarmup,
+  };
 }
 
-function renderLayout(
-  props: LayoutProps,
-  onOpenPicker: OpenPickerFn,
-  onOpenWarmupTemplatePicker: (dayIdx: number) => void,
-  onPickerSelect: (libraryId: string, displayName: string) => void,
-  onSelectWarmupTemplate: (template: WarmupTemplateView) => void,
-  warmupTemplates: WarmupTemplateView[],
-) {
-  const { uiState, t } = props;
+export function RoutinePlannerLayout(props: LayoutProps) {
+  const { uiState, draftState } = props;
+  const { data: warmupTemplates = [] } = useWarmupTemplatesQuery();
+  const {
+    onOpenPicker,
+    onOpenWarmupTemplatePicker,
+    onPickerSelect,
+    onSelectWarmupTemplate,
+    onRemoveWarmupTemplate,
+    onViewWarmupTemplate,
+    viewingWarmup,
+    setViewingWarmup,
+  } = usePickerHandlers(uiState, draftState);
+
+  const viewingTemplate = viewingWarmup ? (warmupTemplates.find((t) => t.id === viewingWarmup.templateId) ?? null) : null;
+
   return (
     <ScrollView contentContainerStyle={s.page}>
       <RoutineLayoutSections
         onOpenPicker={onOpenPicker}
         onOpenWarmupTemplatePicker={onOpenWarmupTemplatePicker}
+        onRemoveWarmupTemplate={onRemoveWarmupTemplate}
+        onViewWarmupTemplate={onViewWarmupTemplate}
         props={props}
       />
       <RoutinePlannerModals
         onPickerSelect={onPickerSelect}
         onSelectWarmupTemplate={onSelectWarmupTemplate}
-        t={t}
+        t={props.t}
         uiState={uiState}
         warmupTemplates={warmupTemplates}
+      />
+      <WarmupTemplateDetailModal
+        template={viewingTemplate}
+        onClose={() => setViewingWarmup(null)}
+        t={props.t}
+        visible={viewingWarmup !== null}
       />
     </ScrollView>
   );
@@ -240,6 +272,8 @@ function renderLayout(
 function RoutineLayoutSections(props: {
   onOpenPicker: OpenPickerFn;
   onOpenWarmupTemplatePicker: (dayIdx: number) => void;
+  onRemoveWarmupTemplate: (dayIdx: number, templateId: string) => void;
+  onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   props: LayoutProps;
 }) {
   const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode } = props.props;
@@ -260,6 +294,8 @@ function RoutineLayoutSections(props: {
         {...props.props}
         onOpenPicker={props.onOpenPicker}
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
+        onRemoveWarmupTemplate={props.onRemoveWarmupTemplate}
+        onViewWarmupTemplate={props.onViewWarmupTemplate}
       />
       <NeatSection
         isReadOnly={isReadOnly}

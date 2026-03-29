@@ -43,15 +43,17 @@ export const useRoutinePlannerContextStore = create<RoutinePlannerContextState>(
       clientDisplayName,
       clientId,
       initialTemplateId: initialTemplateId ?? null,
+      resetCounter: 0,
       viewMode: 'edit',
     }),
   openForEdit: (templateId) =>
-    set({ clientDisplayName: null, clientId: null, initialTemplateId: templateId, viewMode: 'edit' }),
+    set({ clientDisplayName: null, clientId: null, initialTemplateId: templateId, resetCounter: 0, viewMode: 'edit' }),
   openForView: (templateId, clientId, clientDisplayName) =>
     set({
       clientDisplayName: clientDisplayName ?? null,
       clientId: clientId ?? null,
       initialTemplateId: templateId,
+      resetCounter: 0,
       viewMode: 'view',
     }),
   prepareClientAssignment: (clientId, clientDisplayName) =>

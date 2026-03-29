@@ -24,6 +24,8 @@ interface RoutineDayCardProps {
   onRemove: () => void;
   onAddBlock: (type: BlockType) => void;
   onAddWarmupTemplate?: () => void;
+  onRemoveWarmupTemplate?: (templateId: string) => void;
+  onViewWarmupTemplate?: (templateId: string) => void;
   onSetAddBlockDayIdx: (idx: number | null) => void;
   onUpdateBlockField: (blockId: string, field: keyof DraftBlock, value: unknown) => void;
   onMoveBlock: (blockIdx: number, direction: -1 | 1) => void;
@@ -83,12 +85,16 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         isLast={props.isLast}
         onAddBlock={onAddBlockClick}
         onMoveDay={props.onMoveDay}
+        onPickWarmup={props.onAddWarmupTemplate}
         onRemove={props.onRemove}
+        onRemoveWarmup={props.onRemoveWarmupTemplate}
         onRename={props.onRename}
         onToggleCollapse={() => setIsCollapsed((v) => !v)}
+        onViewWarmup={props.onViewWarmupTemplate}
         readOnly={!!readOnly}
         t={t}
         title={day.title}
+        warmupTemplates={day.warmupTemplates}
       />
       {/* Group mode bar */}
       {!readOnly && !isCollapsed && (
@@ -353,6 +359,7 @@ function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: (
 
 function createDragStart(dayIdx: number, blockIdx: number) {
   return (event: React.DragEvent<HTMLDivElement>) => {
+    event.stopPropagation();
     event.dataTransfer.setData('application/json', JSON.stringify({ blockIdx, dayIdx }));
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -369,6 +376,7 @@ function createDropHandler(props: DayBlocksContentProps, targetIdx: number) {
     if (props.readOnly) return;
     const source = parseDragSource(event.dataTransfer.getData('application/json'));
     if (!source || source.dayIdx !== props.dayIdx || source.blockIdx === targetIdx) return;
+    event.stopPropagation();
     moveWithinDay(props, source.blockIdx, targetIdx);
   };
 }

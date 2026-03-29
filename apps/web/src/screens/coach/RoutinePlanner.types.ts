@@ -73,6 +73,7 @@ export interface DraftDay {
   groups?: DraftExerciseGroup[];
   id: string;
   title: string;
+  warmupTemplates?: Array<{ id: string; name: string }>;
 }
 
 export interface NeatItem {

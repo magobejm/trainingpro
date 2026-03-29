@@ -45,6 +45,10 @@ export function routineTemplateInclude(): any {
           orderBy,
           where,
         },
+        warmups: {
+          include: { warmupTemplate: { select: { id: true, name: true } } },
+          orderBy: { sortOrder: 'asc' as const },
+        },
       },
       orderBy: { dayIndex: 'asc' as const },
       where,
@@ -113,6 +117,12 @@ function mapRoutineDay(day: any) {
     sportBlocks: (day.sportBlocks ?? []).map(mapSportOutput),
     title: day.title,
     warmupBlocks: (day.warmupBlocks ?? []).map(mapWarmupOutput),
+    warmupTemplates: (day.warmups ?? []).map((w: any) => ({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      id: w.warmupTemplateId,
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      name: w.warmupTemplate?.name ?? '',
+    })),
   };
 }
 

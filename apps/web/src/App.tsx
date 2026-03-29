@@ -224,13 +224,15 @@ function resolveCoachRouteScreen(route: ShellRoute, setRoute: (route: ShellRoute
   return coachScreen ?? <ClientsScreen onRouteChange={setRoute} />;
 }
 
+const WARMUPS_TAB = 'warmups';
+
 function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
   if (route === 'coach.library.unified') return <UnifiedExerciseLibraryScreen />;
   if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
   if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
   if (route === 'coach.library.routines') return <LibraryRoutinesScreen onRouteChange={setRoute} />;
-  if (route === 'coach.library.warmups') return <LibraryRoutinesScreen defaultTab={'warmups'} onRouteChange={setRoute} />;
+  if (route === 'coach.library.warmups') return <LibraryRoutinesScreen defaultTab={WARMUPS_TAB} onRouteChange={setRoute} />;
   if (route === 'coach.library.isometrics') return <LibraryIsometricScreen />;
   if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
   if (route === 'coach.library.mobility') return <LibraryMobilityScreen />;

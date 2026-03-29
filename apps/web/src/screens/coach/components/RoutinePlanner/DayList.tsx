@@ -6,6 +6,8 @@ import type { PlannerLabels } from './planner-labels';
 export interface DraftStateHandlers {
   onOpenPicker: (dayIdx: number, type: BlockType) => void;
   onOpenWarmupTemplatePicker?: (dayIdx: number) => void;
+  onRemoveWarmupTemplate?: (dayIdx: number, templateId: string) => void;
+  onViewWarmupTemplate?: (dayIdx: number, templateId: string) => void;
   onMoveBlock: (dayIdx: number, blockIdx: number, dir: -1 | 1) => void;
   onMoveBlockToDay: (fromIdx: number, bIdx: number, toIdx: number) => void;
   removeDay: (dayIdx: number) => void;
@@ -45,6 +47,22 @@ export function DayList(props: DayListProps) {
   const handleDayDrop = (targetIdx: number) => (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     if (isReadOnly) return;
+
+    // Cross-day block drop
+    const blockRaw = event.dataTransfer.getData('application/json');
+    if (blockRaw) {
+      try {
+        const src = JSON.parse(blockRaw) as { blockIdx?: unknown; dayIdx?: unknown };
+        if (typeof src.blockIdx === 'number' && typeof src.dayIdx === 'number' && src.dayIdx !== targetIdx) {
+          draftState.onMoveBlockToDay(src.dayIdx, src.blockIdx, targetIdx);
+          return;
+        }
+      } catch {
+        /* not a block drag */
+      }
+    }
+
+    // Day drag
     const raw = event.dataTransfer.getData(DAY_DRAG_KEY);
     const fromIdx = raw !== '' ? parseInt(raw, 10) : NaN;
     if (!Number.isFinite(fromIdx) || fromIdx === targetIdx) return;
@@ -85,6 +103,8 @@ export function DayList(props: DayListProps) {
               draftState.onOpenWarmupTemplatePicker?.(idx);
               setAddIdx(null);
             }}
+            onRemoveWarmupTemplate={(templateId) => draftState.onRemoveWarmupTemplate?.(idx, templateId)}
+            onViewWarmupTemplate={(templateId) => draftState.onViewWarmupTemplate?.(idx, templateId)}
             onMoveBlock={(bIdx, dir) => draftState.onMoveBlock(idx, bIdx, dir)}
             onMoveBlockToDay={(bIdx, target) => draftState.onMoveBlockToDay(idx, bIdx, target)}
             onMoveDay={(dir) => draftState.moveDay(idx, dir)}

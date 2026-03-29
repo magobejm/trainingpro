@@ -170,6 +170,7 @@ export type RoutineDayInput = {
   sportBlocks?: RoutineSportInput[];
   title: string;
   warmupBlocks?: RoutineWarmupInput[];
+  warmupTemplateIds?: string[];
 };
 
 export type RoutineNeatInput = {

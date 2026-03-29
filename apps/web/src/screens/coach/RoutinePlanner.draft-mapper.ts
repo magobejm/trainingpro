@@ -23,6 +23,7 @@ type TemplateDayData = {
   sportBlocks?: TemplateBlockData[];
   isometricBlocks?: TemplateBlockData[];
   groups?: TemplateGroupData[];
+  warmupTemplates?: Array<{ id: string; name: string }>;
 };
 
 type TemplateData = {
@@ -42,6 +43,7 @@ export function mapTemplateToDraft(
       groups: mapGroupsFromTemplate(day),
       id: nextDayId(),
       title: day.title,
+      warmupTemplates: day.warmupTemplates ?? [],
     })),
     expectedCompletionDays: readExpectedCompletionDays(tpl),
     name: tpl.name,

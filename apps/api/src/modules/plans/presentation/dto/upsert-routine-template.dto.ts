@@ -7,6 +7,8 @@ const fieldModeSchema = z.object({
 
 const nullableNumber = z.number().min(0).max(5000).nullable().optional();
 const nullableInt = z.number().int().min(0).max(5000).nullable().optional();
+// UUID format only — not RFC 4122 strict — to accept seeded IDs with non-standard version/variant bytes
+const uuidAny = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Invalid UUID');
 
 const perSetRangeSchema = z.object({
   maxKg: nullableNumber,
@@ -185,6 +187,7 @@ const daySchema = z.object({
   sportBlocks: z.array(sportSchema).optional().default([]),
   title: z.string().trim().min(1).max(120),
   warmupBlocks: z.array(warmupSchema).optional().default([]),
+  warmupTemplateIds: z.array(uuidAny).optional().default([]),
 });
 
 const neatSchema = z.object({

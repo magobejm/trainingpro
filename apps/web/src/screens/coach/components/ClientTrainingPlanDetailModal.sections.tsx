@@ -6,7 +6,7 @@ import type {
   RoutineStrengthBlockInput,
   RoutineCardioBlockInput,
   RoutinePlioBlockInput,
-  RoutineWarmupBlockInput,
+  RoutineMobilityBlockInput,
   RoutineSportBlockInput,
 } from '../../../data/hooks/useRoutineTemplates';
 import { styles } from './ClientTrainingPlanDetailModal.styles';
@@ -35,14 +35,11 @@ function DaySection({ day, t }: { day: RoutineDayInput; t: Translate }) {
 
 function DayBlockGroups({ day, t }: { day: RoutineDayInput; t: Translate }) {
   const blocks = buildOrderedBlocks(day, t);
-  return (
-    <BlockGroup blocks={blocks} label={t('coach.clientProfile.details.trainingPlan.title')} t={t} />
-  );
+  return <BlockGroup blocks={blocks} label={t('coach.clientProfile.details.trainingPlan.title')} t={t} />;
 }
 
 function mapStrengthBlocks(day: RoutineDayInput, t: Translate) {
-  const repsRange = (b: RoutineStrengthBlockInput) =>
-    formatRepsRange(b.repsMin ?? null, b.repsMax ?? null);
+  const repsRange = (b: RoutineStrengthBlockInput) => formatRepsRange(b.repsMin ?? null, b.repsMax ?? null);
   return (day.exercises ?? []).map((b: RoutineStrengthBlockInput) => ({
     name: decorateBlockName(b.displayName, t('coach.routine.blockType.strength')),
     meta: [
@@ -78,9 +75,9 @@ function mapPlioBlocks(day: RoutineDayInput, t: Translate) {
   }));
 }
 
-function mapWarmupBlocks(day: RoutineDayInput, t: Translate) {
-  return (day.warmupBlocks ?? []).map((b: RoutineWarmupBlockInput) => ({
-    name: decorateBlockName(b.displayName, t('coach.routine.blockType.warmup')),
+function mapMobilityBlocks(day: RoutineDayInput, t: Translate) {
+  return (day.mobilityBlocks ?? []).map((b: RoutineMobilityBlockInput) => ({
+    name: decorateBlockName(b.displayName, t('coach.routine.blockType.mobility')),
     meta: [
       fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
       fieldLabel(t('coach.routine.block.work'), b.workSeconds),
@@ -106,7 +103,7 @@ function buildOrderedBlocks(day: RoutineDayInput, t: Translate) {
     ...mapStrengthBlocks(day, t),
     ...mapCardioBlocks(day, t),
     ...mapPlioBlocks(day, t),
-    ...mapWarmupBlocks(day, t),
+    ...mapMobilityBlocks(day, t),
     ...mapSportBlocks(day, t),
   ].sort((a, b) => a.sortOrder - b.sortOrder);
 }
@@ -161,26 +158,13 @@ function BlockMetaLines({ meta, t }: { meta: BlockInfo['meta']; t: Translate }) 
   return (
     <Text style={styles.blockMeta}>
       {meta.map((item, idx) => (
-        <MetaLine
-          item={item}
-          key={`${item.label}-${idx}`}
-          separator={idx < meta.length - 1 ? separator : ''}
-          t={t}
-        />
+        <MetaLine item={item} key={`${item.label}-${idx}`} separator={idx < meta.length - 1 ? separator : ''} t={t} />
       ))}
     </Text>
   );
 }
 
-function MetaLine({
-  item,
-  separator,
-  t,
-}: {
-  item: BlockInfo['meta'][number];
-  separator: string;
-  t: Translate;
-}) {
+function MetaLine({ item, separator, t }: { item: BlockInfo['meta'][number]; separator: string; t: Translate }) {
   return (
     <Text>
       {t('coach.clientProfile.trainingPlan.metaLine', {

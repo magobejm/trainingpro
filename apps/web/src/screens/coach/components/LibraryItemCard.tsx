@@ -20,7 +20,7 @@ type Props = {
   subtitle?: string | null;
   t: (key: string) => string;
   youtubeUrl?: string | null;
-  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility' | 'sport';
   equipment?: null | string;
 };
 
@@ -46,10 +46,7 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
   const equipment = props.equipment;
 
   return (
-    <Pressable
-      onPress={props.onToggle}
-      style={[styles.card, props.deleting && styles.deletingCard]}
-    >
+    <Pressable onPress={props.onToggle} style={[styles.card, props.deleting && styles.deletingCard]}>
       <CardImage imageUrl={imageUrl} name={props.name} scope={props.scope} t={props.t} />
       <View style={styles.content}>
         <Text numberOfLines={1} style={styles.name}>

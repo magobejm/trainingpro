@@ -47,7 +47,7 @@ function colsForType(t: (k: string) => string, type: BlockType): ColDef[] {
         { key: 'weightKg', label: t('coach.routine.block.weightKg'), width: 90 },
         { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
       ];
-    case 'warmup':
+    case 'mobility':
       return [
         { key: 'reps', label: t('coach.routine.seriesTable.col.reps'), width: 100 },
         { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },

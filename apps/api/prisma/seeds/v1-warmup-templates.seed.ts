@@ -1,5 +1,5 @@
 export type WarmupTemplateItemSeed = {
-  warmupExerciseLibraryId: string;
+  mobilityExerciseLibraryId: string;
   displayName: string;
   sortOrder: number;
   roundsPlanned: number;
@@ -22,7 +22,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
     name: 'Movilidad Tren Superior',
     items: [
       {
-        warmupExerciseLibraryId: '26e09cf5-7d26-41e5-955e-504415585c05', // Cat-Cow
+        mobilityExerciseLibraryId: '26e09cf5-7d26-41e5-955e-504415585c05', // Cat-Cow
         displayName: 'Cat-Cow (Gato-Camello)',
         sortOrder: 0,
         roundsPlanned: 2,
@@ -31,7 +31,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: 'bd1b47f3-d874-4388-8757-b35381ffcfb9', // Thread the Needle
+        mobilityExerciseLibraryId: 'bd1b47f3-d874-4388-8757-b35381ffcfb9', // Thread the Needle
         displayName: 'Thread the Needle',
         sortOrder: 1,
         roundsPlanned: 2,
@@ -40,7 +40,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '48eb032a-e93b-4e43-9cab-7291d2172ef9', // Extensión torácica (Rodillo)
+        mobilityExerciseLibraryId: '48eb032a-e93b-4e43-9cab-7291d2172ef9', // Extensión torácica (Rodillo)
         displayName: 'Extensión torácica (Rodillo)',
         sortOrder: 2,
         roundsPlanned: 1,
@@ -48,7 +48,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '0c4279b9-a6a0-4598-af72-66aaeabcf415', // Scapular Push-ups
+        mobilityExerciseLibraryId: '0c4279b9-a6a0-4598-af72-66aaeabcf415', // Scapular Push-ups
         displayName: 'Scapular Push-ups',
         sortOrder: 3,
         roundsPlanned: 3,
@@ -57,7 +57,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 20,
       },
       {
-        warmupExerciseLibraryId: 'e530c09b-22ef-4064-934e-d91d2f6d5566', // Dislocaciones de hombro
+        mobilityExerciseLibraryId: 'e530c09b-22ef-4064-934e-d91d2f6d5566', // Dislocaciones de hombro
         displayName: 'Dislocaciones de hombro',
         sortOrder: 4,
         roundsPlanned: 2,
@@ -66,7 +66,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '933022bb-905f-4096-a2a8-6b303e4fa7eb', // Wall Slides
+        mobilityExerciseLibraryId: '933022bb-905f-4096-a2a8-6b303e4fa7eb', // Wall Slides
         displayName: 'Wall Slides',
         sortOrder: 5,
         roundsPlanned: 3,
@@ -75,7 +75,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 20,
       },
       {
-        warmupExerciseLibraryId: '930b0ffe-970d-47e1-b188-183d4c611f71', // Estiramientos de antebrazo
+        mobilityExerciseLibraryId: '930b0ffe-970d-47e1-b188-183d4c611f71', // Estiramientos de antebrazo
         displayName: 'Estiramientos de antebrazo',
         sortOrder: 6,
         roundsPlanned: 1,
@@ -89,7 +89,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
     name: 'Movilidad Tren Inferior',
     items: [
       {
-        warmupExerciseLibraryId: '26e09cf5-7d26-41e5-955e-504415585c05', // Cat-Cow
+        mobilityExerciseLibraryId: '26e09cf5-7d26-41e5-955e-504415585c05', // Cat-Cow
         displayName: 'Cat-Cow (Gato-Camello)',
         sortOrder: 0,
         roundsPlanned: 2,
@@ -98,7 +98,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '825490bf-9ce3-497f-9ef1-e31692e1b832', // World's Greatest Stretch
+        mobilityExerciseLibraryId: '825490bf-9ce3-497f-9ef1-e31692e1b832', // World's Greatest Stretch
         displayName: "World's Greatest Stretch",
         sortOrder: 1,
         roundsPlanned: 2,
@@ -107,7 +107,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '1ddc2e4e-45d5-452a-a1a5-bc85607591a3', // 90/90 Hip Switch
+        mobilityExerciseLibraryId: '1ddc2e4e-45d5-452a-a1a5-bc85607591a3', // 90/90 Hip Switch
         displayName: '90/90 Hip Switch',
         sortOrder: 2,
         roundsPlanned: 2,
@@ -116,7 +116,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 20,
       },
       {
-        warmupExerciseLibraryId: '2766580c-e4dc-4344-99de-05b3e5d80fe0', // Frog Stretch
+        mobilityExerciseLibraryId: '2766580c-e4dc-4344-99de-05b3e5d80fe0', // Frog Stretch
         displayName: 'Frog Stretch',
         sortOrder: 3,
         roundsPlanned: 1,
@@ -124,7 +124,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '32add5d4-4f98-4b02-aaa3-26fd740372e2', // Couch Stretch
+        mobilityExerciseLibraryId: '32add5d4-4f98-4b02-aaa3-26fd740372e2', // Couch Stretch
         displayName: 'Couch Stretch',
         sortOrder: 4,
         roundsPlanned: 1,
@@ -132,7 +132,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: 'c471ee17-4d98-42ec-a623-4b755ca77409', // Pigeon Pose
+        mobilityExerciseLibraryId: 'c471ee17-4d98-42ec-a623-4b755ca77409', // Pigeon Pose
         displayName: 'Pigeon Pose',
         sortOrder: 5,
         roundsPlanned: 1,
@@ -140,7 +140,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 15,
       },
       {
-        warmupExerciseLibraryId: '573bf70a-8072-4366-b8d4-f3075714b678', // Cossack Squat asistida
+        mobilityExerciseLibraryId: '573bf70a-8072-4366-b8d4-f3075714b678', // Cossack Squat asistida
         displayName: 'Cossack Squat asistida',
         sortOrder: 6,
         roundsPlanned: 3,
@@ -149,7 +149,7 @@ export const WARMUP_TEMPLATES_V1: WarmupTemplateSeed[] = [
         restSeconds: 20,
       },
       {
-        warmupExerciseLibraryId: '41b0faea-86b5-4452-84fc-a5e3b64c993f', // Distracción de tobillo con banda
+        mobilityExerciseLibraryId: '41b0faea-86b5-4452-84fc-a5e3b64c993f', // Distracción de tobillo con banda
         displayName: 'Distracción de tobillo con banda',
         sortOrder: 7,
         roundsPlanned: 2,

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 
-const ALL_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'warmup'];
+const ALL_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'mobility'];
 
 interface AddBlockSectionProps {
   isAdding: boolean;

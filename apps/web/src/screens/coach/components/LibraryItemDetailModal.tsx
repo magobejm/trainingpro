@@ -19,7 +19,7 @@ type Props = {
   item: LibraryItem | null;
   onClose: () => void;
   t: (key: string) => string;
-  type: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup';
+  type: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility';
 };
 
 function resolveApiBaseUrl(): string {
@@ -87,16 +87,11 @@ function InfoArea({
 
   const categoryLabel = type === 'strength' ? item.muscleGroup : item.methodType;
   const mainInfoLabel =
-    type === 'strength'
-      ? t('coach.library.exercises.detail.muscleGroup')
-      : t('coach.library.cardio.detail.methodType');
+    type === 'strength' ? t('coach.library.exercises.detail.muscleGroup') : t('coach.library.cardio.detail.methodType');
 
-  const contentText =
-    item.instructions || item.description || t('coach.library.exercises.detail.empty');
+  const contentText = item.instructions || item.description || t('coach.library.exercises.detail.empty');
   const contentTitle =
-    type === 'strength'
-      ? t('coach.library.exercises.detail.instructions')
-      : t('coach.library.cardio.detail.description');
+    type === 'strength' ? t('coach.library.exercises.detail.instructions') : t('coach.library.cardio.detail.description');
 
   return (
     <ScrollView contentContainerStyle={styles.infoContent} style={styles.infoArea}>
@@ -121,9 +116,7 @@ function InfoArea({
         {item.equipment && (
           <View style={[styles.tag, styles.secondaryTag]}>
             {/* eslint-disable-next-line no-restricted-syntax */}
-            <Text style={[styles.tagText, styles.secondaryTagText]}>
-              Equipamiento: {item.equipment}
-            </Text>
+            <Text style={[styles.tagText, styles.secondaryTagText]}>Equipamiento: {item.equipment}</Text>
           </View>
         )}
       </View>

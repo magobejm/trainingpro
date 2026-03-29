@@ -17,6 +17,7 @@ export type RoutineCardioSetInput = {
   fcReservePct?: null | number;
   heartRate?: null | number;
   rpe?: null | number;
+  advancedTechnique?: null | string;
   note?: null | string;
 };
 
@@ -26,6 +27,7 @@ export type RoutinePlioSetInput = {
   rpe?: null | number;
   weightKg?: null | number;
   restSeconds?: null | number;
+  advancedTechnique?: null | string;
   note?: null | string;
 };
 
@@ -35,15 +37,18 @@ export type RoutineIsometricSetInput = {
   durationSeconds?: null | number;
   weightKg?: null | number;
   restSeconds?: null | number;
+  advancedTechnique?: null | string;
   note?: null | string;
 };
 
-export type RoutineWarmupSetInput = {
+/** Mobility per-set row (coach UI: blockType "mobility"; API field mobilityBlocks). */
+export type RoutineMobilitySetInput = {
   setIndex: number;
   reps?: null | number;
   rpe?: null | number;
   rom?: null | string;
   restSeconds?: null | number;
+  advancedTechnique?: null | string;
   note?: null | string;
 };
 
@@ -57,6 +62,7 @@ export type RoutineSportSetInput = {
   fcReservePct?: null | number;
   heartRate?: null | number;
   restSeconds?: null | number;
+  advancedTechnique?: null | string;
   note?: null | string;
 };
 
@@ -112,17 +118,17 @@ export type RoutinePlioInput = {
   lockedFields?: string[];
 };
 
-export type RoutineWarmupInput = {
+export type RoutineMobilityBlockInput = {
   displayName: string;
   fieldModes?: { fieldKey: string; mode: FieldModeValue }[];
   groupId?: null | string;
   notes?: null | string;
   restSeconds: number;
   roundsPlanned: number;
-  sets?: RoutineWarmupSetInput[];
+  sets?: RoutineMobilitySetInput[];
   sortOrder: number;
   targetRpe?: null | number;
-  warmupExerciseLibraryId?: null | string;
+  mobilityExerciseLibraryId?: null | string;
   workSeconds: number;
   lockedFields?: string[];
 };
@@ -169,7 +175,7 @@ export type RoutineDayInput = {
   plioBlocks?: RoutinePlioInput[];
   sportBlocks?: RoutineSportInput[];
   title: string;
-  warmupBlocks?: RoutineWarmupInput[];
+  mobilityBlocks?: RoutineMobilityBlockInput[];
   warmupTemplateIds?: string[];
 };
 

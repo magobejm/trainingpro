@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Image,
-  Linking,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  type ImageProps,
-  DimensionValue,
-} from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, View, type ImageProps, DimensionValue } from 'react-native';
 import { getYouTubeThumbnailUrl, toYouTubeEmbedUrl } from '../library-media.helpers';
 import { readFrontEnv } from '../../../data/env';
 
@@ -17,7 +8,7 @@ type Props = {
   t: (key: string) => string;
   youtubeUrl: null | string;
   fullWidth?: boolean;
-  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility' | 'sport';
 };
 
 export function resolvePlaceholder(category?: string): string {
@@ -32,7 +23,7 @@ export function resolvePlaceholder(category?: string): string {
       return `${apiBase}/assets/placeholders/isometric-placeholder.png`;
     case 'plio':
       return `${apiBase}/assets/placeholders/plio-placeholder.png`;
-    case 'warmup':
+    case 'mobility':
       return `${apiBase}/assets/placeholders/warmup-placeholder.png`;
     case 'sport':
       return `${apiBase}/assets/placeholders/sports-placeholder.png`;
@@ -81,11 +72,7 @@ function BlurredImageFrame(props: { imageUrl: string; fullWidth?: boolean }): Re
   );
 }
 
-function YouTubeBlock(props: {
-  t: Props['t'];
-  youtubeUrl: string;
-  fullWidth?: boolean;
-}): React.JSX.Element {
+function YouTubeBlock(props: { t: Props['t']; youtubeUrl: string; fullWidth?: boolean }): React.JSX.Element {
   const [isLoaded, setIsLoaded] = useState(false);
   const embedUrl = toYouTubeEmbedUrl(props.youtubeUrl);
   const thumbnailUrl = getYouTubeThumbnailUrl(props.youtubeUrl);
@@ -94,9 +81,7 @@ function YouTubeBlock(props: {
 
   return (
     <View style={[styles.videoWrap, props.fullWidth && styles.videoWrapFull]}>
-      {props.fullWidth && thumbnailUrl && !isLoaded && (
-        <VideoBackdrop thumbnailUrl={thumbnailUrl} />
-      )}
+      {props.fullWidth && thumbnailUrl && !isLoaded && <VideoBackdrop thumbnailUrl={thumbnailUrl} />}
 
       {isLoaded && embedUrl ? (
         <YouTubeFrame embedUrl={embedUrl} fullWidth={props.fullWidth} />
@@ -137,11 +122,7 @@ function YouTubePreview(props: {
   return (
     <Pressable onPress={props.onPress} style={previewStyle}>
       {props.thumbnailUrl ? (
-        <Image
-          resizeMode={THUMBNAIL_RESIZE_MODE}
-          source={{ uri: props.thumbnailUrl }}
-          style={thumbStyle}
-        />
+        <Image resizeMode={THUMBNAIL_RESIZE_MODE} source={{ uri: props.thumbnailUrl }} style={thumbStyle} />
       ) : (
         <View style={[thumbStyle, { backgroundColor: '#000' }]} />
       )}
@@ -156,8 +137,7 @@ function YouTubePreview(props: {
 
 function YouTubeFrame(props: { embedUrl: string; fullWidth?: boolean }): React.JSX.Element {
   const Iframe = 'iframe' as unknown as React.ElementType;
-  const iframeAllow =
-    'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+  const iframeAllow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
   const iframeTitle = 'youtube-player';
   const style = props.fullWidth ? IFRAME_STYLE_FULL : IFRAME_STYLE;
   return (

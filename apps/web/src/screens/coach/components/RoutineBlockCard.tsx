@@ -19,6 +19,7 @@ interface RoutineBlockCardProps {
   isLast: boolean;
   isNew?: boolean;
   isGrouped?: boolean;
+  hideAdvanced?: boolean;
   daysCount: number;
   dayLabels?: string[];
   readOnly?: boolean;
@@ -91,7 +92,13 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
               <BlockNotes onOpenModal={() => state.setShowNotesModal(true)} t={t} />
             </View>
             <View style={s.blockBodyFieldsWrap}>
-              <BlockFields block={props.block} onUpdateField={props.onUpdateField} readOnly={fieldsReadOnly} t={t} />
+              <BlockFields
+                block={props.block}
+                hideAdvanced={props.hideAdvanced}
+                onUpdateField={props.onUpdateField}
+                readOnly={fieldsReadOnly}
+                t={t}
+              />
             </View>
           </View>
         </>

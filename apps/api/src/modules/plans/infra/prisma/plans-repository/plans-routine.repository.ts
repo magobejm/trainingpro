@@ -281,11 +281,11 @@ export class PlansRoutineRepository extends PlansBaseRepository {
         });
       }
     }
-    // Warmup blocks
-    for (const b of dayInput.warmupBlocks ?? []) {
+    // Mobility blocks (embedded in routine day; not day warm-up templates)
+    for (const b of dayInput.mobilityBlocks ?? []) {
       const groupId = this.resolveGroupId(b.groupId, clientIdToGroupId);
       if (groupId) {
-        await txAny.planWarmupBlock.updateMany({
+        await txAny.planMobilityBlock.updateMany({
           where: { dayId, sortOrder: b.sortOrder },
           data: { groupId },
         });

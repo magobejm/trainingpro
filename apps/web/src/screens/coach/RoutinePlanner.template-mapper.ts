@@ -29,7 +29,7 @@ export function mapTemplateBlock(
   if (type === 'strength') return mapStrengthBlock(base, item, metaParsed.meta);
   if (type === 'cardio') return mapCardioBlock(base, item, metaParsed.meta);
   if (type === 'plio') return mapPlioBlock(base, item, metaParsed.meta);
-  if (type === 'warmup') return mapWarmupBlock(base, item, metaParsed.meta);
+  if (type === 'mobility') return mapWarmupBlock(base, item, metaParsed.meta);
   if (type === 'isometric') return mapIsometricBlock(base, item);
   return { ...base, durationMinutes: toNumber(item.durationMinutes), sets: mapSets(item.sets) };
 }
@@ -45,7 +45,7 @@ export function mapWarmupTemplateItemsToBlocks(
   return items
     .map((item) => normalizeWarmupTemplateItem(item))
     .map((item) => {
-      const mappedType: BlockType = item.blockType === 'mobility' ? 'warmup' : (item.blockType as BlockType);
+      const mappedType: BlockType = item.blockType as BlockType;
       return initSetsFromCount(mapTemplateBlock(mappedType, item, createBlock));
     })
     .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0))
@@ -78,7 +78,7 @@ function extractLibraryId(type: BlockType, item: TemplateBlockData): string | un
     cardio: 'cardioMethodLibraryId',
     isometric: 'isometricExerciseLibraryId',
     plio: 'plioExerciseLibraryId',
-    warmup: 'warmupExerciseLibraryId',
+    mobility: 'mobilityExerciseLibraryId',
     sport: 'sportLibraryId',
   };
   const val = item[fieldMap[type]];
@@ -110,6 +110,7 @@ function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
     ...base,
     ...readWarmupImportFlags(meta),
     cardioWorkText: toStringValue(meta.trabajo),
+    durationMinutes: toNumber(item.durationMinutes),
     heartRate: toNumber(meta.pulsaciones),
     intensityFcMax: toNumber(meta.intensidadFcMax),
     intensityFcReserve: toNumber(meta.intensidadFcReserva),

@@ -23,7 +23,7 @@ const itemSchema = z.object({
   sportLibraryId: z.string().uuid().nullable().optional(),
   targetRir: z.number().int().min(0).max(10).nullable().optional(),
   targetRpe: z.number().int().min(1).max(10).nullable().optional(),
-  warmupExerciseLibraryId: z.string().uuid().nullable().optional(),
+  mobilityExerciseLibraryId: z.string().uuid().nullable().optional(),
   workSeconds: z.number().int().min(0).max(36000).nullable().optional(),
 });
 

@@ -31,7 +31,7 @@ const tagColors: Record<BlockType, { bg: string; text: string }> = {
   plio: { bg: '#fef3c7', text: '#d97706' },
   sport: { bg: '#f1f5f9', text: '#64748b' },
   strength: { bg: '#f3e8ff', text: '#9333ea' },
-  warmup: { bg: '#ecfccb', text: '#16a34a' },
+  mobility: { bg: '#ecfccb', text: '#16a34a' },
 };
 const DRAG_HANDLE_ICON = '⠿';
 

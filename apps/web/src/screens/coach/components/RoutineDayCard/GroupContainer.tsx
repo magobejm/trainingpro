@@ -14,6 +14,7 @@ interface GroupContainerProps {
   daysCount: number;
   dayLabels?: string[];
   readOnly: boolean;
+  hideAdvanced?: boolean;
   lastAddedBlockId?: string | null;
   allBlocks: DraftBlock[];
   onMoveBlock: (globalIdx: number, dir: -1 | 1) => void;
@@ -36,6 +37,7 @@ export function GroupContainer({
   daysCount,
   dayLabels,
   readOnly,
+  hideAdvanced,
   lastAddedBlockId,
   allBlocks,
   onMoveBlock,
@@ -107,6 +109,7 @@ export function GroupContainer({
                 dayIdx={dayIdx}
                 daysCount={daysCount}
                 dayLabels={dayLabels}
+                hideAdvanced={hideAdvanced}
                 isFirst={isFirst}
                 isGrouped
                 isLast={isLast}

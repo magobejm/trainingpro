@@ -51,7 +51,7 @@ export function mapDayForSeed(day: any) {
     exercises: mapExercisesForSeed(day.exercises as any[]),
     cardioBlocks: mapCardioBlocksForSeed(day.cardioBlocks as any[]),
     plioBlocks: mapTimedBlocksForSeed(day.plioBlocks as any[]),
-    warmupBlocks: mapTimedBlocksForSeed(day.warmupBlocks as any[]),
+    mobilityBlocks: mapTimedBlocksForSeed(day.mobilityBlocks as any[]),
     sportBlocks: {
       create: (day.sportBlocks ?? []).map((s: any) => ({
         displayName: s.displayName,

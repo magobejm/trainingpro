@@ -21,7 +21,7 @@ import {
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 
-const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'isometric', 'sport'];
+const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 
 type Props = { onRouteChange: (route: ShellRoute) => void };
 
@@ -249,6 +249,7 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
             dayIdx={0}
             daysCount={1}
             dayLabels={['']}
+            hideAdvanced
             readOnly={isReadOnly}
             allBlocks={orderedBlocks}
             onMoveBlock={(idx, dir) => vm.setDraft((state) => ({ ...state, blocks: moveBlocks(state.blocks, idx, dir) }))}
@@ -308,6 +309,7 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
           dayIdx={0}
           dayLabels={['']}
           daysCount={1}
+          hideAdvanced
           isFirst={index === 0}
           isLast={index === orderedBlocks.length - 1}
           onMove={(direction) =>

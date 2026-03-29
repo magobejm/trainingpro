@@ -25,7 +25,7 @@ export function useLibraryItems(blockType: BlockType | null, query: string): { i
   const iso = useLibraryIsometricExercisesQuery({ query: blockType === 'isometric' ? query : undefined });
   const plio = useLibraryPlioExercisesQuery({ query: blockType === 'plio' ? query : undefined });
   const warm = useLibraryMobilityExercisesQuery({
-    query: blockType === 'warmup' ? query : undefined,
+    query: blockType === 'mobility' ? query : undefined,
   });
   const sport = useLibrarySportsQuery();
 
@@ -41,7 +41,7 @@ export function useLibraryItems(blockType: BlockType | null, query: string): { i
   if (blockType === 'plio') {
     return { items: filterByQuery(mapPlio(plio.data ?? []), query), isLoading: plio.isLoading };
   }
-  if (blockType === 'warmup') {
+  if (blockType === 'mobility') {
     return { items: filterByQuery(mapWarmup(warm.data ?? []), query), isLoading: warm.isLoading };
   }
   if (blockType === 'sport') {

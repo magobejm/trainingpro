@@ -46,14 +46,14 @@ export type RoutinePlioBlockInput = {
   workSeconds: number;
 };
 
-export type RoutineWarmupBlockInput = {
+export type RoutineMobilityBlockInput = {
   displayName: string;
   notes?: null | string;
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;
   targetRpe?: null | number;
-  warmupExerciseLibraryId?: null | string;
+  mobilityExerciseLibraryId?: null | string;
   workSeconds: number;
 };
 
@@ -73,7 +73,7 @@ export type RoutineDayInput = {
   plioBlocks?: RoutinePlioBlockInput[];
   sportBlocks?: RoutineSportBlockInput[];
   title: string;
-  warmupBlocks?: RoutineWarmupBlockInput[];
+  mobilityBlocks?: RoutineMobilityBlockInput[];
   warmupTemplates?: Array<{ id: string; name: string }>;
 };
 

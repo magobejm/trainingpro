@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { s } from '../../RoutinePlanner.styles';
 import { WarmupExerciseList } from './WarmupExerciseList';
@@ -23,14 +24,39 @@ export function WarmupTemplatePickerModal(props: Props): React.JSX.Element {
 }
 
 function PickerSheet(props: Props): React.JSX.Element {
+  const { i18n } = useTranslation();
+  const [query, setQuery] = useState('');
+  useEffect(() => {
+    if (props.visible) setQuery('');
+  }, [props.visible]);
+
+  const sortedFiltered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = [...props.templates];
+    list.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', i18n.language || 'en', { sensitivity: 'base' }));
+    if (!q) return list;
+    return list.filter((t) => (t.name ?? '').toLowerCase().includes(q));
+  }, [props.templates, query, i18n.language]);
+
   return (
     <View style={styles.overlay}>
       <View style={styles.sheet}>
         <Text style={styles.title}>{props.t('coach.routine.warmupTemplatePicker.title')}</Text>
+        <TextInput
+          accessibilityLabel={props.t('coach.routine.warmupTemplatePicker.searchPlaceholder')}
+          onChangeText={setQuery}
+          placeholder={props.t('coach.routine.warmupTemplatePicker.searchPlaceholder')}
+          style={styles.searchInput}
+          value={query}
+        />
         <ScrollView style={styles.list}>
-          {props.templates.map((template) => (
-            <TemplateRow key={template.id} onSelect={props.onSelect} t={props.t} template={template} />
-          ))}
+          {sortedFiltered.length === 0 ? (
+            <Text style={styles.emptyList}>{props.t('coach.routine.warmupTemplatePicker.noMatches')}</Text>
+          ) : (
+            sortedFiltered.map((template) => (
+              <TemplateRow key={template.id} onSelect={props.onSelect} t={props.t} template={template} />
+            ))
+          )}
         </ScrollView>
         <Pressable onPress={props.onCancel} style={styles.cancelBtn}>
           <Text style={styles.cancelText}>{props.t('common.cancel')}</Text>
@@ -89,10 +115,26 @@ const styles = {
     color: '#0f172a',
     fontSize: 18,
     fontWeight: '700' as const,
+    marginBottom: 10,
+  },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    color: '#0f172a',
+    fontSize: 14,
     marginBottom: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
   },
   list: {
     maxHeight: '80vh' as unknown as number,
+  },
+  emptyList: {
+    color: '#64748b',
+    fontSize: 14,
+    paddingVertical: 16,
+    textAlign: 'center' as const,
   },
   item: {
     backgroundColor: '#f8fafc',

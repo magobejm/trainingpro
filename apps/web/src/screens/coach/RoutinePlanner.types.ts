@@ -1,4 +1,4 @@
-export type BlockType = 'cardio' | 'isometric' | 'plio' | 'sport' | 'strength' | 'warmup';
+export type BlockType = 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport' | 'strength';
 
 export interface DraftSet {
   setIndex: number;

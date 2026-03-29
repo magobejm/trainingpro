@@ -1,15 +1,7 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DimensionValue,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -137,7 +129,7 @@ export function LibraryMobilityScreen(): React.JSX.Element {
             {items.map((item) => (
               <View key={item.id} style={gridStyles.gridItem}>
                 <LibraryItemCard
-                  category="warmup"
+                  category="mobility"
                   deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
                   expanded={expandedId === item.id}
                   imageUrl={item.media?.url}
@@ -178,7 +170,7 @@ export function LibraryMobilityScreen(): React.JSX.Element {
         }
         mediaContent={
           <LibraryMediaFields
-            category="warmup"
+            category="mobility"
             imageUrl={form.mediaUrl}
             isUploading={uploadImageMutation.isPending}
             onUpload={() => onUploadImage(false)}
@@ -210,7 +202,7 @@ export function LibraryMobilityScreen(): React.JSX.Element {
         }
         mediaContent={
           <LibraryMediaFields
-            category="warmup"
+            category="mobility"
             imageUrl={form.mediaUrl}
             isUploading={uploadImageMutation.isPending}
             onUpload={() => onUploadImage(true)}
@@ -237,7 +229,7 @@ export function LibraryMobilityScreen(): React.JSX.Element {
         }
         onClose={() => setExpandedId('')}
         t={t}
-        type="warmup"
+        type="mobility"
       />
 
       <ActionConfirmModal
@@ -269,11 +261,7 @@ function TopBar({
       <Text style={topBarStyles.title}>{t('coach.library.mobility.title')}</Text>
       <View style={topBarStyles.actions}>
         <View style={topBarStyles.searchWrapper}>
-          <SearchBar
-            onChangeText={setQuery}
-            placeholder={t('coach.library.exercises.searchPlaceholder')}
-            value={query}
-          />
+          <SearchBar onChangeText={setQuery} placeholder={t('coach.library.exercises.searchPlaceholder')} value={query} />
         </View>
         <Pressable onPress={onOpenCreate} style={topBarStyles.createBtn}>
           <Text style={topBarStyles.createBtnText}>{t('coach.library.actions.create')}</Text>

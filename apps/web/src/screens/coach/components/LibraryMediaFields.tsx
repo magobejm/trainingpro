@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  Image,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  type TextInputProps,
-  View,
-  DimensionValue,
-} from 'react-native';
+import { Image, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View, DimensionValue } from 'react-native';
 import { resolvePlaceholder } from './LibraryMediaViewer';
 
 type Props = {
@@ -19,7 +10,7 @@ type Props = {
   setYoutubeUrl?: (value: string) => void;
   t: (key: string) => string;
   youtubeUrl?: string;
-  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'warmup' | 'sport';
+  category?: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility' | 'sport';
 };
 
 const IMAGE_BLUR_RADIUS = 16;
@@ -29,29 +20,17 @@ export function LibraryMediaFields(props: Props): React.JSX.Element {
 
   return (
     <View style={styles.wrap}>
-      <PreviewArea
-        displayImage={displayImage}
-        imageUrl={props.imageUrl}
-        onRemoveImage={props.onRemoveImage}
-      />
+      <PreviewArea displayImage={displayImage} imageUrl={props.imageUrl} onRemoveImage={props.onRemoveImage} />
 
       <View style={styles.actionsRow}>
         <Pressable onPress={props.onUpload} style={styles.uploadButton}>
           <Text style={styles.uploadButtonLabel}>
-            {props.isUploading
-              ? props.t('coach.library.media.uploading')
-              : props.t('coach.library.media.uploadImage')}
+            {props.isUploading ? props.t('coach.library.media.uploading') : props.t('coach.library.media.uploadImage')}
           </Text>
         </Pressable>
       </View>
 
-      {props.setYoutubeUrl && (
-        <YouTubeInput
-          setYoutubeUrl={props.setYoutubeUrl}
-          t={props.t}
-          youtubeUrl={props.youtubeUrl}
-        />
-      )}
+      {props.setYoutubeUrl && <YouTubeInput setYoutubeUrl={props.setYoutubeUrl} t={props.t} youtubeUrl={props.youtubeUrl} />}
     </View>
   );
 }

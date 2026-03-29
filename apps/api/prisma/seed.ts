@@ -383,7 +383,7 @@ async function seedWarmupTemplates(): Promise<void> {
             blockType: 'mobility',
             displayName: item.displayName,
             sortOrder: item.sortOrder,
-            warmupExerciseLibraryId: item.warmupExerciseLibraryId,
+            mobilityExerciseLibraryId: item.mobilityExerciseLibraryId,
             roundsPlanned: item.roundsPlanned,
             setsPlanned: item.setsPlanned ?? null,
             repsMin: item.repsMin ?? null,

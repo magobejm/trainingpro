@@ -428,7 +428,7 @@ function pickRoutineImage(tpl: RoutineTemplateView, map: MediaMap): string {
 function pickWarmupImage(tpl: WarmupTemplateView, map: MediaMap): string {
   for (const item of tpl.items) {
     const id =
-      item.exerciseLibraryId ?? item.warmupExerciseLibraryId ?? item.plioExerciseLibraryId ?? item.cardioMethodLibraryId;
+      item.exerciseLibraryId ?? item.mobilityExerciseLibraryId ?? item.plioExerciseLibraryId ?? item.cardioMethodLibraryId;
     if (id && map[id]) return map[id] as string;
   }
   return WARMUP_PLACEHOLDER();

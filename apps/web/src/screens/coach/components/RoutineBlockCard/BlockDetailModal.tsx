@@ -10,7 +10,7 @@ const BASE_CATEGORY_MAP: Record<string, string> = {
   cardio: 'cardioMethodTypes',
   isometric: 'isometricTypes',
   plio: 'plioTypes',
-  warmup: 'mobilityTypes',
+  mobility: 'mobilityTypes',
   sport: 'sportTypes',
 };
 

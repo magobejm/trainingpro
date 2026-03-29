@@ -647,7 +647,7 @@ model MobilityExercise {
   movementPatternRef  MovementPattern?     @relation(fields: [movementPatternId], references: [id], onDelete: SetNull)
   anatomicalPlaneRef  AnatomicalPlane?     @relation(fields: [anatomicalPlaneId], references: [id], onDelete: SetNull)
   equipmentRef        ExerciseEquipment?   @relation("mobility_equipment", fields: [equipmentId], references: [id], onDelete: SetNull)
-  planWarmupBlocks    PlanWarmupBlock[]
+  planMobilityBlocks  PlanMobilityBlock[]
   warmupTemplateItems WarmupTemplateItem[]
 
   @@index([scope, archivedAt], map: "idx_mobility_scope_archived")
@@ -795,7 +795,7 @@ model WarmupTemplateItem {
   exerciseLibraryId       String?         @map("exercise_library_id") @db.Uuid
   cardioMethodLibraryId   String?         @map("cardio_method_library_id") @db.Uuid
   plioExerciseLibraryId   String?         @map("plio_exercise_library_id") @db.Uuid
-  warmupExerciseLibraryId    String?         @map("warmup_exercise_library_id") @db.Uuid
+  mobilityExerciseLibraryId  String?         @map("mobility_exercise_library_id") @db.Uuid
   isometricExerciseLibraryId String?         @map("isometric_exercise_library_id") @db.Uuid
   sportLibraryId             String?         @map("sport_library_id") @db.Uuid
   groupId                    String?         @map("group_id") @db.Uuid
@@ -818,7 +818,7 @@ model WarmupTemplateItem {
   libraryExercise         Exercise?       @relation(fields: [exerciseLibraryId], references: [id], onDelete: SetNull)
   libraryCardioMethod     CardioMethod?   @relation(fields: [cardioMethodLibraryId], references: [id], onDelete: SetNull)
   libraryPlioExercise     PlioExercise?   @relation(fields: [plioExerciseLibraryId], references: [id], onDelete: SetNull)
-  libraryWarmupExercise   MobilityExercise? @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
+  libraryMobilityExercise MobilityExercise? @relation(fields: [mobilityExerciseLibraryId], references: [id], onDelete: SetNull)
 
   @@index([templateId, archivedAt], map: "idx_warmup_template_item_template_archived")
   @@map("warmup_template_item")
@@ -837,7 +837,7 @@ model PlanDay {
   exercises          PlanStrengthExercise[]
   cardioBlocks       PlanCardioBlock[]
   plioBlocks         PlanPlioBlock[]
-  warmupBlocks       PlanWarmupBlock[]
+  mobilityBlocks     PlanMobilityBlock[]
   sportBlocks        PlanSportBlock[]
   isometricBlocks    PlanIsometricBlock[]
   exerciseGroups     PlanExerciseGroup[]
@@ -988,45 +988,45 @@ model PlioFieldModeSetting {
   @@map("plio_field_mode")
 }
 
-model PlanWarmupBlock {
-  id                      String                    @id @default(uuid()) @db.Uuid
-  dayId                   String                    @map("day_id") @db.Uuid
-  groupId                 String?                   @map("group_id") @db.Uuid
-  warmupExerciseLibraryId String?                   @map("warmup_exercise_library_id") @db.Uuid
-  sortOrder               Int                       @default(0) @map("sort_order")
-  displayName             String                    @map("display_name") @db.VarChar(120)
-  roundsPlanned           Int                       @default(1) @map("rounds_planned")
-  workSeconds             Int                       @map("work_seconds")
-  restSeconds             Int                       @default(0) @map("rest_seconds")
-  targetRpe               Int?                      @map("target_rpe")
-  lockedFieldsJson        Json?                     @map("locked_fields_json")
+model PlanMobilityBlock {
+  id                      String                   @id @default(uuid()) @db.Uuid
+  dayId                   String                   @map("day_id") @db.Uuid
+  groupId                 String?                  @map("group_id") @db.Uuid
+  mobilityExerciseLibraryId String?                @map("mobility_exercise_library_id") @db.Uuid
+  sortOrder               Int                      @default(0) @map("sort_order")
+  displayName             String                   @map("display_name") @db.VarChar(120)
+  roundsPlanned           Int                      @default(1) @map("rounds_planned")
+  workSeconds             Int                      @map("work_seconds")
+  restSeconds             Int                      @default(0) @map("rest_seconds")
+  targetRpe               Int?                     @map("target_rpe")
+  lockedFieldsJson        Json?                    @map("locked_fields_json")
   notes                   String?
-  archivedAt              DateTime?                 @map("archived_at") @db.Timestamptz(6)
-  createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
-  day                     PlanDay                   @relation(fields: [dayId], references: [id], onDelete: Cascade)
-  group                   PlanExerciseGroup?        @relation(fields: [groupId], references: [id], onDelete: SetNull)
-  libraryWarmupExercise   MobilityExercise?         @relation(fields: [warmupExerciseLibraryId], references: [id], onDelete: SetNull)
-  fieldModes              WarmupFieldModeSetting[]
-  sets                    PlanWarmupSet[]
+  archivedAt              DateTime?                @map("archived_at") @db.Timestamptz(6)
+  createdAt               DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt               DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  day                     PlanDay                  @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  group                   PlanExerciseGroup?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  libraryMobilityExercise MobilityExercise?        @relation(fields: [mobilityExerciseLibraryId], references: [id], onDelete: SetNull)
+  fieldModes              MobilityFieldModeSetting[]
+  sets                    PlanMobilitySet[]
 
-  @@index([dayId, archivedAt], map: "idx_plan_warmup_day_archived")
-  @@index([groupId], map: "idx_plan_warmup_group")
-  @@map("plan_warmup_block")
+  @@index([dayId, archivedAt], map: "idx_plan_mobility_day_archived")
+  @@index([groupId], map: "idx_plan_mobility_group")
+  @@map("plan_mobility_block")
 }
 
-model WarmupFieldModeSetting {
-  id                String          @id @default(uuid()) @db.Uuid
-  planWarmupBlockId String          @map("plan_warmup_block_id") @db.Uuid
-  fieldKey          String          @map("field_key") @db.VarChar(80)
-  mode              FieldMode       @default(COACH_INPUT)
-  createdAt         DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  planWarmupBlock   PlanWarmupBlock @relation(fields: [planWarmupBlockId], references: [id], onDelete: Cascade)
+model MobilityFieldModeSetting {
+  id                 String            @id @default(uuid()) @db.Uuid
+  planMobilityBlockId String           @map("plan_mobility_block_id") @db.Uuid
+  fieldKey           String            @map("field_key") @db.VarChar(80)
+  mode               FieldMode         @default(COACH_INPUT)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  planMobilityBlock  PlanMobilityBlock @relation(fields: [planMobilityBlockId], references: [id], onDelete: Cascade)
 
-  @@unique([planWarmupBlockId, fieldKey], map: "uq_warmup_field_mode_item_field")
-  @@index([planWarmupBlockId], map: "idx_warmup_field_mode_item")
-  @@map("warmup_field_mode")
+  @@unique([planMobilityBlockId, fieldKey], map: "uq_mobility_field_mode_item_field")
+  @@index([planMobilityBlockId], map: "idx_mobility_field_mode_item")
+  @@map("mobility_field_mode")
 }
 
 model PlanSportBlock {
@@ -1081,7 +1081,7 @@ model PlanExerciseGroup {
   strengthExercises PlanStrengthExercise[]
   cardioBlocks     PlanCardioBlock[]
   plioBlocks       PlanPlioBlock[]
-  warmupBlocks     PlanWarmupBlock[]
+  mobilityBlocks   PlanMobilityBlock[]
   sportBlocks      PlanSportBlock[]
   isometricBlocks  PlanIsometricBlock[]
 
@@ -1096,6 +1096,7 @@ model PlanIsometricBlock {
   isometricExerciseLibraryId  String?                     @map("isometric_exercise_library_id") @db.Uuid
   sortOrder                   Int                         @default(0) @map("sort_order")
   displayName                 String                      @map("display_name") @db.VarChar(120)
+  targetRpe                   Int?                        @map("target_rpe")
   setsPlanned                 Int?                        @map("sets_planned")
   lockedFieldsJson            Json?                       @map("locked_fields_json")
   notes                       String?
@@ -1148,14 +1149,15 @@ model PlanStrengthSet {
 }
 
 model PlanCardioSet {
-  id             String          @id @default(uuid()) @db.Uuid
-  blockId        String          @map("block_id") @db.Uuid
-  setIndex       Int             @map("set_index")
-  fcMaxPct       Int?            @map("fc_max_pct")
-  fcReservePct   Int?            @map("fc_reserve_pct")
-  heartRate      Int?            @map("heart_rate")
-  rpe            Int?
-  note           String?
+  id                String          @id @default(uuid()) @db.Uuid
+  blockId           String          @map("block_id") @db.Uuid
+  setIndex          Int             @map("set_index")
+  fcMaxPct          Int?            @map("fc_max_pct")
+  fcReservePct      Int?            @map("fc_reserve_pct")
+  heartRate         Int?            @map("heart_rate")
+  rpe               Int?
+  advancedTechnique String?         @map("advanced_technique") @db.VarChar(40)
+  note              String?
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   block          PlanCardioBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
@@ -1166,14 +1168,15 @@ model PlanCardioSet {
 }
 
 model PlanPlioSet {
-  id          String        @id @default(uuid()) @db.Uuid
-  blockId     String        @map("block_id") @db.Uuid
-  setIndex    Int           @map("set_index")
-  reps        Int?
-  rpe         Int?
-  weightKg    Decimal?      @map("weight_kg") @db.Decimal(6, 2)
-  restSeconds Int?          @map("rest_seconds")
-  note        String?
+  id                String        @id @default(uuid()) @db.Uuid
+  blockId           String        @map("block_id") @db.Uuid
+  setIndex          Int           @map("set_index")
+  reps              Int?
+  rpe               Int?
+  weightKg          Decimal?      @map("weight_kg") @db.Decimal(6, 2)
+  restSeconds       Int?          @map("rest_seconds")
+  advancedTechnique String?       @map("advanced_technique") @db.VarChar(40)
+  note              String?
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
   block       PlanPlioBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
@@ -1184,14 +1187,15 @@ model PlanPlioSet {
 }
 
 model PlanIsometricSet {
-  id              String             @id @default(uuid()) @db.Uuid
-  blockId         String             @map("block_id") @db.Uuid
-  setIndex        Int                @map("set_index")
-  rpe             Int?
-  durationSeconds Int?               @map("duration_seconds")
-  weightKg        Decimal?           @map("weight_kg") @db.Decimal(6, 2)
-  restSeconds     Int?               @map("rest_seconds")
-  note            String?
+  id                String             @id @default(uuid()) @db.Uuid
+  blockId           String             @map("block_id") @db.Uuid
+  setIndex          Int                @map("set_index")
+  rpe               Int?
+  durationSeconds   Int?               @map("duration_seconds")
+  weightKg          Decimal?           @map("weight_kg") @db.Decimal(6, 2)
+  restSeconds       Int?               @map("rest_seconds")
+  advancedTechnique String?            @map("advanced_technique") @db.VarChar(40)
+  note              String?
   createdAt       DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
   block           PlanIsometricBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
@@ -1201,37 +1205,39 @@ model PlanIsometricSet {
   @@map("plan_isometric_set")
 }
 
-model PlanWarmupSet {
-  id          String          @id @default(uuid()) @db.Uuid
-  blockId     String          @map("block_id") @db.Uuid
-  setIndex    Int             @map("set_index")
-  reps        Int?
-  rpe         Int?
-  rom         String?         @db.VarChar(30)
-  restSeconds Int?            @map("rest_seconds")
-  note        String?
-  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
-  block       PlanWarmupBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
+model PlanMobilitySet {
+  id                String            @id @default(uuid()) @db.Uuid
+  blockId           String            @map("block_id") @db.Uuid
+  setIndex          Int               @map("set_index")
+  reps              Int?
+  rpe               Int?
+  rom               String?           @db.VarChar(30)
+  restSeconds       Int?              @map("rest_seconds")
+  advancedTechnique String?           @map("advanced_technique") @db.VarChar(40)
+  note              String?
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  block             PlanMobilityBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)
 
-  @@unique([blockId, setIndex], map: "uq_plan_warmup_set")
-  @@index([blockId], map: "idx_plan_warmup_set_block")
-  @@map("plan_warmup_set")
+  @@unique([blockId, setIndex], map: "uq_plan_mobility_set")
+  @@index([blockId], map: "idx_plan_mobility_set_block")
+  @@map("plan_mobility_set")
 }
 
 model PlanSportSet {
-  id           String         @id @default(uuid()) @db.Uuid
-  blockId      String         @map("block_id") @db.Uuid
-  setIndex     Int            @map("set_index")
-  reps         Int?
-  rpe          Int?
-  rir          Int?
-  weightKg     Decimal?       @map("weight_kg") @db.Decimal(6, 2)
-  fcMaxPct     Int?           @map("fc_max_pct")
-  fcReservePct Int?           @map("fc_reserve_pct")
-  heartRate    Int?           @map("heart_rate")
-  restSeconds  Int?           @map("rest_seconds")
-  note         String?
+  id                String         @id @default(uuid()) @db.Uuid
+  blockId           String         @map("block_id") @db.Uuid
+  setIndex          Int            @map("set_index")
+  reps              Int?
+  rpe               Int?
+  rir               Int?
+  weightKg          Decimal?       @map("weight_kg") @db.Decimal(6, 2)
+  fcMaxPct          Int?           @map("fc_max_pct")
+  fcReservePct      Int?           @map("fc_reserve_pct")
+  heartRate         Int?           @map("heart_rate")
+  restSeconds       Int?           @map("rest_seconds")
+  advancedTechnique String?        @map("advanced_technique") @db.VarChar(40)
+  note              String?
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
   block        PlanSportBlock @relation(fields: [blockId], references: [id], onDelete: Cascade)

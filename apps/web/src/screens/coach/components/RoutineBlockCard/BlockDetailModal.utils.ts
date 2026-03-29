@@ -50,7 +50,7 @@ const PLACEHOLDERS: Record<BlockType, string> = {
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
   isometric: `${API_BASE_URL}/assets/placeholders/isometric-placeholder.png`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
-  warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
+  mobility: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
   sport: `${API_BASE_URL}/assets/placeholders/sports-placeholder.png`,
 };
 
@@ -122,14 +122,14 @@ export function useLibrarySources(type: string, query: string) {
   const str = useLibraryExercisesQuery({ query: type === 'strength' ? query : undefined });
   const car = useLibraryCardioMethodsQuery({ query: type === 'cardio' ? query : undefined });
   const plio = useLibraryPlioExercisesQuery({ query: type === 'plio' ? query : undefined });
-  const warm = useLibraryMobilityExercisesQuery({ query: type === 'warmup' ? query : undefined });
+  const warm = useLibraryMobilityExercisesQuery({ query: type === 'mobility' ? query : undefined });
   const sport = useLibrarySportsQuery();
   const mapper = <T extends LibraryItemUnion>(m: (item: T) => DetailItem) => m as (item: LibraryItemUnion) => DetailItem;
   return {
     strength: { items: str.data ?? [], isLoading: str.isLoading, map: mapper(mapExercise) },
     cardio: { items: car.data ?? [], isLoading: car.isLoading, map: mapper(mapCardio) },
     plio: { items: plio.data ?? [], isLoading: plio.isLoading, map: mapper(mapPlio) },
-    warmup: { items: warm.data ?? [], isLoading: warm.isLoading, map: mapper(mapWarmup) },
+    mobility: { items: warm.data ?? [], isLoading: warm.isLoading, map: mapper(mapWarmup) },
     sport: { items: sport.data ?? [], isLoading: sport.isLoading, map: mapper(mapSport) },
   };
 }

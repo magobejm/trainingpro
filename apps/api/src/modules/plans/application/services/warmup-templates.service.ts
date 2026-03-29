@@ -149,7 +149,7 @@ export class WarmupTemplatesService {
         sport_library_id AS "sportLibraryId",
         target_rir AS "targetRir",
         target_rpe AS "targetRpe",
-        warmup_exercise_library_id AS "warmupExerciseLibraryId",
+        mobility_exercise_library_id AS "mobilityExerciseLibraryId",
         work_seconds AS "workSeconds"
       FROM warmup_template_item
       WHERE template_id = $1::uuid AND archived_at IS NULL
@@ -242,7 +242,7 @@ export class WarmupTemplatesService {
           exercise_library_id,
           cardio_method_library_id,
           plio_exercise_library_id,
-          warmup_exercise_library_id,
+          mobility_exercise_library_id,
           isometric_exercise_library_id,
           sport_library_id,
           group_id,
@@ -270,7 +270,7 @@ export class WarmupTemplatesService {
         item.exerciseLibraryId ?? null,
         item.cardioMethodLibraryId ?? null,
         item.plioExerciseLibraryId ?? null,
-        item.warmupExerciseLibraryId ?? null,
+        item.mobilityExerciseLibraryId ?? null,
         item.isometricExerciseLibraryId ?? null,
         item.sportLibraryId ?? null,
         resolvedGroupId,

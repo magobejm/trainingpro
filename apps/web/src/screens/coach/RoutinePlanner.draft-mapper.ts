@@ -19,7 +19,7 @@ type TemplateDayData = {
   exercises?: TemplateBlockData[];
   cardioBlocks?: TemplateBlockData[];
   plioBlocks?: TemplateBlockData[];
-  warmupBlocks?: TemplateBlockData[];
+  mobilityBlocks?: TemplateBlockData[];
   sportBlocks?: TemplateBlockData[];
   isometricBlocks?: TemplateBlockData[];
   groups?: TemplateGroupData[];
@@ -67,12 +67,12 @@ function mapBlocksFromTemplate(
   day: TemplateDayData,
   createBlock: (type: BlockType, displayName: string) => DraftBlock,
 ): DraftBlock[] {
-  const blockTypes: BlockType[] = ['strength', 'cardio', 'plio', 'warmup', 'sport', 'isometric'];
+  const blockTypes: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'sport', 'isometric'];
   const blockKeys: (keyof TemplateDayData)[] = [
     'exercises',
     'cardioBlocks',
     'plioBlocks',
-    'warmupBlocks',
+    'mobilityBlocks',
     'sportBlocks',
     'isometricBlocks',
   ];

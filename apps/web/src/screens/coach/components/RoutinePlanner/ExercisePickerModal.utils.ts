@@ -23,7 +23,7 @@ const PLACEHOLDERS: Record<BlockType, string> = {
   cardio: `${API_BASE_URL}/assets/placeholders/cardio-bg.jpg`,
   isometric: `${API_BASE_URL}/assets/placeholders/isometric-placeholder.png`,
   plio: `${API_BASE_URL}/assets/placeholders/plio-placeholder.png`,
-  warmup: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
+  mobility: `${API_BASE_URL}/assets/placeholders/warmup-placeholder.png`,
   sport: `${API_BASE_URL}/assets/placeholders/sports-placeholder.png`,
 };
 

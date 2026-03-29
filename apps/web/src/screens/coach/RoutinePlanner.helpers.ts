@@ -31,7 +31,7 @@ export function createEmptyDraft(t: (k: string) => string, prefixKey = 'coach.ro
 
 export function createBlock(type: BlockType, displayName: string): DraftBlock {
   const base: DraftBlock = { displayName, id: nextBlockId(), sets: [], type };
-  if (['cardio', 'plio', 'warmup'].includes(type)) {
+  if (['cardio', 'plio', 'mobility'].includes(type)) {
     base.restSeconds = 30;
     base.roundsPlanned = 3;
     base.workSeconds = 30;
@@ -60,8 +60,6 @@ export function copyPreviousSet(sets: DraftSet[], index: number): DraftSet {
   return {
     ...prev,
     setIndex: index,
-    advancedTechnique: undefined,
-    note: undefined,
   };
 }
 
@@ -188,6 +186,7 @@ function mapCardioSet(s: DraftSet) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     rpe: s.rpe ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -225,6 +224,7 @@ function mapPlioSet(s: DraftSet) {
     rpe: s.rpe ?? null,
     weightKg: s.weightKg ?? null,
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -238,13 +238,13 @@ function parsePlioValues(b: DraftBlock) {
   };
 }
 
-const mapWarmup = (b: DraftBlock, si: number) => ({
-  ...parseWarmupValues(b),
+const mapMobility = (b: DraftBlock, si: number) => ({
+  ...parseMobilityValues(b),
   displayName: b.displayName,
   groupId: b.groupId ?? null,
   lockedFields: b.lockedFields ?? [],
-  warmupExerciseLibraryId: b.libraryId ?? null,
-  sets: (b.sets ?? []).map(mapWarmupSet),
+  mobilityExerciseLibraryId: b.libraryId ?? null,
+  sets: (b.sets ?? []).map(mapMobilitySet),
   sortOrder: si,
   notes: appendMeta(b.notes, {
     ...readWarmupImportMeta(b),
@@ -253,18 +253,23 @@ const mapWarmup = (b: DraftBlock, si: number) => ({
   }),
 });
 
-function mapWarmupSet(s: DraftSet) {
+/**
+ * Payload slice for API `mobilityBlocks[].sets`.
+ * Coach UI blockType is `mobility`; day warm-up templates use `warmupTemplateIds`.
+ */
+function mapMobilitySet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
     reps: s.reps ?? null,
     rpe: s.rpe ?? null,
     rom: s.rom ?? null,
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
 
-function parseWarmupValues(b: DraftBlock) {
+function parseMobilityValues(b: DraftBlock) {
   return {
     restSeconds: b.restSeconds ?? 30,
     roundsPlanned: b.roundsPlanned ?? 3,
@@ -298,6 +303,7 @@ function mapSportSet(s: DraftSet) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -323,6 +329,7 @@ function mapIsometricSet(s: DraftSet) {
     durationSeconds: s.durationSeconds ?? null,
     weightKg: s.weightKg ?? null,
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -345,13 +352,13 @@ function mapRoutineDay(day: DraftDay, index: number) {
     isometricBlocks: [] as ReturnType<typeof mapIsometric>[],
     plioBlocks: [] as ReturnType<typeof mapPlio>[],
     sportBlocks: [] as ReturnType<typeof mapSport>[],
-    warmupBlocks: [] as ReturnType<typeof mapWarmup>[],
+    mobilityBlocks: [] as ReturnType<typeof mapMobility>[],
   };
   day.blocks.forEach((block, sortOrder) => {
     if (block.type === 'strength') mapped.exercises.push(mapStrength(block, sortOrder));
     if (block.type === 'cardio') mapped.cardioBlocks.push(mapCardio(block, sortOrder));
     if (block.type === 'plio') mapped.plioBlocks.push(mapPlio(block, sortOrder));
-    if (block.type === 'warmup') mapped.warmupBlocks.push(mapWarmup(block, sortOrder));
+    if (block.type === 'mobility') mapped.mobilityBlocks.push(mapMobility(block, sortOrder));
     if (block.type === 'sport') mapped.sportBlocks.push(mapSport(block, sortOrder));
     if (block.type === 'isometric') mapped.isometricBlocks.push(mapIsometric(block, sortOrder));
   });

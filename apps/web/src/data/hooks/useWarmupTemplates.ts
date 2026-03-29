@@ -38,7 +38,7 @@ export type WarmupTemplateItemInput = {
   sportLibraryId?: null | string;
   targetRir?: null | number;
   targetRpe?: null | number;
-  warmupExerciseLibraryId?: null | string;
+  mobilityExerciseLibraryId?: null | string;
   workSeconds?: null | number;
 };
 

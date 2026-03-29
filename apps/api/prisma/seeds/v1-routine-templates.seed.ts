@@ -35,7 +35,7 @@ export const ROUTINE_TEMPLATES_V1 = [
             restSeconds: 60,
           },
         ],
-        warmupBlocks: [
+        mobilityBlocks: [
           {
             displayName: 'Dynamic Stretching',
             sortOrder: 0,
@@ -59,7 +59,7 @@ export const ROUTINE_TEMPLATES_V1 = [
         exercises: [],
         cardioBlocks: [],
         plioBlocks: [],
-        warmupBlocks: [
+        mobilityBlocks: [
           {
             displayName: 'Yoga Flow',
             sortOrder: 0,

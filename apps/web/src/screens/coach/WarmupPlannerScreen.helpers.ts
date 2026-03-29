@@ -68,8 +68,9 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
     sportLibraryId: block.type === 'sport' ? (block.libraryId ?? null) : null,
     targetRir: block.targetRir ?? null,
     targetRpe: block.targetRpe ?? null,
-    warmupExerciseLibraryId: block.type === 'warmup' ? (block.libraryId ?? null) : null,
+    mobilityExerciseLibraryId: block.type === 'mobility' ? (block.libraryId ?? null) : null,
     workSeconds: block.workSeconds ?? null,
+    durationMinutes: block.durationMinutes ?? null,
   };
 }
 
@@ -102,7 +103,7 @@ export function moveBlocks(blocks: DraftBlock[], index: number, direction: -1 | 
 }
 
 function mapTypeToApi(type: BlockType): WarmupTemplateItemInput['blockType'] {
-  if (type === 'warmup') return 'mobility';
+  if (type === 'mobility') return 'mobility';
   if (type === 'cardio' || type === 'isometric' || type === 'plio' || type === 'sport' || type === 'strength') {
     return type;
   }

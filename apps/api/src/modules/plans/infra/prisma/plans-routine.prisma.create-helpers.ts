@@ -12,8 +12,8 @@ import type {
   RoutineSportSetInput,
   RoutineStrengthInput,
   RoutineStrengthSetInput,
-  RoutineWarmupInput,
-  RoutineWarmupSetInput,
+  RoutineMobilityBlockInput,
+  RoutineMobilitySetInput,
 } from '../../domain/routine-template.input';
 import {
   connectOptional,
@@ -41,7 +41,7 @@ export function mapRoutineDayCreate(day: RoutineDayInput): Prisma.PlanDayCreateW
     exercises: { create: (day.exercises ?? []).map((e) => mapStrengthCreate(e, null)) },
     cardioBlocks: { create: (day.cardioBlocks ?? []).map((b) => mapCardioCreate(b, null)) },
     plioBlocks: { create: (day.plioBlocks ?? []).map((b) => mapPlioCreate(b, null)) },
-    warmupBlocks: { create: (day.warmupBlocks ?? []).map((b) => mapWarmupCreate(b, null)) },
+    mobilityBlocks: { create: (day.mobilityBlocks ?? []).map((b) => mapMobilityCreate(b, null)) },
     sportBlocks: { create: (day.sportBlocks ?? []).map((b) => mapSportCreate(b, null)) },
     isometricBlocks: { create: (day.isometricBlocks ?? []).map((b) => mapIsometricCreate(b, null)) },
   } as any;
@@ -120,6 +120,7 @@ function mapCardioSetCreate(s: RoutineCardioSetInput) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     rpe: s.rpe ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -148,35 +149,38 @@ function mapPlioSetCreate(s: RoutinePlioSetInput) {
     rpe: s.rpe ?? null,
     weightKg: toDecimal(s.weightKg),
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
 
-export function mapWarmupCreate(b: RoutineWarmupInput, groupId: null | string): any {
+/** Mobility block in routine planner (not the same as linked day warm-up templates). */
+export function mapMobilityCreate(b: RoutineMobilityBlockInput, groupId: null | string): any {
   return {
     displayName: b.displayName.trim(),
     fieldModes: { create: (b.fieldModes ?? []).map((m) => ({ fieldKey: m.fieldKey.trim(), mode: m.mode as FieldMode })) },
     group: connectOptional(groupId),
-    libraryWarmupExercise: connectOptional(b.warmupExerciseLibraryId),
+    libraryMobilityExercise: connectOptional(b.mobilityExerciseLibraryId),
     lockedFieldsJson: normalizeLockedFields(b.lockedFields),
     notes: normalizeText(b.notes),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
-    sets: { create: (b.sets ?? []).map(mapWarmupSetCreate) },
+    sets: { create: (b.sets ?? []).map(mapMobilitySetCreate) },
     sortOrder: b.sortOrder,
     targetRpe: b.targetRpe ?? null,
     workSeconds: b.workSeconds,
   };
 }
 
-function mapWarmupSetCreate(s: RoutineWarmupSetInput) {
+function mapMobilitySetCreate(s: RoutineMobilitySetInput) {
   return {
-    setIndex: s.setIndex,
+    advancedTechnique: s.advancedTechnique ?? null,
+    note: s.note ?? null,
     reps: s.reps ?? null,
     rpe: s.rpe ?? null,
-    rom: s.rom ?? null,
     restSeconds: s.restSeconds ?? null,
-    note: s.note ?? null,
+    rom: s.rom ?? null,
+    setIndex: s.setIndex,
   };
 }
 
@@ -206,6 +210,7 @@ function mapSportSetCreate(s: RoutineSportSetInput) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }
@@ -232,6 +237,7 @@ function mapIsometricSetCreate(s: RoutineIsometricSetInput) {
     durationSeconds: s.durationSeconds ?? null,
     weightKg: toDecimal(s.weightKg),
     restSeconds: s.restSeconds ?? null,
+    advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
 }

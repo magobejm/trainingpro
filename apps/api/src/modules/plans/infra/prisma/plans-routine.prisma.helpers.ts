@@ -40,7 +40,7 @@ export function routineTemplateInclude(): any {
           orderBy,
           where,
         },
-        warmupBlocks: {
+        mobilityBlocks: {
           include: { fieldModes: true, sets: { orderBy: { setIndex: 'asc' as const } } },
           orderBy,
           where,
@@ -116,7 +116,7 @@ function mapRoutineDay(day: any) {
     plioBlocks: (day.plioBlocks ?? []).map(mapPlioOutput),
     sportBlocks: (day.sportBlocks ?? []).map(mapSportOutput),
     title: day.title,
-    warmupBlocks: (day.warmupBlocks ?? []).map(mapWarmupOutput),
+    mobilityBlocks: (day.mobilityBlocks ?? []).map(mapMobilityOutput),
     warmupTemplates: (day.warmups ?? []).map((w: any) => ({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       id: w.warmupTemplateId,
@@ -204,6 +204,8 @@ function mapCardioOutput(b: any) {
 function mapCardioSetOutput(s: any) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    advancedTechnique: s.advancedTechnique ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcReservePct: s.fcReservePct ?? null,
@@ -248,6 +250,8 @@ function mapPlioOutput(b: any) {
 function mapPlioSetOutput(s: any) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    advancedTechnique: s.advancedTechnique ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     reps: s.reps ?? null,
@@ -261,7 +265,8 @@ function mapPlioSetOutput(s: any) {
   };
 }
 
-function mapWarmupOutput(b: any) {
+/** Mobility exercises in the coach app (blockType "mobility"); persisted as plan_mobility_block. */
+function mapMobilityOutput(b: any) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     displayName: b.displayName,
@@ -276,20 +281,22 @@ function mapWarmupOutput(b: any) {
     restSeconds: b.restSeconds,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     roundsPlanned: b.roundsPlanned,
-    sets: ((b.sets ?? []) as any[]).map(mapWarmupSetOutput),
+    sets: ((b.sets ?? []) as any[]).map(mapMobilitySetOutput),
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     sortOrder: b.sortOrder,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     targetRpe: b.targetRpe,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    warmupExerciseLibraryId: b.warmupExerciseLibraryId,
+    mobilityExerciseLibraryId: b.mobilityExerciseLibraryId,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     workSeconds: b.workSeconds,
   };
 }
 
-function mapWarmupSetOutput(s: any) {
+function mapMobilitySetOutput(s: any) {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -330,6 +337,8 @@ function mapSportOutput(b: any) {
 
 function mapSportSetOutput(s: any) {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -377,6 +386,8 @@ function mapIsometricOutput(b: any) {
 
 function mapIsometricSetOutput(s: any) {
   return {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     durationSeconds: s.durationSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

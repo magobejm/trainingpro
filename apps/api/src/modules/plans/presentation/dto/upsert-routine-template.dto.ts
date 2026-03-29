@@ -33,6 +33,7 @@ const cardioSetSchema = z.object({
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
   heartRate: z.number().int().min(0).max(300).nullable().optional(),
   rpe: z.number().int().min(1).max(10).nullable().optional(),
+  advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
@@ -42,6 +43,7 @@ const plioSetSchema = z.object({
   rpe: z.number().int().min(1).max(10).nullable().optional(),
   weightKg: z.number().min(0).max(9999).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
@@ -51,15 +53,17 @@ const isometricSetSchema = z.object({
   durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   weightKg: z.number().min(0).max(9999).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
-const warmupSetSchema = z.object({
+const mobilitySetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: z.number().int().min(1).max(10).nullable().optional(),
   rom: z.string().max(30).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
@@ -73,6 +77,7 @@ const sportSetSchema = z.object({
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
   heartRate: z.number().int().min(0).max(300).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
@@ -129,7 +134,7 @@ const plioSchema = z.object({
   workSeconds: z.number().int().min(1).max(36000),
 });
 
-const warmupSchema = z.object({
+const mobilityBlockSchema = z.object({
   displayName: z.string().trim().min(1).max(120),
   fieldModes: z.array(fieldModeSchema).optional().default([]),
   groupId: z.string().min(1).max(100).nullable().optional(),
@@ -137,10 +142,10 @@ const warmupSchema = z.object({
   notes: z.string().max(2000).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600),
   roundsPlanned: z.number().int().min(1).max(200),
-  sets: z.array(warmupSetSchema).max(30).optional().default([]),
+  sets: z.array(mobilitySetSchema).max(30).optional().default([]),
   sortOrder: z.number().int().min(0).max(200),
   targetRpe: z.number().int().min(1).max(10).nullable().optional(),
-  warmupExerciseLibraryId: z.string().uuid().nullable().optional(),
+  mobilityExerciseLibraryId: z.string().uuid().nullable().optional(),
   workSeconds: z.number().int().min(1).max(36000),
 });
 
@@ -186,7 +191,7 @@ const daySchema = z.object({
   plioBlocks: z.array(plioSchema).optional().default([]),
   sportBlocks: z.array(sportSchema).optional().default([]),
   title: z.string().trim().min(1).max(120),
-  warmupBlocks: z.array(warmupSchema).optional().default([]),
+  mobilityBlocks: z.array(mobilityBlockSchema).optional().default([]),
   warmupTemplateIds: z.array(uuidAny).optional().default([]),
 });
 

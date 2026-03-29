@@ -12,6 +12,7 @@ import { RoutineNumberField } from '../RoutineNumberField';
 interface BlockFieldsProps {
   block: DraftBlock;
   readOnly: boolean;
+  hideAdvanced?: boolean;
   onUpdateField: (f: keyof DraftBlock, v: unknown) => void;
   t: (k: string) => string;
 }
@@ -22,7 +23,7 @@ function seriesFieldKey(type: DraftBlock['type']): keyof DraftBlock {
   return 'roundsPlanned';
 }
 
-export function BlockFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
+export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }: BlockFieldsProps) {
   const sets = block.sets ?? [];
   const lockedFields = block.lockedFields ?? [];
   const [advancedModalSeriesIdx, setAdvancedModalSeriesIdx] = useState<number | null>(null);
@@ -100,7 +101,7 @@ export function BlockFields({ block, readOnly, onUpdateField, t }: BlockFieldsPr
         <View style={bf.tableHeader}>
           <Text style={bf.tableTitle}>{t('coach.routine.block.sets')}</Text>
           <View style={{ flex: 1 }} />
-          {!readOnly && (
+          {!readOnly && !hideAdvanced && (
             <TouchableOpacity
               onPress={() => setAdvancedEnabled((v) => !v)}
               style={[bf.advancedBtn, advancedEnabled && bf.advancedBtnActive]}
@@ -222,7 +223,7 @@ function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   if (block.type === 'cardio')
     return <CardioGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
   if (block.type === 'plio') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
-  if (block.type === 'warmup') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
+  if (block.type === 'mobility') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   if (block.type === 'isometric') return null;
   if (block.type === 'sport')
     return <SportGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;

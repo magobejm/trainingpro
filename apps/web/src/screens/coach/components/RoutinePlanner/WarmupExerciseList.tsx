@@ -209,7 +209,9 @@ function ExerciseBody({
                 <View key={`${s.setIndex}-${rowIdx}`} style={el.tableRow}>
                   <View style={el.tableNoteActionCell}>
                     <Pressable
-                      accessibilityLabel={t('coach.routine.seriesNote.title', { n: rowIdx + 1 })}
+                      accessibilityLabel={t('coach.routine.seriesNote.title', {
+                        n: rowIdx + 1,
+                      })}
                       onPress={() => onOpenSetNote(rowIdx)}
                       style={el.setNoteBtn}
                     >

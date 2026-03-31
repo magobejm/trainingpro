@@ -76,12 +76,11 @@ export const el = {
     flexShrink: 0,
   },
   typeBadge: {
-    backgroundColor: '#e0f2fe',
     borderRadius: 5,
     paddingHorizontal: 7,
     paddingVertical: 3,
   },
-  typeBadgeText: { fontSize: 10, fontWeight: '700' as const, color: '#0369a1' },
+  typeBadgeText: { fontSize: 10, fontWeight: '700' as const },
   actionBtn: { paddingHorizontal: 5, paddingVertical: 2 },
   actionBtnText: { fontSize: 14, color: '#64748b' },
 
@@ -203,12 +202,22 @@ export const el = {
     paddingBottom: 4,
     paddingHorizontal: 8,
   },
+  circuitHeaderRow: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: 6,
+    marginBottom: 2,
+  },
   circuitLabel: {
     fontSize: 9,
     fontWeight: '700' as const,
     color: '#1d4ed8',
     textTransform: 'uppercase' as const,
     letterSpacing: 0.5,
-    marginBottom: 2,
+  },
+  circuitNote: {
+    fontSize: 11,
+    color: '#3b82f6',
+    fontStyle: 'italic' as const,
   },
 };

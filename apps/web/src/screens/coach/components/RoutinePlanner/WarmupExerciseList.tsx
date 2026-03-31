@@ -7,6 +7,7 @@ import { UnifiedExerciseDetailModal } from '../../UnifiedExerciseDetailModal';
 import {
   ACCESSIBILITY_ROLE_BUTTON,
   BASE_CATEGORY_MAP,
+  BLOCK_TYPE_COLORS,
   BLOCK_TYPE_LABELS,
   ICON_COLLAPSE,
   ICON_DETAIL,
@@ -47,7 +48,10 @@ export function WarmupExerciseList({ items, groups }: Props): React.JSX.Element 
         const groupItems = sortedItems.filter((i) => i.groupId === group.id);
         elements.push(
           <View key={`group-${group.id}`} style={el.circuitBox}>
-            <Text style={el.circuitLabel}>{t('coach.warmupExerciseList.circuit')}</Text>
+            <View style={el.circuitHeaderRow}>
+              <Text style={el.circuitLabel}>{t('coach.warmupExerciseList.circuit')}</Text>
+              {group.note ? <Text style={el.circuitNote}>{group.note}</Text> : null}
+            </View>
             {groupItems.map((gi, giIdx) => (
               <ExerciseRow key={`${gi.groupId}-${giIdx}`} item={gi} onShowDetail={setDetailItem} />
             ))}
@@ -90,6 +94,7 @@ function ExerciseRow({
   const libraryId = resolveLibraryId(item);
   const baseCategory = BASE_CATEGORY_MAP[item.blockType] ?? 'muscleGroups';
   const displaySets = resolveDisplaySets(item);
+  const badgeColor = BLOCK_TYPE_COLORS[item.blockType] ?? { bg: '#f1f5f9', text: '#64748b' };
 
   const { data: results = [] } = useUnifiedExercisesQuery({ baseCategory, search: item.displayName });
   const libraryItem = results.find((r) => r.id === libraryId || r.name === item.displayName) ?? null;
@@ -103,8 +108,10 @@ function ExerciseRow({
             {item.displayName}
           </Text>
           <View style={el.rowActions}>
-            <View style={el.typeBadge}>
-              <Text style={el.typeBadgeText}>{BLOCK_TYPE_LABELS[item.blockType] ?? item.blockType}</Text>
+            <View style={[el.typeBadge, { backgroundColor: badgeColor.bg }]}>
+              <Text style={[el.typeBadgeText, { color: badgeColor.text }]}>
+                {BLOCK_TYPE_LABELS[item.blockType] ?? item.blockType}
+              </Text>
             </View>
             {libraryItem && (
               <Pressable onPress={() => onShowDetail(libraryItem)} style={el.actionBtn}>

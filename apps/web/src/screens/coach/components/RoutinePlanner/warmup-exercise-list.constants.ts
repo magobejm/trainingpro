@@ -17,6 +17,15 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
   strength: 'Fuerza',
 };
 
+export const BLOCK_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  cardio: { bg: '#dbeafe', text: '#2563eb' },
+  isometric: { bg: '#fce7f3', text: '#be185d' },
+  mobility: { bg: '#ecfccb', text: '#16a34a' },
+  plio: { bg: '#fef3c7', text: '#d97706' },
+  sport: { bg: '#f1f5f9', text: '#64748b' },
+  strength: { bg: '#f3e8ff', text: '#9333ea' },
+};
+
 export const BASE_CATEGORY_MAP: Record<string, string> = {
   strength: 'muscleGroups',
   cardio: 'cardioMethodTypes',

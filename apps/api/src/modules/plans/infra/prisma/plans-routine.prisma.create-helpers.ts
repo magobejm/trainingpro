@@ -31,6 +31,8 @@ import {
 export function mapRoutineDayCreate(day: RoutineDayInput): Prisma.PlanDayCreateWithoutTemplateInput {
   return {
     dayIndex: day.dayIndex,
+    notes: normalizeText(day.notes),
+    notesTitle: normalizeText(day.notesTitle),
     title: day.title.trim(),
     warmups: {
       create: (day.warmupTemplateIds ?? []).map((id, i) => ({

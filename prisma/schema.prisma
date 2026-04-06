@@ -829,6 +829,8 @@ model PlanDay {
   templateId         String                 @map("template_id") @db.Uuid
   dayIndex           Int                    @map("day_index")
   title              String                 @db.VarChar(120)
+  notes              String?                @db.Text
+  notesTitle         String?                @map("notes_title") @db.VarChar(120)
   archivedAt         DateTime?              @map("archived_at") @db.Timestamptz(6)
   createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)

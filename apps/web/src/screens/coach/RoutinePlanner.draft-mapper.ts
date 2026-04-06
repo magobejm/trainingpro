@@ -16,6 +16,8 @@ type TemplateGroupData = {
 
 type TemplateDayData = {
   title: string;
+  notes?: null | string;
+  notesTitle?: null | string;
   exercises?: TemplateBlockData[];
   cardioBlocks?: TemplateBlockData[];
   plioBlocks?: TemplateBlockData[];
@@ -42,6 +44,8 @@ export function mapTemplateToDraft(
       blocks: mapBlocksFromTemplate(day, createBlock),
       groups: mapGroupsFromTemplate(day),
       id: nextDayId(),
+      notes: day.notes ?? null,
+      notesTitle: day.notesTitle ?? null,
       title: day.title,
       warmupTemplates: day.warmupTemplates ?? [],
     })),

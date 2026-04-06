@@ -188,6 +188,8 @@ const daySchema = z.object({
   exercises: z.array(strengthSchema).optional().default([]),
   groups: z.array(exerciseGroupSchema).optional().default([]),
   isometricBlocks: z.array(isometricSchema).optional().default([]),
+  notes: z.string().max(2000).nullable().optional(),
+  notesTitle: z.string().max(120).nullable().optional(),
   plioBlocks: z.array(plioSchema).optional().default([]),
   sportBlocks: z.array(sportSchema).optional().default([]),
   title: z.string().trim().min(1).max(120),

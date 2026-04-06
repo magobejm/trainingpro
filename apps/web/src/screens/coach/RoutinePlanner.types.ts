@@ -72,6 +72,8 @@ export interface DraftDay {
   blocks: DraftBlock[];
   groups?: DraftExerciseGroup[];
   id: string;
+  notes?: null | string;
+  notesTitle?: null | string;
   title: string;
   warmupTemplates?: Array<{ id: string; name: string }>;
 }

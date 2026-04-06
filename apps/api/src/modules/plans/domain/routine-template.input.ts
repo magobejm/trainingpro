@@ -172,6 +172,8 @@ export type RoutineDayInput = {
   exercises?: RoutineStrengthInput[];
   groups?: RoutineExerciseGroupInput[];
   isometricBlocks?: RoutineIsometricInput[];
+  notes?: null | string;
+  notesTitle?: null | string;
   plioBlocks?: RoutinePlioInput[];
   sportBlocks?: RoutineSportInput[];
   title: string;

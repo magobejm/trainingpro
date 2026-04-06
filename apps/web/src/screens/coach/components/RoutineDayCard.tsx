@@ -38,41 +38,9 @@ interface RoutineDayCardProps {
 }
 
 export function RoutineDayCard(props: RoutineDayCardProps) {
-  const { t } = useTranslation();
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { day, readOnly, addBlockDayIdx, dayIdx, daysCount } = props;
-  const isAdding = addBlockDayIdx === dayIdx;
-
-  const {
-    groupMode,
-    selectedBlockIds,
-    startGroupMode,
-    cancelGroupMode,
-    toggleBlockSelection,
-    confirmGroup,
-    removeGroup,
-    updateGroupNote,
-  } = useGroupManagement();
-
-  const onAddBlockClick = () => {
-    setIsCollapsed(false);
-    props.onSetAddBlockDayIdx(isAdding ? null : dayIdx);
-  };
-
-  const handleConfirmGroup = () => {
-    const updated = confirmGroup(day);
-    props.onUpdateDay(updated);
-  };
-
-  const handleRemoveGroup = (groupId: string) => {
-    const updated = removeGroup(day, groupId);
-    props.onUpdateDay(updated);
-  };
-
-  const handleUpdateGroupNote = (groupId: string, note: string) => {
-    const updated = updateGroupNote(day, groupId, note);
-    props.onUpdateDay(updated);
-  };
+  const vm = useRoutineDayCardModel(props);
+  const { day, readOnly } = props;
+  const { dayIdx, daysCount, isAdding, isCollapsed, t } = vm;
 
   return (
     <View style={s.dayCardOuter}>
@@ -83,13 +51,16 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         isCollapsed={isCollapsed}
         isFirst={props.isFirst}
         isLast={props.isLast}
-        onAddBlock={onAddBlockClick}
+        notes={day.notes}
+        notesTitle={day.notesTitle}
+        onAddBlock={vm.onAddBlockClick}
         onMoveDay={props.onMoveDay}
         onPickWarmup={props.onAddWarmupTemplate}
         onRemove={props.onRemove}
         onRemoveWarmup={props.onRemoveWarmupTemplate}
         onRename={props.onRename}
-        onToggleCollapse={() => setIsCollapsed((v) => !v)}
+        onToggleCollapse={vm.toggleCollapsed}
+        onUpdateNotes={(notes, notesTitle) => props.onUpdateDay({ ...day, notes, notesTitle })}
         onViewWarmup={props.onViewWarmupTemplate}
         readOnly={!!readOnly}
         t={t}
@@ -99,13 +70,13 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
       {/* Group mode bar */}
       {!readOnly && !isCollapsed && (
         <GroupModeBar
-          groupMode={groupMode}
-          selectedCount={selectedBlockIds.length}
+          groupMode={vm.groupMode}
+          selectedCount={vm.selectedBlockIds.length}
           t={t}
-          onStartCircuit={() => startGroupMode('CIRCUIT')}
-          onStartSuperset={() => startGroupMode('SUPERSET')}
-          onCancel={cancelGroupMode}
-          onConfirm={handleConfirmGroup}
+          onStartCircuit={() => vm.startGroupMode('CIRCUIT')}
+          onStartSuperset={() => vm.startGroupMode('SUPERSET')}
+          onCancel={vm.cancelGroupMode}
+          onConfirm={vm.handleConfirmGroup}
         />
       )}
       {!isCollapsed && (
@@ -117,16 +88,16 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
             dayLabels={props.dayLabels}
             lastAddedBlockId={props.lastAddedBlockId}
             readOnly={!!readOnly}
-            groupMode={groupMode}
-            selectedBlockIds={selectedBlockIds}
+            groupMode={vm.groupMode}
+            selectedBlockIds={vm.selectedBlockIds}
             t={t}
             onMoveBlock={props.onMoveBlock}
             onMoveBlockToDay={props.onMoveBlockToDay}
             onRemoveBlock={props.onRemoveBlock}
             onUpdateBlockField={props.onUpdateBlockField}
-            onToggleBlockSelection={toggleBlockSelection}
-            onUpdateGroupNote={handleUpdateGroupNote}
-            onRemoveGroup={handleRemoveGroup}
+            onToggleBlockSelection={vm.toggleBlockSelection}
+            onUpdateGroupNote={vm.handleUpdateGroupNote}
+            onRemoveGroup={vm.handleRemoveGroup}
           />
           {!readOnly && isAdding && (
             <AddBlockSection
@@ -141,6 +112,38 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
       )}
     </View>
   );
+}
+
+function useRoutineDayCardModel(props: RoutineDayCardProps) {
+  const { t } = useTranslation();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { day, readOnly, addBlockDayIdx, dayIdx, daysCount } = props;
+  const isAdding = addBlockDayIdx === dayIdx;
+  const groups = useGroupManagement();
+
+  const onAddBlockClick = () => {
+    setIsCollapsed(false);
+    props.onSetAddBlockDayIdx(isAdding ? null : dayIdx);
+  };
+  const handleConfirmGroup = () => props.onUpdateDay(groups.confirmGroup(day));
+  const handleRemoveGroup = (groupId: string) => props.onUpdateDay(groups.removeGroup(day, groupId));
+  const handleUpdateGroupNote = (groupId: string, note: string) =>
+    props.onUpdateDay(groups.updateGroupNote(day, groupId, note));
+
+  return {
+    ...groups,
+    dayIdx,
+    daysCount,
+    handleConfirmGroup,
+    handleRemoveGroup,
+    handleUpdateGroupNote,
+    isAdding,
+    isCollapsed,
+    onAddBlockClick,
+    readOnly,
+    t,
+    toggleCollapsed: () => setIsCollapsed((value) => !value),
+  };
 }
 
 interface GroupModeBarProps {

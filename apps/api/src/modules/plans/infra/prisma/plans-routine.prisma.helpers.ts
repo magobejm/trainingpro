@@ -113,6 +113,10 @@ function mapRoutineDay(day: any) {
     groups: (day.exerciseGroups ?? []).map(mapGroupOutput),
     id: day.id,
     isometricBlocks: (day.isometricBlocks ?? []).map(mapIsometricOutput),
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    notes: day.notes ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    notesTitle: day.notesTitle ?? null,
     plioBlocks: (day.plioBlocks ?? []).map(mapPlioOutput),
     sportBlocks: (day.sportBlocks ?? []).map(mapSportOutput),
     title: day.title,

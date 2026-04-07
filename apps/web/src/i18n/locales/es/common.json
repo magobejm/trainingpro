@@ -877,5 +877,6 @@
   "coach.calendar.type.note": "Nota",
   "coach.calendar.type.reminder": "Recordatorio",
   "coach.calendar.type.workout": "Entrenamiento",
-  "coach.calendar.empty": "Sin eventos este día"
+  "coach.calendar.empty": "Sin eventos este día",
+  "coach.calendar.grid.more": "+{{count}} más"
 }

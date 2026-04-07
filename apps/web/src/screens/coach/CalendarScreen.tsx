@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays } from 'lucide-react';
@@ -109,15 +109,25 @@ function useCalendarLogic() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [selectedClient, setSelectedClient] = useState<ClientView | null>(null);
+  /** Store only id so routine/trainingPlanId updates when the clients list refetches. */
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
 
   const { dateFrom, dateTo } = monthRangeDates(year, month);
   const clientsQuery = useClientsQuery();
   const objectivesQuery = useClientObjectivesQuery();
+  const clients = clientsQuery.data ?? [];
+  const selectedClient = useMemo(
+    () => (selectedClientId ? (clients.find((c) => c.id === selectedClientId) ?? null) : null),
+    [clients, selectedClientId],
+  );
+  const setSelectedClient = useCallback((client: ClientView | null) => {
+    setSelectedClientId(client?.id ?? null);
+  }, []);
+  const planTemplateIdForRoutine = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id);
-  const routineDaysQuery = useClientRoutineDaysQuery(selectedClient?.trainingPlanId);
+  const routineDaysQuery = useClientRoutineDaysQuery(planTemplateIdForRoutine);
   const createEvent = useCreateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
 
@@ -166,7 +176,7 @@ function useCalendarLogic() {
     routineDays,
     events,
     dayEvents,
-    clients: clientsQuery.data ?? [],
+    clients,
     objectives: objectivesQuery.data ?? [],
     createEvent,
     handlePrevMonth,

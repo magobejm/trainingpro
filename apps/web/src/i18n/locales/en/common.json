@@ -844,5 +844,6 @@
   "coach.calendar.type.note": "Note",
   "coach.calendar.type.reminder": "Reminder",
   "coach.calendar.type.workout": "Workout",
-  "coach.calendar.empty": "No events this day"
+  "coach.calendar.empty": "No events this day",
+  "coach.calendar.grid.more": "+{{count}} more"
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
+import { normalizePlanTemplateId } from '../normalize-plan-template-id';
 import { useAuthStore } from '../../store/auth.store';
 import type { CalendarEventData } from '../../screens/coach/calendar-screen.types';
 
@@ -121,13 +122,17 @@ export type RoutineTemplateBasic = {
 
 export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefined) {
   const auth = useAuth();
+  const resolved =
+    trainingPlanId !== undefined && trainingPlanId !== null && String(trainingPlanId).length > 0
+      ? normalizePlanTemplateId(String(trainingPlanId))
+      : undefined;
   return useQuery({
-    enabled: Boolean(auth) && Boolean(trainingPlanId),
-    queryKey: ['routine-template-days', trainingPlanId],
+    enabled: Boolean(auth) && Boolean(resolved),
+    queryKey: ['routine-template-days', resolved],
     queryFn: async () => {
-      if (!auth || !trainingPlanId) return [];
+      if (!auth || !resolved) return [];
       const api = createApiClient(auth);
-      const response = await api.get<RoutineTemplateBasic>(`/plans/templates/routines/${trainingPlanId}?summary=true`);
+      const response = await api.get<RoutineTemplateBasic>(`/plans/templates/routines/${resolved}?summary=true`);
       return (response.days ?? []).map((day) => ({
         id: day.id,
         title: day.title,

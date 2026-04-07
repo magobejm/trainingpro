@@ -9,10 +9,15 @@ export class UpdateCalendarEventDto {
       .regex(/^\d{2}:\d{2}$/)
       .optional(),
     color: z.string().max(30).optional(),
+    date: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
   });
 
   title?: string;
   content?: string;
   time?: string;
   color?: string;
+  date?: string;
 }

@@ -27,6 +27,7 @@ export type UpdateCalendarEventInput = {
   content?: string;
   time?: string;
   color?: string;
+  date?: string;
 };
 
 export function useCalendarEventsQuery(dateFrom: string, dateTo: string, clientId?: string) {

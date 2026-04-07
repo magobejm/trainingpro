@@ -202,6 +202,10 @@ function useCalendarLogic() {
     deleteEvent.mutate(eventId);
   }
 
+  function handleMoveEvent(eventId: string, newDateStr: string) {
+    updateEvent.mutate({ eventId, input: { date: newDateStr } });
+  }
+
   const handleSaveNote = createNoteSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleSaveReminder = createReminderSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
@@ -233,6 +237,7 @@ function useCalendarLogic() {
     handleDayClick,
     handleDrop,
     handleDeleteEvent,
+    handleMoveEvent,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -392,6 +397,7 @@ export function CalendarScreen(): React.JSX.Element {
     handleDayClick,
     handleDrop,
     handleDeleteEvent,
+    handleMoveEvent,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -424,6 +430,7 @@ export function CalendarScreen(): React.JSX.Element {
             onNextMonth={handleNextMonth}
             onDayClick={handleDayClick}
             onDrop={handleDrop}
+            onMoveEvent={handleMoveEvent}
             t={t}
           />
         </View>

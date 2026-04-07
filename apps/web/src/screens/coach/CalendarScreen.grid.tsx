@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
@@ -24,6 +24,7 @@ type GridProps = {
   onNextMonth: () => void;
   onDayClick: (dateStr: string) => void;
   onDrop: (data: CalendarDragData, dateStr: string) => void;
+  onMoveEvent: (eventId: string, newDateStr: string) => void;
   t: TFunc;
 };
 
@@ -38,21 +39,38 @@ type DayCellProps = {
 };
 
 function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onDrop, t }: DayCellProps): React.JSX.Element {
+  const [isDragOver, setIsDragOver] = useState(false);
   const visibleEvents = dayEvents.slice(0, 3);
   const overflowCount = dayEvents.length - visibleEvents.length;
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    onDragOver?.(e);
+    setIsDragOver(true);
+  }
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false);
+  }
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    setIsDragOver(false);
+    onDrop?.(e);
+  }
+
+  const bgColor = cell.day === null ? '#fafafa' : isDragOver ? '#dbeafe' : isToday ? colors.today : 'white';
   return (
     <div
-      onDragOver={onDragOver}
-      onDrop={onDrop}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       onClick={onDayClick}
       style={{
         borderRight: '1px solid #e2e8f0',
         borderBottom: '1px solid #e2e8f0',
         minHeight: 110,
         padding: '6px 4px',
-        backgroundColor: cell.day === null ? '#fafafa' : isToday ? colors.today : 'white',
+        backgroundColor: bgColor,
         cursor: cell.dateStr ? 'pointer' : 'default',
         position: 'relative',
+        transition: 'background-color 0.1s',
       }}
     >
       {cell.day !== null && (
@@ -165,6 +183,7 @@ export function CalendarGrid({
   onNextMonth,
   onDayClick,
   onDrop,
+  onMoveEvent,
   t,
 }: GridProps): React.JSX.Element {
   const cells = getMonthGrid(year, month);
@@ -181,12 +200,17 @@ export function CalendarGrid({
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
+    e.dataTransfer.dropEffect = 'move';
   }, []);
 
   const handleDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>, dateStr: string) => {
       e.preventDefault();
+      const calendarEventId = e.dataTransfer.getData('calendarEventId');
+      if (calendarEventId) {
+        onMoveEvent(calendarEventId, dateStr);
+        return;
+      }
       const planDayId = e.dataTransfer.getData('planDayId');
       const planDayTitle = e.dataTransfer.getData('planDayTitle');
       const clientId = e.dataTransfer.getData('clientId');
@@ -194,7 +218,7 @@ export function CalendarGrid({
       if (!planDayId || !dateStr) return;
       onDrop({ planDayId, planDayTitle, clientId, color }, dateStr);
     },
-    [onDrop],
+    [onDrop, onMoveEvent],
   );
 
   return (
@@ -229,8 +253,17 @@ function EventChip({ event }: { event: CalendarEventData }): React.JSX.Element {
   const colorObj = (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
   const label = event.title ?? event.planDayTitle ?? (event.type === 'reminder' ? event.content : null) ?? '—';
   const displayText = event.time ? [event.time, label].join(' ') : label;
+
+  function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
+    e.stopPropagation();
+    e.dataTransfer.setData('calendarEventId', event.id);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
   return (
     <div
+      draggable
+      onDragStart={handleDragStart}
       style={{
         backgroundColor: colorObj.bg,
         color: colorObj.text,
@@ -243,6 +276,7 @@ function EventChip({ event }: { event: CalendarEventData }): React.JSX.Element {
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
         maxWidth: '100%',
+        cursor: 'grab',
       }}
     >
       {displayText}

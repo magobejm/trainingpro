@@ -90,6 +90,7 @@ export class CalendarRepositoryPrisma implements ICalendarRepository {
         ...(input.content !== undefined ? { content: input.content.trim() } : {}),
         ...(input.time !== undefined ? { time: input.time } : {}),
         ...(input.color !== undefined ? { color: input.color } : {}),
+        ...(input.date !== undefined ? { date: new Date(input.date) } : {}),
       },
       include: INCLUDE_RELATIONS,
     });

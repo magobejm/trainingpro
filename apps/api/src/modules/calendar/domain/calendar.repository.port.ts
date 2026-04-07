@@ -35,6 +35,7 @@ export type UpdateCalendarEventInput = {
   content?: string;
   time?: string;
   color?: string;
+  date?: string;
 };
 
 export type ListCalendarEventsQuery = {

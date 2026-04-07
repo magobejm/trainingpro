@@ -6,11 +6,13 @@ import { useClientsQuery, useClientObjectivesQuery } from '../../data/hooks/useC
 import {
   useCalendarEventsQuery,
   useCreateCalendarEventMutation,
+  useUpdateCalendarEventMutation,
   useDeleteCalendarEventMutation,
   useClientRoutineDaysQuery,
 } from '../../data/hooks/useCalendarQuery';
 import type { ClientView } from '../../data/hooks/useClientsQuery';
 import type { CalendarDragData, CalendarEventData, RoutineDayCard } from './calendar-screen.types';
+import { DEFAULT_COLOR } from './calendar-screen.types';
 import { monthRangeDates } from './calendar-screen.utils';
 import { CalendarSidebar } from './CalendarScreen.sidebar';
 import { CalendarGrid } from './CalendarScreen.grid';
@@ -24,7 +26,9 @@ type ModalState =
   | { type: 'none' }
   | { type: 'day'; dateStr: string }
   | { type: 'addNote'; dateStr: string }
-  | { type: 'addReminder'; dateStr: string };
+  | { type: 'addReminder'; dateStr: string }
+  | { type: 'editNote'; event: CalendarEventData; dateStr: string }
+  | { type: 'editReminder'; event: CalendarEventData; dateStr: string };
 
 function filterDayEvents(events: CalendarEventData[], modal: ModalState): CalendarEventData[] {
   if (modal.type !== 'day') return [];
@@ -105,6 +109,40 @@ function createReminderSaveHandler(
   };
 }
 
+function createNoteUpdateHandler(
+  updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>,
+  modal: ModalState,
+  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
+) {
+  return (data: { title: string; content: string; color: string }) => {
+    if (modal.type !== 'editNote') return;
+    updateEvent.mutate(
+      {
+        eventId: modal.event.id,
+        input: { title: data.title || undefined, content: data.content || undefined, color: data.color },
+      },
+      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
+    );
+  };
+}
+
+function createReminderUpdateHandler(
+  updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>,
+  modal: ModalState,
+  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
+) {
+  return (data: { content: string; time: string; color: string }) => {
+    if (modal.type !== 'editReminder') return;
+    updateEvent.mutate(
+      {
+        eventId: modal.event.id,
+        input: { content: data.content || undefined, time: data.time || undefined, color: data.color },
+      },
+      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
+    );
+  };
+}
+
 function useCalendarLogic() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -129,6 +167,7 @@ function useCalendarLogic() {
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id);
   const routineDaysQuery = useClientRoutineDaysQuery(planTemplateIdForRoutine);
   const createEvent = useCreateCalendarEventMutation();
+  const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
 
   const routineDays: RoutineDayCard[] = useMemo(() => {
@@ -165,6 +204,15 @@ function useCalendarLogic() {
 
   const handleSaveNote = createNoteSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleSaveReminder = createReminderSaveHandler(createEvent, modal, selectedClient?.id, setModal);
+  const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
+  const handleUpdateReminder = createReminderUpdateHandler(updateEvent, modal, setModal);
+
+  function handleEditEvent(event: CalendarEventData) {
+    const d = event.date instanceof Date ? event.date : new Date(event.date);
+    const dateStr = d.toISOString().slice(0, 10);
+    if (event.type === 'note') setModal({ type: 'editNote', event, dateStr });
+    else if (event.type === 'reminder') setModal({ type: 'editReminder', event, dateStr });
+  }
 
   return {
     year,
@@ -179,6 +227,7 @@ function useCalendarLogic() {
     clients,
     objectives: objectivesQuery.data ?? [],
     createEvent,
+    updateEvent,
     handlePrevMonth,
     handleNextMonth,
     handleDayClick,
@@ -186,6 +235,9 @@ function useCalendarLogic() {
     handleDeleteEvent,
     handleSaveNote,
     handleSaveReminder,
+    handleUpdateNote,
+    handleUpdateReminder,
+    handleEditEvent,
     onRoutineDayColorChange: (dayId: string, color: string) => setRoutineDayColors((prev) => ({ ...prev, [dayId]: color })),
   };
 }
@@ -219,6 +271,106 @@ function CalendarTopBar({ selectedClient, t }: TopBarProps): React.JSX.Element {
   );
 }
 
+type CalendarModalsProps = {
+  modal: ModalState;
+  setModal: React.Dispatch<React.SetStateAction<ModalState>>;
+  dayEvents: CalendarEventData[];
+  clientName: string | undefined;
+  createIsPending: boolean;
+  updateIsPending: boolean;
+  onDeleteEvent: (id: string) => void;
+  onEditEvent: (event: CalendarEventData) => void;
+  onSaveNote: (data: { title: string; content: string; color: string }) => void;
+  onSaveReminder: (data: { content: string; time: string; color: string }) => void;
+  onUpdateNote: (data: { title: string; content: string; color: string }) => void;
+  onUpdateReminder: (data: { content: string; time: string; color: string }) => void;
+  t: TFunc;
+};
+
+function CalendarModalsRenderer({
+  modal,
+  setModal,
+  dayEvents,
+  clientName,
+  createIsPending,
+  updateIsPending,
+  onDeleteEvent,
+  onEditEvent,
+  onSaveNote,
+  onSaveReminder,
+  onUpdateNote,
+  onUpdateReminder,
+  t,
+}: CalendarModalsProps): React.JSX.Element {
+  const defaultColor = DEFAULT_COLOR?.bg ?? '#dbeafe';
+  return (
+    <>
+      {modal.type === 'day' && (
+        <DayDetailModal
+          dateStr={modal.dateStr}
+          dayEvents={dayEvents}
+          onClose={() => setModal({ type: 'none' })}
+          onAddNote={() => setModal({ type: 'addNote', dateStr: modal.dateStr })}
+          onAddReminder={() => setModal({ type: 'addReminder', dateStr: modal.dateStr })}
+          onDeleteEvent={onDeleteEvent}
+          onEditEvent={onEditEvent}
+          t={t}
+        />
+      )}
+      {modal.type === 'addNote' && (
+        <AddNoteModal
+          clientName={clientName}
+          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
+          onSave={onSaveNote}
+          isSaving={createIsPending}
+          t={t}
+        />
+      )}
+      {modal.type === 'addReminder' && (
+        <AddReminderModal
+          clientName={clientName}
+          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
+          onSave={onSaveReminder}
+          isSaving={createIsPending}
+          t={t}
+        />
+      )}
+      {modal.type === 'editNote' && (
+        <AddNoteModal
+          clientName={clientName}
+          initialValues={{
+            title: modal.event.title ?? '',
+            content: modal.event.content ?? '',
+            color: modal.event.color ?? defaultColor,
+          }}
+          modalTitle={t('coach.calendar.note.editTitle')}
+          saveLabel={t('coach.calendar.saveChanges')}
+          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
+          onSave={onUpdateNote}
+          isSaving={updateIsPending}
+          t={t}
+        />
+      )}
+      {modal.type === 'editReminder' && (
+        <AddReminderModal
+          clientName={clientName}
+          initialValues={{
+            content: modal.event.content ?? '',
+            time: modal.event.time ?? '09:00',
+            color: modal.event.color ?? defaultColor,
+          }}
+          modalTitle={t('coach.calendar.reminder.editTitle')}
+          saveLabel={t('coach.calendar.saveChanges')}
+          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
+          onSave={onUpdateReminder}
+          isSaving={updateIsPending}
+          t={t}
+        />
+      )}
+    </>
+  );
+}
+
 export function CalendarScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const {
@@ -234,6 +386,7 @@ export function CalendarScreen(): React.JSX.Element {
     clients,
     objectives,
     createEvent,
+    updateEvent,
     handlePrevMonth,
     handleNextMonth,
     handleDayClick,
@@ -241,8 +394,13 @@ export function CalendarScreen(): React.JSX.Element {
     handleDeleteEvent,
     handleSaveNote,
     handleSaveReminder,
+    handleUpdateNote,
+    handleUpdateReminder,
+    handleEditEvent,
     onRoutineDayColorChange,
   } = useCalendarLogic();
+
+  const clientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined;
 
   return (
     <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#f8fafc', minHeight: 0, overflow: 'hidden' }}>
@@ -270,35 +428,21 @@ export function CalendarScreen(): React.JSX.Element {
           />
         </View>
       </View>
-      {modal.type === 'day' && (
-        <DayDetailModal
-          dateStr={modal.dateStr}
-          dayEvents={dayEvents}
-          onClose={() => setModal({ type: 'none' })}
-          onAddNote={() => setModal({ type: 'addNote', dateStr: modal.dateStr })}
-          onAddReminder={() => setModal({ type: 'addReminder', dateStr: modal.dateStr })}
-          onDeleteEvent={handleDeleteEvent}
-          t={t}
-        />
-      )}
-      {modal.type === 'addNote' && (
-        <AddNoteModal
-          clientName={selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined}
-          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
-          onSave={handleSaveNote}
-          isSaving={createEvent.isPending}
-          t={t}
-        />
-      )}
-      {modal.type === 'addReminder' && (
-        <AddReminderModal
-          clientName={selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined}
-          onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
-          onSave={handleSaveReminder}
-          isSaving={createEvent.isPending}
-          t={t}
-        />
-      )}
+      <CalendarModalsRenderer
+        modal={modal}
+        setModal={setModal}
+        dayEvents={dayEvents}
+        clientName={clientName}
+        createIsPending={createEvent.isPending}
+        updateIsPending={updateEvent.isPending}
+        onDeleteEvent={handleDeleteEvent}
+        onEditEvent={handleEditEvent}
+        onSaveNote={handleSaveNote}
+        onSaveReminder={handleSaveReminder}
+        onUpdateNote={handleUpdateNote}
+        onUpdateReminder={handleUpdateReminder}
+        t={t}
+      />
     </View>
   );
 }

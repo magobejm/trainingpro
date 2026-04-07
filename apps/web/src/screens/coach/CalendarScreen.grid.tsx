@@ -237,7 +237,7 @@ function EventChip({ event }: { event: CalendarEventData }): React.JSX.Element {
         border: `1px solid ${colorObj.border}`,
         borderRadius: 4,
         padding: '2px 6px',
-        fontSize: 10,
+        fontSize: 13,
         fontWeight: 500,
         overflow: 'hidden',
         textOverflow: 'ellipsis',

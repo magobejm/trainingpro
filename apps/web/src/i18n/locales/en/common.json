@@ -846,5 +846,8 @@
   "coach.calendar.type.workout": "Workout",
   "coach.calendar.empty": "No events this day",
   "coach.calendar.grid.more": "+{{count}} more",
-  "coach.calendar.colorPicker.label": "Color"
+  "coach.calendar.colorPicker.label": "Color",
+  "coach.calendar.note.editTitle": "Edit Note",
+  "coach.calendar.reminder.editTitle": "Edit Reminder",
+  "coach.calendar.saveChanges": "Save changes"
 }

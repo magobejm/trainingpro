@@ -90,5 +90,7 @@ export interface DraftState {
   name: string;
   neats?: NeatItem[];
   objectiveIds?: string[];
+  /** DB id of the routine template (coach/global), for assign-to-client when editingId state is out of sync */
+  sourcePlanTemplateId?: string;
   scope?: 'GLOBAL' | 'COACH';
 }

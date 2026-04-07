@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
+import { normalizePlanTemplateId } from '../normalize-plan-template-id';
 import { useAuthStore } from '../../store/auth.store';
 import { syncAvatarInCache, syncClientInCache } from './useClientMutations.cache';
 
@@ -64,7 +65,14 @@ export function useUpdateClientMutation(clientId: string) {
   return useMutation({
     mutationFn: (input: UpdateClientInput) => updateClient(auth, clientId, input),
     onSuccess: (_, input) => {
-      syncClientInCache(queryClient, clientId, input);
+      const forCache =
+        input.trainingPlanId !== undefined && input.trainingPlanId !== null
+          ? {
+              ...input,
+              trainingPlanId: normalizePlanTemplateId(String(input.trainingPlanId)) ?? input.trainingPlanId,
+            }
+          : input;
+      syncClientInCache(queryClient, clientId, forCache);
       if (typeof input.avatarUrl === 'string') {
         syncAvatarInCache(queryClient, clientId, input.avatarUrl);
       }
@@ -189,7 +197,17 @@ async function updateClient(auth: ReturnType<typeof useAuth>, clientId: string, 
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  await createApiClient(auth).patch(`/clients/${clientId}`, input);
+  let body: UpdateClientInput = input;
+  if (input.trainingPlanId !== undefined && input.trainingPlanId !== null) {
+    const normalized = normalizePlanTemplateId(String(input.trainingPlanId));
+    if (!normalized) {
+      throw new Error(
+        'ID de rutina no válido. Vuelve a abrir la rutina en la biblioteca o el planificador e inténtalo de nuevo.',
+      );
+    }
+    body = { ...input, trainingPlanId: normalized };
+  }
+  await createApiClient(auth).patch(`/clients/${clientId}`, body);
 }
 
 async function uploadAvatar(auth: ReturnType<typeof useAuth>, clientId: string, file: File): Promise<{ avatarUrl: string }> {

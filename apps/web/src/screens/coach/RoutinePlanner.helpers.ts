@@ -1,3 +1,4 @@
+import { normalizePlanTemplateId } from '../../data/normalize-plan-template-id';
 import type { BlockType, DraftBlock, DraftDay, DraftExerciseGroup, DraftSet, DraftState } from './RoutinePlanner.types';
 import { mapTemplateToDraft as mapTemplateToDraftImpl } from './RoutinePlanner.draft-mapper';
 import { mapWarmupTemplateItemsToBlocks as mapWarmupTemplateItemsToBlocksImpl } from './RoutinePlanner.template-mapper';
@@ -398,5 +399,13 @@ export function mapWarmupTemplateItemsToBlocks(
 }
 
 export function mapTemplateToDraft(tpl: unknown): DraftState {
-  return mapTemplateToDraftImpl(tpl as Parameters<typeof mapTemplateToDraftImpl>[0], createBlock, nextDayId);
+  const mapped = mapTemplateToDraftImpl(tpl as Parameters<typeof mapTemplateToDraftImpl>[0], createBlock, nextDayId);
+  const rawId = (tpl as { id?: unknown }).id;
+  if (typeof rawId === 'string' && rawId.length > 0) {
+    const canon = normalizePlanTemplateId(rawId);
+    if (canon) {
+      return { ...mapped, sourcePlanTemplateId: canon };
+    }
+  }
+  return mapped;
 }

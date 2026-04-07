@@ -1,5 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { pickNormalizedPlanTemplateId } from '../../data/normalize-plan-template-id';
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
 import { createEmptyDraft, mapTemplateToDraft } from './RoutinePlanner.helpers';
 import {
@@ -93,19 +94,20 @@ function usePlannerSaveModel(
     updateClientMutation,
   );
   const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t, onRouteChange);
-  const onAssignOnly = buildAssignOnly(assignMutation, uiState, onRouteChange);
+  const onAssignOnly = buildAssignOnly(assignMutation, uiState, draftState, onRouteChange);
   return { deleteMutation, onSave, onSaveAndAssign, onAssignOnly, updateClientMutation, viewMode };
 }
 
 function buildAssignOnly(
   assignMutation: ReturnType<typeof useAssignRoutineMutation>,
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
+  draftState: ReturnType<typeof useRoutinePlannerDraft>,
   onRouteChange: undefined | ((route: ShellRoute) => void),
 ) {
   return async (clientId: string) => {
-    const editingId = uiState.editingId;
-    if (!editingId) return;
-    await assignMutation.mutateAsync({ clientId, templateId: editingId });
+    const templateId = pickNormalizedPlanTemplateId(uiState.editingId, draftState.draft.sourcePlanTemplateId);
+    if (!templateId) return;
+    await assignMutation.mutateAsync({ clientId, templateId });
     uiState.setSaveSuccess(true);
     setTimeout(() => uiState.setSaveSuccess(false), 3000);
     onRouteChange?.('coach.library.routines');
@@ -221,7 +223,8 @@ function useHydrateDraftFromContext(
 ) {
   React.useEffect(() => {
     if (!initialTemplateId || templates.length === 0) return;
-    const initialTemplate = templates.find((tpl) => tpl.id === initialTemplateId);
+    const wanted = initialTemplateId.trim().toLowerCase();
+    const initialTemplate = templates.find((tpl) => (tpl.id ?? '').trim().toLowerCase() === wanted);
     if (!initialTemplate) return clearInitialTemplate();
     uiState.setEditingId(initialTemplate.id);
     draftState.setDraft(mapTemplateToDraft(initialTemplate));

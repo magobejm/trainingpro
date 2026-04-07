@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+function coerceTrainingPlanId(val: unknown): unknown {
+  if (val === null || val === undefined) return val;
+  if (typeof val !== 'string') return val;
+  const s = val.trim();
+  if (s === '') return undefined;
+  const lower = s.toLowerCase();
+  if (/^[0-9a-f]{32}$/.test(lower)) {
+    return `${lower.slice(0, 8)}-${lower.slice(8, 12)}-${lower.slice(12, 16)}-${lower.slice(16, 20)}-${lower.slice(20)}`;
+  }
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(lower)) {
+    return lower;
+  }
+  return val;
+}
+
 export class UpdateClientDto {
   static schema = z.object({
     allergies: z.string().max(2000).nullable().optional(),
@@ -17,7 +32,14 @@ export class UpdateClientDto {
     lastName: z.string().trim().min(1).max(80).optional(),
     notes: z.string().max(2000).nullable().optional(),
     objectiveId: z.string().uuid().nullable().optional(),
-    trainingPlanId: z.string().uuid().nullable().optional(),
+    trainingPlanId: z.preprocess(
+      coerceTrainingPlanId,
+      z
+        .string()
+        .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, 'Invalid UUID')
+        .nullable()
+        .optional(),
+    ),
     phone: z.string().max(30).nullable().optional(),
     secondaryObjectives: z.array(z.string().trim().min(1).max(80)).max(12).optional(),
     sex: z.string().max(30).nullable().optional(),

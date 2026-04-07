@@ -16,10 +16,12 @@ export const styles = StyleSheet.create({
   content: {
     backgroundColor: COLORS.bg,
     flex: 1,
+    minHeight: 0,
   },
   contentBody: {
     backgroundColor: COLORS.shell,
     flex: 1,
+    minHeight: 0,
   },
   logoutButton: {
     alignItems: 'center',
@@ -110,6 +112,7 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.bg,
     flex: 1,
     flexDirection: 'row',
+    minHeight: 0,
   },
   sidebar: {
     backgroundColor: COLORS.nav,

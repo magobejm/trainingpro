@@ -149,6 +149,7 @@ model OrganizationMember {
   notificationDeviceTokens NotificationDeviceToken[]
   notificationPreferences  NotificationPreference[]
   notificationEventLogs    NotificationEventLog[]
+  coachNotes               CoachNote[]               @relation("coach_notes")
 
   @@unique([organizationId, userId, role], map: "uq_org_user_role")
   @@index([organizationId, role], map: "idx_org_member_org_role")
@@ -210,6 +211,7 @@ model Client {
   weeklyReports         WeeklyReport[]
   chatThreads           ChatThread[]              @relation("client_chat_threads")
   notificationEventLogs NotificationEventLog[]
+  coachNotes            CoachNote[]               @relation("client_notes")
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")
@@ -1411,6 +1413,23 @@ model IncidentAction {
 
   @@index([incidentId, createdAt], map: "idx_incident_action_incident_created")
   @@map("incident_action")
+}
+
+model CoachNote {
+  id                String             @id @default(uuid()) @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  type              String             @db.VarChar(20)
+  clientId          String?            @map("client_id") @db.Uuid
+  content           String             @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
+  coachMembership   OrganizationMember @relation("coach_notes", fields: [coachMembershipId], references: [id], onDelete: Cascade)
+  client            Client?            @relation("client_notes", fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([coachMembershipId, archivedAt], map: "idx_coach_note_coach_archived")
+  @@index([clientId], map: "idx_coach_note_client")
+  @@map("coach_note")
 }
 
 model WeeklyReport {

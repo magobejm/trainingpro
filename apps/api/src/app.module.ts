@@ -17,6 +17,7 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { UsersModule } from './modules/users/users.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
+import { NotesModule } from './modules/notes/notes.module';
 
 @Module({
   imports: [
@@ -37,7 +38,8 @@ import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
     ReportsModule,
     IncidentsModule,
     AiEvaluatorModule,
+    NotesModule,
   ],
   controllers: [HealthController],
 })
-export class AppModule { }
+export class AppModule {}

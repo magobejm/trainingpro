@@ -17,6 +17,7 @@ import { SessionsModule } from './modules/sessions/sessions.module';
 import { UsersModule } from './modules/users/users.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 import { NotesModule } from './modules/notes/notes.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { NotesModule } from './modules/notes/notes.module';
     IncidentsModule,
     AiEvaluatorModule,
     NotesModule,
+    CalendarModule,
   ],
   controllers: [HealthController],
 })

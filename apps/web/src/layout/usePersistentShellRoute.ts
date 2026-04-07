@@ -23,6 +23,7 @@ type CoachRoute =
   | 'coach.incidents'
   | 'coach.chat'
   | 'coach.notes'
+  | 'coach.calendar'
   | 'coach.notifications';
 
 export type ShellRoute = AdminRoute | CoachRoute;
@@ -117,6 +118,7 @@ function isShellRoute(route: string): route is ShellRoute {
     route === 'coach.incidents' ||
     route === 'coach.chat' ||
     route === 'coach.notes' ||
+    route === 'coach.calendar' ||
     route === 'coach.notifications'
   );
 }

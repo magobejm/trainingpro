@@ -150,6 +150,7 @@ model OrganizationMember {
   notificationPreferences  NotificationPreference[]
   notificationEventLogs    NotificationEventLog[]
   coachNotes               CoachNote[]               @relation("coach_notes")
+  calendarEvents           CalendarEvent[]           @relation("coach_calendar_events")
 
   @@unique([organizationId, userId, role], map: "uq_org_user_role")
   @@index([organizationId, role], map: "idx_org_member_org_role")
@@ -212,6 +213,7 @@ model Client {
   chatThreads           ChatThread[]              @relation("client_chat_threads")
   notificationEventLogs NotificationEventLog[]
   coachNotes            CoachNote[]               @relation("client_notes")
+  calendarEvents        CalendarEvent[]           @relation("client_calendar_events")
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")
@@ -845,6 +847,7 @@ model PlanDay {
   sportBlocks        PlanSportBlock[]
   isometricBlocks    PlanIsometricBlock[]
   exerciseGroups     PlanExerciseGroup[]
+  calendarEvents     CalendarEvent[]
 
   @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
   @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
@@ -1565,4 +1568,27 @@ model NotificationEventLog {
   @@index([coachMembershipId, topic, createdAt], map: "idx_notification_event_coach_topic_created")
   @@index([clientId, topic, createdAt], map: "idx_notification_event_client_topic_created")
   @@map("notification_event_log")
+}
+
+model CalendarEvent {
+  id                String             @id @default(uuid()) @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  clientId          String?            @map("client_id") @db.Uuid
+  type              String             @db.VarChar(20)
+  date              DateTime           @db.Date
+  title             String?            @db.VarChar(200)
+  content           String?            @db.Text
+  time              String?            @db.VarChar(5)
+  color             String?            @db.VarChar(30)
+  planDayId         String?            @map("plan_day_id") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
+  coachMembership   OrganizationMember @relation("coach_calendar_events", fields: [coachMembershipId], references: [id], onDelete: Cascade)
+  client            Client?            @relation("client_calendar_events", fields: [clientId], references: [id], onDelete: Cascade)
+  planDay           PlanDay?           @relation(fields: [planDayId], references: [id], onDelete: SetNull)
+
+  @@index([coachMembershipId, date], map: "idx_calendar_event_coach_date")
+  @@index([clientId, date], map: "idx_calendar_event_client_date")
+  @@map("calendar_event")
 }

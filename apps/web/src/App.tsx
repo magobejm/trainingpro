@@ -39,6 +39,7 @@ import { ChatScreen } from './screens/coach/ChatScreen';
 import { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';
 import { RoutinePlannerScreen } from './screens/coach/RoutinePlannerScreen';
 import { WarmupPlannerScreen } from './screens/coach/WarmupPlannerScreen';
+import { CalendarScreen } from './screens/coach/CalendarScreen';
 import { NotesScreen } from './screens/coach/NotesScreen';
 import { useAuthStore } from './store/auth.store';
 import { LoginScreen } from './screens/auth/LoginScreen';
@@ -257,6 +258,7 @@ function resolveCoachMonitoringScreen(route: ShellRoute): null | React.JSX.Eleme
   if (route === 'coach.incidents') return <IncidentsScreen />;
   if (route === 'coach.chat') return <ChatScreen />;
   if (route === 'coach.notes') return <NotesScreen />;
+  if (route === 'coach.calendar') return <CalendarScreen />;
   if (route === 'coach.notifications') return <NotificationSettingsScreen />;
   return null;
 }
@@ -349,6 +351,12 @@ function resolveCoachNavItems(): ShellNavItem[] {
       id: 'coach.notes',
       labelKey: 'app.nav.coach.notes',
       badgeColor: 'rgba(99, 102, 241, 0.1)',
+    },
+    {
+      icon: (p) => <CalendarDays {...p} />,
+      id: 'coach.calendar',
+      labelKey: 'app.nav.coach.calendar',
+      badgeColor: 'rgba(16, 185, 129, 0.1)',
     },
     {
       icon: (p) => <AlertCircle {...p} />,

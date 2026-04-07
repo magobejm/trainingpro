@@ -126,6 +126,23 @@ function createNoteUpdateHandler(
   };
 }
 
+function createWeekMoveHandler(updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>, events: CalendarEventData[]) {
+  return (sourceDates: (string | null)[], targetDates: (string | null)[]) => {
+    for (let i = 0; i < 7; i++) {
+      const src = sourceDates[i];
+      const tgt = targetDates[i];
+      if (!src || !tgt || src === tgt) continue;
+      const dayEvts = events.filter((ev) => {
+        const d = ev.date instanceof Date ? ev.date : new Date(ev.date);
+        return d.toISOString().slice(0, 10) === src;
+      });
+      for (const ev of dayEvts) {
+        updateEvent.mutate({ eventId: ev.id, input: { date: tgt } });
+      }
+    }
+  };
+}
+
 function createReminderUpdateHandler(
   updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>,
   modal: ModalState,
@@ -206,6 +223,8 @@ function useCalendarLogic() {
     updateEvent.mutate({ eventId, input: { date: newDateStr } });
   }
 
+  const handleMoveWeek = createWeekMoveHandler(updateEvent, events);
+
   const handleSaveNote = createNoteSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleSaveReminder = createReminderSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
@@ -238,6 +257,7 @@ function useCalendarLogic() {
     handleDrop,
     handleDeleteEvent,
     handleMoveEvent,
+    handleMoveWeek,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -398,6 +418,7 @@ export function CalendarScreen(): React.JSX.Element {
     handleDrop,
     handleDeleteEvent,
     handleMoveEvent,
+    handleMoveWeek,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -431,6 +452,7 @@ export function CalendarScreen(): React.JSX.Element {
             onDayClick={handleDayClick}
             onDrop={handleDrop}
             onMoveEvent={handleMoveEvent}
+            onMoveWeek={handleMoveWeek}
             t={t}
           />
         </View>

@@ -849,5 +849,6 @@
   "coach.calendar.colorPicker.label": "Color",
   "coach.calendar.note.editTitle": "Edit Note",
   "coach.calendar.reminder.editTitle": "Edit Reminder",
-  "coach.calendar.saveChanges": "Save changes"
+  "coach.calendar.saveChanges": "Save changes",
+  "coach.calendar.week.dragHandle": "Drag week"
 }

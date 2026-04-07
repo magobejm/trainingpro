@@ -1,6 +1,13 @@
 import type { CalendarColor } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
 
+export function getWeeks(year: number, month: number): Array<Array<{ day: number | null; dateStr: string | null }>> {
+  const cells = getMonthGrid(year, month);
+  const weeks: Array<Array<{ day: number | null; dateStr: string | null }>> = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
 export function getMonthGrid(year: number, month: number): Array<{ day: number | null; dateStr: string | null }> {
   const firstDay = new Date(year, month, 1).getDay();
   // Monday-based: Sunday (0) becomes 6, Monday (1) becomes 0, etc.

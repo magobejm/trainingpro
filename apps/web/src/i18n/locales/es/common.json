@@ -882,5 +882,6 @@
   "coach.calendar.colorPicker.label": "Color",
   "coach.calendar.note.editTitle": "Editar Nota",
   "coach.calendar.reminder.editTitle": "Editar Recordatorio",
-  "coach.calendar.saveChanges": "Guardar cambios"
+  "coach.calendar.saveChanges": "Guardar cambios",
+  "coach.calendar.week.dragHandle": "Arrastrar semana"
 }

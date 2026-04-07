@@ -1,9 +1,9 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
-import { getMonthGrid, DAY_NAMES_ES, MONTH_NAMES_ES } from './calendar-screen.utils';
+import { getWeeks, DAY_NAMES_ES, MONTH_NAMES_ES } from './calendar-screen.utils';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -25,6 +25,7 @@ type GridProps = {
   onDayClick: (dateStr: string) => void;
   onDrop: (data: CalendarDragData, dateStr: string) => void;
   onMoveEvent: (eventId: string, newDateStr: string) => void;
+  onMoveWeek: (sourceDates: (string | null)[], targetDates: (string | null)[]) => void;
   t: TFunc;
 };
 
@@ -44,6 +45,10 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
   const overflowCount = dayEvents.length - visibleEvents.length;
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    if (e.dataTransfer.types.includes('weekdates')) {
+      e.preventDefault();
+      return;
+    }
     onDragOver?.(e);
     setIsDragOver(true);
   }
@@ -51,6 +56,7 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false);
   }
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    if (e.dataTransfer.types.includes('weekdates')) return; // WeekRow handles it
     setIsDragOver(false);
     onDrop?.(e);
   }
@@ -164,6 +170,7 @@ function CalendarMonthHeader({ year, month, onPrevMonth, onNextMonth }: MonthHea
 function CalendarDayNames(): React.JSX.Element {
   return (
     <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
+      <View style={{ width: 20, flexShrink: 0 }} />
       {DAY_NAMES_ES.map((dayName) => (
         <View key={dayName} style={{ flex: 1, paddingVertical: 10, alignItems: 'center' }}>
           <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.textMuted, letterSpacing: 0.5 }}>
@@ -172,6 +179,104 @@ function CalendarDayNames(): React.JSX.Element {
         </View>
       ))}
     </View>
+  );
+}
+
+type WeekRowProps = {
+  cells: Array<{ day: number | null; dateStr: string | null }>;
+  todayStr: string;
+  eventsByDate: Record<string, CalendarEventData[]>;
+  onDayClick: (dateStr: string) => void;
+  onCellDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onCellDrop: (e: React.DragEvent<HTMLDivElement>, dateStr: string) => void;
+  onMoveWeek: (src: (string | null)[], tgt: (string | null)[]) => void;
+  t: TFunc;
+};
+
+function WeekRow({
+  cells,
+  todayStr,
+  eventsByDate,
+  onDayClick,
+  onCellDragOver,
+  onCellDrop,
+  onMoveWeek,
+  t,
+}: WeekRowProps): React.JSX.Element {
+  const [isWeekDragOver, setIsWeekDragOver] = useState(false);
+
+  function handleGripDragStart(e: React.DragEvent<HTMLDivElement>) {
+    e.dataTransfer.setData('weekDates', JSON.stringify(cells.map((c) => c.dateStr)));
+    e.dataTransfer.effectAllowed = 'move';
+  }
+  function handleWeekDragOver(e: React.DragEvent<HTMLDivElement>) {
+    if (!e.dataTransfer.types.includes('weekdates')) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsWeekDragOver(true);
+  }
+  function handleWeekDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsWeekDragOver(false);
+  }
+  function handleWeekDrop(e: React.DragEvent<HTMLDivElement>) {
+    setIsWeekDragOver(false);
+    const raw = e.dataTransfer.getData('weekDates');
+    if (!raw) return;
+    e.preventDefault();
+    e.stopPropagation();
+    onMoveWeek(
+      JSON.parse(raw) as (string | null)[],
+      cells.map((c) => c.dateStr),
+    );
+  }
+
+  return (
+    <div
+      onDragOver={handleWeekDragOver}
+      onDragLeave={handleWeekDragLeave}
+      onDrop={handleWeekDrop}
+      style={{
+        display: 'flex',
+        outline: isWeekDragOver ? '2px solid #3b82f6' : '2px solid transparent',
+        outlineOffset: '-2px',
+        transition: 'outline 0.1s',
+      }}
+    >
+      <div
+        draggable
+        onDragStart={handleGripDragStart}
+        title={t('coach.calendar.week.dragHandle')}
+        style={{
+          width: 20,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'grab',
+          flexShrink: 0,
+          backgroundColor: isWeekDragOver ? '#eff6ff' : '#fafafa',
+          borderRight: '1px solid #e2e8f0',
+        }}
+      >
+        <GripVertical size={12} color={colors.textMuted} />
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minWidth: 0 }}>
+        {cells.map((cell, i) => {
+          const dayEvents = cell.dateStr ? (eventsByDate[cell.dateStr] ?? []) : [];
+          return (
+            <CalendarDayCell
+              key={i}
+              cell={cell}
+              isToday={cell.dateStr === todayStr}
+              dayEvents={dayEvents}
+              onDayClick={cell.dateStr ? () => onDayClick(cell.dateStr!) : undefined}
+              onDragOver={cell.dateStr ? onCellDragOver : undefined}
+              onDrop={cell.dateStr ? (e) => onCellDrop(e, cell.dateStr!) : undefined}
+              t={t}
+            />
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
@@ -184,9 +289,10 @@ export function CalendarGrid({
   onDayClick,
   onDrop,
   onMoveEvent,
+  onMoveWeek,
   t,
 }: GridProps): React.JSX.Element {
-  const cells = getMonthGrid(year, month);
+  const weeks = getWeeks(year, month);
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
@@ -198,12 +304,12 @@ export function CalendarGrid({
     return acc;
   }, {});
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleCellDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   }, []);
 
-  const handleDrop = useCallback(
+  const handleCellDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>, dateStr: string) => {
       e.preventDefault();
       const calendarEventId = e.dataTransfer.getData('calendarEventId');
@@ -226,24 +332,19 @@ export function CalendarGrid({
       <CalendarMonthHeader year={year} month={month} onPrevMonth={onPrevMonth} onNextMonth={onNextMonth} />
       <CalendarDayNames />
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', minHeight: '100%' }}>
-          {cells.map((cell, i) => {
-            const dayEvents = cell.dateStr ? (eventsByDate[cell.dateStr] ?? []) : [];
-            const isToday = cell.dateStr === todayStr;
-            return (
-              <CalendarDayCell
-                key={i}
-                cell={cell}
-                isToday={isToday}
-                dayEvents={dayEvents}
-                onDayClick={cell.dateStr ? () => onDayClick(cell.dateStr!) : undefined}
-                onDragOver={cell.dateStr ? handleDragOver : undefined}
-                onDrop={cell.dateStr ? (e: React.DragEvent<HTMLDivElement>) => handleDrop(e, cell.dateStr!) : undefined}
-                t={t}
-              />
-            );
-          })}
-        </div>
+        {weeks.map((week, weekIdx) => (
+          <WeekRow
+            key={weekIdx}
+            cells={week}
+            todayStr={todayStr}
+            eventsByDate={eventsByDate}
+            onDayClick={onDayClick}
+            onCellDragOver={handleCellDragOver}
+            onCellDrop={handleCellDrop}
+            onMoveWeek={onMoveWeek}
+            t={t}
+          />
+        ))}
       </div>
     </View>
   );

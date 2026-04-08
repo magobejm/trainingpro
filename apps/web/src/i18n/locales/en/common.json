@@ -850,5 +850,12 @@
   "coach.calendar.note.editTitle": "Edit Note",
   "coach.calendar.reminder.editTitle": "Edit Reminder",
   "coach.calendar.saveChanges": "Save changes",
-  "coach.calendar.week.dragHandle": "Drag week"
+  "coach.calendar.week.dragHandle": "Drag week",
+  "coach.calendar.clipboard.weekCopied": "Week copied",
+  "coach.calendar.clipboard.dayCopied": "Day copied",
+  "coach.calendar.clipboard.clear": "Clear",
+  "coach.calendar.clipboard.copyWeek": "Copy week",
+  "coach.calendar.clipboard.pasteWeek": "Paste week",
+  "coach.calendar.clipboard.copyDay": "Copy day",
+  "coach.calendar.clipboard.pasteDay": "Paste day"
 }

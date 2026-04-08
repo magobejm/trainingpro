@@ -11,163 +11,40 @@ import {
   useClientRoutineDaysQuery,
 } from '../../data/hooks/useCalendarQuery';
 import type { ClientView } from '../../data/hooks/useClientsQuery';
-import type { CalendarDragData, CalendarEventData, RoutineDayCard } from './calendar-screen.types';
+import type { CalendarEventData, RoutineDayCard } from './calendar-screen.types';
 import { DEFAULT_COLOR } from './calendar-screen.types';
 import { gridRangeDates } from './calendar-screen.utils';
 import { CalendarSidebar } from './CalendarScreen.sidebar';
 import { CalendarGrid } from './CalendarScreen.grid';
 import { DayDetailModal, AddNoteModal, AddReminderModal } from './CalendarScreen.modals';
+import type { CalendarClipboard } from './CalendarScreen.week-row';
+import type { ModalState } from './CalendarScreen.handlers';
+import {
+  filterDayEvents,
+  moveToPrevMonth,
+  moveToNextMonth,
+  createDropHandler,
+  createNoteSaveHandler,
+  createReminderSaveHandler,
+  createNoteUpdateHandler,
+  createReminderUpdateHandler,
+  createEditEventHandler,
+  createWeekMoveHandler,
+  createCopyPasteHandlers,
+} from './CalendarScreen.handlers';
 
 const COLOR_PRIMARY = '#3b82f6' as const;
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
-type ModalState =
-  | { type: 'none' }
-  | { type: 'day'; dateStr: string }
-  | { type: 'addNote'; dateStr: string }
-  | { type: 'addReminder'; dateStr: string }
-  | { type: 'editNote'; event: CalendarEventData; dateStr: string }
-  | { type: 'editReminder'; event: CalendarEventData; dateStr: string };
-
-function filterDayEvents(events: CalendarEventData[], modal: ModalState): CalendarEventData[] {
-  if (modal.type !== 'day') return [];
-  const dateStr = modal.dateStr;
-  return events.filter((event) => {
-    const date = event.date instanceof Date ? event.date : new Date(event.date);
-    return date.toISOString().slice(0, 10) === dateStr;
-  });
-}
-
-function moveToPrevMonth(
-  month: number,
-  setMonth: React.Dispatch<React.SetStateAction<number>>,
-  setYear: React.Dispatch<React.SetStateAction<number>>,
-) {
-  if (month === 0) {
-    setMonth(11);
-    setYear((year) => year - 1);
-    return;
-  }
-  setMonth((value) => value - 1);
-}
-
-function moveToNextMonth(
-  month: number,
-  setMonth: React.Dispatch<React.SetStateAction<number>>,
-  setYear: React.Dispatch<React.SetStateAction<number>>,
-) {
-  if (month === 11) {
-    setMonth(0);
-    setYear((year) => year + 1);
-    return;
-  }
-  setMonth((value) => value + 1);
-}
-
-function createNoteSaveHandler(
-  createEvent: ReturnType<typeof useCreateCalendarEventMutation>,
-  modal: ModalState,
-  selectedClientId: string | undefined,
-  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
-) {
-  return (data: { title: string; content: string; color: string }) => {
-    if (modal.type !== 'addNote') return;
-    createEvent.mutate(
-      {
-        type: 'note',
-        date: modal.dateStr,
-        title: data.title || undefined,
-        content: data.content || undefined,
-        color: data.color,
-        clientId: selectedClientId,
-      },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
-    );
-  };
-}
-
-function createReminderSaveHandler(
-  createEvent: ReturnType<typeof useCreateCalendarEventMutation>,
-  modal: ModalState,
-  selectedClientId: string | undefined,
-  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
-) {
-  return (data: { content: string; time: string; color: string }) => {
-    if (modal.type !== 'addReminder') return;
-    createEvent.mutate(
-      {
-        type: 'reminder',
-        date: modal.dateStr,
-        content: data.content || undefined,
-        time: data.time || undefined,
-        color: data.color,
-        clientId: selectedClientId,
-      },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
-    );
-  };
-}
-
-function createNoteUpdateHandler(
-  updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>,
-  modal: ModalState,
-  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
-) {
-  return (data: { title: string; content: string; color: string }) => {
-    if (modal.type !== 'editNote') return;
-    updateEvent.mutate(
-      {
-        eventId: modal.event.id,
-        input: { title: data.title || undefined, content: data.content || undefined, color: data.color },
-      },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
-    );
-  };
-}
-
-function createWeekMoveHandler(updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>, events: CalendarEventData[]) {
-  return (sourceDates: string[], targetDates: string[]) => {
-    for (let i = 0; i < 7; i++) {
-      const src = sourceDates[i];
-      const tgt = targetDates[i];
-      if (!src || !tgt || src === tgt) continue;
-      const dayEvts = events.filter((ev) => {
-        const d = ev.date instanceof Date ? ev.date : new Date(ev.date);
-        return d.toISOString().slice(0, 10) === src;
-      });
-      for (const ev of dayEvts) {
-        updateEvent.mutate({ eventId: ev.id, input: { date: tgt } });
-      }
-    }
-  };
-}
-
-function createReminderUpdateHandler(
-  updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>,
-  modal: ModalState,
-  setModal: React.Dispatch<React.SetStateAction<ModalState>>,
-) {
-  return (data: { content: string; time: string; color: string }) => {
-    if (modal.type !== 'editReminder') return;
-    updateEvent.mutate(
-      {
-        eventId: modal.event.id,
-        input: { content: data.content || undefined, time: data.time || undefined, color: data.color },
-      },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
-    );
-  };
-}
-
 function useCalendarLogic() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  /** Store only id so routine/trainingPlanId updates when the clients list refetches. */
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
+  const [clipboard, setClipboard] = useState<CalendarClipboard | null>(null);
 
   const { dateFrom, dateTo } = gridRangeDates(year, month);
   const clientsQuery = useClientsQuery();
@@ -180,67 +57,42 @@ function useCalendarLogic() {
   const setSelectedClient = useCallback((client: ClientView | null) => {
     setSelectedClientId(client?.id ?? null);
   }, []);
-  const planTemplateIdForRoutine = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
+  const planTemplateId = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id);
-  const routineDaysQuery = useClientRoutineDaysQuery(planTemplateIdForRoutine);
+  const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId);
   const createEvent = useCreateCalendarEventMutation();
   const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
-
-  const routineDays: RoutineDayCard[] = useMemo(() => {
-    if (!routineDaysQuery.data) return [];
-    return routineDaysQuery.data.map((d) => ({ ...d, color: routineDayColors[d.id] ?? d.color }));
-  }, [routineDaysQuery.data, routineDayColors]);
-
+  const routineDays: RoutineDayCard[] = useMemo(
+    () => (routineDaysQuery.data ?? []).map((d) => ({ ...d, color: routineDayColors[d.id] ?? d.color })),
+    [routineDaysQuery.data, routineDayColors],
+  );
   const events = eventsQuery.data ?? [];
-
   const dayEvents = useMemo(() => filterDayEvents(events, modal), [events, modal]);
 
   const handlePrevMonth = () => moveToPrevMonth(month, setMonth, setYear);
-
   const handleNextMonth = () => moveToNextMonth(month, setMonth, setYear);
-
   const handleGoTo = useCallback((y: number, m: number) => {
     setYear(y);
     setMonth(m);
   }, []);
-
-  function handleDayClick(dateStr: string) {
-    setModal({ type: 'day', dateStr });
-  }
-
-  function handleDrop(data: CalendarDragData, dateStr: string) {
-    createEvent.mutate({
-      type: 'workout',
-      date: dateStr,
-      title: data.planDayTitle,
-      color: data.color,
-      clientId: data.clientId,
-      planDayId: data.planDayId,
-    });
-  }
-
-  function handleDeleteEvent(eventId: string) {
-    deleteEvent.mutate(eventId);
-  }
-
-  function handleMoveEvent(eventId: string, newDateStr: string) {
-    updateEvent.mutate({ eventId, input: { date: newDateStr } });
-  }
-
+  const handleDayClick = (dateStr: string) => setModal({ type: 'day', dateStr });
+  const handleDeleteEvent = (eventId: string) => deleteEvent.mutate(eventId);
+  const handleMoveEvent = (eventId: string, d: string) => updateEvent.mutate({ eventId, input: { date: d } });
   const handleMoveWeek = createWeekMoveHandler(updateEvent, events);
-
+  const { handleCopyWeek, handleCopyDay, handlePasteWeek, handlePasteDay } = createCopyPasteHandlers(
+    createEvent,
+    clipboard,
+    setClipboard,
+    events,
+  );
+  const handleClearClipboard = useCallback(() => setClipboard(null), []);
+  const handleDrop = createDropHandler(createEvent, selectedClient?.id);
   const handleSaveNote = createNoteSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleSaveReminder = createReminderSaveHandler(createEvent, modal, selectedClient?.id, setModal);
   const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
   const handleUpdateReminder = createReminderUpdateHandler(updateEvent, modal, setModal);
-
-  function handleEditEvent(event: CalendarEventData) {
-    const d = event.date instanceof Date ? event.date : new Date(event.date);
-    const dateStr = d.toISOString().slice(0, 10);
-    if (event.type === 'note') setModal({ type: 'editNote', event, dateStr });
-    else if (event.type === 'reminder') setModal({ type: 'editReminder', event, dateStr });
-  }
+  const handleEditEvent = createEditEventHandler(setModal);
 
   return {
     year,
@@ -264,6 +116,12 @@ function useCalendarLogic() {
     handleDeleteEvent,
     handleMoveEvent,
     handleMoveWeek,
+    clipboard,
+    handleCopyWeek,
+    handleCopyDay,
+    handlePasteWeek,
+    handlePasteDay,
+    handleClearClipboard,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -426,6 +284,12 @@ export function CalendarScreen(): React.JSX.Element {
     handleDeleteEvent,
     handleMoveEvent,
     handleMoveWeek,
+    clipboard,
+    handleCopyWeek,
+    handleCopyDay,
+    handlePasteWeek,
+    handlePasteDay,
+    handleClearClipboard,
     handleSaveNote,
     handleSaveReminder,
     handleUpdateNote,
@@ -454,6 +318,7 @@ export function CalendarScreen(): React.JSX.Element {
             year={year}
             month={month}
             events={events}
+            clipboard={clipboard}
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
             onGoTo={handleGoTo}
@@ -461,6 +326,11 @@ export function CalendarScreen(): React.JSX.Element {
             onDrop={handleDrop}
             onMoveEvent={handleMoveEvent}
             onMoveWeek={handleMoveWeek}
+            onCopyWeek={handleCopyWeek}
+            onPasteWeek={handlePasteWeek}
+            onCopyDay={handleCopyDay}
+            onPasteDay={handlePasteDay}
+            onClearClipboard={handleClearClipboard}
             t={t}
           />
         </View>

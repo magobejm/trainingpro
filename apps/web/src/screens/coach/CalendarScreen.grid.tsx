@@ -1,11 +1,13 @@
-import React, { useCallback, useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { Pressable, Text, View } from 'react-native';
-import { ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
+import React, { useCallback, useState } from 'react';
+import { View } from 'react-native';
+import { ClipboardPaste, Copy } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
 import type { CalendarCell } from './calendar-screen.utils';
-import { getWeeks, DAY_NAMES_ES, MONTH_NAMES_ES } from './calendar-screen.utils';
+import { getWeeks } from './calendar-screen.utils';
+import type { CalendarClipboard } from './CalendarScreen.week-row';
+import { WeekRow } from './CalendarScreen.week-row';
+import { CalendarMonthHeader, CalendarDayNames } from './CalendarScreen.month-header';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -22,6 +24,7 @@ type GridProps = {
   year: number;
   month: number;
   events: CalendarEventData[];
+  clipboard: CalendarClipboard | null;
   onPrevMonth: () => void;
   onNextMonth: () => void;
   onGoTo: (year: number, month: number) => void;
@@ -29,23 +32,88 @@ type GridProps = {
   onDrop: (data: CalendarDragData, dateStr: string) => void;
   onMoveEvent: (eventId: string, newDateStr: string) => void;
   onMoveWeek: (sourceDates: string[], targetDates: string[]) => void;
+  onCopyWeek: (dates: string[]) => void;
+  onPasteWeek: (targetDates: string[]) => void;
+  onCopyDay: (dateStr: string) => void;
+  onPasteDay: (dateStr: string) => void;
+  onClearClipboard: () => void;
   t: TFunc;
 };
+
+function DayCellCopyAction({
+  show,
+  canPaste,
+  dateStr,
+  onCopy,
+  onPaste,
+  t,
+}: {
+  show: boolean;
+  canPaste: boolean;
+  dateStr: string;
+  onCopy: (d: string) => void;
+  onPaste: (d: string) => void;
+  t: TFunc;
+}): React.JSX.Element | null {
+  if (!show) return null;
+  return (
+    <>
+      <div
+        onClick={(e) => {
+          e.stopPropagation();
+          onCopy(dateStr);
+        }}
+        title={t('coach.calendar.clipboard.copyDay')}
+        style={{ cursor: 'pointer', lineHeight: 0 }}
+      >
+        <Copy size={11} color={colors.textMuted} />
+      </div>
+      {canPaste && (
+        <div
+          onClick={(e) => {
+            e.stopPropagation();
+            onPaste(dateStr);
+          }}
+          title={t('coach.calendar.clipboard.pasteDay')}
+          style={{ cursor: 'pointer', lineHeight: 0 }}
+        >
+          <ClipboardPaste size={11} color={colors.primary} />
+        </div>
+      )}
+    </>
+  );
+}
 
 type DayCellProps = {
   cell: CalendarCell;
   isToday: boolean;
   dayEvents: CalendarEventData[];
+  clipboard: CalendarClipboard | null;
   onDayClick?: () => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>) => void;
+  onCopyDay: (dateStr: string) => void;
+  onPasteDay: (dateStr: string) => void;
   t: TFunc;
 };
 
-function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onDrop, t }: DayCellProps): React.JSX.Element {
+export function CalendarDayCell({
+  cell,
+  isToday,
+  dayEvents,
+  clipboard,
+  onDayClick,
+  onDragOver,
+  onDrop,
+  onCopyDay,
+  onPasteDay,
+  t,
+}: DayCellProps): React.JSX.Element {
   const [isDragOver, setIsDragOver] = useState(false);
+  const [isCellHover, setIsCellHover] = useState(false);
   const visibleEvents = dayEvents.slice(0, 3);
   const overflowCount = dayEvents.length - visibleEvents.length;
+  const canPasteDay = clipboard?.type === 'day';
 
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     if (e.dataTransfer.types.includes('weekdates')) {
@@ -59,7 +127,7 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
     if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsDragOver(false);
   }
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
-    if (e.dataTransfer.types.includes('weekdates')) return; // WeekRow handles it
+    if (e.dataTransfer.types.includes('weekdates')) return;
     setIsDragOver(false);
     onDrop?.(e);
   }
@@ -72,6 +140,8 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
+      onMouseEnter={() => setIsCellHover(true)}
+      onMouseLeave={() => setIsCellHover(false)}
       onClick={onDayClick}
       style={{
         borderRight: '1px solid #e2e8f0',
@@ -84,21 +154,31 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
         transition: 'background-color 0.1s',
       }}
     >
-      <div
-        style={{
-          width: 26,
-          height: 26,
-          borderRadius: 13,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: isCurrentMonth && isToday ? colors.primary : 'transparent',
-          marginBottom: 2,
-        }}
-      >
-        <span style={{ fontSize: 12, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}>
-          {cell.day}
-        </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+        <div
+          style={{
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: isCurrentMonth && isToday ? colors.primary : 'transparent',
+            flexShrink: 0,
+          }}
+        >
+          <span style={{ fontSize: 12, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}>
+            {cell.day}
+          </span>
+        </div>
+        <DayCellCopyAction
+          show={isCellHover && isCurrentMonth}
+          canPaste={canPasteDay}
+          dateStr={cell.dateStr}
+          onCopy={onCopyDay}
+          onPaste={onPasteDay}
+          t={t}
+        />
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {visibleEvents.map((ev) => (
@@ -114,294 +194,11 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
   );
 }
 
-type MonthHeaderProps = {
-  year: number;
-  month: number;
-  onPrevMonth: () => void;
-  onNextMonth: () => void;
-  onGoTo: (year: number, month: number) => void;
-};
-
-function MonthPicker({
-  currentYear,
-  currentMonth,
-  anchorTop,
-  anchorLeft,
-  onGoTo,
-  onClose,
-}: {
-  currentYear: number;
-  currentMonth: number;
-  anchorTop: number;
-  anchorLeft: number;
-  onGoTo: (year: number, month: number) => void;
-  onClose: () => void;
-}): React.JSX.Element {
-  const [pickerYear, setPickerYear] = useState(currentYear);
-  return ReactDOM.createPortal(
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-      <div
-        style={{
-          position: 'fixed',
-          top: anchorTop,
-          left: anchorLeft,
-          zIndex: 1000,
-          backgroundColor: 'white',
-          border: `1px solid ${colors.border}`,
-          borderRadius: 10,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          padding: 16,
-          minWidth: 240,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setPickerYear((y) => y - 1);
-            }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
-          >
-            {'‹'}
-          </button>
-          <span style={{ fontWeight: 'bold', fontSize: 15, color: colors.text }}>{pickerYear}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setPickerYear((y) => y + 1);
-            }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
-          >
-            {'›'}
-          </button>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
-          {MONTH_NAMES_ES.map((name, i) => {
-            const isSelected = pickerYear === currentYear && i === currentMonth;
-            return (
-              <button
-                key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGoTo(pickerYear, i);
-                  onClose();
-                }}
-                style={{
-                  border: 'none',
-                  borderRadius: 6,
-                  padding: '7px 4px',
-                  fontSize: 12,
-                  fontWeight: isSelected ? 'bold' : 'normal',
-                  cursor: 'pointer',
-                  backgroundColor: isSelected ? colors.primary : 'transparent',
-                  color: isSelected ? 'white' : colors.text,
-                }}
-              >
-                {name.slice(0, 3)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </>,
-    document.body,
-  );
-}
-
-function CalendarMonthHeader({ year, month, onPrevMonth, onNextMonth, onGoTo }: MonthHeaderProps): React.JSX.Element {
-  const [showPicker, setShowPicker] = useState(false);
-  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-
-  function handleTitleClick() {
-    if (titleRef.current) {
-      const rect = titleRef.current.getBoundingClientRect();
-      setAnchor({ top: rect.bottom + 4, left: rect.left });
-    }
-    setShowPicker((v) => !v);
-  }
-
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: 20,
-        borderBottomWidth: 1,
-        borderColor: colors.border,
-        flexShrink: 0,
-      }}
-    >
-      <div ref={titleRef} onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
-          {MONTH_NAMES_ES[month]} {year}
-        </Text>
-      </div>
-      {showPicker && anchor && (
-        <MonthPicker
-          currentYear={year}
-          currentMonth={month}
-          anchorTop={anchor.top}
-          anchorLeft={anchor.left}
-          onGoTo={onGoTo}
-          onClose={() => setShowPicker(false)}
-        />
-      )}
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Pressable
-          onPress={onPrevMonth}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: colors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: colors.bg,
-          }}
-        >
-          <ChevronLeft color={colors.textMuted} size={16} />
-        </Pressable>
-        <Pressable
-          onPress={onNextMonth}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: colors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: colors.bg,
-          }}
-        >
-          <ChevronRight color={colors.textMuted} size={16} />
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function CalendarDayNames(): React.JSX.Element {
-  return (
-    <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
-      <View style={{ width: 20, flexShrink: 0 }} />
-      {DAY_NAMES_ES.map((dayName) => (
-        <View key={dayName} style={{ flex: 1, paddingVertical: 10, alignItems: 'center' }}>
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.textMuted, letterSpacing: 0.5 }}>
-            {dayName.slice(0, 3)}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-type WeekRowProps = {
-  cells: CalendarCell[];
-  todayStr: string;
-  eventsByDate: Record<string, CalendarEventData[]>;
-  onDayClick: (dateStr: string) => void;
-  onCellDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  onCellDrop: (e: React.DragEvent<HTMLDivElement>, dateStr: string) => void;
-  onMoveWeek: (src: string[], tgt: string[]) => void;
-  t: TFunc;
-};
-
-function WeekRow({
-  cells,
-  todayStr,
-  eventsByDate,
-  onDayClick,
-  onCellDragOver,
-  onCellDrop,
-  onMoveWeek,
-  t,
-}: WeekRowProps): React.JSX.Element {
-  const [isWeekDragOver, setIsWeekDragOver] = useState(false);
-
-  function handleGripDragStart(e: React.DragEvent<HTMLDivElement>) {
-    e.dataTransfer.setData('weekDates', JSON.stringify(cells.map((c) => c.dateStr)));
-    e.dataTransfer.effectAllowed = 'move';
-  }
-  function handleWeekDragOver(e: React.DragEvent<HTMLDivElement>) {
-    if (!e.dataTransfer.types.includes('weekdates')) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    setIsWeekDragOver(true);
-  }
-  function handleWeekDragLeave(e: React.DragEvent<HTMLDivElement>) {
-    if (!e.currentTarget.contains(e.relatedTarget as Node)) setIsWeekDragOver(false);
-  }
-  function handleWeekDrop(e: React.DragEvent<HTMLDivElement>) {
-    setIsWeekDragOver(false);
-    const raw = e.dataTransfer.getData('weekDates');
-    if (!raw) return;
-    e.preventDefault();
-    e.stopPropagation();
-    onMoveWeek(
-      JSON.parse(raw) as string[],
-      cells.map((c) => c.dateStr),
-    );
-  }
-
-  return (
-    <div
-      onDragOver={handleWeekDragOver}
-      onDragLeave={handleWeekDragLeave}
-      onDrop={handleWeekDrop}
-      style={{
-        display: 'flex',
-        outline: isWeekDragOver ? '2px solid #3b82f6' : '2px solid transparent',
-        outlineOffset: '-2px',
-        transition: 'outline 0.1s',
-      }}
-    >
-      <div
-        draggable
-        onDragStart={handleGripDragStart}
-        title={t('coach.calendar.week.dragHandle')}
-        style={{
-          width: 20,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'grab',
-          flexShrink: 0,
-          backgroundColor: isWeekDragOver ? '#eff6ff' : '#fafafa',
-          borderRight: '1px solid #e2e8f0',
-        }}
-      >
-        <GripVertical size={12} color={colors.textMuted} />
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minWidth: 0 }}>
-        {cells.map((cell, i) => {
-          const dayEvents = eventsByDate[cell.dateStr] ?? [];
-          return (
-            <CalendarDayCell
-              key={i}
-              cell={cell}
-              isToday={cell.dateStr === todayStr}
-              dayEvents={dayEvents}
-              onDayClick={() => onDayClick(cell.dateStr)}
-              onDragOver={onCellDragOver}
-              onDrop={(e) => onCellDrop(e, cell.dateStr)}
-              t={t}
-            />
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export function CalendarGrid({
   year,
   month,
   events,
+  clipboard,
   onPrevMonth,
   onNextMonth,
   onGoTo,
@@ -409,6 +206,11 @@ export function CalendarGrid({
   onDrop,
   onMoveEvent,
   onMoveWeek,
+  onCopyWeek,
+  onPasteWeek,
+  onCopyDay,
+  onPasteDay,
+  onClearClipboard,
   t,
 }: GridProps): React.JSX.Element {
   const weeks = getWeeks(year, month);
@@ -448,7 +250,16 @@ export function CalendarGrid({
 
   return (
     <View style={{ flex: 1, flexDirection: 'column', backgroundColor: 'white', minWidth: 0 }}>
-      <CalendarMonthHeader year={year} month={month} onPrevMonth={onPrevMonth} onNextMonth={onNextMonth} onGoTo={onGoTo} />
+      <CalendarMonthHeader
+        year={year}
+        month={month}
+        clipboard={clipboard}
+        onPrevMonth={onPrevMonth}
+        onNextMonth={onNextMonth}
+        onGoTo={onGoTo}
+        onClearClipboard={onClearClipboard}
+        t={t}
+      />
       <CalendarDayNames />
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {weeks.map((week, weekIdx) => (
@@ -457,10 +268,15 @@ export function CalendarGrid({
             cells={week}
             todayStr={todayStr}
             eventsByDate={eventsByDate}
+            clipboard={clipboard}
             onDayClick={onDayClick}
             onCellDragOver={handleCellDragOver}
             onCellDrop={handleCellDrop}
             onMoveWeek={onMoveWeek}
+            onCopyWeek={onCopyWeek}
+            onPasteWeek={onPasteWeek}
+            onCopyDay={onCopyDay}
+            onPasteDay={onPasteDay}
             t={t}
           />
         ))}

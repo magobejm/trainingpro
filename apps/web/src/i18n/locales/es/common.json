@@ -883,5 +883,12 @@
   "coach.calendar.note.editTitle": "Editar Nota",
   "coach.calendar.reminder.editTitle": "Editar Recordatorio",
   "coach.calendar.saveChanges": "Guardar cambios",
-  "coach.calendar.week.dragHandle": "Arrastrar semana"
+  "coach.calendar.week.dragHandle": "Arrastrar semana",
+  "coach.calendar.clipboard.weekCopied": "Semana copiada",
+  "coach.calendar.clipboard.dayCopied": "Día copiado",
+  "coach.calendar.clipboard.clear": "Limpiar",
+  "coach.calendar.clipboard.copyWeek": "Copiar semana",
+  "coach.calendar.clipboard.pasteWeek": "Pegar semana",
+  "coach.calendar.clipboard.copyDay": "Copiar día",
+  "coach.calendar.clipboard.pasteDay": "Pegar día"
 }

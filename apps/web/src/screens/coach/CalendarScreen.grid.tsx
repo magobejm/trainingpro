@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
+import ReactDOM from 'react-dom';
 import { Pressable, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
@@ -23,6 +24,7 @@ type GridProps = {
   events: CalendarEventData[];
   onPrevMonth: () => void;
   onNextMonth: () => void;
+  onGoTo: (year: number, month: number) => void;
   onDayClick: (dateStr: string) => void;
   onDrop: (data: CalendarDragData, dateStr: string) => void;
   onMoveEvent: (eventId: string, newDateStr: string) => void;
@@ -112,9 +114,114 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
   );
 }
 
-type MonthHeaderProps = { year: number; month: number; onPrevMonth: () => void; onNextMonth: () => void };
+type MonthHeaderProps = {
+  year: number;
+  month: number;
+  onPrevMonth: () => void;
+  onNextMonth: () => void;
+  onGoTo: (year: number, month: number) => void;
+};
 
-function CalendarMonthHeader({ year, month, onPrevMonth, onNextMonth }: MonthHeaderProps): React.JSX.Element {
+function MonthPicker({
+  currentYear,
+  currentMonth,
+  anchorTop,
+  anchorLeft,
+  onGoTo,
+  onClose,
+}: {
+  currentYear: number;
+  currentMonth: number;
+  anchorTop: number;
+  anchorLeft: number;
+  onGoTo: (year: number, month: number) => void;
+  onClose: () => void;
+}): React.JSX.Element {
+  const [pickerYear, setPickerYear] = useState(currentYear);
+  return ReactDOM.createPortal(
+    <>
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
+      <div
+        style={{
+          position: 'fixed',
+          top: anchorTop,
+          left: anchorLeft,
+          zIndex: 1000,
+          backgroundColor: 'white',
+          border: `1px solid ${colors.border}`,
+          borderRadius: 10,
+          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+          padding: 16,
+          minWidth: 240,
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setPickerYear((y) => y - 1);
+            }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
+          >
+            {'‹'}
+          </button>
+          <span style={{ fontWeight: 'bold', fontSize: 15, color: colors.text }}>{pickerYear}</span>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setPickerYear((y) => y + 1);
+            }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
+          >
+            {'›'}
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+          {MONTH_NAMES_ES.map((name, i) => {
+            const isSelected = pickerYear === currentYear && i === currentMonth;
+            return (
+              <button
+                key={i}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onGoTo(pickerYear, i);
+                  onClose();
+                }}
+                style={{
+                  border: 'none',
+                  borderRadius: 6,
+                  padding: '7px 4px',
+                  fontSize: 12,
+                  fontWeight: isSelected ? 'bold' : 'normal',
+                  cursor: 'pointer',
+                  backgroundColor: isSelected ? colors.primary : 'transparent',
+                  color: isSelected ? 'white' : colors.text,
+                }}
+              >
+                {name.slice(0, 3)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>,
+    document.body,
+  );
+}
+
+function CalendarMonthHeader({ year, month, onPrevMonth, onNextMonth, onGoTo }: MonthHeaderProps): React.JSX.Element {
+  const [showPicker, setShowPicker] = useState(false);
+  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
+  const titleRef = useRef<HTMLDivElement>(null);
+
+  function handleTitleClick() {
+    if (titleRef.current) {
+      const rect = titleRef.current.getBoundingClientRect();
+      setAnchor({ top: rect.bottom + 4, left: rect.left });
+    }
+    setShowPicker((v) => !v);
+  }
+
   return (
     <View
       style={{
@@ -127,9 +234,21 @@ function CalendarMonthHeader({ year, month, onPrevMonth, onNextMonth }: MonthHea
         flexShrink: 0,
       }}
     >
-      <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
-        {MONTH_NAMES_ES[month]} {year}
-      </Text>
+      <div ref={titleRef} onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
+        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
+          {MONTH_NAMES_ES[month]} {year}
+        </Text>
+      </div>
+      {showPicker && anchor && (
+        <MonthPicker
+          currentYear={year}
+          currentMonth={month}
+          anchorTop={anchor.top}
+          anchorLeft={anchor.left}
+          onGoTo={onGoTo}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <Pressable
           onPress={onPrevMonth}
@@ -285,6 +404,7 @@ export function CalendarGrid({
   events,
   onPrevMonth,
   onNextMonth,
+  onGoTo,
   onDayClick,
   onDrop,
   onMoveEvent,
@@ -328,7 +448,7 @@ export function CalendarGrid({
 
   return (
     <View style={{ flex: 1, flexDirection: 'column', backgroundColor: 'white', minWidth: 0 }}>
-      <CalendarMonthHeader year={year} month={month} onPrevMonth={onPrevMonth} onNextMonth={onNextMonth} />
+      <CalendarMonthHeader year={year} month={month} onPrevMonth={onPrevMonth} onNextMonth={onNextMonth} onGoTo={onGoTo} />
       <CalendarDayNames />
       <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
         {weeks.map((week, weekIdx) => (

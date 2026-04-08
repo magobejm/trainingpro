@@ -200,6 +200,11 @@ function useCalendarLogic() {
 
   const handleNextMonth = () => moveToNextMonth(month, setMonth, setYear);
 
+  const handleGoTo = useCallback((y: number, m: number) => {
+    setYear(y);
+    setMonth(m);
+  }, []);
+
   function handleDayClick(dateStr: string) {
     setModal({ type: 'day', dateStr });
   }
@@ -253,6 +258,7 @@ function useCalendarLogic() {
     updateEvent,
     handlePrevMonth,
     handleNextMonth,
+    handleGoTo,
     handleDayClick,
     handleDrop,
     handleDeleteEvent,
@@ -414,6 +420,7 @@ export function CalendarScreen(): React.JSX.Element {
     updateEvent,
     handlePrevMonth,
     handleNextMonth,
+    handleGoTo,
     handleDayClick,
     handleDrop,
     handleDeleteEvent,
@@ -449,6 +456,7 @@ export function CalendarScreen(): React.JSX.Element {
             events={events}
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
+            onGoTo={handleGoTo}
             onDayClick={handleDayClick}
             onDrop={handleDrop}
             onMoveEvent={handleMoveEvent}

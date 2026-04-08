@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, GripVertical } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
+import type { CalendarCell } from './calendar-screen.utils';
 import { getWeeks, DAY_NAMES_ES, MONTH_NAMES_ES } from './calendar-screen.utils';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -25,12 +26,12 @@ type GridProps = {
   onDayClick: (dateStr: string) => void;
   onDrop: (data: CalendarDragData, dateStr: string) => void;
   onMoveEvent: (eventId: string, newDateStr: string) => void;
-  onMoveWeek: (sourceDates: (string | null)[], targetDates: (string | null)[]) => void;
+  onMoveWeek: (sourceDates: string[], targetDates: string[]) => void;
   t: TFunc;
 };
 
 type DayCellProps = {
-  cell: { day: number | null; dateStr?: string | null };
+  cell: CalendarCell;
   isToday: boolean;
   dayEvents: CalendarEventData[];
   onDayClick?: () => void;
@@ -61,7 +62,9 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
     onDrop?.(e);
   }
 
-  const bgColor = cell.day === null ? '#fafafa' : isDragOver ? '#dbeafe' : isToday ? colors.today : 'white';
+  const { isCurrentMonth } = cell;
+  const bgColor = !isCurrentMonth ? colors.bg : isDragOver ? '#dbeafe' : isToday ? colors.today : 'white';
+  const dayColor = !isCurrentMonth ? '#b0bec5' : isToday ? 'white' : colors.text;
   return (
     <div
       onDragOver={handleDragOver}
@@ -74,41 +77,37 @@ function CalendarDayCell({ cell, isToday, dayEvents, onDayClick, onDragOver, onD
         minHeight: 110,
         padding: '6px 4px',
         backgroundColor: bgColor,
-        cursor: cell.dateStr ? 'pointer' : 'default',
+        cursor: onDayClick ? 'pointer' : 'default',
         position: 'relative',
         transition: 'background-color 0.1s',
       }}
     >
-      {cell.day !== null && (
-        <>
-          <div
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: 13,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: isToday ? colors.primary : 'transparent',
-              marginBottom: 2,
-            }}
-          >
-            <span style={{ fontSize: 12, fontWeight: isToday ? 'bold' : 'normal', color: isToday ? 'white' : colors.text }}>
-              {cell.day}
-            </span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {visibleEvents.map((ev) => (
-              <EventChip key={ev.id} event={ev} />
-            ))}
-            {overflowCount > 0 && (
-              <span style={{ fontSize: 10, color: colors.textMuted, paddingLeft: 4 }}>
-                {t('coach.calendar.grid.more', { count: overflowCount })}
-              </span>
-            )}
-          </div>
-        </>
-      )}
+      <div
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: 13,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: isCurrentMonth && isToday ? colors.primary : 'transparent',
+          marginBottom: 2,
+        }}
+      >
+        <span style={{ fontSize: 12, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}>
+          {cell.day}
+        </span>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {visibleEvents.map((ev) => (
+          <EventChip key={ev.id} event={ev} muted={!isCurrentMonth} />
+        ))}
+        {overflowCount > 0 && (
+          <span style={{ fontSize: 10, color: colors.textMuted, paddingLeft: 4 }}>
+            {t('coach.calendar.grid.more', { count: overflowCount })}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -183,13 +182,13 @@ function CalendarDayNames(): React.JSX.Element {
 }
 
 type WeekRowProps = {
-  cells: Array<{ day: number | null; dateStr: string | null }>;
+  cells: CalendarCell[];
   todayStr: string;
   eventsByDate: Record<string, CalendarEventData[]>;
   onDayClick: (dateStr: string) => void;
   onCellDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
   onCellDrop: (e: React.DragEvent<HTMLDivElement>, dateStr: string) => void;
-  onMoveWeek: (src: (string | null)[], tgt: (string | null)[]) => void;
+  onMoveWeek: (src: string[], tgt: string[]) => void;
   t: TFunc;
 };
 
@@ -225,7 +224,7 @@ function WeekRow({
     e.preventDefault();
     e.stopPropagation();
     onMoveWeek(
-      JSON.parse(raw) as (string | null)[],
+      JSON.parse(raw) as string[],
       cells.map((c) => c.dateStr),
     );
   }
@@ -261,16 +260,16 @@ function WeekRow({
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minWidth: 0 }}>
         {cells.map((cell, i) => {
-          const dayEvents = cell.dateStr ? (eventsByDate[cell.dateStr] ?? []) : [];
+          const dayEvents = eventsByDate[cell.dateStr] ?? [];
           return (
             <CalendarDayCell
               key={i}
               cell={cell}
               isToday={cell.dateStr === todayStr}
               dayEvents={dayEvents}
-              onDayClick={cell.dateStr ? () => onDayClick(cell.dateStr!) : undefined}
-              onDragOver={cell.dateStr ? onCellDragOver : undefined}
-              onDrop={cell.dateStr ? (e) => onCellDrop(e, cell.dateStr!) : undefined}
+              onDayClick={() => onDayClick(cell.dateStr)}
+              onDragOver={onCellDragOver}
+              onDrop={(e) => onCellDrop(e, cell.dateStr)}
               t={t}
             />
           );
@@ -350,7 +349,7 @@ export function CalendarGrid({
   );
 }
 
-function EventChip({ event }: { event: CalendarEventData }): React.JSX.Element {
+function EventChip({ event, muted = false }: { event: CalendarEventData; muted?: boolean }): React.JSX.Element {
   const colorObj = (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
   const label = event.title ?? event.planDayTitle ?? (event.type === 'reminder' ? event.content : null) ?? '—';
   const displayText = event.time ? [event.time, label].join(' ') : label;
@@ -378,6 +377,7 @@ function EventChip({ event }: { event: CalendarEventData }): React.JSX.Element {
         whiteSpace: 'nowrap',
         maxWidth: '100%',
         cursor: 'grab',
+        opacity: muted ? 0.5 : 1,
       }}
     >
       {displayText}

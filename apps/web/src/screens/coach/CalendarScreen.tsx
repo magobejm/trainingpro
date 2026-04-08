@@ -13,7 +13,7 @@ import {
 import type { ClientView } from '../../data/hooks/useClientsQuery';
 import type { CalendarDragData, CalendarEventData, RoutineDayCard } from './calendar-screen.types';
 import { DEFAULT_COLOR } from './calendar-screen.types';
-import { monthRangeDates } from './calendar-screen.utils';
+import { gridRangeDates } from './calendar-screen.utils';
 import { CalendarSidebar } from './CalendarScreen.sidebar';
 import { CalendarGrid } from './CalendarScreen.grid';
 import { DayDetailModal, AddNoteModal, AddReminderModal } from './CalendarScreen.modals';
@@ -127,7 +127,7 @@ function createNoteUpdateHandler(
 }
 
 function createWeekMoveHandler(updateEvent: ReturnType<typeof useUpdateCalendarEventMutation>, events: CalendarEventData[]) {
-  return (sourceDates: (string | null)[], targetDates: (string | null)[]) => {
+  return (sourceDates: string[], targetDates: string[]) => {
     for (let i = 0; i < 7; i++) {
       const src = sourceDates[i];
       const tgt = targetDates[i];
@@ -169,7 +169,7 @@ function useCalendarLogic() {
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
 
-  const { dateFrom, dateTo } = monthRangeDates(year, month);
+  const { dateFrom, dateTo } = gridRangeDates(year, month);
   const clientsQuery = useClientsQuery();
   const objectivesQuery = useClientObjectivesQuery();
   const clients = clientsQuery.data ?? [];

@@ -14,6 +14,7 @@ import { CreateClientResultBanner } from './components/CreateClientResultBanner'
 import { EmptyClientSelectionPanel } from './components/EmptyClientSelectionPanel';
 import { useClientCreateForm } from './useClientCreateForm';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
+import { useProgressContextStore } from '../../store/progressContext.store';
 
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
@@ -38,21 +39,22 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const refs = useClientsDataRefs();
   const state = useClientsViewState();
   const consumeClientId = useRoutinePlannerContextStore((state) => state.consumeClientId);
+  const consumeReturnClientId = useProgressContextStore((state) => state.consumeReturnClientId);
   useEffect(() => {
     const clientIdFromPlanner = consumeClientId();
     if (clientIdFromPlanner) {
       state.setSelectedClientId(clientIdFromPlanner);
       state.setScreenMode('profile');
+      return;
     }
-  }, [consumeClientId]);
-  const selectedClientName = resolveSelectedClientName(
-    refs.clientsQuery.data ?? [],
-    state.selectedClientId,
-  );
-  const selectedClient = resolveSelectedClient(
-    refs.clientsQuery.data ?? [],
-    state.selectedClientId,
-  );
+    const clientIdFromProgress = consumeReturnClientId();
+    if (clientIdFromProgress) {
+      state.setSelectedClientId(clientIdFromProgress);
+      state.setScreenMode('profile');
+    }
+  }, [consumeClientId, consumeReturnClientId]);
+  const selectedClientName = resolveSelectedClientName(refs.clientsQuery.data ?? [], state.selectedClientId);
+  const selectedClient = resolveSelectedClient(refs.clientsQuery.data ?? [], state.selectedClientId);
   return buildClientsViewModel(refs, selectedClientName, selectedClient, state, onRouteChange, t);
 }
 
@@ -148,10 +150,7 @@ function ClientsView(props: ViewProps): React.JSX.Element {
 }
 
 function renderMainContent(props: ViewProps): React.JSX.Element {
-  if (
-    (props.screenMode === 'profile' || props.screenMode === 'profileEdit') &&
-    props.selectedClientId
-  ) {
+  if ((props.screenMode === 'profile' || props.screenMode === 'profileEdit') && props.selectedClientId) {
     return renderProfilePage(props);
   }
   return (
@@ -275,9 +274,7 @@ function renderProfileEdit(props: ViewProps): React.JSX.Element {
 function renderProfilePage(props: ViewProps): React.JSX.Element {
   const currentLabel = props.selectedClientName || props.t('coach.clients.title');
   const lastCrumb =
-    props.screenMode === 'profileEdit'
-      ? props.t('coach.clientProfile.edit.title')
-      : props.t('coach.clientProfile.title');
+    props.screenMode === 'profileEdit' ? props.t('coach.clientProfile.edit.title') : props.t('coach.clientProfile.title');
   return (
     <>
       <View style={styles.breadcrumbCard}>
@@ -287,9 +284,7 @@ function renderProfilePage(props: ViewProps): React.JSX.Element {
         >
           <Text style={styles.backLabel}>{props.t('common.back')}</Text>
         </Pressable>
-        <Text style={styles.breadcrumb}>
-          {formatBreadcrumb([props.t('coach.clients.title'), currentLabel, lastCrumb])}
-        </Text>
+        <Text style={styles.breadcrumb}>{formatBreadcrumb([props.t('coach.clients.title'), currentLabel, lastCrumb])}</Text>
       </View>
       <View style={styles.profileCard}>
         {props.screenMode === 'profileEdit' ? renderProfileEdit(props) : renderProfile(props)}

@@ -38,7 +38,7 @@ export type ShellNavItem = {
 const SHELL_ROUTE_STORAGE_KEY = 'trainerpro.shell.route';
 
 export function usePersistentShellRoute(
-  activeRole: 'admin' | 'client' | 'coach',
+  activeRole: 'admin' | 'coach',
   navItems: ShellNavItem[],
 ): [ShellRoute, (route: ShellRoute) => void] {
   const defaultRoute = useMemo(() => resolveDefaultRoute(activeRole), [activeRole]);
@@ -67,8 +67,9 @@ function ensureAllowedRoute(route: ShellRoute, navItems: ShellNavItem[], default
   return navItems[0]?.id ?? defaultRoute;
 }
 
-function resolveDefaultRoute(role: 'admin' | 'client' | 'coach'): ShellRoute {
-  return role === 'admin' ? 'admin.coaches' : 'coach.clients';
+function resolveDefaultRoute(role: 'admin' | 'coach'): ShellRoute {
+  if (role === 'admin') return 'admin.coaches';
+  return 'coach.clients';
 }
 
 function isRouteAllowed(route: ShellRoute, navItems: ShellNavItem[]): boolean {

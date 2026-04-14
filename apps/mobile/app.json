@@ -7,7 +7,9 @@
     "platforms": ["ios", "android", "web"],
     "web": {
       "bundler": "metro",
-      "output": "single"
-    }
+      "output": "single",
+      "backgroundColor": "#07000f"
+    },
+    "backgroundColor": "#07000f"
   }
 }

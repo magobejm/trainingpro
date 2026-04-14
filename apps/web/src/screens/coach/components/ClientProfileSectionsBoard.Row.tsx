@@ -8,6 +8,7 @@ type Props = {
   item: SectionItem;
   onArchive: () => void;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
+  onOpenProgress?: () => void;
   onOpenTrainingPlanner: () => void;
   rowIndex: number;
   onToggleMenu: () => void;
@@ -24,6 +25,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
     <div {...dragProps} style={rowStyle}>
       <RowMain
         item={props.item}
+        onOpenProgress={props.onOpenProgress}
         onOpenTrainingPlanner={props.onOpenTrainingPlanner}
         onToggleMenu={props.onToggleMenu}
         t={props.t}
@@ -45,6 +47,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
 
 function RowMain(props: {
   item: SectionItem;
+  onOpenProgress?: () => void;
   onOpenTrainingPlanner: () => void;
   onToggleMenu: () => void;
   t: Props['t'];
@@ -57,7 +60,10 @@ function RowMain(props: {
       <View style={[styles.iconShell, { backgroundColor: props.item.badgeColor }]}>
         {props.item.icon({ color: props.item.iconColor || '#64748b', size: 18 })}
       </View>
-      <Pressable onPress={() => onOpenSection(props.item.id, props.onOpenTrainingPlanner)} style={styles.rowText}>
+      <Pressable
+        onPress={() => onOpenSection(props.item.id, props.onOpenTrainingPlanner, props.onOpenProgress)}
+        style={styles.rowText}
+      >
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
         <Text style={styles.rowSubtitle}>{subtitle}</Text>
       </Pressable>
@@ -105,8 +111,9 @@ function readDragProps(
   };
 }
 
-function onOpenSection(id: SectionId, onOpenTrainingPlanner: () => void): void {
+function onOpenSection(id: SectionId, onOpenTrainingPlanner: () => void, onOpenProgress?: () => void): void {
   if (id === 'training') onOpenTrainingPlanner();
+  if (id === 'progress') onOpenProgress?.();
 }
 
 function readSubtitle(item: SectionItem, trainingPlanName: string | undefined, t: Props['t']): string {

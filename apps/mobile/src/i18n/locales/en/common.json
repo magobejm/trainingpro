@@ -122,5 +122,21 @@
   "coach.notifications.topic.incident_critical": "Critical incident",
   "coach.notifications.topic.client_inactive_3d": "Client inactive 3 days",
   "coach.notifications.topic.adherence_low_weekly": "Low weekly adherence",
-  "coach.notifications.topic.client_reminder": "Client reminder"
+  "coach.notifications.topic.client_reminder": "Client reminder",
+  "mobile.client.back": "Back",
+  "mobile.client.defaultGoal": "No goal defined",
+  "mobile.client.hub.diet": "Diet",
+  "mobile.client.hub.mood": "Mood",
+  "mobile.client.hub.progress": "Progress",
+  "mobile.client.hub.routine": "Routine",
+  "mobile.client.profile.active": "Active Client",
+  "mobile.client.profile.height": "Height",
+  "mobile.client.profile.notes": "Trainer notes",
+  "mobile.client.profile.objective": "Goal",
+  "mobile.client.profile.title": "My Profile",
+  "mobile.client.profile.weight": "Weight",
+  "mobile.client.routine.days": "training days",
+  "mobile.client.routine.mesocycle": "Current Mesocycle",
+  "mobile.client.routine.title": "My Routine",
+  "mobile.client.routine.empty": "You don't have a routine assigned"
 }

@@ -10,12 +10,12 @@ type Props = {
 };
 
 const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  input: '#f3f7fd',
-  muted: '#627285',
-  text: '#0e1a2f',
+  action: '#ec4899',
+  bg: '#07000f',
+  card: 'rgba(0,0,0,0.55)',
+  input: 'rgba(20,0,50,0.8)',
+  muted: 'rgba(196,181,253,0.7)',
+  text: '#ffffff',
   white: '#ffffff',
 };
 
@@ -78,11 +78,7 @@ function useSyncReportFields(
   }, [data]);
 }
 
-function buildReportInput(
-  fields: ReturnType<typeof useWeeklyReportFields>,
-  reportDate: string,
-  sourceSessionId?: string,
-) {
+function buildReportInput(fields: ReturnType<typeof useWeeklyReportFields>, reportDate: string, sourceSessionId?: string) {
   return {
     adherencePercent: toNumber(fields.adherencePercent),
     energy: toNumber(fields.energy),
@@ -114,11 +110,7 @@ function MetricsForm(props: ViewModel) {
     <View style={styles.card}>
       <Field label={props.t('client.report.mood')} value={props.mood} onChange={props.setMood} />
       <Field label={props.t('client.report.energy')} value={props.energy} onChange={props.setEnergy} />
-      <Field
-        label={props.t('client.report.sleepHours')}
-        value={props.sleepHours}
-        onChange={props.setSleepHours}
-      />
+      <Field label={props.t('client.report.sleepHours')} value={props.sleepHours} onChange={props.setSleepHours} />
       <Field
         label={props.t('client.report.adherence')}
         value={props.adherencePercent}

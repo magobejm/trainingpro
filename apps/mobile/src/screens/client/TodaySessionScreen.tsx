@@ -2,7 +2,16 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
-import { COLORS } from '../../constants/colors';
+
+const COLORS = {
+  action: '#ec4899',
+  bg: '#07000f',
+  card: 'rgba(0,0,0,0.55)',
+  cardBorder: 'rgba(139,92,246,0.2)',
+  muted: 'rgba(196,181,253,0.7)',
+  text: '#ffffff',
+  white: '#ffffff',
+};
 import type { SessionView } from '../../data/hooks/useTodaySession';
 import {
   useFinishSessionMutation,
@@ -22,9 +31,7 @@ export function TodaySessionScreen(): React.JSX.Element {
   const [finishOpen, setFinishOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const handlers = useTodaySessionHandlers(DEMO_SESSION_ID, setFinishOpen, setReportOpen);
-  return (
-    <TodaySessionContent finishOpen={finishOpen} handlers={handlers} reportOpen={reportOpen} />
-  );
+  return <TodaySessionContent finishOpen={finishOpen} handlers={handlers} reportOpen={reportOpen} />;
 }
 
 type TodaySessionContentProps = {
@@ -40,10 +47,7 @@ function TodaySessionContent(props: TodaySessionContentProps): React.JSX.Element
       <Pressable onPress={props.handlers.onStart} style={styles.button}>
         <StartButtonLabel />
       </Pressable>
-      <SessionItemsCard
-        items={props.handlers.data.sessionQuery.data?.items ?? []}
-        onLogSet={props.handlers.onLogSet}
-      />
+      <SessionItemsCard items={props.handlers.data.sessionQuery.data?.items ?? []} onLogSet={props.handlers.onLogSet} />
       <RestTimerBlock />
       <Pressable onPress={props.handlers.onOpenFinish} style={styles.button}>
         <FinishButtonLabel />
@@ -55,10 +59,7 @@ function TodaySessionContent(props: TodaySessionContentProps): React.JSX.Element
         visible={props.finishOpen}
       />
       <Modal animationType={REPORT_MODAL_ANIMATION} transparent visible={props.reportOpen}>
-        <WeeklyReportScreen
-          onClose={props.handlers.onCloseWeeklyReport}
-          sourceSessionId={DEMO_SESSION_ID}
-        />
+        <WeeklyReportScreen onClose={props.handlers.onCloseWeeklyReport} sourceSessionId={DEMO_SESSION_ID} />
       </Modal>
     </ScrollView>
   );
@@ -192,14 +193,16 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
+    borderColor: COLORS.cardBorder,
     borderRadius: 14,
+    borderWidth: 1,
     gap: 14,
     padding: 16,
     width: '100%',
   },
   checkBtn: {
     alignItems: 'center',
-    backgroundColor: '#e6edf5',
+    backgroundColor: 'rgba(109,40,217,0.2)',
     borderRadius: 8,
     flex: 1,
     justifyContent: 'center',
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
   },
   ghost: {
     alignItems: 'center',
-    borderColor: '#d8e1ee',
+    borderColor: 'rgba(139,92,246,0.3)',
     borderRadius: 8,
     borderWidth: 1,
     justifyContent: 'center',
@@ -230,12 +233,12 @@ const styles = StyleSheet.create({
     width: 120,
   },
   ghostLabel: {
-    color: COLORS.text,
+    color: COLORS.muted,
     fontSize: 12,
     fontWeight: '700',
   },
   item: {
-    borderColor: '#dce5f2',
+    borderColor: 'rgba(139,92,246,0.2)',
     borderRadius: 10,
     borderWidth: 1,
     gap: 6,

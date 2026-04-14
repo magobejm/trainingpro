@@ -20,6 +20,7 @@ import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 type Props = {
   clientId: string;
   hasTrainingPlan: boolean;
+  onOpenProgress?: () => void;
   onOpenTrainingPlanner: () => void;
   onUnassignTrainingPlan: () => void;
   t: (key: string, params?: Record<string, number | string>) => string;
@@ -58,9 +59,7 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
         t={props.t}
       />
       <View style={styles.mainList}>
-        {lists.activeSections.map((item, index) =>
-          renderRow(item, index, lists.activeSections.length, props, vm),
-        )}
+        {lists.activeSections.map((item, index) => renderRow(item, index, lists.activeSections.length, props, vm))}
       </View>
       <ClientProfileArchivedDrawer
         archived={lists.archivedSections}
@@ -82,8 +81,7 @@ function useBoardViewModel(clientId: string): BoardViewModel {
     onArchive: (id) => saveItems(mutation, archiveSection(items, id), ui.setOpenMenuId),
     onCloseArchived: () => ui.setShowArchivedDrawer(false),
     onDropArchive: (sourceId) => onDropArchive(items, sourceId, mutation, ui.setOpenMenuId),
-    onDropReorderByIndex: (sourceIndex, targetIndex) =>
-      onDropReorderByIndex(items, sourceIndex, targetIndex, mutation),
+    onDropReorderByIndex: (sourceIndex, targetIndex) => onDropReorderByIndex(items, sourceIndex, targetIndex, mutation),
     onRestore: (id) => saveItems(mutation, restoreSection(items, id), ui.setOpenMenuId),
     onToggleArchived: () => ui.setShowArchivedDrawer((value) => !value),
     onToggleMenu: (id) => ui.setOpenMenuId(ui.openMenuId === id ? null : id),
@@ -98,13 +96,7 @@ function useBoardUiState(): BoardUiState {
   return { openMenuId, setOpenMenuId, setShowArchivedDrawer, showArchivedDrawer };
 }
 
-function renderRow(
-  item: SectionItem,
-  index: number,
-  total: number,
-  props: Props,
-  vm: BoardViewModel,
-): React.JSX.Element {
+function renderRow(item: SectionItem, index: number, total: number, props: Props, vm: BoardViewModel): React.JSX.Element {
   return (
     <ClientProfileSectionRow
       key={item.id}
@@ -112,6 +104,7 @@ function renderRow(
       item={item}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
+      onOpenProgress={props.onOpenProgress}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={() => vm.onToggleMenu(item.id)}
       onUnassignTrainingPlan={props.onUnassignTrainingPlan}

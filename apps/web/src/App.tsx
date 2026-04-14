@@ -3,7 +3,6 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Dumbbell,
   Apple,
-  LineChart,
   AlertCircle,
   MessageSquare,
   GraduationCap,
@@ -79,7 +78,7 @@ export function App(): React.JSX.Element {
 }
 
 function ShellSidebar(props: {
-  activeRole: 'admin' | 'client' | 'coach';
+  activeRole: 'admin' | 'coach';
   navItems: ShellNavItem[];
   route: ShellRoute;
   setRoute: (r: ShellRoute) => void;
@@ -99,12 +98,12 @@ function ShellSidebar(props: {
   );
 }
 
-function Shell(props: { activeRole: 'admin' | 'client' | 'coach'; onLogout: () => Promise<void> }): React.JSX.Element {
+function Shell(props: { activeRole: 'admin' | 'coach'; onLogout: () => Promise<void> }): React.JSX.Element {
   const vm = useShellViewModel(props.activeRole);
   return <ShellView {...vm} onLogout={props.onLogout} />;
 }
 
-function useShellViewModel(activeRole: 'admin' | 'client' | 'coach') {
+function useShellViewModel(activeRole: 'admin' | 'coach') {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
   const clearRoutinePlannerContext = useRoutinePlannerContextStore((state) => state.clear);
@@ -120,7 +119,7 @@ function useShellViewModel(activeRole: 'admin' | 'client' | 'coach') {
 }
 
 function ShellView(props: {
-  activeRole: 'admin' | 'client' | 'coach';
+  activeRole: 'admin' | 'coach';
   email: string;
   navItems: ShellNavItem[];
   onLogout: () => Promise<void>;
@@ -145,7 +144,7 @@ function ShellView(props: {
 }
 
 function ShellContentArea(props: {
-  activeRole: 'admin' | 'client' | 'coach';
+  activeRole: 'admin' | 'coach';
   route: ShellRoute;
   setRoute: (route: ShellRoute) => void;
   t: (key: string) => string;
@@ -212,7 +211,7 @@ function renderNavButtons(
 
 function resolveRouteScreen(
   route: ShellRoute,
-  role: 'admin' | 'client' | 'coach',
+  role: 'admin' | 'coach',
   setRoute: (route: ShellRoute) => void,
 ): React.JSX.Element {
   if (role === 'admin') {
@@ -223,7 +222,9 @@ function resolveRouteScreen(
 
 function resolveCoachRouteScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): React.JSX.Element {
   const coachScreen =
-    resolveCoachLibraryScreen(route, setRoute) ?? resolveCoachBuilderScreen(route) ?? resolveCoachMonitoringScreen(route);
+    resolveCoachLibraryScreen(route, setRoute) ??
+    resolveCoachBuilderScreen(route) ??
+    resolveCoachMonitoringScreen(route, setRoute);
   return coachScreen ?? <ClientsScreen onRouteChange={setRoute} />;
 }
 
@@ -252,8 +253,8 @@ function resolveCoachBuilderScreen(route: ShellRoute): null | React.JSX.Element 
   return null;
 }
 
-function resolveCoachMonitoringScreen(route: ShellRoute): null | React.JSX.Element {
-  if (route === 'coach.progress') return <ProgressScreen />;
+function resolveCoachMonitoringScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
+  if (route === 'coach.progress') return <ProgressScreen onRouteChange={setRoute} />;
   if (route === 'coach.evaluator') return <TechniqueEvaluatorScreen />;
   if (route === 'coach.incidents') return <IncidentsScreen />;
   if (route === 'coach.chat') return <ChatScreen />;
@@ -272,7 +273,7 @@ async function clearAuthContext(clearSession: () => void, clearQueryCache: () =>
   }
 }
 
-function resolveNavItems(role: 'admin' | 'client' | 'coach'): ShellNavItem[] {
+function resolveNavItems(role: 'admin' | 'coach'): ShellNavItem[] {
   if (role === 'admin') return resolveAdminNavItems();
   return resolveCoachNavItems();
 }
@@ -323,12 +324,6 @@ function resolveCoachNavItems(): ShellNavItem[] {
       badgeColor: 'rgba(249, 115, 22, 0.1)',
     },
     {
-      icon: (p) => <LineChart {...p} />,
-      id: 'coach.progress',
-      labelKey: 'app.nav.coach.progress',
-      badgeColor: 'rgba(16, 185, 129, 0.1)',
-    },
-    {
       icon: (p) => <BarChart2 {...p} />,
       id: 'coach.evaluator',
       labelKey: 'app.nav.coach.evaluator',
@@ -369,7 +364,7 @@ function resolveCoachNavItems(): ShellNavItem[] {
 
 function isSupportedRole(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  role: 'admin' | 'client' | 'coach' | null | any,
-): role is 'admin' | 'client' | 'coach' {
-  return role === 'admin' || role === 'coach' || role === 'client';
+  role: 'admin' | 'coach' | null | any,
+): role is 'admin' | 'coach' {
+  return role === 'admin' || role === 'coach';
 }

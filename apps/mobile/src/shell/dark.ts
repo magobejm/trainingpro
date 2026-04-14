@@ -1,0 +1,15 @@
+export const DARK = {
+  bg: '#07000f',
+  card: 'rgba(0,0,0,0.55)',
+  cardBorder: 'rgba(139,92,246,0.2)',
+  text: '#ffffff',
+  textMuted: 'rgba(196,181,253,0.8)',
+  accent: '#ec4899',
+  accentBg: 'rgba(236,72,153,0.15)',
+  purpleBg: 'rgba(109,40,217,0.2)',
+  barBg: 'rgba(0,0,0,0.85)',
+  barBorder: 'rgba(109,40,217,0.5)',
+  inputBg: 'rgba(20,0,50,0.8)',
+  inputBorder: 'rgba(139,92,246,0.35)',
+  error: '#f87171',
+};

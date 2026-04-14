@@ -17,6 +17,7 @@ import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-prof
 import { type FormErrors, validateClientProfileForm } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
+import { useProgressContextStore } from '../../store/progressContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import {
   archiveClient,
@@ -49,6 +50,7 @@ function useClientProfileModel(
   const objectivesQuery = useClientObjectivesQuery();
   const openForView = useRoutinePlannerContextStore((state) => state.openForView);
   const prepareClientAssignment = useRoutinePlannerContextStore((state) => state.prepareClientAssignment);
+  const openProgressForClient = useProgressContextStore((state) => state.openForClient);
   const mutations = useProfileMutations(clientId);
   const state = useProfileState();
   useSyncFormFromQuery(query.data, state.setForm, state.setErrors, state.setNoteDraft);
@@ -59,6 +61,7 @@ function useClientProfileModel(
     query,
     objectives: objectivesQuery.data ?? [],
     openForView,
+    openProgressForClient,
     prepareClientAssignment,
     ...mutations,
     ...state,
@@ -126,6 +129,7 @@ interface ViewModelInput {
   onOpenEditScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
   openForView: (templateId: string, clientId?: string, clientDisplayName?: string) => void;
+  openProgressForClient: (clientId: string, clientDisplayName: string) => void;
   prepareClientAssignment: (clientId: string, clientDisplayName: string) => void;
   query: ReturnType<typeof useClientByIdQuery>;
   objectives: Array<{ id: string; label: string }>;
@@ -148,6 +152,7 @@ function buildViewModel(input: ViewModelInput) {
   const { updateMutation } = input;
   const noteActions = buildNoteActions(input, updateMutation);
   const onOpenRoutinePlanner = buildOpenRoutinePlannerAction(input);
+  const onOpenProgress = buildOpenProgressAction(input);
 
   return {
     ...input,
@@ -158,6 +163,7 @@ function buildViewModel(input: ViewModelInput) {
     trainingPlan: client?.trainingPlan ?? undefined,
     onOpenEdit: () => (input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true)),
     onOpenRoutinePlanner,
+    onOpenProgress,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     ...noteActions,
   };
@@ -177,6 +183,16 @@ function buildNoteActions(input: ViewModelInput, updateMutation: ReturnType<type
       await updateMutation.mutateAsync({ notes: input.noteDraft.trim() || null });
       input.setEditingNote(false);
     },
+  };
+}
+
+function buildOpenProgressAction(input: ViewModelInput): () => void {
+  return () => {
+    const client = input.query.data;
+    if (!client) return;
+    const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
+    input.openProgressForClient(client.id, clientDisplayName);
+    input.onRouteChange?.('coach.progress');
   };
 }
 
@@ -231,6 +247,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}
+        onOpenProgress={props.vm.onOpenProgress}
         onOpenTrainingPlanner={props.vm.onOpenRoutinePlanner}
         onUnassignTrainingPlan={props.vm.onUnassignPlan}
         t={props.vm.t}

@@ -8,12 +8,12 @@ import { useCreateIncidentMutation } from '../../data/hooks/useIncidents';
 type Severity = 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
 
 const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  input: '#f3f7fd',
-  muted: '#627285',
-  text: '#0e1a2f',
+  action: '#ec4899',
+  bg: '#07000f',
+  card: 'rgba(0,0,0,0.55)',
+  input: 'rgba(20,0,50,0.8)',
+  muted: 'rgba(196,181,253,0.7)',
+  text: '#ffffff',
   white: '#ffffff',
 };
 
@@ -83,11 +83,7 @@ function SeverityCard(props: ViewModel) {
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{props.t('client.incident.severity')}</Text>
-      <FilterChips
-        activeId={props.severity}
-        items={props.severityOptions}
-        onSelect={toSelect(props)}
-      />
+      <FilterChips activeId={props.severity} items={props.severityOptions} onSelect={toSelect(props)} />
     </View>
   );
 }

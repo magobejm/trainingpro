@@ -1,3 +1,56 @@
+// ── New detailed progress models ─────────────────────────────────────────────
+
+export type ExerciseProgressPoint = {
+  sessionDate: string;
+  sessionId: string;
+  sets: number;
+  totalReps: number;
+  tonnage: number;
+  avgRpe: number | null;
+  e1rm: number | null;
+  inol: number | null;
+  setDetails: Array<{
+    setIndex: number;
+    reps: number | null;
+    weightKg: number | null;
+    rpe: number | null;
+    e1rm: number | null;
+    inol: number | null;
+    tonnage: number;
+  }>;
+};
+
+export type SessionProgressPoint = {
+  sessionDate: string;
+  sessionId: string;
+  sessionTonnage: number;
+  sessionInol: number | null;
+  sessionRpe: number | null;
+  effortIndex: number | null;
+  trainingLoad: number | null;
+  sessionEfficiency: number | null;
+};
+
+export type MicrocycleProgressPoint = {
+  weekStart: string;
+  totalTonnage: number;
+  avgRpe: number | null;
+  totalTrainingLoad: number | null;
+  sessionsCount: number;
+};
+
+export type RecentSessionSummary = {
+  sessionDate: string;
+  sessionId: string;
+  exerciseCount: number;
+  totalTonnage: number;
+  sessionInol: number | null;
+  avgRpe: number | null;
+  durationMinutes: number | null;
+};
+
+// ── Existing row types ────────────────────────────────────────────────────────
+
 export type CardioLogRow = {
   avgHeartRate: null | number;
   distanceDoneMeters: null | number;

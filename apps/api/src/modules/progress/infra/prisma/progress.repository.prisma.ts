@@ -1,9 +1,26 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type { ProgressQuery, ProgressRepositoryPort } from '../../domain/progress-repository.port';
-import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../domain/progress.models';
+import type {
+  ExerciseProgressQuery,
+  MicrocycleProgressQuery,
+  ProgressQuery,
+  ProgressRepositoryPort,
+  RecentSessionsQuery,
+  SessionProgressQuery,
+} from '../../domain/progress-repository.port';
+import type {
+  CardioLogRow,
+  ExerciseProgressPoint,
+  MicrocycleProgressPoint,
+  RecentSessionSummary,
+  SessionProgressPoint,
+  SessionSrpeRow,
+  StrengthLogRow,
+} from '../../domain/progress.models';
+import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
+import { toWeekStart } from '../../domain/metrics/week-start';
 
 @Injectable()
 export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
@@ -71,6 +88,267 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
     }));
   }
+
+  // ── New detailed progress queries ─────────────────────────────────────────
+
+  async readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const rows = await this.prisma.setLog.findMany({
+      where: {
+        sessionItem: {
+          sourceExerciseId: query.exerciseId,
+        },
+        session: {
+          archivedAt: null,
+          clientId,
+          isCompleted: true,
+          sessionDate: { gte: query.from, lte: query.to },
+        },
+      },
+      select: {
+        setIndex: true,
+        repsDone: true,
+        weightDoneKg: true,
+        effortRpe: true,
+        sessionId: true,
+        session: { select: { sessionDate: true } },
+      },
+      orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
+    });
+
+    // Group by session
+    const bySession = new Map<string, { sessionDate: Date; sets: typeof rows }>();
+    for (const row of rows) {
+      const entry = bySession.get(row.sessionId) ?? { sessionDate: row.session.sessionDate, sets: [] };
+      entry.sets.push(row);
+      bySession.set(row.sessionId, entry);
+    }
+
+    return [...bySession.entries()].map(([sessionId, { sessionDate, sets }]) =>
+      aggregateExerciseSets(
+        sessionId,
+        sessionDate,
+        sets.map((s) => ({
+          setIndex: s.setIndex,
+          repsDone: s.repsDone,
+          weightDoneKg: s.weightDoneKg !== null ? Number(s.weightDoneKg) : null,
+          effortRpe: s.effortRpe,
+        })),
+      ),
+    );
+  }
+
+  async readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const sessions = await this.prisma.sessionInstance.findMany({
+      where: {
+        archivedAt: null,
+        clientId,
+        isCompleted: true,
+        sourceTemplateId: query.templateId,
+        sessionDate: { gte: query.from, lte: query.to },
+      },
+      select: {
+        id: true,
+        sessionDate: true,
+        startedAt: true,
+        finishedAt: true,
+        logs: {
+          select: {
+            repsDone: true,
+            weightDoneKg: true,
+            effortRpe: true,
+          },
+        },
+        intervalLogs: {
+          select: {
+            durationSecondsDone: true,
+            effortRpe: true,
+            avgHeartRate: true,
+          },
+        },
+        client: { select: { fcRest: true, fcMax: true } },
+      },
+      orderBy: { sessionDate: 'asc' },
+    });
+
+    return sessions.map((session) => {
+      let totalTonnage = 0;
+      let totalInol = 0;
+      let inolCount = 0;
+      let totalRpe = 0;
+      let rpeCount = 0;
+
+      for (const log of session.logs) {
+        const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+        const r = log.repsDone;
+        if (w !== null && r !== null) {
+          totalTonnage += w * r;
+          // Simple INOL estimate: reps / (100 - intensity) using 75% as default intensity when no e1RM
+          const inol = r / 25;
+          totalInol += inol;
+          inolCount++;
+        }
+        if (log.effortRpe !== null) {
+          totalRpe += log.effortRpe;
+          rpeCount++;
+        }
+      }
+
+      const avgRpe = rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null;
+      const sessionInol = inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null;
+      const effortIndex = avgRpe !== null && sessionInol !== null ? Math.round(avgRpe * sessionInol * 100) / 100 : null;
+
+      // TRIMP (simplified): duration * %FC reserva
+      let trainingLoad: number | null = null;
+      let sessionEfficiency: number | null = null;
+      const intervalDuration = session.intervalLogs.reduce((sum, l) => sum + (l.durationSecondsDone ?? 0), 0);
+      const durationMinutes = intervalDuration > 0 ? intervalDuration / 60 : null;
+      const avgHr =
+        session.intervalLogs.length > 0
+          ? session.intervalLogs.filter((l) => l.avgHeartRate !== null).reduce((s, l) => s + (l.avgHeartRate ?? 0), 0) /
+            session.intervalLogs.filter((l) => l.avgHeartRate !== null).length
+          : null;
+
+      if (durationMinutes !== null && avgHr !== null) {
+        const fcRest = session.client?.fcRest ?? 60;
+        const fcMax = session.client?.fcMax ?? 190;
+        const fcReservePercent = ((avgHr - fcRest) / (fcMax - fcRest)) * 100;
+        trainingLoad = Math.round(durationMinutes * Math.max(0, fcReservePercent) * 100) / 100;
+        sessionEfficiency = avgHr > 0 ? Math.round((totalTonnage / avgHr) * 100) / 100 : null;
+      }
+
+      return {
+        sessionDate: session.sessionDate.toISOString().slice(0, 10),
+        sessionId: session.id,
+        sessionTonnage: Math.round(totalTonnage * 100) / 100,
+        sessionInol,
+        sessionRpe: avgRpe,
+        effortIndex,
+        trainingLoad,
+        sessionEfficiency,
+      };
+    });
+  }
+
+  async readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressPoint[]> {
+    const sessionPoints = await this.readSessionProgress(context, {
+      clientId: query.clientId,
+      templateId: query.templateId,
+      from: query.from,
+      to: query.to,
+    });
+
+    type WeekAccumulator = MicrocycleProgressPoint & { _rpeSum: number; _rpeCount: number };
+    const byWeek = new Map<string, WeekAccumulator>();
+    for (const point of sessionPoints) {
+      const weekStart = toWeekStart(new Date(point.sessionDate));
+      const current: WeekAccumulator = byWeek.get(weekStart) ?? {
+        weekStart,
+        totalTonnage: 0,
+        avgRpe: null,
+        totalTrainingLoad: null,
+        sessionsCount: 0,
+        _rpeSum: 0,
+        _rpeCount: 0,
+      };
+
+      current._rpeSum = (current._rpeSum ?? 0) + (point.sessionRpe ?? 0);
+      current._rpeCount = (current._rpeCount ?? 0) + (point.sessionRpe !== null ? 1 : 0);
+      current.totalTonnage = Math.round((current.totalTonnage + point.sessionTonnage) * 100) / 100;
+      current.totalTrainingLoad = (current.totalTrainingLoad ?? 0) + (point.trainingLoad ?? 0) || null;
+      current.sessionsCount++;
+      current.avgRpe = current._rpeCount > 0 ? Math.round((current._rpeSum / current._rpeCount) * 100) / 100 : null;
+      byWeek.set(weekStart, current);
+    }
+
+    return [...byWeek.values()]
+      .map(({ weekStart, totalTonnage, avgRpe, totalTrainingLoad, sessionsCount }) => ({
+        weekStart,
+        totalTonnage,
+        avgRpe,
+        totalTrainingLoad: totalTrainingLoad !== null ? Math.round(totalTrainingLoad * 100) / 100 : null,
+        sessionsCount,
+      }))
+      .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+  }
+
+  async readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const whereBase: Prisma.SessionInstanceWhereInput = {
+      archivedAt: null,
+      clientId,
+      isCompleted: true,
+      sessionDate: { gte: query.from, lte: query.to },
+      ...(query.templateId ? { sourceTemplateId: query.templateId } : {}),
+    };
+
+    const sessions = await this.prisma.sessionInstance.findMany({
+      where: whereBase,
+      select: {
+        id: true,
+        sessionDate: true,
+        startedAt: true,
+        finishedAt: true,
+        items: {
+          where: { archivedAt: null },
+          select: {
+            id: true,
+            sourceExerciseId: true,
+            logs: {
+              select: { repsDone: true, weightDoneKg: true, effortRpe: true },
+            },
+          },
+        },
+      },
+      orderBy: { sessionDate: 'desc' },
+      take: query.limit,
+    });
+
+    return sessions
+      .filter((session) => {
+        if (!query.exerciseId) return true;
+        return session.items.some((item) => item.sourceExerciseId === query.exerciseId);
+      })
+      .map((session) => {
+        let totalTonnage = 0;
+        let totalInol = 0;
+        let totalRpe = 0;
+        let rpeCount = 0;
+        let inolCount = 0;
+
+        for (const item of session.items) {
+          for (const log of item.logs) {
+            const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+            const r = log.repsDone;
+            if (w !== null && r !== null) {
+              totalTonnage += w * r;
+              totalInol += r / 25;
+              inolCount++;
+            }
+            if (log.effortRpe !== null) {
+              totalRpe += log.effortRpe;
+              rpeCount++;
+            }
+          }
+        }
+
+        const durationMs =
+          session.startedAt && session.finishedAt ? session.finishedAt.getTime() - session.startedAt.getTime() : null;
+
+        return {
+          sessionDate: session.sessionDate.toISOString().slice(0, 10),
+          sessionId: session.id,
+          exerciseCount: session.items.length,
+          totalTonnage: Math.round(totalTonnage * 100) / 100,
+          sessionInol: inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null,
+          avgRpe: rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null,
+          durationMinutes: durationMs !== null ? Math.round(durationMs / 60000) : null,
+        };
+      });
+  }
+
+  // ── Existing private helpers ───────────────────────────────────────────────
 
   private async readMethodTypeMap(
     rows: Array<{ sessionCardioBlock: { sourceCardioMethodId: null | string } }>,

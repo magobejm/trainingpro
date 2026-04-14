@@ -21,6 +21,7 @@ import { WARMUP_TEMPLATES_V1 } from './seeds/v1-warmup-templates.seed';
 import { seedMovementPatterns } from './seeds/v3-movement-patterns.seed';
 import { seedAnatomicalPlanes } from './seeds/v3-anatomical-planes.seed';
 import { mapDayForSeed, readRequiredId } from './seeds/seed-utils';
+import { seedSessions } from './seeds/seed-sessions';
 
 const prisma = new PrismaClient();
 
@@ -45,6 +46,7 @@ async function main(): Promise<void> {
   await seedSports();
   await seedRoutineTemplates();
   await seedWarmupTemplates();
+  await seedSessions(prisma);
 }
 
 async function seedClientObjectives(): Promise<void> {

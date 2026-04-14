@@ -8,6 +8,8 @@ import { CreateClientUseCase } from './application/use-cases/create-client.useca
 import { DeleteClientProgressPhotoUseCase } from './application/use-cases/delete-client-progress-photo.usecase';
 import { GetClientUseCase } from './application/use-cases/get-client.usecase';
 import { GetClientManagementSectionsUseCase } from './application/use-cases/get-client-management-sections.usecase';
+import { GetClientMeUseCase } from './application/use-cases/get-client-me.usecase';
+import { GetClientRoutineUseCase } from './application/use-cases/get-client-routine.usecase';
 import { ListClientProgressPhotosUseCase } from './application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from './application/use-cases/list-clients.usecase';
 import { ListClientObjectivesUseCase } from './application/use-cases/list-client-objectives.usecase';
@@ -20,12 +22,13 @@ import { UploadClientProgressPhotoUseCase } from './application/use-cases/upload
 import { CLIENTS_REPOSITORY } from './domain/clients-repository.port';
 import { ClientAccessPolicy } from './domain/policies/client-access.policy';
 import { ClientRepositoryPrisma } from './infra/prisma/client.repository.prisma';
+import { ClientSelfController } from './presentation/controllers/client-self.controller';
 import { ClientsController } from './presentation/controllers/clients.controller';
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
   imports: [AuthModule, FilesModule],
-  controllers: [ClientsController],
+  controllers: [ClientSelfController, ClientsController],
   providers: [
     ArchiveClientUseCase,
     ClientAuthProvisionerService,
@@ -34,6 +37,8 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     DeleteClientProgressPhotoUseCase,
     GetClientUseCase,
     GetClientManagementSectionsUseCase,
+    GetClientMeUseCase,
+    GetClientRoutineUseCase,
     ListClientProgressPhotosUseCase,
     ListClientsUseCase,
     ListClientObjectivesUseCase,

@@ -189,7 +189,7 @@ function Start-DatabaseStackIfPossible([hashtable]$Target) {
   return $false
 }
 
-Write-Output "Preparing clean start for API/Web..."
+Write-Output "Preparing clean start for API/Web/Mobile..."
 
 $dbUrl = $env:DATABASE_URL
 if (-not $dbUrl) {
@@ -211,21 +211,24 @@ if ($dbUrl) {
 
 Stop-PortListeners -Port 8080
 Stop-PortListeners -Port 5173
+Stop-PortListeners -Port 19006
 
 $api = Start-DevService -Name "API" -Command "pnpm.cmd --filter @trainerpro/api build && pnpm.cmd --filter @trainerpro/api start" -ReadyUrl "http://localhost:8080/health"
 $web = Start-DevService -Name "WEB" -Command "pnpm.cmd --filter @trainerpro/web dev" -ReadyUrl "http://localhost:5173"
+$mobile = Start-DevService -Name "MOBILE" -Command "pnpm.cmd --filter @trainerpro/mobile dev" -ReadyUrl "http://localhost:19006"
 
-if (-not $api.Ok -or -not $web.Ok) {
-  if ((Test-PortListening -Port 8080) -and (Test-PortListening -Port 5173)) {
-    Write-Warning "Readiness timeout reached, but both ports 8080 and 5173 are listening. Continuing."
+if (-not $api.Ok -or -not $web.Ok -or -not $mobile.Ok) {
+  if ((Test-PortListening -Port 8080) -and (Test-PortListening -Port 5173) -and (Test-PortListening -Port 19006)) {
+    Write-Warning "Readiness timeout reached, but ports 8080, 5173 and 19006 are listening. Continuing."
     exit 0
   }
   Write-Output ""
-  throw "Start failed. Check the opened API/WEB terminals."
+  throw "Start failed. Check the opened API/WEB/MOBILE terminals."
 }
 
 Write-Output ""
 Write-Output "All services ready."
 Write-Output "API: http://localhost:8080/health"
 Write-Output "WEB: http://localhost:5173"
+Write-Output "MOBILE: http://localhost:19006"
 Write-Output "Logs: $runDir"

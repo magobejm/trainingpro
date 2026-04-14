@@ -30,11 +30,12 @@ function Stop-PortListeners([int]$Port) {
 
 Stop-PortListeners -Port 8080
 Stop-PortListeners -Port 5173
+Stop-PortListeners -Port 19006
 
 Get-CimInstance Win32_Process |
   Where-Object {
     $_.Name -eq "node.exe" -and
-    $_.CommandLine -match "@trainerpro/api dev|@trainerpro/api start|@trainerpro/web dev|tsx watch src/main.ts|dist/main.js|vite --host 0.0.0.0 --port 5173"
+    $_.CommandLine -match "@trainerpro/api dev|@trainerpro/api start|@trainerpro/web dev|@trainerpro/mobile dev|tsx watch src/main.ts|dist/main.js|vite --host 0.0.0.0 --port 5173|expo start --web --port 19006"
   } |
   ForEach-Object {
     try {

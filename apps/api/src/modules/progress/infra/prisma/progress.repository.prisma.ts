@@ -6,6 +6,7 @@ import type {
   ExerciseProgressQuery,
   MicrocycleProgressQuery,
   PerformedExercisesQuery,
+  PerformedTemplatesQuery,
   ProgressQuery,
   ProgressRepositoryPort,
   RecentSessionsQuery,
@@ -16,6 +17,7 @@ import type {
   ExerciseProgressPoint,
   MicrocycleProgressPoint,
   PerformedExercisesResult,
+  PerformedTemplatesResult,
   RecentSessionSummary,
   SessionProgressPoint,
   SessionSrpeRow,
@@ -171,6 +173,31 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     };
     const ids = await readPerformedIds(this.prisma, sessionWhere);
     return fetchPerformedExerciseNames(this.prisma, ids);
+  }
+
+  async readPerformedTemplates(context: AuthContext, query: PerformedTemplatesQuery): Promise<PerformedTemplatesResult> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const sessions = await this.prisma.sessionInstance.findMany({
+      where: {
+        archivedAt: null,
+        clientId,
+        isCompleted: true,
+        sessionDate: { gte: query.from, lte: query.to },
+      },
+      select: { sourceTemplateId: true },
+      distinct: ['sourceTemplateId'],
+    });
+
+    const templateIds = sessions.map((s) => s.sourceTemplateId).filter((id): id is string => id !== null);
+    if (templateIds.length === 0) return { templates: [] };
+
+    const templates = await this.prisma.planTemplate.findMany({
+      where: { id: { in: templateIds }, archivedAt: null },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    return { templates: templates.map((t) => ({ id: t.id, name: t.name })) };
   }
 
   async readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]> {

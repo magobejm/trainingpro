@@ -5,13 +5,13 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../../i18n';
 import { useProgressContextStore } from '../../store/progressContext.store';
-import { useRoutineTemplatesQuery } from '../../data/hooks/useRoutineTemplates';
 import { useExerciseProgressQuery } from '../../data/hooks/useExerciseProgressQuery';
 import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuery';
 import { useMicrocycleProgressQuery } from '../../data/hooks/useMicrocycleProgressQuery';
 import { MetricDetailModal } from './progress/MetricDetailModal';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
 import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
+import { ProgressRoutineFilter } from './progress/ProgressRoutineFilter';
 import {
   EXERCISE_VARIABLES,
   PLIO_VARIABLES,
@@ -61,7 +61,6 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
 
   // Selection
   const [selectedExercise, setSelectedExercise] = useState<SelectedExercise | null>(null);
-  const [routineSearch, setRoutineSearch] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   const selectedExerciseId = selectedExercise?.id ?? null;
@@ -73,9 +72,6 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   // Detail modal
   const [detailVariable, setDetailVariable] = useState<VariableDef | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
-
-  // Library data
-  const routinesQuery = useRoutineTemplatesQuery({ summary: true });
 
   // Progress queries
   const exerciseQuery = useExerciseProgressQuery(
@@ -216,10 +212,10 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
           t={t}
         />
       ) : (
-        <RoutineFilter
-          search={routineSearch}
-          onSearch={setRoutineSearch}
-          routines={(routinesQuery.data ?? []) as Array<{ id: string; name: string }>}
+        <ProgressRoutineFilter
+          clientId={clientId}
+          from={range.from}
+          to={range.to}
           selectedId={selectedTemplateId}
           onSelect={setSelectedTemplateId}
           t={t}
@@ -343,69 +339,6 @@ function RangeSelector({
       <button style={{ ...rangeBtn, ...(customRange ? rangeBtnActive : {}) }} onClick={onCustom}>
         {customRange ? `${customRange.from} – ${customRange.to}` : t('coach.progress.range.custom')}
       </button>
-    </div>
-  );
-}
-
-const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, width: '100%' };
-const searchInput: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: 12,
-  border: '1.5px solid #dce3eb',
-  fontSize: 14,
-  color: '#0f1b2f',
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-const filterList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
-const filterItem: React.CSSProperties = {
-  padding: '8px 14px',
-  borderRadius: 10,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
-  color: '#5d6f85',
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontSize: 13,
-};
-const filterItemActive: React.CSSProperties = { background: '#0f1b2f', color: '#fff', borderColor: '#0f1b2f' };
-
-function RoutineFilter({
-  search,
-  onSearch,
-  routines,
-  selectedId,
-  onSelect,
-  t,
-}: {
-  search: string;
-  onSearch: (s: string) => void;
-  routines: Array<{ id: string; name: string }>;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  t: (k: string) => string;
-}) {
-  const filtered = routines.filter((r) => r.name.toLowerCase().includes(search.toLowerCase())).slice(0, 10);
-  return (
-    <div style={filterBlock}>
-      <input
-        style={searchInput}
-        placeholder={t('coach.progress.filter.routine.placeholder')}
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-      />
-      <div style={filterList}>
-        {filtered.map((r) => (
-          <button
-            key={r.id}
-            style={{ ...filterItem, ...(selectedId === r.id ? filterItemActive : {}) }}
-            onClick={() => onSelect(r.id)}
-          >
-            {r.name}
-          </button>
-        ))}
-      </div>
     </div>
   );
 }

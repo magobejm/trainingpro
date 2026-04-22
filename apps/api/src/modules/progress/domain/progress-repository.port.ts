@@ -3,6 +3,7 @@ import type {
   ExerciseProgressPoint,
   MicrocycleProgressPoint,
   PerformedExercisesResult,
+  PerformedTemplatesResult,
   RecentSessionSummary,
   SessionProgressPoint,
   SessionSrpeRow,
@@ -29,6 +30,12 @@ export type ExerciseProgressQuery = {
 export type ExerciseType = 'strength' | 'cardio' | 'plio' | 'mobility' | 'isometric' | 'sport';
 
 export type PerformedExercisesQuery = {
+  clientId?: string;
+  from: Date;
+  to: Date;
+};
+
+export type PerformedTemplatesQuery = {
   clientId?: string;
   from: Date;
   to: Date;
@@ -67,4 +74,5 @@ export interface ProgressRepositoryPort {
   readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressPoint[]>;
   readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]>;
   readPerformedExercises(context: AuthContext, query: PerformedExercisesQuery): Promise<PerformedExercisesResult>;
+  readPerformedTemplates(context: AuthContext, query: PerformedTemplatesQuery): Promise<PerformedTemplatesResult>;
 }

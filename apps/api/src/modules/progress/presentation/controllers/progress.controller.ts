@@ -7,6 +7,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { GetExerciseProgressUseCase } from '../../application/use-cases/get-exercise-progress.usecase';
 import { GetMicrocycleProgressUseCase } from '../../application/use-cases/get-microcycle-progress.usecase';
 import { GetPerformedExercisesUseCase } from '../../application/use-cases/get-performed-exercises.usecase';
+import { GetPerformedTemplatesUseCase } from '../../application/use-cases/get-performed-templates.usecase';
 import { GetProgressOverviewUseCase } from '../../application/use-cases/get-progress-overview.usecase';
 import { GetRecentSessionsUseCase } from '../../application/use-cases/get-recent-sessions.usecase';
 import { GetSessionProgressUseCase } from '../../application/use-cases/get-session-progress.usecase';
@@ -14,6 +15,7 @@ import type { ExerciseType } from '../../domain/progress-repository.port';
 import { GetExerciseProgressQueryDto } from '../dto/get-exercise-progress-query.dto';
 import { GetMicrocycleProgressQueryDto } from '../dto/get-microcycle-progress-query.dto';
 import { GetPerformedExercisesQueryDto } from '../dto/get-performed-exercises-query.dto';
+import { GetPerformedTemplatesQueryDto } from '../dto/get-performed-templates-query.dto';
 import { GetProgressQueryDto } from '../dto/get-progress-query.dto';
 import { GetRecentSessionsQueryDto } from '../dto/get-recent-sessions-query.dto';
 import { GetSessionProgressQueryDto } from '../dto/get-session-progress-query.dto';
@@ -29,6 +31,7 @@ export class ProgressController {
     private readonly getMicrocycleProgressUseCase: GetMicrocycleProgressUseCase,
     private readonly getRecentSessionsUseCase: GetRecentSessionsUseCase,
     private readonly getPerformedExercisesUseCase: GetPerformedExercisesUseCase,
+    private readonly getPerformedTemplatesUseCase: GetPerformedTemplatesUseCase,
   ) {}
 
   @Get('overview')
@@ -60,6 +63,17 @@ export class ProgressController {
     const auth = readAuthContext(request);
     const parsed = GetPerformedExercisesQueryDto.schema.parse(query);
     return this.getPerformedExercisesUseCase.execute(auth, {
+      clientId: parsed.clientId,
+      from: new Date(parsed.from),
+      to: new Date(parsed.to),
+    });
+  }
+
+  @Get('performed-templates')
+  async getPerformedTemplates(@Query() query: GetPerformedTemplatesQueryDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const parsed = GetPerformedTemplatesQueryDto.schema.parse(query);
+    return this.getPerformedTemplatesUseCase.execute(auth, {
       clientId: parsed.clientId,
       from: new Date(parsed.from),
       to: new Date(parsed.to),

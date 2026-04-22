@@ -14,6 +14,17 @@ export type PerformedExercisesResult = {
   sport: PerformedExerciseItem[];
 };
 
+// ── Performed templates result ────────────────────────────────────────────────
+
+export type PerformedTemplateItem = {
+  id: string;
+  name: string;
+};
+
+export type PerformedTemplatesResult = {
+  templates: PerformedTemplateItem[];
+};
+
 // ── New detailed progress models ─────────────────────────────────────────────
 
 export type ExerciseProgressPoint = {

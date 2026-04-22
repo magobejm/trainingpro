@@ -128,7 +128,7 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
           onFocus={() => setDropdownOpen(true)}
           onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
         />
-        {dropdownOpen && search.length > 0 && (
+        {dropdownOpen && (
           <div style={dropdownContainer}>
             {hasDropdownResults ? (
               dropdownGroups.map((group) => (

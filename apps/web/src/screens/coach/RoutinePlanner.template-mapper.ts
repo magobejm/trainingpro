@@ -109,7 +109,6 @@ function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
   return {
     ...base,
     ...readWarmupImportFlags(meta),
-    cardioWorkText: toStringValue(meta.trabajo),
     durationMinutes: toNumber(item.durationMinutes),
     heartRate: toNumber(meta.pulsaciones),
     intensityFcMax: toNumber(meta.intensidadFcMax),

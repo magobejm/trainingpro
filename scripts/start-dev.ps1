@@ -66,21 +66,29 @@ function Test-TcpPort([string]$TargetHost, [int]$Port, [int]$TimeoutMs = 1200) {
 }
 
 function Stop-PortListeners([int]$Port) {
-  $lines = netstat -ano -p tcp | Select-String ":$Port\s+.*LISTENING\s+(\d+)$"
-  if (-not $lines) {
+  $pids = @()
+  try {
+    $tcp = Get-NetTCPConnection -State Listen -LocalPort $Port -ErrorAction Stop
+    if ($tcp) {
+      $pids = $tcp | Select-Object -ExpandProperty OwningProcess -Unique
+    }
+  } catch {
+    $lines = netstat -ano -p tcp | Select-String ":$Port\s+.*LISTENING\s+(\d+)$"
+    foreach ($line in $lines) {
+      if ($line.Matches.Count -gt 0) {
+        $pids += [int]$line.Matches[0].Groups[1].Value
+      }
+    }
+    $pids = $pids | Sort-Object -Unique
+  }
+  if (-not $pids -or $pids.Count -eq 0) {
     return
   }
-  $pids = @()
-  foreach ($line in $lines) {
-    if ($line.Matches.Count -gt 0) {
-      $pids += [int]$line.Matches[0].Groups[1].Value
-    }
-  }
-  $pids = $pids | Sort-Object -Unique
   foreach ($procId in $pids) {
     try {
       if ($procId -ne $PID) {
         Stop-Process -Id $procId -Force -ErrorAction Stop
+        Wait-Process -Id $procId -Timeout 4 -ErrorAction SilentlyContinue
         Write-Output "Stopped stale process on port ${Port}: PID $procId"
       }
     } catch {
@@ -91,11 +99,16 @@ function Stop-PortListeners([int]$Port) {
 
 function Wait-HttpReady([string]$Name, [string]$Url, [int]$TimeoutSec) {
   $deadline = (Get-Date).AddSeconds($TimeoutSec)
+  $nextPing = Get-Date
   while ((Get-Date) -lt $deadline) {
+    if ((Get-Date) -ge $nextPing) {
+      Write-Host "Waiting for $Name on $Url..."
+      $nextPing = (Get-Date).AddSeconds(10)
+    }
     try {
       $response = Invoke-WebRequest -UseBasicParsing -Uri $Url -TimeoutSec 2
       if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 500) {
-        Write-Output "$Name ready ($($response.StatusCode)): $Url"
+        Write-Host "$Name ready ($($response.StatusCode)): $Url"
         return $true
       }
     } catch {
@@ -109,9 +122,10 @@ function Wait-HttpReady([string]$Name, [string]$Url, [int]$TimeoutSec) {
 
 function Start-DevService([string]$Name, [string]$Command, [string]$ReadyUrl) {
   $command = "cd /d `"$repo`" && $Command"
+  Write-Host "$Name launching..."
   $proc = Start-Process cmd.exe -ArgumentList "/k", $command -PassThru
 
-  Write-Output "$Name launching (PID $($proc.Id))"
+  Write-Host "$Name launched (PID $($proc.Id))"
   if (Wait-HttpReady -Name $Name -Url $ReadyUrl -TimeoutSec $TimeoutSeconds) {
     return @{
       Ok = $true
@@ -209,9 +223,11 @@ if ($dbUrl) {
   }
 }
 
+Write-Output "Cleaning known dev ports..."
 Stop-PortListeners -Port 8080
 Stop-PortListeners -Port 5173
 Stop-PortListeners -Port 19006
+Write-Output "Ports cleaned. Launching services..."
 
 $api = Start-DevService -Name "API" -Command "pnpm.cmd --filter @trainerpro/api build && pnpm.cmd --filter @trainerpro/api start" -ReadyUrl "http://localhost:8080/health"
 $web = Start-DevService -Name "WEB" -Command "pnpm.cmd --filter @trainerpro/web dev" -ReadyUrl "http://localhost:5173"

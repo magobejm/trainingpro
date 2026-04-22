@@ -5,6 +5,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   ExerciseProgressQuery,
   MicrocycleProgressQuery,
+  PerformedExercisesQuery,
   ProgressQuery,
   ProgressRepositoryPort,
   RecentSessionsQuery,
@@ -14,6 +15,7 @@ import type {
   CardioLogRow,
   ExerciseProgressPoint,
   MicrocycleProgressPoint,
+  PerformedExercisesResult,
   RecentSessionSummary,
   SessionProgressPoint,
   SessionSrpeRow,
@@ -21,6 +23,15 @@ import type {
 } from '../../domain/progress.models';
 import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
 import { toWeekStart } from '../../domain/metrics/week-start';
+import {
+  fetchPerformedExerciseNames,
+  readCardioExerciseProgress,
+  readIsometricProgress,
+  readMobilityProgress,
+  readPerformedIds,
+  readPlioProgress,
+  readSportProgress,
+} from './progress-exercise-types.helpers';
 
 @Injectable()
 export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
@@ -93,6 +104,19 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
 
   async readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]> {
     const clientId = await this.resolveClientId(context, query.clientId);
+    const type = query.exerciseType ?? 'strength';
+    if (type === 'plio') return readPlioProgress(this.prisma, clientId, query);
+    if (type === 'mobility') return readMobilityProgress(this.prisma, clientId, query);
+    if (type === 'isometric') return readIsometricProgress(this.prisma, clientId, query);
+    if (type === 'sport') return readSportProgress(this.prisma, clientId, query);
+    if (type === 'cardio') return readCardioExerciseProgress(this.prisma, clientId, query);
+    return this.readStrengthExerciseProgress(clientId, query);
+  }
+
+  private async readStrengthExerciseProgress(
+    clientId: string,
+    query: ExerciseProgressQuery,
+  ): Promise<ExerciseProgressPoint[]> {
     const rows = await this.prisma.setLog.findMany({
       where: {
         sessionItem: {
@@ -116,7 +140,6 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
     });
 
-    // Group by session
     const bySession = new Map<string, { sessionDate: Date; sets: typeof rows }>();
     for (const row of rows) {
       const entry = bySession.get(row.sessionId) ?? { sessionDate: row.session.sessionDate, sets: [] };
@@ -136,6 +159,18 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
         })),
       ),
     );
+  }
+
+  async readPerformedExercises(context: AuthContext, query: PerformedExercisesQuery): Promise<PerformedExercisesResult> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const sessionWhere = {
+      archivedAt: null as null,
+      clientId,
+      isCompleted: true,
+      sessionDate: { gte: query.from, lte: query.to },
+    };
+    const ids = await readPerformedIds(this.prisma, sessionWhere);
+    return fetchPerformedExerciseNames(this.prisma, ids);
   }
 
   async readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]> {

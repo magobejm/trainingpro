@@ -238,10 +238,8 @@ function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
 }
 
 function CardioGlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  const x = txtField(block, onUpdateField, readOnly, t);
   return (
     <>
-      {x('coach.routine.block.workText', 'cardioWorkText')}
       <TextField
         label={t('coach.routine.block.totalTime')}
         onChange={(v) => {
@@ -260,7 +258,6 @@ function SportGlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsPro
   return (
     <>
       {x('coach.routine.block.repsRange', 'repsRange')}
-      {x('coach.routine.block.workText', 'cardioWorkText')}
       <TextField
         label={t('coach.routine.block.totalTime')}
         onChange={(v) => {

@@ -9,6 +9,41 @@ export const EXERCISE_VARIABLES: VariableDef[] = [
   { id: 'totalReps', labelKey: 'coach.progress.variable.totalReps', unit: '', color: '#06b6d4', dataKey: 'totalReps' },
 ];
 
+export const PLIO_VARIABLES: VariableDef[] = [
+  { id: 'sets', labelKey: 'coach.progress.variable.sets', unit: '', color: '#10b981', dataKey: 'sets' },
+  { id: 'totalReps', labelKey: 'coach.progress.variable.totalReps', unit: '', color: '#06b6d4', dataKey: 'totalReps' },
+  { id: 'avgRpe', labelKey: 'coach.progress.variable.rpe', unit: '', color: '#ef4444', dataKey: 'avgRpe' },
+];
+
+export const MOBILITY_VARIABLES: VariableDef[] = [
+  { id: 'sets', labelKey: 'coach.progress.variable.sets', unit: '', color: '#10b981', dataKey: 'sets' },
+  { id: 'totalReps', labelKey: 'coach.progress.variable.totalReps', unit: '', color: '#06b6d4', dataKey: 'totalReps' },
+  { id: 'avgRpe', labelKey: 'coach.progress.variable.rpe', unit: '', color: '#ef4444', dataKey: 'avgRpe' },
+];
+
+export const ISOMETRIC_VARIABLES: VariableDef[] = [
+  { id: 'sets', labelKey: 'coach.progress.variable.sets', unit: '', color: '#10b981', dataKey: 'sets' },
+  {
+    id: 'totalDurationSeconds',
+    labelKey: 'coach.progress.variable.totalDurationSeconds',
+    unit: 's',
+    color: '#f59e0b',
+    dataKey: 'totalDurationSeconds',
+  },
+  { id: 'avgRpe', labelKey: 'coach.progress.variable.rpe', unit: '', color: '#ef4444', dataKey: 'avgRpe' },
+];
+
+export const SPORT_VARIABLES: VariableDef[] = [
+  {
+    id: 'durationMinutes',
+    labelKey: 'coach.progress.variable.durationMinutes',
+    unit: 'min',
+    color: '#f59e0b',
+    dataKey: 'durationMinutes',
+  },
+  { id: 'avgRpe', labelKey: 'coach.progress.variable.rpe', unit: '', color: '#ef4444', dataKey: 'avgRpe' },
+];
+
 export const SESSION_VARIABLES: VariableDef[] = [
   {
     id: 'sessionTonnage',

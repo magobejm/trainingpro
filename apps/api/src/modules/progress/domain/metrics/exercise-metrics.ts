@@ -54,6 +54,8 @@ export type ExerciseSessionMetrics = {
   avgRpe: number | null;
   e1rm: number | null;
   inol: number | null;
+  totalDurationSeconds: number | null;
+  durationMinutes: number | null;
   setDetails: SetMetrics[];
 };
 
@@ -110,6 +112,8 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
     avgRpe: rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null,
     e1rm: maxE1rm,
     inol: inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null,
+    totalDurationSeconds: null,
+    durationMinutes: null,
     setDetails,
   };
 }

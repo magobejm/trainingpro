@@ -5,16 +5,24 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../../i18n';
 import { useProgressContextStore } from '../../store/progressContext.store';
-import { useLibraryExercisesQuery, useLibraryCardioMethodsQuery } from '../../data/hooks/useLibraryQuery';
 import { useRoutineTemplatesQuery } from '../../data/hooks/useRoutineTemplates';
 import { useExerciseProgressQuery } from '../../data/hooks/useExerciseProgressQuery';
 import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuery';
 import { useMicrocycleProgressQuery } from '../../data/hooks/useMicrocycleProgressQuery';
 import { MetricDetailModal } from './progress/MetricDetailModal';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
-import { EXERCISE_VARIABLES, SESSION_VARIABLES, MICROCYCLE_VARIABLES } from './progress/progress-screen.variables';
+import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
+import {
+  EXERCISE_VARIABLES,
+  PLIO_VARIABLES,
+  MOBILITY_VARIABLES,
+  ISOMETRIC_VARIABLES,
+  SPORT_VARIABLES,
+  SESSION_VARIABLES,
+  MICROCYCLE_VARIABLES,
+} from './progress/progress-screen.variables';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
-import type { AnalysisMode, DateRange, VariableDef } from './progress/progress-screen.types';
+import type { AnalysisMode, DateRange, SelectedExercise, VariableDef } from './progress/progress-screen.types';
 import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 
@@ -52,10 +60,11 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   const range: DateRange = customRange ?? buildRange(weeksPreset);
 
   // Selection
-  const [exerciseSearch, setExerciseSearch] = useState('');
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+  const [selectedExercise, setSelectedExercise] = useState<SelectedExercise | null>(null);
   const [routineSearch, setRoutineSearch] = useState('');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+
+  const selectedExerciseId = selectedExercise?.id ?? null;
 
   // Variable toggles
   const defaultVars = EXERCISE_VARIABLES.slice(0, 2).map((v) => v.id);
@@ -66,13 +75,17 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   const [showDetailModal, setShowDetailModal] = useState(false);
 
   // Library data
-  const exercisesQuery = useLibraryExercisesQuery({ query: exerciseSearch });
-  const cardioMethodsQuery = useLibraryCardioMethodsQuery({ query: exerciseSearch });
   const routinesQuery = useRoutineTemplatesQuery({ summary: true });
 
   // Progress queries
   const exerciseQuery = useExerciseProgressQuery(
-    { clientId: clientId ?? undefined, exerciseId: selectedExerciseId ?? '', from: range.from, to: range.to },
+    {
+      clientId: clientId ?? undefined,
+      exerciseId: selectedExerciseId ?? '',
+      exerciseType: selectedExercise?.type ?? 'strength',
+      from: range.from,
+      to: range.to,
+    },
     { enabled: Boolean(clientId) && Boolean(selectedExerciseId) && mode === 'exercise' },
   );
   const sessionQuery = useSessionProgressQuery(
@@ -84,8 +97,21 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     { enabled: Boolean(clientId) && Boolean(selectedTemplateId) && mode === 'microcycle' },
   );
 
+  function getVarsForType(type: string) {
+    if (type === 'plio') return PLIO_VARIABLES;
+    if (type === 'mobility') return MOBILITY_VARIABLES;
+    if (type === 'isometric') return ISOMETRIC_VARIABLES;
+    if (type === 'sport') return SPORT_VARIABLES;
+    if (type === 'cardio') return PLIO_VARIABLES;
+    return EXERCISE_VARIABLES;
+  }
+
+  function getExerciseVars() {
+    return getVarsForType(selectedExercise?.type ?? 'strength');
+  }
+
   const currentVars =
-    mode === 'exercise' ? EXERCISE_VARIABLES : mode === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES;
+    mode === 'exercise' ? getExerciseVars() : mode === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES;
 
   const chartPoints = useMemo(() => {
     if (mode === 'exercise') return (exerciseQuery.data ?? []) as Record<string, unknown>[];
@@ -97,10 +123,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     mode === 'exercise' ? exerciseQuery.isLoading : mode === 'session' ? sessionQuery.isLoading : microcycleQuery.isLoading;
   const hasSelection = mode === 'exercise' ? Boolean(selectedExerciseId) : Boolean(selectedTemplateId);
 
-  const selectedExerciseName = useMemo(
-    () => exercisesQuery.data?.find((e) => e.id === selectedExerciseId)?.name ?? '',
-    [exercisesQuery.data, selectedExerciseId],
-  );
+  const selectedExerciseName = selectedExercise?.name ?? '';
 
   function toggleVar(id: string): void {
     setActiveVarIds((prev) => {
@@ -116,13 +139,8 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
 
   function handleModeChange(m: AnalysisMode): void {
     setMode(m);
-    setActiveVarIds(
-      new Set(
-        (m === 'exercise' ? EXERCISE_VARIABLES : m === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES)
-          .slice(0, 2)
-          .map((v) => v.id),
-      ),
-    );
+    const vars = m === 'exercise' ? EXERCISE_VARIABLES : m === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES;
+    setActiveVarIds(new Set(vars.slice(0, 2).map((v) => v.id)));
   }
 
   function openDetail(v: VariableDef): void {
@@ -185,13 +203,16 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
 
       {/* Filters */}
       {mode === 'exercise' ? (
-        <ExerciseFilter
-          search={exerciseSearch}
-          onSearch={setExerciseSearch}
-          exercises={exercisesQuery.data ?? []}
-          cardioMethods={cardioMethodsQuery.data ?? []}
-          selectedId={selectedExerciseId}
-          onSelect={setSelectedExerciseId}
+        <ProgressExerciseFilter
+          clientId={clientId}
+          from={range.from}
+          to={range.to}
+          selected={selectedExercise}
+          onSelect={(ex) => {
+            setSelectedExercise(ex);
+            const vars = getVarsForType(ex?.type ?? 'strength');
+            setActiveVarIds(new Set(vars.slice(0, 2).map((v) => v.id)));
+          }}
           t={t}
         />
       ) : (
@@ -326,74 +347,29 @@ function RangeSelector({
   );
 }
 
-function ExerciseFilter({
-  search,
-  onSearch,
-  exercises,
-  cardioMethods,
-  selectedId,
-  onSelect,
-  t,
-}: {
-  search: string;
-  onSearch: (s: string) => void;
-  exercises: Array<{ id: string; name: string }>;
-  cardioMethods: Array<{ id: string; name: string }>;
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  t: (k: string) => string;
-}) {
-  const q = search.toLowerCase();
-  const filteredEx = exercises.filter((e) => e.name.toLowerCase().includes(q)).slice(0, 12);
-  const filteredCardio = cardioMethods.filter((m) => m.name.toLowerCase().includes(q)).slice(0, 6);
-  const noResultsText = t('coach.progress.filter.noResults').replace('{query}', search);
-
-  return (
-    <div style={filterBlock}>
-      <input
-        style={searchInput}
-        placeholder={t('coach.progress.filter.exercise.placeholder')}
-        value={search}
-        onChange={(e) => onSearch(e.target.value)}
-      />
-      {filteredEx.length > 0 && (
-        <>
-          <p style={filterGroupLabel}>{t('coach.progress.filter.group.strength')}</p>
-          <div style={filterList}>
-            {filteredEx.map((ex) => (
-              <button
-                key={ex.id}
-                style={{ ...filterItem, ...(selectedId === ex.id ? filterItemActive : {}) }}
-                onClick={() => onSelect(ex.id)}
-              >
-                {ex.name}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-      {filteredCardio.length > 0 && (
-        <>
-          <p style={filterGroupLabel}>{t('coach.progress.filter.group.cardio')}</p>
-          <div style={filterList}>
-            {filteredCardio.map((m) => (
-              <button
-                key={m.id}
-                style={{ ...filterItem, ...(selectedId === m.id ? filterItemActive : {}) }}
-                onClick={() => onSelect(m.id)}
-              >
-                {m.name}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-      {filteredEx.length === 0 && filteredCardio.length === 0 && search.length > 0 && (
-        <p style={{ margin: 0, fontSize: 13, color: '#94a3b8' }}>{noResultsText}</p>
-      )}
-    </div>
-  );
-}
+const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, width: '100%' };
+const searchInput: React.CSSProperties = {
+  padding: '10px 14px',
+  borderRadius: 12,
+  border: '1.5px solid #dce3eb',
+  fontSize: 14,
+  color: '#0f1b2f',
+  outline: 'none',
+  width: '100%',
+  boxSizing: 'border-box',
+};
+const filterList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
+const filterItem: React.CSSProperties = {
+  padding: '8px 14px',
+  borderRadius: 10,
+  border: '1.5px solid #dce3eb',
+  background: '#fff',
+  color: '#5d6f85',
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontSize: 13,
+};
+const filterItemActive: React.CSSProperties = { background: '#0f1b2f', color: '#fff', borderColor: '#0f1b2f' };
 
 function RoutineFilter({
   search,
@@ -663,38 +639,6 @@ const rangeBtn: React.CSSProperties = {
   fontSize: 12,
 };
 const rangeBtnActive: React.CSSProperties = { background: '#3b82f6', color: '#fff', borderColor: '#3b82f6' };
-
-const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8, width: '100%' };
-const filterGroupLabel: React.CSSProperties = {
-  margin: '4px 0 0',
-  fontSize: 11,
-  fontWeight: 800,
-  color: '#94a3b8',
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-};
-const searchInput: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: 12,
-  border: '1.5px solid #dce3eb',
-  fontSize: 14,
-  color: C.text,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
-const filterList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
-const filterItem: React.CSSProperties = {
-  padding: '8px 14px',
-  borderRadius: 10,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
-  color: C.muted,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontSize: 13,
-};
-const filterItemActive: React.CSSProperties = { background: '#0f1b2f', color: '#fff', borderColor: '#0f1b2f' };
 
 const pill: React.CSSProperties = {
   padding: '7px 14px',

@@ -1,3 +1,19 @@
+// ── Performed exercises result ────────────────────────────────────────────────
+
+export type PerformedExerciseItem = {
+  id: string;
+  name: string;
+};
+
+export type PerformedExercisesResult = {
+  strength: PerformedExerciseItem[];
+  cardio: PerformedExerciseItem[];
+  plio: PerformedExerciseItem[];
+  mobility: PerformedExerciseItem[];
+  isometric: PerformedExerciseItem[];
+  sport: PerformedExerciseItem[];
+};
+
 // ── New detailed progress models ─────────────────────────────────────────────
 
 export type ExerciseProgressPoint = {
@@ -9,6 +25,8 @@ export type ExerciseProgressPoint = {
   avgRpe: number | null;
   e1rm: number | null;
   inol: number | null;
+  totalDurationSeconds: number | null;
+  durationMinutes: number | null;
   setDetails: Array<{
     setIndex: number;
     reps: number | null;

@@ -1,37 +1,29 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, SessionStatus, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  CardioIntervalLog,
-  CardioSessionInstance,
-} from '../../domain/cardio-session.entity';
+import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
 import type { SessionInstance, SessionSetLog } from '../../domain/session.entity';
 import type { EnsureSessionInput, FinishSessionInput, LogSetInput } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import {
   assertSessionMutable,
+  mapSessionIsometricCreate,
   mapSessionItemCreate,
+  mapSessionMobilityCreate,
+  mapSessionPlioCreate,
+  mapSessionSportCreate,
   mapSetLog,
   readFirstDayExercises,
+  readFirstDayIsometricBlocks,
+  readFirstDayMobilityBlocks,
+  readFirstDayPlioBlocks,
+  readFirstDaySportBlocks,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
-import {
-  mapSession,
-  normalizeText,
-  sessionInclude,
-  toDecimal,
-} from './sessions-strength.prisma.helpers';
+import { mapSession, normalizeText, sessionInclude, toDecimal } from './sessions-strength.prisma.helpers';
 
 type CoachMembership = {
   id: string;
@@ -55,10 +47,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.canClientAccessSession(context, sessionId);
   }
 
-  ensureCardioSession(
-    context: AuthContext,
-    input: EnsureCardioSessionInput,
-  ): Promise<CardioSessionInstance> {
+  ensureCardioSession(context: AuthContext, input: EnsureCardioSessionInput): Promise<CardioSessionInstance> {
     return this.cardioRepository.ensureCardioSession(context, input);
   }
 
@@ -87,16 +76,21 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         sourceTemplateVersion: template.templateVersion,
         status: SessionStatus.PENDING,
         items: { create: template.items.map(mapSessionItemCreate) },
+        plioBlocks: template.plioBlocks ? { create: template.plioBlocks.map(mapSessionPlioCreate) } : undefined,
+        mobilityBlocks: template.mobilityBlocks
+          ? { create: template.mobilityBlocks.map(mapSessionMobilityCreate) }
+          : undefined,
+        isometricBlocks: template.isometricBlocks
+          ? { create: template.isometricBlocks.map(mapSessionIsometricCreate) }
+          : undefined,
+        sportBlocks: template.sportBlocks ? { create: template.sportBlocks.map(mapSessionSportCreate) } : undefined,
       },
       include: sessionInclude(),
     });
     return mapSession(row);
   }
 
-  finishCardioSession(
-    context: AuthContext,
-    input: FinishSessionInput,
-  ): Promise<CardioSessionInstance> {
+  finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
     return this.cardioRepository.finishCardioSession(context, input);
   }
 
@@ -118,10 +112,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return mapSession(updated);
   }
 
-  getCardioSessionById(
-    context: AuthContext,
-    sessionId: string,
-  ): Promise<CardioSessionInstance | null> {
+  getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
     return this.cardioRepository.getCardioSessionById(context, sessionId);
   }
 
@@ -219,6 +210,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return {
       id: row.id,
       items: exercises,
+      plioBlocks: readFirstDayPlioBlocks(row.days),
+      mobilityBlocks: readFirstDayMobilityBlocks(row.days),
+      isometricBlocks: readFirstDayIsometricBlocks(row.days),
+      sportBlocks: readFirstDaySportBlocks(row.days),
       templateVersion: row.templateVersion,
     };
   }
@@ -282,6 +277,22 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
           orderBy: { dayIndex: 'asc' },
           include: {
             exercises: {
+              where: { archivedAt: null },
+              orderBy: { sortOrder: 'asc' },
+            },
+            plioBlocks: {
+              where: { archivedAt: null },
+              orderBy: { sortOrder: 'asc' },
+            },
+            mobilityBlocks: {
+              where: { archivedAt: null },
+              orderBy: { sortOrder: 'asc' },
+            },
+            isometricBlocks: {
+              where: { archivedAt: null },
+              orderBy: { sortOrder: 'asc' },
+            },
+            sportBlocks: {
               where: { archivedAt: null },
               orderBy: { sortOrder: 'asc' },
             },

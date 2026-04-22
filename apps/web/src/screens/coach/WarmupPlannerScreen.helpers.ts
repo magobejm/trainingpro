@@ -76,7 +76,6 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
 
 function buildNotes(block: DraftBlock): null | string {
   return appendMeta(block.notes, {
-    trabajo: block.cardioWorkText,
     intensidadFcMax: block.intensityFcMax,
     intensidadFcReserva: block.intensityFcReserve,
     pesoKg: block.weightKg,

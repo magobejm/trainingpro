@@ -173,7 +173,6 @@ const mapCardio = (b: DraftBlock, si: number) => ({
   sortOrder: si,
   notes: appendMeta(b.notes, {
     ...readWarmupImportMeta(b),
-    trabajo: b.cardioWorkText,
     intensidadFcMax: b.intensityFcMax,
     intensidadFcReserva: b.intensityFcReserve,
     pulsaciones: b.heartRate,

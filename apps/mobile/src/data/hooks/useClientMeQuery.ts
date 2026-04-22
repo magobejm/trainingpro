@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { createApiClient } from '../api-client';
+import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type ClientProgressPhoto = {
@@ -41,9 +41,19 @@ export type ClientMe = {
 
 export function useClientMeQuery(): UseQueryResult<ClientMe, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const clearSession = useAuthStore((state) => state.clearSession);
   return useQuery({
     enabled: Boolean(accessToken),
-    queryFn: () => createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientMe>('/clients/me'),
+    queryFn: async () => {
+      try {
+        return await createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientMe>('/clients/me');
+      } catch (error) {
+        if (error instanceof UnauthorizedApiError) {
+          clearSession();
+        }
+        throw error;
+      }
+    },
     queryKey: ['clients', 'me'],
   });
 }

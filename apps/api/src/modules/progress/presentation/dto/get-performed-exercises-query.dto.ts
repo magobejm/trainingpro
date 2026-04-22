@@ -1,20 +1,14 @@
 import { z } from 'zod';
 import { postgresUuidString } from '../../../../common/zod/postgres-uuid.schema';
 
-const exerciseTypeSchema = z.enum(['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport']);
-
-export class GetExerciseProgressQueryDto {
+export class GetPerformedExercisesQueryDto {
   static schema = z.object({
     clientId: postgresUuidString.optional(),
-    exerciseId: postgresUuidString,
-    exerciseType: exerciseTypeSchema.optional().default('strength'),
     from: z.string().date(),
     to: z.string().date(),
   });
 
   clientId?: string;
-  exerciseId!: string;
-  exerciseType?: string;
   from!: string;
   to!: string;
 }

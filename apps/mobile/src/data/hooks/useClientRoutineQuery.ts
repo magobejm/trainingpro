@@ -1,5 +1,5 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { createApiClient } from '../api-client';
+import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type ClientRoutineExercise = {
@@ -34,10 +34,21 @@ export type ClientRoutine = {
 
 export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
+  const clearSession = useAuthStore((state) => state.clearSession);
   return useQuery({
     enabled: Boolean(accessToken),
-    queryFn: () =>
-      createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientRoutine>('/clients/me/routine'),
+    queryFn: async () => {
+      try {
+        return await createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientRoutine>(
+          '/clients/me/routine',
+        );
+      } catch (error) {
+        if (error instanceof UnauthorizedApiError) {
+          clearSession();
+        }
+        throw error;
+      }
+    },
     queryKey: ['clients', 'me', 'routine'],
   });
 }

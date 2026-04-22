@@ -44,7 +44,6 @@ export interface DraftBlock {
   repsPerSeries?: string;
   weightPerSeriesKg?: string;
   weightKg?: number;
-  cardioWorkText?: string;
   intensityFcMax?: number;
   intensityFcReserve?: number;
   heartRate?: number;

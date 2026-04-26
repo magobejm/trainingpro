@@ -5,9 +5,11 @@ export class ListCalendarEventsQueryDto {
     dateFrom: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateFrom must be YYYY-MM-DD'),
     dateTo: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'dateTo must be YYYY-MM-DD'),
     clientId: z.string().uuid().optional(),
+    coachOnly: z.enum(['true', 'false']).optional(),
   });
 
   dateFrom!: string;
   dateTo!: string;
   clientId?: string;
+  coachOnly?: string;
 }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { ChevronLeft, Search, Users } from 'lucide-react';
+import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
@@ -17,11 +17,16 @@ const colors = {
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
+type ViewMode = 'all' | 'coachOnly';
+
 type SidebarProps = {
   clients: ClientView[];
   objectives: ClientObjectiveView[];
   selectedClient: ClientView | null;
   onSelectClient: (client: ClientView | null) => void;
+  viewMode: ViewMode;
+  onCoachOnlyView: () => void;
+  onAllView: () => void;
   routineDays: RoutineDayCard[];
   onRoutineDayColorChange: (dayId: string, color: string) => void;
   t: TFunc;
@@ -35,6 +40,8 @@ type SidebarHeaderProps = {
   objectives: ClientObjectiveView[];
   selectedClient: ClientView | null;
   onSelectClient: (client: ClientView | null) => void;
+  viewMode: ViewMode;
+  onAllView: () => void;
   t: TFunc;
 };
 
@@ -46,6 +53,8 @@ function SidebarHeader({
   objectives,
   selectedClient,
   onSelectClient,
+  viewMode,
+  onAllView,
   t,
 }: SidebarHeaderProps): React.JSX.Element {
   return (
@@ -97,9 +106,9 @@ function SidebarHeader({
           </option>
         ))}
       </select>
-      {selectedClient && (
+      {(selectedClient || viewMode === 'coachOnly') && (
         <Pressable
-          onPress={() => onSelectClient(null)}
+          onPress={() => (selectedClient ? onSelectClient(null) : onAllView())}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -233,11 +242,49 @@ function SidebarClientRow({
   );
 }
 
+type CoachViewItemProps = { isActive: boolean; label: string; onPress: () => void };
+function CoachViewItem({ isActive, label, onPress }: CoachViewItemProps): React.JSX.Element {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 10,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: isActive ? colors.primary : 'transparent',
+        backgroundColor: isActive ? '#eff6ff' : 'transparent',
+        marginBottom: 8,
+      }}
+    >
+      <View
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 18,
+          backgroundColor: isActive ? '#dbeafe' : '#e2e8f0',
+          marginRight: 10,
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Dumbbell size={16} color={isActive ? colors.primary : colors.textMuted} />
+      </View>
+      <Text style={{ fontSize: 13, fontWeight: 'bold', color: isActive ? colors.primary : colors.text }}>{label}</Text>
+    </Pressable>
+  );
+}
+
 export function CalendarSidebar({
   clients,
   objectives,
   selectedClient,
   onSelectClient,
+  viewMode,
+  onCoachOnlyView,
+  onAllView,
   routineDays,
   onRoutineDayColorChange,
   t,
@@ -245,6 +292,8 @@ export function CalendarSidebar({
   const [search, setSearch] = useState('');
   const [objectiveFilter, setObjectiveFilter] = useState<string>(EMPTY_FILTER);
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
+
+  const isCoachOnly = viewMode === 'coachOnly';
 
   const filtered = clients.filter((c) => {
     const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
@@ -273,9 +322,16 @@ export function CalendarSidebar({
         objectives={objectives}
         selectedClient={selectedClient}
         onSelectClient={onSelectClient}
+        viewMode={viewMode}
+        onAllView={onAllView}
         t={t}
       />
       <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ padding: 12 }}>
+        <CoachViewItem
+          isActive={isCoachOnly}
+          label={t('coach.calendar.sidebar.coachView')}
+          onPress={() => (isCoachOnly ? onAllView() : onCoachOnlyView())}
+        />
         {filtered.map((client) => (
           <SidebarClientRow
             key={client.id}

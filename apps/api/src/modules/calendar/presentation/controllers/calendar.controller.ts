@@ -35,6 +35,7 @@ export class CalendarController {
       dateFrom: new Date(query.dateFrom),
       dateTo: new Date(query.dateTo),
       clientId: query.clientId,
+      coachOnly: query.coachOnly === 'true',
     };
     return this.listCalendarEventsUseCase.execute(readAuthContext(request), parsedQuery);
   }

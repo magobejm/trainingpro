@@ -72,7 +72,7 @@ export class CalendarRepositoryPrisma implements ICalendarRepository {
         coachMembershipId,
         archivedAt: null,
         date: { gte: query.dateFrom, lte: query.dateTo },
-        ...(query.clientId ? { clientId: query.clientId } : {}),
+        ...(query.coachOnly ? { clientId: null } : query.clientId ? { clientId: query.clientId } : {}),
       },
       include: INCLUDE_RELATIONS,
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],

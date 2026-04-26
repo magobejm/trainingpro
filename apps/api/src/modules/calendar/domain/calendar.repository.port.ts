@@ -42,6 +42,7 @@ export type ListCalendarEventsQuery = {
   dateFrom: Date;
   dateTo: Date;
   clientId?: string;
+  coachOnly?: boolean;
 };
 
 export interface ICalendarRepository {

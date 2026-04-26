@@ -37,11 +37,31 @@ const COLOR_PRIMARY = '#3b82f6' as const;
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
+type ViewMode = 'all' | 'coachOnly';
+
+function useClientViewMode() {
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('all');
+  const setSelectedClient = useCallback((client: ClientView | null) => {
+    setSelectedClientId(client?.id ?? null);
+    if (client) setViewMode('all');
+  }, []);
+  const setCoachOnlyView = useCallback(() => {
+    setSelectedClientId(null);
+    setViewMode('coachOnly');
+  }, []);
+  const setAllView = useCallback(() => {
+    setSelectedClientId(null);
+    setViewMode('all');
+  }, []);
+  return { selectedClientId, viewMode, setSelectedClient, setCoachOnlyView, setAllView };
+}
+
 function useCalendarLogic() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const { selectedClientId, viewMode, setSelectedClient, setCoachOnlyView, setAllView } = useClientViewMode();
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
   const [clipboard, setClipboard] = useState<CalendarClipboard | null>(null);
@@ -54,11 +74,8 @@ function useCalendarLogic() {
     () => (selectedClientId ? (clients.find((c) => c.id === selectedClientId) ?? null) : null),
     [clients, selectedClientId],
   );
-  const setSelectedClient = useCallback((client: ClientView | null) => {
-    setSelectedClientId(client?.id ?? null);
-  }, []);
   const planTemplateId = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
-  const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id);
+  const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id, viewMode === 'coachOnly');
   const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId);
   const createEvent = useCreateCalendarEventMutation();
   const updateEvent = useUpdateCalendarEventMutation();
@@ -99,6 +116,9 @@ function useCalendarLogic() {
     month,
     selectedClient,
     setSelectedClient,
+    viewMode,
+    setCoachOnlyView,
+    setAllView,
     modal,
     setModal,
     routineDays,
@@ -267,6 +287,9 @@ export function CalendarScreen(): React.JSX.Element {
     month,
     selectedClient,
     setSelectedClient,
+    viewMode,
+    setCoachOnlyView,
+    setAllView,
     modal,
     setModal,
     routineDays,
@@ -307,6 +330,9 @@ export function CalendarScreen(): React.JSX.Element {
         objectives={objectives}
         selectedClient={selectedClient}
         onSelectClient={setSelectedClient}
+        viewMode={viewMode}
+        onCoachOnlyView={setCoachOnlyView}
+        onAllView={setAllView}
         routineDays={routineDays}
         onRoutineDayColorChange={onRoutineDayColorChange}
         t={t}

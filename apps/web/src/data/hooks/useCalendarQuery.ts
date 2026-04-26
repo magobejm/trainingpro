@@ -30,16 +30,17 @@ export type UpdateCalendarEventInput = {
   date?: string;
 };
 
-export function useCalendarEventsQuery(dateFrom: string, dateTo: string, clientId?: string) {
+export function useCalendarEventsQuery(dateFrom: string, dateTo: string, clientId?: string, coachOnly?: boolean) {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth) && Boolean(dateFrom) && Boolean(dateTo),
-    queryKey: ['calendar', 'events', dateFrom, dateTo, clientId],
+    queryKey: ['calendar', 'events', dateFrom, dateTo, clientId, coachOnly],
     queryFn: async () => {
       if (!auth) throw new Error('Not authenticated');
       const api = createApiClient(auth);
       const params = new URLSearchParams({ dateFrom, dateTo });
       if (clientId) params.append('clientId', clientId);
+      if (coachOnly) params.append('coachOnly', 'true');
       const response = await api.get<{ data: CalendarEventData[] }>(`/calendar?${params.toString()}`);
       return response.data.map((ev: CalendarEventData) => ({
         ...ev,

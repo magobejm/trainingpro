@@ -263,7 +263,11 @@ async function seedRoutineTemplates(): Promise<void> {
         scope: LibraryItemScope.GLOBAL,
         days: { create: tpl.days.map(mapDayForSeed) },
       },
-      update: { name: tpl.name, scope: LibraryItemScope.GLOBAL },
+      update: {
+        name: tpl.name,
+        scope: LibraryItemScope.GLOBAL,
+        days: { deleteMany: {}, create: tpl.days.map(mapDayForSeed) },
+      },
     });
   }
 }

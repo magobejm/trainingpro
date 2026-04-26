@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import type { SessionProgressCategory } from '../types/session-progress';
 
 export type MicrocycleProgressPoint = {
   weekStart: string;
@@ -10,9 +11,15 @@ export type MicrocycleProgressPoint = {
   sessionsCount: number;
 };
 
+export type MicrocycleProgressResult = {
+  cycleDays: number;
+  points: MicrocycleProgressPoint[];
+};
+
 type QueryInput = {
   clientId?: string;
-  templateId: string;
+  templateId?: string;
+  category?: SessionProgressCategory;
   from: string;
   to: string;
 };
@@ -20,9 +27,9 @@ type QueryInput = {
 export function useMicrocycleProgressQuery(input: QueryInput, options?: { enabled?: boolean }) {
   const auth = useAuth();
   return useQuery({
-    enabled: Boolean(auth) && Boolean(input.templateId) && (options?.enabled ?? true),
+    enabled: Boolean(auth) && (options?.enabled ?? true),
     queryFn: () => fetchMicrocycleProgress(auth, input),
-    queryKey: ['progress', 'microcycle', input.clientId, input.templateId, input.from, input.to],
+    queryKey: ['progress', 'microcycle', input.clientId, input.templateId ?? '', input.category ?? '', input.from, input.to],
   });
 }
 
@@ -36,9 +43,11 @@ function useAuth() {
 async function fetchMicrocycleProgress(
   auth: ReturnType<typeof useAuth>,
   input: QueryInput,
-): Promise<MicrocycleProgressPoint[]> {
+): Promise<MicrocycleProgressResult> {
   if (!auth) throw new Error('Missing auth');
-  const query = new URLSearchParams({ templateId: input.templateId, from: input.from, to: input.to });
+  const query = new URLSearchParams({ from: input.from, to: input.to });
   if (input.clientId) query.set('clientId', input.clientId);
-  return createApiClient(auth).get<MicrocycleProgressPoint[]>(`/progress/microcycle?${query}`);
+  if (input.templateId) query.set('templateId', input.templateId);
+  if (input.category) query.set('category', input.category);
+  return createApiClient(auth).get<MicrocycleProgressResult>(`/progress/microcycle?${query}`);
 }

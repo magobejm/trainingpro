@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- progress repository aggregates many read paths */
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
@@ -6,6 +7,7 @@ import type {
   ExerciseProgressQuery,
   MicrocycleProgressQuery,
   PerformedExercisesQuery,
+  PerformedSessionDaysQuery,
   PerformedTemplatesQuery,
   ProgressQuery,
   ProgressRepositoryPort,
@@ -16,7 +18,9 @@ import type {
   CardioLogRow,
   ExerciseProgressPoint,
   MicrocycleProgressPoint,
+  MicrocycleProgressResult,
   PerformedExercisesResult,
+  PerformedSessionDaysResult,
   PerformedTemplatesResult,
   RecentSessionSummary,
   SessionProgressPoint,
@@ -24,7 +28,6 @@ import type {
   StrengthLogRow,
 } from '../../domain/progress.models';
 import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
-import { toWeekStart } from '../../domain/metrics/week-start';
 import {
   fetchPerformedExerciseNames,
   readCardioExerciseProgress,
@@ -33,6 +36,7 @@ import {
   readPerformedIds,
   readPlioProgress,
   readSportProgress,
+  type HeartProfile,
 } from './progress-exercise-types.helpers';
 
 @Injectable()
@@ -106,12 +110,20 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
 
   async readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]> {
     const clientId = await this.resolveClientId(context, query.clientId);
+    const clientRow = await this.prisma.client.findFirst({
+      where: { archivedAt: null, id: clientId },
+      select: { fcMax: true, fcRest: true },
+    });
+    const heartProfile: HeartProfile = {
+      fcMax: clientRow?.fcMax ?? null,
+      fcRest: clientRow?.fcRest ?? null,
+    };
     const type = query.exerciseType ?? 'strength';
     if (type === 'plio') return readPlioProgress(this.prisma, clientId, query);
     if (type === 'mobility') return readMobilityProgress(this.prisma, clientId, query);
     if (type === 'isometric') return readIsometricProgress(this.prisma, clientId, query);
-    if (type === 'sport') return readSportProgress(this.prisma, clientId, query);
-    if (type === 'cardio') return readCardioExerciseProgress(this.prisma, clientId, query);
+    if (type === 'sport') return readSportProgress(this.prisma, clientId, query, heartProfile);
+    if (type === 'cardio') return readCardioExerciseProgress(this.prisma, clientId, query, heartProfile);
     return this.readStrengthExerciseProgress(clientId, query);
   }
 
@@ -200,113 +212,120 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     return { templates: templates.map((t) => ({ id: t.id, name: t.name })) };
   }
 
-  async readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]> {
+  async readPerformedSessionDays(
+    context: AuthContext,
+    query: PerformedSessionDaysQuery,
+  ): Promise<PerformedSessionDaysResult> {
     const clientId = await this.resolveClientId(context, query.clientId);
-    const sessions = await this.prisma.sessionInstance.findMany({
+    const rows = await this.prisma.sessionInstance.findMany({
       where: {
         archivedAt: null,
         clientId,
         isCompleted: true,
         sourceTemplateId: query.templateId,
         sessionDate: { gte: query.from, lte: query.to },
+        planDayIndex: { not: null },
       },
-      select: {
-        id: true,
-        sessionDate: true,
-        startedAt: true,
-        finishedAt: true,
-        logs: {
-          select: {
-            repsDone: true,
-            weightDoneKg: true,
-            effortRpe: true,
-          },
-        },
-        intervalLogs: {
-          select: {
-            durationSecondsDone: true,
-            effortRpe: true,
-            avgHeartRate: true,
-          },
-        },
-        client: { select: { fcRest: true, fcMax: true } },
+      orderBy: { sessionDate: 'asc' },
+      select: { planDayIndex: true, planDayTitle: true },
+    });
+    const snapshotTitleByIndex = new Map<number, string>();
+    for (const r of rows) {
+      if (r.planDayIndex == null) continue;
+      if (!snapshotTitleByIndex.has(r.planDayIndex)) {
+        const title = (r.planDayTitle?.trim() || `Day ${r.planDayIndex}`).slice(0, 120);
+        snapshotTitleByIndex.set(r.planDayIndex, title);
+      }
+    }
+    const indices = [...snapshotTitleByIndex.keys()].sort((a, b) => a - b);
+    if (indices.length === 0) {
+      return { days: [] };
+    }
+    const planDays = await this.prisma.planDay.findMany({
+      where: {
+        templateId: query.templateId,
+        archivedAt: null,
+        dayIndex: { in: indices },
       },
+      select: { dayIndex: true, title: true },
+    });
+    const catalogTitleByIndex = new Map<number, string>(
+      planDays.map((d) => [d.dayIndex, (d.title?.trim() || `Day ${d.dayIndex}`).slice(0, 120)]),
+    );
+    const days = indices.map((dayIndex) => ({
+      dayIndex,
+      title: catalogTitleByIndex.get(dayIndex) ?? snapshotTitleByIndex.get(dayIndex) ?? `Day ${dayIndex}`,
+    }));
+    return { days };
+  }
+
+  async readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const legacy = query.dayIndex == null && query.category == null;
+    const where: Prisma.SessionInstanceWhereInput = {
+      archivedAt: null,
+      clientId,
+      isCompleted: true,
+      sourceTemplateId: query.templateId,
+      sessionDate: { gte: query.from, lte: query.to },
+    };
+    if (!legacy && query.dayIndex != null) {
+      where.planDayIndex = query.dayIndex;
+    }
+
+    const sessions = await this.prisma.sessionInstance.findMany({
+      where,
+      select: sessionProgressSelect(),
       orderBy: { sessionDate: 'asc' },
     });
 
-    return sessions.map((session) => {
-      let totalTonnage = 0;
-      let totalInol = 0;
-      let inolCount = 0;
-      let totalRpe = 0;
-      let rpeCount = 0;
-
-      for (const log of session.logs) {
-        const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
-        const r = log.repsDone;
-        if (w !== null && r !== null) {
-          totalTonnage += w * r;
-          // Simple INOL estimate: reps / (100 - intensity) using 75% as default intensity when no e1RM
-          const inol = r / 25;
-          totalInol += inol;
-          inolCount++;
-        }
-        if (log.effortRpe !== null) {
-          totalRpe += log.effortRpe;
-          rpeCount++;
-        }
-      }
-
-      const avgRpe = rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null;
-      const sessionInol = inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null;
-      const effortIndex = avgRpe !== null && sessionInol !== null ? Math.round(avgRpe * sessionInol * 100) / 100 : null;
-
-      // TRIMP (simplified): duration * %FC reserva
-      let trainingLoad: number | null = null;
-      let sessionEfficiency: number | null = null;
-      const intervalDuration = session.intervalLogs.reduce((sum, l) => sum + (l.durationSecondsDone ?? 0), 0);
-      const durationMinutes = intervalDuration > 0 ? intervalDuration / 60 : null;
-      const avgHr =
-        session.intervalLogs.length > 0
-          ? session.intervalLogs.filter((l) => l.avgHeartRate !== null).reduce((s, l) => s + (l.avgHeartRate ?? 0), 0) /
-            session.intervalLogs.filter((l) => l.avgHeartRate !== null).length
-          : null;
-
-      if (durationMinutes !== null && avgHr !== null) {
-        const fcRest = session.client?.fcRest ?? 60;
-        const fcMax = session.client?.fcMax ?? 190;
-        const fcReservePercent = ((avgHr - fcRest) / (fcMax - fcRest)) * 100;
-        trainingLoad = Math.round(durationMinutes * Math.max(0, fcReservePercent) * 100) / 100;
-        sessionEfficiency = avgHr > 0 ? Math.round((totalTonnage / avgHr) * 100) / 100 : null;
-      }
-
-      return {
-        sessionDate: session.sessionDate.toISOString().slice(0, 10),
-        sessionId: session.id,
-        sessionTonnage: Math.round(totalTonnage * 100) / 100,
-        sessionInol,
-        sessionRpe: avgRpe,
-        effortIndex,
-        trainingLoad,
-        sessionEfficiency,
-      };
-    });
+    if (legacy) {
+      return sessions.map(mapLegacySessionProgressPoint);
+    }
+    const category = query.category ?? 'strength';
+    return sessions.map((s) => mapCategorySessionProgressPoint(s, category));
   }
 
-  async readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressPoint[]> {
-    const sessionPoints = await this.readSessionProgress(context, {
-      clientId: query.clientId,
-      templateId: query.templateId,
-      from: query.from,
-      to: query.to,
+  async readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressResult> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    let cycleDays = 7;
+    if (query.templateId) {
+      const tpl = await this.prisma.planTemplate.findFirst({
+        where: { id: query.templateId, archivedAt: null },
+        select: { expectedCompletionDays: true },
+      });
+      const n = tpl?.expectedCompletionDays;
+      cycleDays = typeof n === 'number' && n >= 1 && n <= 90 ? n : 7;
+    }
+
+    const where: Prisma.SessionInstanceWhereInput = {
+      archivedAt: null,
+      clientId,
+      isCompleted: true,
+      sessionDate: { gte: query.from, lte: query.to },
+    };
+    if (query.templateId) {
+      where.sourceTemplateId = query.templateId;
+    }
+
+    const sessions = await this.prisma.sessionInstance.findMany({
+      where,
+      select: sessionProgressSelect(),
+      orderBy: { sessionDate: 'asc' },
     });
 
-    type WeekAccumulator = MicrocycleProgressPoint & { _rpeSum: number; _rpeCount: number };
-    const byWeek = new Map<string, WeekAccumulator>();
+    const legacy = !query.category;
+    const sessionPoints = sessions.map((row) =>
+      legacy ? mapLegacySessionProgressPoint(row) : mapCategorySessionProgressPoint(row, query.category!),
+    );
+
+    const fromYmd = query.from.toISOString().slice(0, 10);
+    type Acc = MicrocycleProgressPoint & { _rpeSum: number; _rpeCount: number };
+    const byBlock = new Map<string, Acc>();
     for (const point of sessionPoints) {
-      const weekStart = toWeekStart(new Date(point.sessionDate));
-      const current: WeekAccumulator = byWeek.get(weekStart) ?? {
-        weekStart,
+      const blockStart = microcycleBlockStartIso(point.sessionDate, fromYmd, cycleDays);
+      const current: Acc = byBlock.get(blockStart) ?? {
+        weekStart: blockStart,
         totalTonnage: 0,
         avgRpe: null,
         totalTrainingLoad: null,
@@ -314,17 +333,16 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
         _rpeSum: 0,
         _rpeCount: 0,
       };
-
       current._rpeSum = (current._rpeSum ?? 0) + (point.sessionRpe ?? 0);
       current._rpeCount = (current._rpeCount ?? 0) + (point.sessionRpe !== null ? 1 : 0);
       current.totalTonnage = Math.round((current.totalTonnage + point.sessionTonnage) * 100) / 100;
-      current.totalTrainingLoad = (current.totalTrainingLoad ?? 0) + (point.trainingLoad ?? 0) || null;
+      current.totalTrainingLoad = (current.totalTrainingLoad ?? 0) + (point.trainingLoad ?? 0);
       current.sessionsCount++;
       current.avgRpe = current._rpeCount > 0 ? Math.round((current._rpeSum / current._rpeCount) * 100) / 100 : null;
-      byWeek.set(weekStart, current);
+      byBlock.set(blockStart, current);
     }
 
-    return [...byWeek.values()]
+    const points = [...byBlock.values()]
       .map(({ weekStart, totalTonnage, avgRpe, totalTrainingLoad, sessionsCount }) => ({
         weekStart,
         totalTonnage,
@@ -333,6 +351,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
         sessionsCount,
       }))
       .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
+    return { cycleDays, points };
   }
 
   async readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]> {
@@ -492,6 +511,292 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     }
     return client.id;
   }
+}
+
+function utcCalendarDaysBetween(fromIsoYmd: string, toIsoYmd: string): number {
+  const t0 = Date.UTC(+fromIsoYmd.slice(0, 4), +fromIsoYmd.slice(5, 7) - 1, +fromIsoYmd.slice(8, 10));
+  const t1 = Date.UTC(+toIsoYmd.slice(0, 4), +toIsoYmd.slice(5, 7) - 1, +toIsoYmd.slice(8, 10));
+  return Math.floor((t1 - t0) / 86400000);
+}
+
+/** Start date (YYYY-MM-DD) of the N-day microcycle block containing sessionDateYmd, anchored at rangeFromYmd. */
+function microcycleBlockStartIso(sessionDateYmd: string, rangeFromYmd: string, cycleDays: number): string {
+  const n = Math.max(1, cycleDays);
+  const diff = utcCalendarDaysBetween(rangeFromYmd, sessionDateYmd);
+  const k = Math.floor(Math.max(0, diff) / n);
+  const base = new Date(`${rangeFromYmd}T00:00:00.000Z`);
+  base.setUTCDate(base.getUTCDate() + k * n);
+  return base.toISOString().slice(0, 10);
+}
+
+type SessionProgressRow = {
+  id: string;
+  sessionDate: Date;
+  client: { fcRest: number | null; fcMax: number | null } | null;
+  logs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: number | null }>;
+  intervalLogs: Array<{ durationSecondsDone: number | null; effortRpe: number | null; avgHeartRate: number | null }>;
+  plioLogs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: number | null }>;
+  mobilityLogs: Array<{ effortRpe: number | null }>;
+  isometricLogs: Array<{
+    durationSecondsDone: number | null;
+    weightDoneKg: Prisma.Decimal | null;
+    effortRpe: number | null;
+  }>;
+  sportLogs: Array<{ durationMinutesDone: number | null; effortRpe: number | null; avgHeartRate: number | null }>;
+};
+
+function sessionProgressSelect() {
+  return {
+    id: true,
+    sessionDate: true,
+    client: { select: { fcRest: true, fcMax: true } },
+    logs: { select: { repsDone: true, weightDoneKg: true, effortRpe: true } },
+    intervalLogs: { select: { durationSecondsDone: true, effortRpe: true, avgHeartRate: true } },
+    plioLogs: { select: { repsDone: true, weightDoneKg: true, effortRpe: true } },
+    mobilityLogs: { select: { effortRpe: true } },
+    isometricLogs: { select: { durationSecondsDone: true, weightDoneKg: true, effortRpe: true } },
+    sportLogs: { select: { durationMinutesDone: true, effortRpe: true, avgHeartRate: true } },
+  };
+}
+
+function aggregateStrengthSetLogs(logs: SessionProgressRow['logs']): {
+  totalTonnage: number;
+  sessionInol: number | null;
+  avgRpe: number | null;
+  effortIndex: number | null;
+} {
+  let totalTonnage = 0;
+  let totalInol = 0;
+  let inolCount = 0;
+  let totalRpe = 0;
+  let rpeCount = 0;
+  for (const log of logs) {
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    const r = log.repsDone;
+    if (w !== null && r !== null) {
+      totalTonnage += w * r;
+      totalInol += r / 25;
+      inolCount++;
+    }
+    if (log.effortRpe !== null) {
+      totalRpe += log.effortRpe;
+      rpeCount++;
+    }
+  }
+  const avgRpe = rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null;
+  const sessionInol = inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null;
+  const effortIndex = avgRpe !== null && sessionInol !== null ? Math.round(avgRpe * sessionInol * 100) / 100 : null;
+  return {
+    totalTonnage: Math.round(totalTonnage * 100) / 100,
+    sessionInol,
+    avgRpe,
+    effortIndex,
+  };
+}
+
+function cardioTrainingFromIntervals(session: SessionProgressRow): {
+  trainingLoad: number | null;
+  avgRpe: number | null;
+  avgHr: number | null;
+  intervalDurationSeconds: number;
+} {
+  const intervalDurationSeconds = session.intervalLogs.reduce((sum, l) => sum + (l.durationSecondsDone ?? 0), 0);
+  const durationMinutes = intervalDurationSeconds > 0 ? intervalDurationSeconds / 60 : null;
+  const hrRows = session.intervalLogs.filter((l) => l.avgHeartRate !== null);
+  const avgHr = hrRows.length > 0 ? Math.round(hrRows.reduce((s, l) => s + (l.avgHeartRate ?? 0), 0) / hrRows.length) : null;
+  const rpeRows = session.intervalLogs.filter((l) => l.effortRpe !== null);
+  const avgRpe =
+    rpeRows.length > 0
+      ? Math.round((rpeRows.reduce((s, l) => s + (l.effortRpe ?? 0), 0) / rpeRows.length) * 100) / 100
+      : null;
+  let trainingLoad: number | null = null;
+  if (durationMinutes !== null && avgHr !== null) {
+    const fcRest = session.client?.fcRest ?? 60;
+    const fcMax = session.client?.fcMax ?? 190;
+    const denom = fcMax - fcRest;
+    const fcReservePercent = denom > 0 ? ((avgHr - fcRest) / denom) * 100 : 0;
+    trainingLoad = Math.round(durationMinutes * Math.max(0, fcReservePercent) * 100) / 100;
+  }
+  return { trainingLoad, avgRpe, avgHr, intervalDurationSeconds };
+}
+
+function mapLegacySessionProgressPoint(session: SessionProgressRow): SessionProgressPoint {
+  const s = aggregateStrengthSetLogs(session.logs);
+  const cardio = cardioTrainingFromIntervals(session);
+  const sessionEfficiency =
+    cardio.avgHr !== null && cardio.avgHr > 0 && s.totalTonnage > 0
+      ? Math.round((s.totalTonnage / cardio.avgHr) * 100) / 100
+      : null;
+  return {
+    sessionDate: session.sessionDate.toISOString().slice(0, 10),
+    sessionId: session.id,
+    sessionTonnage: s.totalTonnage,
+    sessionInol: s.sessionInol,
+    sessionRpe: s.avgRpe,
+    effortIndex: s.effortIndex,
+    trainingLoad: cardio.trainingLoad,
+    sessionEfficiency,
+  };
+}
+
+function mapCategorySessionProgressPoint(session: SessionProgressRow, category: string): SessionProgressPoint {
+  switch (category) {
+    case 'strength':
+      return mapCategorySessionStrength(session);
+    case 'cardio':
+      return mapCategorySessionCardio(session);
+    case 'plio':
+      return mapCategorySessionPlio(session);
+    case 'isometric':
+      return mapCategorySessionIsometric(session);
+    case 'mobility':
+      return mapCategorySessionMobility(session);
+    case 'sport':
+      return mapCategorySessionSport(session);
+    default:
+      return mapCategorySessionStrength(session);
+  }
+}
+
+function mapCategorySessionBase(session: SessionProgressRow) {
+  return { sessionDate: session.sessionDate.toISOString().slice(0, 10), sessionId: session.id };
+}
+
+function mapCategorySessionStrength(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  const s = aggregateStrengthSetLogs(session.logs);
+  return {
+    ...baseDate,
+    sessionTonnage: s.totalTonnage,
+    sessionInol: s.sessionInol,
+    sessionRpe: s.avgRpe,
+    effortIndex: s.effortIndex,
+    trainingLoad: null,
+    sessionEfficiency: null,
+  };
+}
+
+function mapCategorySessionCardio(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  const c = cardioTrainingFromIntervals(session);
+  const sessionEfficiency =
+    c.avgHr !== null && c.avgHr > 0 && c.intervalDurationSeconds > 0
+      ? Math.round((c.intervalDurationSeconds / c.avgHr) * 100) / 100
+      : null;
+  return {
+    ...baseDate,
+    sessionTonnage: 0,
+    sessionInol: null,
+    sessionRpe: c.avgRpe,
+    effortIndex: null,
+    trainingLoad: c.trainingLoad,
+    sessionEfficiency,
+  };
+}
+
+function mapCategorySessionPlio(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  let ton = 0;
+  let rpeSum = 0;
+  let rpeN = 0;
+  for (const log of session.plioLogs) {
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
+    const r = log.repsDone ?? 0;
+    ton += w * r;
+    if (log.effortRpe !== null) {
+      rpeSum += log.effortRpe;
+      rpeN++;
+    }
+  }
+  const avgRpe = rpeN > 0 ? Math.round((rpeSum / rpeN) * 100) / 100 : null;
+  return {
+    ...baseDate,
+    sessionTonnage: Math.round(ton * 100) / 100,
+    sessionInol: null,
+    sessionRpe: avgRpe,
+    effortIndex: null,
+    trainingLoad: null,
+    sessionEfficiency: null,
+  };
+}
+
+function mapCategorySessionIsometric(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  let ton = 0;
+  let rpeSum = 0;
+  let rpeN = 0;
+  for (const log of session.isometricLogs) {
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
+    const sec = log.durationSecondsDone ?? 0;
+    ton += w * (sec / 60);
+    if (log.effortRpe !== null) {
+      rpeSum += log.effortRpe;
+      rpeN++;
+    }
+  }
+  const avgRpe = rpeN > 0 ? Math.round((rpeSum / rpeN) * 100) / 100 : null;
+  return {
+    ...baseDate,
+    sessionTonnage: Math.round(ton * 100) / 100,
+    sessionInol: null,
+    sessionRpe: avgRpe,
+    effortIndex: null,
+    trainingLoad: null,
+    sessionEfficiency: null,
+  };
+}
+
+function mapCategorySessionMobility(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  const rpeVals = session.mobilityLogs.map((l) => l.effortRpe).filter((v): v is number => v !== null);
+  const avgRpe = rpeVals.length > 0 ? Math.round((rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length) * 100) / 100 : null;
+  return {
+    ...baseDate,
+    sessionTonnage: 0,
+    sessionInol: null,
+    sessionRpe: avgRpe,
+    effortIndex: null,
+    trainingLoad: null,
+    sessionEfficiency: null,
+  };
+}
+
+function mapCategorySessionSport(session: SessionProgressRow): SessionProgressPoint {
+  const baseDate = mapCategorySessionBase(session);
+  let abstractTonnage = 0;
+  let inolAcc = 0;
+  let rpeSum = 0;
+  let rpeN = 0;
+  let hrWeighted = 0;
+  let durWeighted = 0;
+  for (const log of session.sportLogs) {
+    const dm = log.durationMinutesDone ?? 0;
+    const rpe = log.effortRpe ?? 0;
+    abstractTonnage += dm * Math.max(1, rpe);
+    inolAcc += (dm * rpe) / 10;
+    if (log.effortRpe !== null) {
+      rpeSum += log.effortRpe;
+      rpeN++;
+    }
+    if (log.avgHeartRate !== null && dm > 0) {
+      hrWeighted += log.avgHeartRate * dm;
+      durWeighted += dm;
+    }
+  }
+  const avgRpe = rpeN > 0 ? Math.round((rpeSum / rpeN) * 100) / 100 : null;
+  const sessionInol = inolAcc > 0 ? Math.round(inolAcc * 100) / 100 : null;
+  const effortIndex = avgRpe !== null && sessionInol !== null ? Math.round(avgRpe * sessionInol * 100) / 100 : null;
+  const avgHr = durWeighted > 0 ? Math.round(hrWeighted / durWeighted) : null;
+  const sessionEfficiency = avgHr !== null && abstractTonnage > 0 ? Math.round((abstractTonnage / avgHr) * 100) / 100 : null;
+  return {
+    ...baseDate,
+    sessionTonnage: Math.round(abstractTonnage * 100) / 100,
+    sessionInol,
+    sessionRpe: avgRpe,
+    effortIndex,
+    trainingLoad: null,
+    sessionEfficiency,
+  };
 }
 
 function buildDateWhere(clientId: string, query: ProgressQuery) {

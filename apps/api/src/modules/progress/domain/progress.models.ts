@@ -25,6 +25,15 @@ export type PerformedTemplatesResult = {
   templates: PerformedTemplateItem[];
 };
 
+export type PerformedSessionDayItem = {
+  dayIndex: number;
+  title: string;
+};
+
+export type PerformedSessionDaysResult = {
+  days: PerformedSessionDayItem[];
+};
+
 // ── New detailed progress models ─────────────────────────────────────────────
 
 export type ExerciseProgressPoint = {
@@ -38,6 +47,10 @@ export type ExerciseProgressPoint = {
   inol: number | null;
   totalDurationSeconds: number | null;
   durationMinutes: number | null;
+  avgHeartRate: number | null;
+  avgPaceMinKm: number | null;
+  fcReservePercent: number | null;
+  plioEffort: number | null;
   setDetails: Array<{
     setIndex: number;
     reps: number | null;
@@ -66,6 +79,11 @@ export type MicrocycleProgressPoint = {
   avgRpe: number | null;
   totalTrainingLoad: number | null;
   sessionsCount: number;
+};
+
+export type MicrocycleProgressResult = {
+  cycleDays: number;
+  points: MicrocycleProgressPoint[];
 };
 
 export type RecentSessionSummary = {

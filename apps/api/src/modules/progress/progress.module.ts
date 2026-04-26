@@ -3,6 +3,7 @@ import { AuthModule } from '../auth/auth.module';
 import { GetExerciseProgressUseCase } from './application/use-cases/get-exercise-progress.usecase';
 import { GetMicrocycleProgressUseCase } from './application/use-cases/get-microcycle-progress.usecase';
 import { GetPerformedExercisesUseCase } from './application/use-cases/get-performed-exercises.usecase';
+import { GetPerformedSessionDaysUseCase } from './application/use-cases/get-performed-session-days.usecase';
 import { GetPerformedTemplatesUseCase } from './application/use-cases/get-performed-templates.usecase';
 import { GetProgressOverviewUseCase } from './application/use-cases/get-progress-overview.usecase';
 import { GetRecentSessionsUseCase } from './application/use-cases/get-recent-sessions.usecase';
@@ -22,6 +23,7 @@ import { ProgressController } from './presentation/controllers/progress.controll
     GetRecentSessionsUseCase,
     GetPerformedExercisesUseCase,
     GetPerformedTemplatesUseCase,
+    GetPerformedSessionDaysUseCase,
     ProgressRepositoryPrisma,
     {
       provide: PROGRESS_REPOSITORY,

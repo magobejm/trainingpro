@@ -23,6 +23,11 @@ const SEED_EXERCISES: Array<{ id: string; name: string; baseWeightKg: number }> 
 // We'll look these up dynamically
 const SESSION_COUNT = 24;
 
+const SEED_PLIO_EXERCISE_ID = '8fc8f40c-278a-426a-aa46-613e972745ea';
+const SEED_MOBILITY_EXERCISE_ID = '26e09cf5-7d26-41e5-955e-504415585c05';
+const SEED_ISOMETRIC_EXERCISE_ID = '3aa2ff19-1816-47a6-8398-a8714532835e';
+const SEED_SPORT_ID = 'c3d4e5f6-0003-4000-8000-000000000001';
+
 /** Returns a Date N days before today */
 function daysAgo(n: number): Date {
   const d = new Date();
@@ -149,8 +154,139 @@ async function createCardioLogs(
   });
 }
 
+async function createPlioLogs(prisma: PrismaClient, sessionId: string, sessionIndex: number): Promise<void> {
+  if (sessionIndex % 2 !== 0) return;
+
+  const blockId = randomUUID();
+  await (prisma as any).sessionPlioBlock.create({
+    data: {
+      id: blockId,
+      sessionId,
+      sourcePlioExerciseId: SEED_PLIO_EXERCISE_ID,
+      displayName: 'Pogo Jumps',
+      sortOrder: 1,
+      roundsPlanned: 1,
+      workSeconds: 300,
+      restSeconds: 60,
+      targetRpe: 7,
+    },
+  });
+
+  const setCount = 3 + (sessionIndex % 2);
+  for (let i = 0; i < setCount; i++) {
+    await (prisma as any).plioSetLog.create({
+      data: {
+        id: randomUUID(),
+        sessionId,
+        sessionPlioBlockId: blockId,
+        setIndex: i + 1,
+        repsDone: 20 + i * 5 + sessionIndex,
+        weightDoneKg: round2(2 + sessionIndex * 0.15 + i * 0.5),
+        effortRpe: Math.min(10, 7 + Math.floor(sessionIndex / 6) + (i === setCount - 1 ? 1 : 0)),
+      },
+    });
+  }
+}
+
+async function createMobilityLogs(prisma: PrismaClient, sessionId: string, sessionIndex: number): Promise<void> {
+  if (sessionIndex % 3 !== 0) return;
+
+  const blockId = randomUUID();
+  await (prisma as any).sessionMobilityBlock.create({
+    data: {
+      id: blockId,
+      sessionId,
+      sourceMobilityExerciseId: SEED_MOBILITY_EXERCISE_ID,
+      displayName: 'Cat-Cow',
+      sortOrder: 2,
+      roundsPlanned: 1,
+      workSeconds: 120,
+      restSeconds: 0,
+      targetRpe: 5,
+    },
+  });
+
+  for (let i = 0; i < 3; i++) {
+    await (prisma as any).mobilitySetLog.create({
+      data: {
+        id: randomUUID(),
+        sessionId,
+        sessionMobilityBlockId: blockId,
+        setIndex: i + 1,
+        repsDone: 10 + i * 2,
+        effortRpe: 5 + (sessionIndex % 3),
+      },
+    });
+  }
+}
+
+async function createIsometricLogs(prisma: PrismaClient, sessionId: string, sessionIndex: number): Promise<void> {
+  if (sessionIndex % 2 !== 1) return;
+
+  const blockId = randomUUID();
+  await (prisma as any).sessionIsometricBlock.create({
+    data: {
+      id: blockId,
+      sessionId,
+      sourceIsometricExerciseId: SEED_ISOMETRIC_EXERCISE_ID,
+      displayName: 'Wall Sit',
+      sortOrder: 3,
+      setsPlanned: 3,
+      targetRpe: 7,
+    },
+  });
+
+  for (let i = 0; i < 3; i++) {
+    await (prisma as any).isometricSetLog.create({
+      data: {
+        id: randomUUID(),
+        sessionId,
+        sessionIsometricBlockId: blockId,
+        setIndex: i + 1,
+        durationSecondsDone: 40 + i * 10 + sessionIndex * 2,
+        weightDoneKg: round2(0.5 * (i + 1) + sessionIndex * 0.08),
+        effortRpe: 7 + (i % 2),
+      },
+    });
+  }
+}
+
+async function createSportLogs(prisma: PrismaClient, sessionId: string, sessionIndex: number): Promise<void> {
+  if (sessionIndex % 4 !== 1) return;
+
+  const blockId = randomUUID();
+  await (prisma as any).sessionSportBlock.create({
+    data: {
+      id: blockId,
+      sessionId,
+      sourceSportId: SEED_SPORT_ID,
+      displayName: 'Fútbol',
+      sortOrder: 4,
+      durationMinutes: 45 + (sessionIndex % 5),
+      targetRpe: 7,
+    },
+  });
+
+  const avgHr = 135 + sessionIndex + Math.floor(Math.random() * 12);
+  await (prisma as any).sportSessionLog.create({
+    data: {
+      id: randomUUID(),
+      sessionId,
+      sessionSportBlockId: blockId,
+      durationMinutesDone: 40 + (sessionIndex % 8),
+      effortRpe: 7,
+      avgHeartRate: Math.max(105, avgHr),
+    },
+  });
+}
+
 export async function seedSessions(prisma: PrismaClient): Promise<void> {
   console.log('Seeding session data...');
+
+  await (prisma as any).client.updateMany({
+    where: { archivedAt: null },
+    data: { fcMax: 185, fcRest: 60 },
+  });
 
   // Find all active clients
   const clients = await (prisma as any).client.findMany({
@@ -176,6 +312,12 @@ export async function seedSessions(prisma: PrismaClient): Promise<void> {
   });
 
   const dates = buildSessionDates();
+
+  const planDaysForGlobal = await (prisma as any).planDay.findMany({
+    where: { templateId: GLOBAL_TEMPLATE_ID },
+    orderBy: { dayIndex: 'asc' },
+    select: { id: true, dayIndex: true, title: true },
+  });
 
   let createdCount = 0;
 
@@ -206,6 +348,8 @@ export async function seedSessions(prisma: PrismaClient): Promise<void> {
 
       const sessionId = randomUUID();
 
+      const planDayRow = planDaysForGlobal.length > 0 ? planDaysForGlobal[sessionIndex % planDaysForGlobal.length] : null;
+
       // Create session
       await (prisma as any).sessionInstance.create({
         data: {
@@ -215,6 +359,9 @@ export async function seedSessions(prisma: PrismaClient): Promise<void> {
           clientId: client.id,
           sourceTemplateId: templateExists.id,
           sourceTemplateVersion: templateExists.templateVersion,
+          planDayId: planDayRow?.id ?? null,
+          planDayIndex: planDayRow?.dayIndex ?? null,
+          planDayTitle: planDayRow?.title ?? null,
           sessionDate,
           startedAt,
           finishedAt,
@@ -228,6 +375,10 @@ export async function seedSessions(prisma: PrismaClient): Promise<void> {
 
       await createStrengthLogs(prisma, sessionId, sessionIndex);
       await createCardioLogs(prisma, sessionId, sessionIndex, cardioMethods);
+      await createPlioLogs(prisma, sessionId, sessionIndex);
+      await createMobilityLogs(prisma, sessionId, sessionIndex);
+      await createIsometricLogs(prisma, sessionId, sessionIndex);
+      await createSportLogs(prisma, sessionId, sessionIndex);
 
       createdCount++;
     }

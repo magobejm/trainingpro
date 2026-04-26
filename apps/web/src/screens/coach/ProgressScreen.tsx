@@ -1,5 +1,5 @@
 /* eslint-disable max-lines */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -13,16 +13,19 @@ import { CalendarRangeModal } from './progress/CalendarRangeModal';
 import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
 import { ProgressRoutineFilter } from './progress/ProgressRoutineFilter';
 import {
-  EXERCISE_VARIABLES,
+  STRENGTH_VARIABLES,
+  CARDIO_VARIABLES,
   PLIO_VARIABLES,
   MOBILITY_VARIABLES,
   ISOMETRIC_VARIABLES,
   SPORT_VARIABLES,
-  SESSION_VARIABLES,
   MICROCYCLE_VARIABLES,
+  getMicrocycleVarsForCategory,
+  getSessionVarsForCategory,
 } from './progress/progress-screen.variables';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import type { AnalysisMode, DateRange, SelectedExercise, VariableDef } from './progress/progress-screen.types';
+import type { SessionProgressCategory } from '../../data/types/session-progress';
 import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 
@@ -62,11 +65,13 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   // Selection
   const [selectedExercise, setSelectedExercise] = useState<SelectedExercise | null>(null);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<SessionProgressCategory | null>(null);
 
   const selectedExerciseId = selectedExercise?.id ?? null;
 
   // Variable toggles
-  const defaultVars = EXERCISE_VARIABLES.slice(0, 2).map((v) => v.id);
+  const defaultVars = STRENGTH_VARIABLES.slice(0, 2).map((v) => v.id);
   const [activeVarIds, setActiveVarIds] = useState<Set<string>>(new Set(defaultVars));
 
   // Detail modal
@@ -85,21 +90,41 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     { enabled: Boolean(clientId) && Boolean(selectedExerciseId) && mode === 'exercise' },
   );
   const sessionQuery = useSessionProgressQuery(
-    { clientId: clientId ?? undefined, templateId: selectedTemplateId ?? '', from: range.from, to: range.to },
-    { enabled: Boolean(clientId) && Boolean(selectedTemplateId) && mode === 'session' },
+    {
+      clientId: clientId ?? undefined,
+      templateId: selectedTemplateId ?? '',
+      from: range.from,
+      to: range.to,
+      dayIndex: selectedDayIndex ?? undefined,
+      category: selectedCategory ?? undefined,
+    },
+    {
+      enabled:
+        Boolean(clientId) &&
+        Boolean(selectedTemplateId) &&
+        selectedDayIndex !== null &&
+        selectedCategory !== null &&
+        mode === 'session',
+    },
   );
   const microcycleQuery = useMicrocycleProgressQuery(
-    { clientId: clientId ?? undefined, templateId: selectedTemplateId ?? '', from: range.from, to: range.to },
-    { enabled: Boolean(clientId) && Boolean(selectedTemplateId) && mode === 'microcycle' },
+    {
+      clientId: clientId ?? undefined,
+      templateId: selectedTemplateId ?? undefined,
+      category: selectedTemplateId && selectedCategory ? selectedCategory : undefined,
+      from: range.from,
+      to: range.to,
+    },
+    { enabled: Boolean(clientId) && mode === 'microcycle' },
   );
 
   function getVarsForType(type: string) {
+    if (type === 'cardio') return CARDIO_VARIABLES;
     if (type === 'plio') return PLIO_VARIABLES;
-    if (type === 'mobility') return MOBILITY_VARIABLES;
     if (type === 'isometric') return ISOMETRIC_VARIABLES;
+    if (type === 'mobility') return MOBILITY_VARIABLES;
     if (type === 'sport') return SPORT_VARIABLES;
-    if (type === 'cardio') return PLIO_VARIABLES;
-    return EXERCISE_VARIABLES;
+    return STRENGTH_VARIABLES;
   }
 
   function getExerciseVars() {
@@ -107,19 +132,45 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   }
 
   const currentVars =
-    mode === 'exercise' ? getExerciseVars() : mode === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES;
+    mode === 'exercise'
+      ? getExerciseVars()
+      : mode === 'session'
+        ? getSessionVarsForCategory(selectedCategory)
+        : selectedTemplateId && selectedCategory
+          ? getMicrocycleVarsForCategory(selectedCategory)
+          : MICROCYCLE_VARIABLES;
 
   const chartPoints = useMemo(() => {
     if (mode === 'exercise') return (exerciseQuery.data ?? []) as Record<string, unknown>[];
     if (mode === 'session') return (sessionQuery.data ?? []) as Record<string, unknown>[];
-    return (microcycleQuery.data ?? []) as Record<string, unknown>[];
+    return (microcycleQuery.data?.points ?? []) as Record<string, unknown>[];
   }, [mode, exerciseQuery.data, sessionQuery.data, microcycleQuery.data]);
 
   const isLoading =
     mode === 'exercise' ? exerciseQuery.isLoading : mode === 'session' ? sessionQuery.isLoading : microcycleQuery.isLoading;
-  const hasSelection = mode === 'exercise' ? Boolean(selectedExerciseId) : Boolean(selectedTemplateId);
+  const hasSelection =
+    mode === 'exercise'
+      ? Boolean(selectedExerciseId)
+      : mode === 'session'
+        ? Boolean(selectedTemplateId) && selectedDayIndex !== null && selectedCategory !== null
+        : true;
 
   const selectedExerciseName = selectedExercise?.name ?? '';
+
+  useEffect(() => {
+    if (mode !== 'session' || !selectedCategory) return;
+    const vars = getSessionVarsForCategory(selectedCategory);
+    const pick = vars.slice(0, Math.min(2, vars.length)).map((v) => v.id);
+    if (pick.length > 0) setActiveVarIds(new Set(pick));
+  }, [mode, selectedCategory]);
+
+  useEffect(() => {
+    if (mode !== 'microcycle') return;
+    const vars =
+      selectedTemplateId && selectedCategory ? getMicrocycleVarsForCategory(selectedCategory) : MICROCYCLE_VARIABLES;
+    const pick = vars.slice(0, Math.min(2, vars.length)).map((v) => v.id);
+    if (pick.length > 0) setActiveVarIds(new Set(pick));
+  }, [mode, selectedTemplateId, selectedCategory]);
 
   function toggleVar(id: string): void {
     setActiveVarIds((prev) => {
@@ -135,8 +186,20 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
 
   function handleModeChange(m: AnalysisMode): void {
     setMode(m);
-    const vars = m === 'exercise' ? EXERCISE_VARIABLES : m === 'session' ? SESSION_VARIABLES : MICROCYCLE_VARIABLES;
-    setActiveVarIds(new Set(vars.slice(0, 2).map((v) => v.id)));
+    if (m === 'exercise') {
+      setSelectedDayIndex(null);
+      setSelectedCategory(null);
+      const vars = getVarsForType(selectedExercise?.type ?? 'strength');
+      setActiveVarIds(new Set(vars.slice(0, 2).map((v) => v.id)));
+    } else if (m === 'session') {
+      setSelectedDayIndex(null);
+      setSelectedCategory(null);
+      setActiveVarIds(new Set());
+    } else {
+      setSelectedDayIndex(null);
+      setSelectedCategory(null);
+      setActiveVarIds(new Set(MICROCYCLE_VARIABLES.slice(0, 2).map((v) => v.id)));
+    }
   }
 
   function openDetail(v: VariableDef): void {
@@ -217,9 +280,28 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
           from={range.from}
           to={range.to}
           selectedId={selectedTemplateId}
-          onSelect={setSelectedTemplateId}
+          onSelect={(id) => {
+            setSelectedTemplateId(id);
+            setSelectedDayIndex(null);
+            setSelectedCategory(null);
+          }}
+          showDaySelector={mode === 'session'}
+          selectedDayIndex={selectedDayIndex}
+          onDaySelect={(idx) => {
+            setSelectedDayIndex(idx);
+            if (idx === null) setSelectedCategory(null);
+          }}
+          selectedCategory={selectedCategory}
+          onCategorySelect={setSelectedCategory}
+          showCategorySelector={mode === 'microcycle'}
           t={t}
         />
+      )}
+
+      {mode === 'microcycle' && microcycleQuery.data != null && !microcycleQuery.isLoading && (
+        <Text style={styles.microcycleMeta}>
+          {t('coach.progress.microcycle.cycleDays', { days: microcycleQuery.data.cycleDays })}
+        </Text>
       )}
 
       {/* Variables */}
@@ -536,6 +618,7 @@ const styles = StyleSheet.create({
   breadcrumbSep: { color: C.muted, fontSize: 14, marginHorizontal: 4 },
   breadcrumbTitle: { color: C.text, fontSize: 14, fontWeight: '900' },
   subtitle: { color: C.muted, fontSize: 13, width: '100%' },
+  microcycleMeta: { color: C.muted, fontSize: 13, fontWeight: '700', width: '100%' },
   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
   variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   loading: { color: C.muted, fontSize: 14, textAlign: 'center', paddingVertical: 20 },

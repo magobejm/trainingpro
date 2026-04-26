@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import type { SessionProgressCategory } from '../types/session-progress';
 
 export type SessionProgressPoint = {
   sessionDate: string;
@@ -17,6 +18,7 @@ type QueryInput = {
   clientId?: string;
   templateId: string;
   dayIndex?: number;
+  category?: SessionProgressCategory;
   from: string;
   to: string;
 };
@@ -42,5 +44,6 @@ async function fetchSessionProgress(auth: ReturnType<typeof useAuth>, input: Que
   const query = new URLSearchParams({ templateId: input.templateId, from: input.from, to: input.to });
   if (input.clientId) query.set('clientId', input.clientId);
   if (input.dayIndex !== undefined) query.set('dayIndex', String(input.dayIndex));
+  if (input.category) query.set('category', input.category);
   return createApiClient(auth).get<SessionProgressPoint[]>(`/progress/session?${query}`);
 }

@@ -56,6 +56,10 @@ export type ExerciseSessionMetrics = {
   inol: number | null;
   totalDurationSeconds: number | null;
   durationMinutes: number | null;
+  avgHeartRate: number | null;
+  avgPaceMinKm: number | null;
+  fcReservePercent: number | null;
+  plioEffort: number | null;
   setDetails: SetMetrics[];
 };
 
@@ -114,6 +118,10 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
     inol: inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null,
     totalDurationSeconds: null,
     durationMinutes: null,
+    avgHeartRate: null,
+    avgPaceMinKm: null,
+    fcReservePercent: null,
+    plioEffort: null,
     setDetails,
   };
 }

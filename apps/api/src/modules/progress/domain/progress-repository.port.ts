@@ -1,8 +1,9 @@
 import type {
   CardioLogRow,
   ExerciseProgressPoint,
-  MicrocycleProgressPoint,
+  MicrocycleProgressResult,
   PerformedExercisesResult,
+  PerformedSessionDaysResult,
   PerformedTemplatesResult,
   RecentSessionSummary,
   SessionProgressPoint,
@@ -45,13 +46,23 @@ export type SessionProgressQuery = {
   clientId?: string;
   templateId: string;
   dayIndex?: number;
+  /** When set with dayIndex, metrics are scoped to this block type. */
+  category?: ExerciseType;
+  from: Date;
+  to: Date;
+};
+
+export type PerformedSessionDaysQuery = {
+  clientId?: string;
+  templateId: string;
   from: Date;
   to: Date;
 };
 
 export type MicrocycleProgressQuery = {
   clientId?: string;
-  templateId: string;
+  templateId?: string;
+  category?: ExerciseType;
   from: Date;
   to: Date;
 };
@@ -71,8 +82,9 @@ export interface ProgressRepositoryPort {
   readStrengthLogs(context: AuthContext, query: ProgressQuery): Promise<StrengthLogRow[]>;
   readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]>;
   readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]>;
-  readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressPoint[]>;
+  readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressResult>;
   readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]>;
   readPerformedExercises(context: AuthContext, query: PerformedExercisesQuery): Promise<PerformedExercisesResult>;
   readPerformedTemplates(context: AuthContext, query: PerformedTemplatesQuery): Promise<PerformedTemplatesResult>;
+  readPerformedSessionDays(context: AuthContext, query: PerformedSessionDaysQuery): Promise<PerformedSessionDaysResult>;
 }

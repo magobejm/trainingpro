@@ -15,6 +15,10 @@ export type ExerciseProgressPoint = {
   inol: number | null;
   totalDurationSeconds: number | null;
   durationMinutes: number | null;
+  avgHeartRate: number | null;
+  avgPaceMinKm: number | null;
+  fcReservePercent: number | null;
+  plioEffort: number | null;
   setDetails: Array<{
     setIndex: number;
     reps: number | null;

@@ -46,6 +46,43 @@ export const ROUTINE_TEMPLATES_V1 = [
         ],
         sportBlocks: [{ displayName: 'Basketball', sortOrder: 3, durationMinutes: 20 }],
       },
+      {
+        title: 'Day 2: Lower Focus',
+        dayIndex: 2,
+        exercises: [
+          {
+            displayName: 'Goblet squat',
+            sortOrder: 0,
+            fieldModes: [{ fieldKey: 'reps', mode: 'COACH_INPUT' }],
+          },
+          {
+            displayName: 'Romanian deadlift',
+            sortOrder: 1,
+            fieldModes: [{ fieldKey: 'reps', mode: 'COACH_INPUT' }],
+          },
+        ],
+        cardioBlocks: [
+          {
+            displayName: 'Bike intervals',
+            sortOrder: 2,
+            methodType: 'constant',
+            roundsPlanned: 4,
+            workSeconds: 120,
+            restSeconds: 60,
+          },
+        ],
+        plioBlocks: [],
+        mobilityBlocks: [
+          {
+            displayName: 'Hip opener flow',
+            sortOrder: 0,
+            roundsPlanned: 1,
+            workSeconds: 420,
+            restSeconds: 0,
+          },
+        ],
+        sportBlocks: [],
+      },
     ],
   },
   {

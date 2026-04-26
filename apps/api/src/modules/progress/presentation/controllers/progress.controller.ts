@@ -7,6 +7,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { GetExerciseProgressUseCase } from '../../application/use-cases/get-exercise-progress.usecase';
 import { GetMicrocycleProgressUseCase } from '../../application/use-cases/get-microcycle-progress.usecase';
 import { GetPerformedExercisesUseCase } from '../../application/use-cases/get-performed-exercises.usecase';
+import { GetPerformedSessionDaysUseCase } from '../../application/use-cases/get-performed-session-days.usecase';
 import { GetPerformedTemplatesUseCase } from '../../application/use-cases/get-performed-templates.usecase';
 import { GetProgressOverviewUseCase } from '../../application/use-cases/get-progress-overview.usecase';
 import { GetRecentSessionsUseCase } from '../../application/use-cases/get-recent-sessions.usecase';
@@ -18,6 +19,7 @@ import { GetPerformedExercisesQueryDto } from '../dto/get-performed-exercises-qu
 import { GetPerformedTemplatesQueryDto } from '../dto/get-performed-templates-query.dto';
 import { GetProgressQueryDto } from '../dto/get-progress-query.dto';
 import { GetRecentSessionsQueryDto } from '../dto/get-recent-sessions-query.dto';
+import { GetPerformedSessionDaysQueryDto } from '../dto/get-performed-session-days-query.dto';
 import { GetSessionProgressQueryDto } from '../dto/get-session-progress-query.dto';
 
 @Controller('progress')
@@ -32,6 +34,7 @@ export class ProgressController {
     private readonly getRecentSessionsUseCase: GetRecentSessionsUseCase,
     private readonly getPerformedExercisesUseCase: GetPerformedExercisesUseCase,
     private readonly getPerformedTemplatesUseCase: GetPerformedTemplatesUseCase,
+    private readonly getPerformedSessionDaysUseCase: GetPerformedSessionDaysUseCase,
   ) {}
 
   @Get('overview')
@@ -80,6 +83,18 @@ export class ProgressController {
     });
   }
 
+  @Get('session/days')
+  async getPerformedSessionDays(@Query() query: GetPerformedSessionDaysQueryDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const parsed = GetPerformedSessionDaysQueryDto.schema.parse(query);
+    return this.getPerformedSessionDaysUseCase.execute(auth, {
+      clientId: parsed.clientId,
+      templateId: parsed.templateId,
+      from: new Date(parsed.from),
+      to: new Date(parsed.to),
+    });
+  }
+
   @Get('session')
   async getSessionProgress(@Query() query: GetSessionProgressQueryDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
@@ -88,6 +103,7 @@ export class ProgressController {
       clientId: parsed.clientId,
       templateId: parsed.templateId,
       dayIndex: parsed.dayIndex,
+      category: parsed.category,
       from: new Date(parsed.from),
       to: new Date(parsed.to),
     });
@@ -100,6 +116,7 @@ export class ProgressController {
     return this.getMicrocycleProgressUseCase.execute(auth, {
       clientId: parsed.clientId,
       templateId: parsed.templateId,
+      category: parsed.category,
       from: new Date(parsed.from),
       to: new Date(parsed.to),
     });

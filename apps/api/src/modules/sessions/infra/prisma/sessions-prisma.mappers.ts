@@ -70,32 +70,76 @@ export function mapSessionItemCreate(item: TemplateExerciseSnapshot): Prisma.Ses
   };
 }
 
-export function readFirstDayExercises(days: { exercises: TemplateExerciseSnapshot[] }[]): null | TemplateExerciseSnapshot[] {
-  const firstDay = days[0];
-  if (!firstDay || firstDay.exercises.length === 0) {
+export function pickPlanDay<T extends { id: string }>(days: T[], planDayId?: string | null): T | undefined {
+  if (days.length === 0) return undefined;
+  if (planDayId) {
+    return days.find((d) => d.id === planDayId) ?? days[0];
+  }
+  return days[0];
+}
+
+export function readDayExercises(
+  days: Array<{ id: string; exercises: TemplateExerciseSnapshot[] }>,
+  planDayId?: string | null,
+): null | TemplateExerciseSnapshot[] {
+  const day = pickPlanDay(days, planDayId);
+  if (!day || day.exercises.length === 0) {
     return null;
   }
-  return firstDay.exercises;
+  return day.exercises;
+}
+
+/** @deprecated use readDayExercises */
+export function readFirstDayExercises(days: { exercises: TemplateExerciseSnapshot[] }[]): null | TemplateExerciseSnapshot[] {
+  return readDayExercises(days as Array<{ id: string; exercises: TemplateExerciseSnapshot[] }>, null);
+}
+
+export function readDayPlioBlocks(
+  days: Array<{ id: string; plioBlocks?: TemplatePlioSnapshot[] }>,
+  planDayId?: string | null,
+): TemplatePlioSnapshot[] {
+  return pickPlanDay(days, planDayId)?.plioBlocks ?? [];
+}
+
+export function readDayMobilityBlocks(
+  days: Array<{ id: string; mobilityBlocks?: TemplateMobilitySnapshot[] }>,
+  planDayId?: string | null,
+): TemplateMobilitySnapshot[] {
+  return pickPlanDay(days, planDayId)?.mobilityBlocks ?? [];
+}
+
+export function readDayIsometricBlocks(
+  days: Array<{ id: string; isometricBlocks?: TemplateIsometricSnapshot[] }>,
+  planDayId?: string | null,
+): TemplateIsometricSnapshot[] {
+  return pickPlanDay(days, planDayId)?.isometricBlocks ?? [];
+}
+
+export function readDaySportBlocks(
+  days: Array<{ id: string; sportBlocks?: TemplateSportSnapshot[] }>,
+  planDayId?: string | null,
+): TemplateSportSnapshot[] {
+  return pickPlanDay(days, planDayId)?.sportBlocks ?? [];
 }
 
 export function readFirstDayPlioBlocks(days: { plioBlocks?: TemplatePlioSnapshot[] }[]): TemplatePlioSnapshot[] {
-  return days[0]?.plioBlocks ?? [];
+  return readDayPlioBlocks(days as Array<{ id: string; plioBlocks?: TemplatePlioSnapshot[] }>, null);
 }
 
 export function readFirstDayMobilityBlocks(
   days: { mobilityBlocks?: TemplateMobilitySnapshot[] }[],
 ): TemplateMobilitySnapshot[] {
-  return days[0]?.mobilityBlocks ?? [];
+  return readDayMobilityBlocks(days as Array<{ id: string; mobilityBlocks?: TemplateMobilitySnapshot[] }>, null);
 }
 
 export function readFirstDayIsometricBlocks(
   days: { isometricBlocks?: TemplateIsometricSnapshot[] }[],
 ): TemplateIsometricSnapshot[] {
-  return days[0]?.isometricBlocks ?? [];
+  return readDayIsometricBlocks(days as Array<{ id: string; isometricBlocks?: TemplateIsometricSnapshot[] }>, null);
 }
 
 export function readFirstDaySportBlocks(days: { sportBlocks?: TemplateSportSnapshot[] }[]): TemplateSportSnapshot[] {
-  return days[0]?.sportBlocks ?? [];
+  return readDaySportBlocks(days as Array<{ id: string; sportBlocks?: TemplateSportSnapshot[] }>, null);
 }
 
 export function mapSessionPlioCreate(block: TemplatePlioSnapshot): Prisma.SessionPlioBlockCreateWithoutSessionInput {

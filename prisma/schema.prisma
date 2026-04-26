@@ -848,6 +848,7 @@ model PlanDay {
   isometricBlocks    PlanIsometricBlock[]
   exerciseGroups     PlanExerciseGroup[]
   calendarEvents     CalendarEvent[]
+  sessions           SessionInstance[]
 
   @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
   @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
@@ -1273,10 +1274,14 @@ model SessionInstance {
   updatedBy             String                @map("updated_by") @db.Uuid
   createdAt             DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  planDayId             String?               @map("plan_day_id") @db.Uuid
+  planDayIndex          Int?                  @map("plan_day_index")
+  planDayTitle          String?               @map("plan_day_title") @db.VarChar(120)
   organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
   coachMembership       OrganizationMember    @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
   client                Client                @relation(fields: [clientId], references: [id], onDelete: Restrict)
   template              PlanTemplate          @relation(fields: [sourceTemplateId], references: [id], onDelete: Restrict)
+  planDay               PlanDay?              @relation(fields: [planDayId], references: [id], onDelete: SetNull)
   items                 SessionStrengthItem[]
   cardioBlocks          SessionCardioBlock[]
   plioBlocks            SessionPlioBlock[]

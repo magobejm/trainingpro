@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { normalizePlanTemplateId } from '../normalize-plan-template-id';
 import { useAuthStore } from '../../store/auth.store';
+import type { SessionProgressCategory } from '../types/session-progress';
 import type { CalendarEventData } from '../../screens/coach/calendar-screen.types';
 
 function useAuth() {
@@ -114,12 +115,41 @@ export type RoutineDayCard = {
   dayIndex: number;
   exerciseCount: number;
   color: string;
+  categories: SessionProgressCategory[];
 };
+
+function inferRoutineDayCategories(day: {
+  exercises?: unknown[];
+  cardioBlocks?: unknown[];
+  plioBlocks?: unknown[];
+  mobilityBlocks?: unknown[];
+  sportBlocks?: unknown[];
+  isometricBlocks?: unknown[];
+}): SessionProgressCategory[] {
+  const out: SessionProgressCategory[] = [];
+  if ((day.exercises?.length ?? 0) > 0) out.push('strength');
+  if ((day.cardioBlocks?.length ?? 0) > 0) out.push('cardio');
+  if ((day.plioBlocks?.length ?? 0) > 0) out.push('plio');
+  if ((day.isometricBlocks?.length ?? 0) > 0) out.push('isometric');
+  if ((day.mobilityBlocks?.length ?? 0) > 0) out.push('mobility');
+  if ((day.sportBlocks?.length ?? 0) > 0) out.push('sport');
+  return out;
+}
 
 export type RoutineTemplateBasic = {
   id: string;
   name: string;
-  days: Array<{ id: string; title: string; dayIndex: number; exercises?: unknown[] }>;
+  days: Array<{
+    id: string;
+    title: string;
+    dayIndex: number;
+    exercises?: unknown[];
+    cardioBlocks?: unknown[];
+    plioBlocks?: unknown[];
+    mobilityBlocks?: unknown[];
+    sportBlocks?: unknown[];
+    isometricBlocks?: unknown[];
+  }>;
 };
 
 export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefined) {
@@ -134,13 +164,14 @@ export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefi
     queryFn: async () => {
       if (!auth || !resolved) return [];
       const api = createApiClient(auth);
-      const response = await api.get<RoutineTemplateBasic>(`/plans/templates/routines/${resolved}?summary=true`);
+      const response = await api.get<RoutineTemplateBasic>(`/plans/templates/routines/${resolved}`);
       return (response.days ?? []).map((day) => ({
         id: day.id,
         title: day.title,
         dayIndex: day.dayIndex,
         exerciseCount: Array.isArray(day.exercises) ? day.exercises.length : 0,
         color: '#dbeafe',
+        categories: inferRoutineDayCategories(day as Parameters<typeof inferRoutineDayCategories>[0]),
       })) as RoutineDayCard[];
     },
   });

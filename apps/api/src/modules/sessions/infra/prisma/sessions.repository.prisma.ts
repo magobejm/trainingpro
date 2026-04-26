@@ -16,11 +16,11 @@ import {
   mapSessionPlioCreate,
   mapSessionSportCreate,
   mapSetLog,
-  readFirstDayExercises,
-  readFirstDayIsometricBlocks,
-  readFirstDayMobilityBlocks,
-  readFirstDayPlioBlocks,
-  readFirstDaySportBlocks,
+  readDayExercises,
+  readDayIsometricBlocks,
+  readDayMobilityBlocks,
+  readDayPlioBlocks,
+  readDaySportBlocks,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
 import { mapSession, normalizeText, sessionInclude, toDecimal } from './sessions-strength.prisma.helpers';
@@ -64,7 +64,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (existing) {
       return mapSession(existing);
     }
-    const template = await this.readTemplateSnapshot(input.templateId, membership.id);
+    const template = await this.readTemplateSnapshot(input.templateId, membership.id, input.planDayId);
     const row = await this.prisma.sessionInstance.create({
       data: {
         ...buildCreateAuditFields(context),
@@ -74,8 +74,11 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         sessionDate: input.sessionDate,
         sourceTemplateId: template.id,
         sourceTemplateVersion: template.templateVersion,
+        planDayId: template.planDaySnapshot.planDayId,
+        planDayIndex: template.planDaySnapshot.planDayIndex,
+        planDayTitle: template.planDaySnapshot.planDayTitle,
         status: SessionStatus.PENDING,
-        items: { create: template.items.map(mapSessionItemCreate) },
+        items: template.items.length > 0 ? { create: template.items.map(mapSessionItemCreate) } : undefined,
         plioBlocks: template.plioBlocks ? { create: template.plioBlocks.map(mapSessionPlioCreate) } : undefined,
         mobilityBlocks: template.mobilityBlocks
           ? { create: template.mobilityBlocks.map(mapSessionMobilityCreate) }
@@ -198,23 +201,51 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return row;
   }
 
-  private async readTemplateSnapshot(templateId: string, coachMembershipId: string) {
-    const row = await this.readStrengthTemplate(templateId, coachMembershipId);
+  private async readTemplateSnapshot(templateId: string, coachMembershipId: string, planDayId?: string | null) {
+    const row = await this.readWorkoutTemplate(templateId, coachMembershipId);
     if (!row) {
-      throw new NotFoundException('Strength template not found');
+      throw new NotFoundException('Template not found');
     }
-    const exercises = readFirstDayExercises(row.days);
-    if (!exercises) {
-      throw new BadRequestException('Template has no exercises');
+    const days = row.days as Array<{ id: string; dayIndex: number; title: string }>;
+    const firstDay = days[0];
+    if (!firstDay) {
+      throw new BadRequestException('Template has no days');
+    }
+    const resolvedPlanDayId = planDayId ?? firstDay.id;
+    const planDayRow = days.find((d) => d.id === resolvedPlanDayId);
+    if (!planDayRow) {
+      throw new NotFoundException('Plan day not found for this template');
+    }
+    const exercises = readDayExercises(row.days as Parameters<typeof readDayExercises>[0], resolvedPlanDayId);
+    const plioBlocks = readDayPlioBlocks(row.days as Parameters<typeof readDayPlioBlocks>[0], resolvedPlanDayId);
+    const mobilityBlocks = readDayMobilityBlocks(row.days as Parameters<typeof readDayMobilityBlocks>[0], resolvedPlanDayId);
+    const isometricBlocks = readDayIsometricBlocks(
+      row.days as Parameters<typeof readDayIsometricBlocks>[0],
+      resolvedPlanDayId,
+    );
+    const sportBlocks = readDaySportBlocks(row.days as Parameters<typeof readDaySportBlocks>[0], resolvedPlanDayId);
+    const hasContent =
+      (exercises?.length ?? 0) > 0 ||
+      plioBlocks.length > 0 ||
+      mobilityBlocks.length > 0 ||
+      isometricBlocks.length > 0 ||
+      sportBlocks.length > 0;
+    if (!hasContent) {
+      throw new BadRequestException('Selected template day has no workout content');
     }
     return {
       id: row.id,
-      items: exercises,
-      plioBlocks: readFirstDayPlioBlocks(row.days),
-      mobilityBlocks: readFirstDayMobilityBlocks(row.days),
-      isometricBlocks: readFirstDayIsometricBlocks(row.days),
-      sportBlocks: readFirstDaySportBlocks(row.days),
+      items: exercises ?? [],
+      plioBlocks,
+      mobilityBlocks,
+      isometricBlocks,
+      sportBlocks,
       templateVersion: row.templateVersion,
+      planDaySnapshot: {
+        planDayId: planDayRow.id,
+        planDayIndex: planDayRow.dayIndex,
+        planDayTitle: planDayRow.title,
+      },
     };
   }
 
@@ -263,13 +294,13 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  private readStrengthTemplate(templateId: string, coachMembershipId: string) {
+  private readWorkoutTemplate(templateId: string, coachMembershipId: string) {
     return this.prisma.planTemplate.findFirst({
       where: {
         archivedAt: null,
         coachMembershipId,
         id: templateId,
-        kind: TemplateKind.STRENGTH,
+        kind: { in: [TemplateKind.STRENGTH, TemplateKind.ROUTINE] },
       },
       include: {
         days: {

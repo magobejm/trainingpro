@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   useLibraryCardioMethodsQuery,
   useLibraryExercisesQuery,
@@ -61,12 +61,17 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
     sport: new Set(performed.sport.map((e) => e.id)),
   };
 
+  useEffect(() => {
+    if (selected) setSearch(selected.name);
+  }, [selected]);
+
   const q = search.toLowerCase();
 
   function filterBySearch<T extends { id: string; name: string }>(items: T[]): T[] {
     return items.filter((i) => i.name.toLowerCase().includes(q));
   }
 
+  /** Orden: Grupo muscular, Cardio, Pliometría, Isométrico, Movilidad, Deporte */
   const groups: Group[] = [
     {
       type: 'strength',
@@ -84,14 +89,14 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
       items: filterBySearch(plioQuery.data ?? []).filter((e) => performedIds.plio.has(e.id)),
     },
     {
-      type: 'mobility',
-      labelKey: 'coach.progress.filter.group.mobility',
-      items: filterBySearch(mobilityQuery.data ?? []).filter((e) => performedIds.mobility.has(e.id)),
-    },
-    {
       type: 'isometric',
       labelKey: 'coach.progress.filter.group.isometric',
       items: filterBySearch(isometricQuery.data ?? []).filter((e) => performedIds.isometric.has(e.id)),
+    },
+    {
+      type: 'mobility',
+      labelKey: 'coach.progress.filter.group.mobility',
+      items: filterBySearch(mobilityQuery.data ?? []).filter((e) => performedIds.mobility.has(e.id)),
     },
     {
       type: 'sport',
@@ -155,31 +160,22 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
         )}
       </div>
 
-      {groups.map((group) =>
-        group.items.length > 0 ? (
-          <div key={group.type}>
-            <p style={groupLabel}>{t(group.labelKey)}</p>
-            <div style={chipList}>
-              {group.items.slice(0, 12).map((item) => (
-                <button
-                  key={item.id}
-                  style={{ ...chip, ...(selected?.id === item.id ? chipActive : {}) }}
-                  onClick={() => {
-                    if (selected?.id === item.id) {
-                      onSelect(null);
-                      setSearch('');
-                    } else {
-                      handleSelect(item, group.type);
-                    }
-                  }}
-                >
-                  {item.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null,
-      )}
+      {selected ? (
+        <div style={selectedExerciseRow}>
+          <span style={selectedExerciseName}>{selected.name}</span>
+          <button
+            type={'button'}
+            style={selectedClearBtn}
+            aria-label={t('common.close')}
+            onClick={() => {
+              onSelect(null);
+              setSearch('');
+            }}
+          >
+            {t('common.modalCloseGlyph')}
+          </button>
+        </div>
+      ) : null}
 
       {!clientId && <p style={noClientMsg}>{t('coach.progress.filter.noClient')}</p>}
     </div>
@@ -243,24 +239,39 @@ const dropdownItem: React.CSSProperties = {
 };
 const dropdownItemActive: React.CSSProperties = { background: '#eff6ff', color: '#3b82f6' };
 const dropdownEmpty: React.CSSProperties = { margin: '12px', fontSize: 13, color: '#94a3b8', textAlign: 'center' };
-const groupLabel: React.CSSProperties = {
-  margin: '4px 0 0',
-  fontSize: 11,
-  fontWeight: 800,
-  color: '#94a3b8',
-  textTransform: 'uppercase',
-  letterSpacing: 1,
-};
-const chipList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
-const chip: React.CSSProperties = {
-  padding: '8px 14px',
-  borderRadius: 10,
+const selectedExerciseRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '10px 14px',
+  borderRadius: 12,
   border: '1.5px solid #dce3eb',
   background: '#fff',
-  color: '#5d6f85',
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontSize: 13,
+  maxWidth: '100%',
 };
-const chipActive: React.CSSProperties = { background: '#0f1b2f', color: '#fff', borderColor: '#0f1b2f' };
+const selectedExerciseName: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  fontSize: 14,
+  fontWeight: 700,
+  color: '#0f1b2f',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+const selectedClearBtn: React.CSSProperties = {
+  flexShrink: 0,
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  border: '1.5px solid #dce3eb',
+  background: '#f8fafc',
+  color: '#64748b',
+  fontSize: 16,
+  lineHeight: 1,
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
 const noClientMsg: React.CSSProperties = { margin: 0, fontSize: 13, color: '#94a3b8' };

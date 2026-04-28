@@ -9,6 +9,8 @@ export type MicrocycleProgressPoint = {
   avgRpe: number | null;
   totalTrainingLoad: number | null;
   sessionsCount: number;
+  avgE1rm: number | null;
+  recordsBroken: number;
 };
 
 export type MicrocycleProgressResult = {

@@ -12,6 +12,9 @@ export type SessionProgressPoint = {
   effortIndex: number | null;
   trainingLoad: number | null;
   sessionEfficiency: number | null;
+  durationMinutes: number | null;
+  avgIntensityPercent: number | null;
+  peakLoadKg: number | null;
 };
 
 type QueryInput = {
@@ -28,7 +31,16 @@ export function useSessionProgressQuery(input: QueryInput, options?: { enabled?:
   return useQuery({
     enabled: Boolean(auth) && Boolean(input.templateId) && (options?.enabled ?? true),
     queryFn: () => fetchSessionProgress(auth, input),
-    queryKey: ['progress', 'session', input.clientId, input.templateId, input.dayIndex, input.from, input.to],
+    queryKey: [
+      'progress',
+      'session',
+      input.clientId,
+      input.templateId,
+      input.dayIndex,
+      input.category ?? '',
+      input.from,
+      input.to,
+    ],
   });
 }
 

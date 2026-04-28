@@ -28,6 +28,11 @@ export type ExerciseProgressQuery = {
   to: Date;
 };
 
+export type ExercisePrQuery = {
+  clientId?: string;
+  exerciseId: string;
+};
+
 export type ExerciseType = 'strength' | 'cardio' | 'plio' | 'mobility' | 'isometric' | 'sport';
 
 export type PerformedExercisesQuery = {
@@ -81,6 +86,7 @@ export interface ProgressRepositoryPort {
   readSessionSrpeRows(context: AuthContext, query: ProgressQuery): Promise<SessionSrpeRow[]>;
   readStrengthLogs(context: AuthContext, query: ProgressQuery): Promise<StrengthLogRow[]>;
   readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]>;
+  readExercisePr(context: AuthContext, query: ExercisePrQuery): Promise<number | null>;
   readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]>;
   readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressResult>;
   readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]>;

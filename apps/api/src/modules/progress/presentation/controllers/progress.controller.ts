@@ -4,6 +4,7 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { GetExercisePrUseCase } from '../../application/use-cases/get-exercise-pr.usecase';
 import { GetExerciseProgressUseCase } from '../../application/use-cases/get-exercise-progress.usecase';
 import { GetMicrocycleProgressUseCase } from '../../application/use-cases/get-microcycle-progress.usecase';
 import { GetPerformedExercisesUseCase } from '../../application/use-cases/get-performed-exercises.usecase';
@@ -13,6 +14,7 @@ import { GetProgressOverviewUseCase } from '../../application/use-cases/get-prog
 import { GetRecentSessionsUseCase } from '../../application/use-cases/get-recent-sessions.usecase';
 import { GetSessionProgressUseCase } from '../../application/use-cases/get-session-progress.usecase';
 import type { ExerciseType } from '../../domain/progress-repository.port';
+import { GetExercisePrQueryDto } from '../dto/get-exercise-pr-query.dto';
 import { GetExerciseProgressQueryDto } from '../dto/get-exercise-progress-query.dto';
 import { GetMicrocycleProgressQueryDto } from '../dto/get-microcycle-progress-query.dto';
 import { GetPerformedExercisesQueryDto } from '../dto/get-performed-exercises-query.dto';
@@ -29,6 +31,7 @@ export class ProgressController {
   constructor(
     private readonly getProgressOverviewUseCase: GetProgressOverviewUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
+    private readonly getExercisePrUseCase: GetExercisePrUseCase,
     private readonly getSessionProgressUseCase: GetSessionProgressUseCase,
     private readonly getMicrocycleProgressUseCase: GetMicrocycleProgressUseCase,
     private readonly getRecentSessionsUseCase: GetRecentSessionsUseCase,
@@ -58,6 +61,16 @@ export class ProgressController {
       exerciseType: (parsed.exerciseType ?? 'strength') as ExerciseType,
       from: new Date(parsed.from),
       to: new Date(parsed.to),
+    });
+  }
+
+  @Get('exercise-pr')
+  async getExercisePr(@Query() query: GetExercisePrQueryDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const parsed = GetExercisePrQueryDto.schema.parse(query);
+    return this.getExercisePrUseCase.execute(auth, {
+      clientId: parsed.clientId,
+      exerciseId: parsed.exerciseId,
     });
   }
 

@@ -4,6 +4,7 @@ import { Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
+  ExercisePrQuery,
   ExerciseProgressQuery,
   MicrocycleProgressQuery,
   PerformedExercisesQuery,
@@ -27,7 +28,7 @@ import type {
   SessionSrpeRow,
   StrengthLogRow,
 } from '../../domain/progress.models';
-import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
+import { aggregateExerciseSets, estimateE1rm } from '../../domain/metrics/exercise-metrics';
 import {
   fetchPerformedExerciseNames,
   readCardioExerciseProgress,
@@ -125,6 +126,23 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     if (type === 'sport') return readSportProgress(this.prisma, clientId, query, heartProfile);
     if (type === 'cardio') return readCardioExerciseProgress(this.prisma, clientId, query, heartProfile);
     return this.readStrengthExerciseProgress(clientId, query);
+  }
+
+  async readExercisePr(context: AuthContext, query: ExercisePrQuery): Promise<number | null> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const row = await this.prisma.setLog.findFirst({
+      where: {
+        sessionItem: { sourceExerciseId: query.exerciseId },
+        session: {
+          archivedAt: null,
+          clientId,
+          isCompleted: true,
+        },
+      },
+      select: { weightDoneKg: true },
+      orderBy: { weightDoneKg: 'desc' },
+    });
+    return row?.weightDoneKg !== null && row?.weightDoneKg !== undefined ? Number(row.weightDoneKg) : null;
   }
 
   private async readStrengthExerciseProgress(
@@ -314,44 +332,132 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       orderBy: { sessionDate: 'asc' },
     });
 
+    const recordsBrokenBySession = await this.readRecordsBrokenBySession(clientId, query);
+
     const legacy = !query.category;
-    const sessionPoints = sessions.map((row) =>
-      legacy ? mapLegacySessionProgressPoint(row) : mapCategorySessionProgressPoint(row, query.category!),
-    );
 
     const fromYmd = query.from.toISOString().slice(0, 10);
-    type Acc = MicrocycleProgressPoint & { _rpeSum: number; _rpeCount: number };
+    type Acc = MicrocycleProgressPoint & { _rpeSum: number; _rpeCount: number; _e1rmSum: number; _e1rmCount: number };
     const byBlock = new Map<string, Acc>();
-    for (const point of sessionPoints) {
+    for (const session of sessions) {
+      const point = legacy
+        ? mapLegacySessionProgressPoint(session)
+        : mapCategorySessionProgressPoint(session, query.category!);
       const blockStart = microcycleBlockStartIso(point.sessionDate, fromYmd, cycleDays);
+      const e1rmStats = strengthE1rmStatsFromLogs(session.logs);
       const current: Acc = byBlock.get(blockStart) ?? {
         weekStart: blockStart,
         totalTonnage: 0,
         avgRpe: null,
         totalTrainingLoad: null,
         sessionsCount: 0,
+        avgE1rm: null,
+        recordsBroken: 0,
         _rpeSum: 0,
         _rpeCount: 0,
+        _e1rmSum: 0,
+        _e1rmCount: 0,
       };
       current._rpeSum = (current._rpeSum ?? 0) + (point.sessionRpe ?? 0);
       current._rpeCount = (current._rpeCount ?? 0) + (point.sessionRpe !== null ? 1 : 0);
       current.totalTonnage = Math.round((current.totalTonnage + point.sessionTonnage) * 100) / 100;
       current.totalTrainingLoad = (current.totalTrainingLoad ?? 0) + (point.trainingLoad ?? 0);
+      current._e1rmSum += e1rmStats.sum;
+      current._e1rmCount += e1rmStats.count;
       current.sessionsCount++;
+      current.recordsBroken += recordsBrokenBySession.get(point.sessionId) ?? 0;
       current.avgRpe = current._rpeCount > 0 ? Math.round((current._rpeSum / current._rpeCount) * 100) / 100 : null;
+      current.avgE1rm = current._e1rmCount > 0 ? Math.round((current._e1rmSum / current._e1rmCount) * 100) / 100 : null;
       byBlock.set(blockStart, current);
     }
 
     const points = [...byBlock.values()]
-      .map(({ weekStart, totalTonnage, avgRpe, totalTrainingLoad, sessionsCount }) => ({
+      .map(({ weekStart, totalTonnage, avgRpe, totalTrainingLoad, sessionsCount, avgE1rm, recordsBroken }) => ({
         weekStart,
         totalTonnage,
         avgRpe,
         totalTrainingLoad: totalTrainingLoad !== null ? Math.round(totalTrainingLoad * 100) / 100 : null,
         sessionsCount,
+        avgE1rm,
+        recordsBroken,
       }))
       .sort((a, b) => a.weekStart.localeCompare(b.weekStart));
     return { cycleDays, points };
+  }
+
+  private async readRecordsBrokenBySession(clientId: string, query: MicrocycleProgressQuery): Promise<Map<string, number>> {
+    const beforeRangeLogs = await this.prisma.setLog.findMany({
+      where: {
+        session: {
+          archivedAt: null,
+          clientId,
+          isCompleted: true,
+          sessionDate: { lt: query.from },
+        },
+      },
+      select: {
+        repsDone: true,
+        weightDoneKg: true,
+        effortRpe: true,
+        sessionItem: { select: { sourceExerciseId: true } },
+      },
+    });
+    const priorBestByExercise = new Map<string, number>();
+    for (const log of beforeRangeLogs) {
+      const exerciseId = log.sessionItem?.sourceExerciseId;
+      const reps = log.repsDone;
+      const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+      if (!exerciseId || reps === null || weight === null) continue;
+      const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+      if (e1rm === null) continue;
+      const prev = priorBestByExercise.get(exerciseId) ?? Number.NEGATIVE_INFINITY;
+      if (e1rm > prev) priorBestByExercise.set(exerciseId, e1rm);
+    }
+
+    const where: Prisma.SetLogWhereInput = {
+      session: {
+        archivedAt: null,
+        clientId,
+        isCompleted: true,
+        sessionDate: { gte: query.from, lte: query.to },
+      },
+    };
+    if (query.templateId) {
+      where.session = {
+        ...(where.session as Prisma.SessionInstanceWhereInput),
+        sourceTemplateId: query.templateId,
+      };
+    }
+    const logsInRange = await this.prisma.setLog.findMany({
+      where,
+      select: {
+        setIndex: true,
+        sessionId: true,
+        repsDone: true,
+        weightDoneKg: true,
+        effortRpe: true,
+        session: { select: { sessionDate: true } },
+        sessionItem: { select: { sourceExerciseId: true } },
+      },
+      orderBy: [{ session: { sessionDate: 'asc' } }, { sessionId: 'asc' }, { setIndex: 'asc' }],
+    });
+
+    const recordsBySession = new Map<string, number>();
+    for (const log of logsInRange) {
+      const exerciseId = log.sessionItem?.sourceExerciseId;
+      const reps = log.repsDone;
+      const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+      if (!exerciseId || reps === null || weight === null) continue;
+      const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+      if (e1rm === null) continue;
+
+      const prevBest = priorBestByExercise.get(exerciseId);
+      if (prevBest === undefined || e1rm > prevBest) {
+        recordsBySession.set(log.sessionId, (recordsBySession.get(log.sessionId) ?? 0) + 1);
+        priorBestByExercise.set(exerciseId, e1rm);
+      }
+    }
+    return recordsBySession;
   }
 
   async readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]> {
@@ -532,6 +638,8 @@ function microcycleBlockStartIso(sessionDateYmd: string, rangeFromYmd: string, c
 type SessionProgressRow = {
   id: string;
   sessionDate: Date;
+  startedAt: Date | null;
+  finishedAt: Date | null;
   client: { fcRest: number | null; fcMax: number | null } | null;
   logs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: number | null }>;
   intervalLogs: Array<{ durationSecondsDone: number | null; effortRpe: number | null; avgHeartRate: number | null }>;
@@ -549,6 +657,8 @@ function sessionProgressSelect() {
   return {
     id: true,
     sessionDate: true,
+    startedAt: true,
+    finishedAt: true,
     client: { select: { fcRest: true, fcMax: true } },
     logs: { select: { repsDone: true, weightDoneKg: true, effortRpe: true } },
     intervalLogs: { select: { durationSecondsDone: true, effortRpe: true, avgHeartRate: true } },
@@ -620,9 +730,57 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
   return { trainingLoad, avgRpe, avgHr, intervalDurationSeconds };
 }
 
+function durationMinutesFromSession(session: SessionProgressRow): number | null {
+  if (!session.startedAt || !session.finishedAt || session.finishedAt <= session.startedAt) return null;
+  return Math.round((session.finishedAt.getTime() - session.startedAt.getTime()) / 60000);
+}
+
+function peakLoadKgFromLogs(logs: SessionProgressRow['logs']): number | null {
+  let peak: number | null = null;
+  for (const log of logs) {
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    if (w === null) continue;
+    peak = peak === null ? w : Math.max(peak, w);
+  }
+  return peak;
+}
+
+function strengthE1rmStatsFromLogs(logs: SessionProgressRow['logs']): { sum: number; count: number } {
+  let sum = 0;
+  let count = 0;
+  for (const log of logs) {
+    const reps = log.repsDone;
+    const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    if (reps === null || weight === null) continue;
+    const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+    if (e1rm === null) continue;
+    sum += e1rm;
+    count++;
+  }
+  return { sum, count };
+}
+
+function avgIntensityPercentFromLogs(logs: SessionProgressRow['logs']): number | null {
+  let sum = 0;
+  let count = 0;
+  for (const log of logs) {
+    const reps = log.repsDone;
+    const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    if (reps === null || weight === null) continue;
+    const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+    if (e1rm === null || e1rm <= 0) continue;
+    sum += (weight / e1rm) * 100;
+    count++;
+  }
+  return count > 0 ? Math.round((sum / count) * 100) / 100 : null;
+}
+
 function mapLegacySessionProgressPoint(session: SessionProgressRow): SessionProgressPoint {
   const s = aggregateStrengthSetLogs(session.logs);
   const cardio = cardioTrainingFromIntervals(session);
+  const durationMinutes = durationMinutesFromSession(session);
+  const avgIntensityPercent = avgIntensityPercentFromLogs(session.logs);
+  const peakLoadKg = peakLoadKgFromLogs(session.logs);
   const sessionEfficiency =
     cardio.avgHr !== null && cardio.avgHr > 0 && s.totalTonnage > 0
       ? Math.round((s.totalTonnage / cardio.avgHr) * 100) / 100
@@ -636,6 +794,9 @@ function mapLegacySessionProgressPoint(session: SessionProgressRow): SessionProg
     effortIndex: s.effortIndex,
     trainingLoad: cardio.trainingLoad,
     sessionEfficiency,
+    durationMinutes,
+    avgIntensityPercent,
+    peakLoadKg,
   };
 }
 
@@ -673,6 +834,9 @@ function mapCategorySessionStrength(session: SessionProgressRow): SessionProgres
     effortIndex: s.effortIndex,
     trainingLoad: null,
     sessionEfficiency: null,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: avgIntensityPercentFromLogs(session.logs),
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 
@@ -691,6 +855,9 @@ function mapCategorySessionCardio(session: SessionProgressRow): SessionProgressP
     effortIndex: null,
     trainingLoad: c.trainingLoad,
     sessionEfficiency,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: null,
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 
@@ -717,6 +884,9 @@ function mapCategorySessionPlio(session: SessionProgressRow): SessionProgressPoi
     effortIndex: null,
     trainingLoad: null,
     sessionEfficiency: null,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: null,
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 
@@ -743,6 +913,9 @@ function mapCategorySessionIsometric(session: SessionProgressRow): SessionProgre
     effortIndex: null,
     trainingLoad: null,
     sessionEfficiency: null,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: null,
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 
@@ -758,6 +931,9 @@ function mapCategorySessionMobility(session: SessionProgressRow): SessionProgres
     effortIndex: null,
     trainingLoad: null,
     sessionEfficiency: null,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: null,
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 
@@ -796,6 +972,9 @@ function mapCategorySessionSport(session: SessionProgressRow): SessionProgressPo
     effortIndex,
     trainingLoad: null,
     sessionEfficiency,
+    durationMinutes: durationMinutesFromSession(session),
+    avgIntensityPercent: null,
+    peakLoadKg: peakLoadKgFromLogs(session.logs),
   };
 }
 

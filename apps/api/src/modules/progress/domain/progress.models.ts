@@ -71,6 +71,9 @@ export type SessionProgressPoint = {
   effortIndex: number | null;
   trainingLoad: number | null;
   sessionEfficiency: number | null;
+  durationMinutes: number | null;
+  avgIntensityPercent: number | null;
+  peakLoadKg: number | null;
 };
 
 export type MicrocycleProgressPoint = {
@@ -79,6 +82,8 @@ export type MicrocycleProgressPoint = {
   avgRpe: number | null;
   totalTrainingLoad: number | null;
   sessionsCount: number;
+  avgE1rm: number | null;
+  recordsBroken: number;
 };
 
 export type MicrocycleProgressResult = {

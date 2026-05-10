@@ -8,4 +8,20 @@ coverage
 .git
 .github
 .env
+**/.env
+**/.env.local
 *.log
+
+# Frontend apps not needed by API container
+apps/web
+apps/mobile
+packages/ui
+packages/shared
+
+# Local-only stuff
+docs
+scripts
+.claude
+.vscode
+.idea
+*.md

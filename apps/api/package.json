@@ -31,7 +31,7 @@
     "tsx": "^4.20.5"
   },
   "scripts": {
-    "dev": "pnpm exec tsx watch src/main.ts",
+    "dev": "powershell -NoProfile -Command \"$p = Start-Process pnpm -ArgumentList 'exec','tsc','-p','tsconfig.build.json','--watch','--preserveWatchOutput' -PassThru; try { pnpm exec node --watch dist/main.js } finally { if ($p -and !$p.HasExited) { Stop-Process -Id $p.Id -Force } }\"",
     "start:dev": "pnpm run dev",
     "start": "pnpm exec node dist/main.js",
     "db:generate": "pnpm exec prisma generate --schema ../../prisma/schema.prisma",

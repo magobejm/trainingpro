@@ -10,6 +10,11 @@ tmp/*
 .env.*
 !.env.example
 
+# Service account keys (must NEVER be committed)
+*-sa-key.json
+firebase-sa-key.json
+gcp-*-key.json
+
 # Build artifacts
 apps/**/dist/
 build/

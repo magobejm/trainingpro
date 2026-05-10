@@ -3,6 +3,7 @@ import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type CoachView = {
+  archivedAt: null | string;
   coachMembershipId: string;
   email: string;
   isActive: boolean;
@@ -14,7 +15,16 @@ export function useCoachesQuery(): UseQueryResult<CoachView[], Error> {
   return useQuery({
     enabled: Boolean(auth),
     queryFn: () => fetchCoaches(auth),
-    queryKey: ['coaches', 'list', auth?.activeRole, auth?.accessToken],
+    queryKey: ['coaches', 'list', 'active', auth?.activeRole, auth?.accessToken],
+  });
+}
+
+export function useArchivedCoachesQuery(): UseQueryResult<CoachView[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => fetchArchivedCoaches(auth),
+    queryKey: ['coaches', 'list', 'archived', auth?.activeRole, auth?.accessToken],
   });
 }
 
@@ -32,4 +42,11 @@ async function fetchCoaches(auth: ReturnType<typeof useAuth>): Promise<CoachView
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).get<CoachView[]>('/coaches');
+}
+
+async function fetchArchivedCoaches(auth: ReturnType<typeof useAuth>): Promise<CoachView[]> {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  return createApiClient(auth).get<CoachView[]>('/coaches', { archived: 'true' });
 }

@@ -23,11 +23,9 @@ export class OrgAdminController {
   }
 
   @Patch('limit')
-  async setClientLimit(
-    @Body() body: UpdateClientLimitDto,
-    @Req() request: HttpAuthRequest,
-  ) {
+  async setClientLimit(@Body() body: UpdateClientLimitDto, @Req() request: HttpAuthRequest) {
     const adminUid = request.user?.subject ?? '';
-    return this.updateClientLimitUseCase.execute(adminUid, body.clientLimit);
+    const parsed = UpdateClientLimitDto.schema.parse(body);
+    return this.updateClientLimitUseCase.execute(adminUid, parsed.clientLimit);
   }
 }

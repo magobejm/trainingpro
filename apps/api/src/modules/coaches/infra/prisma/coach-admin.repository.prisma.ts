@@ -1,20 +1,13 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  CoachAdminRepositoryPort,
-  CoachAdminView,
-  CreateCoachInput,
-} from '../../domain/coach-admin.repository.port';
+import type { CoachAdminRepositoryPort, CoachAdminView, CreateCoachInput } from '../../domain/coach-admin.repository.port';
 
 @Injectable()
 export class CoachAdminRepositoryPrisma implements CoachAdminRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async activateCoach(
-    adminSupabaseUid: string,
-    coachMembershipId: string,
-  ): Promise<CoachAdminView> {
+  async activateCoach(adminSupabaseUid: string, coachMembershipId: string): Promise<CoachAdminView> {
     return this.updateCoachStatus(adminSupabaseUid, coachMembershipId, true);
   }
 
@@ -42,10 +35,7 @@ export class CoachAdminRepositoryPrisma implements CoachAdminRepositoryPort {
     return this.toCoachView(membership);
   }
 
-  async deactivateCoach(
-    adminSupabaseUid: string,
-    coachMembershipId: string,
-  ): Promise<CoachAdminView> {
+  async deactivateCoach(adminSupabaseUid: string, coachMembershipId: string): Promise<CoachAdminView> {
     return this.updateCoachStatus(adminSupabaseUid, coachMembershipId, false);
   }
 
@@ -57,6 +47,28 @@ export class CoachAdminRepositoryPrisma implements CoachAdminRepositoryPort {
       orderBy: { createdAt: 'desc' },
     });
     return memberships.map((membership) => this.toCoachView(membership));
+  }
+
+  async listArchivedCoaches(adminSupabaseUid: string): Promise<CoachAdminView[]> {
+    const organizationId = await this.resolveAdminOrganizationId(adminSupabaseUid);
+    const memberships = await this.prisma.organizationMember.findMany({
+      where: { archivedAt: { not: null }, organizationId, role: Role.COACH },
+      include: { user: { select: { email: true } } },
+      orderBy: { archivedAt: 'desc' },
+    });
+    return memberships.map((membership) => this.toCoachView(membership));
+  }
+
+  async restoreCoach(adminSupabaseUid: string, coachMembershipId: string): Promise<CoachAdminView> {
+    const organizationId = await this.resolveAdminOrganizationId(adminSupabaseUid);
+    const membership = await this.findArchivedCoachMembership(organizationId, coachMembershipId);
+    return this.toCoachView(
+      await this.prisma.organizationMember.update({
+        where: { id: membership.id },
+        data: { archivedAt: null, isActive: true },
+        include: { user: { select: { email: true } } },
+      }),
+    );
   }
 
   private async updateCoachStatus(
@@ -117,13 +129,26 @@ export class CoachAdminRepositoryPrisma implements CoachAdminRepositoryPort {
     return membership;
   }
 
+  private async findArchivedCoachMembership(organizationId: string, coachMembershipId: string) {
+    const membership = await this.prisma.organizationMember.findFirst({
+      where: { archivedAt: { not: null }, id: coachMembershipId, organizationId, role: Role.COACH },
+      select: { id: true },
+    });
+    if (!membership) {
+      throw new NotFoundException('Archived coach membership not found');
+    }
+    return membership;
+  }
+
   private toCoachView(membership: {
+    archivedAt?: Date | null;
     id: string;
     isActive: boolean;
     user: { email: string };
     userId: string;
   }): CoachAdminView {
     return {
+      archivedAt: membership.archivedAt?.toISOString() ?? null,
       coachMembershipId: membership.id,
       email: membership.user.email,
       isActive: membership.isActive,

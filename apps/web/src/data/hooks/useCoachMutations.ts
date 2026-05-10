@@ -1,11 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import type { CoachView } from './useCoachesQuery';
+
+export type CreateCoachResult = {
+  coach: CoachView;
+  credentials: {
+    temporaryPassword: null | string;
+    userCreated: boolean;
+  };
+};
 
 export function useArchiveCoachMutation() {
-  return useCoachMutation((auth, coachMembershipId) =>
-    createApiClient(auth).delete(`/coaches/${coachMembershipId}`),
-  );
+  return useCoachMutation((auth, coachMembershipId) => createApiClient(auth).delete(`/coaches/${coachMembershipId}`));
+}
+
+export function useRestoreCoachMutation() {
+  return useCoachMutation((auth, coachMembershipId) => createApiClient(auth).post(`/coaches/${coachMembershipId}/restore`));
+}
+
+export function useCreateCoachMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (email: string) => createApiClient(auth).post<CreateCoachResult>('/coaches', { email }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['coaches'] });
+    },
+  });
 }
 
 export function useToggleCoachMutation() {
@@ -20,9 +42,7 @@ export function useToggleCoachMutation() {
   });
 }
 
-function useCoachMutation(
-  run: (auth: AuthState, coachMembershipId: string) => Promise<unknown>,
-) {
+function useCoachMutation(run: (auth: AuthState, coachMembershipId: string) => Promise<unknown>) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
@@ -47,11 +67,7 @@ function useAuth(): AuthState {
   return { accessToken, activeRole };
 }
 
-async function toggleCoach(
-  auth: AuthState,
-  coachMembershipId: string,
-  isActive: boolean,
-): Promise<void> {
+async function toggleCoach(auth: AuthState, coachMembershipId: string, isActive: boolean): Promise<void> {
   const action = isActive ? 'deactivate' : 'activate';
   await createApiClient(auth).patch(`/coaches/${coachMembershipId}/${action}`);
 }

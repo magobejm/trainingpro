@@ -106,7 +106,6 @@ jobs:
             GEMINI_API_KEY=GEMINI_API_KEY:latest
           env_vars: |
             NODE_ENV=production
-            PORT=8080
       - name: Smoke test /health
         run: |
           for i in $(seq 1 10); do

@@ -64,7 +64,18 @@ export class WarmupTemplatesService {
         items: [],
       }));
     }
-    return Promise.all(rows.map((row) => this.loadTemplate(row.id)));
+    if (rows.length === 0) {
+      return [];
+    }
+    const templateIds = rows.map((row) => row.id);
+    const [items, groups] = await this.loadDetailsForMany(templateIds);
+    const itemsByTemplate = groupBy(items, 'templateId');
+    const groupsByTemplate = groupBy(groups, 'templateId');
+    return rows.map((row) => ({
+      ...row,
+      groups: (groupsByTemplate.get(row.id) ?? []).map(stripTemplateId),
+      items: (itemsByTemplate.get(row.id) ?? []).map(stripTemplateId),
+    }));
   }
 
   async getOne(context: AuthContext, templateId: string) {
@@ -90,7 +101,7 @@ export class WarmupTemplatesService {
       throw new NotFoundException('Warmup template not found');
     }
     const [items, groups] = await this.loadDetails(row.id);
-    return { ...row, groups, items };
+    return { ...row, groups: groups.map(stripTemplateId), items: items.map(stripTemplateId) };
   }
 
   async update(context: AuthContext, templateId: string, input: Input) {
@@ -132,13 +143,20 @@ export class WarmupTemplatesService {
     if (!template) {
       throw new NotFoundException('Warmup template not found');
     }
-    return { ...template, groups, items };
+    return { ...template, groups: groups.map(stripTemplateId), items: items.map(stripTemplateId) };
   }
 
-  private loadDetails(templateId: string): Promise<[unknown[], unknown[]]> {
+  private loadDetails(templateId: string): Promise<[Array<Record<string, unknown>>, Array<Record<string, unknown>>]> {
+    return this.loadDetailsForMany([templateId]);
+  }
+
+  private loadDetailsForMany(
+    templateIds: string[],
+  ): Promise<[Array<Record<string, unknown>>, Array<Record<string, unknown>>]> {
     return Promise.all([
-      this.prisma.$queryRawUnsafe<unknown[]>(
+      this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT
+          template_id AS "templateId",
           block_type AS "blockType",
           cardio_method_library_id AS "cardioMethodLibraryId",
           display_name AS "displayName",
@@ -161,20 +179,21 @@ export class WarmupTemplatesService {
           mobility_exercise_library_id AS "mobilityExerciseLibraryId",
           work_seconds AS "workSeconds"
         FROM warmup_template_item
-        WHERE template_id = $1::uuid AND archived_at IS NULL
-        ORDER BY sort_order ASC`,
-        templateId,
+        WHERE template_id = ANY($1::uuid[]) AND archived_at IS NULL
+        ORDER BY template_id, sort_order ASC`,
+        templateIds,
       ),
-      this.prisma.$queryRawUnsafe<unknown[]>(
+      this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT
+          template_id AS "templateId",
           id,
           group_type AS "groupType",
           note,
           sort_order AS "sortOrder"
         FROM warmup_template_group
-        WHERE template_id = $1::uuid
-        ORDER BY sort_order ASC`,
-        templateId,
+        WHERE template_id = ANY($1::uuid[])
+        ORDER BY template_id, sort_order ASC`,
+        templateIds,
       ),
     ]);
   }
@@ -313,4 +332,22 @@ export class WarmupTemplatesService {
     }
     return membership;
   }
+}
+
+function groupBy(rows: Array<Record<string, unknown>>, key: string): Map<string, Array<Record<string, unknown>>> {
+  const map = new Map<string, Array<Record<string, unknown>>>();
+  for (const row of rows) {
+    const value = row[key];
+    if (typeof value !== 'string') continue;
+    const list = map.get(value) ?? [];
+    list.push(row);
+    map.set(value, list);
+  }
+  return map;
+}
+
+function stripTemplateId(row: Record<string, unknown>): Record<string, unknown> {
+  const { templateId: _ignored, ...rest } = row;
+  void _ignored;
+  return rest;
 }

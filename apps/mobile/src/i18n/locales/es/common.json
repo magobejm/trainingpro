@@ -43,6 +43,9 @@
   "client.today.empty": "No hay ejercicios para hoy",
   "client.today.sets": "Series",
   "client.today.logSet": "Registrar set",
+  "client.today.exerciseOf": "Ejercicio {{current}} de {{total}}",
+  "client.today.prevExercise": "Anterior",
+  "client.today.nextExercise": "Siguiente",
   "client.finish.title": "Finalizar sesion",
   "client.finish.commentPlaceholder": "Comentario final",
   "client.finish.incompleteOn": "Marcado como incompleta",
@@ -138,5 +141,7 @@
   "mobile.client.routine.days": "días de entrenamiento",
   "mobile.client.routine.mesocycle": "Mesociclo Actual",
   "mobile.client.routine.title": "Mi Rutina",
-  "mobile.client.routine.empty": "No tienes una rutina asignada"
+  "mobile.client.routine.empty": "No tienes una rutina asignada",
+  "mobile.client.day.startTraining": "Empezar entrenamiento",
+  "mobile.client.day.startError": "No se pudo iniciar la sesión"
 }

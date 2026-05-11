@@ -2,10 +2,10 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { COLORS } from '../../constants/colors';
-import type { SessionView } from '../../data/hooks/useTodaySession';
+import type { StrengthSessionItem } from '../../data/hooks/useTodaySession';
 
 export type SessionSetRowProps = {
-  item: SessionView['items'][0];
+  item: StrengthSessionItem;
   onLogSet: (
     sessionItemId: string,
     setIndex: number,
@@ -22,18 +22,8 @@ export function SessionSetRow({ item, onLogSet, setIndex }: SessionSetRowProps) 
   return (
     <View style={[styles.setRow, isDone && styles.setRowDone]}>
       <Text style={styles.setColText}>{setIndex}</Text>
-      <TextInput
-        keyboardType="numeric"
-        onChangeText={setWeightStr}
-        style={styles.setColInput}
-        value={weightStr}
-      />
-      <TextInput
-        keyboardType="numeric"
-        onChangeText={setRepsStr}
-        style={styles.setColInput}
-        value={repsStr}
-      />
+      <TextInput keyboardType="numeric" onChangeText={setWeightStr} style={styles.setColInput} value={weightStr} />
+      <TextInput keyboardType="numeric" onChangeText={setRepsStr} style={styles.setColInput} value={repsStr} />
       <Pressable
         onPress={() => handleToggle(item, setIndex, weightStr, repsStr, onLogSet)}
         style={[styles.checkBtn, isDone && styles.checkBtnDone]}
@@ -61,9 +51,7 @@ function useSetRowState(item: SessionSetRowProps['item'], setIndex: number) {
   const isDone = Boolean(existingLog);
   const defaultReps = item.repsMax ?? item.repsMin ?? '';
   const [weightStr, setWeightStr] = useState(existingLog?.weightDoneKg?.toString() ?? '');
-  const [repsStr, setRepsStr] = useState(
-    existingLog?.repsDone?.toString() ?? defaultReps.toString(),
-  );
+  const [repsStr, setRepsStr] = useState(existingLog?.repsDone?.toString() ?? defaultReps.toString());
   return { isDone, repsStr, setRepsStr, setWeightStr, weightStr };
 }
 

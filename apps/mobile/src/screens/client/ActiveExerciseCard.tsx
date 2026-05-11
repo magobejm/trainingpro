@@ -2,11 +2,11 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { COLORS } from '../../constants/colors';
-import type { SessionView } from '../../data/hooks/useTodaySession';
+import type { StrengthSessionItem } from '../../data/hooks/useTodaySession';
 import { SessionSetRow, type SessionSetRowProps } from './SessionSetRow';
 
 export type ActiveExerciseCardProps = {
-  item: SessionView['items'][0];
+  item: StrengthSessionItem;
   onLogSet: SessionSetRowProps['onLogSet'];
 };
 

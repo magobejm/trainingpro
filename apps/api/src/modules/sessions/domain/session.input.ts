@@ -6,6 +6,11 @@ export type EnsureSessionInput = {
   planDayId?: string;
 };
 
+export type EnsureSessionForClientInput = EnsureSessionInput & {
+  coachMembershipId: string;
+  organizationId: string;
+};
+
 export type FinishSessionInput = {
   comment?: null | string;
   isIncomplete: boolean;

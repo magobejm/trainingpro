@@ -7,6 +7,7 @@ export type SessionSetLog = {
 };
 
 export type SessionStrengthItem = {
+  type: 'strength';
   displayName: string;
   id: string;
   logs: SessionSetLog[];
@@ -16,6 +17,16 @@ export type SessionStrengthItem = {
   sortOrder: number;
 };
 
+export type SessionBlockItem = {
+  type: 'isometric' | 'mobility' | 'plio' | 'sport';
+  displayName: string;
+  id: string;
+  meta: string;
+  sortOrder: number;
+};
+
+export type SessionItem = SessionBlockItem | SessionStrengthItem;
+
 export type SessionInstance = {
   clientId: string;
   finishComment: null | string;
@@ -23,7 +34,7 @@ export type SessionInstance = {
   id: string;
   isCompleted: boolean;
   isIncomplete: boolean;
-  items: SessionStrengthItem[];
+  items: SessionItem[];
   sessionDate: Date;
   startedAt: Date | null;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';

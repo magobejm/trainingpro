@@ -43,6 +43,9 @@
   "client.today.empty": "No exercises for today",
   "client.today.sets": "Sets",
   "client.today.logSet": "Log set",
+  "client.today.exerciseOf": "Exercise {{current}} of {{total}}",
+  "client.today.prevExercise": "Previous",
+  "client.today.nextExercise": "Next",
   "client.finish.title": "Finish session",
   "client.finish.commentPlaceholder": "Final comment",
   "client.finish.incompleteOn": "Marked as incomplete",
@@ -138,5 +141,7 @@
   "mobile.client.routine.days": "training days",
   "mobile.client.routine.mesocycle": "Current Mesocycle",
   "mobile.client.routine.title": "My Routine",
-  "mobile.client.routine.empty": "You don't have a routine assigned"
+  "mobile.client.routine.empty": "You don't have a routine assigned",
+  "mobile.client.day.startTraining": "Start training",
+  "mobile.client.day.startError": "Could not start the session"
 }

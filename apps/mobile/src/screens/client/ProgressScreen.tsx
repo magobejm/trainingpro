@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { BarsChart, SummaryStrip } from '@trainerpro/ui';
 import '../../i18n';
 import { useProgressOverviewQuery } from '../../data/hooks/useProgressQuery';
+import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 
 const COLORS = {
   bg: '#07000f',
@@ -11,9 +12,13 @@ const COLORS = {
   text: '#ffffff',
 };
 
-export function ProgressScreen(): React.JSX.Element {
+type ProgressScreenProps = {
+  onClose: () => void;
+};
+
+export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   const vm = useProgressViewModel();
-  return <ProgressView {...vm} />;
+  return <ProgressView onClose={props.onClose} {...vm} />;
 }
 
 function useProgressViewModel() {
@@ -26,15 +31,17 @@ function useProgressViewModel() {
   return { cardioBars, query, strengthBars, summaryItems, t };
 }
 
-type ViewModel = ReturnType<typeof useProgressViewModel>;
+type ViewModel = ReturnType<typeof useProgressViewModel> & { onClose: () => void };
 
 function ProgressView(props: ViewModel) {
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <Text style={styles.title}>{props.t('client.progress.title')}</Text>
-      <Text style={styles.subtitle}>{props.t('client.progress.subtitle')}</Text>
-      {renderState(props)}
-    </ScrollView>
+    <View style={styles.root}>
+      <OverlayBackHeader onClose={props.onClose} title={props.t('client.progress.title')} />
+      <ScrollView contentContainerStyle={styles.page}>
+        <Text style={styles.subtitle}>{props.t('client.progress.subtitle')}</Text>
+        {renderState(props)}
+      </ScrollView>
+    </View>
   );
 }
 
@@ -108,10 +115,12 @@ const styles = StyleSheet.create({
   },
   page: {
     alignItems: 'center',
-    backgroundColor: COLORS.bg,
     gap: 12,
-    minHeight: '100%',
     padding: 16,
+  },
+  root: {
+    backgroundColor: COLORS.bg,
+    flex: 1,
   },
   stack: {
     gap: 12,
@@ -120,12 +129,6 @@ const styles = StyleSheet.create({
   subtitle: {
     color: COLORS.muted,
     fontSize: 14,
-    width: '100%',
-  },
-  title: {
-    color: COLORS.text,
-    fontSize: 24,
-    fontWeight: '800',
     width: '100%',
   },
 });

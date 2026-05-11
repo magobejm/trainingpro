@@ -7,6 +7,7 @@ import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/card
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
 import type { SessionInstance, SessionSetLog } from '../../domain/session.entity';
 import type { EnsureSessionInput, FinishSessionInput, LogSetInput } from '../../domain/session.input';
+import type { EnsureSessionForClientInput } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import {
   assertSessionMutable,
@@ -53,6 +54,22 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
 
   async ensureSession(context: AuthContext, input: EnsureSessionInput): Promise<SessionInstance> {
     const membership = await this.resolveCoachMembership(context);
+    return this.createSessionFromTemplate(context, input, membership);
+  }
+
+  async ensureSessionForClient(context: AuthContext, input: EnsureSessionForClientInput): Promise<SessionInstance> {
+    const membership: CoachMembership = {
+      id: input.coachMembershipId,
+      organizationId: input.organizationId,
+    };
+    return this.createSessionFromTemplate(context, input, membership);
+  }
+
+  private async createSessionFromTemplate(
+    context: AuthContext,
+    input: EnsureSessionInput,
+    membership: CoachMembership,
+  ): Promise<SessionInstance> {
     const existing = await this.prisma.sessionInstance.findFirst({
       where: {
         archivedAt: null,

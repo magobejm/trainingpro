@@ -425,4 +425,15 @@ export const s = StyleSheet.create({
   },
   sectionLabel: { color: '#a78bfa', fontSize: 10, fontWeight: '800', letterSpacing: 1.5, textTransform: 'uppercase' },
   sidePanel: { backgroundColor: '#07000f', flex: 1 },
+  startTrainingBtn: {
+    alignItems: 'center',
+    backgroundColor: '#ec4899',
+    borderRadius: 12,
+    justifyContent: 'center',
+    minHeight: 46,
+    paddingHorizontal: 16,
+    width: '100%',
+  },
+  startTrainingBtnLabel: { color: '#ffffff', fontSize: 15, fontWeight: '800' },
+  startTrainingError: { color: '#f87171', fontSize: 13, textAlign: 'center' },
 });

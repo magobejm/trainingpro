@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { FilesModule } from '../files/files.module';
+import { SessionsModule } from '../sessions/sessions.module';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
+import { EnsureClientSelfSessionUseCase } from './application/use-cases/ensure-client-self-session.usecase';
 import { ClientAuthProvisionerService } from './application/services/client-auth-provisioner.service';
 import { CreateClientProgressPhotoUseCase } from './application/use-cases/create-client-progress-photo.usecase';
 import { CreateClientUseCase } from './application/use-cases/create-client.usecase';
@@ -27,10 +29,11 @@ import { ClientsController } from './presentation/controllers/clients.controller
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
-  imports: [AuthModule, FilesModule],
+  imports: [AuthModule, FilesModule, SessionsModule],
   controllers: [ClientSelfController, ClientsController],
   providers: [
     ArchiveClientUseCase,
+    EnsureClientSelfSessionUseCase,
     ClientAuthProvisionerService,
     CreateClientProgressPhotoUseCase,
     CreateClientUseCase,

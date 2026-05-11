@@ -22,6 +22,7 @@ import { SessionsController } from './presentation/controllers/sessions.controll
 @Module({
   imports: [AuthModule, NotificationsModule],
   controllers: [SessionsController, SessionsCardioController],
+  exports: [SESSIONS_REPOSITORY, SessionsRepositoryPrisma, SessionsCardioRepositoryPrisma],
   providers: [
     EnsureCardioSessionUseCase,
     EnsureSessionUseCase,

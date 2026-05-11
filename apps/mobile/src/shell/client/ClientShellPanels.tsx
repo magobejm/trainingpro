@@ -10,6 +10,7 @@ import {
   type ClientRoutineDay,
   type ClientRoutineExercise,
 } from '../../data/hooks/useClientRoutineQuery';
+import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
 import { DARK } from '../dark';
 import { MENU_ITEMS, type MenuItem } from './client-shell.constants';
 import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
@@ -321,12 +322,35 @@ function RoutineDayCard(props: { day: ClientRoutineDay; onPress: () => void }): 
   );
 }
 
-export function DayDetailPanel(props: { day: ClientRoutineDay; onClose: () => void }): React.JSX.Element {
+type DayDetailPanelProps = {
+  day: ClientRoutineDay;
+  onClose: () => void;
+  onStartTraining: (sessionId: string) => void;
+};
+
+export function DayDetailPanel(props: DayDetailPanelProps): React.JSX.Element {
+  const { t } = useTranslation();
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null);
+  const ensureMutation = useEnsureClientSessionMutation();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const handleStartTraining = () => {
+    ensureMutation.mutate(
+      { planDayId: props.day.id, sessionDate: today },
+      { onSuccess: (session) => props.onStartTraining(session.id) },
+    );
+  };
+
   return (
     <View style={s.sidePanel}>
       <OverlayBackHeader onClose={props.onClose} title={`Día ${props.day.dayIndex} – ${props.day.title}`} />
       <ScrollView contentContainerStyle={s.panelContent}>
+        <Pressable disabled={ensureMutation.isPending} onPress={handleStartTraining} style={s.startTrainingBtn}>
+          <Text style={s.startTrainingBtnLabel}>
+            {ensureMutation.isPending ? '...' : t('mobile.client.day.startTraining')}
+          </Text>
+        </Pressable>
+        {ensureMutation.isError ? <Text style={s.startTrainingError}>{t('mobile.client.day.startError')}</Text> : null}
         <Text style={s.exerciseCount}>{`${props.day.exercises.length} Ejercicios`}</Text>
         {props.day.exercises.map((ex, idx) => (
           <ExerciseCard

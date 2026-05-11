@@ -9,6 +9,7 @@ type HomeHubProps = {
   activeMenuIds: string[];
   onOpenMenu: () => void;
   onOpenProfile: () => void;
+  onOpenProgress: () => void;
   onOpenRoutine: () => void;
 };
 
@@ -47,7 +48,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
           <AvatarImage avatarUrl={client?.avatarUrl ?? null} size={148} />
         </Animated.View>
         <FloatingCircle emoji={'😊'} label={'ÁNIMO'} position={s.circleBottomLeft} />
-        <FloatingCircle emoji={'📈'} label={'PROGRESO'} position={s.circleBottomRight} />
+        <FloatingCircle emoji={'📈'} label={'PROGRESO'} onPress={props.onOpenProgress} position={s.circleBottomRight} />
       </View>
       <BottomBar activeMenuIds={props.activeMenuIds} onOpenMenu={props.onOpenMenu} />
     </View>

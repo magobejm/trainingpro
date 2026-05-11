@@ -2,22 +2,36 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
+export type StrengthSessionItem = {
+  type: 'strength';
+  id: string;
+  displayName: string;
+  setsPlanned: null | number;
+  repsMax: null | number;
+  repsMin: null | number;
+  logs: {
+    effortRpe: null | number;
+    repsDone: null | number;
+    sessionItemId: string;
+    setIndex: number;
+    weightDoneKg: null | number;
+  }[];
+  sortOrder: number;
+};
+
+export type BlockSessionItem = {
+  type: 'isometric' | 'mobility' | 'plio' | 'sport';
+  id: string;
+  displayName: string;
+  meta: string;
+  sortOrder: number;
+};
+
+export type SessionItem = BlockSessionItem | StrengthSessionItem;
+
 export type SessionView = {
   id: string;
-  items: {
-    id: string;
-    displayName: string;
-    setsPlanned: null | number;
-    repsMax: null | number;
-    repsMin: null | number;
-    logs: {
-      effortRpe: null | number;
-      repsDone: null | number;
-      sessionItemId: string;
-      setIndex: number;
-      weightDoneKg: null | number;
-    }[];
-  }[];
+  items: SessionItem[];
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
 };
 
@@ -36,6 +50,19 @@ export function useStartSessionMutation(sessionId: string) {
 
 export function useFinishSessionMutation(sessionId: string) {
   return useSessionMutation(sessionId, 'finish');
+}
+
+export type EnsureClientSessionResult = {
+  id: string;
+  sessionDate: string;
+  status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
+};
+
+export function useEnsureClientSessionMutation() {
+  const auth = useAuth();
+  return useMutation({
+    mutationFn: (input: { sessionDate: string; planDayId?: string }) => ensureClientSession(auth, input),
+  });
 }
 
 export function useLogSetMutation(sessionId: string) {
@@ -75,6 +102,16 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
+async function ensureClientSession(
+  auth: ReturnType<typeof useAuth>,
+  input: { sessionDate: string; planDayId?: string },
+): Promise<EnsureClientSessionResult> {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  return createApiClient(auth).post<EnsureClientSessionResult>('/clients/me/sessions/ensure', input);
+}
+
 async function logSet(
   auth: ReturnType<typeof useAuth>,
   sessionId: string,
@@ -92,11 +129,7 @@ async function logSet(
   return createApiClient(auth).post(`/sessions/strength/${sessionId}/log-set`, input);
 }
 
-async function mutateSession(
-  auth: ReturnType<typeof useAuth>,
-  sessionId: string,
-  action: 'finish' | 'start',
-) {
+async function mutateSession(auth: ReturnType<typeof useAuth>, sessionId: string, action: 'finish' | 'start') {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -108,10 +141,7 @@ async function mutateSession(
   });
 }
 
-async function readSession(
-  auth: ReturnType<typeof useAuth>,
-  sessionId: string,
-): Promise<SessionView> {
+async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<SessionView> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

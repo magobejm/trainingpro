@@ -1,6 +1,6 @@
 import type { ViewStyle } from 'react-native';
 
-export type OverlayId = 'menu' | 'profile' | 'routine' | 'routineDay' | null;
+export type OverlayId = 'menu' | 'profile' | 'progress' | 'routine' | 'routineDay' | 'session' | null;
 
 export const WEB_BLUR_SM = { backdropFilter: 'blur(16px)' } as unknown as ViewStyle;
 export const WEB_BLUR_LG = { filter: 'blur(100px)' } as unknown as ViewStyle;

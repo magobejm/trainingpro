@@ -120,23 +120,29 @@ function Wait-HttpReady([string]$Name, [string]$Url, [int]$TimeoutSec) {
   return $false
 }
 
-function Start-DevService([string]$Name, [string]$Command, [string]$ReadyUrl) {
+function Start-DevService([string]$Name, [string]$Command, [string]$ReadyUrl = "", [int]$ReadyPort = 0) {
   $command = "cd /d `"$repo`" && $Command"
   Write-Host "$Name launching..."
   $proc = Start-Process cmd.exe -ArgumentList "/k", $command -PassThru
-
   Write-Host "$Name launched (PID $($proc.Id))"
-  if (Wait-HttpReady -Name $Name -Url $ReadyUrl -TimeoutSec $TimeoutSeconds) {
-    return @{
-      Ok = $true
-      Process = $proc
+
+  $ok = $false
+  if ($ReadyUrl) {
+    $ok = Wait-HttpReady -Name $Name -Url $ReadyUrl -TimeoutSec $TimeoutSeconds
+  } elseif ($ReadyPort -gt 0) {
+    Write-Host "Waiting for $Name on port $ReadyPort..."
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+      if (Test-PortListening -Port $ReadyPort) {
+        Write-Host "$Name ready (port $ReadyPort)"
+        $ok = $true
+        break
+      }
+      Start-Sleep -Milliseconds 800
     }
   }
 
-  return @{
-    Ok = $false
-    Process = $proc
-  }
+  return @{ Ok = $ok; Process = $proc }
 }
 
 function Test-PortListening([int]$Port) {
@@ -230,8 +236,8 @@ Stop-PortListeners -Port 19006
 Write-Output "Ports cleaned. Launching services..."
 
 $api = Start-DevService -Name "API" -Command "pnpm.cmd --filter @trainerpro/api build && pnpm.cmd --filter @trainerpro/api start" -ReadyUrl "http://localhost:8080/health"
-$web = Start-DevService -Name "WEB" -Command "pnpm.cmd --filter @trainerpro/web dev" -ReadyUrl "http://localhost:5173"
-$mobile = Start-DevService -Name "MOBILE" -Command "pnpm.cmd --filter @trainerpro/mobile dev" -ReadyUrl "http://localhost:19006"
+$web = Start-DevService -Name "WEB" -Command "pnpm.cmd --filter @trainerpro/web dev" -ReadyPort 5173
+$mobile = Start-DevService -Name "MOBILE" -Command "pnpm.cmd --filter @trainerpro/mobile dev" -ReadyPort 19006
 
 if (-not $api.Ok -or -not $web.Ok -or -not $mobile.Ok) {
   if ((Test-PortListening -Port 8080) -and (Test-PortListening -Port 5173) -and (Test-PortListening -Port 19006)) {

@@ -106,6 +106,7 @@ jobs:
             GEMINI_API_KEY=GEMINI_API_KEY:latest
           env_vars: |
             NODE_ENV=production
+            CORS_ORIGINS=https://${{ vars.FIREBASE_SITE }}.web.app,https://${{ vars.FIREBASE_SITE }}.firebaseapp.com
       - name: Smoke test /health
         run: |
           for i in $(seq 1 10); do

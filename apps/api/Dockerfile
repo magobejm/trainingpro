@@ -24,11 +24,11 @@ RUN pnpm --filter @trainerpro/api db:generate \
 FROM node:${NODE_VERSION} AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=8080
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=build /app/apps/api/dist ./dist
-COPY --from=build /app/apps/api/package.json ./package.json
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/prisma ./prisma
+WORKDIR /app/apps/api
 EXPOSE 8080
 CMD ["node", "dist/main.js"]

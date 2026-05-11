@@ -107,6 +107,7 @@ jobs:
           env_vars: |
             NODE_ENV=production
             CORS_ORIGINS=https://${{ vars.FIREBASE_SITE }}.web.app,https://${{ vars.FIREBASE_SITE }}.firebaseapp.com
+            PUBLIC_ASSET_BASE_URL=${{ vars.API_BASE_URL }}
       - name: Smoke test /health
         run: |
           for i in $(seq 1 10); do

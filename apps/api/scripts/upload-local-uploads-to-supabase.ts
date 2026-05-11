@@ -7,7 +7,7 @@ async function main(): Promise<void> {
   const serviceRoleKey = requireEnv('SUPABASE_SERVICE_ROLE_KEY');
   const bucket = requireEnv('SUPABASE_STORAGE_BUCKET');
 
-  const uploadsRoot = resolve(process.cwd(), 'apps/storage/uploads');
+  const uploadsRoot = resolve(__dirname, '../../../apps/storage/uploads');
   const files = await listFilesRecursive(uploadsRoot);
   if (files.length === 0) {
     console.log('No files found under apps/storage/uploads');

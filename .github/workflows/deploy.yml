@@ -149,4 +149,3 @@ jobs:
           projectId: ${{ env.GCP_PROJECT_ID }}
           target: ${{ env.FIREBASE_SITE }}
           channelId: live
-          entryPoint: apps/web

@@ -30,8 +30,7 @@ export const UNAUTHORIZED_EVENT = 'trainerpro:unauthorized';
 
 export function createApiClient(config: ApiClientOptions) {
   const baseUrl = resolveBaseUrl(config.baseUrl);
-  const send = <T>(request: RequestOptions): Promise<T> =>
-    executeRequest<T>(baseUrl, config, request);
+  const send = <T>(request: RequestOptions): Promise<T> => executeRequest<T>(baseUrl, config, request);
   return {
     delete: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
       send<T>({
@@ -39,11 +38,8 @@ export function createApiClient(config: ApiClientOptions) {
         method: 'DELETE',
         path,
       }),
-    get: <T>(
-      path: string,
-      params?: Record<string, string>,
-      headers?: Record<string, string>,
-    ): Promise<T> => send<T>({ headers, method: 'GET', path, params }),
+    get: <T>(path: string, params?: Record<string, string>, headers?: Record<string, string>): Promise<T> =>
+      send<T>({ headers, method: 'GET', path, params }),
     patch: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
       send<T>({ body, headers, method: 'PATCH', path }),
     post: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
@@ -53,11 +49,7 @@ export function createApiClient(config: ApiClientOptions) {
   };
 }
 
-async function executeRequest<T>(
-  baseUrl: string,
-  config: ApiClientOptions,
-  request: RequestOptions,
-): Promise<T> {
+async function executeRequest<T>(baseUrl: string, config: ApiClientOptions, request: RequestOptions): Promise<T> {
   const headers = buildHeaders(config, request.body, request.headers);
   const url = buildUrl(baseUrl, request.path, request.params);
   const response = await fetch(url, {
@@ -93,8 +85,9 @@ function readFrontEnv(): Record<string, string | undefined> {
 }
 
 function readImportMetaEnv(): Record<string, string | undefined> {
-  const meta = import.meta as ImportMeta & { env?: Record<string, string | undefined> };
-  return meta.env ?? {};
+  return {
+    EXPO_PUBLIC_API_BASE_URL: import.meta.env?.EXPO_PUBLIC_API_BASE_URL as string | undefined,
+  };
 }
 
 function readProcessEnv(): Record<string, string | undefined> {
@@ -120,11 +113,7 @@ function emitUnauthorizedEvent(): void {
   scope.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
 }
 
-function buildHeaders(
-  config: ApiClientOptions,
-  body?: unknown,
-  extra?: Record<string, string>,
-): Record<string, string> {
+function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
     ...(extra ?? {}),

@@ -89,7 +89,8 @@ export class WarmupTemplatesService {
     if (!row) {
       throw new NotFoundException('Warmup template not found');
     }
-    return this.loadTemplate(row.id);
+    const [items, groups] = await this.loadDetails(row.id);
+    return { ...row, groups, items };
   }
 
   async update(context: AuthContext, templateId: string, input: Input) {
@@ -111,63 +112,71 @@ export class WarmupTemplatesService {
   }
 
   private async loadTemplate(templateId: string) {
-    const templates = await this.prisma.$queryRawUnsafe<TemplateRow[]>(
-      `SELECT
-        id,
-        coach_membership_id AS "coachMembershipId",
-        name,
-        scope,
-        template_version AS "templateVersion",
-        created_at AS "createdAt",
-        updated_at AS "updatedAt"
-      FROM warmup_template
-      WHERE id = $1::uuid`,
-      templateId,
-    );
+    const [templates, [items, groups]] = await Promise.all([
+      this.prisma.$queryRawUnsafe<TemplateRow[]>(
+        `SELECT
+          id,
+          coach_membership_id AS "coachMembershipId",
+          name,
+          scope,
+          template_version AS "templateVersion",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+        FROM warmup_template
+        WHERE id = $1::uuid`,
+        templateId,
+      ),
+      this.loadDetails(templateId),
+    ]);
     const template = templates[0];
     if (!template) {
       throw new NotFoundException('Warmup template not found');
     }
-    const items = await this.prisma.$queryRawUnsafe<unknown[]>(
-      `SELECT
-        block_type AS "blockType",
-        cardio_method_library_id AS "cardioMethodLibraryId",
-        display_name AS "displayName",
-        duration_minutes AS "durationMinutes",
-        exercise_library_id AS "exerciseLibraryId",
-        group_id AS "groupId",
-        isometric_exercise_library_id AS "isometricExerciseLibraryId",
-        metadata_json AS "metadataJson",
-        notes,
-        plio_exercise_library_id AS "plioExerciseLibraryId",
-        reps_max AS "repsMax",
-        reps_min AS "repsMin",
-        rest_seconds AS "restSeconds",
-        rounds_planned AS "roundsPlanned",
-        sets_planned AS "setsPlanned",
-        sort_order AS "sortOrder",
-        sport_library_id AS "sportLibraryId",
-        target_rir AS "targetRir",
-        target_rpe AS "targetRpe",
-        mobility_exercise_library_id AS "mobilityExerciseLibraryId",
-        work_seconds AS "workSeconds"
-      FROM warmup_template_item
-      WHERE template_id = $1::uuid AND archived_at IS NULL
-      ORDER BY sort_order ASC`,
-      templateId,
-    );
-    const groups = await this.prisma.$queryRawUnsafe<unknown[]>(
-      `SELECT
-        id,
-        group_type AS "groupType",
-        note,
-        sort_order AS "sortOrder"
-      FROM warmup_template_group
-      WHERE template_id = $1::uuid
-      ORDER BY sort_order ASC`,
-      templateId,
-    );
     return { ...template, groups, items };
+  }
+
+  private loadDetails(templateId: string): Promise<[unknown[], unknown[]]> {
+    return Promise.all([
+      this.prisma.$queryRawUnsafe<unknown[]>(
+        `SELECT
+          block_type AS "blockType",
+          cardio_method_library_id AS "cardioMethodLibraryId",
+          display_name AS "displayName",
+          duration_minutes AS "durationMinutes",
+          exercise_library_id AS "exerciseLibraryId",
+          group_id AS "groupId",
+          isometric_exercise_library_id AS "isometricExerciseLibraryId",
+          metadata_json AS "metadataJson",
+          notes,
+          plio_exercise_library_id AS "plioExerciseLibraryId",
+          reps_max AS "repsMax",
+          reps_min AS "repsMin",
+          rest_seconds AS "restSeconds",
+          rounds_planned AS "roundsPlanned",
+          sets_planned AS "setsPlanned",
+          sort_order AS "sortOrder",
+          sport_library_id AS "sportLibraryId",
+          target_rir AS "targetRir",
+          target_rpe AS "targetRpe",
+          mobility_exercise_library_id AS "mobilityExerciseLibraryId",
+          work_seconds AS "workSeconds"
+        FROM warmup_template_item
+        WHERE template_id = $1::uuid AND archived_at IS NULL
+        ORDER BY sort_order ASC`,
+        templateId,
+      ),
+      this.prisma.$queryRawUnsafe<unknown[]>(
+        `SELECT
+          id,
+          group_type AS "groupType",
+          note,
+          sort_order AS "sortOrder"
+        FROM warmup_template_group
+        WHERE template_id = $1::uuid
+        ORDER BY sort_order ASC`,
+        templateId,
+      ),
+    ]);
   }
 
   private async assertOwnedTemplate(context: AuthContext, templateId: string): Promise<void> {

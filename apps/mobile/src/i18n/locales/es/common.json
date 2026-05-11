@@ -143,5 +143,62 @@
   "mobile.client.routine.title": "Mi Rutina",
   "mobile.client.routine.empty": "No tienes una rutina asignada",
   "mobile.client.day.startTraining": "Empezar entrenamiento",
-  "mobile.client.day.startError": "No se pudo iniciar la sesión"
+  "mobile.client.day.startError": "No se pudo iniciar la sesión",
+
+  "client.start.title": "¿Cómo quieres entrenar hoy?",
+  "client.start.modeTimer": "Solo Temporizador",
+  "client.start.modeInteractive": "Seguimiento Interactivo",
+  "client.start.cancel": "Cancelar",
+
+  "client.wellnessPre.title": "¿Cómo llegas al entreno?",
+  "client.wellnessPre.motivation": "Motivación",
+  "client.wellnessPre.recovery": "Recuperación",
+  "client.wellnessPre.fatigue": "Fatiga (1=mucha, 10=nada)",
+  "client.wellnessPre.save": "Guardar y Continuar",
+  "client.wellnessPre.skip": "Omitir",
+
+  "client.wellnessPost.title": "Resumen de la sesión",
+  "client.wellnessPost.fatigue": "¿Cómo de cansado/a acabas?",
+  "client.wellnessPost.pain": "¿Sales dolorido o estresado?",
+  "client.wellnessPost.mood": "Estado de ánimo (10=motivado)",
+  "client.wellnessPost.comment": "Comentario para el entrenador",
+  "client.wellnessPost.commentPlaceholder": "Escribe un comentario opcional...",
+  "client.wellnessPost.submit": "Finalizar y guardar",
+
+  "client.wizard.serieOf": "Serie {{current}} / {{total}}",
+  "client.wizard.reps": "Repeticiones",
+  "client.wizard.weight": "Peso",
+  "client.wizard.rpe": "RPE",
+  "client.wizard.rir": "RIR",
+  "client.wizard.trainerVars": "Variables del entrenador",
+  "client.wizard.restRecommended": "Descanso recomendado: {{seconds}}s",
+  "client.wizard.completeAndRest": "Completar serie y descansar",
+  "client.wizard.finishExercise": "Finalizar ejercicio",
+  "client.wizard.saveChanges": "Guardar cambios",
+  "client.wizard.history": "Historial",
+  "client.wizard.noHistory": "Sin historial previo",
+  "client.wizard.clear": "Limpiar",
+  "client.wizard.autocomplete": "Autocompletar",
+  "client.wizard.hints": "Sugerencia del coach",
+
+  "client.summary.title": "Series registradas",
+  "client.summary.edit": "Editar",
+  "client.summary.set": "Serie {{index}}",
+
+  "client.timerGrid.reps": "Reps",
+  "client.timerGrid.weight": "Peso",
+  "client.timerGrid.rpe": "RPE",
+  "client.timerGrid.rir": "RIR",
+  "client.timerGrid.set": "S{{index}}",
+  "client.timerGrid.indications": "Indicaciones",
+
+  "client.workoutClock.elapsed": "{{time}} en curso",
+  "client.workoutClock.finish": "Finalizar Entreno",
+
+  "client.label.kg": "kg",
+  "client.label.reps": "reps",
+  "client.label.rpe": "RPE",
+  "client.label.rir": "RIR",
+  "client.today.setsProgress": "{{done}}/{{total}} series",
+  "client.today.blockInfo": "Bloque: {{meta}}"
 }

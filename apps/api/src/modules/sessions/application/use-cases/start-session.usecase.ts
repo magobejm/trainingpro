@@ -1,10 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
-import {
-  SESSIONS_REPOSITORY,
-  type SessionsRepositoryPort,
-} from '../../domain/sessions-repository.port';
+import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import type { StartSessionInput } from '../../domain/session.input';
 
 @Injectable()
 export class StartSessionUseCase {
@@ -13,8 +11,8 @@ export class StartSessionUseCase {
     private readonly accessPolicy: SessionAccessPolicy,
   ) {}
 
-  async execute(context: AuthContext, sessionId: string) {
-    await this.accessPolicy.assertCanAccess(context, sessionId);
-    return this.repository.startSession(context, sessionId);
+  async execute(context: AuthContext, input: StartSessionInput) {
+    await this.accessPolicy.assertCanAccess(context, input.sessionId);
+    return this.repository.startSession(context, input);
   }
 }

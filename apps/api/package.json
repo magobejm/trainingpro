@@ -39,6 +39,7 @@
     "db:migrate:resolve": "pnpm exec prisma migrate resolve --schema ../../prisma/schema.prisma",
     "db:migrate:status": "pnpm exec prisma migrate status --schema ../../prisma/schema.prisma",
     "db:seed": "pnpm exec tsx prisma/seed.ts",
+    "db:seed:dev": "pnpm exec tsx prisma/seeds/seed-dev-data.ts",
     "lint": "pnpm exec eslint src --ext .ts",
     "test": "pnpm exec jest --config jest.config.cjs --runInBand",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",

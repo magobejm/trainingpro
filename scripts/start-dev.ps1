@@ -209,6 +209,24 @@ function Start-DatabaseStackIfPossible([hashtable]$Target) {
   return $false
 }
 
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Yellow
+Write-Host "  ADVERTENCIA — Base de datos local" -ForegroundColor Yellow
+Write-Host "============================================================" -ForegroundColor Yellow
+Write-Host "  NUNCA ejecutes estos comandos (borran todos los datos):" -ForegroundColor Red
+Write-Host "    prisma migrate reset" -ForegroundColor Red
+Write-Host "    prisma migrate dev" -ForegroundColor Red
+Write-Host "    supabase db reset" -ForegroundColor Red
+Write-Host ""
+Write-Host "  Para aplicar migraciones usa siempre:" -ForegroundColor Green
+Write-Host "    pnpm --filter @trainerpro/api db:migrate:deploy" -ForegroundColor Green
+Write-Host ""
+Write-Host "  Si la BD queda vacia, restaura con:" -ForegroundColor Cyan
+Write-Host "    pnpm --filter @trainerpro/api db:seed" -ForegroundColor Cyan
+Write-Host "    pnpm --filter @trainerpro/api db:seed:dev" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Yellow
+Write-Host ""
+
 Write-Output "Preparing clean start for API/Web/Mobile..."
 
 $dbUrl = $env:DATABASE_URL

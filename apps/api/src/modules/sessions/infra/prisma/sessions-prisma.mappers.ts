@@ -5,11 +5,15 @@ import type { SessionSetLog } from '../../domain/session.entity';
 export type TemplateExerciseSnapshot = {
   displayName: string;
   exerciseLibraryId: null | string;
+  notes: null | string;
   perSetWeightRangesJson: Prisma.JsonValue | null;
   repsMax: null | number;
   repsMin: null | number;
+  restSeconds: null | number;
   setsPlanned: null | number;
   sortOrder: number;
+  targetRir: null | number;
+  targetRpe: null | number;
   weightRangeMaxKg: Prisma.Decimal | null;
   weightRangeMinKg: Prisma.Decimal | null;
 };
@@ -59,12 +63,16 @@ export function assertSessionMutable(status: SessionStatus): void {
 export function mapSessionItemCreate(item: TemplateExerciseSnapshot): Prisma.SessionStrengthItemCreateWithoutSessionInput {
   return {
     displayName: item.displayName,
+    notes: item.notes,
     perSetRangesJson: toInputJson(item.perSetWeightRangesJson),
     repsMax: item.repsMax,
     repsMin: item.repsMin,
+    restSeconds: item.restSeconds,
     setsPlanned: item.setsPlanned,
     sortOrder: item.sortOrder,
     sourceExerciseId: item.exerciseLibraryId,
+    targetRir: item.targetRir,
+    targetRpe: item.targetRpe,
     weightRangeMaxKg: item.weightRangeMaxKg,
     weightRangeMinKg: item.weightRangeMinKg,
   };
@@ -191,6 +199,7 @@ export function mapSessionSportCreate(block: TemplateSportSnapshot): Prisma.Sess
 }
 
 export function mapSetLog(row: {
+  effortRir: null | number;
   effortRpe: null | number;
   repsDone: null | number;
   sessionItemId: string;
@@ -198,6 +207,7 @@ export function mapSetLog(row: {
   weightDoneKg: Prisma.Decimal | null;
 }): SessionSetLog {
   return {
+    effortRir: row.effortRir,
     effortRpe: row.effortRpe,
     repsDone: row.repsDone,
     sessionItemId: row.sessionItemId,

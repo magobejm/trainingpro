@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensure-client-self-session.usecase';
+import { GetClientExerciseHistoryUseCase } from '../../application/use-cases/get-client-exercise-history.usecase';
 import { GetClientMeUseCase } from '../../application/use-cases/get-client-me.usecase';
 import { GetClientRoutineUseCase } from '../../application/use-cases/get-client-routine.usecase';
 import type { Client } from '../../domain/client';
@@ -17,6 +18,7 @@ import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dt
 export class ClientSelfController {
   constructor(
     private readonly ensureClientSelfSessionUseCase: EnsureClientSelfSessionUseCase,
+    private readonly getClientExerciseHistoryUseCase: GetClientExerciseHistoryUseCase,
     private readonly getClientMeUseCase: GetClientMeUseCase,
     private readonly getClientRoutineUseCase: GetClientRoutineUseCase,
   ) {}
@@ -31,6 +33,21 @@ export class ClientSelfController {
   async getMyRoutine(@Req() request: HttpAuthRequest): Promise<ClientRoutine> {
     const context = readAuthContext(request);
     return this.getClientRoutineUseCase.execute(context);
+  }
+
+  @Get('me/exercises/:sourceExerciseId/history')
+  async getExerciseHistory(
+    @Param('sourceExerciseId') sourceExerciseId: string,
+    @Query('limit') limit: string | undefined,
+    @Req() request: HttpAuthRequest,
+  ) {
+    const context = readAuthContext(request);
+    const parsedLimit = limit ? Math.max(1, Math.min(10, Number(limit))) : 3;
+    const entries = await this.getClientExerciseHistoryUseCase.execute(context, sourceExerciseId, parsedLimit);
+    return entries.map((e) => ({
+      ...e,
+      sessionDate: e.sessionDate.toISOString().slice(0, 10),
+    }));
   }
 
   @Post('me/sessions/ensure')

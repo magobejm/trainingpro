@@ -43,6 +43,11 @@ enum SessionStatus {
   COMPLETED
 }
 
+enum SessionStartMode {
+  TIMER
+  INTERACTIVE
+}
+
 enum IncidentSeverity {
   LOW
   MEDIUM
@@ -1270,6 +1275,13 @@ model SessionInstance {
   isIncomplete          Boolean               @default(false) @map("is_incomplete")
   finishComment         String?               @map("finish_comment")
   status                SessionStatus         @default(PENDING)
+  startMode             SessionStartMode?     @map("start_mode")
+  preMotivation         Int?                  @map("pre_motivation")
+  preRecovery           Int?                  @map("pre_recovery")
+  preFatigue            Int?                  @map("pre_fatigue")
+  postFatigue           Int?                  @map("post_fatigue")
+  postPain              Int?                  @map("post_pain")
+  postMood              Int?                  @map("post_mood")
   archivedAt            DateTime?             @map("archived_at") @db.Timestamptz(6)
   createdBy             String                @map("created_by") @db.Uuid
   updatedBy             String                @map("updated_by") @db.Uuid
@@ -1316,6 +1328,10 @@ model SessionStrengthItem {
   weightRangeMinKg Decimal?        @map("weight_range_min_kg") @db.Decimal(6, 2)
   weightRangeMaxKg Decimal?        @map("weight_range_max_kg") @db.Decimal(6, 2)
   perSetRangesJson Json?           @map("per_set_ranges_json")
+  targetRpe        Int?            @map("target_rpe")
+  targetRir        Int?            @map("target_rir")
+  restSeconds      Int?            @map("rest_seconds")
+  notes            String?
   archivedAt       DateTime?       @map("archived_at") @db.Timestamptz(6)
   createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -1335,6 +1351,7 @@ model SetLog {
   repsDone      Int?                @map("reps_done")
   weightDoneKg  Decimal?            @map("weight_done_kg") @db.Decimal(6, 2)
   effortRpe     Int?                @map("effort_rpe")
+  effortRir     Int?                @map("effort_rir")
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   session       SessionInstance     @relation(fields: [sessionId], references: [id], onDelete: Cascade)

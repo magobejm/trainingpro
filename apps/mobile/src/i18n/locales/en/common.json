@@ -143,5 +143,62 @@
   "mobile.client.routine.title": "My Routine",
   "mobile.client.routine.empty": "You don't have a routine assigned",
   "mobile.client.day.startTraining": "Start training",
-  "mobile.client.day.startError": "Could not start the session"
+  "mobile.client.day.startError": "Could not start the session",
+
+  "client.start.title": "How do you want to train today?",
+  "client.start.modeTimer": "Timer Only",
+  "client.start.modeInteractive": "Interactive Tracking",
+  "client.start.cancel": "Cancel",
+
+  "client.wellnessPre.title": "How are you arriving to your workout?",
+  "client.wellnessPre.motivation": "Motivation",
+  "client.wellnessPre.recovery": "Recovery",
+  "client.wellnessPre.fatigue": "Fatigue (1=very tired, 10=fresh)",
+  "client.wellnessPre.save": "Save & Continue",
+  "client.wellnessPre.skip": "Skip",
+
+  "client.wellnessPost.title": "Session summary",
+  "client.wellnessPost.fatigue": "How tired do you feel?",
+  "client.wellnessPost.pain": "Any pain or stress?",
+  "client.wellnessPost.mood": "Mood (10=motivated)",
+  "client.wellnessPost.comment": "Comment for your coach",
+  "client.wellnessPost.commentPlaceholder": "Write an optional comment...",
+  "client.wellnessPost.submit": "Finish & save",
+
+  "client.wizard.serieOf": "Set {{current}} / {{total}}",
+  "client.wizard.reps": "Reps",
+  "client.wizard.weight": "Weight",
+  "client.wizard.rpe": "RPE",
+  "client.wizard.rir": "RIR",
+  "client.wizard.trainerVars": "Trainer variables",
+  "client.wizard.restRecommended": "Recommended rest: {{seconds}}s",
+  "client.wizard.completeAndRest": "Complete set & rest",
+  "client.wizard.finishExercise": "Finish exercise",
+  "client.wizard.saveChanges": "Save changes",
+  "client.wizard.history": "History",
+  "client.wizard.noHistory": "No previous history",
+  "client.wizard.clear": "Clear",
+  "client.wizard.autocomplete": "Autocomplete",
+  "client.wizard.hints": "Coach hint",
+
+  "client.summary.title": "Logged sets",
+  "client.summary.edit": "Edit",
+  "client.summary.set": "Set {{index}}",
+
+  "client.timerGrid.reps": "Reps",
+  "client.timerGrid.weight": "Weight",
+  "client.timerGrid.rpe": "RPE",
+  "client.timerGrid.rir": "RIR",
+  "client.timerGrid.set": "S{{index}}",
+  "client.timerGrid.indications": "Indications",
+
+  "client.workoutClock.elapsed": "{{time}} elapsed",
+  "client.workoutClock.finish": "Finish Workout",
+
+  "client.label.kg": "kg",
+  "client.label.reps": "reps",
+  "client.label.rpe": "RPE",
+  "client.label.rir": "RIR",
+  "client.today.setsProgress": "{{done}}/{{total}} sets",
+  "client.today.blockInfo": "Block: {{meta}}"
 }

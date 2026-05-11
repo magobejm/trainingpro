@@ -1,192 +1,312 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
+import { FlatList, Modal, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import '../../i18n';
-
-const COLORS = {
-  action: '#ec4899',
-  bg: '#07000f',
-  muted: 'rgba(196,181,253,0.7)',
-  text: '#ffffff',
-  white: '#ffffff',
-};
 import {
   useFinishSessionMutation,
   useLogSetMutation,
   useSessionQuery,
   useStartSessionMutation,
 } from '../../data/hooks/useTodaySession';
-import { RestTimer } from '../../features/timers/RestTimer';
-import { ExerciseCarousel } from './ExerciseCarousel';
-import { FinishSessionModal } from './FinishSessionModal';
-import { WeeklyReportScreen } from './WeeklyReportScreen';
+import type { LogSetMutationInput, SessionItem, SessionView, StrengthSessionItem } from '../../data/hooks/useTodaySession';
+import { WorkoutClock } from '../../features/timers/WorkoutClock';
+import { ExerciseListCard } from './ExerciseListCard';
+import { ExerciseSummaryOverlay } from './ExerciseSummaryOverlay';
+import { SetWizardOverlay } from './SetWizardOverlay';
+import { StartModeModal } from './StartModeModal';
+import { TimerGridList } from './TimerGridList';
+import { WellnessPostModal } from './WellnessPostModal';
+import { WellnessPreModal } from './WellnessPreModal';
 
-const REPORT_MODAL_ANIMATION = 'slide' as const;
+const DUMMY_MODAL_ANIMATION = 'slide' as const;
 
 type TodaySessionScreenProps = {
   onClose: () => void;
   sessionId: string;
 };
 
-export function TodaySessionScreen(props: TodaySessionScreenProps): React.JSX.Element {
-  const [finishOpen, setFinishOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
-  const handlers = useTodaySessionHandlers(props.sessionId, setFinishOpen, setReportOpen);
-  return (
-    <TodaySessionContent
-      finishOpen={finishOpen}
-      handlers={handlers}
-      onClose={props.onClose}
-      reportOpen={reportOpen}
-      sessionId={props.sessionId}
-    />
-  );
-}
+type WizardState = {
+  item: StrengthSessionItem;
+  editingSetIndex?: number | null;
+} | null;
 
-type TodaySessionContentProps = {
-  finishOpen: boolean;
-  handlers: ReturnType<typeof useTodaySessionHandlers>;
-  onClose: () => void;
-  reportOpen: boolean;
-  sessionId: string;
-};
+type SummaryState = {
+  item: StrengthSessionItem;
+} | null;
 
-function TodaySessionContent(props: TodaySessionContentProps): React.JSX.Element {
-  return (
-    <ScrollView contentContainerStyle={styles.page}>
-      <TodaySessionHeader />
-      <Pressable onPress={props.handlers.onStart} style={styles.button}>
-        <StartButtonLabel />
-      </Pressable>
-      <ExerciseCarousel items={props.handlers.data.sessionQuery.data?.items ?? []} onLogSet={props.handlers.onLogSet} />
-      <RestTimerBlock />
-      <Pressable onPress={props.handlers.onOpenFinish} style={styles.button}>
-        <FinishButtonLabel />
-      </Pressable>
-      <FinishSessionModal
-        onClose={props.handlers.onCloseFinish}
-        onOpenWeeklyReport={props.handlers.onOpenWeeklyReport}
-        onSubmit={props.handlers.onFinish}
-        visible={props.finishOpen}
-      />
-      <Modal animationType={REPORT_MODAL_ANIMATION} transparent visible={props.reportOpen}>
-        <WeeklyReportScreen onClose={props.onClose} sourceSessionId={props.sessionId} />
-      </Modal>
-    </ScrollView>
-  );
-}
-
-function TodaySessionHeader(): React.JSX.Element {
-  const { t } = useTranslation();
-  return (
-    <>
-      <Text style={styles.title}>{t('client.today.title')}</Text>
-      <Text style={styles.subtitle}>{t('client.today.subtitle')}</Text>
-    </>
-  );
-}
-
-function StartButtonLabel(): React.JSX.Element {
-  const { t } = useTranslation();
-  return <Text style={styles.buttonLabel}>{t('client.today.start')}</Text>;
-}
-
-function FinishButtonLabel(): React.JSX.Element {
-  const { t } = useTranslation();
-  return <Text style={styles.buttonLabel}>{t('client.today.finish')}</Text>;
-}
-
-function useTodaySessionData(sessionId: string) {
+function useSessionOrchestrator(sessionId: string, onClose: () => void) {
   const sessionQuery = useSessionQuery(sessionId);
   const startMutation = useStartSessionMutation(sessionId);
   const finishMutation = useFinishSessionMutation(sessionId);
   const logSetMutation = useLogSetMutation(sessionId);
-  return { sessionQuery, startMutation, finishMutation, logSetMutation };
-}
 
-// eslint-disable-next-line max-lines-per-function
-function useTodaySessionHandlers(
-  sessionId: string,
-  setFinishOpen: (value: boolean) => void,
-  setReportOpen: (value: boolean) => void,
-) {
-  const data = useTodaySessionData(sessionId);
+  const [showStartMode, setShowStartMode] = useState(false);
+  const [showWellnessPre, setShowWellnessPre] = useState(false);
+  const [showWellnessPost, setShowWellnessPost] = useState(false);
+  const [pendingMode, setPendingMode] = useState<'INTERACTIVE' | 'TIMER' | null>(null);
+  const [wizard, setWizard] = useState<WizardState>(null);
+  const [summary, setSummary] = useState<SummaryState>(null);
 
-  const onLogSet = (
-    sessionItemId: string,
-    setIndex: number,
-    repsDone: number | null,
-    effortRpe: number | null,
-    weightDoneKg: number | null,
-  ) => {
-    data.logSetMutation.mutate({
-      effortRpe,
-      repsDone,
-      sessionItemId,
-      setIndex,
-      weightDoneKg,
-    });
-  };
+  const handleBegin = useCallback(() => setShowStartMode(true), []);
+
+  const handleModeSelected = useCallback((mode: 'INTERACTIVE' | 'TIMER') => {
+    setPendingMode(mode);
+    setShowStartMode(false);
+    setShowWellnessPre(true);
+  }, []);
+
+  const handleStartWithWellness = useCallback(
+    (wellness: { motivation: number; recovery: number; fatigue: number }) => {
+      setShowWellnessPre(false);
+      startMutation.mutate({
+        startMode: pendingMode,
+        preMotivation: wellness.motivation,
+        preRecovery: wellness.recovery,
+        preFatigue: wellness.fatigue,
+      });
+    },
+    [startMutation, pendingMode],
+  );
+
+  const handleSkipWellness = useCallback(() => {
+    setShowWellnessPre(false);
+    startMutation.mutate({ startMode: pendingMode });
+  }, [startMutation, pendingMode]);
+
+  const handleSubmitPost = useCallback(
+    (values: { fatigue: number; pain: number; mood: number; comment: string }) => {
+      setShowWellnessPost(false);
+      finishMutation.mutate(
+        {
+          isIncomplete: false,
+          comment: values.comment || null,
+          postFatigue: values.fatigue,
+          postPain: values.pain,
+          postMood: values.mood,
+        },
+        { onSuccess: onClose },
+      );
+    },
+    [finishMutation, onClose],
+  );
+
+  const handleLogSet = useCallback(
+    (input: LogSetMutationInput) => {
+      logSetMutation.mutate(input);
+    },
+    [logSetMutation],
+  );
+
+  const handleItemPress = useCallback((item: SessionItem) => {
+    if (item.type !== 'strength') return;
+    const isFullyLogged = item.setsPlanned != null && item.logs.length >= item.setsPlanned;
+    if (item.logs.length > 0 && isFullyLogged) {
+      setSummary({ item });
+    } else {
+      setWizard({ item });
+    }
+  }, []);
 
   return {
-    data,
-    onCloseFinish: () => setFinishOpen(false),
-    onCloseWeeklyReport: () => setReportOpen(false),
-    onFinish: () => {
-      data.finishMutation.mutate();
-      setFinishOpen(false);
-    },
-    onLogSet,
-    onOpenFinish: () => setFinishOpen(true),
-    onOpenWeeklyReport: () => setReportOpen(true),
-    onStart: () => data.startMutation.mutate(),
+    session: sessionQuery.data,
+    showStartMode,
+    showWellnessPre,
+    showWellnessPost,
+    wizard,
+    summary,
+    handleBegin,
+    handleModeSelected,
+    handleStartWithWellness,
+    handleSkipWellness,
+    handleSubmitPost,
+    handleLogSet,
+    handleItemPress,
+    setShowStartMode,
+    setShowWellnessPost,
+    setWizard,
+    setSummary,
   };
 }
 
-function RestTimerBlock(): React.JSX.Element {
-  const { t } = useTranslation();
+function SessionItemList({ items, onItemPress }: { items: SessionItem[]; onItemPress: (i: SessionItem) => void }) {
   return (
-    <RestTimer
-      initialSeconds={90}
-      label={t('client.today.restTimer')}
-      pauseLabel={t('client.today.pause')}
-      resetLabel={t('client.today.reset')}
-      startLabel={t('client.today.startTimer')}
+    <FlatList
+      data={items}
+      keyExtractor={(i) => i.id}
+      renderItem={({ item }) => <ExerciseListCard item={item} onPress={() => onItemPress(item)} />}
+      contentContainerStyle={listStyles.list}
     />
   );
 }
 
+function SessionOverlays({ sessionId, state }: { sessionId: string; state: ReturnType<typeof useSessionOrchestrator> }) {
+  const {
+    showStartMode,
+    showWellnessPre,
+    showWellnessPost,
+    wizard,
+    summary,
+    handleModeSelected,
+    handleStartWithWellness,
+    handleSkipWellness,
+    handleSubmitPost,
+    handleLogSet,
+    setShowStartMode,
+    setShowWellnessPost,
+    setWizard,
+    setSummary,
+  } = state;
+
+  return (
+    <>
+      <StartModeModal visible={showStartMode} onSelect={handleModeSelected} onCancel={() => setShowStartMode(false)} />
+      <WellnessPreModal visible={showWellnessPre} onSave={handleStartWithWellness} onSkip={handleSkipWellness} />
+      <WellnessPostModal
+        visible={showWellnessPost}
+        onSubmit={handleSubmitPost}
+        onCancel={() => setShowWellnessPost(false)}
+      />
+      {wizard ? (
+        <SetWizardOverlay
+          item={wizard.item}
+          editingSetIndex={wizard.editingSetIndex}
+          sessionId={sessionId}
+          onClose={() => setWizard(null)}
+          onLogSet={handleLogSet}
+        />
+      ) : null}
+      {summary ? (
+        <ExerciseSummaryOverlay
+          item={summary.item}
+          onClose={() => setSummary(null)}
+          onEditSet={(setIndex) => {
+            const itm = summary.item;
+            setSummary(null);
+            setWizard({ item: itm, editingSetIndex: setIndex });
+          }}
+        />
+      ) : null}
+      <Modal animationType={DUMMY_MODAL_ANIMATION} transparent visible={false}>
+        <View />
+      </Modal>
+    </>
+  );
+}
+
+function SessionBody({
+  session,
+  sessionId,
+  onItemPress,
+  onLogSet,
+  onFinish,
+  onBegin,
+}: {
+  session: SessionView;
+  sessionId: string;
+  onItemPress: (i: SessionItem) => void;
+  onLogSet: (i: LogSetMutationInput) => void;
+  onFinish: () => void;
+  onBegin: () => void;
+}) {
+  const { t } = useTranslation();
+  const isRunning = session.status === 'IN_PROGRESS';
+  const startMode = session.startMode ?? 'INTERACTIVE';
+
+  return (
+    <>
+      {!isRunning && session.status !== 'COMPLETED' && (
+        <View style={styles.startBanner}>
+          <Text style={styles.startBannerText} onPress={onBegin}>
+            {t('mobile.client.day.startTraining')}
+          </Text>
+        </View>
+      )}
+      {isRunning && startMode === 'TIMER' ? (
+        <TimerGridList items={session.items} sessionId={sessionId} onLogSet={onLogSet} />
+      ) : (
+        <SessionItemList items={session.items} onItemPress={onItemPress} />
+      )}
+      {isRunning && <WorkoutClock startedAt={session.startedAt} onFinish={onFinish} />}
+    </>
+  );
+}
+
+export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenProps): React.JSX.Element {
+  const { t } = useTranslation();
+  const state = useSessionOrchestrator(sessionId, onClose);
+
+  if (!state.session) {
+    return (
+      <View style={styles.centerContainer}>
+        <Text style={styles.emptyText}>{t('client.today.empty')}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>{t('client.today.title')}</Text>
+        </View>
+        <SessionBody
+          session={state.session}
+          sessionId={sessionId}
+          onItemPress={state.handleItemPress}
+          onLogSet={state.handleLogSet}
+          onFinish={() => state.setShowWellnessPost(true)}
+          onBegin={state.handleBegin}
+        />
+      </View>
+      <SessionOverlays sessionId={sessionId} state={state} />
+    </SafeAreaView>
+  );
+}
+
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: COLORS.action,
-    borderRadius: 10,
-    justifyContent: 'center',
-    minHeight: 42,
-    paddingHorizontal: 12,
-    width: '100%',
+  safeArea: {
+    backgroundColor: '#0f172a',
+    flex: 1,
   },
-  buttonLabel: {
-    color: COLORS.white,
-    fontSize: 13,
-    fontWeight: '800',
+  container: {
+    flex: 1,
   },
-  page: {
-    alignItems: 'center',
-    backgroundColor: COLORS.bg,
-    gap: 16,
+  header: {
+    borderBottomColor: '#1e293b',
+    borderBottomWidth: 1,
     paddingHorizontal: 16,
-    paddingVertical: 24,
-  },
-  subtitle: {
-    color: COLORS.muted,
-    fontSize: 13,
-    width: '100%',
+    paddingVertical: 14,
   },
   title: {
-    color: COLORS.text,
-    fontSize: 24,
+    color: '#e2e8f0',
+    fontSize: 20,
     fontWeight: '800',
-    width: '100%',
+  },
+  centerContainer: {
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'center',
+  },
+  emptyText: {
+    color: '#64748b',
+    fontSize: 16,
+  },
+  startBanner: {
+    backgroundColor: '#6366f1',
+    borderRadius: 10,
+    margin: 16,
+    paddingVertical: 14,
+  },
+  startBannerText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+});
+
+const listStyles = StyleSheet.create({
+  list: {
+    padding: 16,
   },
 });

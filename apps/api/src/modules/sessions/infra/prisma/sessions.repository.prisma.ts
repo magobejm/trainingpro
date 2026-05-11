@@ -5,8 +5,8 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
-import type { SessionInstance, SessionSetLog } from '../../domain/session.entity';
-import type { EnsureSessionInput, FinishSessionInput, LogSetInput } from '../../domain/session.input';
+import type { ExerciseHistoryEntry, SessionInstance, SessionSetLog } from '../../domain/session.entity';
+import type { EnsureSessionInput, FinishSessionInput, LogSetInput, StartSessionInput } from '../../domain/session.input';
 import type { EnsureSessionForClientInput } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import {
@@ -114,6 +114,39 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.cardioRepository.finishCardioSession(context, input);
   }
 
+  async findExerciseHistory(clientId: string, sourceExerciseId: string, limit: number): Promise<ExerciseHistoryEntry[]> {
+    const rows = await this.prisma.setLog.findMany({
+      where: {
+        session: { archivedAt: null, clientId, status: 'COMPLETED' },
+        sessionItem: { archivedAt: null, sourceExerciseId },
+      },
+      orderBy: [{ session: { sessionDate: 'desc' } }, { setIndex: 'desc' }],
+      select: {
+        effortRir: true,
+        effortRpe: true,
+        repsDone: true,
+        setIndex: true,
+        session: { select: { sessionDate: true } },
+        weightDoneKg: true,
+      },
+      take: limit * 10,
+    });
+    const byDate = new Map<string, ExerciseHistoryEntry>();
+    for (const r of rows) {
+      const key = r.session.sessionDate.toISOString();
+      if (!byDate.has(key)) {
+        byDate.set(key, {
+          effortRir: r.effortRir,
+          effortRpe: r.effortRpe,
+          repsDone: r.repsDone,
+          sessionDate: r.session.sessionDate,
+          weightDoneKg: r.weightDoneKg ? Number(r.weightDoneKg) : null,
+        });
+      }
+    }
+    return [...byDate.values()].slice(0, limit);
+  }
+
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
@@ -125,6 +158,9 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         finishedAt: new Date(),
         isCompleted: true,
         isIncomplete: input.isIncomplete,
+        postFatigue: input.postFatigue ?? null,
+        postMood: input.postMood ?? null,
+        postPain: input.postPain ?? null,
         status: SessionStatus.COMPLETED,
       },
       include: sessionInclude(),
@@ -165,8 +201,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.cardioRepository.startCardioSession(context, sessionId);
   }
 
-  async startSession(context: AuthContext, sessionId: string): Promise<SessionInstance> {
-    const session = await this.readSessionForMutation(sessionId);
+  async startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance> {
+    const session = await this.readSessionForMutation(input.sessionId);
     if (session.startedAt || session.status === SessionStatus.COMPLETED) {
       return mapSession(session);
     }
@@ -174,6 +210,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       where: { id: session.id },
       data: {
         ...buildUpdateAuditFields(context),
+        preFatigue: input.preFatigue ?? null,
+        preMotivation: input.preMotivation ?? null,
+        preRecovery: input.preRecovery ?? null,
+        startMode: input.startMode ?? null,
         startedAt: new Date(),
         status: SessionStatus.IN_PROGRESS,
       },
@@ -296,6 +336,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.prisma.setLog.upsert({
       where: { sessionItemId_setIndex: { sessionItemId, setIndex: input.setIndex } },
       create: {
+        effortRir: input.effortRir ?? null,
         effortRpe: input.effortRpe ?? null,
         repsDone: input.repsDone ?? null,
         sessionId: input.sessionId,
@@ -304,6 +345,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         weightDoneKg: toDecimal(input.weightDoneKg),
       },
       update: {
+        effortRir: input.effortRir ?? null,
         effortRpe: input.effortRpe ?? null,
         repsDone: input.repsDone ?? null,
         weightDoneKg: toDecimal(input.weightDoneKg),

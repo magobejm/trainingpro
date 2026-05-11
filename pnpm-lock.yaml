@@ -166,6 +166,9 @@ importers:
       '@expo/metro-runtime':
         specifier: ~5.0.5
         version: 5.0.5(react-native@0.77.3(@babel/core@7.29.0)(@babel/preset-env@7.29.0(@babel/core@7.29.0))(@types/react@19.2.14)(react@19.2.4))
+      '@react-native-community/slider':
+        specifier: ^5.2.0
+        version: 5.2.0
       '@supabase/supabase-js':
         specifier: ^2.57.4
         version: 2.96.0
@@ -1703,6 +1706,9 @@ packages:
 
   '@protobufjs/utf8@1.1.0':
     resolution: {integrity: sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==}
+
+  '@react-native-community/slider@5.2.0':
+    resolution: {integrity: sha512-484sH8aWEaSjxaZ7HT3YZ8CKDcNes2synko1vdEz5DFEdvKAduxKJTj22L/qBMD7rtIkfbX69DMzWDAGbOAV6w==}
 
   '@react-native/assets-registry@0.77.3':
     resolution: {integrity: sha512-kLocY1mlQjCdrX0y4eYQblub9NDdX+rkNii3F2rumri532ILjMAvkdpehf2PwQDj0X6PZYF1XFjszPw5uzq0Aw==}
@@ -7297,6 +7303,8 @@ snapshots:
   '@protobufjs/pool@1.1.0': {}
 
   '@protobufjs/utf8@1.1.0': {}
+
+  '@react-native-community/slider@5.2.0': {}
 
   '@react-native/assets-registry@0.77.3': {}
 

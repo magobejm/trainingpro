@@ -32,6 +32,7 @@ apps/mobile/.expo/
 # Supabase local temp state
 supabase/.temp/
 supabase/.branches/
+supabase/snippets/
 
 # Local binaries
 schema-engine-*.exe

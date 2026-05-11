@@ -4,6 +4,7 @@ import { FilesModule } from '../files/files.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
 import { EnsureClientSelfSessionUseCase } from './application/use-cases/ensure-client-self-session.usecase';
+import { GetClientExerciseHistoryUseCase } from './application/use-cases/get-client-exercise-history.usecase';
 import { ClientAuthProvisionerService } from './application/services/client-auth-provisioner.service';
 import { CreateClientProgressPhotoUseCase } from './application/use-cases/create-client-progress-photo.usecase';
 import { CreateClientUseCase } from './application/use-cases/create-client.usecase';
@@ -34,6 +35,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
   providers: [
     ArchiveClientUseCase,
     EnsureClientSelfSessionUseCase,
+    GetClientExerciseHistoryUseCase,
     ClientAuthProvisionerService,
     CreateClientProgressPhotoUseCase,
     CreateClientUseCase,

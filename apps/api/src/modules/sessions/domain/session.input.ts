@@ -14,10 +14,22 @@ export type EnsureSessionForClientInput = EnsureSessionInput & {
 export type FinishSessionInput = {
   comment?: null | string;
   isIncomplete: boolean;
+  postFatigue?: null | number;
+  postMood?: null | number;
+  postPain?: null | number;
   sessionId: string;
 };
 
+export type StartSessionInput = {
+  preFatigue?: null | number;
+  preMotivation?: null | number;
+  preRecovery?: null | number;
+  sessionId: string;
+  startMode?: null | 'INTERACTIVE' | 'TIMER';
+};
+
 export type LogSetInput = {
+  effortRir?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
   sessionId: string;

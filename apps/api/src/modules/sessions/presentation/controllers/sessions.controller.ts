@@ -13,6 +13,7 @@ import { EnsureSessionDto } from '../dto/ensure-session.dto';
 import { FinishSessionDto } from '../dto/finish-session.dto';
 import { LogSetDto } from '../dto/log-set.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
+import { StartSessionDto } from '../dto/start-session.dto';
 
 @Controller('sessions/strength')
 @UseGuards(AuthGuard, RolesGuard)
@@ -38,9 +39,15 @@ export class SessionsController {
   }
 
   @Post(':sessionId/start')
-  async start(@Param() params: SessionIdParamDto, @Req() request: HttpAuthRequest) {
+  async start(@Param() params: SessionIdParamDto, @Body() body: StartSessionDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
-    const session = await this.startSessionUseCase.execute(auth, params.sessionId);
+    const session = await this.startSessionUseCase.execute(auth, {
+      preFatigue: body.preFatigue,
+      preMotivation: body.preMotivation,
+      preRecovery: body.preRecovery,
+      sessionId: params.sessionId,
+      startMode: body.startMode,
+    });
     return mapSession(session);
   }
 
@@ -70,7 +77,14 @@ export class SessionsController {
     const auth = readAuthContext(request);
     const session = await this.finishSessionUseCase.execute(
       auth,
-      { comment: body.comment, isIncomplete: body.isIncomplete, sessionId: params.sessionId },
+      {
+        comment: body.comment,
+        isIncomplete: body.isIncomplete,
+        postFatigue: body.postFatigue,
+        postMood: body.postMood,
+        postPain: body.postPain,
+        sessionId: params.sessionId,
+      },
       readOffset(timezoneOffset),
     );
     return mapSession(session);
@@ -84,11 +98,7 @@ export class SessionsController {
   }
 }
 
-function mapSession(session: {
-  finishedAt: Date | null;
-  sessionDate: Date;
-  startedAt: Date | null;
-}) {
+function mapSession(session: { finishedAt: Date | null; sessionDate: Date; startedAt: Date | null }) {
   return {
     ...session,
     finishedAt: session.finishedAt ? session.finishedAt.toISOString() : null,

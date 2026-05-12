@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
-import { readFrontEnv } from './env';
 
 export function createSupabaseClient() {
-  const env = readFrontEnv();
-  const supabaseUrl = env.EXPO_PUBLIC_SUPABASE_URL;
-  const anonKey = env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+  // Direct `process.env.EXPO_PUBLIC_*` access so the bundler inlines it at
+  // build time (native and web). Indirect access via a helper is NOT inlined.
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const anonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !anonKey) {
     throw new Error('Missing Supabase public env vars');
   }

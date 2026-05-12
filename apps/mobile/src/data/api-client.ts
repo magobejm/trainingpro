@@ -27,16 +27,15 @@ export class ForbiddenApiError extends ApiClientError {}
 
 export function createApiClient(config: ApiClientOptions) {
   const baseUrl = resolveBaseUrl(config.baseUrl);
-  const send = <T>(request: RequestOptions): Promise<T> =>
-    executeRequest<T>(baseUrl, config, request);
+  const send = <T>(request: RequestOptions): Promise<T> => executeRequest<T>(baseUrl, config, request);
   return {
-    delete: <T>(path: string, headers?: Record<string, string>): Promise<T> => send<T>({
-      headers,
-      method: 'DELETE',
-      path,
-    }),
-    get: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
-      send<T>({ headers, method: 'GET', path }),
+    delete: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
+      send<T>({
+        headers,
+        method: 'DELETE',
+        path,
+      }),
+    get: <T>(path: string, headers?: Record<string, string>): Promise<T> => send<T>({ headers, method: 'GET', path }),
     patch: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
       send<T>({ body, headers, method: 'PATCH', path }),
     post: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
@@ -46,11 +45,7 @@ export function createApiClient(config: ApiClientOptions) {
   };
 }
 
-async function executeRequest<T>(
-  baseUrl: string,
-  config: ApiClientOptions,
-  request: RequestOptions,
-): Promise<T> {
+async function executeRequest<T>(baseUrl: string, config: ApiClientOptions, request: RequestOptions): Promise<T> {
   const headers = buildHeaders(config, request.body, request.headers);
   const response = await fetch(`${baseUrl}${request.path}`, {
     body: serializeBody(request.body),
@@ -69,13 +64,10 @@ function resolveBaseUrl(baseUrl?: string): string {
   if (baseUrl) {
     return baseUrl;
   }
-  const env = readEnv();
-  return env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
-}
-
-function readEnv(): Record<string, string | undefined> {
-  const scope = globalThis as { process?: { env?: Record<string, string | undefined> } };
-  return scope.process?.env ?? {};
+  // Direct `process.env.EXPO_PUBLIC_*` access so the bundler can inline it at
+  // build time (both native and web). Indirect access via a helper is NOT
+  // inlined and falls back to localhost on web.
+  return process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 }
 
 async function throwIfUnauthorized(response: Response): Promise<void> {
@@ -87,11 +79,7 @@ async function throwIfUnauthorized(response: Response): Promise<void> {
   }
 }
 
-function buildHeaders(
-  config: ApiClientOptions,
-  body?: unknown,
-  extra?: Record<string, string>,
-): Record<string, string> {
+function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
     ...(extra ?? {}),

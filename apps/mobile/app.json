@@ -5,11 +5,28 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
+    "android": {
+      "package": "com.trainerpro.mobile",
+      "versionCode": 1
+    },
     "web": {
       "bundler": "metro",
       "output": "single",
       "backgroundColor": "#07000f"
     },
-    "backgroundColor": "#07000f"
+    "backgroundColor": "#07000f",
+    "extra": {
+      "eas": {
+        "projectId": "e32025fc-78da-4dfc-89d8-60149b6e193d"
+      }
+    },
+    "owner": "magobejm",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/e32025fc-78da-4dfc-89d8-60149b6e193d"
+    },
+    "ios": {}
   }
 }

@@ -16,7 +16,7 @@ export default defineConfig({
       },
       {
         find: /^react-native$/,
-        replacement: resolve(__dirname, './node_modules/react-native-web/dist/index.js'),
+        replacement: 'react-native-web',
       },
     ],
   },

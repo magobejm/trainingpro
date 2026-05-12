@@ -151,3 +151,58 @@ jobs:
           projectId: ${{ env.GCP_PROJECT_ID }}
           target: ${{ env.FIREBASE_SITE }}
           channelId: live
+
+  deploy-mobile-web:
+    name: Deploy mobile web (EAS Hosting)
+    runs-on: ubuntu-latest
+    needs: deploy-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Export web bundle
+        working-directory: apps/mobile
+        env:
+          EXPO_PUBLIC_API_BASE_URL: ${{ vars.API_BASE_URL || needs.deploy-api.outputs.service_url }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+        run: pnpm exec expo export --platform web --clear
+      - name: Deploy to EAS Hosting (production)
+        working-directory: apps/mobile
+        run: eas deploy --prod --non-interactive
+
+  build-mobile-apk:
+    name: Build Android APK (EAS)
+    runs-on: ubuntu-latest
+    # EAS Build consumes build minutes (free tier ~30/month), so the APK is built
+    # only on a manual `workflow_dispatch`, not on every push to main.
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Allow EAS to archive the repo via git
+        run: git config protocol.file.allow always
+      - name: EAS Build (Android, preview profile → APK)
+        working-directory: apps/mobile
+        env:
+          # `pnpm install` runs husky's `prepare`, which sets `core.hooksPath`;
+          # git's clone-protection then blocks EAS's repo archive without this.
+          GIT_CLONE_PROTECTION_ACTIVE: 'false'
+        run: eas build --profile preview --platform android --non-interactive --no-wait

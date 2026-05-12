@@ -106,7 +106,7 @@ jobs:
             GEMINI_API_KEY=GEMINI_API_KEY:latest
           env_vars: |
             NODE_ENV=production
-            CORS_ORIGINS=https://${{ vars.FIREBASE_SITE }}.web.app,https://${{ vars.FIREBASE_SITE }}.firebaseapp.com,https://trainer-pro-mobile.expo.app
+            CORS_ORIGINS=https://${{ vars.FIREBASE_SITE }}.web.app
             PUBLIC_ASSET_BASE_URL=${{ vars.API_BASE_URL }}
       - name: Smoke test /health
         run: |

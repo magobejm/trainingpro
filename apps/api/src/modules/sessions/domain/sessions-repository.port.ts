@@ -5,10 +5,22 @@ import type {
   EnsureSessionInput,
   EnsureSessionForClientInput,
   FinishSessionInput,
+  LogIsometricSetInput,
+  LogMobilitySetInput,
+  LogPlioSetInput,
   LogSetInput,
+  LogSportInput,
   StartSessionInput,
 } from './session.input';
-import type { ExerciseHistoryEntry, SessionInstance, SessionSetLog } from './session.entity';
+import type {
+  ExerciseHistoryEntry,
+  SessionInstance,
+  SessionIsometricSetLog,
+  SessionMobilitySetLog,
+  SessionPlioSetLog,
+  SessionSetLog,
+  SessionSportLog,
+} from './session.entity';
 
 export const SESSIONS_REPOSITORY = Symbol('SESSIONS_REPOSITORY');
 
@@ -23,7 +35,11 @@ export interface SessionsRepositoryPort {
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null>;
   getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null>;
   logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog>;
+  logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<SessionIsometricSetLog>;
+  logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<SessionMobilitySetLog>;
+  logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<SessionPlioSetLog>;
   logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog>;
+  logSport(context: AuthContext, input: LogSportInput): Promise<SessionSportLog>;
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance>;
   startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance>;
 }

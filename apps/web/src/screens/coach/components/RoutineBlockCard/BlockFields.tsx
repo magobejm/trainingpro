@@ -224,7 +224,15 @@ function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
     return <CardioGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
   if (block.type === 'plio') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   if (block.type === 'mobility') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
-  if (block.type === 'isometric') return null;
+  if (block.type === 'isometric')
+    return (
+      <RoutineNumberField
+        label={t('coach.routine.block.rest')}
+        onChange={(v) => onUpdateField('restSeconds', v)}
+        readOnly={readOnly}
+        value={block.restSeconds}
+      />
+    );
   if (block.type === 'sport')
     return <SportGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
   return (

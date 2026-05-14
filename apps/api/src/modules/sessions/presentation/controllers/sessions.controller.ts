@@ -7,15 +7,25 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { EnsureSessionUseCase } from '../../application/use-cases/ensure-session.usecase';
 import { FinishSessionUseCase } from '../../application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../application/use-cases/get-session.usecase';
+import { LogIntervalUseCase } from '../../application/use-cases/log-interval.usecase';
+import { LogIsometricSetUseCase } from '../../application/use-cases/log-isometric-set.usecase';
+import { LogMobilitySetUseCase } from '../../application/use-cases/log-mobility-set.usecase';
+import { LogPlioSetUseCase } from '../../application/use-cases/log-plio-set.usecase';
 import { LogSetUseCase } from '../../application/use-cases/log-set.usecase';
+import { LogSportUseCase } from '../../application/use-cases/log-sport.usecase';
 import { StartSessionUseCase } from '../../application/use-cases/start-session.usecase';
 import { EnsureSessionDto } from '../dto/ensure-session.dto';
 import { FinishSessionDto } from '../dto/finish-session.dto';
+import { LogIntervalDto } from '../dto/log-interval.dto';
+import { LogIsometricSetDto } from '../dto/log-isometric-set.dto';
+import { LogMobilitySetDto } from '../dto/log-mobility-set.dto';
+import { LogPlioSetDto } from '../dto/log-plio-set.dto';
 import { LogSetDto } from '../dto/log-set.dto';
+import { LogSportDto } from '../dto/log-sport.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
 
-@Controller('sessions/strength')
+@Controller('sessions')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('coach', 'client')
 export class SessionsController {
@@ -23,7 +33,12 @@ export class SessionsController {
     private readonly ensureSessionUseCase: EnsureSessionUseCase,
     private readonly finishSessionUseCase: FinishSessionUseCase,
     private readonly getSessionUseCase: GetSessionUseCase,
+    private readonly logIntervalUseCase: LogIntervalUseCase,
+    private readonly logIsometricSetUseCase: LogIsometricSetUseCase,
+    private readonly logMobilitySetUseCase: LogMobilitySetUseCase,
+    private readonly logPlioSetUseCase: LogPlioSetUseCase,
     private readonly logSetUseCase: LogSetUseCase,
+    private readonly logSportUseCase: LogSportUseCase,
     private readonly startSessionUseCase: StartSessionUseCase,
   ) {}
 
@@ -49,6 +64,61 @@ export class SessionsController {
       startMode: body.startMode,
     });
     return mapSession(session);
+  }
+
+  @Post(':sessionId/log-interval')
+  async logInterval(
+    @Param() params: SessionIdParamDto,
+    @Body() body: LogIntervalDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logIntervalUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+  }
+
+  @Post(':sessionId/log-plio-set')
+  async logPlioSet(
+    @Param() params: SessionIdParamDto,
+    @Body() body: LogPlioSetDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logPlioSetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+  }
+
+  @Post(':sessionId/log-mobility-set')
+  async logMobilitySet(
+    @Param() params: SessionIdParamDto,
+    @Body() body: LogMobilitySetDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logMobilitySetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+  }
+
+  @Post(':sessionId/log-isometric-set')
+  async logIsometricSet(
+    @Param() params: SessionIdParamDto,
+    @Body() body: LogIsometricSetDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logIsometricSetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+  }
+
+  @Post(':sessionId/log-sport')
+  async logSport(
+    @Param() params: SessionIdParamDto,
+    @Body() body: LogSportDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logSportUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
   }
 
   @Post(':sessionId/log-set')

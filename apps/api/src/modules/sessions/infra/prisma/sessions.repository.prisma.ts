@@ -1,22 +1,43 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role, SessionStatus, TemplateKind } from '@prisma/client';
+import { Role, SessionStatus } from '@prisma/client';
 import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
-import type { ExerciseHistoryEntry, SessionInstance, SessionSetLog } from '../../domain/session.entity';
-import type { EnsureSessionInput, FinishSessionInput, LogSetInput, StartSessionInput } from '../../domain/session.input';
-import type { EnsureSessionForClientInput } from '../../domain/session.input';
+import type {
+  ExerciseHistoryEntry,
+  SessionInstance,
+  SessionIsometricSetLog,
+  SessionMobilitySetLog,
+  SessionPlioSetLog,
+  SessionSetLog,
+  SessionSportLog,
+} from '../../domain/session.entity';
+import type {
+  EnsureSessionInput,
+  EnsureSessionForClientInput,
+  FinishSessionInput,
+  LogIsometricSetInput,
+  LogMobilitySetInput,
+  LogPlioSetInput,
+  LogSetInput,
+  LogSportInput,
+  StartSessionInput,
+} from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import {
   assertSessionMutable,
+  mapIsometricSetLog,
+  mapMobilitySetLog,
+  mapPlioSetLog,
   mapSessionIsometricCreate,
   mapSessionItemCreate,
   mapSessionMobilityCreate,
   mapSessionPlioCreate,
   mapSessionSportCreate,
   mapSetLog,
+  mapSportLog,
   readDayExercises,
   readDayIsometricBlocks,
   readDayMobilityBlocks,
@@ -24,7 +45,15 @@ import {
   readDaySportBlocks,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
-import { mapSession, normalizeText, sessionInclude, toDecimal } from './sessions-strength.prisma.helpers';
+import { mapSession, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
+import {
+  readWorkoutTemplate,
+  upsertIsometricSetLog,
+  upsertMobilitySetLog,
+  upsertPlioSetLog,
+  upsertSetLog,
+  upsertSportLog,
+} from './sessions-strength.prisma.upserts';
 
 type CoachMembership = {
   id: string;
@@ -185,6 +214,58 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.cardioRepository.logInterval(context, input);
   }
 
+  async logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<SessionPlioSetLog> {
+    const session = await this.readSessionForMutation(input.sessionId);
+    assertSessionMutable(session.status);
+    const block = await this.prisma.sessionPlioBlock.findFirst({
+      where: { archivedAt: null, id: input.sessionPlioBlockId, sessionId: input.sessionId },
+      select: { id: true },
+    });
+    if (!block) throw new NotFoundException('Plio block not found');
+    const row = await upsertPlioSetLog(this.prisma, input, block.id);
+    void context;
+    return mapPlioSetLog(row);
+  }
+
+  async logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<SessionMobilitySetLog> {
+    const session = await this.readSessionForMutation(input.sessionId);
+    assertSessionMutable(session.status);
+    const block = await this.prisma.sessionMobilityBlock.findFirst({
+      where: { archivedAt: null, id: input.sessionMobilityBlockId, sessionId: input.sessionId },
+      select: { id: true },
+    });
+    if (!block) throw new NotFoundException('Mobility block not found');
+    const row = await upsertMobilitySetLog(this.prisma, input, block.id);
+    void context;
+    return mapMobilitySetLog(row);
+  }
+
+  async logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<SessionIsometricSetLog> {
+    const session = await this.readSessionForMutation(input.sessionId);
+    assertSessionMutable(session.status);
+    const block = await this.prisma.sessionIsometricBlock.findFirst({
+      where: { archivedAt: null, id: input.sessionIsometricBlockId, sessionId: input.sessionId },
+      select: { id: true },
+    });
+    if (!block) throw new NotFoundException('Isometric block not found');
+    const row = await upsertIsometricSetLog(this.prisma, input, block.id);
+    void context;
+    return mapIsometricSetLog(row);
+  }
+
+  async logSport(context: AuthContext, input: LogSportInput): Promise<SessionSportLog> {
+    const session = await this.readSessionForMutation(input.sessionId);
+    assertSessionMutable(session.status);
+    const block = await this.prisma.sessionSportBlock.findFirst({
+      where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
+      select: { id: true },
+    });
+    if (!block) throw new NotFoundException('Sport block not found');
+    const row = await upsertSportLog(this.prisma, input, block.id);
+    void context;
+    return mapSportLog(row);
+  }
+
   async logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
@@ -192,7 +273,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!item) {
       throw new NotFoundException('Session item not found');
     }
-    const row = await this.upsertSetLog(input, item.id);
+    const row = await upsertSetLog(this.prisma, input, item.id);
     void context;
     return mapSetLog(row);
   }
@@ -259,7 +340,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   private async readTemplateSnapshot(templateId: string, coachMembershipId: string, planDayId?: string | null) {
-    const row = await this.readWorkoutTemplate(templateId, coachMembershipId);
+    const row = await readWorkoutTemplate(this.prisma, templateId, coachMembershipId);
     if (!row) {
       throw new NotFoundException('Template not found');
     }
@@ -329,66 +410,6 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.prisma.sessionStrengthItem.findFirst({
       where: { archivedAt: null, id: sessionItemId, sessionId },
       select: { id: true },
-    });
-  }
-
-  private upsertSetLog(input: LogSetInput, sessionItemId: string) {
-    return this.prisma.setLog.upsert({
-      where: { sessionItemId_setIndex: { sessionItemId, setIndex: input.setIndex } },
-      create: {
-        effortRir: input.effortRir ?? null,
-        effortRpe: input.effortRpe ?? null,
-        repsDone: input.repsDone ?? null,
-        sessionId: input.sessionId,
-        sessionItemId,
-        setIndex: input.setIndex,
-        weightDoneKg: toDecimal(input.weightDoneKg),
-      },
-      update: {
-        effortRir: input.effortRir ?? null,
-        effortRpe: input.effortRpe ?? null,
-        repsDone: input.repsDone ?? null,
-        weightDoneKg: toDecimal(input.weightDoneKg),
-      },
-    });
-  }
-
-  private readWorkoutTemplate(templateId: string, coachMembershipId: string) {
-    return this.prisma.planTemplate.findFirst({
-      where: {
-        archivedAt: null,
-        coachMembershipId,
-        id: templateId,
-        kind: { in: [TemplateKind.STRENGTH, TemplateKind.ROUTINE] },
-      },
-      include: {
-        days: {
-          where: { archivedAt: null },
-          orderBy: { dayIndex: 'asc' },
-          include: {
-            exercises: {
-              where: { archivedAt: null },
-              orderBy: { sortOrder: 'asc' },
-            },
-            plioBlocks: {
-              where: { archivedAt: null },
-              orderBy: { sortOrder: 'asc' },
-            },
-            mobilityBlocks: {
-              where: { archivedAt: null },
-              orderBy: { sortOrder: 'asc' },
-            },
-            isometricBlocks: {
-              where: { archivedAt: null },
-              orderBy: { sortOrder: 'asc' },
-            },
-            sportBlocks: {
-              where: { archivedAt: null },
-              orderBy: { sortOrder: 'asc' },
-            },
-          },
-        },
-      },
     });
   }
 }

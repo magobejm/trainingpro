@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
 import type { ExerciseHistoryEntry, LogSetMutationInput, StrengthSessionItem } from '../../data/hooks/useTodaySession';
 import { useExerciseHistoryQuery } from '../../data/hooks/useTodaySession';
+import { IntervalTimer } from '../../features/timers/IntervalTimer';
 
 const MODAL_ANIMATION = 'slide';
 const BACK_ARROW = '\u2190';
@@ -198,6 +199,7 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
   const [weight, setWeight] = useState('');
   const [rpe, setRpe] = useState(7);
   const [rir, setRir] = useState(2);
+  const [restPhase, setRestPhase] = useState(false);
 
   const existingLog = item.logs.find((l) => l.setIndex === currentSet);
 
@@ -242,12 +244,8 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
     });
   }, [onLogSet, rir, rpe, reps, item.id, currentSet, weight]);
 
-  const handlePrimary = useCallback(() => {
-    commitSet();
-    if (isEditing) {
-      onClose();
-      return;
-    }
+  const advanceSet = useCallback(() => {
+    setRestPhase(false);
     if (currentSet < setsPlanned) {
       setCurrentSet((prev) => prev + 1);
       setReps('');
@@ -257,7 +255,21 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
     } else {
       onClose();
     }
-  }, [commitSet, isEditing, onClose, currentSet, setsPlanned]);
+  }, [currentSet, onClose, setsPlanned]);
+
+  const handlePrimary = useCallback(() => {
+    commitSet();
+    if (isEditing) {
+      onClose();
+      return;
+    }
+    const hasRest = !isEditing && item.restSeconds != null && item.restSeconds > 0 && currentSet < setsPlanned;
+    if (hasRest) {
+      setRestPhase(true);
+    } else {
+      advanceSet();
+    }
+  }, [advanceSet, commitSet, currentSet, isEditing, item.restSeconds, onClose, setsPlanned]);
 
   const isLastSet = currentSet >= setsPlanned;
   const ctaLabel = isEditing
@@ -317,11 +329,28 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
           <EffortSliders rpe={rpe} rir={rir} onRpeChange={setRpe} onRirChange={setRir} />
         </ScrollView>
 
-        <View style={styles.footer}>
-          <Pressable style={styles.ctaBtn} onPress={handlePrimary}>
-            <Text style={styles.ctaBtnText}>{ctaLabel}</Text>
-          </Pressable>
-        </View>
+        {restPhase && item.restSeconds != null ? (
+          <View style={styles.restOverlay}>
+            <Text style={styles.restTitle}>{t('client.today.restTimer')}</Text>
+            <IntervalTimer
+              seconds={item.restSeconds}
+              startLabel={t('client.today.startTimer')}
+              pauseLabel={t('client.today.pause')}
+              resetLabel={t('client.today.reset')}
+              runningLabel={t('client.today.restTimer')}
+              onComplete={advanceSet}
+            />
+            <Pressable style={styles.skipRestBtn} onPress={advanceSet}>
+              <Text style={styles.ctaBtnText}>{t('client.wizard.completeAndRest')}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <View style={styles.footer}>
+            <Pressable style={styles.ctaBtn} onPress={handlePrimary}>
+              <Text style={styles.ctaBtnText}>{ctaLabel}</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -435,6 +464,15 @@ const styles = StyleSheet.create({
   footer: { borderTopColor: '#1e293b', borderTopWidth: 1, padding: 16 },
   ctaBtn: { backgroundColor: '#6366f1', borderRadius: 12, paddingVertical: 16 },
   ctaBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  restOverlay: {
+    backgroundColor: '#0f172a',
+    borderTopColor: '#1e293b',
+    borderTopWidth: 1,
+    gap: 12,
+    padding: 16,
+  },
+  restTitle: { color: '#94a3b8', fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  skipRestBtn: { backgroundColor: '#334155', borderRadius: 12, paddingVertical: 12 },
 });
 
 const historyStyles = StyleSheet.create({

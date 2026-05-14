@@ -33,33 +33,35 @@ describe('Sessions snapshot rules', () => {
   it('does not mutate started/completed sessions and keeps snapshot', async () => {
     const app = await bootstrap();
     try {
+      const today = new Date().toISOString().slice(0, 10);
       const ensure = await request(app.getHttpServer())
-        .post('/sessions/strength/ensure')
+        .post('/sessions/ensure')
         .set('Authorization', 'Bearer coach-a')
         .set('x-active-role', 'coach')
         .send({
           clientId: '11111111-1111-1111-1111-111111111111',
-          sessionDate: '2026-02-18',
+          sessionDate: today,
           templateId: '22222222-2222-2222-2222-222222222222',
         })
         .expect(201);
 
       const sessionId = ensure.body.id as string;
       await request(app.getHttpServer())
-        .post(`/sessions/strength/${sessionId}/start`)
+        .post(`/sessions/${sessionId}/start`)
         .set('Authorization', 'Bearer coach-a')
         .set('x-active-role', 'coach')
+        .send({})
         .expect(201);
 
       await request(app.getHttpServer())
-        .post(`/sessions/strength/${sessionId}/finish`)
+        .post(`/sessions/${sessionId}/finish`)
         .set('Authorization', 'Bearer coach-a')
         .set('x-active-role', 'coach')
         .send({ isIncomplete: false })
         .expect(201);
 
       await request(app.getHttpServer())
-        .post(`/sessions/strength/${sessionId}/log-set`)
+        .post(`/sessions/${sessionId}/log-set`)
         .set('Authorization', 'Bearer coach-a')
         .set('x-active-role', 'coach')
         .send({
@@ -75,66 +77,45 @@ describe('Sessions snapshot rules', () => {
 });
 
 function createSessionsRepository() {
+  const today = new Date();
+  today.setUTCHours(0, 0, 0, 0);
   const sessions = new Map<string, { id: string; status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING' }>();
+  function makeSessionPayload(id: string, status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING') {
+    return {
+      clientId: '11111111-1111-1111-1111-111111111111',
+      finishComment: null,
+      finishedAt: status === 'COMPLETED' ? new Date() : null,
+      id,
+      isCompleted: status === 'COMPLETED',
+      isIncomplete: false,
+      items: [],
+      sessionDate: today,
+      startedAt: status !== 'PENDING' ? new Date() : null,
+      status,
+      templateId: '22222222-2222-2222-2222-222222222222',
+      templateVersion: 1,
+    };
+  }
   return {
     canAccessSession: async () => true,
     ensureSession: async () => {
       const id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
       sessions.set(id, { id, status: 'PENDING' });
-      return {
-        clientId: '11111111-1111-1111-1111-111111111111',
-        finishComment: null,
-        finishedAt: null,
-        id,
-        isCompleted: false,
-        isIncomplete: false,
-        items: [],
-        sessionDate: new Date('2026-02-18'),
-        startedAt: null,
-        status: 'PENDING' as const,
-        templateId: '22222222-2222-2222-2222-222222222222',
-        templateVersion: 1,
-      };
+      return makeSessionPayload(id, 'PENDING');
     },
     finishSession: async (_context: unknown, input: { sessionId: string }) => {
       const session = sessions.get(input.sessionId);
       if (session) {
         session.status = 'COMPLETED';
       }
-      return {
-        clientId: '11111111-1111-1111-1111-111111111111',
-        finishComment: null,
-        finishedAt: new Date(),
-        id: input.sessionId,
-        isCompleted: true,
-        isIncomplete: false,
-        items: [],
-        sessionDate: new Date('2026-02-18'),
-        startedAt: new Date(),
-        status: 'COMPLETED' as const,
-        templateId: '22222222-2222-2222-2222-222222222222',
-        templateVersion: 1,
-      };
+      return makeSessionPayload(input.sessionId, 'COMPLETED');
     },
     getSessionById: async (_context: unknown, sessionId: string) => {
       const session = sessions.get(sessionId);
       if (!session) {
         return null;
       }
-      return {
-        clientId: '11111111-1111-1111-1111-111111111111',
-        finishComment: null,
-        finishedAt: session.status === 'COMPLETED' ? new Date() : null,
-        id: sessionId,
-        isCompleted: session.status === 'COMPLETED',
-        isIncomplete: false,
-        items: [],
-        sessionDate: new Date('2026-02-18'),
-        startedAt: new Date(),
-        status: session.status,
-        templateId: '22222222-2222-2222-2222-222222222222',
-        templateVersion: 1,
-      };
+      return makeSessionPayload(sessionId, session.status);
     },
     logSet: async (_context: unknown, input: { sessionId: string }) => {
       const session = sessions.get(input.sessionId);
@@ -149,25 +130,12 @@ function createSessionsRepository() {
         weightDoneKg: null,
       };
     },
-    startSession: async (_context: unknown, sessionId: string) => {
-      const session = sessions.get(sessionId);
+    startSession: async (_context: unknown, input: { sessionId: string }) => {
+      const session = sessions.get(input.sessionId);
       if (session) {
         session.status = 'IN_PROGRESS';
       }
-      return {
-        clientId: '11111111-1111-1111-1111-111111111111',
-        finishComment: null,
-        finishedAt: null,
-        id: sessionId,
-        isCompleted: false,
-        isIncomplete: false,
-        items: [],
-        sessionDate: new Date('2026-02-18'),
-        startedAt: new Date(),
-        status: 'IN_PROGRESS' as const,
-        templateId: '22222222-2222-2222-2222-222222222222',
-        templateVersion: 1,
-      };
+      return makeSessionPayload(input.sessionId, 'IN_PROGRESS');
     },
   };
 }

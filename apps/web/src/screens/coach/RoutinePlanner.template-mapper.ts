@@ -152,8 +152,9 @@ function mapWarmupBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap
 function mapIsometricBlock(base: DraftBlock, item: TemplateBlockData): DraftBlock {
   return {
     ...base,
-    setsPlanned: toNumber(item.setsPlanned),
+    restSeconds: toNumber(item.restSeconds),
     sets: mapSets(item.sets),
+    setsPlanned: toNumber(item.setsPlanned),
   };
 }
 

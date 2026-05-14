@@ -4,15 +4,32 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import {
   useFinishSessionMutation,
+  useLogIsometricSetMutation,
+  useLogMobilitySetMutation,
+  useLogPlioSetMutation,
   useLogSetMutation,
+  useLogSportMutation,
   useSessionQuery,
   useStartSessionMutation,
 } from '../../data/hooks/useTodaySession';
-import type { LogSetMutationInput, SessionItem, SessionView, StrengthSessionItem } from '../../data/hooks/useTodaySession';
+import type {
+  IsometricSessionItem,
+  LogSetMutationInput,
+  MobilitySessionItem,
+  PlioSessionItem,
+  SessionItem,
+  SessionView,
+  SportSessionItem,
+  StrengthSessionItem,
+} from '../../data/hooks/useTodaySession';
 import { WorkoutClock } from '../../features/timers/WorkoutClock';
 import { ExerciseListCard } from './ExerciseListCard';
 import { ExerciseSummaryOverlay } from './ExerciseSummaryOverlay';
+import { IsometricBlockOverlay } from './IsometricBlockOverlay';
+import { MobilityBlockOverlay } from './MobilityBlockOverlay';
+import { PlioBlockOverlay } from './PlioBlockOverlay';
 import { SetWizardOverlay } from './SetWizardOverlay';
+import { SportBlockOverlay } from './SportBlockOverlay';
 import { StartModeModal } from './StartModeModal';
 import { TimerGridList } from './TimerGridList';
 import { WellnessPostModal } from './WellnessPostModal';
@@ -34,18 +51,70 @@ type SummaryState = {
   item: StrengthSessionItem;
 } | null;
 
+function useSessionMutations(sessionId: string) {
+  return {
+    finishMutation: useFinishSessionMutation(sessionId),
+    logIsometricSetMutation: useLogIsometricSetMutation(sessionId),
+    logMobilitySetMutation: useLogMobilitySetMutation(sessionId),
+    logPlioSetMutation: useLogPlioSetMutation(sessionId),
+    logSetMutation: useLogSetMutation(sessionId),
+    logSportMutation: useLogSportMutation(sessionId),
+    startMutation: useStartSessionMutation(sessionId),
+  };
+}
+
+function useBlockOverlayState() {
+  const [wizard, setWizard] = useState<WizardState>(null);
+  const [summary, setSummary] = useState<SummaryState>(null);
+  const [plioOverlay, setPlioOverlay] = useState<PlioSessionItem | null>(null);
+  const [mobilityOverlay, setMobilityOverlay] = useState<MobilitySessionItem | null>(null);
+  const [isometricOverlay, setIsometricOverlay] = useState<IsometricSessionItem | null>(null);
+  const [sportOverlay, setSportOverlay] = useState<SportSessionItem | null>(null);
+
+  const handleItemPress = useCallback((item: SessionItem) => {
+    if (item.type === 'strength') {
+      const isFullyLogged = item.setsPlanned != null && item.logs.length >= item.setsPlanned;
+      if (item.logs.length > 0 && isFullyLogged) setSummary({ item });
+      else setWizard({ item });
+    } else if (item.type === 'plio') {
+      setPlioOverlay(item);
+    } else if (item.type === 'mobility') {
+      setMobilityOverlay(item);
+    } else if (item.type === 'isometric') {
+      setIsometricOverlay(item);
+    } else if (item.type === 'sport') {
+      setSportOverlay(item);
+    }
+  }, []);
+
+  return {
+    handleItemPress,
+    wizard,
+    setWizard,
+    summary,
+    setSummary,
+    plioOverlay,
+    setPlioOverlay,
+    mobilityOverlay,
+    setMobilityOverlay,
+    isometricOverlay,
+    setIsometricOverlay,
+    sportOverlay,
+    setSportOverlay,
+  };
+}
+
 function useSessionOrchestrator(sessionId: string, onClose: () => void) {
   const sessionQuery = useSessionQuery(sessionId);
-  const startMutation = useStartSessionMutation(sessionId);
-  const finishMutation = useFinishSessionMutation(sessionId);
-  const logSetMutation = useLogSetMutation(sessionId);
+  const mutations = useSessionMutations(sessionId);
+  const { startMutation, finishMutation, logSetMutation, logPlioSetMutation } = mutations;
+  const { logMobilitySetMutation, logIsometricSetMutation, logSportMutation } = mutations;
+  const overlayState = useBlockOverlayState();
 
   const [showStartMode, setShowStartMode] = useState(false);
   const [showWellnessPre, setShowWellnessPre] = useState(false);
   const [showWellnessPost, setShowWellnessPost] = useState(false);
   const [pendingMode, setPendingMode] = useState<'INTERACTIVE' | 'TIMER' | null>(null);
-  const [wizard, setWizard] = useState<WizardState>(null);
-  const [summary, setSummary] = useState<SummaryState>(null);
 
   const handleBegin = useCallback(() => setShowStartMode(true), []);
 
@@ -97,34 +166,24 @@ function useSessionOrchestrator(sessionId: string, onClose: () => void) {
     [logSetMutation],
   );
 
-  const handleItemPress = useCallback((item: SessionItem) => {
-    if (item.type !== 'strength') return;
-    const isFullyLogged = item.setsPlanned != null && item.logs.length >= item.setsPlanned;
-    if (item.logs.length > 0 && isFullyLogged) {
-      setSummary({ item });
-    } else {
-      setWizard({ item });
-    }
-  }, []);
-
   return {
     session: sessionQuery.data,
     showStartMode,
     showWellnessPre,
     showWellnessPost,
-    wizard,
-    summary,
+    ...overlayState,
     handleBegin,
     handleModeSelected,
     handleStartWithWellness,
     handleSkipWellness,
     handleSubmitPost,
     handleLogSet,
-    handleItemPress,
+    logPlioSetMutation,
+    logMobilitySetMutation,
+    logIsometricSetMutation,
+    logSportMutation,
     setShowStartMode,
     setShowWellnessPost,
-    setWizard,
-    setSummary,
   };
 }
 
@@ -146,15 +205,27 @@ function SessionOverlays({ sessionId, state }: { sessionId: string; state: Retur
     showWellnessPost,
     wizard,
     summary,
+    plioOverlay,
+    mobilityOverlay,
+    isometricOverlay,
+    sportOverlay,
     handleModeSelected,
     handleStartWithWellness,
     handleSkipWellness,
     handleSubmitPost,
     handleLogSet,
+    logPlioSetMutation,
+    logMobilitySetMutation,
+    logIsometricSetMutation,
+    logSportMutation,
     setShowStartMode,
     setShowWellnessPost,
     setWizard,
     setSummary,
+    setPlioOverlay,
+    setMobilityOverlay,
+    setIsometricOverlay,
+    setSportOverlay,
   } = state;
 
   return (
@@ -184,6 +255,38 @@ function SessionOverlays({ sessionId, state }: { sessionId: string; state: Retur
             setSummary(null);
             setWizard({ item: itm, editingSetIndex: setIndex });
           }}
+        />
+      ) : null}
+      {plioOverlay ? (
+        <PlioBlockOverlay
+          item={plioOverlay}
+          sessionId={sessionId}
+          onClose={() => setPlioOverlay(null)}
+          onLogSet={(input) => logPlioSetMutation.mutate(input)}
+        />
+      ) : null}
+      {mobilityOverlay ? (
+        <MobilityBlockOverlay
+          item={mobilityOverlay}
+          sessionId={sessionId}
+          onClose={() => setMobilityOverlay(null)}
+          onLogSet={(input) => logMobilitySetMutation.mutate(input)}
+        />
+      ) : null}
+      {isometricOverlay ? (
+        <IsometricBlockOverlay
+          item={isometricOverlay}
+          sessionId={sessionId}
+          onClose={() => setIsometricOverlay(null)}
+          onLogSet={(input) => logIsometricSetMutation.mutate(input)}
+        />
+      ) : null}
+      {sportOverlay ? (
+        <SportBlockOverlay
+          item={sportOverlay}
+          sessionId={sessionId}
+          onClose={() => setSportOverlay(null)}
+          onLog={(input) => logSportMutation.mutate(input)}
         />
       ) : null}
       <Modal animationType={DUMMY_MODAL_ANIMATION} transparent visible={false}>

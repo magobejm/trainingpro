@@ -73,22 +73,14 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
-async function logInterval(
-  auth: ReturnType<typeof useAuth>,
-  sessionId: string,
-  input: LogIntervalInput,
-) {
+async function logInterval(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogIntervalInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).post(`/sessions/cardio/${sessionId}/log-interval`, input);
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-interval`, input);
 }
 
-async function mutateSession(
-  auth: ReturnType<typeof useAuth>,
-  sessionId: string,
-  action: 'finish' | 'start',
-) {
+async function mutateSession(auth: ReturnType<typeof useAuth>, sessionId: string, action: 'finish' | 'start') {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -100,10 +92,7 @@ async function mutateSession(
   });
 }
 
-async function readSession(
-  auth: ReturnType<typeof useAuth>,
-  sessionId: string,
-): Promise<CardioSessionView> {
+async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<CardioSessionView> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

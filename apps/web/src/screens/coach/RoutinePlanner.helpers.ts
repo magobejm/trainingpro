@@ -43,6 +43,7 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
     base.restSeconds = 60;
   }
   if (type === 'isometric') {
+    base.restSeconds = 60;
     base.setsPlanned = 3;
   }
   if (type === 'sport') {
@@ -315,6 +316,7 @@ function mapIsometric(block: DraftBlock, sortOrder: number) {
     isometricExerciseLibraryId: block.libraryId ?? null,
     lockedFields: block.lockedFields ?? [],
     notes: block.notes ?? '',
+    restSeconds: block.restSeconds ?? 0,
     sets: (block.sets ?? []).map(mapIsometricSet),
     setsPlanned: block.setsPlanned ?? null,
     sortOrder,

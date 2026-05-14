@@ -29,15 +29,142 @@ export type StrengthSessionItem = {
   weightRangeMinKg: null | number;
 };
 
-export type BlockSessionItem = {
-  type: 'isometric' | 'mobility' | 'plio' | 'sport';
-  id: string;
-  displayName: string;
-  meta: string;
-  sortOrder: number;
+export type PlioSetLog = {
+  effortRpe: null | number;
+  repsDone: null | number;
+  sessionPlioBlockId: string;
+  setIndex: number;
+  weightDoneKg: null | number;
 };
 
-export type SessionItem = BlockSessionItem | StrengthSessionItem;
+export type PlioSessionItem = {
+  type: 'plio';
+  id: string;
+  displayName: string;
+  logs: PlioSetLog[];
+  restSeconds: number;
+  roundsPlanned: number;
+  sortOrder: number;
+  targetRpe: null | number;
+  workSeconds: number;
+};
+
+export type MobilitySetLog = {
+  effortRpe: null | number;
+  repsDone: null | number;
+  romDone: null | string;
+  sessionMobilityBlockId: string;
+  setIndex: number;
+};
+
+export type MobilitySessionItem = {
+  type: 'mobility';
+  id: string;
+  displayName: string;
+  logs: MobilitySetLog[];
+  restSeconds: number;
+  roundsPlanned: number;
+  sortOrder: number;
+  targetRpe: null | number;
+  workSeconds: number;
+};
+
+export type IsometricSetLog = {
+  durationSecondsDone: null | number;
+  effortRpe: null | number;
+  sessionIsometricBlockId: string;
+  setIndex: number;
+  weightDoneKg: null | number;
+};
+
+export type IsometricSessionItem = {
+  type: 'isometric';
+  id: string;
+  displayName: string;
+  logs: IsometricSetLog[];
+  restSeconds: null | number;
+  setsPlanned: null | number;
+  sortOrder: number;
+  targetRpe: null | number;
+};
+
+export type SportLog = {
+  avgHeartRate: null | number;
+  durationMinutesDone: null | number;
+  effortRpe: null | number;
+  sessionSportBlockId: string;
+};
+
+export type SportSessionItem = {
+  type: 'sport';
+  id: string;
+  displayName: string;
+  durationMinutes: number;
+  log: SportLog | null;
+  sortOrder: number;
+  targetRpe: null | number;
+};
+
+export type IntervalLog = {
+  avgHeartRate: null | number;
+  distanceDoneMeters: null | number;
+  durationSecondsDone: null | number;
+  effortRpe: null | number;
+  intervalIndex: number;
+  sessionCardioBlockId: string;
+};
+
+export type CardioSessionItem = {
+  type: 'cardio';
+  id: string;
+  displayName: string;
+  intervalLogs: IntervalLog[];
+  restSeconds: number;
+  roundsPlanned: number;
+  sortOrder: number;
+  targetDistanceMeters: null | number;
+  targetRpe: null | number;
+  workSeconds: number;
+};
+
+export type SessionItem =
+  | CardioSessionItem
+  | IsometricSessionItem
+  | MobilitySessionItem
+  | PlioSessionItem
+  | SportSessionItem
+  | StrengthSessionItem;
+
+export type LogPlioSetMutationInput = {
+  effortRpe?: null | number;
+  repsDone?: null | number;
+  sessionPlioBlockId: string;
+  setIndex: number;
+  weightDoneKg?: null | number;
+};
+
+export type LogMobilitySetMutationInput = {
+  effortRpe?: null | number;
+  repsDone?: null | number;
+  romDone?: null | string;
+  sessionMobilityBlockId: string;
+  setIndex: number;
+};
+
+export type LogIsometricSetMutationInput = {
+  durationSecondsDone?: null | number;
+  effortRpe?: null | number;
+  sessionIsometricBlockId: string;
+  setIndex: number;
+  weightDoneKg?: null | number;
+};
+
+export type LogSportMutationInput = {
+  avgHeartRate?: null | number;
+  durationMinutesDone?: null | number;
+  effortRpe?: null | number;
+  sessionSportBlockId: string;
+};
 
 export type SessionView = {
   id: string;
@@ -136,6 +263,50 @@ export function useLogSetMutation(sessionId: string) {
   });
 }
 
+export function useLogPlioSetMutation(sessionId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LogPlioSetMutationInput) => logPlioSet(auth, sessionId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
+export function useLogMobilitySetMutation(sessionId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LogMobilitySetMutationInput) => logMobilitySet(auth, sessionId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
+export function useLogIsometricSetMutation(sessionId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LogIsometricSetMutationInput) => logIsometricSet(auth, sessionId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
+export function useLogSportMutation(sessionId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LogSportMutationInput) => logSport(auth, sessionId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
 export function useExerciseHistoryQuery(sourceExerciseId: null | string) {
   const auth = useAuth();
   return useQuery({
@@ -168,7 +339,7 @@ async function logSet(auth: ReturnType<typeof useAuth>, sessionId: string, input
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).post(`/sessions/strength/${sessionId}/log-set`, input);
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-set`, input);
 }
 
 async function startSession(
@@ -184,7 +355,7 @@ async function startSession(
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).post(`/sessions/strength/${sessionId}/start`, payload);
+  return createApiClient(auth).post(`/sessions/${sessionId}/start`, payload);
 }
 
 async function finishSession(
@@ -201,15 +372,14 @@ async function finishSession(
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).post(`/sessions/strength/${sessionId}/finish`, payload);
+  return createApiClient(auth).post(`/sessions/${sessionId}/finish`, payload);
 }
 
 async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<SessionView> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const path = `/sessions/strength/${sessionId}`;
-  return createApiClient(auth).get<SessionView>(path);
+  return createApiClient(auth).get<SessionView>(`/sessions/${sessionId}`);
 }
 
 async function fetchExerciseHistory(
@@ -220,4 +390,24 @@ async function fetchExerciseHistory(
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).get<ExerciseHistoryEntry[]>(`/clients/me/exercises/${sourceExerciseId}/history?limit=3`);
+}
+
+async function logPlioSet(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogPlioSetMutationInput) {
+  if (!auth) throw new Error('Missing authenticated context');
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-plio-set`, input);
+}
+
+async function logMobilitySet(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogMobilitySetMutationInput) {
+  if (!auth) throw new Error('Missing authenticated context');
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-mobility-set`, input);
+}
+
+async function logIsometricSet(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogIsometricSetMutationInput) {
+  if (!auth) throw new Error('Missing authenticated context');
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-isometric-set`, input);
+}
+
+async function logSport(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogSportMutationInput) {
+  if (!auth) throw new Error('Missing authenticated context');
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-sport`, input);
 }

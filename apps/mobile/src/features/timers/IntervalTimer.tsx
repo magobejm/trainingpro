@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 type Props = {
+  onComplete?: () => void;
   pauseLabel: string;
   resetLabel: string;
   runningLabel: string;
@@ -17,16 +18,13 @@ const COLORS = {
 };
 
 export function IntervalTimer(props: Props): React.JSX.Element {
-  const { isRunning, remaining, reset, toggle } = useCountdown(props.seconds);
+  const { isRunning, remaining, reset, toggle } = useCountdown(props.seconds, props.onComplete);
   const label = useMemo(() => formatSeconds(remaining), [remaining]);
   return (
     <View style={styles.card}>
       <Text style={styles.time}>{label}</Text>
       <View style={styles.row}>
-        <ActionButton
-          label={isRunning ? props.pauseLabel : props.startLabel}
-          onPress={toggle}
-        />
+        <ActionButton label={isRunning ? props.pauseLabel : props.startLabel} onPress={toggle} />
         <ActionButton label={props.resetLabel} onPress={reset} />
       </View>
       <Text style={styles.running}>{isRunning ? props.runningLabel : props.startLabel}</Text>
@@ -34,15 +32,28 @@ export function IntervalTimer(props: Props): React.JSX.Element {
   );
 }
 
-function useCountdown(seconds: number) {
+function useCountdown(seconds: number, onComplete?: () => void) {
   const [isRunning, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(seconds);
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
   useEffect(() => {
-    if (!isRunning) {
-      return;
-    }
+    setRemaining(seconds);
+    setRunning(false);
+  }, [seconds]);
+
+  useEffect(() => {
+    if (!isRunning) return;
     const timer = setInterval(() => {
-      setRemaining((value) => (value > 0 ? value - 1 : 0));
+      setRemaining((value) => {
+        if (value <= 1) {
+          setRunning(false);
+          onCompleteRef.current?.();
+          return 0;
+        }
+        return value - 1;
+      });
     }, 1000);
     return () => clearInterval(timer);
   }, [isRunning]);

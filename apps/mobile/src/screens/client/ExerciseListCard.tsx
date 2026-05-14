@@ -1,7 +1,15 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import type { BlockSessionItem, SessionItem, StrengthSessionItem } from '../../data/hooks/useTodaySession';
+import type {
+  CardioSessionItem,
+  IsometricSessionItem,
+  MobilitySessionItem,
+  PlioSessionItem,
+  SessionItem,
+  SportSessionItem,
+  StrengthSessionItem,
+} from '../../data/hooks/useTodaySession';
 
 type ExerciseListCardProps = {
   item: SessionItem;
@@ -9,6 +17,7 @@ type ExerciseListCardProps = {
 };
 
 const TYPE_LABEL: Record<string, string> = {
+  cardio: 'Cardio',
   isometric: 'Isométrico',
   mobility: 'Movilidad',
   plio: 'Pliométrico',
@@ -41,30 +50,129 @@ function StrengthCard({ item, onPress }: { item: StrengthSessionItem; onPress: (
   );
 }
 
-function BlockCard({ item, onPress }: { item: BlockSessionItem; onPress: () => void }) {
+function PlioCard({ item, onPress }: { item: PlioSessionItem; onPress: () => void }) {
   const { t } = useTranslation();
+  const loggedRounds = item.logs.length;
+  const totalRounds = item.roundsPlanned;
+  const isComplete = totalRounds > 0 && loggedRounds >= totalRounds;
   return (
-    <Pressable style={styles.card} onPress={onPress}>
+    <Pressable style={[styles.card, isComplete && styles.cardComplete]} onPress={onPress}>
       <View style={styles.cardLeft}>
         <Text style={styles.exerciseName} numberOfLines={2}>
           {item.displayName}
         </Text>
-        <Text style={styles.progressText}>{t('client.today.blockInfo', { meta: item.meta })}</Text>
+        <Text style={styles.progressText}>{t('client.today.setsProgress', { done: loggedRounds, total: totalRounds })}</Text>
       </View>
       <View style={styles.cardRight}>
         <View style={[styles.typeBadge, styles.typeBadgeBlock]}>
-          <Text style={styles.typeLabel}>{TYPE_LABEL[item.type] ?? item.type}</Text>
+          <Text style={styles.typeLabel}>{TYPE_LABEL.plio}</Text>
         </View>
+        {isComplete && <View style={styles.completeDot} />}
+      </View>
+    </Pressable>
+  );
+}
+
+function MobilityCard({ item, onPress }: { item: MobilitySessionItem; onPress: () => void }) {
+  const { t } = useTranslation();
+  const loggedSets = item.logs.length;
+  const totalSets = item.roundsPlanned;
+  const isComplete = totalSets > 0 && loggedSets >= totalSets;
+  return (
+    <Pressable style={[styles.card, isComplete && styles.cardComplete]} onPress={onPress}>
+      <View style={styles.cardLeft}>
+        <Text style={styles.exerciseName} numberOfLines={2}>
+          {item.displayName}
+        </Text>
+        <Text style={styles.progressText}>{t('client.today.setsProgress', { done: loggedSets, total: totalSets })}</Text>
+      </View>
+      <View style={styles.cardRight}>
+        <View style={[styles.typeBadge, styles.typeBadgeBlock]}>
+          <Text style={styles.typeLabel}>{TYPE_LABEL.mobility}</Text>
+        </View>
+        {isComplete && <View style={styles.completeDot} />}
+      </View>
+    </Pressable>
+  );
+}
+
+function IsometricCard({ item, onPress }: { item: IsometricSessionItem; onPress: () => void }) {
+  const { t } = useTranslation();
+  const loggedSets = item.logs.length;
+  const totalSets = item.setsPlanned ?? 0;
+  const isComplete = totalSets > 0 && loggedSets >= totalSets;
+  return (
+    <Pressable style={[styles.card, isComplete && styles.cardComplete]} onPress={onPress}>
+      <View style={styles.cardLeft}>
+        <Text style={styles.exerciseName} numberOfLines={2}>
+          {item.displayName}
+        </Text>
+        <Text style={styles.progressText}>{t('client.today.setsProgress', { done: loggedSets, total: totalSets })}</Text>
+      </View>
+      <View style={styles.cardRight}>
+        <View style={[styles.typeBadge, styles.typeBadgeBlock]}>
+          <Text style={styles.typeLabel}>{TYPE_LABEL.isometric}</Text>
+        </View>
+        {isComplete && <View style={styles.completeDot} />}
+      </View>
+    </Pressable>
+  );
+}
+
+function SportCard({ item, onPress }: { item: SportSessionItem; onPress: () => void }) {
+  const { t } = useTranslation();
+  const isDone = item.log != null;
+  return (
+    <Pressable style={[styles.card, isDone && styles.cardComplete]} onPress={onPress}>
+      <View style={styles.cardLeft}>
+        <Text style={styles.exerciseName} numberOfLines={2}>
+          {item.displayName}
+        </Text>
+        <Text style={styles.progressText}>{isDone ? t('client.today.blockDone') : t('client.today.blockPending')}</Text>
+      </View>
+      <View style={styles.cardRight}>
+        <View style={[styles.typeBadge, styles.typeBadgeBlock]}>
+          <Text style={styles.typeLabel}>{TYPE_LABEL.sport}</Text>
+        </View>
+        {isDone && <View style={styles.completeDot} />}
+      </View>
+    </Pressable>
+  );
+}
+
+function CardioCard({ item, onPress }: { item: CardioSessionItem; onPress: () => void }) {
+  const { t } = useTranslation();
+  const loggedIntervals = item.intervalLogs.length;
+  const totalRounds = item.roundsPlanned;
+  const progressLabel = t('client.today.setsProgress', { done: loggedIntervals, total: totalRounds });
+  const isComplete = totalRounds > 0 && loggedIntervals >= totalRounds;
+
+  return (
+    <Pressable style={[styles.card, isComplete && styles.cardComplete]} onPress={onPress}>
+      <View style={styles.cardLeft}>
+        <Text style={styles.exerciseName} numberOfLines={2}>
+          {item.displayName}
+        </Text>
+        <Text style={styles.progressText}>{progressLabel}</Text>
+      </View>
+      <View style={styles.cardRight}>
+        <View style={[styles.typeBadge, styles.typeBadgeBlock]}>
+          <Text style={styles.typeLabel}>{TYPE_LABEL.cardio}</Text>
+        </View>
+        {isComplete && <View style={styles.completeDot} />}
       </View>
     </Pressable>
   );
 }
 
 export function ExerciseListCard({ item, onPress }: ExerciseListCardProps) {
-  if (item.type === 'strength') {
-    return <StrengthCard item={item} onPress={onPress} />;
-  }
-  return <BlockCard item={item} onPress={onPress} />;
+  if (item.type === 'strength') return <StrengthCard item={item} onPress={onPress} />;
+  if (item.type === 'cardio') return <CardioCard item={item} onPress={onPress} />;
+  if (item.type === 'plio') return <PlioCard item={item} onPress={onPress} />;
+  if (item.type === 'mobility') return <MobilityCard item={item} onPress={onPress} />;
+  if (item.type === 'isometric') return <IsometricCard item={item} onPress={onPress} />;
+  if (item.type === 'sport') return <SportCard item={item} onPress={onPress} />;
+  return null;
 }
 
 const styles = StyleSheet.create({

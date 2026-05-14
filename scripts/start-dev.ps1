@@ -1,4 +1,4 @@
-[CmdletBinding()]
+﻿[CmdletBinding()]
 param(
   [int]$TimeoutSeconds = 240
 )
@@ -253,9 +253,9 @@ Stop-PortListeners -Port 5173
 Stop-PortListeners -Port 19006
 Write-Output "Ports cleaned. Launching services..."
 
-$api = Start-DevService -Name "API" -Command "pnpm.cmd --filter @trainerpro/api build && pnpm.cmd --filter @trainerpro/api start" -ReadyUrl "http://localhost:8080/health"
-$web = Start-DevService -Name "WEB" -Command "pnpm.cmd --filter @trainerpro/web dev" -ReadyPort 5173
-$mobile = Start-DevService -Name "MOBILE" -Command "pnpm.cmd --filter @trainerpro/mobile dev" -ReadyPort 19006
+$api = Start-DevService -Name "API" -Command 'pnpm.cmd --filter @trainerpro/api build && pnpm.cmd --filter @trainerpro/api start' -ReadyUrl "http://localhost:8080/health"
+$web = Start-DevService -Name "WEB" -Command 'pnpm.cmd --filter @trainerpro/web dev' -ReadyPort 5173
+$mobile = Start-DevService -Name "MOBILE" -Command 'pnpm.cmd --filter @trainerpro/mobile dev' -ReadyPort 19006
 
 if (-not $api.Ok -or -not $web.Ok -or -not $mobile.Ok) {
   if ((Test-PortListening -Port 8080) -and (Test-PortListening -Port 5173) -and (Test-PortListening -Port 19006)) {

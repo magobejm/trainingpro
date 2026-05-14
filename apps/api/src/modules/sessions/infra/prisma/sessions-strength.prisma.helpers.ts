@@ -1,5 +1,19 @@
 import { Prisma } from '@prisma/client';
-import type { SessionBlockItem, SessionInstance, SessionStartMode, SessionStrengthItem } from '../../domain/session.entity';
+import type {
+  CardioSessionItem,
+  SessionInstance,
+  SessionIntervalLog,
+  SessionIsometricItem,
+  SessionIsometricSetLog,
+  SessionMobilityItem,
+  SessionMobilitySetLog,
+  SessionPlioItem,
+  SessionPlioSetLog,
+  SessionSportItem,
+  SessionSportLog,
+  SessionStartMode,
+  SessionStrengthItem,
+} from '../../domain/session.entity';
 
 // eslint-disable-next-line max-lines-per-function
 export function mapSession(
@@ -30,39 +44,109 @@ export function mapSession(
     weightRangeMinKg: item.weightRangeMinKg ? Number(item.weightRangeMinKg) : null,
   }));
 
-  const plioItems: SessionBlockItem[] = row.plioBlocks.map((b) => ({
+  const plioItems: SessionPlioItem[] = row.plioBlocks.map((b) => ({
     type: 'plio' as const,
     displayName: b.displayName,
     id: b.id,
-    meta: `${b.roundsPlanned}×${b.workSeconds}s / ${b.restSeconds}s desc`,
+    logs: b.logs.map(
+      (l): SessionPlioSetLog => ({
+        effortRpe: l.effortRpe,
+        repsDone: l.repsDone,
+        sessionPlioBlockId: l.sessionPlioBlockId,
+        setIndex: l.setIndex,
+        weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
+      }),
+    ),
+    restSeconds: b.restSeconds,
+    roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
+    targetRpe: b.targetRpe,
+    workSeconds: b.workSeconds,
   }));
 
-  const mobilityItems: SessionBlockItem[] = row.mobilityBlocks.map((b) => ({
+  const mobilityItems: SessionMobilityItem[] = row.mobilityBlocks.map((b) => ({
     type: 'mobility' as const,
     displayName: b.displayName,
     id: b.id,
-    meta: `${b.roundsPlanned}×${b.workSeconds}s / ${b.restSeconds}s desc`,
+    logs: b.logs.map(
+      (l): SessionMobilitySetLog => ({
+        effortRpe: l.effortRpe,
+        repsDone: l.repsDone,
+        romDone: l.romDone,
+        sessionMobilityBlockId: l.sessionMobilityBlockId,
+        setIndex: l.setIndex,
+      }),
+    ),
+    restSeconds: b.restSeconds,
+    roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
+    targetRpe: b.targetRpe,
+    workSeconds: b.workSeconds,
   }));
 
-  const isometricItems: SessionBlockItem[] = row.isometricBlocks.map((b) => ({
+  const isometricItems: SessionIsometricItem[] = row.isometricBlocks.map((b) => ({
     type: 'isometric' as const,
     displayName: b.displayName,
     id: b.id,
-    meta: b.setsPlanned ? `${b.setsPlanned} series` : '',
+    logs: b.logs.map(
+      (l): SessionIsometricSetLog => ({
+        durationSecondsDone: l.durationSecondsDone,
+        effortRpe: l.effortRpe,
+        sessionIsometricBlockId: l.sessionIsometricBlockId,
+        setIndex: l.setIndex,
+        weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
+      }),
+    ),
+    restSeconds: b.restSeconds ?? null,
+    setsPlanned: b.setsPlanned,
     sortOrder: b.sortOrder,
+    targetRpe: b.targetRpe,
   }));
 
-  const sportItems: SessionBlockItem[] = row.sportBlocks.map((b) => ({
-    type: 'sport' as const,
+  const sportItems: SessionSportItem[] = row.sportBlocks.map((b) => {
+    const rawLog = b.logs[0];
+    const log: SessionSportLog | null = rawLog
+      ? {
+          avgHeartRate: rawLog.avgHeartRate,
+          durationMinutesDone: rawLog.durationMinutesDone,
+          effortRpe: rawLog.effortRpe,
+          sessionSportBlockId: rawLog.sessionSportBlockId,
+        }
+      : null;
+    return {
+      type: 'sport' as const,
+      displayName: b.displayName,
+      durationMinutes: b.durationMinutes,
+      id: b.id,
+      log,
+      sortOrder: b.sortOrder,
+      targetRpe: b.targetRpe,
+    };
+  });
+
+  const cardioItems: CardioSessionItem[] = row.cardioBlocks.map((b) => ({
+    type: 'cardio' as const,
     displayName: b.displayName,
     id: b.id,
-    meta: `${b.durationMinutes} min`,
+    intervalLogs: b.intervalLogs.map(
+      (l): SessionIntervalLog => ({
+        avgHeartRate: l.avgHeartRate,
+        distanceDoneMeters: l.distanceDoneMeters,
+        durationSecondsDone: l.durationSecondsDone,
+        effortRpe: l.effortRpe,
+        intervalIndex: l.intervalIndex,
+        sessionCardioBlockId: l.sessionCardioBlockId,
+      }),
+    ),
+    restSeconds: b.restSeconds,
+    roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
+    targetDistanceMeters: b.targetDistanceMeters,
+    targetRpe: b.targetRpe,
+    workSeconds: b.workSeconds,
   }));
 
-  const items = [...strengthItems, ...plioItems, ...mobilityItems, ...isometricItems, ...sportItems].sort(
+  const items = [...strengthItems, ...plioItems, ...mobilityItems, ...isometricItems, ...sportItems, ...cardioItems].sort(
     (a, b) => a.sortOrder - b.sortOrder,
   );
 
@@ -108,18 +192,39 @@ export function sessionInclude() {
     plioBlocks: {
       orderBy: { sortOrder: 'asc' as const },
       where: { archivedAt: null },
+      include: {
+        logs: { orderBy: { setIndex: 'asc' as const } },
+      },
     },
     mobilityBlocks: {
       orderBy: { sortOrder: 'asc' as const },
       where: { archivedAt: null },
+      include: {
+        logs: { orderBy: { setIndex: 'asc' as const } },
+      },
     },
     isometricBlocks: {
       orderBy: { sortOrder: 'asc' as const },
       where: { archivedAt: null },
+      include: {
+        logs: { orderBy: { setIndex: 'asc' as const } },
+      },
     },
     sportBlocks: {
       orderBy: { sortOrder: 'asc' as const },
       where: { archivedAt: null },
+      include: {
+        logs: true,
+      },
+    },
+    cardioBlocks: {
+      orderBy: { sortOrder: 'asc' as const },
+      where: { archivedAt: null },
+      include: {
+        intervalLogs: {
+          orderBy: { intervalIndex: 'asc' as const },
+        },
+      },
     },
   };
 }

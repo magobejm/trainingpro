@@ -1,6 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
-import type { SessionSetLog } from '../../domain/session.entity';
+import type {
+  SessionIsometricSetLog,
+  SessionMobilitySetLog,
+  SessionPlioSetLog,
+  SessionSetLog,
+  SessionSportLog,
+} from '../../domain/session.entity';
 
 export type TemplateExerciseSnapshot = {
   displayName: string;
@@ -41,6 +47,7 @@ export type TemplateMobilitySnapshot = {
 export type TemplateIsometricSnapshot = {
   displayName: string;
   isometricExerciseLibraryId: null | string;
+  restSeconds: number;
   setsPlanned: null | number;
   sortOrder: number;
   targetRpe: null | number;
@@ -181,6 +188,7 @@ export function mapSessionIsometricCreate(
 ): Prisma.SessionIsometricBlockCreateWithoutSessionInput {
   return {
     displayName: block.displayName,
+    restSeconds: block.restSeconds,
     setsPlanned: block.setsPlanned,
     sortOrder: block.sortOrder,
     sourceIsometricExerciseId: block.isometricExerciseLibraryId,
@@ -213,6 +221,68 @@ export function mapSetLog(row: {
     sessionItemId: row.sessionItemId,
     setIndex: row.setIndex,
     weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
+  };
+}
+
+export function mapPlioSetLog(row: {
+  effortRpe: null | number;
+  repsDone: null | number;
+  sessionPlioBlockId: string;
+  setIndex: number;
+  weightDoneKg: Prisma.Decimal | null;
+}): SessionPlioSetLog {
+  return {
+    effortRpe: row.effortRpe,
+    repsDone: row.repsDone,
+    sessionPlioBlockId: row.sessionPlioBlockId,
+    setIndex: row.setIndex,
+    weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
+  };
+}
+
+export function mapMobilitySetLog(row: {
+  effortRpe: null | number;
+  repsDone: null | number;
+  romDone: null | string;
+  sessionMobilityBlockId: string;
+  setIndex: number;
+}): SessionMobilitySetLog {
+  return {
+    effortRpe: row.effortRpe,
+    repsDone: row.repsDone,
+    romDone: row.romDone,
+    sessionMobilityBlockId: row.sessionMobilityBlockId,
+    setIndex: row.setIndex,
+  };
+}
+
+export function mapIsometricSetLog(row: {
+  durationSecondsDone: null | number;
+  effortRpe: null | number;
+  sessionIsometricBlockId: string;
+  setIndex: number;
+  weightDoneKg: Prisma.Decimal | null;
+}): SessionIsometricSetLog {
+  return {
+    durationSecondsDone: row.durationSecondsDone,
+    effortRpe: row.effortRpe,
+    sessionIsometricBlockId: row.sessionIsometricBlockId,
+    setIndex: row.setIndex,
+    weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
+  };
+}
+
+export function mapSportLog(row: {
+  avgHeartRate: null | number;
+  durationMinutesDone: null | number;
+  effortRpe: null | number;
+  sessionSportBlockId: string;
+}): SessionSportLog {
+  return {
+    avgHeartRate: row.avgHeartRate,
+    durationMinutesDone: row.durationMinutesDone,
+    effortRpe: row.effortRpe,
+    sessionSportBlockId: row.sessionSportBlockId,
   };
 }
 

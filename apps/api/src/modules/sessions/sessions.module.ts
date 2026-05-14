@@ -8,7 +8,11 @@ import { FinishSessionUseCase } from './application/use-cases/finish-session.use
 import { GetCardioSessionUseCase } from './application/use-cases/get-cardio-session.usecase';
 import { GetSessionUseCase } from './application/use-cases/get-session.usecase';
 import { LogIntervalUseCase } from './application/use-cases/log-interval.usecase';
+import { LogIsometricSetUseCase } from './application/use-cases/log-isometric-set.usecase';
+import { LogMobilitySetUseCase } from './application/use-cases/log-mobility-set.usecase';
+import { LogPlioSetUseCase } from './application/use-cases/log-plio-set.usecase';
 import { LogSetUseCase } from './application/use-cases/log-set.usecase';
+import { LogSportUseCase } from './application/use-cases/log-sport.usecase';
 import { StartCardioSessionUseCase } from './application/use-cases/start-cardio-session.usecase';
 import { StartSessionUseCase } from './application/use-cases/start-session.usecase';
 import { EditWindowPolicy } from './domain/policies/edit-window.policy';
@@ -31,7 +35,11 @@ import { SessionsController } from './presentation/controllers/sessions.controll
     GetCardioSessionUseCase,
     GetSessionUseCase,
     LogIntervalUseCase,
+    LogIsometricSetUseCase,
+    LogMobilitySetUseCase,
+    LogPlioSetUseCase,
     LogSetUseCase,
+    LogSportUseCase,
     StartCardioSessionUseCase,
     StartSessionUseCase,
     EditWindowPolicy,

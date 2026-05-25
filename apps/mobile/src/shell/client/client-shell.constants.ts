@@ -1,6 +1,35 @@
 import type { ViewStyle } from 'react-native';
 
-export type OverlayId = 'menu' | 'profile' | 'progress' | 'routine' | 'routineDay' | 'session' | null;
+export type OverlayId =
+  | 'calendar'
+  | 'chat'
+  | 'incidents'
+  | 'library'
+  | 'measures'
+  | 'menu'
+  | 'mood'
+  | 'planning'
+  | 'profile'
+  | 'progress'
+  | 'routine'
+  | 'routineDay'
+  | 'session'
+  | null;
+
+export type ProgressMode = 'progress' | 'volume';
+
+export type MenuId =
+  | 'calendar'
+  | 'chat'
+  | 'exercises'
+  | 'external'
+  | 'incidents'
+  | 'measures'
+  | 'notes'
+  | 'payment'
+  | 'planning'
+  | 'routines'
+  | 'volume';
 
 export const WEB_BLUR_SM = { backdropFilter: 'blur(16px)' } as unknown as ViewStyle;
 export const WEB_BLUR_LG = { filter: 'blur(100px)' } as unknown as ViewStyle;

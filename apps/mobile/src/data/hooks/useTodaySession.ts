@@ -166,6 +166,15 @@ export type LogSportMutationInput = {
   sessionSportBlockId: string;
 };
 
+export type LogIntervalMutationInput = {
+  avgHeartRate?: null | number;
+  distanceDoneMeters?: null | number;
+  durationSecondsDone?: null | number;
+  effortRpe?: null | number;
+  intervalIndex: number;
+  sessionCardioBlockId: string;
+};
+
 export type SessionView = {
   id: string;
   items: SessionItem[];
@@ -307,6 +316,17 @@ export function useLogSportMutation(sessionId: string) {
   });
 }
 
+export function useLogIntervalMutation(sessionId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: LogIntervalMutationInput) => logInterval(auth, sessionId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    },
+  });
+}
+
 export function useExerciseHistoryQuery(sourceExerciseId: null | string) {
   const auth = useAuth();
   return useQuery({
@@ -410,4 +430,9 @@ async function logIsometricSet(auth: ReturnType<typeof useAuth>, sessionId: stri
 async function logSport(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogSportMutationInput) {
   if (!auth) throw new Error('Missing authenticated context');
   return createApiClient(auth).post(`/sessions/${sessionId}/log-sport`, input);
+}
+
+async function logInterval(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogIntervalMutationInput) {
+  if (!auth) throw new Error('Missing authenticated context');
+  return createApiClient(auth).post(`/sessions/${sessionId}/log-interval`, input);
 }

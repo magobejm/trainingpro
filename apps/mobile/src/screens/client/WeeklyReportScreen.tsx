@@ -20,18 +20,18 @@ const COLORS = {
 };
 
 export function WeeklyReportScreen(props: Props): React.JSX.Element {
-  const vm = useWeeklyReportViewModel(props.sourceSessionId);
+  const vm = useWeeklyReportViewModel(props.sourceSessionId, props.onClose);
   return <WeeklyReportView {...vm} onClose={props.onClose} />;
 }
 
-function useWeeklyReportViewModel(sourceSessionId?: string) {
+function useWeeklyReportViewModel(sourceSessionId?: string, onClose?: () => void) {
   const { t } = useTranslation();
   const reportDate = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const query = useWeeklyReportQuery(reportDate);
   const mutation = useUpsertWeeklyReportMutation();
   const fields = useWeeklyReportFields();
   useSyncReportFields(query.data, fields);
-  const onSubmit = () => mutation.mutate(buildReportInput(fields, reportDate, sourceSessionId));
+  const onSubmit = () => mutation.mutate(buildReportInput(fields, reportDate, sourceSessionId), { onSuccess: onClose });
   return {
     ...fields,
     isLoading: query.isLoading,

@@ -7,7 +7,9 @@ import { s } from './client-shell.styles';
 
 type HomeHubProps = {
   activeMenuIds: string[];
+  onMenuItemPress: (id: string) => void;
   onOpenMenu: () => void;
+  onOpenMood: () => void;
   onOpenProfile: () => void;
   onOpenProgress: () => void;
   onOpenRoutine: () => void;
@@ -47,10 +49,10 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
         <Animated.View style={[s.centerAvatar, { transform: [{ translateY: avatarY }] }]}>
           <AvatarImage avatarUrl={client?.avatarUrl ?? null} size={148} />
         </Animated.View>
-        <FloatingCircle emoji={'😊'} label={'ÁNIMO'} position={s.circleBottomLeft} />
+        <FloatingCircle emoji={'😊'} label={'ÁNIMO'} onPress={props.onOpenMood} position={s.circleBottomLeft} />
         <FloatingCircle emoji={'📈'} label={'PROGRESO'} onPress={props.onOpenProgress} position={s.circleBottomRight} />
       </View>
-      <BottomBar activeMenuIds={props.activeMenuIds} onOpenMenu={props.onOpenMenu} />
+      <BottomBar activeMenuIds={props.activeMenuIds} onItemPress={props.onMenuItemPress} onOpenMenu={props.onOpenMenu} />
     </View>
   );
 }
@@ -74,7 +76,11 @@ function ProfileCard(props: { client: ClientMe | undefined; onPress: () => void 
   );
 }
 
-function BottomBar(props: { activeMenuIds: string[]; onOpenMenu: () => void }): React.JSX.Element {
+function BottomBar(props: {
+  activeMenuIds: string[];
+  onItemPress: (id: string) => void;
+  onOpenMenu: () => void;
+}): React.JSX.Element {
   const items = useMemo(
     () => props.activeMenuIds.map((id) => MENU_ITEMS.find((m) => m.id === id)).filter(Boolean) as MenuItem[],
     [props.activeMenuIds],
@@ -88,20 +94,20 @@ function BottomBar(props: { activeMenuIds: string[]; onOpenMenu: () => void }): 
       </View>
       <View style={[s.bar, WEB_BLUR_SM]}>
         {items.map((item) => (
-          <BottomBarItem key={item.id} emoji={item.emoji} label={item.label} />
+          <BottomBarItem key={item.id} emoji={item.emoji} label={item.label} onPress={() => props.onItemPress(item.id)} />
         ))}
       </View>
     </View>
   );
 }
 
-function BottomBarItem(props: { emoji: string; label: string }): React.JSX.Element {
+function BottomBarItem(props: { emoji: string; label: string; onPress: () => void }): React.JSX.Element {
   return (
-    <View style={s.barItem}>
+    <Pressable onPress={props.onPress} style={s.barItem}>
       <View style={s.barIconWrap}>
         <Text style={s.barEmoji}>{props.emoji}</Text>
       </View>
       <Text style={s.barLabel}>{props.label}</Text>
-    </View>
+    </Pressable>
   );
 }

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import {
   useFinishSessionMutation,
+  useLogIntervalMutation,
   useLogIsometricSetMutation,
   useLogMobilitySetMutation,
   useLogPlioSetMutation,
@@ -13,6 +14,7 @@ import {
   useStartSessionMutation,
 } from '../../data/hooks/useTodaySession';
 import type {
+  CardioSessionItem,
   IsometricSessionItem,
   LogSetMutationInput,
   MobilitySessionItem,
@@ -25,6 +27,7 @@ import type {
 import { WorkoutClock } from '../../features/timers/WorkoutClock';
 import { ExerciseListCard } from './ExerciseListCard';
 import { ExerciseSummaryOverlay } from './ExerciseSummaryOverlay';
+import { CardioBlockOverlay } from './CardioBlockOverlay';
 import { IsometricBlockOverlay } from './IsometricBlockOverlay';
 import { MobilityBlockOverlay } from './MobilityBlockOverlay';
 import { PlioBlockOverlay } from './PlioBlockOverlay';
@@ -32,6 +35,7 @@ import { SetWizardOverlay } from './SetWizardOverlay';
 import { SportBlockOverlay } from './SportBlockOverlay';
 import { StartModeModal } from './StartModeModal';
 import { TimerGridList } from './TimerGridList';
+import { WeeklyReportScreen } from './WeeklyReportScreen';
 import { WellnessPostModal } from './WellnessPostModal';
 import { WellnessPreModal } from './WellnessPreModal';
 
@@ -54,6 +58,7 @@ type SummaryState = {
 function useSessionMutations(sessionId: string) {
   return {
     finishMutation: useFinishSessionMutation(sessionId),
+    logIntervalMutation: useLogIntervalMutation(sessionId),
     logIsometricSetMutation: useLogIsometricSetMutation(sessionId),
     logMobilitySetMutation: useLogMobilitySetMutation(sessionId),
     logPlioSetMutation: useLogPlioSetMutation(sessionId),
@@ -66,6 +71,7 @@ function useSessionMutations(sessionId: string) {
 function useBlockOverlayState() {
   const [wizard, setWizard] = useState<WizardState>(null);
   const [summary, setSummary] = useState<SummaryState>(null);
+  const [cardioOverlay, setCardioOverlay] = useState<CardioSessionItem | null>(null);
   const [plioOverlay, setPlioOverlay] = useState<PlioSessionItem | null>(null);
   const [mobilityOverlay, setMobilityOverlay] = useState<MobilitySessionItem | null>(null);
   const [isometricOverlay, setIsometricOverlay] = useState<IsometricSessionItem | null>(null);
@@ -76,6 +82,8 @@ function useBlockOverlayState() {
       const isFullyLogged = item.setsPlanned != null && item.logs.length >= item.setsPlanned;
       if (item.logs.length > 0 && isFullyLogged) setSummary({ item });
       else setWizard({ item });
+    } else if (item.type === 'cardio') {
+      setCardioOverlay(item);
     } else if (item.type === 'plio') {
       setPlioOverlay(item);
     } else if (item.type === 'mobility') {
@@ -93,6 +101,8 @@ function useBlockOverlayState() {
     setWizard,
     summary,
     setSummary,
+    cardioOverlay,
+    setCardioOverlay,
     plioOverlay,
     setPlioOverlay,
     mobilityOverlay,
@@ -104,16 +114,17 @@ function useBlockOverlayState() {
   };
 }
 
-function useSessionOrchestrator(sessionId: string, onClose: () => void) {
+function useSessionOrchestrator(sessionId: string) {
   const sessionQuery = useSessionQuery(sessionId);
   const mutations = useSessionMutations(sessionId);
   const { startMutation, finishMutation, logSetMutation, logPlioSetMutation } = mutations;
-  const { logMobilitySetMutation, logIsometricSetMutation, logSportMutation } = mutations;
+  const { logMobilitySetMutation, logIsometricSetMutation, logSportMutation, logIntervalMutation } = mutations;
   const overlayState = useBlockOverlayState();
 
   const [showStartMode, setShowStartMode] = useState(false);
   const [showWellnessPre, setShowWellnessPre] = useState(false);
   const [showWellnessPost, setShowWellnessPost] = useState(false);
+  const [showWeeklyReport, setShowWeeklyReport] = useState(false);
   const [pendingMode, setPendingMode] = useState<'INTERACTIVE' | 'TIMER' | null>(null);
 
   const handleBegin = useCallback(() => setShowStartMode(true), []);
@@ -153,10 +164,10 @@ function useSessionOrchestrator(sessionId: string, onClose: () => void) {
           postPain: values.pain,
           postMood: values.mood,
         },
-        { onSuccess: onClose },
+        { onSuccess: () => setShowWeeklyReport(true) },
       );
     },
-    [finishMutation, onClose],
+    [finishMutation],
   );
 
   const handleLogSet = useCallback(
@@ -171,6 +182,7 @@ function useSessionOrchestrator(sessionId: string, onClose: () => void) {
     showStartMode,
     showWellnessPre,
     showWellnessPost,
+    showWeeklyReport,
     ...overlayState,
     handleBegin,
     handleModeSelected,
@@ -178,6 +190,7 @@ function useSessionOrchestrator(sessionId: string, onClose: () => void) {
     handleSkipWellness,
     handleSubmitPost,
     handleLogSet,
+    logIntervalMutation,
     logPlioSetMutation,
     logMobilitySetMutation,
     logIsometricSetMutation,
@@ -198,34 +211,97 @@ function SessionItemList({ items, onItemPress }: { items: SessionItem[]; onItemP
   );
 }
 
-function SessionOverlays({ sessionId, state }: { sessionId: string; state: ReturnType<typeof useSessionOrchestrator> }) {
+type BlockOverlaysState = Pick<
+  ReturnType<typeof useSessionOrchestrator>,
+  | 'cardioOverlay'
+  | 'setCardioOverlay'
+  | 'logIntervalMutation'
+  | 'plioOverlay'
+  | 'setPlioOverlay'
+  | 'logPlioSetMutation'
+  | 'mobilityOverlay'
+  | 'setMobilityOverlay'
+  | 'logMobilitySetMutation'
+  | 'isometricOverlay'
+  | 'setIsometricOverlay'
+  | 'logIsometricSetMutation'
+  | 'sportOverlay'
+  | 'setSportOverlay'
+  | 'logSportMutation'
+>;
+
+function BlockOverlays({ sessionId, s }: { sessionId: string; s: BlockOverlaysState }) {
+  return (
+    <>
+      {s.cardioOverlay ? (
+        <CardioBlockOverlay
+          item={s.cardioOverlay}
+          sessionId={sessionId}
+          onClose={() => s.setCardioOverlay(null)}
+          onLogInterval={(input) => s.logIntervalMutation.mutate(input)}
+        />
+      ) : null}
+      {s.plioOverlay ? (
+        <PlioBlockOverlay
+          item={s.plioOverlay}
+          sessionId={sessionId}
+          onClose={() => s.setPlioOverlay(null)}
+          onLogSet={(input) => s.logPlioSetMutation.mutate(input)}
+        />
+      ) : null}
+      {s.mobilityOverlay ? (
+        <MobilityBlockOverlay
+          item={s.mobilityOverlay}
+          sessionId={sessionId}
+          onClose={() => s.setMobilityOverlay(null)}
+          onLogSet={(input) => s.logMobilitySetMutation.mutate(input)}
+        />
+      ) : null}
+      {s.isometricOverlay ? (
+        <IsometricBlockOverlay
+          item={s.isometricOverlay}
+          sessionId={sessionId}
+          onClose={() => s.setIsometricOverlay(null)}
+          onLogSet={(input) => s.logIsometricSetMutation.mutate(input)}
+        />
+      ) : null}
+      {s.sportOverlay ? (
+        <SportBlockOverlay
+          item={s.sportOverlay}
+          sessionId={sessionId}
+          onClose={() => s.setSportOverlay(null)}
+          onLog={(input) => s.logSportMutation.mutate(input)}
+        />
+      ) : null}
+    </>
+  );
+}
+
+function SessionOverlays({
+  sessionId,
+  onClose,
+  state,
+}: {
+  sessionId: string;
+  onClose: () => void;
+  state: ReturnType<typeof useSessionOrchestrator>;
+}) {
   const {
     showStartMode,
     showWellnessPre,
     showWellnessPost,
+    showWeeklyReport,
     wizard,
     summary,
-    plioOverlay,
-    mobilityOverlay,
-    isometricOverlay,
-    sportOverlay,
     handleModeSelected,
     handleStartWithWellness,
     handleSkipWellness,
     handleSubmitPost,
     handleLogSet,
-    logPlioSetMutation,
-    logMobilitySetMutation,
-    logIsometricSetMutation,
-    logSportMutation,
     setShowStartMode,
     setShowWellnessPost,
     setWizard,
     setSummary,
-    setPlioOverlay,
-    setMobilityOverlay,
-    setIsometricOverlay,
-    setSportOverlay,
   } = state;
 
   return (
@@ -257,37 +333,11 @@ function SessionOverlays({ sessionId, state }: { sessionId: string; state: Retur
           }}
         />
       ) : null}
-      {plioOverlay ? (
-        <PlioBlockOverlay
-          item={plioOverlay}
-          sessionId={sessionId}
-          onClose={() => setPlioOverlay(null)}
-          onLogSet={(input) => logPlioSetMutation.mutate(input)}
-        />
-      ) : null}
-      {mobilityOverlay ? (
-        <MobilityBlockOverlay
-          item={mobilityOverlay}
-          sessionId={sessionId}
-          onClose={() => setMobilityOverlay(null)}
-          onLogSet={(input) => logMobilitySetMutation.mutate(input)}
-        />
-      ) : null}
-      {isometricOverlay ? (
-        <IsometricBlockOverlay
-          item={isometricOverlay}
-          sessionId={sessionId}
-          onClose={() => setIsometricOverlay(null)}
-          onLogSet={(input) => logIsometricSetMutation.mutate(input)}
-        />
-      ) : null}
-      {sportOverlay ? (
-        <SportBlockOverlay
-          item={sportOverlay}
-          sessionId={sessionId}
-          onClose={() => setSportOverlay(null)}
-          onLog={(input) => logSportMutation.mutate(input)}
-        />
+      <BlockOverlays sessionId={sessionId} s={state} />
+      {showWeeklyReport ? (
+        <Modal animationType={DUMMY_MODAL_ANIMATION} visible>
+          <WeeklyReportScreen sourceSessionId={sessionId} onClose={onClose} />
+        </Modal>
       ) : null}
       <Modal animationType={DUMMY_MODAL_ANIMATION} transparent visible={false}>
         <View />
@@ -336,7 +386,7 @@ function SessionBody({
 
 export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenProps): React.JSX.Element {
   const { t } = useTranslation();
-  const state = useSessionOrchestrator(sessionId, onClose);
+  const state = useSessionOrchestrator(sessionId);
 
   if (!state.session) {
     return (
@@ -361,7 +411,7 @@ export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenPro
           onBegin={state.handleBegin}
         />
       </View>
-      <SessionOverlays sessionId={sessionId} state={state} />
+      <SessionOverlays sessionId={sessionId} onClose={onClose} state={state} />
     </SafeAreaView>
   );
 }

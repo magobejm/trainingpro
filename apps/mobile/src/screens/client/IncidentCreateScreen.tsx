@@ -18,22 +18,30 @@ const COLORS = {
 };
 
 export function IncidentCreateScreen(): React.JSX.Element {
-  const vm = useIncidentCreateViewModel();
+  const vm = useIncidentCreateViewModel(undefined);
   return <IncidentCreateView {...vm} />;
 }
 
-function useIncidentCreateViewModel() {
+export function IncidentCreatePanel({ onCreated }: { onCreated?: () => void }): React.JSX.Element {
+  const vm = useIncidentCreateViewModel(onCreated);
+  return <IncidentCreateView {...vm} />;
+}
+
+function useIncidentCreateViewModel(onCreated: (() => void) | undefined) {
   const { t } = useTranslation();
   const fields = useIncidentFields();
   const mutation = useCreateIncidentMutation();
   const severityOptions = useMemo(() => mapSeverityOptions(t), [t]);
   const onSubmit = () => {
-    mutation.mutate({
-      description: fields.description,
-      sessionId: fields.sessionId || null,
-      sessionItemId: fields.sessionItemId || null,
-      severity: fields.severity,
-    });
+    mutation.mutate(
+      {
+        description: fields.description,
+        sessionId: fields.sessionId || null,
+        sessionItemId: fields.sessionItemId || null,
+        severity: fields.severity,
+      },
+      { onSuccess: onCreated },
+    );
   };
   return {
     ...fields,

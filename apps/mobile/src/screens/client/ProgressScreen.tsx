@@ -4,6 +4,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-nat
 import { BarsChart, SummaryStrip } from '@trainerpro/ui';
 import '../../i18n';
 import { useProgressOverviewQuery } from '../../data/hooks/useProgressQuery';
+import type { ProgressMode } from '../../shell/client/client-shell.constants';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 
 const COLORS = {
@@ -12,18 +13,22 @@ const COLORS = {
   text: '#ffffff',
 };
 
+const SPINNER_SIZE = 'small' as const;
+
 type ProgressScreenProps = {
+  mode?: ProgressMode;
   onClose: () => void;
 };
 
 export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
-  const vm = useProgressViewModel();
-  return <ProgressView onClose={props.onClose} {...vm} />;
+  const mode = props.mode ?? 'progress';
+  const vm = useProgressViewModel(mode);
+  return <ProgressView mode={mode} onClose={props.onClose} {...vm} />;
 }
 
-function useProgressViewModel() {
+function useProgressViewModel(mode: ProgressMode) {
   const { t } = useTranslation();
-  const range = useMemo(() => buildRange(), []);
+  const range = useMemo(() => buildRange(mode), [mode]);
   const query = useProgressOverviewQuery({ from: range.from, to: range.to });
   const summaryItems = useMemo(() => buildSummary(query.data, t), [query.data, t]);
   const strengthBars = useMemo(() => buildStrengthBars(query.data), [query.data]);
@@ -31,14 +36,16 @@ function useProgressViewModel() {
   return { cardioBars, query, strengthBars, summaryItems, t };
 }
 
-type ViewModel = ReturnType<typeof useProgressViewModel> & { onClose: () => void };
+type ViewModel = ReturnType<typeof useProgressViewModel> & { mode: ProgressMode; onClose: () => void };
 
 function ProgressView(props: ViewModel) {
+  const titleKey = props.mode === 'volume' ? 'client.volume.title' : 'client.progress.title';
+  const subtitleKey = props.mode === 'volume' ? 'client.volume.subtitle' : 'client.progress.subtitle';
   return (
     <View style={styles.root}>
-      <OverlayBackHeader onClose={props.onClose} title={props.t('client.progress.title')} />
+      <OverlayBackHeader onClose={props.onClose} title={props.t(titleKey)} />
       <ScrollView contentContainerStyle={styles.page}>
-        <Text style={styles.subtitle}>{props.t('client.progress.subtitle')}</Text>
+        <Text style={styles.subtitle}>{props.t(subtitleKey)}</Text>
         {renderState(props)}
       </ScrollView>
     </View>
@@ -47,7 +54,7 @@ function ProgressView(props: ViewModel) {
 
 function renderState(props: ViewModel) {
   if (props.query.isLoading) {
-    return <ActivityIndicator />;
+    return <ActivityIndicator size={SPINNER_SIZE} />;
   }
   if (props.query.isError) {
     return <Text style={styles.info}>{props.t('client.progress.error')}</Text>;
@@ -96,10 +103,11 @@ function buildCardioBars(data: ReturnType<typeof useProgressOverviewQuery>['data
   }));
 }
 
-function buildRange() {
+function buildRange(mode: ProgressMode) {
   const to = new Date();
   const from = new Date(to);
-  from.setDate(from.getDate() - 56);
+  const days = mode === 'volume' ? 28 : 56;
+  from.setDate(from.getDate() - days);
   return { from: toDateString(from), to: toDateString(to) };
 }
 

@@ -53,6 +53,14 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
   const { t } = useTranslation();
   const state = useBlockCardState(props.isNew);
   const fieldsReadOnly = !!props.readOnly || !state.isEditing;
+
+  const handleToggleEdit = () => {
+    state.setIsEditing((editing) => {
+      if (!editing) state.setIsCollapsed(false);
+      return !editing;
+    });
+  };
+
   return (
     <View style={s.blockCard}>
       <BlockHeader
@@ -69,7 +77,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
         onShowMove={() => state.setShowMove(!state.showMove)}
         onShowDetail={() => state.setShowDetailModal(true)}
         onToggleCollapse={() => state.setIsCollapsed((v) => !v)}
-        onToggleEdit={() => state.setIsEditing((v) => !v)}
+        onToggleEdit={handleToggleEdit}
         onUpdateName={(v) => props.onUpdateField('displayName', v)}
         readOnly={!!props.readOnly}
         t={t}

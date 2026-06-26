@@ -18,53 +18,71 @@ import { s } from './ExercisePickerModal.styles';
 
 const IMAGE_RESIZE_MODE: ImageProps['resizeMode'] = 'contain';
 
-export const PickerHeader = ({ label, t }: { label: string; t: (k: string) => string }) => {
-  const separator = t('coach.routine.picker.separator');
+export const PickerHeader = ({ t }: { t: (k: string) => string }) => (
+  <Text style={s.title}>{t('coach.routine.picker.title')}</Text>
+);
+
+export function PickerTypeBar({
+  activeType,
+  allowedTypes,
+  onChange,
+  t,
+}: {
+  activeType: BlockType;
+  allowedTypes: BlockType[];
+  onChange: (type: BlockType) => void;
+  t: (k: string) => string;
+}) {
   return (
-    <Text style={s.title}>
-      {t('coach.routine.picker.title')}
-      {separator}
-      {label}
-    </Text>
+    <View style={s.typeBar}>
+      {allowedTypes.map((type) => {
+        const active = type === activeType;
+        return (
+          <Pressable key={type} onPress={() => onChange(type)} style={[s.typeBtn, active && s.typeBtnActive]}>
+            <Text style={[s.typeBtnText, active && s.typeBtnTextActive]}>{t(`coach.routine.blockType.${type}`)}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
   );
-};
+}
 
 interface CardActionsProps {
+  isAdded: boolean;
   onSelect: () => void;
   onViewDetail: () => void;
   t: (k: string) => string;
 }
 
-const CardActions = ({ onSelect, onViewDetail, t }: CardActionsProps) => (
+const CardActions = ({ isAdded, onSelect, onViewDetail, t }: CardActionsProps) => (
   <View style={s.cardActions}>
     <Pressable onPress={onViewDetail} style={s.cardGhostBtn}>
       <Text style={s.cardGhostText}>{t('coach.routine.picker.actions.viewDetails')}</Text>
     </Pressable>
-    <Pressable onPress={onSelect} style={s.cardPrimaryBtn}>
-      <Text style={s.cardPrimaryText}>{t('coach.routine.picker.actions.select')}</Text>
+    <Pressable onPress={onSelect} style={[s.cardPrimaryBtn, isAdded && s.cardPrimaryBtnAdded]}>
+      <Text style={[s.cardPrimaryText, isAdded && s.cardPrimaryTextAdded]}>
+        {isAdded ? t('coach.routine.picker.added') : t('coach.routine.picker.actions.select')}
+      </Text>
     </Pressable>
   </View>
 );
 
 const CardImage = ({ blockType, url }: { blockType: BlockType; url: string | null }) => (
   <View style={s.cardImageFrame}>
-    <Image
-      resizeMode={IMAGE_RESIZE_MODE}
-      source={{ uri: getFullUrl(blockType, url) }}
-      style={s.cardImage}
-    />
+    <Image resizeMode={IMAGE_RESIZE_MODE} source={{ uri: getFullUrl(blockType, url) }} style={s.cardImage} />
   </View>
 );
 
 interface PickerCardProps {
   blockType: BlockType;
+  isAdded: boolean;
   item: LibraryItem;
   onSelect: (id: string, name: string) => void;
   onViewDetail: (id: string) => void;
   t: (k: string) => string;
 }
 
-export const PickerCard = ({ blockType, item, onSelect, onViewDetail, t }: PickerCardProps) => (
+export const PickerCard = ({ blockType, isAdded, item, onSelect, onViewDetail, t }: PickerCardProps) => (
   <View style={s.card}>
     <CardImage blockType={blockType} url={item.imageUrl} />
     <View style={s.cardBody}>
@@ -74,7 +92,13 @@ export const PickerCard = ({ blockType, item, onSelect, onViewDetail, t }: Picke
       <Text numberOfLines={2} style={s.cardSubtitle}>
         {item.description || item.notes || t('coach.routine.picker.card.empty')}
       </Text>
+      {isAdded ? (
+        <View style={s.cardAddedBadge}>
+          <Text style={s.cardAddedBadgeText}>{t('coach.routine.picker.added')}</Text>
+        </View>
+      ) : null}
       <CardActions
+        isAdded={isAdded}
         onSelect={() => onSelect(item.id, item.name)}
         onViewDetail={() => onViewDetail(item.id)}
         t={t}
@@ -84,6 +108,7 @@ export const PickerCard = ({ blockType, item, onSelect, onViewDetail, t }: Picke
 );
 
 interface BodyProps {
+  addedIds: Set<string>;
   blockType: BlockType;
   items: LibraryItem[];
   isLoading: boolean;
@@ -99,6 +124,7 @@ export const PickerBody = (p: BodyProps) => {
   const renderItem: ListRenderItem<LibraryItem> = ({ item }) => (
     <PickerCard
       blockType={p.blockType}
+      isAdded={p.addedIds.has(item.id)}
       item={item}
       onSelect={p.onSelect}
       onViewDetail={p.onViewDetail}
@@ -165,22 +191,12 @@ function renderDetailPanel(
 
   return (
     <View style={s.detailPanel}>
-      <MediaSection
-        blockType={p.blockType}
-        imageUrl={p.item.imageUrl}
-        t={p.t}
-        youtubeUrl={p.item.youtubeUrl || null}
-      />
+      <MediaSection blockType={p.blockType} imageUrl={p.item.imageUrl} t={p.t} youtubeUrl={p.item.youtubeUrl || null} />
       <View style={s.detailContent}>
         <Text style={s.detailName}>{p.item.name}</Text>
         <DetailTags categoryLabel={categoryLabel} equipmentLabel={equipmentLabel} />
-        <DetailSection
-          label={p.t('coach.routine.picker.details.description')}
-          value={description}
-        />
-        {p.item.notes ? (
-          <DetailSection label={p.t('coach.routine.picker.details.notes')} value={p.item.notes} />
-        ) : null}
+        <DetailSection label={p.t('coach.routine.picker.details.description')} value={description} />
+        {p.item.notes ? <DetailSection label={p.t('coach.routine.picker.details.notes')} value={p.item.notes} /> : null}
       </View>
     </View>
   );
@@ -205,10 +221,7 @@ function MediaSection(props: {
   );
 }
 
-function DetailTags(props: {
-  categoryLabel: null | string | undefined;
-  equipmentLabel: null | string;
-}) {
+function DetailTags(props: { categoryLabel: null | string | undefined; equipmentLabel: null | string }) {
   return (
     <View style={tagStyles.tagsRow}>
       {props.categoryLabel ? (

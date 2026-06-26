@@ -3,9 +3,8 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { s } from '../RoutinePlanner.styles';
-import type { BlockType, DraftBlock, DraftDay } from '../RoutinePlanner.types';
+import type { DraftBlock, DraftDay } from '../RoutinePlanner.types';
 import { DayHeader } from './RoutineDayCard/DayHeader';
-import { AddBlockSection } from './RoutineDayCard/AddBlockSection';
 import { GroupContainer } from './RoutineDayCard/GroupContainer';
 import { RoutineBlockCard } from './RoutineBlockCard';
 import type { PlannerLabels } from './RoutinePlanner/planner-labels';
@@ -18,15 +17,13 @@ interface RoutineDayCardProps {
   dayLabels?: string[];
   isFirst: boolean;
   isLast: boolean;
-  addBlockDayIdx: number | null;
   readOnly?: boolean;
   onRename: (title: string) => void;
   onRemove: () => void;
-  onAddBlock: (type: BlockType) => void;
+  onAddBlock: () => void;
   onAddWarmupTemplate?: () => void;
   onRemoveWarmupTemplate?: (templateId: string) => void;
   onViewWarmupTemplate?: (templateId: string) => void;
-  onSetAddBlockDayIdx: (idx: number | null) => void;
   onUpdateBlockField: (blockId: string, field: keyof DraftBlock, value: unknown) => void;
   onMoveBlock: (blockIdx: number, direction: -1 | 1) => void;
   onRemoveBlock: (blockId: string) => void;
@@ -40,7 +37,7 @@ interface RoutineDayCardProps {
 export function RoutineDayCard(props: RoutineDayCardProps) {
   const vm = useRoutineDayCardModel(props);
   const { day, readOnly } = props;
-  const { dayIdx, daysCount, isAdding, isCollapsed, t } = vm;
+  const { dayIdx, daysCount, isCollapsed, t } = vm;
 
   return (
     <View style={s.dayCardOuter}>
@@ -99,15 +96,6 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
             onUpdateGroupNote={vm.handleUpdateGroupNote}
             onRemoveGroup={vm.handleRemoveGroup}
           />
-          {!readOnly && isAdding && (
-            <AddBlockSection
-              isAdding={isAdding}
-              onAdd={props.onAddBlock}
-              onAddWarmupTemplate={props.onAddWarmupTemplate}
-              onCancel={() => props.onSetAddBlockDayIdx(null)}
-              t={t}
-            />
-          )}
         </View>
       )}
     </View>
@@ -117,13 +105,12 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
 function useRoutineDayCardModel(props: RoutineDayCardProps) {
   const { t } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { day, readOnly, addBlockDayIdx, dayIdx, daysCount } = props;
-  const isAdding = addBlockDayIdx === dayIdx;
+  const { day, readOnly, dayIdx, daysCount } = props;
   const groups = useGroupManagement();
 
   const onAddBlockClick = () => {
     setIsCollapsed(false);
-    props.onSetAddBlockDayIdx(isAdding ? null : dayIdx);
+    props.onAddBlock();
   };
   const handleConfirmGroup = () => props.onUpdateDay(groups.confirmGroup(day));
   const handleRemoveGroup = (groupId: string) => props.onUpdateDay(groups.removeGroup(day, groupId));
@@ -137,7 +124,6 @@ function useRoutineDayCardModel(props: RoutineDayCardProps) {
     handleConfirmGroup,
     handleRemoveGroup,
     handleUpdateGroupNote,
-    isAdding,
     isCollapsed,
     onAddBlockClick,
     readOnly,

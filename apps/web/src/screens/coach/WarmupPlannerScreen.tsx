@@ -7,7 +7,6 @@ import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType, DraftDay } from './RoutinePlanner.types';
 import { EMPTY_DRAFT, fromTemplate, moveBlocks, toPayload, type DraftState } from './WarmupPlannerScreen.helpers';
 import { s } from './RoutinePlanner.styles';
-import { AddBlockSection } from './components/RoutineDayCard/AddBlockSection';
 import { GroupContainer } from './components/RoutineDayCard/GroupContainer';
 import { RoutineBlockCard } from './components/RoutineBlockCard';
 import { ExercisePickerModal } from './components/RoutinePlanner/ExercisePickerModal';
@@ -41,7 +40,6 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const [editingId, setEditingId] = useState<null | string>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [pickerType, setPickerType] = useState<null | BlockType>(null);
-  const [showTypeButtons, setShowTypeButtons] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
   const { data: list = [], isFetching } = useWarmupTemplatesQuery();
@@ -124,9 +122,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     setDraft,
     setPickerType,
     setShowSaveModal,
-    setShowTypeButtons,
     showSaveModal,
-    showTypeButtons,
     startGroupMode,
     cancelGroupMode,
     t,
@@ -147,16 +143,14 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
         </Pressable>
       )}
       <ExercisePickerModal
+        allowedTypes={WARMUP_BLOCK_TYPES}
         blockType={vm.pickerType}
         onCancel={() => vm.setPickerType(null)}
-        onSelect={(libraryId, name) => {
-          const type = vm.pickerType;
-          if (!type) return;
+        onSelect={(libraryId, name, type) => {
           vm.setDraft((state) => ({
             ...state,
             blocks: [...state.blocks, { ...createBlock(type, name), libraryId, sortOrder: state.blocks.length }],
           }));
-          vm.setPickerType(null);
         }}
         t={vm.t}
       />
@@ -193,7 +187,7 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
     <View style={s.card}>
       {!vm.isReadOnly && (
         <View style={s.dayHeaderRight}>
-          <Pressable onPress={() => vm.setShowTypeButtons(true)} style={s.dayAddExerciseBtn}>
+          <Pressable onPress={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')} style={s.dayAddExerciseBtn}>
             <Text style={s.dayAddExerciseBtnText}>{`+ ${vm.t('coach.routine.addExercise')}`}</Text>
           </Pressable>
         </View>
@@ -210,18 +204,6 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
       )}
       {vm.orderedBlocks.length === 0 ? <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text> : null}
       <WarmupBlocksContent vm={vm} />
-      {!vm.isReadOnly && vm.showTypeButtons && (
-        <AddBlockSection
-          isAdding={vm.showTypeButtons}
-          onAdd={(type) => {
-            vm.setPickerType(type);
-            vm.setShowTypeButtons(false);
-          }}
-          onCancel={() => vm.setShowTypeButtons(false)}
-          t={vm.t}
-          types={WARMUP_BLOCK_TYPES}
-        />
-      )}
     </View>
   );
 }

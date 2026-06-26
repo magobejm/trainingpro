@@ -30,8 +30,6 @@ interface LayoutProps {
     setSaveSuccess: (v: boolean) => void;
     deletingId: string | null;
     setDeletingId: (id: string | null) => void;
-    addIdx: number | null;
-    setAddIdx: (i: number | null) => void;
     pickerType: BlockType | null;
     setPickerType: (t: BlockType | null) => void;
     showWarmupTemplatePicker: boolean;
@@ -100,12 +98,11 @@ function RoutineMainSection(
     onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   },
 ) {
-  const { t, draftState, uiState, labels = ROUTINE_LABELS, viewOnlyMode } = props;
+  const { t, draftState, labels = ROUTINE_LABELS, viewOnlyMode } = props;
   const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
   return (
     <>
       <RoutineDayList
-        addIdx={uiState.addIdx}
         draftState={draftState}
         isReadOnly={isReadOnly}
         labels={labels}
@@ -113,7 +110,6 @@ function RoutineMainSection(
         onOpenWarmupTemplatePicker={props.onOpenWarmupTemplatePicker}
         onRemoveWarmupTemplate={props.onRemoveWarmupTemplate}
         onViewWarmupTemplate={props.onViewWarmupTemplate}
-        setAddIdx={uiState.setAddIdx}
       />
       {!isReadOnly && (
         <Pressable onPress={draftState.addDay} style={s.addDayBtn}>
@@ -125,7 +121,6 @@ function RoutineMainSection(
 }
 
 function RoutineDayList(props: {
-  addIdx: null | number;
   draftState: LayoutProps['draftState'];
   isReadOnly: boolean;
   labels: PlannerLabels;
@@ -133,11 +128,9 @@ function RoutineDayList(props: {
   onOpenWarmupTemplatePicker: (dayIdx: number) => void;
   onRemoveWarmupTemplate: (dayIdx: number, templateId: string) => void;
   onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
-  setAddIdx: (i: number | null) => void;
 }) {
   return (
     <DayList
-      addIdx={props.addIdx}
       days={props.draftState.draft.days}
       draftState={buildDraftHandlers(
         props.draftState,
@@ -149,7 +142,6 @@ function RoutineDayList(props: {
       isReadOnly={props.isReadOnly}
       labels={props.labels}
       lastAddedBlockId={props.draftState.lastAddedBlockId}
-      setAddIdx={props.setAddIdx}
     />
   );
 }
@@ -186,9 +178,8 @@ function usePickerHandlers(uiState: LayoutProps['uiState'], draftState: LayoutPr
     uiState.setPickerType(type);
   }
 
-  function onPickerSelect(libraryId: string, displayName: string) {
-    draftState.onAddBlock(pendingDayIdxRef.current, uiState.pickerType!, libraryId, displayName);
-    uiState.setPickerType(null);
+  function onPickerSelect(libraryId: string, displayName: string, type: BlockType) {
+    draftState.onAddBlock(pendingDayIdxRef.current, type, libraryId, displayName);
   }
 
   const onOpenWarmupTemplatePicker = (dayIdx: number) => {

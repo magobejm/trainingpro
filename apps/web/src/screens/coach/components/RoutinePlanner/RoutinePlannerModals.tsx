@@ -5,7 +5,7 @@ import type { BlockType } from '../../RoutinePlanner.types';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 
 type Props = {
-  onPickerSelect: (libraryId: string, displayName: string) => void;
+  onPickerSelect: (libraryId: string, displayName: string, type: BlockType) => void;
   onSelectWarmupTemplate: (template: WarmupTemplateView) => void;
   t: (k: string, options?: { count: number }) => string;
   uiState: {

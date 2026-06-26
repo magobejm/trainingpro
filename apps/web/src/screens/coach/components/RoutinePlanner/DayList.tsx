@@ -20,8 +20,6 @@ export interface DraftStateHandlers {
 
 interface DayListProps {
   days: DraftDay[];
-  addIdx: number | null;
-  setAddIdx: (i: number | null) => void;
   draftState: DraftStateHandlers;
   isReadOnly: boolean;
   labels?: PlannerLabels;
@@ -41,7 +39,7 @@ function moveDayToIndex(moveDay: DraftStateHandlers['moveDay'], from: number, to
 }
 
 export function DayList(props: DayListProps) {
-  const { days, addIdx, setAddIdx, draftState, isReadOnly, labels, lastAddedBlockId } = props;
+  const { days, draftState, isReadOnly, labels, lastAddedBlockId } = props;
   const dayLabels = days.map((day) => day.title);
 
   const handleDayDrop = (targetIdx: number) => (event: React.DragEvent<HTMLDivElement>) => {
@@ -87,7 +85,6 @@ export function DayList(props: DayListProps) {
           style={{ cursor: isReadOnly ? undefined : 'grab' }}
         >
           <RoutineDayCard
-            addBlockDayIdx={addIdx}
             day={day}
             dayIdx={idx}
             dayLabels={dayLabels}
@@ -95,14 +92,8 @@ export function DayList(props: DayListProps) {
             isFirst={idx === 0}
             isLast={idx === days.length - 1}
             lastAddedBlockId={lastAddedBlockId}
-            onAddBlock={(type) => {
-              draftState.onOpenPicker(idx, type);
-              setAddIdx(null);
-            }}
-            onAddWarmupTemplate={() => {
-              draftState.onOpenWarmupTemplatePicker?.(idx);
-              setAddIdx(null);
-            }}
+            onAddBlock={() => draftState.onOpenPicker(idx, 'strength')}
+            onAddWarmupTemplate={() => draftState.onOpenWarmupTemplatePicker?.(idx)}
             onRemoveWarmupTemplate={(templateId) => draftState.onRemoveWarmupTemplate?.(idx, templateId)}
             onViewWarmupTemplate={(templateId) => draftState.onViewWarmupTemplate?.(idx, templateId)}
             onMoveBlock={(bIdx, dir) => draftState.onMoveBlock(idx, bIdx, dir)}
@@ -111,7 +102,6 @@ export function DayList(props: DayListProps) {
             onRemove={() => draftState.removeDay(idx)}
             onRemoveBlock={(blockId) => draftState.onRemoveBlock(idx, blockId)}
             onRename={(title) => draftState.renameDay(idx, title)}
-            onSetAddBlockDayIdx={setAddIdx}
             onUpdateBlockField={(bid, f, v) => draftState.onUpdateBlockField(idx, bid, f, v)}
             onUpdateDay={(updated) => draftState.updateDay(idx, updated)}
             readOnly={isReadOnly}

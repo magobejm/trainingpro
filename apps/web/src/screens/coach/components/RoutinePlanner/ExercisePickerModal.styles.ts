@@ -20,6 +20,78 @@ export const s = StyleSheet.create({
     paddingVertical: 12,
   },
   cancelText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+  typeBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  typeBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
+  },
+  typeBtnActive: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#93c5fd',
+  },
+  typeBtnText: {
+    color: '#64748b',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  typeBtnTextActive: {
+    color: '#1d4ed8',
+  },
+  footer: {
+    alignItems: 'center',
+    borderTopColor: '#e2e8f0',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+    paddingTop: 12,
+  },
+  footerCount: {
+    color: '#64748b',
+    flex: 1,
+    fontSize: 13,
+  },
+  doneBtn: {
+    alignItems: 'center',
+    backgroundColor: '#1c74e9',
+    borderRadius: 8,
+    minWidth: 120,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  doneBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  cardAddedBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#dcfce7',
+    borderRadius: 4,
+    marginTop: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  cardAddedBadgeText: {
+    color: '#15803d',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  cardPrimaryBtnAdded: {
+    backgroundColor: '#e2e8f0',
+  },
+  cardPrimaryTextAdded: {
+    color: '#64748b',
+  },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,

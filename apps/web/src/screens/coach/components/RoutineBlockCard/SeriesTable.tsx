@@ -3,6 +3,7 @@ import type { BaseSyntheticEvent } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
+import { SERIES_COL_W, st } from './SeriesTable.styles';
 
 interface ColDef {
   key: keyof DraftSet;
@@ -15,7 +16,6 @@ interface ColDef {
 
 const KB_NUMERIC = 'numeric' as const;
 const ACTION_COL_W = 56;
-const SERIES_COL_W = 48;
 const PLACEHOLDER_MUTED = '#cbd5e1';
 const ICON_NOTE = '📝';
 const ICON_TRASH = '🗑';
@@ -240,17 +240,21 @@ function SeriesDataRow({
         )}
       </View>
 
-      <TouchableOpacity
-        style={[st.seriesCell, { width: SERIES_COL_W }, advancedEnabled && !readOnly && st.seriesCellClickable]}
-        onPress={() => advancedEnabled && !readOnly && onOpenAdvanced(idx)}
-      >
-        <Text style={[st.seriesNumber, advancedEnabled && !readOnly && st.seriesNumberAdvanced]}>{idx + 1}</Text>
-        {set.advancedTechnique ? (
-          <View style={st.advancedLabelRow}>
-            <Text style={st.advancedLabel} numberOfLines={1}>
-              {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+      {advancedEnabled && !readOnly ? (
+        <TouchableOpacity
+          style={[st.seriesCell, { width: SERIES_COL_W }, st.seriesCellClickable]}
+          onPress={() => onOpenAdvanced(idx)}
+        >
+          <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
+            <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
+              {idx + 1}
             </Text>
-            {!readOnly && (
+          </View>
+          {set.advancedTechnique ? (
+            <View style={st.advancedLabelRow}>
+              <Text style={st.advancedLabel} numberOfLines={1}>
+                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+              </Text>
               <TouchableOpacity
                 onPress={(e) => {
                   (e as BaseSyntheticEvent).stopPropagation?.();
@@ -260,15 +264,26 @@ function SeriesDataRow({
               >
                 <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
               </TouchableOpacity>
-            )}
-          </View>
-        ) : null}
-        {idx > 0 && !readOnly && (
-          <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.copyBtn}>
-            <Text style={st.copyIcon}>{ICON_COPY}</Text>
-          </TouchableOpacity>
-        )}
-      </TouchableOpacity>
+            </View>
+          ) : null}
+          {idx > 0 ? (
+            <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.copyBtn}>
+              <Text style={st.copyIcon}>{ICON_COPY}</Text>
+            </TouchableOpacity>
+          ) : null}
+        </TouchableOpacity>
+      ) : (
+        <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
+          <Text style={st.seriesNumber}>{idx + 1}</Text>
+          {set.advancedTechnique ? (
+            <View style={st.advancedLabelRow}>
+              <Text style={st.advancedLabel} numberOfLines={1}>
+                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      )}
 
       <SeriesRowValueCells
         idx={idx}
@@ -377,130 +392,3 @@ function SelectCell({
     ...options.map((opt) => React.createElement('option', { key: opt, value: opt }, opt)),
   );
 }
-
-const st = {
-  row: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  headerRow: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 6,
-    borderBottomWidth: 0,
-    paddingVertical: 6,
-  },
-  rowEven: { backgroundColor: '#fff' },
-  rowOdd: { backgroundColor: '#fafafa' },
-  headerCell: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 4,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-  },
-  headerText: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: '#64748b',
-  },
-  headerTextLocked: { color: '#cbd5e1' },
-  lockBtn: { padding: 2 },
-  lockIcon: { fontSize: 11, color: '#94a3b8' },
-  lockIconActive: { color: '#ef4444' },
-  actionCell: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    gap: 4,
-    paddingVertical: 6,
-  },
-  actionBtn: { padding: 4 },
-  actionIcon: { fontSize: 14, color: '#cbd5e1' },
-  actionIconActive: { color: '#3b82f6' },
-  actionIconRemove: { fontSize: 12, color: '#f87171' },
-  seriesCell: {
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    paddingVertical: 6,
-    gap: 2,
-  },
-  seriesCellClickable: { cursor: 'pointer' } as { cursor: 'pointer' },
-  seriesNumber: {
-    fontSize: 13,
-    fontWeight: '600' as const,
-    color: '#475569',
-  },
-  seriesNumberAdvanced: { color: '#ef4444' },
-  advancedLabelRow: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: 2,
-    width: SERIES_COL_W - 4,
-    overflow: 'hidden' as const,
-  },
-  advancedLabel: {
-    fontSize: 9,
-    fontWeight: '700' as const,
-    color: '#374151',
-    flexShrink: 1,
-  },
-  advancedRemoveIcon: {
-    fontSize: 9,
-    color: '#ef4444',
-    fontWeight: '700' as const,
-    lineHeight: 12,
-  },
-  copyBtn: { marginTop: 2 },
-  copyIcon: { fontSize: 12, color: '#3b82f6' },
-  dataCell: {
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-  },
-  dataCellLocked: { backgroundColor: '#f8fafc' },
-  cellInput: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    fontSize: 12,
-    color: '#1e293b',
-    textAlign: 'center' as const,
-    backgroundColor: '#fff',
-  },
-  cellInputReadOnly: { backgroundColor: '#f8fafc', color: '#64748b' },
-  selectTrigger: { paddingHorizontal: 6 },
-  selectOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15,23,42,0.35)',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  },
-  selectSheet: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    paddingVertical: 6,
-    minWidth: 160,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  selectOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  selectOptionActive: { backgroundColor: '#eff6ff' },
-  selectCancelOption: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    alignItems: 'center' as const,
-  },
-  selectCancelText: { fontSize: 13, color: '#94a3b8' },
-  selectOptionText: { fontSize: 14, color: '#475569', textAlign: 'center' as const },
-  selectOptionTextActive: { color: '#3b82f6', fontWeight: '700' as const },
-};

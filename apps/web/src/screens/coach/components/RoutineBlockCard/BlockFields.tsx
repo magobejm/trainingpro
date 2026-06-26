@@ -108,8 +108,8 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
             >
               <Text style={[bf.advancedBtnText, advancedEnabled && bf.advancedBtnTextActive]}>
                 {advancedEnabled
-                  ? `⚡ ${t('coach.routine.block.advancedOn')}`
-                  : `⚡ ${t('coach.routine.block.advancedOff')}`}
+                  ? `⚡ ${t('coach.routine.block.advancedSeriesOn')}`
+                  : `⚡ ${t('coach.routine.block.advancedSeriesOff')}`}
               </Text>
             </TouchableOpacity>
           )}

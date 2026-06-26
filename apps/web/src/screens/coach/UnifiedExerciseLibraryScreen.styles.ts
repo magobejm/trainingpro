@@ -89,6 +89,8 @@ export const styles = StyleSheet.create({
     gap: 6,
     marginTop: 16,
     paddingHorizontal: 10,
+    position: 'relative',
+    zIndex: 1,
   },
   clearFiltersText: { color: '#64748b', fontSize: 12 },
   divider: {
@@ -107,8 +109,10 @@ export const styles = StyleSheet.create({
   equipmentSubSection: {
     borderTopColor: '#f1f5f9',
     borderTopWidth: 1,
-    marginTop: 4,
-    paddingTop: 4,
+    marginTop: 12,
+    paddingTop: 8,
+    overflow: 'visible',
+    position: 'relative',
   },
   chipSmall: {
     backgroundColor: '#f8fafc',
@@ -129,6 +133,9 @@ export const styles = StyleSheet.create({
   emptyText: { color: '#64748b', fontSize: 16, fontWeight: '600' },
   filtersSection: {
     marginTop: 8,
+    overflow: 'visible',
+    position: 'relative',
+    zIndex: 10,
   },
   header: {
     alignItems: 'center',
@@ -181,6 +188,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRightColor: '#e2e8f0',
     borderRightWidth: 1,
+    overflow: 'visible',
     paddingHorizontal: 12,
     paddingVertical: 16,
     width: 230,

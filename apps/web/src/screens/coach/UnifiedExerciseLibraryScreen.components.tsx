@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Pressable, TextInput, ScrollView } from 'react-native';
 import { Dumbbell, Heart, Zap, Wind, Trophy, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
@@ -8,6 +8,7 @@ import { LibraryScreenState } from './useLibraryScreenState';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnifiedExerciseModal } from './UnifiedExerciseModal';
 import { UnifiedExerciseDetailModal } from './UnifiedExerciseDetailModal';
+import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMultiSelect';
 
 const C_BLUE = '#2563eb';
 const C_GRAY = '#94a3b8';
@@ -18,7 +19,13 @@ const C_RED = '#ef4444';
 const REMODE_CVR = 'cover' as const;
 const REMODE_CNT = 'contain' as const;
 
-export type CategoryKey = 'muscleGroups' | 'cardioMethodTypes' | 'isometricTypes' | 'plioTypes' | 'mobilityTypes' | 'sportTypes';
+export type CategoryKey =
+  | 'muscleGroups'
+  | 'cardioMethodTypes'
+  | 'isometricTypes'
+  | 'plioTypes'
+  | 'mobilityTypes'
+  | 'sportTypes';
 
 export type CategoryMeta = {
   key: CategoryKey;
@@ -200,7 +207,29 @@ export function LibrarySidebar({ st }: { st: LibraryScreenState }) {
 }
 
 function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
+  const [openCombo, setOpenCombo] = useState<'category' | 'equipment' | null>(null);
   const catLabel = CATEGORIES.find((c) => c.key === st.expandedCategory)?.labelKey ?? '';
+
+  useEffect(() => {
+    setOpenCombo(null);
+  }, [st.expandedCategory]);
+
+  const categoryOptions = useMemo((): TagMultiSelectOption[] => {
+    const items = [...(st.catalogs?.[st.expandedCategory as CategoryKey] ?? [])];
+    return items
+      .sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1))
+      .map((item) => ({ value: item.id, label: item.label }));
+  }, [st.catalogs, st.expandedCategory]);
+
+  const equipmentOptions = useMemo((): TagMultiSelectOption[] => {
+    const items = [...(st.catalogs?.equipmentTypes ?? [])];
+    return items
+      .sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1))
+      .map((item) => ({ value: item.id, label: item.label }));
+  }, [st.catalogs?.equipmentTypes]);
+
+  const selectedCategoryIds = [...(st.selectedCategoryFilters[st.expandedCategory!] ?? new Set<string>())];
+
   return (
     <View style={styles.filtersSection}>
       <View style={styles.divider} />
@@ -208,8 +237,30 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
         {st.t('coach.library.sidebar.filtersTitle')} {st.t(catLabel).toUpperCase()}
       </Text>
 
-      <CategoryChipList st={st} />
-      <EquipmentChipList st={st} />
+      <TagMultiSelect
+        options={categoryOptions}
+        selectedIds={selectedCategoryIds}
+        onToggle={(id) => st.toggleCategoryItem(st.expandedCategory!, id)}
+        expanded={openCombo === 'category'}
+        setExpanded={(open) => setOpenCombo(open ? 'category' : null)}
+        placeholder={st.t('coach.library.sidebar.categoryPlaceholder')}
+        doneLabel={st.t('coach.library.sidebar.doneSelecting')}
+        zIndex={60}
+      />
+
+      <View style={styles.equipmentSubSection}>
+        <Text style={styles.equipmentSubLabel}>{st.t('coach.library.sidebar.equipmentTitle')}</Text>
+        <TagMultiSelect
+          options={equipmentOptions}
+          selectedIds={[...st.selectedEquipment]}
+          onToggle={st.toggleEquipment}
+          expanded={openCombo === 'equipment'}
+          setExpanded={(open) => setOpenCombo(open ? 'equipment' : null)}
+          placeholder={st.t('coach.library.sidebar.equipmentPlaceholder')}
+          doneLabel={st.t('coach.library.sidebar.doneSelecting')}
+          zIndex={50}
+        />
+      </View>
 
       {st.hasActiveFilters && (
         <TouchableOpacity style={styles.clearFilters} onPress={st.clearAllFilters}>
@@ -217,54 +268,6 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
           <Text style={styles.clearFiltersText}>{st.t('coach.library.sidebar.clearFilters')}</Text>
         </TouchableOpacity>
       )}
-    </View>
-  );
-}
-
-function CategoryChipList({ st }: { st: LibraryScreenState }) {
-  const filters = [...(st.catalogs?.[st.expandedCategory as CategoryKey] ?? [])];
-
-  return (
-    <View style={styles.chipContainer}>
-      {filters
-        .sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1))
-        .map((item) => {
-          const isSelected = (st.selectedCategoryFilters[st.expandedCategory!] ?? new Set()).has(item.id);
-          return (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.chip, isSelected && styles.chipSelected]}
-              onPress={() => st.toggleCategoryItem(st.expandedCategory!, item.id)}
-            >
-              <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>{item.label}</Text>
-            </TouchableOpacity>
-          );
-        })}
-    </View>
-  );
-}
-
-function EquipmentChipList({ st }: { st: LibraryScreenState }) {
-  const equipments = [...(st.catalogs?.equipmentTypes ?? [])];
-  return (
-    <View style={styles.equipmentSubSection}>
-      <Text style={styles.equipmentSubLabel}>{st.t('coach.library.sidebar.equipmentTitle')}</Text>
-      <View style={styles.chipContainer}>
-        {equipments
-          .sort((a, b) => (a.isDefault === b.isDefault ? 0 : a.isDefault ? -1 : 1))
-          .map((item) => {
-            const isSelected = st.selectedEquipment.has(item.id);
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={[styles.chipSmall, isSelected && styles.chipSelected]}
-                onPress={() => st.toggleEquipment(item.id)}
-              >
-                <Text style={[styles.chipTextSmall, isSelected && styles.chipTextSelected]}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-      </View>
     </View>
   );
 }

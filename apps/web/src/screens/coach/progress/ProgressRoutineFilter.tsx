@@ -4,6 +4,7 @@ import { usePerformedSessionDaysQuery } from '../../../data/hooks/usePerformedSe
 import { useClientRoutineDaysQuery } from '../../../data/hooks/useCalendarQuery';
 import type { SessionProgressCategory } from '../../../data/types/session-progress';
 import type { PerformedSessionDay } from '../../../data/hooks/usePerformedSessionDaysQuery';
+import { matchesSearch } from '../../../utils/normalize-search';
 
 type Props = {
   clientId: string | null;
@@ -161,8 +162,7 @@ export function ProgressRoutineFilter({
   const routineDaysQuery = useClientRoutineDaysQuery(showDaySelector || showCategorySelector ? selectedId : null);
 
   const allTemplates = performedQuery.data?.templates ?? [];
-  const q = search.toLowerCase();
-  const filtered = allTemplates.filter((r) => r.name.toLowerCase().includes(q));
+  const filtered = allTemplates.filter((r) => matchesSearch(r.name, search));
   const dropdownItems = filtered.slice(0, 10);
 
   const performedDays = [...(performedDaysQuery.data ?? [])].sort((a, b) => a.dayIndex - b.dayIndex);

@@ -11,7 +11,6 @@ export function buildCardioMethodWhere(coachMembershipId: string, filter: Cardio
   return {
     ...buildLibraryScopeWhere(coachMembershipId),
     methodTypeId: equalsFilter(filter.methodTypeId),
-    name: containsFilter(filter.query),
   } satisfies Prisma.CardioMethodWhereInput;
 }
 
@@ -21,7 +20,6 @@ export function buildExerciseWhere(coachMembershipId: string, filter: ExerciseFi
     ...(filter.muscleGroupId && {
       muscleGroups: { some: { muscleGroupId: filter.muscleGroupId } },
     }),
-    name: containsFilter(filter.query),
   } satisfies Prisma.ExerciseWhereInput;
 }
 
@@ -30,7 +28,6 @@ export function buildFoodWhere(coachMembershipId: string, filter: FoodFilter) {
     ...buildLibraryScopeWhere(coachMembershipId),
     foodCategory: containsFilter(filter.foodCategory),
     foodType: containsFilter(filter.foodType),
-    name: containsFilter(filter.query),
     servingUnit: equalsFilter(filter.servingUnit),
   } satisfies Prisma.FoodWhereInput;
 }
@@ -38,7 +35,6 @@ export function buildFoodWhere(coachMembershipId: string, filter: FoodFilter) {
 export function buildPlioWhere(coachMembershipId: string, filter: PlioExerciseFilter) {
   const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
-    name: containsFilter(filter.query),
   } as Record<string, unknown>;
   if (filter.plioType?.trim()) {
     base.plioType = equalsFilter(filter.plioType);
@@ -49,7 +45,6 @@ export function buildPlioWhere(coachMembershipId: string, filter: PlioExerciseFi
 export function buildMobilityWhere(coachMembershipId: string, filter: MobilityExerciseFilter) {
   const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
-    name: containsFilter(filter.query),
   } as Record<string, unknown>;
   if (filter.mobilityType?.trim()) {
     base.mobilityType = equalsFilter(filter.mobilityType);
@@ -60,7 +55,6 @@ export function buildMobilityWhere(coachMembershipId: string, filter: MobilityEx
 export function buildIsometricWhere(coachMembershipId: string, filter: IsometricExerciseFilter) {
   const base = {
     ...buildLibraryScopeWhere(coachMembershipId),
-    name: containsFilter(filter.query),
   } as Record<string, unknown>;
   if (filter.isometricType?.trim()) {
     base.isometricType = equalsFilter(filter.isometricType);
@@ -68,10 +62,9 @@ export function buildIsometricWhere(coachMembershipId: string, filter: Isometric
   return base as Prisma.IsometricExerciseWhereInput;
 }
 
-export function buildSportWhere(coachMembershipId: string, query?: string) {
+export function buildSportWhere(coachMembershipId: string) {
   return {
     ...buildLibraryScopeWhere(coachMembershipId),
-    name: containsFilter(query),
   } satisfies Prisma.SportWhereInput;
 }
 

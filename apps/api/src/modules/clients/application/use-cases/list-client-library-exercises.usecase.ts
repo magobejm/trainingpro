@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import { buildLibraryScopeWhere, containsFilter, resolveClientCoachId } from '../client-library.helpers';
+import { buildLibraryScopeWhere, resolveClientCoachId } from '../client-library.helpers';
+import { matchesSearch } from '../../../../common/text/normalize-search';
 
 export type ClientLibraryExercise = {
   equipment: null | string;
@@ -22,7 +23,7 @@ export class ListClientLibraryExercisesUseCase {
   async execute(context: AuthContext, q?: string): Promise<ClientLibraryExercise[]> {
     const coachId = await resolveClientCoachId(this.prisma, context);
     const rows = await this.prisma.exercise.findMany({
-      where: { ...buildLibraryScopeWhere(coachId), name: containsFilter(q) },
+      where: { ...buildLibraryScopeWhere(coachId) },
       select: {
         equipment: true,
         id: true,
@@ -36,16 +37,18 @@ export class ListClientLibraryExercisesUseCase {
       },
       orderBy: [{ name: 'asc' }],
     });
-    return rows.map((r) => ({
-      equipment: r.equipment,
-      id: r.id,
-      instructions: r.instructions,
-      mediaType: r.mediaType,
-      mediaUrl: r.mediaUrl,
-      muscleGroups: r.muscleGroups.map((mg) => ({ id: mg.muscleGroup.id, label: mg.muscleGroup.label })),
-      name: r.name,
-      scope: r.scope,
-      youtubeUrl: r.youtubeUrl,
-    }));
+    return rows
+      .map((r) => ({
+        equipment: r.equipment,
+        id: r.id,
+        instructions: r.instructions,
+        mediaType: r.mediaType,
+        mediaUrl: r.mediaUrl,
+        muscleGroups: r.muscleGroups.map((mg) => ({ id: mg.muscleGroup.id, label: mg.muscleGroup.label })),
+        name: r.name,
+        scope: r.scope,
+        youtubeUrl: r.youtubeUrl,
+      }))
+      .filter((r) => matchesSearch(r.name, q));
   }
 }

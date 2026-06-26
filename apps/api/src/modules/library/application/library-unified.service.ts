@@ -1,6 +1,7 @@
 ﻿import { Injectable, BadRequestException } from '@nestjs/common';
 import { LibraryItemScope } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
+import { matchesSearch } from '../../../common/text/normalize-search';
 import { LibrarySeedService } from './library-seed.service';
 
 export type UnifiedCategory = 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport' | 'isometric';
@@ -23,7 +24,6 @@ export interface UnifiedExerciseDto {
   coachInstructions?: string;
 }
 
-type NameFilter = { contains: string; mode: 'insensitive' } | undefined;
 type IdList = string[] | undefined;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = any;
@@ -74,11 +74,10 @@ export class LibraryUnifiedService {
     const toArr = (v?: string) =>
       v
         ? v
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
+            .split(',')
+            .map((s) => s.trim())
+            .filter(Boolean)
         : undefined;
-    const name: NameFilter = filters.search ? { contains: filters.search, mode: 'insensitive' } : undefined;
     const mg = toArr(filters.muscleGroupIds),
       ct = toArr(filters.cardioTypeIds);
     const pt = toArr(filters.plioTypeIds),
@@ -87,20 +86,19 @@ export class LibraryUnifiedService {
       eq = toArr(filters.equipmentIds);
     const results: Row[] = [];
     const cat = filters.baseCategory;
-    if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, name, mg, eq);
-    if (!cat || cat === 'cardioMethodTypes') await this.fetchCardio(results, name, ct, eq);
-    if (!cat || cat === 'plioTypes') await this.fetchPlio(results, name, pt, eq);
-    if (!cat || cat === 'mobilityTypes') await this.fetchMobility(results, name, mt);
-    if (!cat || cat === 'isometricTypes') await this.fetchIsometric(results, name, toArr(filters.isometricTypeIds));
-    if (!cat || cat === 'sportTypes') await this.fetchSports(results, name, st);
-    return { items: results };
+    if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, mg, eq);
+    if (!cat || cat === 'cardioMethodTypes') await this.fetchCardio(results, ct, eq);
+    if (!cat || cat === 'plioTypes') await this.fetchPlio(results, pt, eq);
+    if (!cat || cat === 'mobilityTypes') await this.fetchMobility(results, mt);
+    if (!cat || cat === 'isometricTypes') await this.fetchIsometric(results, toArr(filters.isometricTypeIds));
+    if (!cat || cat === 'sportTypes') await this.fetchSports(results, st);
+    return { items: results.filter((r) => matchesSearch(r.name, filters.search)) };
   }
 
-  private async fetchExercises(res: Row[], name: NameFilter, mg: IdList, eq: IdList) {
+  private async fetchExercises(res: Row[], mg: IdList, eq: IdList) {
     const data = await this.prisma.exercise.findMany({
       where: {
         archivedAt: null,
-        ...(name && { name }),
         ...(mg && { muscleGroups: { some: { muscleGroupId: { in: mg } } } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -134,11 +132,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchCardio(res: Row[], name: NameFilter, ct: IdList, eq: IdList) {
+  private async fetchCardio(res: Row[], ct: IdList, eq: IdList) {
     const data = await this.prisma.cardioMethod.findMany({
       where: {
         archivedAt: null,
-        ...(name && { name }),
         ...(ct && { methodTypeId: { in: ct } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -173,11 +170,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchPlio(res: Row[], name: NameFilter, pt: IdList, eq: IdList) {
+  private async fetchPlio(res: Row[], pt: IdList, eq: IdList) {
     const data = await this.prisma.plioExercise.findMany({
       where: {
         archivedAt: null,
-        ...(name && { name }),
         ...(pt && { plioTypeId: { in: pt } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -207,9 +203,9 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchMobility(res: Row[], name: NameFilter, mt: IdList) {
+  private async fetchMobility(res: Row[], mt: IdList) {
     const data = await this.prisma.mobilityExercise.findMany({
-      where: { archivedAt: null, ...(name && { name }), ...(mt && { mobilityTypeId: { in: mt } }) },
+      where: { archivedAt: null, ...(mt && { mobilityTypeId: { in: mt } }) },
       include: { mobilityTypeRefRel: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
@@ -239,11 +235,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchIsometric(res: Row[], name: NameFilter, it: IdList) {
+  private async fetchIsometric(res: Row[], it: IdList) {
     const data = await this.prisma.isometricExercise.findMany({
       where: {
         archivedAt: null,
-        ...(name && { name }),
         ...(it && { isometricTypeId: { in: it } }),
       },
       include: { isometricTypeRef: true, equipmentRef: true, movementPatternRef: true, anatomicalPlaneRef: true },
@@ -272,9 +267,9 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchSports(res: Row[], name: NameFilter, st: IdList) {
+  private async fetchSports(res: Row[], st: IdList) {
     const data = await this.prisma.sport.findMany({
-      where: { archivedAt: null, ...(name && { name }), ...(st && { sportTypeId: { in: st } }) },
+      where: { archivedAt: null, ...(st && { sportTypeId: { in: st } }) },
       include: { sportTypeRef: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
@@ -345,7 +340,7 @@ export class LibraryUnifiedService {
     });
   }
   private async createCardio(base: Row, dto: UnifiedExerciseDto) {
-    const methodTypeId = dto.cardioTypeId ?? await this.resolveDefaultCardioMethodTypeId();
+    const methodTypeId = dto.cardioTypeId ?? (await this.resolveDefaultCardioMethodTypeId());
     return this.prisma.cardioMethod.create({
       data: {
         ...base,
@@ -437,7 +432,7 @@ export class LibraryUnifiedService {
       case 'strength':
         return this.updateStrength(id, base, dto);
       case 'cardio': {
-        const methodTypeId = dto.cardioTypeId ?? await this.resolveDefaultCardioMethodTypeId();
+        const methodTypeId = dto.cardioTypeId ?? (await this.resolveDefaultCardioMethodTypeId());
         return this.prisma.cardioMethod.update({
           where: { id },
           data: { ...extBase, methodTypeId, equipmentId: dto.equipmentId },

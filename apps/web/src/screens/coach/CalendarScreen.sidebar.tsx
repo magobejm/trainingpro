@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { matchesSearch } from '../../utils/normalize-search';
 import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
@@ -296,10 +297,10 @@ export function CalendarSidebar({
   const isCoachOnly = viewMode === 'coachOnly';
 
   const filtered = clients.filter((c) => {
-    const fullName = `${c.firstName} ${c.lastName}`.toLowerCase();
-    const matchesSearch = fullName.includes(search.toLowerCase());
+    const fullName = `${c.firstName} ${c.lastName}`;
+    const nameMatches = matchesSearch(fullName, search);
     const matchesObj = objectiveFilter ? c.objectiveId === objectiveFilter : true;
-    return matchesSearch && matchesObj;
+    return nameMatches && matchesObj;
   });
 
   return (

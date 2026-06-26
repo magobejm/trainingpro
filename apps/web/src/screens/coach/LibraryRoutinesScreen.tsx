@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
+import { matchesSearch } from '../../utils/normalize-search';
 import { C, ss } from './LibraryRoutinesScreen.styles';
 import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
 import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
@@ -437,8 +438,7 @@ function pickWarmupImage(tpl: WarmupTemplateView, map: MediaMap): string {
 function useFiltered<T extends { name: string }>(items: T[], query: string): T[] {
   return useMemo(() => {
     const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
-    const q = query.trim().toLowerCase();
-    return q ? sorted.filter((i) => i.name.toLowerCase().includes(q)) : sorted;
+    return sorted.filter((i) => matchesSearch(i.name, query));
   }, [items, query]);
 }
 

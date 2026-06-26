@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useRoutineTemplatesQuery } from '../../../data/hooks/useRoutineTemplates';
 import { usePlanTemplatesQuery } from '../../../data/hooks/usePlanTemplates';
+import { matchesSearch } from '../../../utils/normalize-search';
 
 type Props = {
   visible: boolean;
@@ -16,17 +17,10 @@ export function PlanSelectionModal(props: Props): React.JSX.Element {
   const { routines, strength, isLoading } = usePlanData();
   const [search, setSearch] = useState('');
   const allTemplates = [...routines, ...strength];
-  const filtered = allTemplates.filter((tpl) =>
-    tpl.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = allTemplates.filter((tpl) => matchesSearch(tpl.name, search));
 
   return (
-    <Modal
-      animationType={ANIMATION_FADE}
-      onRequestClose={props.onClose}
-      transparent
-      visible={props.visible}
-    >
+    <Modal animationType={ANIMATION_FADE} onRequestClose={props.onClose} transparent visible={props.visible}>
       <ModalContent
         filtered={filtered}
         isLoading={isLoading}
@@ -62,19 +56,8 @@ function ModalContent(props: ContentProps) {
     <View style={styles.overlay}>
       <View style={styles.card}>
         <Text style={styles.title}>{t('coach.routine.list.title')}</Text>
-        <TextInput
-          onChangeText={setSearch}
-          placeholder={t('common.search')}
-          style={styles.input}
-          value={search}
-        />
-        <PlanListContent
-          filtered={filtered}
-          isLoading={isLoading}
-          onClose={onClose}
-          onSelect={onSelect}
-          t={t}
-        />
+        <TextInput onChangeText={setSearch} placeholder={t('common.search')} style={styles.input} value={search} />
+        <PlanListContent filtered={filtered} isLoading={isLoading} onClose={onClose} onSelect={onSelect} t={t} />
         <Pressable onPress={onClose} style={styles.closeButton}>
           <Text style={styles.closeLabel}>{t('common.cancel')}</Text>
         </Pressable>
@@ -111,9 +94,7 @@ function PlanListContent({
     <FlatList
       data={filtered}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => (
-        <PlanListItem item={item} onClose={onClose} onSelect={onSelect} t={t} />
-      )}
+      renderItem={({ item }) => <PlanListItem item={item} onClose={onClose} onSelect={onSelect} t={t} />}
       style={styles.list}
     />
   );
@@ -139,9 +120,7 @@ function PlanListItem({
       style={styles.item}
     >
       <Text style={styles.itemName}>{item.name}</Text>
-      <Text style={styles.itemSubtitle}>
-        {item.scope === 'GLOBAL' ? t('common.global') : t('common.mine')}
-      </Text>
+      <Text style={styles.itemSubtitle}>{item.scope === 'GLOBAL' ? t('common.global') : t('common.mine')}</Text>
     </Pressable>
   );
 }

@@ -12,6 +12,7 @@ import {
 } from '../../data/hooks/useNotesQuery';
 import type { ClientData, NoteData } from './notes-screen.types';
 import { filterAndSortNotes } from './notes-screen.utils';
+import { matchesSearch } from '../../utils/normalize-search';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
 
@@ -151,8 +152,8 @@ function useNotesScreenModel() {
   const filteredClients = useMemo(
     () =>
       clients.filter((client) => {
-        const name = `${client.firstName} ${client.lastName}`.toLowerCase();
-        const matchesName = name.includes(clientSearch.toLowerCase());
+        const name = `${client.firstName} ${client.lastName}`;
+        const matchesName = matchesSearch(name, clientSearch);
         return matchesName && (selectedObjective ? client.objectiveId === selectedObjective : true);
       }),
     [clientSearch, clients, selectedObjective],

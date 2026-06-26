@@ -25,6 +25,7 @@ import {
   buildExerciseWhere,
   toDomainScope,
 } from './library.repository.prisma.helpers';
+import { matchesSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
 import { LibraryFoodRepository } from './library-food.repository';
 import { LibrarySpecializedRepository } from './library-specialized.repository';
@@ -50,7 +51,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
 
   async createCardioMethod(context: AuthContext, input: CardioMethodWriteInput) {
     const membership = await this.resolveCoachMembership(context);
-    const methodTypeId = input.methodTypeId ?? await this.resolveDefaultCardioMethodTypeId();
+    const methodTypeId = input.methodTypeId ?? (await this.resolveDefaultCardioMethodTypeId());
     await this.assertCardioMethodTypeExists(methodTypeId);
     const row = await this.prisma.cardioMethod.create({
       data: {
@@ -130,7 +131,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
       where: buildCardioMethodWhere(membership.id, filter),
       include: CARDIO_METHOD_WITH_CATALOG,
     });
-    return rows.map(mapCardioMethod);
+    return rows.map(mapCardioMethod).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async listMobilityTypes(context: AuthContext) {
@@ -152,7 +153,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
       where: buildExerciseWhere(membership.id, filter),
       include: EXERCISE_WITH_CATALOG,
     });
-    return rows.map(mapExercise);
+    return rows.map(mapExercise).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async listFoods(context: AuthContext, filter: FoodFilter) {

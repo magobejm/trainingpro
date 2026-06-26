@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { s } from '../../RoutinePlanner.styles';
 import { WarmupExerciseList } from './WarmupExerciseList';
+import { matchesSearch } from '../../../../utils/normalize-search';
 
 type Props = {
   onCancel: () => void;
@@ -31,11 +32,9 @@ function PickerSheet(props: Props): React.JSX.Element {
   }, [props.visible]);
 
   const sortedFiltered = useMemo(() => {
-    const q = query.trim().toLowerCase();
     const list = [...props.templates];
     list.sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', i18n.language || 'en', { sensitivity: 'base' }));
-    if (!q) return list;
-    return list.filter((t) => (t.name ?? '').toLowerCase().includes(q));
+    return list.filter((t) => matchesSearch(t.name ?? '', query));
   }, [props.templates, query, i18n.language]);
 
   return (

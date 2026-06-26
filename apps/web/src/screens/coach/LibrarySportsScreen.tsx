@@ -1,14 +1,7 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DimensionValue,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  ActivityIndicator,
-} from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -28,6 +21,7 @@ import { readFrontEnv } from '../../data/env';
 import { EMPTY_SPORT_FORM, type SportCreateFormState } from './LibrarySportsScreen.create';
 import { createFieldSetter } from './libraryCreateForm.utils';
 import { uploadLibraryMediaImage } from './library-media.upload';
+import { matchesSearch } from '../../utils/normalize-search';
 
 function resolvePlaceholder(): string {
   const env = readFrontEnv();
@@ -54,9 +48,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
 
   const { data, isLoading } = useLibrarySportsQuery();
   // Frontend-side filtering for sports (api doesn't support query yet for sports)
-  const items = (data ?? []).filter(
-    (item) => !query || item.name.toLowerCase().includes(query.toLowerCase()),
-  );
+  const items = (data ?? []).filter((item) => matchesSearch(item.name, query));
 
   const createMutation = useCreateSportMutation();
   const updateMutation = useUpdateSportMutation();
@@ -124,11 +116,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
       <Text style={styles.subtitle}>{t('coach.library.exercises.subtitle')}</Text>
 
       <View style={styles.card}>
-        <SearchBar
-          onChangeText={setQuery}
-          placeholder={t('coach.library.exercises.searchPlaceholder')}
-          value={query}
-        />
+        <SearchBar onChangeText={setQuery} placeholder={t('coach.library.exercises.searchPlaceholder')} value={query} />
       </View>
 
       <LibraryCreateCta
@@ -149,11 +137,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
         title={t('coach.library.sports.modal.title')}
         visible={createModalVisible}
       >
-        <SportBaseFields
-          form={form as unknown as Record<string, string>}
-          setField={setField}
-          t={t}
-        />
+        <SportBaseFields form={form as unknown as Record<string, string>} setField={setField} t={t} />
         <LibraryMediaFields
           imageUrl={form.mediaUrl}
           isUploading={uploadImageMutation.isPending}
@@ -174,11 +158,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
         title={t('coach.library.sports.editModal.title')}
         visible={editModalVisible}
       >
-        <SportBaseFields
-          form={form as unknown as Record<string, string>}
-          setField={setField}
-          t={t}
-        />
+        <SportBaseFields form={form as unknown as Record<string, string>} setField={setField} t={t} />
         <LibraryMediaFields
           imageUrl={form.mediaUrl}
           isUploading={uploadImageMutation.isPending}

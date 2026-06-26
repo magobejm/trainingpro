@@ -9,6 +9,7 @@ import type {
   SportLibraryItem,
 } from '../../../../data/hooks/useLibraryQuery';
 import type { LibraryItem } from './ExercisePickerModal.types';
+import { matchesSearch } from '../../../../utils/normalize-search';
 
 function resolveApiBaseUrl(): string {
   const env = readFrontEnv();
@@ -114,7 +115,5 @@ export function mapSports(items: SportLibraryItem[]): LibraryItem[] {
 }
 
 export function filterByQuery(items: LibraryItem[], query: string): LibraryItem[] {
-  const q = query.trim().toLowerCase();
-  if (!q) return items;
-  return items.filter((item) => item.name.toLowerCase().includes(q));
+  return items.filter((item) => matchesSearch(item.name, query));
 }

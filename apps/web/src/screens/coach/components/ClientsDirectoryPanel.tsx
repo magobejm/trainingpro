@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
+import { matchesSearch } from '../../../utils/normalize-search';
 import { ClientSelectionStrip, type ClientSelectorItem } from './ClientSelectionStrip';
 import { styles } from './ClientsDirectoryPanel.styles';
 
@@ -41,10 +42,7 @@ function useDirectoryModel(props: Props) {
   };
 }
 
-function renderDirectory(
-  props: Props,
-  vm: ReturnType<typeof useDirectoryModel>,
-): React.JSX.Element {
+function renderDirectory(props: Props, vm: ReturnType<typeof useDirectoryModel>): React.JSX.Element {
   return (
     <ClientSelectionStrip
       emptyLabel={vm.emptyLabel}
@@ -79,11 +77,7 @@ function DirectoryHeader(props: {
     <View style={styles.headerRow}>
       <Text style={styles.title}>{props.t('coach.clients.section.title')}</Text>
       <View style={styles.filtersRow}>
-        <SearchInput
-          onChangeText={props.onSearchValueChange}
-          t={props.t}
-          value={props.searchValue}
-        />
+        <SearchInput onChangeText={props.onSearchValueChange} t={props.t} value={props.searchValue} />
         <ObjectiveSelect
           objectiveFilter={props.objectiveFilter}
           objectives={props.objectives}
@@ -139,7 +133,7 @@ function buildClientCards(
   objectiveFilter: string,
   t: (key: string) => string,
 ): ClientSelectorItem[] {
-  const search = searchValue.trim().toLocaleLowerCase('es');
+  const search = searchValue.trim();
   return clients
     .filter((item) => matchesClient(item, search, objectiveFilter))
     .map((item) => toCard(item, t))
@@ -147,11 +141,11 @@ function buildClientCards(
 }
 
 function matchesClient(client: ClientView, search: string, objectiveFilter: string): boolean {
-  const fullName = `${client.firstName} ${client.lastName}`.trim().toLocaleLowerCase('es');
+  const fullName = `${client.firstName} ${client.lastName}`.trim();
   const objective = (client.objective ?? '').trim();
-  const matchesSearch = search.length === 0 || fullName.includes(search);
+  const nameMatches = matchesSearch(fullName, search);
   const matchesObjective = objectiveFilter === 'ALL' || objective === objectiveFilter;
-  return matchesSearch && matchesObjective;
+  return nameMatches && matchesObjective;
 }
 
 function toCard(client: ClientView, t: (key: string) => string): ClientSelectorItem {
@@ -185,9 +179,7 @@ function readObjective(client: ClientView, t: (key: string) => string): string {
 
 function readObjectiveOptions(clients: ClientView[], t: (key: string) => string) {
   const labels = Array.from(
-    new Set(
-      clients.map((item) => (item.objective ?? '').trim()).filter((value) => value.length > 0),
-    ),
+    new Set(clients.map((item) => (item.objective ?? '').trim()).filter((value) => value.length > 0)),
   ).sort((left, right) => left.localeCompare(right, 'es'));
 
   const options = labels.map((label) => ({ label, value: label }));

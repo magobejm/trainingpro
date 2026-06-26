@@ -4,10 +4,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import type { IsometricExerciseFilter, IsometricExerciseWriteInput } from '../../domain/isometric-exercise.input';
 import type { PlioExerciseFilter, PlioExerciseWriteInput } from '../../domain/plio-exercise.input';
-import type {
-  MobilityExerciseFilter,
-  MobilityExerciseWriteInput,
-} from '../../domain/mobility-exercise.input';
+import type { MobilityExerciseFilter, MobilityExerciseWriteInput } from '../../domain/mobility-exercise.input';
 import type { SportWriteInput } from '../../domain/sport.input';
 import type { LibraryCatalogItem } from '../../domain/entities/library-catalog-item';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
@@ -25,6 +22,7 @@ import {
   buildSportWhere,
   toDomainScope,
 } from './library.repository.prisma.helpers';
+import { matchesSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
 
 @Injectable()
@@ -42,7 +40,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
       orderBy: [{ name: 'asc' }],
       where: buildIsometricWhere(membership.id, filter),
     });
-    return rows.map(mapIsometricExercise);
+    return rows.map(mapIsometricExercise).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async listIsometricTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
@@ -69,11 +67,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return mapIsometricExercise(row);
   }
 
-  async updateIsometricExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<IsometricExerciseWriteInput>,
-  ) {
+  async updateIsometricExercise(context: AuthContext, itemId: string, input: Partial<IsometricExerciseWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readIsometricExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
@@ -100,7 +94,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
       orderBy: [{ name: 'asc' }],
       where: buildPlioWhere(membership.id, filter),
     });
-    return rows.map(mapPlioExercise);
+    return rows.map(mapPlioExercise).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async listMobilityExercises(context: AuthContext, filter: MobilityExerciseFilter) {
@@ -109,16 +103,16 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
       orderBy: [{ name: 'asc' }],
       where: buildMobilityWhere(membership.id, filter),
     });
-    return rows.map(mapMobilityExercise);
+    return rows.map(mapMobilityExercise).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async listSports(context: AuthContext, query?: string) {
     const membership = await this.resolveCoachMembership(context);
     const rows = await this.prisma.sport.findMany({
       orderBy: [{ name: 'asc' }],
-      where: buildSportWhere(membership.id, query),
+      where: buildSportWhere(membership.id),
     });
-    return rows.map(mapSport);
+    return rows.map(mapSport).filter((item) => matchesSearch(item.name, query));
   }
 
   async listPlioTypes(context: AuthContext): Promise<LibraryCatalogItem[]> {
@@ -182,11 +176,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return mapSport(row);
   }
 
-  async updatePlioExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<PlioExerciseWriteInput>,
-  ) {
+  async updatePlioExercise(context: AuthContext, itemId: string, input: Partial<PlioExerciseWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readPlioExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
@@ -197,11 +187,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     return mapPlioExercise(updated);
   }
 
-  async updateMobilityExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<MobilityExerciseWriteInput>,
-  ) {
+  async updateMobilityExercise(context: AuthContext, itemId: string, input: Partial<MobilityExerciseWriteInput>) {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readMobilityExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);

@@ -1,15 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { FoodFilter, FoodWriteInput } from '../../domain/food.input';
 import { LibraryEditPolicy } from '../../domain/policies/library-edit.policy';
 import { mapFood, normalizeFoodInput } from './library.mappers';
 import { buildFoodWhere, toDomainScope } from './library.repository.prisma.helpers';
+import { matchesSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
 
 @Injectable()
@@ -41,7 +39,7 @@ export class LibraryFoodRepository extends LibraryBaseRepository {
       orderBy: [{ name: 'asc' }],
       where: buildFoodWhere(membership.id, filter),
     });
-    return rows.map(mapFood);
+    return rows.map(mapFood).filter((item) => matchesSearch(item.name, filter.query));
   }
 
   async updateFood(context: AuthContext, itemId: string, input: Partial<FoodWriteInput>) {

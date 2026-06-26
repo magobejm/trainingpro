@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { SearchBar } from '@trainerpro/ui';
+import { matchesSearch } from '../../../../utils/normalize-search';
 import { s } from '../../RoutinePlanner.styles';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { RoutineListItem } from './RoutineListItem';
@@ -90,18 +91,9 @@ function renderListContent(
   ));
 }
 
-function useFilteredTemplates(
-  templates: RoutineTemplateView[],
-  query: string,
-): RoutineTemplateView[] {
+function useFilteredTemplates(templates: RoutineTemplateView[], query: string): RoutineTemplateView[] {
   return useMemo(() => {
-    const sorted = [...templates].sort((a, b) =>
-      a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }),
-    );
-    const q = query.trim().toLowerCase();
-    if (!q) {
-      return sorted;
-    }
-    return sorted.filter((tpl) => tpl.name.toLowerCase().includes(q));
+    const sorted = [...templates].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
+    return sorted.filter((tpl) => matchesSearch(tpl.name, query));
   }, [query, templates]);
 }

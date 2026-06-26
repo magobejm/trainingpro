@@ -9,6 +9,7 @@ import {
 } from '../../../data/hooks/useLibraryQuery';
 import { usePerformedExercisesQuery } from '../../../data/hooks/usePerformedExercisesQuery';
 import type { ExerciseType, SelectedExercise } from './progress-screen.types';
+import { matchesSearch } from '../../../utils/normalize-search';
 
 type Group = {
   type: ExerciseType;
@@ -65,10 +66,8 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
     if (selected) setSearch(selected.name);
   }, [selected]);
 
-  const q = search.toLowerCase();
-
   function filterBySearch<T extends { id: string; name: string }>(items: T[]): T[] {
-    return items.filter((i) => i.name.toLowerCase().includes(q));
+    return items.filter((i) => matchesSearch(i.name, search));
   }
 
   /** Orden: Grupo muscular, Cardio, Pliometría, Isométrico, Movilidad, Deporte */

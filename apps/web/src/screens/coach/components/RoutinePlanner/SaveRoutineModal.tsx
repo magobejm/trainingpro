@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
+import { matchesSearch } from '../../../../utils/normalize-search';
 
 const MODAL_ANIM = 'fade' as const;
 const SCROLL_KEYBOARD_TAPS = 'handled' as const;
@@ -106,14 +107,10 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   }, [visible, initialName]);
 
   const filtered = clients.filter((c) => {
-    const q = search.toLowerCase();
-    const matchesSearch =
-      !q ||
-      c.firstName.toLowerCase().includes(q) ||
-      c.lastName.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q);
+    const haystack = `${c.firstName} ${c.lastName} ${c.email}`;
+    const nameMatches = matchesSearch(haystack, search);
     const matchesObjective = !selectedObjectiveId || c.objectiveId === selectedObjectiveId;
-    return matchesSearch && matchesObjective;
+    return nameMatches && matchesObjective;
   });
 
   async function handleSaveOnly() {

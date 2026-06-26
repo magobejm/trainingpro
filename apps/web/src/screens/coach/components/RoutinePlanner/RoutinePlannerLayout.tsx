@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Pressable, ScrollView, Text } from 'react-native';
+import { ArrowLeft } from 'lucide-react';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
 import { SaveRoutineModal } from './SaveRoutineModal';
@@ -19,6 +20,7 @@ interface LayoutProps {
   objectiveOptions: Array<{ id: string; label: string }>;
   onAssignTemplate?: (templateId: string) => Promise<void>;
   onBack?: () => void;
+  backLabelKey?: string;
   t: (k: string, options?: Record<string, unknown>) => string;
   viewOnlyMode?: boolean;
   uiState: {
@@ -153,15 +155,8 @@ function RoutineDayList(props: {
 }
 
 function RoutineFooterSection(props: LayoutProps) {
-  const { t, draftState, uiState, viewOnlyMode, onBack } = props;
+  const { t, draftState, uiState, viewOnlyMode } = props;
   const isGlobal = draftState.draft.scope === 'GLOBAL';
-  if (viewOnlyMode && onBack) {
-    return (
-      <Pressable onPress={onBack} style={[s.saveBtn, { backgroundColor: '#64748b' }]}>
-        <Text style={s.saveBtnText}>{t('common.back')}</Text>
-      </Pressable>
-    );
-  }
   const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
@@ -269,6 +264,28 @@ export function RoutinePlannerLayout(props: LayoutProps) {
   );
 }
 
+function RoutinePlannerBackHeader({
+  onBack,
+  backLabelKey,
+  t,
+}: {
+  onBack: () => void;
+  backLabelKey: string;
+  t: LayoutProps['t'];
+}) {
+  return (
+    <Pressable onPress={onBack} style={plannerBackStyles.row}>
+      <ArrowLeft color={'#64748b'} size={18} />
+      <Text style={plannerBackStyles.text}>{t(backLabelKey)}</Text>
+    </Pressable>
+  );
+}
+
+const plannerBackStyles = {
+  row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, padding: 4, marginBottom: 8 },
+  text: { fontSize: 14, color: '#64748b' as const },
+};
+
 function RoutineLayoutSections(props: {
   onOpenPicker: OpenPickerFn;
   onOpenWarmupTemplatePicker: (dayIdx: number) => void;
@@ -276,10 +293,11 @@ function RoutineLayoutSections(props: {
   onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   props: LayoutProps;
 }) {
-  const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode } = props.props;
+  const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode, onBack, backLabelKey } = props.props;
   const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
   return (
     <>
+      {onBack && backLabelKey ? <RoutinePlannerBackHeader onBack={onBack} backLabelKey={backLabelKey} t={t} /> : null}
       <RoutinePlannerTopSection
         draft={draftState.draft}
         editingId={uiState.editingId}

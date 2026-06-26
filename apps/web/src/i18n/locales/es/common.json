@@ -19,6 +19,8 @@
   "coach.routineLib.emptyRoutines": "No hay rutinas guardadas",
   "coach.routineLib.emptyWarmups": "No hay calentamientos guardados",
   "coach.routineLib.microcycle": "{{count}} días microciclo",
+  "coach.routinePlanner.backToLibrary": "Volver a biblioteca de rutinas",
+  "coach.routinePlanner.backToClient": "Volver al cliente",
   "app.nav.coach.library.isometrics": "Biblioteca isométricos",
   "app.nav.coach.library.plyometrics": "Biblioteca pliométricos",
   "app.nav.coach.library.warmup": "Biblioteca movilidad",

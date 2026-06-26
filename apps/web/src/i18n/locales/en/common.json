@@ -19,6 +19,8 @@
   "coach.routineLib.emptyRoutines": "No saved routines",
   "coach.routineLib.emptyWarmups": "No saved warmups",
   "coach.routineLib.microcycle": "{{count}} day microcycle",
+  "coach.routinePlanner.backToLibrary": "Back to routines library",
+  "coach.routinePlanner.backToClient": "Back to client",
   "app.nav.coach.library.isometrics": "Isometrics library",
   "app.nav.coach.library.plyometrics": "Plyometrics library",
   "app.nav.coach.library.warmup": "Mobility library",

@@ -157,7 +157,15 @@ function buildLayoutModel(params: {
     objectiveOptions: params.objectiveOptions,
     onAssignTemplate: buildAssignTemplateHandler(params),
     onAssignOnly: params.onAssignOnly,
-    onBack: params.plannerContext.clientId ? () => params.onRouteChange?.('coach.clients') : undefined,
+    onBack: params.plannerContext.clientId
+      ? () => params.onRouteChange?.('coach.clients')
+      : () => {
+          params.plannerContext.clear();
+          params.onRouteChange?.('coach.library.routines');
+        },
+    backLabelKey: params.plannerContext.clientId
+      ? 'coach.routinePlanner.backToClient'
+      : 'coach.routinePlanner.backToLibrary',
     onSave: params.onSave,
     onSaveAndAssign: params.onSaveAndAssign,
     t: params.t,
@@ -203,6 +211,7 @@ function useRoutineSaveHandler(
 
 function usePlannerContextState() {
   return {
+    clear: useRoutinePlannerContextStore((state) => state.clear),
     clientDisplayName: useRoutinePlannerContextStore((state) => state.clientDisplayName),
     clearInitialTemplate: useRoutinePlannerContextStore((state) => state.clearInitialTemplate),
     clientId: useRoutinePlannerContextStore((state) => state.clientId),

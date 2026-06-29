@@ -58,8 +58,9 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
   const openForEdit = useRoutinePlannerContextStore((s) => s.openForEdit);
   const openForView = useRoutinePlannerContextStore((s) => s.openForView);
   const clearRoutine = useRoutinePlannerContextStore((s) => s.clear);
+  const openBlankRoutine = useRoutinePlannerContextStore((s) => s.openBlankFromLibrary);
   const setWarmupInitial = useWarmupPlannerContextStore((s) => s.setInitialTemplate);
-  const clearWarmup = useWarmupPlannerContextStore((s) => s.clear);
+  const openBlankWarmup = useWarmupPlannerContextStore((s) => s.openBlankFromLibrary);
   const assignRoutine = useAssignRoutineMutation();
   const deleteRoutine = useDeleteRoutineTemplateMutation();
   const deleteWarmup = useDeleteWarmupTemplateMutation();
@@ -87,11 +88,11 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
     deleteError,
     setDeleteError,
     onCreateRoutine: () => {
-      clearRoutine();
+      openBlankRoutine();
       onRouteChange('coach.routine.planner');
     },
     onCreateWarmup: () => {
-      clearWarmup();
+      openBlankWarmup();
       onRouteChange('coach.warmup.planner');
     },
     onAssignRoutine: (tpl: RoutineTemplateView) => {

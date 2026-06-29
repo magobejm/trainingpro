@@ -159,13 +159,17 @@ function buildLayoutModel(params: {
     onAssignOnly: params.onAssignOnly,
     onBack: params.plannerContext.clientId
       ? () => params.onRouteChange?.('coach.clients')
-      : () => {
-          params.plannerContext.clear();
-          params.onRouteChange?.('coach.library.routines');
-        },
+      : params.plannerContext.fromLibrary
+        ? () => {
+            params.plannerContext.clear();
+            params.onRouteChange?.('coach.library.routines');
+          }
+        : undefined,
     backLabelKey: params.plannerContext.clientId
       ? 'coach.routinePlanner.backToClient'
-      : 'coach.routinePlanner.backToLibrary',
+      : params.plannerContext.fromLibrary
+        ? 'coach.routinePlanner.backToLibrary'
+        : undefined,
     onSave: params.onSave,
     onSaveAndAssign: params.onSaveAndAssign,
     t: params.t,
@@ -215,6 +219,7 @@ function usePlannerContextState() {
     clientDisplayName: useRoutinePlannerContextStore((state) => state.clientDisplayName),
     clearInitialTemplate: useRoutinePlannerContextStore((state) => state.clearInitialTemplate),
     clientId: useRoutinePlannerContextStore((state) => state.clientId),
+    fromLibrary: useRoutinePlannerContextStore((state) => state.fromLibrary),
     initialTemplateId: useRoutinePlannerContextStore((state) => state.initialTemplateId),
     resetCounter: useRoutinePlannerContextStore((state) => state.resetCounter),
     viewMode: useRoutinePlannerContextStore((state) => state.viewMode),

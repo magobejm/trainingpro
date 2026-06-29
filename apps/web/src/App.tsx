@@ -52,6 +52,7 @@ import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
+import { useWarmupPlannerContextStore } from './store/warmupPlannerContext.store';
 
 export function App(): React.JSX.Element {
   useSessionSync();
@@ -107,11 +108,15 @@ function useShellViewModel(activeRole: 'admin' | 'coach') {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
   const clearRoutinePlannerContext = useRoutinePlannerContextStore((state) => state.clear);
+  const clearWarmupPlannerContext = useWarmupPlannerContextStore((state) => state.clear);
   const navItems = useMemo(() => resolveNavItems(activeRole), [activeRole]);
   const [route, setRoute] = usePersistentShellRoute(activeRole, navItems);
   const onSetRoute = (nextRoute: ShellRoute) => {
     if (nextRoute === 'coach.routine.planner') {
       clearRoutinePlannerContext();
+    }
+    if (nextRoute === 'coach.warmup.planner') {
+      clearWarmupPlannerContext();
     }
     setRoute(nextRoute);
   };

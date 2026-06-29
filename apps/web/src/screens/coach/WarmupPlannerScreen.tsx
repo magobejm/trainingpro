@@ -62,7 +62,8 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
 
   const initialTemplateId = useWarmupPlannerContextStore((st) => st.initialTemplateId);
   const viewOnly = useWarmupPlannerContextStore((st) => st.viewOnly);
-  const clearWarmupContext = useWarmupPlannerContextStore((st) => st.clear);
+  const fromLibrary = useWarmupPlannerContextStore((st) => st.fromLibrary);
+  const clearInitialTemplate = useWarmupPlannerContextStore((st) => st.clearInitialTemplate);
 
   useEffect(() => {
     if (!initialTemplateId || list.length === 0 || isFetching) return;
@@ -72,8 +73,8 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     setEditingId(isGlobal ? null : tpl.id);
     setIsReadOnly(isGlobal || viewOnly);
     setDraft(fromTemplate(tpl));
-    clearWarmupContext();
-  }, [initialTemplateId, list, isFetching, clearWarmupContext, viewOnly]);
+    clearInitialTemplate();
+  }, [initialTemplateId, list, isFetching, clearInitialTemplate, viewOnly]);
 
   const handleConfirmGroup = () => {
     const updated = confirmGroup(toDraftDay(draft));
@@ -125,6 +126,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     showSaveModal,
     startGroupMode,
     cancelGroupMode,
+    fromLibrary,
     t,
     toggleBlockSelection,
   };
@@ -173,10 +175,18 @@ const backBtnTextStyle = { fontSize: 14, color: '#64748b' as const };
 function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <View style={headerStyles}>
-      <Pressable onPress={() => vm.onRouteChange('coach.library.warmups')} style={backBtnStyle}>
-        <ArrowLeft color={'#64748b'} size={18} />
-        <Text style={backBtnTextStyle}>{vm.t('coach.warmupPlanner.back')}</Text>
-      </Pressable>
+      {vm.fromLibrary ? (
+        <Pressable
+          onPress={() => {
+            useWarmupPlannerContextStore.getState().clear();
+            vm.onRouteChange('coach.library.warmups');
+          }}
+          style={backBtnStyle}
+        >
+          <ArrowLeft color={'#64748b'} size={18} />
+          <Text style={backBtnTextStyle}>{vm.t('coach.warmupPlanner.back')}</Text>
+        </Pressable>
+      ) : null}
       <Text style={s.title}>{vm.t('coach.warmupPlanner.title')}</Text>
     </View>
   );

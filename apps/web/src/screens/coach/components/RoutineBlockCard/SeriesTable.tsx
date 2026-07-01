@@ -240,50 +240,49 @@ function SeriesDataRow({
         )}
       </View>
 
-      {advancedEnabled && !readOnly ? (
-        <TouchableOpacity
-          style={[st.seriesCell, { width: SERIES_COL_W }, st.seriesCellClickable]}
-          onPress={() => onOpenAdvanced(idx)}
-        >
-          <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
-            <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
-              {idx + 1}
-            </Text>
-          </View>
-          {set.advancedTechnique ? (
-            <View style={st.advancedLabelRow}>
-              <Text style={st.advancedLabel} numberOfLines={1}>
-                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
-              </Text>
-              <TouchableOpacity
-                onPress={(e) => {
-                  (e as BaseSyntheticEvent).stopPropagation?.();
-                  onRemoveAdvanced(idx);
-                }}
-                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-              >
-                <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null}
-          {idx > 0 ? (
-            <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.copyBtn}>
-              <Text style={st.copyIcon}>{ICON_COPY}</Text>
-            </TouchableOpacity>
-          ) : null}
-        </TouchableOpacity>
-      ) : (
-        <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
-          <Text style={st.seriesNumber}>{idx + 1}</Text>
-          {set.advancedTechnique ? (
-            <View style={st.advancedLabelRow}>
-              <Text style={st.advancedLabel} numberOfLines={1}>
-                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+      <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
+        {advancedEnabled && !readOnly ? (
+          <TouchableOpacity style={st.seriesCellClickable} onPress={() => onOpenAdvanced(idx)}>
+            <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
+              <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
+                {idx + 1}
               </Text>
             </View>
-          ) : null}
-        </View>
-      )}
+            {set.advancedTechnique ? (
+              <View style={st.advancedLabelRow}>
+                <Text style={st.advancedLabel} numberOfLines={1}>
+                  {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+                </Text>
+                <TouchableOpacity
+                  onPress={(e) => {
+                    (e as BaseSyntheticEvent).stopPropagation?.();
+                    onRemoveAdvanced(idx);
+                  }}
+                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                >
+                  <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
+          </TouchableOpacity>
+        ) : (
+          <>
+            <Text style={st.seriesNumber}>{idx + 1}</Text>
+            {set.advancedTechnique ? (
+              <View style={st.advancedLabelRow}>
+                <Text style={st.advancedLabel} numberOfLines={1}>
+                  {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+                </Text>
+              </View>
+            ) : null}
+          </>
+        )}
+        {!readOnly && idx > 0 ? (
+          <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.copyBtn}>
+            <Text style={st.copyIcon}>{ICON_COPY}</Text>
+          </TouchableOpacity>
+        ) : null}
+      </View>
 
       <SeriesRowValueCells
         idx={idx}

@@ -29,6 +29,7 @@ import { matchesSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
 import { LibraryFoodRepository } from './library-food.repository';
 import { LibrarySpecializedRepository } from './library-specialized.repository';
+import { LibraryRoutineUsageGuard } from './library-routine-usage.guard';
 
 const CARDIO_METHOD_WITH_CATALOG = {
   methodTypeRef: { select: { label: true } },
@@ -45,6 +46,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     prisma: PrismaService,
     private readonly foodRepo: LibraryFoodRepository,
     private readonly specializedRepo: LibrarySpecializedRepository,
+    private readonly routineUsageGuard: LibraryRoutineUsageGuard,
   ) {
     super(prisma);
   }
@@ -90,6 +92,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readCardioMethodForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('cardio', itemId);
     await this.prisma.cardioMethod.update({
       where: { id: itemId },
       data: {
@@ -103,6 +106,7 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('strength', itemId);
     await this.prisma.exercise.update({
       where: { id: itemId },
       data: {

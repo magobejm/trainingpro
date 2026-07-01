@@ -57,6 +57,7 @@ export function useLibraryScreenState() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; kind: string } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<UnifiedExerciseItem | null>(null);
@@ -120,8 +121,12 @@ export function useLibraryScreenState() {
 
   const confirmDelete = useCallback(() => {
     if (!pendingDelete) return;
+    setDeleteError(null);
     setDeletingId(pendingDelete.id);
     const { id, kind } = pendingDelete;
+    const itemName =
+      exercises?.find((item) => item.id === id && item.kind === kind)?.name ??
+      t('coach.library.exercises.actions.deleteInRoutineFallbackName');
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mutationItem: any;
 
@@ -134,13 +139,22 @@ export function useLibraryScreenState() {
 
     if (mutationItem) {
       mutationItem.mutate(id, {
-        onSettled: () => {
+        onSuccess: () => {
           setPendingDelete(null);
+          setDeletingId(null);
+        },
+        onError: (err: unknown) => {
+          const raw = readApiErrorMessage(err);
+          setDeleteError(
+            isLibraryItemUsedInRoutineError(raw)
+              ? t('coach.library.exercises.actions.deleteInRoutineError', { name: itemName })
+              : raw || t('coach.library.exercises.actions.deleteFailed'),
+          );
           setDeletingId(null);
         },
       });
     }
-  }, [pendingDelete, deleteExercise, deleteCardio, deleteIsometric, deletePlio, deleteMobility, deleteSport]);
+  }, [pendingDelete, exercises, t, deleteExercise, deleteCardio, deleteIsometric, deletePlio, deleteMobility, deleteSport]);
 
   return {
     t,
@@ -156,6 +170,8 @@ export function useLibraryScreenState() {
     pendingDelete,
     setPendingDelete,
     deletingId,
+    deleteError,
+    setDeleteError,
     isModalVisible,
     setIsModalVisible,
     itemToEdit,
@@ -175,3 +191,23 @@ export function useLibraryScreenState() {
   };
 }
 export type LibraryScreenState = ReturnType<typeof useLibraryScreenState>;
+
+function readApiErrorMessage(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+  try {
+    const parsed = JSON.parse(raw) as { message?: string | string[] };
+    if (typeof parsed.message === 'string') {
+      return parsed.message;
+    }
+    if (Array.isArray(parsed.message)) {
+      return parsed.message.join(', ');
+    }
+  } catch {
+    // not JSON
+  }
+  return raw;
+}
+
+function isLibraryItemUsedInRoutineError(message: string): boolean {
+  return message.toLowerCase().includes('routine template');
+}

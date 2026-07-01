@@ -24,12 +24,14 @@ import {
 } from './library.repository.prisma.helpers';
 import { matchesSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
+import { LibraryRoutineUsageGuard } from './library-routine-usage.guard';
 
 @Injectable()
 export class LibrarySpecializedRepository extends LibraryBaseRepository {
   constructor(
     private readonly policy: LibraryEditPolicy,
     prisma: PrismaService,
+    private readonly routineUsageGuard: LibraryRoutineUsageGuard,
   ) {
     super(prisma);
   }
@@ -82,6 +84,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readIsometricExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('isometric', itemId);
     await this.prisma.isometricExercise.update({
       where: { id: itemId },
       data: { archivedAt: new Date() },
@@ -213,6 +216,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readPlioExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('plio', itemId);
     await this.prisma.plioExercise.update({
       where: { id: itemId },
       data: { archivedAt: new Date() },
@@ -223,6 +227,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readMobilityExerciseForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('mobility', itemId);
     await this.prisma.mobilityExercise.update({
       where: { id: itemId },
       data: { archivedAt: new Date() },
@@ -233,6 +238,7 @@ export class LibrarySpecializedRepository extends LibraryBaseRepository {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readSportForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await this.routineUsageGuard.assertNotUsedInRoutine('sport', itemId);
     await this.prisma.sport.update({
       where: { id: itemId },
       data: { archivedAt: new Date() },

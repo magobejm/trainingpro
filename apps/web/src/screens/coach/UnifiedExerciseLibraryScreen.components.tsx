@@ -297,7 +297,10 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
               st.setItemToEdit(item);
               st.setIsModalVisible(true);
             }}
-            onDelete={() => st.setPendingDelete({ id: item.id, kind: item.kind })}
+            onDelete={() => {
+              st.setDeleteError(null);
+              st.setPendingDelete({ id: item.id, kind: item.kind });
+            }}
             deletionDisabled={st.deletingId === item.id}
           />
         ))}
@@ -319,8 +322,13 @@ export function LibraryModals({ st }: { st: LibraryScreenState }) {
       <ActionConfirmModal
         cancelLabel={st.t('coach.clients.modal.cancel')}
         confirmLabel={st.t('coach.library.exercises.actions.delete')}
+        errorMessage={st.deleteError}
+        isLoading={Boolean(st.deletingId)}
         message={st.t('coach.library.exercises.actions.deleteConfirm')}
-        onCancel={() => st.setPendingDelete(null)}
+        onCancel={() => {
+          st.setDeleteError(null);
+          st.setPendingDelete(null);
+        }}
         onConfirm={st.confirmDelete}
         title={st.t('coach.library.confirm.title')}
         visible={Boolean(st.pendingDelete)}

@@ -38,6 +38,7 @@ import { UploadLibraryMediaImageUseCase } from './application/use-cases/upload-l
 import { LIBRARY_REPOSITORY } from './domain/library-repository.port';
 import { LibraryEditPolicy } from './domain/policies/library-edit.policy';
 import { LibraryRepositoryPrisma } from './infra/prisma/library.repository.prisma';
+import { LibraryRoutineUsageGuard } from './infra/prisma/library-routine-usage.guard';
 import { LibraryFoodRepository } from './infra/prisma/library-food.repository';
 import { LibrarySpecializedRepository } from './infra/prisma/library-specialized.repository';
 import { LibraryController } from './presentation/controllers/library.controller';
@@ -95,6 +96,7 @@ import { LibrarySeedService } from './application/library-seed.service';
     UpdateSportUseCase,
     UploadLibraryMediaImageUseCase,
     LibraryEditPolicy,
+    LibraryRoutineUsageGuard,
     LibraryFoodRepository,
     LibrarySpecializedRepository,
     LibraryRepositoryPrisma,

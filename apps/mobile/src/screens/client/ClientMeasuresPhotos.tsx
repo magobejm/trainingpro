@@ -3,6 +3,7 @@ import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientProgressPhoto } from '../../data/hooks/useClientMeQuery';
+import { LIGHT } from '../../theme/light';
 
 type Props = { photos: ClientProgressPhoto[] };
 
@@ -31,9 +32,9 @@ export function MeasuresPhotos({ photos }: Props): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  empty: { color: 'rgba(196,181,253,0.5)', fontSize: 13, marginTop: 8 },
+  empty: { color: LIGHT.textMuted, fontSize: 13, marginTop: 8 },
   row: { gap: 10, paddingVertical: 4 },
   section: { marginTop: 20, paddingHorizontal: 16 },
-  sectionTitle: { color: 'rgba(196,181,253,0.7)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
-  thumb: { borderRadius: 12, height: 120, width: 90 },
+  sectionTitle: { color: LIGHT.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
+  thumb: { borderColor: LIGHT.border, borderRadius: LIGHT.radiusMd, borderWidth: 1, height: 120, width: 90 },
 });

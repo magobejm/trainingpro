@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { LibraryTabId } from './client-library.helpers';
 import { LIBRARY_TABS, LIBRARY_TYPE_BADGE } from './client-library.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   active: LibraryTabId;
@@ -40,11 +41,12 @@ const styles = StyleSheet.create({
   content: { gap: 8, paddingHorizontal: 16 },
   scroll: { marginBottom: 12 },
   tab: {
-    borderColor: 'rgba(168,85,247,0.25)',
-    borderRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusFull,
     borderWidth: 1,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  tabText: { color: 'rgba(196,181,253,0.6)', fontSize: 13, fontWeight: '600' },
+  tabText: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '600' },
 });

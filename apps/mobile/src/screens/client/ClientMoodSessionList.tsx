@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientWellnessSession } from '../../data/hooks/useClientWellness';
 import { MOOD_EMOJI, formatDateLabel, formatScore, hasWellnessData } from './client-mood.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = { sessions: ClientWellnessSession[] };
 
@@ -63,28 +64,28 @@ function Metric(props: { label: string; value: string }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(168,85,247,0.15)',
-    borderRadius: 14,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
     borderWidth: 1,
     marginBottom: 8,
     padding: 14,
   },
-  date: { color: 'rgba(196,181,253,0.6)', fontSize: 11, marginBottom: 8 },
+  date: { color: LIGHT.textMuted, fontSize: 11, marginBottom: 8 },
   emoji: { fontSize: 22 },
-  empty: { color: 'rgba(196,181,253,0.5)', fontSize: 13 },
+  empty: { color: LIGHT.textMuted, fontSize: 13 },
   header: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   metric: { alignItems: 'center', flex: 1 },
-  metricLabel: { color: 'rgba(196,181,253,0.6)', fontSize: 9, textTransform: 'uppercase' },
+  metricLabel: { color: LIGHT.accentMuted, fontSize: 9, textTransform: 'uppercase' },
   metrics: { flexDirection: 'row', gap: 8 },
-  metricValue: { color: '#ffffff', fontSize: 14, fontWeight: '700', marginTop: 2 },
+  metricValue: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700', marginTop: 2 },
   section: { marginTop: 20, paddingHorizontal: 16 },
   sectionTitle: {
-    color: 'rgba(196,181,253,0.7)',
+    color: LIGHT.textMuted,
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 10,
     textTransform: 'uppercase',
   },
-  title: { color: '#ffffff', flex: 1, fontSize: 15, fontWeight: '700' },
+  title: { color: LIGHT.textStrong, flex: 1, fontSize: 15, fontWeight: '700' },
 });

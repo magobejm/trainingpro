@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useTranslation } from 'react-i18next';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import type { CardioSessionItem, LogIntervalMutationInput } from '../../data/hooks/useTodaySession';
+import { LIGHT } from '../../theme/light';
 
 type Phase = 'work' | 'rest' | 'done';
 
@@ -16,7 +17,7 @@ type CardioBlockOverlayProps = {
 const MODAL_ANIMATION = 'slide';
 const KEYBOARD_DECIMAL = 'decimal-pad';
 const KEYBOARD_NUMBER = 'number-pad';
-const PLACEHOLDER_COLOR = '#475569';
+const PLACEHOLDER_COLOR = LIGHT.textMuted;
 const PLACEHOLDER_DASH = '--';
 
 type WorkPhaseProps = {
@@ -236,25 +237,25 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   closeBtnText: {
-    color: '#94a3b8',
+    color: LIGHT.textMuted,
     fontSize: 14,
   },
   container: {
-    backgroundColor: '#0f172a',
+    backgroundColor: LIGHT.bgSoft,
     flex: 1,
   },
   ctaButton: {
     alignItems: 'center',
-    backgroundColor: '#225fdb',
-    borderRadius: 12,
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusMd,
     marginTop: 16,
     padding: 16,
   },
   ctaSecondary: {
-    backgroundColor: '#334155',
+    backgroundColor: LIGHT.accentSoft,
   },
   ctaText: {
-    color: '#ffffff',
+    color: LIGHT.textOnNavy,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -264,28 +265,31 @@ const styles = StyleSheet.create({
     paddingTop: 32,
   },
   doneText: {
-    color: '#22c55e',
+    color: LIGHT.success,
     fontSize: 18,
     fontWeight: '700',
   },
   header: {
-    borderBottomColor: '#1e293b',
+    backgroundColor: LIGHT.bgCard,
+    borderBottomColor: LIGHT.border,
     borderBottomWidth: 1,
     gap: 4,
     padding: 16,
     paddingTop: 48,
   },
   input: {
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
-    color: '#f1f5f9',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
     fontSize: 16,
     minWidth: 80,
     padding: 10,
     textAlign: 'center',
   },
   inputLabel: {
-    color: '#94a3b8',
+    color: LIGHT.textMuted,
     flex: 1,
     fontSize: 14,
   },
@@ -300,7 +304,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   progress: {
-    color: '#64748b',
+    color: LIGHT.textMuted,
     fontSize: 13,
   },
   scroll: {
@@ -310,7 +314,7 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   sectionLabel: {
-    color: '#94a3b8',
+    color: LIGHT.accentMuted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
@@ -318,7 +322,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    color: '#f1f5f9',
+    color: LIGHT.textStrong,
     fontSize: 20,
     fontWeight: '700',
   },

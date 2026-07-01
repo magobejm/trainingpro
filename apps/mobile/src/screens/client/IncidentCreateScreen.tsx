@@ -4,17 +4,18 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import { FilterChips } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateIncidentMutation } from '../../data/hooks/useIncidents';
+import { LIGHT } from '../../theme/light';
 
 type Severity = 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
 
 const COLORS = {
-  action: '#ec4899',
-  bg: '#07000f',
-  card: 'rgba(0,0,0,0.55)',
-  input: 'rgba(20,0,50,0.8)',
-  muted: 'rgba(196,181,253,0.7)',
-  text: '#ffffff',
-  white: '#ffffff',
+  action: LIGHT.accent,
+  bg: LIGHT.bgSoft,
+  card: LIGHT.bgCard,
+  input: LIGHT.bgSoft,
+  muted: LIGHT.textMuted,
+  text: LIGHT.textStrong,
+  white: LIGHT.textOnNavy,
 };
 
 export function IncidentCreateScreen(): React.JSX.Element {
@@ -164,14 +165,19 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     gap: 10,
     padding: 14,
     width: '100%',
   },
   input: {
     backgroundColor: COLORS.input,
-    borderRadius: 10,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
@@ -200,7 +206,10 @@ const styles = StyleSheet.create({
   },
   textArea: {
     backgroundColor: COLORS.input,
-    borderRadius: 10,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
     minHeight: 90,
     paddingHorizontal: 12,
     paddingVertical: 10,

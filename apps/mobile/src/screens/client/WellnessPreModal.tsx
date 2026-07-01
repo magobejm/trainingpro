@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
+import { LIGHT } from '../../theme/light';
 
 const MODAL_ANIMATION = 'slide';
-const SLIDER_ACTIVE = '#6366f1';
-const SLIDER_TRACK = '#334155';
-const SLIDER_THUMB = '#6366f1';
+const SLIDER_ACTIVE = LIGHT.accent;
+const SLIDER_TRACK = LIGHT.borderStrong;
+const SLIDER_THUMB = LIGHT.accent;
 
 type WellnessPreModalProps = {
   visible: boolean;
@@ -73,34 +74,34 @@ export function WellnessPreModal({ visible, onSave, onSkip }: WellnessPreModalPr
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: LIGHT.overlay,
     flex: 1,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#1e293b',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderTopLeftRadius: LIGHT.radius2xl,
+    borderTopRightRadius: LIGHT.radius2xl,
     maxHeight: '80%',
     paddingBottom: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
   title: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
   },
   saveBtn: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusMd,
     marginTop: 16,
     paddingVertical: 16,
   },
   saveBtnText: {
-    color: '#fff',
+    color: LIGHT.textOnNavy,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -109,7 +110,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   skipText: {
-    color: '#94a3b8',
+    color: LIGHT.textMuted,
     fontSize: 15,
     textAlign: 'center',
   },
@@ -125,11 +126,11 @@ const sliderStyles = StyleSheet.create({
     marginBottom: 4,
   },
   label: {
-    color: '#cbd5e1',
+    color: LIGHT.text,
     fontSize: 14,
   },
   value: {
-    color: '#6366f1',
+    color: LIGHT.accent,
     fontSize: 14,
     fontWeight: '700',
   },

@@ -9,8 +9,10 @@ import { PlanHero } from './ClientPlanningHero';
 import { TypeDistribution } from './ClientPlanningTypeDistribution';
 import { WeekDistributionGrid } from './ClientPlanningWeekGrid';
 import { aggregateMicrocycleTypes, buildWeekSlots } from './client-planning.helpers';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
-const SPINNER_COLOR = '#ec4899';
+const SPINNER_COLOR = LIGHT.accent;
 
 type Props = {
   onClose: () => void;
@@ -75,16 +77,16 @@ function PlanningContent({ onClose, onSelectDay, routine }: ContentProps): React
 
 const styles = StyleSheet.create({
   centered: { alignItems: 'center', flex: 1, justifyContent: 'center' },
-  container: { backgroundColor: '#07000f', flex: 1 },
+  container: SCREEN.root,
   content: { paddingBottom: 32 },
   daysSection: { marginHorizontal: 12, marginTop: 16 },
   daysTitle: {
-    color: '#c4b5fd',
+    color: LIGHT.accentMuted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
-  empty: { color: 'rgba(196,181,253,0.7)' },
+  empty: { color: LIGHT.textMuted },
 });

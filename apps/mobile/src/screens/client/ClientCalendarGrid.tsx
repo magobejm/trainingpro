@@ -3,11 +3,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { DayData, GridCell } from './client-calendar.helpers';
+import { LIGHT } from '../../theme/light';
 
-const BG_COMPLETED = '#22c55e';
-const BG_PLANNED = '#6366f1';
-const TEXT_DIM = 'rgba(196,181,253,0.5)';
-const TEXT_MAIN = '#ffffff';
+const BG_COMPLETED = LIGHT.emerald;
+const BG_PLANNED = LIGHT.accent;
+const TEXT_DIM = LIGHT.textMuted;
+const TEXT_MAIN = LIGHT.textStrong;
 
 type MonthHeaderProps = {
   label: string;
@@ -103,7 +104,7 @@ const styles = StyleSheet.create({
   cellToday: { fontWeight: '700', textDecorationLine: 'underline' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   meetingDot: {
-    backgroundColor: '#fbbf24',
+    backgroundColor: LIGHT.amber,
     borderRadius: 3,
     height: 6,
     position: 'absolute',
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   monthLabel: { color: TEXT_MAIN, fontSize: 16, fontWeight: '600' },
-  navBtn: { color: '#c4b5fd', fontSize: 24, paddingHorizontal: 12 },
-  weekdayLabel: { color: 'rgba(196,181,253,0.7)', fontSize: 12, textAlign: 'center', width: '14.28%' },
+  navBtn: { color: LIGHT.accent, fontSize: 24, paddingHorizontal: 12 },
+  weekdayLabel: { color: LIGHT.textMuted, fontSize: 12, textAlign: 'center', width: '14.28%' },
   weekdayRow: { flexDirection: 'row', marginBottom: 4 },
 });

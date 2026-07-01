@@ -2,11 +2,9 @@ import type { ViewStyle } from 'react-native';
 
 export type OverlayId =
   | 'calendar'
-  | 'chat'
   | 'incidents'
   | 'library'
   | 'measures'
-  | 'menu'
   | 'mood'
   | 'planning'
   | 'profile'
@@ -18,35 +16,10 @@ export type OverlayId =
 
 export type ProgressMode = 'progress' | 'volume';
 
-export type MenuId =
-  | 'calendar'
-  | 'chat'
-  | 'exercises'
-  | 'external'
-  | 'incidents'
-  | 'measures'
-  | 'notes'
-  | 'payment'
-  | 'planning'
-  | 'routines'
-  | 'volume';
+export type TabId = 'chat' | 'home' | 'more';
 
-export const WEB_BLUR_SM = { backdropFilter: 'blur(16px)' } as unknown as ViewStyle;
-export const WEB_BLUR_LG = { filter: 'blur(100px)' } as unknown as ViewStyle;
+export type MoreMenuId = 'incidents' | 'measures' | 'notes' | 'planning' | 'volume';
+
 export const SPRING = { damping: 25, stiffness: 200, useNativeDriver: false } as const;
 
-export type MenuItem = { emoji: string; id: string; label: string };
-
-export const MENU_ITEMS: MenuItem[] = [
-  { emoji: '📐', id: 'measures', label: 'Medidas antro.' },
-  { emoji: '📝', id: 'notes', label: 'Bloc de notas' },
-  { emoji: '💬', id: 'chat', label: 'Chat' },
-  { emoji: '⚠️', id: 'incidents', label: 'Incidencias' },
-  { emoji: '📅', id: 'calendar', label: 'Calendario' },
-  { emoji: '📊', id: 'volume', label: 'Volumen semanal' },
-  { emoji: '📋', id: 'planning', label: 'Planificación' },
-  { emoji: '💳', id: 'payment', label: 'Métodos pago' },
-  { emoji: '🏃', id: 'external', label: 'Entrenos ext.' },
-  { emoji: '📚', id: 'exercises', label: 'Biblio. Ejercicios' },
-  { emoji: '📖', id: 'routines', label: 'Biblio. Rutinas' },
-];
+export const WEB_BLUR_SM = { backdropFilter: 'blur(16px)' } as unknown as ViewStyle;

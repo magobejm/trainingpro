@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { computeDayTypeStats, TYPE_BADGE } from './client-planning.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   day: ClientRoutineDay;
@@ -39,30 +40,30 @@ export function PlanDayCard({ day, onPress }: Props): React.JSX.Element {
 const styles = StyleSheet.create({
   badge: {
     alignItems: 'center',
-    backgroundColor: 'rgba(168,85,247,0.2)',
-    borderColor: 'rgba(168,85,247,0.4)',
-    borderRadius: 10,
+    backgroundColor: LIGHT.accentSoft,
+    borderColor: LIGHT.borderStrong,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
     height: 40,
     justifyContent: 'center',
     width: 40,
   },
-  badgeText: { color: '#c4b5fd', fontSize: 13, fontWeight: '800' },
+  badgeText: { color: LIGHT.accentDark, fontSize: 13, fontWeight: '800' },
   card: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(168,85,247,0.2)',
-    borderRadius: 16,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusLg,
     borderWidth: 1,
     flexDirection: 'row',
     gap: 12,
     marginBottom: 8,
     padding: 12,
   },
-  chevron: { color: 'rgba(196,181,253,0.7)', fontSize: 18 },
+  chevron: { color: LIGHT.accentMuted, fontSize: 18 },
   info: { flex: 1 },
-  subtitle: { color: 'rgba(196,181,253,0.7)', fontSize: 11, marginTop: 2 },
-  title: { color: '#ffffff', fontSize: 15, fontWeight: '700' },
+  subtitle: { color: LIGHT.textMuted, fontSize: 11, marginTop: 2 },
+  title: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '700' },
   typePill: { borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   typePillText: { fontSize: 9, fontWeight: '700' },
   typeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },

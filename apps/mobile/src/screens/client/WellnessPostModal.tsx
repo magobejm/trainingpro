@@ -12,15 +12,16 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
+import { LIGHT } from '../../theme/light';
 
 const MODAL_ANIMATION = 'slide';
 const KEYBOARD_BEHAVIOR = Platform.OS === 'ios' ? 'padding' : undefined;
 const KEYBOARD_TYPE = 'default';
 const KEYBOARD_PERSIST_TAPS = 'handled';
-const SLIDER_ACTIVE = '#6366f1';
-const SLIDER_TRACK = '#334155';
-const SLIDER_THUMB = '#6366f1';
-const PLACEHOLDER_COLOR = '#64748b';
+const SLIDER_ACTIVE = LIGHT.accent;
+const SLIDER_TRACK = LIGHT.borderStrong;
+const SLIDER_THUMB = LIGHT.accent;
+const PLACEHOLDER_COLOR = LIGHT.textMuted;
 
 type WellnessPostModalProps = {
   visible: boolean;
@@ -96,38 +97,38 @@ export function WellnessPostModal({ visible, onSubmit, onCancel }: WellnessPostM
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: LIGHT.overlay,
     flex: 1,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#1e293b',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderTopLeftRadius: LIGHT.radius2xl,
+    borderTopRightRadius: LIGHT.radius2xl,
     maxHeight: '85%',
     paddingBottom: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
   title: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 16,
     textAlign: 'center',
   },
   commentLabel: {
-    color: '#cbd5e1',
+    color: LIGHT.text,
     fontSize: 14,
     marginBottom: 8,
     marginTop: 8,
   },
   commentInput: {
-    backgroundColor: '#0f172a',
-    borderColor: '#334155',
-    borderRadius: 8,
+    backgroundColor: LIGHT.bgSoft,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 14,
     marginBottom: 16,
     minHeight: 80,
@@ -136,13 +137,13 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitBtn: {
-    backgroundColor: '#6366f1',
-    borderRadius: 12,
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusMd,
     marginTop: 8,
     paddingVertical: 16,
   },
   submitBtnText: {
-    color: '#fff',
+    color: LIGHT.textOnNavy,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
@@ -159,11 +160,11 @@ const sliderStyles = StyleSheet.create({
     marginBottom: 4,
   },
   label: {
-    color: '#cbd5e1',
+    color: LIGHT.text,
     fontSize: 14,
   },
   value: {
-    color: '#6366f1',
+    color: LIGHT.accent,
     fontSize: 14,
     fontWeight: '700',
   },

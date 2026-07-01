@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientRoutine } from '../../data/hooks/useClientRoutineQuery';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   routine: ClientRoutine;
@@ -38,26 +39,26 @@ function Chip({ text, accent }: { text: string; accent?: boolean }): React.JSX.E
 
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(168,85,247,0.4)',
-    borderRadius: 8,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  chipAccent: { backgroundColor: 'rgba(236,72,153,0.18)', borderColor: 'rgba(236,72,153,0.4)' },
+  chipAccent: { backgroundColor: LIGHT.accentSoft, borderColor: LIGHT.accent },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 },
-  chipText: { color: '#c4b5fd', fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
-  chipTextAccent: { color: '#f9a8d4' },
+  chipText: { color: LIGHT.accentDark, fontSize: 10, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  chipTextAccent: { color: LIGHT.accent },
   hero: {
-    backgroundColor: 'rgba(88,28,135,0.25)',
-    borderColor: 'rgba(168,85,247,0.3)',
-    borderRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radius2xl,
     borderWidth: 1,
     marginHorizontal: 12,
     marginTop: 12,
     padding: 16,
   },
-  label: { color: 'rgba(196,181,253,0.7)', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-  name: { color: '#ffffff', fontSize: 22, fontWeight: '800', marginTop: 4 },
+  label: { color: LIGHT.textMuted, fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  name: { color: LIGHT.textStrong, fontSize: 22, fontWeight: '800', marginTop: 4 },
 });

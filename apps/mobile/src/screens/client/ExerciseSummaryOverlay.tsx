@@ -1,6 +1,8 @@
 import React from 'react';
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { LIGHT } from '../../theme/light';
+import { SESSION } from '../../theme/sessionStyles';
 import type { SetLog, StrengthSessionItem } from '../../data/hooks/useTodaySession';
 
 const MODAL_ANIMATION = 'slide';
@@ -71,37 +73,26 @@ export function ExerciseSummaryOverlay({ item, onClose, onEditSet }: ExerciseSum
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#0f172a',
-    flex: 1,
-  },
+  container: SESSION.modalOverlay,
   header: {
+    ...SESSION.header,
     alignItems: 'center',
-    borderBottomColor: '#1e293b',
-    borderBottomWidth: 1,
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
   },
-  backBtn: {
-    paddingRight: 12,
-  },
-  backArrow: {
-    color: '#94a3b8',
-    fontSize: 20,
-  },
+  backBtn: SESSION.backBtn,
+  backArrow: SESSION.backArrow,
   exerciseName: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   headerRight: {
-    width: 32,
+    width: 40,
   },
   sectionTitle: {
-    color: '#94a3b8',
+    color: LIGHT.accentMuted,
     fontSize: 13,
     fontWeight: '600',
     letterSpacing: 0.5,
@@ -117,11 +108,11 @@ const styles = StyleSheet.create({
 
 const rowStyles = StyleSheet.create({
   container: {
+    ...SESSION.card,
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
+    borderRadius: LIGHT.radiusMd,
     padding: 14,
   },
   left: {
@@ -129,23 +120,23 @@ const rowStyles = StyleSheet.create({
     gap: 2,
   },
   setLabel: {
-    color: '#94a3b8',
+    color: LIGHT.accentMuted,
     fontSize: 12,
     fontWeight: '600',
     textTransform: 'uppercase',
   },
   data: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 15,
   },
   editBtn: {
-    backgroundColor: '#334155',
-    borderRadius: 6,
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusSm,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   editText: {
-    color: '#6366f1',
+    color: LIGHT.accent,
     fontSize: 13,
     fontWeight: '600',
   },

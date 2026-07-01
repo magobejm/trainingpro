@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-
 import type { KeyboardTypeOptions } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { LogSetMutationInput, SessionItem, StrengthSessionItem } from '../../data/hooks/useTodaySession';
+import { LIGHT } from '../../theme/light';
 
 const KEYBOARD_NUMBER: KeyboardTypeOptions = 'number-pad';
 const KEYBOARD_DECIMAL: KeyboardTypeOptions = 'decimal-pad';
@@ -228,8 +229,10 @@ export function TimerGridList({ items, onLogSet }: TimerGridListProps) {
 
 const gridStyles = StyleSheet.create({
   card: {
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     marginBottom: 10,
     overflow: 'hidden',
   },
@@ -240,25 +243,25 @@ const gridStyles = StyleSheet.create({
     padding: 14,
   },
   name: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     flex: 1,
     fontSize: 15,
     fontWeight: '700',
   },
   chevron: {
-    color: '#64748b',
+    color: LIGHT.textMuted,
     fontSize: 10,
     marginLeft: 8,
   },
   tableContainer: {
-    borderTopColor: '#334155',
+    borderTopColor: LIGHT.border,
     borderTopWidth: 1,
     padding: 12,
   },
   restBanner: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 6,
-    color: '#bfdbfe',
+    backgroundColor: LIGHT.emeraldSoft,
+    borderRadius: LIGHT.radiusSm,
+    color: LIGHT.success,
     fontSize: 12,
     fontWeight: '600',
     marginBottom: 8,
@@ -272,27 +275,27 @@ const gridStyles = StyleSheet.create({
     marginBottom: 10,
   },
   actionBtn: {
-    backgroundColor: '#334155',
-    borderRadius: 6,
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusSm,
     flex: 1,
     paddingVertical: 6,
   },
   actionBtnActive: {
-    backgroundColor: '#6366f1',
+    backgroundColor: LIGHT.accent,
   },
   actionBtnSecondary: {
-    backgroundColor: '#1e293b',
-    borderColor: '#334155',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
     borderWidth: 1,
   },
   actionBtnText: {
-    color: '#94a3b8',
+    color: LIGHT.accentDark,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
   },
   actionBtnTextSecondary: {
-    color: '#64748b',
+    color: LIGHT.textMuted,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -307,7 +310,7 @@ const gridStyles = StyleSheet.create({
     width: 56,
   },
   rowHeaderText: {
-    color: '#64748b',
+    color: LIGHT.textMuted,
     fontSize: 11,
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -319,7 +322,7 @@ const gridStyles = StyleSheet.create({
     width: 56,
   },
   setHeaderText: {
-    color: '#94a3b8',
+    color: LIGHT.accentMuted,
     fontSize: 12,
     fontWeight: '700',
   },
@@ -328,11 +331,11 @@ const gridStyles = StyleSheet.create({
     width: 56,
   },
   cellInput: {
-    backgroundColor: '#0f172a',
-    borderColor: '#334155',
-    borderRadius: 6,
+    backgroundColor: LIGHT.bgSoft,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 14,
     fontWeight: '600',
     paddingHorizontal: 4,

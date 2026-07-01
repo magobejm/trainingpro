@@ -10,6 +10,7 @@ import type {
   SportSessionItem,
   StrengthSessionItem,
 } from '../../data/hooks/useTodaySession';
+import { LIGHT } from '../../theme/light';
 
 type ExerciseListCardProps = {
   item: SessionItem;
@@ -178,15 +179,17 @@ export function ExerciseListCard({ item, onPress }: ExerciseListCardProps) {
 const styles = StyleSheet.create({
   card: {
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
     padding: 16,
   },
   cardComplete: {
-    borderColor: '#22c55e',
+    borderColor: LIGHT.emerald,
     borderWidth: 1.5,
   },
   cardLeft: {
@@ -195,12 +198,12 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   exerciseName: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 15,
     fontWeight: '700',
   },
   progressText: {
-    color: '#64748b',
+    color: LIGHT.textMuted,
     fontSize: 13,
   },
   cardRight: {
@@ -213,19 +216,19 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
   },
   typeBadgeStrength: {
-    backgroundColor: '#312e81',
+    backgroundColor: LIGHT.accentSoft,
   },
   typeBadgeBlock: {
-    backgroundColor: '#14532d',
+    backgroundColor: LIGHT.emeraldSoft,
   },
   typeLabel: {
-    color: '#a5b4fc',
+    color: LIGHT.accentDark,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   completeDot: {
-    backgroundColor: '#22c55e',
+    backgroundColor: LIGHT.emerald,
     borderRadius: 5,
     height: 10,
     width: 10,

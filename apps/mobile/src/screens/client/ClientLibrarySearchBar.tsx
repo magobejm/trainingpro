@@ -2,16 +2,17 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   onChange: (value: string) => void;
   value: string;
 };
 
-const INPUT_BG = 'rgba(0,0,0,0.4)';
-const INPUT_BORDER = 'rgba(168,85,247,0.3)';
-const INPUT_COLOR = '#ffffff';
-const PLACEHOLDER_COLOR = 'rgba(196,181,253,0.5)';
+const INPUT_BG = LIGHT.bgCard;
+const INPUT_BORDER = LIGHT.border;
+const INPUT_COLOR = LIGHT.textStrong;
+const PLACEHOLDER_COLOR = LIGHT.textMuted;
 
 export function LibrarySearchBar({ value, onChange }: Props): React.JSX.Element {
   const { t } = useTranslation();

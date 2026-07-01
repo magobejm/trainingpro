@@ -4,15 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import type { ActiveRole } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
-
-const COLORS = {
-  accent: '#2864dc',
-  bg: '#f3f6fb',
-  card: '#ffffff',
-  cardBorder: '#dde5f0',
-  muted: '#6a7686',
-  text: '#0e1725',
-};
+import { LIGHT } from '../../theme/light';
 
 export function RoleSelectScreen(): React.JSX.Element {
   const vm = useRoleSelectViewModel();
@@ -36,6 +28,12 @@ type RoleSelectCardProps = ReturnType<typeof useRoleSelectViewModel>;
 function RoleSelectCard(props: RoleSelectCardProps): React.JSX.Element {
   return (
     <View style={styles.page}>
+      <View style={styles.hero}>
+        <View style={styles.logoWrap}>
+          <Text style={styles.logoEmoji}>{'👤'}</Text>
+        </View>
+        <Text style={styles.appName}>{props.t('app.title')}</Text>
+      </View>
       <View style={styles.card}>
         <Text style={styles.title}>{props.t('auth.roleSelect.title')}</Text>
         <Text style={styles.subtitle}>{props.t('auth.roleSelect.subtitle')}</Text>
@@ -86,52 +84,85 @@ function resolveRoleTextStyle(isActive: boolean) {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.cardBorder,
-    borderRadius: 16,
+  page: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgSoft,
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  hero: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  logoWrap: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusXl,
     borderWidth: 1,
-    padding: 20,
+    height: 72,
+    justifyContent: 'center',
+    marginBottom: 12,
+    width: 72,
+  },
+  logoEmoji: {
+    fontSize: 36,
+  },
+  appName: {
+    color: LIGHT.textStrong,
+    fontSize: 24,
+    fontWeight: '800',
+  },
+  card: {
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusXl,
+    borderWidth: 1,
+    maxWidth: 420,
+    padding: 24,
+    shadowColor: LIGHT.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     width: '100%',
   },
   empty: {
-    color: COLORS.muted,
+    color: LIGHT.textMuted,
     fontSize: 14,
   },
   list: {
     gap: 10,
   },
-  page: {
-    alignItems: 'center',
-    backgroundColor: COLORS.bg,
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
   roleButton: {
-    backgroundColor: COLORS.bg,
-    borderRadius: 12,
+    backgroundColor: LIGHT.bgSoft,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
   roleButtonActive: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: LIGHT.accent,
+    borderColor: LIGHT.accentDark,
   },
   roleLabel: {
-    color: COLORS.text,
+    color: LIGHT.textStrong,
     fontSize: 15,
     fontWeight: '700',
+    textAlign: 'center',
   },
   roleLabelActive: {
-    color: COLORS.card,
+    color: LIGHT.textOnNavy,
   },
   subtitle: {
-    color: COLORS.muted,
+    color: LIGHT.textMuted,
     fontSize: 14,
+    lineHeight: 20,
     marginBottom: 16,
   },
   title: {
-    color: COLORS.text,
+    color: LIGHT.textStrong,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 8,

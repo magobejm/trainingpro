@@ -1,6 +1,7 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { LIGHT } from '../../theme/light';
 
 const MODAL_ANIMATION = 'slide';
 
@@ -35,50 +36,50 @@ export function StartModeModal({ visible, onSelect, onCancel }: StartModeModalPr
 
 const styles = StyleSheet.create({
   overlay: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: LIGHT.overlay,
     flex: 1,
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#1e293b',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderTopLeftRadius: LIGHT.radius2xl,
+    borderTopRightRadius: LIGHT.radius2xl,
     gap: 12,
     paddingBottom: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
   },
   title: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 18,
     fontWeight: '700',
     marginBottom: 8,
     textAlign: 'center',
   },
   btn: {
-    borderRadius: 12,
+    borderRadius: LIGHT.radiusMd,
     paddingVertical: 16,
   },
   btnInteractive: {
-    backgroundColor: '#6366f1',
+    backgroundColor: LIGHT.accent,
   },
   btnTimer: {
-    backgroundColor: '#334155',
+    backgroundColor: LIGHT.accentSoft,
   },
   btnText: {
-    color: '#fff',
+    color: LIGHT.textOnNavy,
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
   },
   btnTextSecondary: {
-    color: '#cbd5e1',
+    color: LIGHT.accentDark,
   },
   cancelBtn: {
     paddingVertical: 12,
   },
   cancelText: {
-    color: '#94a3b8',
+    color: LIGHT.textMuted,
     fontSize: 15,
     textAlign: 'center',
   },

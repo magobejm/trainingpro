@@ -5,6 +5,7 @@ import '../../i18n';
 import { showComingSoon } from '../../shell/client/feedback';
 import type { DayData } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
+import { LIGHT } from '../../theme/light';
 
 type DayDetailModalProps = {
   data: DayData | undefined;
@@ -61,41 +62,43 @@ export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDet
 
 const styles = StyleSheet.create({
   actions: { gap: 8, marginTop: 16 },
-  backdrop: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
+  backdrop: { backgroundColor: LIGHT.overlay, bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   btnPrimary: {
     alignItems: 'center',
-    backgroundColor: '#6366f1',
-    borderRadius: 10,
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusSm,
     paddingVertical: 12,
   },
-  btnPrimaryText: { color: '#ffffff', fontWeight: '700' },
+  btnPrimaryText: { color: LIGHT.textOnNavy, fontWeight: '700' },
   btnSecondary: {
     alignItems: 'center',
-    borderColor: 'rgba(196,181,253,0.4)',
-    borderRadius: 10,
+    borderColor: LIGHT.borderStrong,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
     paddingVertical: 12,
   },
-  btnSecondaryText: { color: '#c4b5fd' },
+  btnSecondaryText: { color: LIGHT.accentDark },
   card: {
-    backgroundColor: '#1a0a2e',
-    borderRadius: 20,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radius2xl,
+    borderWidth: 1,
     elevation: 8,
     left: 20,
     padding: 20,
     position: 'absolute',
     right: 20,
-    shadowColor: '#000',
+    shadowColor: LIGHT.shadow,
     shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 1,
     shadowRadius: 12,
     top: '25%',
   },
   closeBtn: { alignItems: 'center', marginTop: 12 },
-  closeBtnText: { color: 'rgba(196,181,253,0.6)', fontSize: 16 },
-  dateLabel: { color: '#ffffff', fontSize: 15, fontWeight: '600', marginBottom: 12, textTransform: 'capitalize' },
+  closeBtnText: { color: LIGHT.textMuted, fontSize: 16 },
+  dateLabel: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '600', marginBottom: 12, textTransform: 'capitalize' },
   mood: { fontSize: 24, marginTop: 4 },
   section: { marginBottom: 8 },
-  sectionTitle: { color: 'rgba(196,181,253,0.7)', fontSize: 12, marginBottom: 2 },
-  sectionValue: { color: '#ffffff', fontSize: 15 },
+  sectionTitle: { color: LIGHT.textMuted, fontSize: 12, marginBottom: 2 },
+  sectionValue: { color: LIGHT.textStrong, fontSize: 15 },
 });

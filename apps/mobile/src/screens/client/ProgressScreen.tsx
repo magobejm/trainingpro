@@ -6,12 +6,8 @@ import '../../i18n';
 import { useProgressOverviewQuery } from '../../data/hooks/useProgressQuery';
 import type { ProgressMode } from '../../shell/client/client-shell.constants';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
-
-const COLORS = {
-  bg: '#07000f',
-  muted: 'rgba(196,181,253,0.7)',
-  text: '#ffffff',
-};
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
 const SPINNER_SIZE = 'small' as const;
 
@@ -117,7 +113,7 @@ function toDateString(input: Date): string {
 
 const styles = StyleSheet.create({
   info: {
-    color: COLORS.muted,
+    color: LIGHT.textMuted,
     fontSize: 14,
     width: '100%',
   },
@@ -126,16 +122,13 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
   },
-  root: {
-    backgroundColor: COLORS.bg,
-    flex: 1,
-  },
+  root: SCREEN.root,
   stack: {
     gap: 12,
     width: '100%',
   },
   subtitle: {
-    color: COLORS.muted,
+    color: LIGHT.textMuted,
     fontSize: 14,
     width: '100%',
   },

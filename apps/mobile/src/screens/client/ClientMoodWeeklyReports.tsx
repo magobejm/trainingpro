@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientWellnessWeeklyReport } from '../../data/hooks/useClientWellness';
 import { formatScore } from './client-mood.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = { reports: ClientWellnessWeeklyReport[] };
 
@@ -48,25 +49,25 @@ function Metric(props: { label: string; value: string }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(99,102,241,0.2)',
-    borderRadius: 14,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
     borderWidth: 1,
     marginBottom: 8,
     padding: 14,
   },
-  empty: { color: 'rgba(196,181,253,0.5)', fontSize: 13 },
+  empty: { color: LIGHT.textMuted, fontSize: 13 },
   metric: { alignItems: 'center', flex: 1 },
-  metricLabel: { color: 'rgba(196,181,253,0.6)', fontSize: 9, textTransform: 'uppercase' },
+  metricLabel: { color: LIGHT.accentMuted, fontSize: 9, textTransform: 'uppercase' },
   metrics: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  metricValue: { color: '#ffffff', fontSize: 14, fontWeight: '700', marginTop: 2 },
+  metricValue: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700', marginTop: 2 },
   section: { marginTop: 20, paddingHorizontal: 16 },
   sectionTitle: {
-    color: 'rgba(196,181,253,0.7)',
+    color: LIGHT.textMuted,
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 10,
     textTransform: 'uppercase',
   },
-  weekLabel: { color: '#c4b5fd', fontSize: 13, fontWeight: '600' },
+  weekLabel: { color: LIGHT.accentDark, fontSize: 13, fontWeight: '600' },
 });

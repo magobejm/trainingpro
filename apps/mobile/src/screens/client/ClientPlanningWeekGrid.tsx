@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { computeDayTypeStats, TYPE_BADGE, type WeekSlot } from './client-planning.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   slots: WeekSlot[];
@@ -50,7 +51,7 @@ function SlotCell({ slot, onSelectDay }: SlotCellProps): React.JSX.Element {
   const stats = computeDayTypeStats(slot.day);
   const badge = stats.dominantType ? TYPE_BADGE[stats.dominantType] : null;
   const bg = badge?.bg ?? 'rgba(168,85,247,0.2)';
-  const textColor = badge?.text ?? '#c4b5fd';
+  const textColor = badge?.text ?? LIGHT.accentDark;
   return (
     <Pressable onPress={() => onSelectDay(slot.day!)} style={[styles.cell, { backgroundColor: bg }]}>
       <Text style={[styles.cellDayNum, { color: textColor }]}>{`D${slot.day.dayIndex}`}</Text>
@@ -72,30 +73,32 @@ const styles = StyleSheet.create({
   },
   cellDayNum: { fontSize: 13, fontWeight: '800' },
   cellName: { fontSize: 8, fontWeight: '700', marginTop: 2, textAlign: 'center', textTransform: 'uppercase' },
-  cellRest: { backgroundColor: 'rgba(0,0,0,0.3)', borderColor: 'rgba(168,85,247,0.15)', borderWidth: 1 },
+  cellRest: { backgroundColor: LIGHT.bgSoft, borderColor: LIGHT.border, borderWidth: 1 },
   container: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 16,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusLg,
+    borderWidth: 1,
     marginHorizontal: 12,
     marginTop: 12,
     padding: 12,
   },
   grid: { flexDirection: 'row', justifyContent: 'space-between' },
   restLabel: {
-    color: 'rgba(196,181,253,0.5)',
+    color: LIGHT.textMuted,
     fontSize: 8,
     fontWeight: '700',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   title: {
-    color: '#c4b5fd',
+    color: LIGHT.accentMuted,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
     marginBottom: 8,
     textTransform: 'uppercase',
   },
-  weekdayLabel: { color: 'rgba(196,181,253,0.5)', fontSize: 10, fontWeight: '700', textAlign: 'center', width: '13.7%' },
+  weekdayLabel: { color: LIGHT.textMuted, fontSize: 10, fontWeight: '700', textAlign: 'center', width: '13.7%' },
   weekdayRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
 });

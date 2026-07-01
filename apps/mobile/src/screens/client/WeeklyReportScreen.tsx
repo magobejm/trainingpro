@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
 import { useUpsertWeeklyReportMutation, useWeeklyReportQuery } from '../../data/hooks/useWeeklyReport';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   onClose?: () => void;
@@ -10,13 +11,13 @@ type Props = {
 };
 
 const COLORS = {
-  action: '#ec4899',
-  bg: '#07000f',
-  card: 'rgba(0,0,0,0.55)',
-  input: 'rgba(20,0,50,0.8)',
-  muted: 'rgba(196,181,253,0.7)',
-  text: '#ffffff',
-  white: '#ffffff',
+  action: LIGHT.accent,
+  bg: LIGHT.bgSoft,
+  card: LIGHT.bgCard,
+  input: LIGHT.bgSoft,
+  muted: LIGHT.textMuted,
+  text: LIGHT.textStrong,
+  white: LIGHT.textOnNavy,
 };
 
 export function WeeklyReportScreen(props: Props): React.JSX.Element {
@@ -189,7 +190,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     gap: 10,
     padding: 14,
     width: '100%',
@@ -199,8 +202,8 @@ const styles = StyleSheet.create({
   },
   ghost: {
     alignItems: 'center',
-    borderColor: '#d8e1ee',
-    borderRadius: 10,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
     justifyContent: 'center',
     minHeight: 42,
@@ -213,7 +216,10 @@ const styles = StyleSheet.create({
   },
   input: {
     backgroundColor: COLORS.input,
-    borderRadius: 8,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
     paddingHorizontal: 10,
     paddingVertical: 8,
   },
@@ -253,7 +259,10 @@ const styles = StyleSheet.create({
   },
   textArea: {
     backgroundColor: COLORS.input,
-    borderRadius: 8,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
     minHeight: 90,
     paddingHorizontal: 10,
     paddingVertical: 8,

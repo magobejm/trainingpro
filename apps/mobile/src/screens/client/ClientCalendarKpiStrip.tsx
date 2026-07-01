@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientCalendarSummary } from '../../data/hooks/useClientCalendar';
+import { LIGHT } from '../../theme/light';
 
 type KpiItemProps = {
   label: string;
@@ -36,8 +37,10 @@ export function KpiStrip({ data }: KpiStripProps): React.JSX.Element {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 12,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginHorizontal: 12,
@@ -45,6 +48,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   item: { alignItems: 'center' },
-  label: { color: 'rgba(196,181,253,0.7)', fontSize: 11, marginTop: 2, textAlign: 'center' },
-  value: { color: '#ffffff', fontSize: 22, fontWeight: '700' },
+  label: { color: LIGHT.textMuted, fontSize: 11, marginTop: 2, textAlign: 'center' },
+  value: { color: LIGHT.textStrong, fontSize: 22, fontWeight: '700' },
 });

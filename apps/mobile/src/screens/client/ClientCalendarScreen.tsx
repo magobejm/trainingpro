@@ -12,6 +12,8 @@ import { DayDetailModal } from './ClientCalendarDayDetail';
 import { KpiStrip } from './ClientCalendarKpiStrip';
 import { MonthGrid, MonthHeader } from './ClientCalendarGrid';
 import { buildMonthGrid, mergeDayData, toDateStr } from './client-calendar.helpers';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
 type CalendarMode = 'planned' | 'progress';
 
@@ -92,15 +94,17 @@ export function ClientCalendarScreen({ initialMode, onClose, onOpenSession }: Pr
 }
 
 const styles = StyleSheet.create({
-  container: { backgroundColor: '#07000f', flex: 1 },
+  container: SCREEN.root,
   content: { paddingBottom: 32, paddingHorizontal: 12 },
-  modeBtnActive: { backgroundColor: '#6366f1' },
-  modeBtnTextActive: { color: '#ffffff', fontWeight: '700' },
-  modeBtn: { borderRadius: 8, flex: 1, paddingVertical: 8 },
-  modeBtnText: { color: 'rgba(196,181,253,0.7)', fontSize: 14, textAlign: 'center' },
+  modeBtnActive: { backgroundColor: LIGHT.accent },
+  modeBtnTextActive: { color: LIGHT.textOnNavy, fontWeight: '700' },
+  modeBtn: { borderRadius: LIGHT.radiusSm, flex: 1, paddingVertical: 8 },
+  modeBtnText: { color: LIGHT.textMuted, fontSize: 14, textAlign: 'center' },
   modeRow: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 10,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: 4,
     marginBottom: 8,

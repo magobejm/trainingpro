@@ -3,19 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
 import { useLoginMutation } from '../../data/hooks/useAuthMutations';
-
-const COLORS = {
-  error: '#f87171',
-  page: '#07000f',
-  primary: '#ec4899',
-  text: '#ffffff',
-  white: '#ffffff',
-  muted: 'rgba(196,181,253,0.8)',
-  inputBg: 'rgba(20,0,50,0.8)',
-  inputBorder: 'rgba(139,92,246,0.35)',
-  cardBg: 'rgba(0,0,0,0.55)',
-  cardBorder: 'rgba(139,92,246,0.2)',
-};
+import { LIGHT } from '../../theme/light';
 
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
@@ -23,6 +11,7 @@ const EMAIL_PROPS = {
 };
 
 const ACCESSIBILITY_ROLE_BUTTON = 'button' as const;
+const PLACEHOLDER_COLOR = LIGHT.accentMuted;
 
 export function LoginScreen(): React.JSX.Element {
   const vm = useLoginViewModel();
@@ -57,19 +46,29 @@ type LoginCardProps = ReturnType<typeof useLoginViewModel>;
 function LoginCard(props: LoginCardProps): React.JSX.Element {
   return (
     <View style={styles.page}>
+      <View style={styles.hero}>
+        <View style={styles.logoWrap}>
+          <Text style={styles.logoEmoji}>{'🏋️'}</Text>
+        </View>
+        <Text style={styles.appName}>{props.t('app.title')}</Text>
+      </View>
       <View style={styles.card}>
         <Text style={styles.title}>{props.t('auth.login.title')}</Text>
         <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
+        <Text style={styles.fieldLabel}>{props.t('auth.login.email.placeholder')}</Text>
         <TextInput
           {...EMAIL_PROPS}
           onChangeText={props.setEmail}
           placeholder={props.t('auth.login.email.placeholder')}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           style={styles.input}
           value={props.email}
         />
+        <Text style={styles.fieldLabel}>{props.t('auth.login.password.placeholder')}</Text>
         <TextInput
           onChangeText={props.setPassword}
           placeholder={props.t('auth.login.password.placeholder')}
+          placeholderTextColor={PLACEHOLDER_COLOR}
           secureTextEntry
           style={styles.input}
           value={props.password}
@@ -85,62 +84,102 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
 
 function renderSubmitContent(isLoading: boolean, label: string): React.JSX.Element {
   if (isLoading) {
-    return <ActivityIndicator color={COLORS.white} />;
+    return <ActivityIndicator color={LIGHT.textOnNavy} />;
   }
   return <Text style={styles.buttonText}>{label}</Text>;
 }
 
 const styles = StyleSheet.create({
-  button: {
+  page: {
     alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    height: 48,
+    backgroundColor: LIGHT.bgSoft,
+    flex: 1,
     justifyContent: 'center',
+    padding: 24,
   },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: 15,
-    fontWeight: '700',
+  hero: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  logoWrap: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusXl,
+    borderWidth: 1,
+    height: 72,
+    justifyContent: 'center',
+    marginBottom: 12,
+    width: 72,
+  },
+  logoEmoji: {
+    fontSize: 36,
+  },
+  appName: {
+    color: LIGHT.textStrong,
+    fontSize: 24,
+    fontWeight: '800',
   },
   card: {
-    backgroundColor: COLORS.cardBg,
-    borderColor: COLORS.cardBorder,
-    borderRadius: 16,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusXl,
     borderWidth: 1,
     maxWidth: 420,
-    padding: 20,
+    padding: 24,
+    shadowColor: LIGHT.text,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
     width: '100%',
   },
+  fieldLabel: {
+    color: LIGHT.accentMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+    textTransform: 'uppercase',
+  },
+  button: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusMd,
+    height: 48,
+    justifyContent: 'center',
+    marginTop: 8,
+  },
+  buttonText: {
+    color: LIGHT.textOnNavy,
+    fontSize: 15,
+    fontWeight: '800',
+  },
   error: {
-    color: COLORS.error,
+    color: LIGHT.error,
     fontSize: 13,
+    fontWeight: '600',
     marginBottom: 8,
+    marginTop: 4,
   },
   input: {
-    backgroundColor: COLORS.inputBg,
-    borderColor: COLORS.inputBorder,
-    borderRadius: 10,
+    backgroundColor: LIGHT.bgSoft,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
-    color: COLORS.text,
-    marginBottom: 12,
+    color: LIGHT.textStrong,
+    fontSize: 15,
+    marginBottom: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  page: {
-    alignItems: 'center',
-    backgroundColor: COLORS.page,
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-  },
   subtitle: {
-    color: COLORS.muted,
+    color: LIGHT.textMuted,
     fontSize: 14,
-    marginBottom: 18,
+    lineHeight: 20,
+    marginBottom: 20,
   },
   title: {
-    color: COLORS.text,
+    color: LIGHT.textStrong,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 8,

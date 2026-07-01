@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientMe } from '../../data/hooks/useClientMeQuery';
 import { computeBmi, formatMetric } from './client-measures.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = { client: ClientMe };
 
@@ -36,9 +37,9 @@ function MeasureCard(props: { label: string; value: string }): React.JSX.Element
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(168,85,247,0.2)',
-    borderRadius: 14,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
     borderWidth: 1,
     flex: 1,
     minWidth: '45%',
@@ -50,6 +51,6 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingHorizontal: 16,
   },
-  label: { color: 'rgba(196,181,253,0.7)', fontSize: 11, marginBottom: 4, textTransform: 'uppercase' },
-  value: { color: '#ffffff', fontSize: 18, fontWeight: '700' },
+  label: { color: LIGHT.textMuted, fontSize: 11, marginBottom: 4, textTransform: 'uppercase' },
+  value: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '700' },
 });

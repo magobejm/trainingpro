@@ -24,6 +24,7 @@ import type {
   SportSessionItem,
   StrengthSessionItem,
 } from '../../data/hooks/useTodaySession';
+import { SESSION } from '../../theme/sessionStyles';
 import { WorkoutClock } from '../../features/timers/WorkoutClock';
 import { ExerciseListCard } from './ExerciseListCard';
 import { ExerciseSummaryOverlay } from './ExerciseSummaryOverlay';
@@ -417,45 +418,21 @@ export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenPro
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: '#0f172a',
-    flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  header: {
-    borderBottomColor: '#1e293b',
-    borderBottomWidth: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  title: {
-    color: '#e2e8f0',
-    fontSize: 20,
-    fontWeight: '800',
-  },
+  safeArea: SESSION.safeArea,
+  container: SESSION.container,
+  header: SESSION.header,
+  title: SESSION.title,
   centerContainer: {
     alignItems: 'center',
     flex: 1,
     justifyContent: 'center',
   },
-  emptyText: {
-    color: '#64748b',
-    fontSize: 16,
-  },
+  emptyText: SESSION.emptyText,
   startBanner: {
-    backgroundColor: '#6366f1',
-    borderRadius: 10,
+    ...SESSION.primaryBtn,
     margin: 16,
-    paddingVertical: 14,
   },
-  startBannerText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
+  startBannerText: SESSION.primaryBtnText,
 });
 
 const listStyles = StyleSheet.create({

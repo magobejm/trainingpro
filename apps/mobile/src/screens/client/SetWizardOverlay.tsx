@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import type { ExerciseHistoryEntry, LogSetMutationInput, StrengthSessionItem } from '../../data/hooks/useTodaySession';
 import { useExerciseHistoryQuery } from '../../data/hooks/useTodaySession';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
+import { LIGHT } from '../../theme/light';
+import { SESSION } from '../../theme/sessionStyles';
 
 const MODAL_ANIMATION = 'slide';
 const BACK_ARROW = '\u2190';
@@ -13,10 +15,10 @@ const KEYBOARD_NUMBER = 'number-pad';
 const KEYBOARD_PERSIST_TAPS = 'handled';
 const COLON_SPACE = ': ';
 const DOUBLE_DASH = '--';
-const PLACEHOLDER_COLOR = '#475569';
-const RPE_TRACK_ACTIVE = '#f59e0b';
-const RIR_TRACK_ACTIVE = '#10b981';
-const TRACK_BG = '#334155';
+const PLACEHOLDER_COLOR = LIGHT.textMuted;
+const RPE_TRACK_ACTIVE = LIGHT.amber;
+const RIR_TRACK_ACTIVE = LIGHT.emerald;
+const TRACK_BG = LIGHT.borderStrong;
 
 type SetWizardOverlayProps = {
   item: StrengthSessionItem;
@@ -357,81 +359,68 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
 }
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#0f172a',
-    flex: 1,
-  },
+  container: SESSION.modalOverlay,
   header: {
+    ...SESSION.header,
     alignItems: 'center',
-    borderBottomColor: '#1e293b',
-    borderBottomWidth: 1,
     flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
   },
-  backBtn: {
-    paddingRight: 12,
-  },
-  backArrow: {
-    color: '#94a3b8',
-    fontSize: 20,
-  },
+  backBtn: SESSION.backBtn,
+  backArrow: SESSION.backArrow,
   exerciseName: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
     textAlign: 'center',
   },
   historyBtn: {
-    backgroundColor: '#1e293b',
-    borderRadius: 6,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
   historyBtnActive: {
-    backgroundColor: '#6366f1',
+    backgroundColor: LIGHT.accentSoft,
+    borderColor: LIGHT.accent,
   },
   historyBtnText: {
-    color: '#94a3b8',
+    color: LIGHT.accentDark,
     fontSize: 12,
     fontWeight: '600',
   },
   historyPanel: {
-    backgroundColor: '#1e293b',
-    borderBottomColor: '#334155',
+    ...SESSION.panel,
+    borderBottomColor: LIGHT.border,
     borderBottomWidth: 1,
-    padding: 16,
+    borderRadius: 0,
+    marginBottom: 0,
   },
-  body: {
-    flex: 1,
-    padding: 16,
-  },
+  body: SESSION.screenPadding,
   setLabel: {
-    color: '#6366f1',
+    color: LIGHT.accent,
     fontSize: 22,
     fontWeight: '800',
     marginBottom: 16,
     textAlign: 'center',
   },
   trainerVarsRow: {
+    ...SESSION.panel,
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
   },
-  trainerVarsText: { color: '#94a3b8', fontSize: 14, fontWeight: '600' },
-  trainerVarsChevron: { color: '#94a3b8', fontSize: 10 },
-  trainerVarsPanel: { backgroundColor: '#1e293b', borderRadius: 8, gap: 8, marginBottom: 12, padding: 12 },
-  trainerHint: { color: '#94a3b8', fontSize: 13 },
+  trainerVarsText: { color: LIGHT.textMuted, fontSize: 14, fontWeight: '600' },
+  trainerVarsChevron: { color: LIGHT.textMuted, fontSize: 10 },
+  trainerVarsPanel: { ...SESSION.panel, gap: 8, marginBottom: 12 },
+  trainerHint: { color: LIGHT.textMuted, fontSize: 13 },
   restBanner: {
-    backgroundColor: '#1d4ed8',
-    borderRadius: 6,
-    color: '#bfdbfe',
+    backgroundColor: LIGHT.emeraldSoft,
+    borderRadius: LIGHT.radiusSm,
+    color: LIGHT.success,
     fontSize: 13,
     fontWeight: '600',
     paddingHorizontal: 10,
@@ -439,45 +428,35 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actionRow: { flexDirection: 'row', gap: 8 },
-  actionBtn: { backgroundColor: '#6366f1', borderRadius: 6, flex: 1, paddingVertical: 8 },
-  actionBtnSecondary: { backgroundColor: '#334155' },
-  actionBtnText: { color: '#fff', fontSize: 13, fontWeight: '600', textAlign: 'center' },
-  actionBtnTextSecondary: { color: '#94a3b8', fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  actionBtn: { ...SESSION.primaryBtn, borderRadius: LIGHT.radiusSm, flex: 1, paddingVertical: 8 },
+  actionBtnSecondary: SESSION.secondaryBtn,
+  actionBtnText: { ...SESSION.primaryBtnText, fontSize: 13 },
+  actionBtnTextSecondary: { ...SESSION.secondaryBtnText, fontSize: 13 },
   inputGrid: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   inputCell: { flex: 1 },
-  inputLabel: { color: '#94a3b8', fontSize: 12, fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
-  input: {
-    backgroundColor: '#1e293b',
-    borderColor: '#334155',
-    borderRadius: 8,
-    borderWidth: 1,
-    color: '#e2e8f0',
-    fontSize: 20,
-    fontWeight: '700',
-    padding: 12,
-    textAlign: 'center',
-  },
+  inputLabel: SESSION.inputLabel,
+  input: SESSION.input,
   sliderSection: { marginBottom: 12 },
   sliderRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  sliderLabel: { color: '#cbd5e1', fontSize: 14, fontWeight: '600' },
-  sliderValue: { color: '#e2e8f0', fontSize: 14, fontWeight: '700' },
-  footer: { borderTopColor: '#1e293b', borderTopWidth: 1, padding: 16 },
-  ctaBtn: { backgroundColor: '#6366f1', borderRadius: 12, paddingVertical: 16 },
-  ctaBtnText: { color: '#fff', fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  sliderLabel: { color: LIGHT.text, fontSize: 14, fontWeight: '600' },
+  sliderValue: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700' },
+  footer: { borderTopColor: LIGHT.border, borderTopWidth: 1, padding: 16 },
+  ctaBtn: SESSION.primaryBtn,
+  ctaBtnText: SESSION.primaryBtnText,
   restOverlay: {
-    backgroundColor: '#0f172a',
-    borderTopColor: '#1e293b',
-    borderTopWidth: 1,
+    backgroundColor: LIGHT.emeraldSoft,
+    borderTopColor: LIGHT.emerald,
+    borderTopWidth: 2,
     gap: 12,
     padding: 16,
   },
-  restTitle: { color: '#94a3b8', fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-  skipRestBtn: { backgroundColor: '#334155', borderRadius: 12, paddingVertical: 12 },
+  restTitle: { color: LIGHT.success, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  skipRestBtn: { ...SESSION.primaryBtnSuccess, borderRadius: LIGHT.radiusMd, paddingVertical: 12 },
 });
 
 const historyStyles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
-  date: { color: '#64748b', fontSize: 12 },
-  data: { color: '#94a3b8', fontSize: 12, fontWeight: '600' },
-  empty: { color: '#475569', fontSize: 13, textAlign: 'center' },
+  date: { color: LIGHT.textMuted, fontSize: 12 },
+  data: { color: LIGHT.text, fontSize: 12, fontWeight: '600' },
+  empty: { color: LIGHT.textMuted, fontSize: 13, textAlign: 'center' },
 });

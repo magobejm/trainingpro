@@ -16,10 +16,12 @@ import { LibraryItemCard } from './ClientLibraryItemCard';
 import { LibraryItemDetail } from './ClientLibraryItemDetail';
 import { LibrarySearchBar } from './ClientLibrarySearchBar';
 import { LibraryTabBar } from './ClientLibraryTabs';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
 type Props = { onClose: () => void };
 
-const SPINNER_COLOR = '#a855f7';
+const SPINNER_COLOR = LIGHT.accent;
 const SPINNER_SIZE = 'large' as const;
 
 function useLibraryTabData(activeTab: LibraryTabId, q: string) {
@@ -82,7 +84,7 @@ export function ClientLibraryScreen({ onClose }: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', flex: 1, justifyContent: 'center' },
-  container: { backgroundColor: '#0d0520', flex: 1 },
-  emptyText: { color: 'rgba(196,181,253,0.6)', fontSize: 14 },
+  container: SCREEN.root,
+  emptyText: { color: LIGHT.textMuted, fontSize: 14 },
   list: { paddingBottom: 32 },
 });

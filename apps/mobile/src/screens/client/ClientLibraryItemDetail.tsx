@@ -3,6 +3,7 @@ import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'r
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { LibraryDisplayItem } from './client-library.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   item: LibraryDisplayItem | null;
@@ -79,15 +80,16 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   body: { padding: 20 },
-  bodyText: { color: 'rgba(255,255,255,0.85)', fontSize: 14, lineHeight: 21, marginTop: 6 },
+  bodyText: { color: LIGHT.text, fontSize: 14, lineHeight: 21, marginTop: 6 },
   closeBtn: { padding: 8 },
-  closeBtnText: { color: 'rgba(196,181,253,0.7)', fontSize: 20 },
-  container: { backgroundColor: '#0d0520', flex: 1 },
-  fieldLabel: { color: 'rgba(196,181,253,0.7)', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
-  fieldRow: { color: '#ffffff', fontSize: 14, marginBottom: 4 },
+  closeBtnText: { color: LIGHT.textMuted, fontSize: 20 },
+  container: { backgroundColor: LIGHT.bgSoft, flex: 1 },
+  fieldLabel: { color: LIGHT.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
+  fieldRow: { color: LIGHT.textStrong, fontSize: 14, marginBottom: 4 },
   header: {
     alignItems: 'center',
-    borderBottomColor: 'rgba(168,85,247,0.2)',
+    backgroundColor: LIGHT.bgCard,
+    borderBottomColor: LIGHT.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
     gap: 12,
@@ -97,12 +99,12 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   section: { marginBottom: 18 },
-  title: { color: '#ffffff', flex: 1, fontSize: 18, fontWeight: '700' },
+  title: { color: LIGHT.textStrong, flex: 1, fontSize: 18, fontWeight: '700' },
   typeChip: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(168,85,247,0.2)',
-    borderRadius: 8,
-    color: '#c4b5fd',
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusSm,
+    color: LIGHT.accentDark,
     fontSize: 12,
     fontWeight: '700',
     marginBottom: 16,
@@ -112,12 +114,12 @@ const styles = StyleSheet.create({
   },
   videoBtn: {
     alignItems: 'center',
-    backgroundColor: 'rgba(99,102,241,0.2)',
-    borderColor: '#6366f1',
-    borderRadius: 12,
+    backgroundColor: LIGHT.accentSoft,
+    borderColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusMd,
     borderWidth: 1,
     marginTop: 8,
     paddingVertical: 14,
   },
-  videoBtnText: { color: '#a5b4fc', fontWeight: '700' },
+  videoBtnText: { color: LIGHT.accentDark, fontWeight: '700' },
 });

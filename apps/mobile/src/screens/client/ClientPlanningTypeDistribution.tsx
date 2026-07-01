@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { TYPE_BADGE, type TypeCount } from './client-planning.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = {
   counts: TypeCount[];
@@ -49,16 +50,18 @@ const styles = StyleSheet.create({
   },
   barSegment: { height: '100%' },
   container: {
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderRadius: 16,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusLg,
+    borderWidth: 1,
     marginHorizontal: 12,
     marginTop: 12,
     padding: 12,
   },
-  empty: { color: 'rgba(196,181,253,0.5)', fontSize: 12 },
+  empty: { color: LIGHT.textMuted, fontSize: 12 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
   legendDot: { borderRadius: 5, height: 10, marginRight: 4, width: 10 },
   legendItem: { alignItems: 'center', flexDirection: 'row' },
-  legendText: { color: '#c4b5fd', fontSize: 11 },
-  title: { color: '#c4b5fd', fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  legendText: { color: LIGHT.text, fontSize: 11 },
+  title: { color: LIGHT.accentMuted, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
 });

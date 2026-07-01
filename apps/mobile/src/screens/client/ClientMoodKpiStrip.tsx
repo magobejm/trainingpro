@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientWellnessSummary } from '../../data/hooks/useClientWellness';
 import { formatScore } from './client-mood.helpers';
+import { LIGHT } from '../../theme/light';
 
 type Props = { summary: ClientWellnessSummary };
 
@@ -34,15 +35,15 @@ export function MoodKpiStrip({ summary }: Props): React.JSX.Element {
 const styles = StyleSheet.create({
   chip: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderColor: 'rgba(168,85,247,0.2)',
-    borderRadius: 12,
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
     borderWidth: 1,
     flex: 1,
     minWidth: '45%',
     padding: 12,
   },
-  label: { color: 'rgba(196,181,253,0.7)', fontSize: 10, marginTop: 4, textAlign: 'center' },
+  label: { color: LIGHT.textMuted, fontSize: 10, marginTop: 4, textAlign: 'center' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16 },
-  value: { color: '#ffffff', fontSize: 20, fontWeight: '800' },
+  value: { color: LIGHT.textStrong, fontSize: 20, fontWeight: '800' },
 });

@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { ClientCalendarScreen } from '../../screens/client/ClientCalendarScreen';
 import { ClientLibraryScreen } from '../../screens/client/ClientLibraryScreen';
@@ -10,59 +11,52 @@ import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { IncidentsScreen } from '../../screens/client/IncidentsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
-import { SPRING, WEB_BLUR_LG, type MenuId, type OverlayId, type ProgressMode } from './client-shell.constants';
-import { showComingSoon } from './feedback';
+import { BottomNav, type TabId } from '../../theme/primitives';
+import { SPRING, type MoreMenuId, type OverlayId, type ProgressMode } from './client-shell.constants';
 import { s } from './client-shell.styles';
 import { HomeHub } from './ClientShellHome';
-import { DayDetailPanel, MenuConfigPanel, ProfilePanel, RoutinePanel } from './ClientShellPanels';
-import { OverlayBackHeader } from './client-shell.primitives';
+import { DayDetailPanel, ProfilePanel, RoutinePanel } from './ClientShellPanels';
+import { MoreScreen } from './MoreScreen';
 
 type ShellState = {
-  activeMenuIds: string[];
+  activeTab: TabId;
   activeSessionId: string | null;
   overlay: OverlayId;
   progressMode: ProgressMode;
   selectedDay: ClientRoutineDay | null;
   slideX: Animated.Value;
-  slideY: Animated.Value;
   closeOverlay: () => void;
   openDay: (day: ClientRoutineDay) => void;
   openOverlay: (id: OverlayId) => void;
   openProgress: (mode: ProgressMode) => void;
   openSession: (sessionId: string) => void;
-  setActiveMenuIds: React.Dispatch<React.SetStateAction<string[]>>;
+  setActiveTab: (tab: TabId) => void;
 };
 
 function useShellState(): ShellState {
+  const [activeTab, setActiveTab] = useState<TabId>('home');
   const [overlay, setOverlay] = useState<OverlayId>(null);
   const [selectedDay, setSelectedDay] = useState<ClientRoutineDay | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [activeMenuIds, setActiveMenuIds] = useState<string[]>(['measures', 'notes', 'chat', 'incidents']);
   const [progressMode, setProgressMode] = useState<ProgressMode>('progress');
   const slideX = useRef(new Animated.Value(600)).current;
-  const slideY = useRef(new Animated.Value(900)).current;
 
   const openOverlay = useCallback(
     (id: OverlayId) => {
       setOverlay(id);
-      if (id === 'menu') {
-        Animated.spring(slideY, { toValue: 0, ...SPRING }).start();
-      } else {
-        Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
-      }
+      Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
     },
-    [slideX, slideY],
+    [slideX],
   );
 
   const closeOverlay = useCallback(() => {
-    const ref = overlay === 'menu' ? slideY : slideX;
-    Animated.spring(ref, { toValue: overlay === 'menu' ? 900 : 600, ...SPRING }).start(() => {
+    Animated.spring(slideX, { toValue: 600, ...SPRING }).start(() => {
       setOverlay(null);
       setProgressMode('progress');
       if (overlay === 'routineDay') setSelectedDay(null);
       if (overlay === 'session') setActiveSessionId(null);
     });
-  }, [overlay, slideX, slideY]);
+  }, [overlay, slideX]);
 
   const openProgress = useCallback(
     (mode: ProgressMode) => {
@@ -92,8 +86,8 @@ function useShellState(): ShellState {
   );
 
   return {
-    activeMenuIds,
     activeSessionId,
+    activeTab,
     closeOverlay,
     openDay,
     openOverlay,
@@ -102,60 +96,52 @@ function useShellState(): ShellState {
     overlay,
     progressMode,
     selectedDay,
-    setActiveMenuIds,
+    setActiveTab,
     slideX,
-    slideY,
   };
 }
 
-function dispatchMenu(id: MenuId, openOverlay: (id: OverlayId) => void, openProgress: (mode: ProgressMode) => void): void {
-  if (id === 'chat') {
-    openOverlay('chat');
-    return;
-  }
-  if (id === 'incidents') {
-    openOverlay('incidents');
-    return;
-  }
-  if (id === 'calendar') {
-    openOverlay('calendar');
-    return;
-  }
-  if (id === 'planning') {
-    openOverlay('planning');
-    return;
-  }
-  if (id === 'exercises') {
-    openOverlay('library');
-    return;
-  }
-  if (id === 'measures') {
-    openOverlay('measures');
-    return;
-  }
-  if (id === 'volume') {
-    openProgress('volume');
-    return;
-  }
-  const label = id.charAt(0).toUpperCase() + id.slice(1);
-  showComingSoon(label);
+function dispatchMoreMenu(
+  id: MoreMenuId,
+  openOverlay: (id: OverlayId) => void,
+  openProgress: (mode: ProgressMode) => void,
+): void {
+  if (id === 'incidents') openOverlay('incidents');
+  else if (id === 'measures') openOverlay('measures');
+  else if (id === 'planning') openOverlay('planning');
+  else if (id === 'volume') openProgress('volume');
 }
 
 export function ClientShell(): React.JSX.Element {
+  const { t } = useTranslation();
   const st = useShellState();
+  const showBottomNav = st.overlay === null;
+
   return (
     <View style={s.root}>
-      <View style={[s.glowPink, WEB_BLUR_LG]} />
-      <View style={[s.glowBlue, WEB_BLUR_LG]} />
-      <HomeHub
-        activeMenuIds={st.activeMenuIds}
-        onMenuItemPress={(id) => dispatchMenu(id as MenuId, st.openOverlay, st.openProgress)}
-        onOpenMenu={() => st.openOverlay('menu')}
-        onOpenMood={() => st.openOverlay('mood')}
-        onOpenProfile={() => st.openOverlay('profile')}
-        onOpenProgress={() => st.openProgress('progress')}
-        onOpenRoutine={() => st.openOverlay('routine')}
-      />
+      {st.activeTab === 'home' && (
+        <HomeHub
+          onOpenMood={() => st.openOverlay('mood')}
+          onOpenProfile={() => st.openOverlay('profile')}
+          onOpenProgress={() => st.openProgress('progress')}
+          onOpenRoutine={() => st.openOverlay('routine')}
+        />
+      )}
+      {st.activeTab === 'chat' && <ChatScreen embedded />}
+      {st.activeTab === 'more' && <MoreScreen onNavigate={(id) => dispatchMoreMenu(id, st.openOverlay, st.openProgress)} />}
+
+      {showBottomNav ? (
+        <BottomNav
+          active={st.activeTab}
+          labels={{
+            chat: t('mobile.tab.chat'),
+            home: t('mobile.client.home.tab'),
+            more: t('mobile.client.more.tab'),
+          }}
+          onChange={st.setActiveTab}
+        />
+      ) : null}
+
       {st.overlay === 'profile' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <ProfilePanel onClose={st.closeOverlay} />
@@ -191,12 +177,6 @@ export function ClientShell(): React.JSX.Element {
           <ClientMoodScreen onClose={st.closeOverlay} />
         </Animated.View>
       )}
-      {st.overlay === 'chat' && (
-        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <OverlayBackHeader onClose={st.closeOverlay} title={'Chat'} />
-          <ChatScreen />
-        </Animated.View>
-      )}
       {st.overlay === 'incidents' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <IncidentsScreen onClose={st.closeOverlay} />
@@ -215,21 +195,6 @@ export function ClientShell(): React.JSX.Element {
       {st.overlay === 'library' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <ClientLibraryScreen onClose={st.closeOverlay} />
-        </Animated.View>
-      )}
-      {st.overlay === 'menu' && (
-        <Animated.View style={[s.fullOverlay, { transform: [{ translateY: st.slideY }] }]}>
-          <MenuConfigPanel
-            activeIds={st.activeMenuIds}
-            onClose={st.closeOverlay}
-            onToggle={(id) => {
-              st.setActiveMenuIds((prev) => {
-                if (prev.includes(id)) return prev.filter((x) => x !== id);
-                if (prev.length >= 4) return prev;
-                return [...prev, id];
-              });
-            }}
-          />
         </Animated.View>
       )}
     </View>

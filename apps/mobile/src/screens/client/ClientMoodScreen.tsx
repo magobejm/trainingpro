@@ -8,10 +8,12 @@ import { MoodKpiStrip } from './ClientMoodKpiStrip';
 import { MoodSessionList } from './ClientMoodSessionList';
 import { MoodWeeklyReports } from './ClientMoodWeeklyReports';
 import { buildDefaultWellnessRange } from './client-mood.helpers';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
 type Props = { onClose: () => void };
 
-const SPINNER_COLOR = '#a855f7';
+const SPINNER_COLOR = LIGHT.accent;
 const SPINNER_SIZE = 'large' as const;
 
 export function ClientMoodScreen({ onClose }: Props): React.JSX.Element {
@@ -71,19 +73,19 @@ function renderBody(query: ReturnType<typeof useClientWellnessQuery>, t: (key: s
 
 const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', minHeight: 200, padding: 24 },
-  container: { backgroundColor: '#0d0520', flex: 1 },
+  container: SCREEN.root,
   content: { paddingBottom: 32 },
-  empty: { color: 'rgba(196,181,253,0.6)', fontSize: 14, textAlign: 'center' },
-  error: { color: '#f87171', fontSize: 14, textAlign: 'center' },
+  empty: { color: LIGHT.textMuted, fontSize: 14, textAlign: 'center' },
+  error: { color: LIGHT.error, fontSize: 14, textAlign: 'center' },
   hint: {
-    backgroundColor: 'rgba(99,102,241,0.15)',
-    borderColor: 'rgba(99,102,241,0.3)',
-    borderRadius: 10,
+    backgroundColor: LIGHT.accentSoft,
+    borderColor: LIGHT.borderStrong,
+    borderRadius: LIGHT.radiusSm,
     borderWidth: 1,
     marginBottom: 16,
     marginHorizontal: 16,
     padding: 12,
   },
-  hintText: { color: 'rgba(196,181,253,0.8)', fontSize: 12, textAlign: 'center' },
-  subtitle: { color: 'rgba(196,181,253,0.7)', fontSize: 13, marginBottom: 12, paddingHorizontal: 16 },
+  hintText: { color: LIGHT.accentDark, fontSize: 12, textAlign: 'center' },
+  subtitle: { color: LIGHT.textMuted, fontSize: 13, marginBottom: 12, paddingHorizontal: 16 },
 });

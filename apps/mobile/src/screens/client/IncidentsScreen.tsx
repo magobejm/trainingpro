@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useIncidentsListQuery, type IncidentListItem } from '../../data/hooks/useIncidents';
 import { IncidentCreatePanel } from './IncidentCreateScreen';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
 
 type Tab = 'history' | 'new';
 
@@ -18,11 +20,10 @@ const SEVERITY_COLOR: Record<string, string> = {
   MEDIUM: '#eab308',
 };
 
-const BG = '#07000f';
-const CARD = 'rgba(0,0,0,0.55)';
-const TEXT = '#ffffff';
-const MUTED = 'rgba(196,181,253,0.7)';
-const ACCENT = '#ec4899';
+const CARD = LIGHT.bgCard;
+const TEXT = LIGHT.textStrong;
+const MUTED = LIGHT.textMuted;
+const ACCENT = LIGHT.accent;
 
 function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void }) {
   const { t } = useTranslation();
@@ -42,7 +43,7 @@ function TabBar({ active, onChange }: { active: Tab; onChange: (t: Tab) => void 
 
 function IncidentRow({ item }: { item: IncidentListItem }) {
   const { t } = useTranslation();
-  const color = SEVERITY_COLOR[item.severity] ?? '#94a3b8';
+  const color = SEVERITY_COLOR[item.severity] ?? LIGHT.textMuted;
   const date = new Date(item.createdAt).toLocaleDateString();
   const statusLabel = t(`client.incidents.status.${item.status.toLowerCase()}`);
   return (
@@ -108,8 +109,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   container: {
-    backgroundColor: BG,
-    flex: 1,
+    ...SCREEN.root,
   },
   empty: {
     color: MUTED,
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: LIGHT.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -132,7 +132,9 @@ const styles = StyleSheet.create({
   },
   row: {
     backgroundColor: CARD,
-    borderRadius: 12,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusMd,
+    borderWidth: 1,
     gap: 6,
     padding: 12,
   },
@@ -175,7 +177,7 @@ const styles = StyleSheet.create({
     borderBottomColor: ACCENT,
   },
   tabBar: {
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: LIGHT.border,
     borderBottomWidth: 1,
     flexDirection: 'row',
     paddingHorizontal: 16,

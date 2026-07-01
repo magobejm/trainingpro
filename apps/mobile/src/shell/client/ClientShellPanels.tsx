@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useAuthStore } from '../../store/auth.store';
@@ -11,64 +11,12 @@ import {
   type ClientRoutineExercise,
 } from '../../data/hooks/useClientRoutineQuery';
 import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
-import { DARK } from '../dark';
-import { MENU_ITEMS, type MenuItem } from './client-shell.constants';
+import { LIGHT } from '../../theme/light';
+import { InfoButton, PrimaryButton, StatSquare } from '../../theme/primitives';
 import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
 import { s } from './client-shell.styles';
 
-type MenuConfigProps = {
-  activeIds: string[];
-  onClose: () => void;
-  onToggle: (id: string) => void;
-};
-
-export function MenuConfigPanel(props: MenuConfigProps): React.JSX.Element {
-  const activeItems = useMemo(
-    () => props.activeIds.map((id) => MENU_ITEMS.find((m) => m.id === id)).filter(Boolean) as MenuItem[],
-    [props.activeIds],
-  );
-  const availableItems = useMemo(() => MENU_ITEMS.filter((m) => !props.activeIds.includes(m.id)), [props.activeIds]);
-  return (
-    <View style={s.menuPanel}>
-      <View style={s.menuHeader}>
-        <Text style={s.menuTitle}>{'Configurar Menú'}</Text>
-        <Pressable onPress={props.onClose} style={s.closeBtn}>
-          <Text style={s.closeBtnText}>{'✕'}</Text>
-        </Pressable>
-      </View>
-      <ScrollView style={s.menuScroll} contentContainerStyle={s.menuContent}>
-        <View style={s.menuSectionHeader}>
-          <Text style={s.menuSectionLabel}>{'MENÚ PRINCIPAL'}</Text>
-          <Text style={[s.menuCounter, props.activeIds.length >= 4 ? s.menuCounterFull : null]}>
-            {`${props.activeIds.length} / 4`}
-          </Text>
-        </View>
-        <View style={s.menuActiveBox}>
-          {activeItems.map((item) => (
-            <Pressable key={item.id} onPress={() => props.onToggle(item.id)} style={s.menuActiveItem}>
-              <View style={s.menuActiveIcon}>
-                <Text style={s.menuActiveEmoji}>{item.emoji}</Text>
-              </View>
-              <Text style={s.menuActiveLabel}>{item.label}</Text>
-            </Pressable>
-          ))}
-          {activeItems.length === 0 && <Text style={s.menuEmptyText}>{'Toca un elemento para añadirlo'}</Text>}
-        </View>
-        <Text style={s.menuSectionLabel}>{'MÁS OPCIONES'}</Text>
-        <View style={s.menuGrid}>
-          {availableItems.map((item) => (
-            <Pressable key={item.id} onPress={() => props.onToggle(item.id)} style={s.menuGridItem}>
-              <View style={s.menuGridIcon}>
-                <Text style={s.menuGridEmoji}>{item.emoji}</Text>
-              </View>
-              <Text style={s.menuGridLabel}>{item.label}</Text>
-            </Pressable>
-          ))}
-        </View>
-      </ScrollView>
-    </View>
-  );
-}
+const BTN_VARIANT_SUCCESS = 'success' as const;
 
 export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element {
   const { t } = useTranslation();
@@ -79,7 +27,7 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
       <View style={s.sidePanel}>
         <OverlayBackHeader onClose={props.onClose} />
         <View style={s.centered}>
-          <ActivityIndicator color={DARK.accent} />
+          <ActivityIndicator color={LIGHT.accent} />
         </View>
       </View>
     );
@@ -88,11 +36,39 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
     <View style={s.sidePanel}>
       <OverlayBackHeader onClose={props.onClose} />
       <ScrollView contentContainerStyle={s.panelContent}>
-        <ProfileHero client={client} />
-        <MetricsGrid client={client} />
-        <DetailedMetrics client={client} />
-        <ObjectivesSection client={client} t={t} />
-        <ProgressPhotosSection photos={client.progressPhotos} />
+        <ProfileHero client={client} t={t} />
+        <ProfileFields client={client} />
+        <View style={s.statGrid}>
+          <StatSquare label={t('mobile.client.profile.waist')} value={client.waistCm} />
+          <StatSquare label={t('mobile.client.profile.hip')} value={client.hipCm} />
+          <StatSquare label={'FC Max'} value={client.fcMax} />
+          <StatSquare label={'FC Res'} value={client.fcRest} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
+          <View style={{ flex: 1, gap: 16 }}>
+            <ObjectivesSection client={client} t={t} />
+            <Pressable style={s.photoBtn}>
+              <Text style={{ fontSize: 24 }}>{'🖼️'}</Text>
+              <Text style={s.photoBtnText}>{t('mobile.client.profile.photos')}</Text>
+            </Pressable>
+            <ProgressPhotosSection photos={client.progressPhotos} />
+          </View>
+          <View style={{ flex: 1, gap: 12 }}>
+            {client.fitnessLevel ? (
+              <View>
+                <Text style={s.sectionLabel}>{t('mobile.client.profile.fitnessLevel')}</Text>
+                <View style={[s.fieldCard, { alignItems: 'center', marginTop: 6 }]}>
+                  <Text style={s.fieldValue}>{client.fitnessLevel}</Text>
+                </View>
+              </View>
+            ) : null}
+            {client.considerations ? (
+              <InfoButton label={t('mobile.client.profile.considerations')} onPress={() => {}} />
+            ) : null}
+            {client.allergies ? <InfoButton label={t('mobile.client.profile.allergies')} onPress={() => {}} /> : null}
+            {client.injuries ? <InfoButton label={t('mobile.client.profile.injuries')} onPress={() => {}} /> : null}
+          </View>
+        </View>
         <MedicalSection client={client} />
         {client.notes ? <NotesSection notes={client.notes} t={t} /> : null}
         <Pressable onPress={clearSession} style={s.logoutBtn}>
@@ -103,65 +79,48 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
   );
 }
 
-function ProfileHero(props: { client: ClientMe }): React.JSX.Element {
+function ProfileHero(props: { client: ClientMe; t: (k: string) => string }): React.JSX.Element {
   return (
     <View style={s.profileHero}>
       <View style={s.heroAvatarWrap}>
-        <AvatarImage avatarUrl={props.client.avatarUrl} size={80} />
+        <AvatarImage avatarUrl={props.client.avatarUrl} size={64} />
       </View>
       <View style={s.heroInfo}>
         <Text style={s.heroName}>{`${props.client.firstName} ${props.client.lastName}`}</Text>
         <View style={s.heroStatusRow}>
           <View style={s.heroStatusDot} />
-          <Text style={s.heroStatusText}>{'Cliente Activo'}</Text>
+          <Text style={s.heroStatusText}>{props.t('mobile.client.profile.active')}</Text>
+        </View>
+      </View>
+      <View style={s.profileStatsRow}>
+        <View style={s.profileStatCol}>
+          <Text style={s.profileStatValue}>{props.client.heightCm ?? '–'}</Text>
+          <Text style={s.profileStatLabel}>{props.t('mobile.client.profile.height')}</Text>
+        </View>
+        <View style={s.profileStatCol}>
+          <Text style={s.profileStatValue}>{props.client.weightKg ?? '–'}</Text>
+          <Text style={s.profileStatLabel}>{props.t('mobile.client.profile.weight')}</Text>
         </View>
       </View>
     </View>
   );
 }
 
-function MetricsGrid(props: { client: ClientMe }): React.JSX.Element {
+function ProfileFields(props: { client: ClientMe }): React.JSX.Element {
   return (
-    <View style={s.metricsRow}>
-      <MetricCard label={'Altura'} value={props.client.heightCm} unit={'cm'} />
-      <MetricCard label={'Peso'} value={props.client.weightKg} unit={'kg'} />
-      <MetricCard label={'Sexo'} value={props.client.sex} unit={''} />
-    </View>
-  );
-}
-
-function MetricCard(props: { label: string; unit: string; value: string | number | null }): React.JSX.Element {
-  return (
-    <View style={s.metricCard}>
-      <Text style={s.metricCardLabel}>{props.label}</Text>
-      <Text style={s.metricCardValue}>
-        {props.value ?? '–'}
-        {props.unit ? <Text style={s.metricCardUnit}>{` ${props.unit}`}</Text> : null}
-      </Text>
-    </View>
-  );
-}
-
-function DetailedMetrics(props: { client: ClientMe }): React.JSX.Element {
-  return (
-    <View style={s.detailedGrid}>
-      <DetailRow label={'Cintura'} value={props.client.waistCm} unit={'cm'} />
-      <DetailRow label={'Cadera'} value={props.client.hipCm} unit={'cm'} />
-      <DetailRow label={'FCMax'} value={props.client.fcMax} unit={'bpm'} blue />
-      <DetailRow label={'FCReposo'} value={props.client.fcRest} unit={'bpm'} blue />
-    </View>
-  );
-}
-
-function DetailRow(props: { blue?: boolean; label: string; unit: string; value: number | null }): React.JSX.Element {
-  const labelColor = props.blue ? '#60a5fa' : DARK.textMuted;
-  const valueColor = props.blue ? '#93c5fd' : '#ffffff';
-  return (
-    <View style={s.detailRow}>
-      <Text style={[s.detailLabel, { color: labelColor }]}>{props.label}</Text>
-      <Text style={[s.detailValue, { color: valueColor }]}>
-        {props.value ?? '–'} <Text style={s.detailUnit}>{props.unit}</Text>
-      </Text>
+    <View style={{ gap: 12 }}>
+      <View style={s.fieldCard}>
+        <Text style={s.fieldLabel}>{'Nombre completo'}</Text>
+        <Text style={s.fieldValue}>{`${props.client.firstName} ${props.client.lastName}`}</Text>
+      </View>
+      <View style={s.fieldCard}>
+        <Text style={s.fieldLabel}>{'Email'}</Text>
+        <Text style={s.fieldValue}>{props.client.email ?? '–'}</Text>
+      </View>
+      <View style={s.fieldCard}>
+        <Text style={s.fieldLabel}>{'Teléfono'}</Text>
+        <Text style={s.fieldValue}>{props.client.phone ?? '–'}</Text>
+      </View>
     </View>
   );
 }
@@ -171,7 +130,7 @@ function ObjectivesSection(props: { client: ClientMe; t: (k: string) => string }
     <View style={s.sectionCard}>
       <Text style={s.sectionLabel}>{props.t('mobile.client.profile.objective')}</Text>
       <View style={s.objectivePill}>
-        <Text style={s.objectivePillText}>{props.client.objective}</Text>
+        <Text style={s.objectivePillText}>{props.client.objective ?? '–'}</Text>
       </View>
       {props.client.secondaryObjectives.length > 0 && (
         <View style={s.chipRow}>
@@ -182,45 +141,32 @@ function ObjectivesSection(props: { client: ClientMe; t: (k: string) => string }
           ))}
         </View>
       )}
-      {props.client.fitnessLevel ? (
-        <View style={s.levelRow}>
-          <Text style={s.levelLabel}>{'Nivel fitness'}</Text>
-          <Text style={s.levelValue}>{props.client.fitnessLevel}</Text>
-        </View>
-      ) : null}
     </View>
   );
 }
 
 function ProgressPhotosSection(props: { photos: ClientMe['progressPhotos'] }): React.JSX.Element {
-  if (!props.photos || props.photos.length === 0) {
-    return <View />;
-  }
+  if (!props.photos || props.photos.length === 0) return <View />;
   return (
-    <View style={s.sectionCard}>
-      <Text style={s.sectionLabel}>{'FOTOS DE PROGRESO'}</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photosRow}>
-        {props.photos
-          .filter((p) => !p.archived)
-          .map((photo) => (
-            <Image key={photo.id} source={{ uri: photo.imageUrl }} style={s.photoThumb} />
-          ))}
-      </ScrollView>
-    </View>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.photosRow}>
+      {props.photos
+        .filter((p) => !p.archived)
+        .map((photo) => (
+          <Image key={photo.id} source={{ uri: photo.imageUrl }} style={s.photoThumb} />
+        ))}
+    </ScrollView>
   );
 }
 
 function MedicalSection(props: { client: ClientMe }): React.JSX.Element {
   const hasAny = props.client.injuries || props.client.allergies || props.client.considerations;
-  if (!hasAny) {
-    return <View />;
-  }
+  if (!hasAny) return <View />;
   return (
     <View style={s.sectionCard}>
-      {props.client.injuries ? <MedicalRow color={'#f87171'} label={'Lesiones'} value={props.client.injuries} /> : null}
-      {props.client.allergies ? <MedicalRow color={'#fb923c'} label={'Alergias'} value={props.client.allergies} /> : null}
+      {props.client.injuries ? <MedicalRow color={LIGHT.red} label={'Lesiones'} value={props.client.injuries} /> : null}
+      {props.client.allergies ? <MedicalRow color={LIGHT.orange} label={'Alergias'} value={props.client.allergies} /> : null}
       {props.client.considerations ? (
-        <MedicalRow color={'#60a5fa'} label={'A tener en cuenta'} value={props.client.considerations} />
+        <MedicalRow color={LIGHT.accent} label={'A tener en cuenta'} value={props.client.considerations} />
       ) : null}
     </View>
   );
@@ -250,12 +196,19 @@ function NotesSection(props: { notes: string; t: (k: string) => string }): React
 export function RoutinePanel(props: { onClose: () => void; onSelectDay: (d: ClientRoutineDay) => void }): React.JSX.Element {
   const { t } = useTranslation();
   const { data: routine, isLoading } = useClientRoutineQuery();
+  const todayIdx = new Date().getDay();
+  const todayDay = routine?.planDays.length ? routine.planDays[todayIdx % routine.planDays.length] : null;
+  const otherDays = useMemo(
+    () => (routine?.planDays ?? []).filter((d) => d.id !== todayDay?.id),
+    [routine?.planDays, todayDay?.id],
+  );
+
   if (isLoading) {
     return (
       <View style={s.sidePanel}>
         <OverlayBackHeader onClose={props.onClose} title={t('mobile.client.routine.title')} />
         <View style={s.centered}>
-          <ActivityIndicator color={DARK.accent} />
+          <ActivityIndicator color={LIGHT.accent} />
         </View>
       </View>
     );
@@ -272,12 +225,21 @@ export function RoutinePanel(props: { onClose: () => void; onSelectDay: (d: Clie
   }
   return (
     <View style={s.sidePanel}>
-      <OverlayBackHeader onClose={props.onClose} title={t('mobile.client.routine.title')} />
+      <OverlayBackHeader onClose={props.onClose} />
       <ScrollView contentContainerStyle={s.panelContent}>
         <RoutineHeroCard routine={routine} t={t} />
-        {routine.planDays.map((day) => (
-          <RoutineDayCard key={day.id} day={day} onPress={() => props.onSelectDay(day)} />
-        ))}
+        {todayDay ? (
+          <View style={{ marginBottom: 8 }}>
+            <Text style={s.routineSectionLabel}>{t('mobile.client.routine.today')}</Text>
+            <RoutineDayCard day={todayDay} isActive onPress={() => props.onSelectDay(todayDay)} />
+          </View>
+        ) : null}
+        <View style={s.routineSeparator} />
+        <View style={{ gap: 16 }}>
+          {otherDays.map((day) => (
+            <RoutineDayCard key={day.id} day={day} onPress={() => props.onSelectDay(day)} />
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -286,38 +248,33 @@ export function RoutinePanel(props: { onClose: () => void; onSelectDay: (d: Clie
 function RoutineHeroCard(props: { routine: ClientRoutine; t: (k: string) => string }): React.JSX.Element {
   return (
     <View style={s.routineHero}>
-      <Text style={s.routineHeroLabel}>{props.t('mobile.client.routine.mesocycle')}</Text>
       <Text style={s.routineHeroName}>{props.routine.name}</Text>
-      <View style={s.routineChipRow}>
-        <View style={s.routineChip}>
-          <Text style={s.routineChipText}>{`${props.routine.planDays.length} Días Entreno`}</Text>
+      <Text
+        style={s.routineHeroSub}
+      >{`${props.routine.planDays.length} ${props.t('mobile.client.routine.trainingDays')}`}</Text>
+      {props.routine.expectedCompletionDays ? (
+        <View style={s.routineHeroMeta}>
+          <Text style={s.sectionLabel}>{props.t('mobile.client.routine.mesocycle')}</Text>
+          <Text style={s.fieldValue}>{`${props.routine.expectedCompletionDays} días`}</Text>
         </View>
-        {props.routine.expectedCompletionDays ? (
-          <View style={s.routineChip}>
-            <Text style={s.routineChipText}>{`${props.routine.expectedCompletionDays} Días Microciclo`}</Text>
-          </View>
-        ) : null}
-        {props.routine.objectives.map((obj) => (
-          <View key={obj} style={s.routineChip}>
-            <Text style={s.routineChipText}>{obj}</Text>
-          </View>
-        ))}
-      </View>
+      ) : null}
     </View>
   );
 }
 
-function RoutineDayCard(props: { day: ClientRoutineDay; onPress: () => void }): React.JSX.Element {
+function RoutineDayCard(props: { day: ClientRoutineDay; isActive?: boolean; onPress: () => void }): React.JSX.Element {
   return (
-    <Pressable onPress={props.onPress} style={s.dayCard}>
-      <View style={s.dayBadge}>
-        <Text style={s.dayBadgeText}>{`D${props.day.dayIndex}`}</Text>
-      </View>
+    <Pressable onPress={props.onPress} style={[s.dayCard, props.isActive && s.dayCardActive]}>
       <View style={s.dayInfo}>
         <Text style={s.dayName}>{props.day.title}</Text>
-        <Text style={s.dayExCount}>{`${props.day.exercises.length} ejercicios`}</Text>
+        <Text style={s.dayExCount}>{props.day.title}</Text>
       </View>
-      <Text style={s.dayChevron}>{'›'}</Text>
+      <View style={{ alignItems: 'center', flexDirection: 'row', gap: 12 }}>
+        <View style={s.dayExPill}>
+          <Text style={s.dayExPillText}>{`${props.day.exercises.length} ejercicios`}</Text>
+        </View>
+        <Text style={s.dayChevron}>{'›'}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -343,15 +300,14 @@ export function DayDetailPanel(props: DayDetailPanelProps): React.JSX.Element {
 
   return (
     <View style={s.sidePanel}>
-      <OverlayBackHeader onClose={props.onClose} title={`Día ${props.day.dayIndex} – ${props.day.title}`} />
-      <ScrollView contentContainerStyle={s.panelContent}>
-        <Pressable disabled={ensureMutation.isPending} onPress={handleStartTraining} style={s.startTrainingBtn}>
-          <Text style={s.startTrainingBtnLabel}>
-            {ensureMutation.isPending ? '...' : t('mobile.client.day.startTraining')}
-          </Text>
-        </Pressable>
-        {ensureMutation.isError ? <Text style={s.startTrainingError}>{t('mobile.client.day.startError')}</Text> : null}
-        <Text style={s.exerciseCount}>{`${props.day.exercises.length} Ejercicios`}</Text>
+      <OverlayBackHeader onClose={props.onClose} />
+      <ScrollView contentContainerStyle={[s.panelContent, { paddingBottom: 80 }]}>
+        <View style={{ alignItems: 'baseline', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Text style={{ color: LIGHT.textStrong, fontSize: 28, fontWeight: '800' }}>{props.day.title}</Text>
+          <View style={s.dayExPill}>
+            <Text style={s.dayExPillText}>{`${props.day.exercises.length} ejer`}</Text>
+          </View>
+        </View>
         {props.day.exercises.map((ex, idx) => (
           <ExerciseCard
             key={ex.id}
@@ -360,9 +316,16 @@ export function DayDetailPanel(props: DayDetailPanelProps): React.JSX.Element {
             onToggle={() => setExpandedIdx(expandedIdx === idx ? null : idx)}
           />
         ))}
+        <PrimaryButton
+          disabled={ensureMutation.isPending}
+          label={ensureMutation.isPending ? t('mobile.shell.loading') : t('mobile.client.day.startTraining')}
+          onPress={handleStartTraining}
+          variant={BTN_VARIANT_SUCCESS}
+        />
+        {ensureMutation.isError ? <Text style={s.startTrainingError}>{t('mobile.client.day.startError')}</Text> : null}
         {props.day.notes ? (
           <View style={s.dayNotesCard}>
-            <Text style={s.sectionLabel}>{'Notas del día'}</Text>
+            <Text style={s.sectionLabel}>{t('mobile.client.day.notes')}</Text>
             <Text style={s.notesText}>{props.day.notes}</Text>
           </View>
         ) : null}
@@ -380,16 +343,35 @@ function ExerciseCard(props: {
   const typeBadge = resolveTypeBadge(ex.type);
   const repsValue = ex.repsMin && ex.repsMax ? `${ex.repsMin}-${ex.repsMax}` : (ex.repsMin ?? ex.repsMax);
   return (
-    <Pressable onPress={props.onToggle} style={s.exerciseCard}>
+    <Pressable onPress={props.onToggle} style={[s.exerciseCard, { marginBottom: 16 }]}>
       <View style={s.exerciseHeader}>
-        <Text style={s.exerciseName}>{ex.displayName}</Text>
-        <View style={[s.exerciseTypeBadge, { backgroundColor: typeBadge.bg }]}>
-          <Text style={[s.exerciseTypeText, { color: typeBadge.text }]}>{typeBadge.label}</Text>
+        <View style={{ flex: 1 }}>
+          <Text style={s.exerciseName}>{ex.displayName}</Text>
+          {!props.expanded && ex.setsPlanned ? (
+            <Text style={{ color: LIGHT.accent, fontSize: 14, fontWeight: '700', marginTop: 4 }}>
+              {`${ex.setsPlanned} series`}
+            </Text>
+          ) : null}
         </View>
-        <Text style={s.exerciseChevron}>{props.expanded ? '▴' : '▾'}</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {ex.notes ? (
+            <View style={panelStyles.iconBtn}>
+              <Text>{'📄'}</Text>
+            </View>
+          ) : null}
+          <Pressable onPress={props.onToggle} style={panelStyles.iconBtn}>
+            <Text style={s.exerciseChevron}>{props.expanded ? '▴' : '▾'}</Text>
+          </Pressable>
+        </View>
       </View>
       {props.expanded && (
         <View style={s.exerciseBody}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text style={s.sectionLabel}>{'Indicaciones'}</Text>
+            {repsValue ? (
+              <Text style={{ color: LIGHT.textStrong, fontSize: 14, fontWeight: '700' }}>{String(repsValue)}</Text>
+            ) : null}
+          </View>
           <View style={s.exerciseMetaRow}>
             <ExMeta label={'Series'} value={ex.setsPlanned} />
             <ExMeta label={'Reps'} value={repsValue} />
@@ -398,16 +380,30 @@ function ExerciseCard(props: {
             <ExMeta label={'Descanso'} value={ex.restSeconds ? `${ex.restSeconds}s` : null} />
           </View>
           {ex.notes ? <Text style={s.exerciseNotes}>{ex.notes}</Text> : null}
+          <View style={[s.exerciseTypeBadge, { alignSelf: 'flex-start', backgroundColor: typeBadge.bg, marginTop: 8 }]}>
+            <Text style={[s.exerciseTypeText, { color: typeBadge.text }]}>{typeBadge.label}</Text>
+          </View>
         </View>
       )}
     </Pressable>
   );
 }
 
+const panelStyles = StyleSheet.create({
+  iconBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusFull,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+});
+
+// merge iconBtn into usage - actually I used s.iconBtn which doesn't exist. Fix with inline or add to styles.
+
 function ExMeta(props: { label: string; value: string | number | null | undefined }): React.JSX.Element | null {
-  if (props.value === null || props.value === undefined) {
-    return null;
-  }
+  if (props.value === null || props.value === undefined) return null;
   return (
     <View style={s.exMetaItem}>
       <Text style={s.exMetaLabel}>{props.label}</Text>
@@ -418,12 +414,12 @@ function ExMeta(props: { label: string; value: string | number | null | undefine
 
 function resolveTypeBadge(type: string): { bg: string; label: string; text: string } {
   const map: Record<string, { bg: string; label: string; text: string }> = {
-    cardio: { bg: 'rgba(59,130,246,0.2)', label: 'Cardio', text: '#60a5fa' },
-    isometric: { bg: 'rgba(251,146,60,0.2)', label: 'Isométrico', text: '#fb923c' },
-    mobility: { bg: 'rgba(52,211,153,0.2)', label: 'Movilidad', text: '#34d399' },
-    plio: { bg: 'rgba(250,204,21,0.2)', label: 'Pliométrico', text: '#facc15' },
-    sport: { bg: 'rgba(167,139,250,0.2)', label: 'Deporte', text: '#a78bfa' },
-    strength: { bg: 'rgba(236,72,153,0.15)', label: 'Fuerza', text: '#ec4899' },
+    cardio: { bg: LIGHT.accentSoft, label: 'Cardio', text: LIGHT.accentDark },
+    isometric: { bg: '#ffedd5', label: 'Isométrico', text: LIGHT.orange },
+    mobility: { bg: LIGHT.emeraldSoft, label: 'Movilidad', text: LIGHT.success },
+    plio: { bg: '#fef9c3', label: 'Pliométrico', text: '#ca8a04' },
+    sport: { bg: '#f3e8ff', label: 'Deporte', text: LIGHT.purple },
+    strength: { bg: LIGHT.accentSoft, label: 'Fuerza', text: LIGHT.accentDark },
   };
-  return map[type] ?? { bg: 'rgba(236,72,153,0.15)', label: 'Fuerza', text: '#ec4899' };
+  return map[type] ?? { bg: LIGHT.accentSoft, label: 'Fuerza', text: LIGHT.accentDark };
 }

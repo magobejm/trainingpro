@@ -1,9 +1,10 @@
 export const SERIES_COL_W = 48;
+export const ACTION_COL_W = 76;
 
 export const st = {
   row: {
     flexDirection: 'row' as const,
-    alignItems: 'center' as const,
+    alignItems: 'flex-start' as const,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
@@ -35,7 +36,8 @@ export const st = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    gap: 4,
+    flexWrap: 'wrap' as const,
+    gap: 2,
     paddingVertical: 6,
   },
   actionBtn: { padding: 4 },
@@ -97,7 +99,6 @@ export const st = {
     fontWeight: '700' as const,
     lineHeight: 12,
   },
-  copyBtn: { marginTop: 2 },
   copyIcon: { fontSize: 12, color: '#3b82f6' },
   dataCell: {
     paddingHorizontal: 4,

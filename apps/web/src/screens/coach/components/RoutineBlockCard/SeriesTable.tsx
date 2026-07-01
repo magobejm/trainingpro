@@ -3,7 +3,7 @@ import type { BaseSyntheticEvent } from 'react';
 import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
-import { SERIES_COL_W, st } from './SeriesTable.styles';
+import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 
 interface ColDef {
   key: keyof DraftSet;
@@ -15,7 +15,6 @@ interface ColDef {
 }
 
 const KB_NUMERIC = 'numeric' as const;
-const ACTION_COL_W = 56;
 const PLACEHOLDER_MUTED = '#cbd5e1';
 const ICON_NOTE = '📝';
 const ICON_TRASH = '🗑';
@@ -233,6 +232,11 @@ function SeriesDataRow({
         <TouchableOpacity onPress={() => onOpenNote(idx)} style={st.actionBtn}>
           <Text style={[st.actionIcon, !!set.note && st.actionIconActive]}>{ICON_NOTE}</Text>
         </TouchableOpacity>
+        {!readOnly && idx > 0 ? (
+          <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.actionBtn}>
+            <Text style={st.copyIcon}>{ICON_COPY}</Text>
+          </TouchableOpacity>
+        ) : null}
         {!readOnly && (
           <TouchableOpacity onPress={() => onRemoveSet(idx)} style={st.actionBtn}>
             <Text style={st.actionIconRemove}>{ICON_TRASH}</Text>
@@ -277,11 +281,6 @@ function SeriesDataRow({
             ) : null}
           </>
         )}
-        {!readOnly && idx > 0 ? (
-          <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.copyBtn}>
-            <Text style={st.copyIcon}>{ICON_COPY}</Text>
-          </TouchableOpacity>
-        ) : null}
       </View>
 
       <SeriesRowValueCells

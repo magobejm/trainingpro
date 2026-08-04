@@ -179,7 +179,7 @@ function mapStrengthSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rir: s.rir ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
     weightKg: s.weightKg ? Number(s.weightKg) : null,
@@ -218,7 +218,7 @@ function mapCardioSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
   };
@@ -262,7 +262,7 @@ function mapPlioSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     restSeconds: s.restSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
     weightKg: s.weightKg ? Number(s.weightKg) : null,
@@ -310,7 +310,7 @@ function mapMobilitySetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rom: s.rom ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
   };
@@ -358,7 +358,7 @@ function mapSportSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rir: s.rir ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
     weightKg: s.weightKg ? Number(s.weightKg) : null,
@@ -399,7 +399,7 @@ function mapIsometricSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     restSeconds: s.restSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    rpe: s.rpe ?? null,
+    rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
     weightKg: s.weightKg ? Number(s.weightKg) : null,

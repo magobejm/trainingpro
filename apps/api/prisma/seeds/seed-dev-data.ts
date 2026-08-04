@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   console.log('  ✓ Organization');
 
   // 2. User account for coach1@example.com
-  await prisma.user.upsert({
+  const coachUser = await prisma.user.upsert({
     where: { supabaseUid: COACH_SUPABASE_UID },
     create: {
       id: COACH_USER_ID,
@@ -53,12 +53,18 @@ async function main(): Promise<void> {
   console.log('  ✓ User account (coach)');
 
   // 3. OrganizationMember (coach role)
-  await prisma.organizationMember.upsert({
-    where: { id: COACH_MEMBERSHIP_ID },
+  const coachMembership = await prisma.organizationMember.upsert({
+    where: {
+      organizationId_userId_role: {
+        organizationId: ORG_ID,
+        userId: coachUser.id,
+        role: Role.COACH,
+      },
+    },
     create: {
       id: COACH_MEMBERSHIP_ID,
       organizationId: ORG_ID,
-      userId: COACH_USER_ID,
+      userId: coachUser.id,
       role: Role.COACH,
       isActive: true,
     },
@@ -87,32 +93,39 @@ async function main(): Promise<void> {
     }));
 
   // 6. Client for client5.coach1@example.com
-  await prisma.client.upsert({
-    where: { id: CLIENT_ID },
-    create: {
-      id: CLIENT_ID,
-      organizationId: ORG_ID,
-      coachMembershipId: COACH_MEMBERSHIP_ID,
-      email: 'client5.coach1@example.com',
-      firstName: 'Cliente',
-      lastName: 'Cinco',
-      objectiveId: objective.id,
-      trainingPlanId: planTemplate?.id ?? null,
-      createdBy: COACH_SUPABASE_UID,
-      updatedBy: COACH_SUPABASE_UID,
-    },
-    update: {
-      coachMembershipId: COACH_MEMBERSHIP_ID,
-      trainingPlanId: planTemplate?.id ?? null,
-    },
+  const existingClient = await prisma.client.findFirst({
+    where: { email: 'client5.coach1@example.com' },
+    select: { id: true },
   });
+
+  if (existingClient) {
+    await prisma.client.update({
+      where: { id: existingClient.id },
+      data: { trainingPlanId: planTemplate?.id ?? null },
+    });
+  } else {
+    await prisma.client.create({
+      data: {
+        id: CLIENT_ID,
+        organizationId: ORG_ID,
+        coachMembershipId: coachMembership.id,
+        email: 'client5.coach1@example.com',
+        firstName: 'Cliente',
+        lastName: 'Cinco',
+        objectiveId: objective.id,
+        trainingPlanId: planTemplate?.id ?? null,
+        createdBy: COACH_SUPABASE_UID,
+        updatedBy: COACH_SUPABASE_UID,
+      },
+    });
+  }
   console.log(`  ✓ Client (client5.coach1@example.com) — plan: ${planTemplate?.id ?? 'none'}`);
 
   console.log('');
   console.log('Dev data ready.');
   console.log(`  Org:    ${ORG_ID}`);
-  console.log(`  Coach membership: ${COACH_MEMBERSHIP_ID}`);
-  console.log(`  Client: ${CLIENT_ID}`);
+  console.log(`  Coach membership: ${coachMembership.id}`);
+  console.log(`  Client: ${existingClient?.id ?? CLIENT_ID}`);
   if (!planTemplate) {
     console.log('  ⚠ No PlanTemplate found — run db:seed first, then db:seed:dev again.');
   }

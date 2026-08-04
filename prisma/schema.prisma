@@ -1148,7 +1148,7 @@ model PlanStrengthSet {
   exerciseId        String               @map("exercise_id") @db.Uuid
   setIndex          Int                  @map("set_index")
   reps              Int?
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   weightKg          Decimal?             @map("weight_kg") @db.Decimal(6, 2)
   rir               Int?
   restSeconds       Int?                 @map("rest_seconds")
@@ -1170,7 +1170,7 @@ model PlanCardioSet {
   fcMaxPct          Int?            @map("fc_max_pct")
   fcReservePct      Int?            @map("fc_reserve_pct")
   heartRate         Int?            @map("heart_rate")
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   advancedTechnique String?         @map("advanced_technique") @db.VarChar(40)
   note              String?
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1187,7 +1187,7 @@ model PlanPlioSet {
   blockId           String        @map("block_id") @db.Uuid
   setIndex          Int           @map("set_index")
   reps              Int?
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   weightKg          Decimal?      @map("weight_kg") @db.Decimal(6, 2)
   restSeconds       Int?          @map("rest_seconds")
   advancedTechnique String?       @map("advanced_technique") @db.VarChar(40)
@@ -1205,7 +1205,7 @@ model PlanIsometricSet {
   id                String             @id @default(uuid()) @db.Uuid
   blockId           String             @map("block_id") @db.Uuid
   setIndex          Int                @map("set_index")
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   durationSeconds   Int?               @map("duration_seconds")
   weightKg          Decimal?           @map("weight_kg") @db.Decimal(6, 2)
   restSeconds       Int?               @map("rest_seconds")
@@ -1225,7 +1225,7 @@ model PlanMobilitySet {
   blockId           String            @map("block_id") @db.Uuid
   setIndex          Int               @map("set_index")
   reps              Int?
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   rom               String?           @db.VarChar(30)
   restSeconds       Int?              @map("rest_seconds")
   advancedTechnique String?           @map("advanced_technique") @db.VarChar(40)
@@ -1244,7 +1244,7 @@ model PlanSportSet {
   blockId           String         @map("block_id") @db.Uuid
   setIndex          Int            @map("set_index")
   reps              Int?
-  rpe               Int?
+  rpe               Decimal?             @db.Decimal(3, 1)
   rir               Int?
   weightKg          Decimal?       @map("weight_kg") @db.Decimal(6, 2)
   fcMaxPct          Int?           @map("fc_max_pct")

@@ -1,9 +1,10 @@
 import React from 'react';
 import type { BaseSyntheticEvent } from 'react';
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
+import { SeriesTableNumericCell } from './SeriesTableNumericCell';
 
 interface ColDef {
   key: keyof DraftSet;
@@ -14,8 +15,6 @@ interface ColDef {
   selectOptions?: string[];
 }
 
-const KB_NUMERIC = 'numeric' as const;
-const PLACEHOLDER_MUTED = '#cbd5e1';
 const ICON_NOTE = '📝';
 const ICON_TRASH = '🗑';
 const ICON_REMOVE = '✕';
@@ -331,17 +330,12 @@ function SeriesRowValueCells({
                 onChange={(v) => onUpdateSet(idx, { [col.key]: v } as Partial<DraftSet>)}
               />
             ) : (
-              <TextInput
-                editable={!readOnly}
-                keyboardType={KB_NUMERIC}
-                onChangeText={(v) => {
-                  const num = v === '' ? undefined : Number(v);
-                  onUpdateSet(idx, { [col.key]: Number.isFinite(num) ? num : undefined } as Partial<DraftSet>);
-                }}
+              <SeriesTableNumericCell
+                fieldKey={col.key}
+                onChange={(v) => onUpdateSet(idx, { [col.key]: v } as Partial<DraftSet>)}
                 placeholder={phDash}
-                placeholderTextColor={PLACEHOLDER_MUTED}
-                style={[st.cellInput, readOnly && st.cellInputReadOnly]}
-                value={set[col.key] !== undefined && set[col.key] !== null ? String(set[col.key]) : ''}
+                readOnly={readOnly}
+                value={set[col.key] as number | undefined}
               />
             )}
           </View>

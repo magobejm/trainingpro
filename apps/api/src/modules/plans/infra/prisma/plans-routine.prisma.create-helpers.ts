@@ -83,7 +83,7 @@ function mapStrengthSetCreate(s: RoutineStrengthSetInput) {
   return {
     setIndex: s.setIndex,
     reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     weightKg: toDecimal(s.weightKg),
     rir: s.rir ?? null,
     restSeconds: s.restSeconds ?? null,
@@ -121,7 +121,7 @@ function mapCardioSetCreate(s: RoutineCardioSetInput) {
     fcMaxPct: s.fcMaxPct ?? null,
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
@@ -148,7 +148,7 @@ function mapPlioSetCreate(s: RoutinePlioSetInput) {
   return {
     setIndex: s.setIndex,
     reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     weightKg: toDecimal(s.weightKg),
     restSeconds: s.restSeconds ?? null,
     advancedTechnique: s.advancedTechnique ?? null,
@@ -179,7 +179,7 @@ function mapMobilitySetCreate(s: RoutineMobilitySetInput) {
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
     reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     restSeconds: s.restSeconds ?? null,
     rom: s.rom ?? null,
     setIndex: s.setIndex,
@@ -205,7 +205,7 @@ function mapSportSetCreate(s: RoutineSportSetInput) {
   return {
     setIndex: s.setIndex,
     reps: s.reps ?? null,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     rir: s.rir ?? null,
     weightKg: toDecimal(s.weightKg),
     fcMaxPct: s.fcMaxPct ?? null,
@@ -235,7 +235,7 @@ export function mapIsometricCreate(b: RoutineIsometricInput, groupId: null | str
 function mapIsometricSetCreate(s: RoutineIsometricSetInput) {
   return {
     setIndex: s.setIndex,
-    rpe: s.rpe ?? null,
+    rpe: toDecimal(s.rpe),
     durationSeconds: s.durationSeconds ?? null,
     weightKg: toDecimal(s.weightKg),
     restSeconds: s.restSeconds ?? null,

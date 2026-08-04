@@ -31,9 +31,8 @@ export class UploadClientAvatarUseCase {
       path,
       upsert: true,
     });
-    const avatarUrl = this.storage.getPublicUrl(path);
-    await this.updateClientUseCase.execute(context, clientId, { avatarUrl });
-    return { avatarUrl };
+    await this.updateClientUseCase.execute(context, clientId, { avatarUrl: path });
+    return { avatarUrl: this.storage.getPublicUrl(path) };
   }
 }
 
@@ -46,10 +45,7 @@ function validateAvatarFile(file: { mimetype: string; size: number }): void {
   }
 }
 
-function buildAvatarPath(
-  clientId: string,
-  file: { mimetype: string; originalname: string },
-): string {
+function buildAvatarPath(clientId: string, file: { mimetype: string; originalname: string }): string {
   const extension = EXT_BY_MIME[file.mimetype] ?? 'jpg';
   const safeName = sanitizeName(file.originalname);
   return `clients/avatars/${clientId}/${Date.now()}-${safeName}.${extension}`;
@@ -57,6 +53,9 @@ function buildAvatarPath(
 
 function sanitizeName(originalName: string): string {
   const base = originalName.replace(/\.[a-z0-9]+$/i, '');
-  const normalized = base.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  const normalized = base
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-');
   return normalized.length > 0 ? normalized : 'avatar';
 }

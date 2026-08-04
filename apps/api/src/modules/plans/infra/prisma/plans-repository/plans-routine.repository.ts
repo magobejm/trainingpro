@@ -24,6 +24,9 @@ type RoutineMetadataRow = {
   template_id: string;
 };
 
+/** Routine saves recreate all days/blocks/sets and can exceed Prisma's default 5s tx timeout on prod. */
+const ROUTINE_WRITE_TX_OPTIONS = { maxWait: 10_000, timeout: 30_000 } as const;
+
 @Injectable()
 export class PlansRoutineRepository extends PlansBaseRepository {
   constructor(prisma: PrismaService) {
@@ -32,74 +35,19 @@ export class PlansRoutineRepository extends PlansBaseRepository {
 
   async createRoutineTemplate(ctx: AuthContext, input: RoutineTemplateWriteInput) {
     const m = await this.resolveCoachMembership(ctx);
-    // #region agent log
-    let row: Awaited<ReturnType<typeof this.prisma.planTemplate.create>>;
-    try {
-      row = await this.prisma.planTemplate.create({
-        data: {
-          ...buildCreateAuditFields(ctx),
-          coachMembershipId: m.id,
-          days: { create: input.days.map(mapRoutineDayCreate) },
-          kind: TemplateKind.ROUTINE,
-          name: input.name.trim(),
-          organizationId: m.organizationId,
-        },
-        include: routineTemplateInclude(),
-      });
-    } catch (e: unknown) {
-      const err = e as Error & { code?: string; meta?: unknown };
-      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
-        body: JSON.stringify({
-          sessionId: 'dccd80',
-          location: 'plans-routine.repository.ts:planTemplate.create',
-          message: 'CREATE FAILED',
-          data: { msg: err.message, code: err.code, meta: err.meta },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      throw e;
-    }
-    // #endregion
-    try {
-      await this.persistRoutineMetadata(this.prisma, row.id, input);
-    } catch (e: unknown) {
-      const err = e as Error & { code?: string; meta?: unknown };
-      // #region agent log
-      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
-        body: JSON.stringify({
-          sessionId: 'dccd80',
-          location: 'plans-routine.repository.ts:persistRoutineMetadata',
-          message: 'METADATA FAILED',
-          data: { msg: err.message, code: err.code, meta: err.meta },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-      throw e;
-    }
-    try {
-      await this.persistDayGroups(this.prisma, row.id, input.days);
-    } catch (e: unknown) {
-      const err = e as Error & { code?: string; meta?: unknown };
-      // #region agent log
-      void fetch('http://127.0.0.1:7699/ingest/da65e195-3bcc-4c8f-8a2b-2f69a203ef0d', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'dccd80' },
-        body: JSON.stringify({
-          sessionId: 'dccd80',
-          location: 'plans-routine.repository.ts:persistDayGroups',
-          message: 'GROUPS FAILED',
-          data: { msg: err.message, code: err.code, meta: err.meta },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-      // #endregion
-      throw e;
-    }
+    const row = await this.prisma.planTemplate.create({
+      data: {
+        ...buildCreateAuditFields(ctx),
+        coachMembershipId: m.id,
+        days: { create: input.days.map(mapRoutineDayCreate) },
+        kind: TemplateKind.ROUTINE,
+        name: input.name.trim(),
+        organizationId: m.organizationId,
+      },
+      include: routineTemplateInclude(),
+    });
+    await this.persistRoutineMetadata(this.prisma, row.id, input);
+    await this.persistDayGroups(this.prisma, row.id, input.days);
     const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
     const refreshed = await this.prisma.planTemplate.findUniqueOrThrow({
       where: { id: row.id },
@@ -145,7 +93,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
 
   async updateRoutineTemplate(ctx: AuthContext, id: string, input: RoutineTemplateWriteInput) {
     const m = await this.resolveCoachMembership(ctx);
-    return this.prisma.$transaction(async (tx) => {
+    const templateId = await this.prisma.$transaction(async (tx) => {
       const cur = await tx.planTemplate.findFirst({
         where: { archivedAt: null, coachMembershipId: m.id, id },
         select: { id: true, templateVersion: true },
@@ -160,17 +108,18 @@ export class PlansRoutineRepository extends PlansBaseRepository {
           name: input.name.trim(),
           templateVersion: cur.templateVersion + 1,
         },
-        include: routineTemplateInclude(),
+        select: { id: true },
       });
       await this.persistRoutineMetadata(tx, row.id, input);
       await this.persistDayGroups(tx, row.id, input.days);
-      const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
-      const refreshed = await tx.planTemplate.findUniqueOrThrow({
-        where: { id: row.id },
-        include: routineTemplateInclude(),
-      });
-      return mapRoutineTemplate(refreshed, metadataByTemplate.get(row.id));
+      return row.id;
+    }, ROUTINE_WRITE_TX_OPTIONS);
+    const metadataByTemplate = await this.loadRoutineMetadata([templateId]);
+    const refreshed = await this.prisma.planTemplate.findUniqueOrThrow({
+      where: { id: templateId },
+      include: routineTemplateInclude(),
     });
+    return mapRoutineTemplate(refreshed, metadataByTemplate.get(templateId));
   }
 
   async deleteRoutineTemplate(ctx: AuthContext, id: string): Promise<void> {

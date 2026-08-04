@@ -33,12 +33,15 @@ it('should upload a valid avatar and update client avatarUrl', async () => {
 
   const result = await useCase.execute(context, 'client-123', file);
 
-  expect(mockStorage.upload).toHaveBeenCalledWith(
-    expect.objectContaining({ contentType: 'image/jpeg' }),
+  expect(mockStorage.upload).toHaveBeenCalledWith(expect.objectContaining({ contentType: 'image/jpeg' }));
+  expect(mockUpdateClientUseCase.execute).toHaveBeenCalledWith(
+    context,
+    'client-123',
+    expect.objectContaining({
+      avatarUrl: expect.stringMatching(/^clients\/avatars\/client-123\//),
+    }),
   );
-  expect(mockUpdateClientUseCase.execute).toHaveBeenCalledWith(context, 'client-123', {
-    avatarUrl: 'https://cdn.example.com/avatar.jpg',
-  });
+  expect(mockStorage.getPublicUrl).toHaveBeenCalledWith(expect.stringMatching(/^clients\/avatars\/client-123\//));
   expect(result).toEqual({ avatarUrl: 'https://cdn.example.com/avatar.jpg' });
 });
 

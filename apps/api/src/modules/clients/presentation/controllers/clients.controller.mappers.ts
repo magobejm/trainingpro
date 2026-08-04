@@ -1,4 +1,5 @@
 import type { FileStoragePort } from '../../../files/domain/file-storage.port';
+import { resolveStoredFileUrl } from '../../../files/domain/resolve-stored-file-url';
 import type { Client } from '../../domain/client';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
@@ -8,8 +9,7 @@ import type { UpdateClientDto } from '../dto/update-client.dto';
 export function mapUpdateDto(body: UpdateClientDto) {
   return {
     ...body,
-    birthDate:
-      body.birthDate === undefined ? undefined : body.birthDate ? new Date(body.birthDate) : null,
+    birthDate: body.birthDate === undefined ? undefined : body.birthDate ? new Date(body.birthDate) : null,
   };
 }
 
@@ -21,7 +21,7 @@ export function mapCreateDto(body: CreateClientDto) {
 }
 
 export function mapClientOutput(client: Client, storage?: FileStoragePort) {
-  return { ...mapClientCoreOutput(client), ...mapClientProfileOutput(client, storage) };
+  return { ...mapClientCoreOutput(client, storage), ...mapClientProfileOutput(client, storage) };
 }
 
 export function mapManagementSection(item: ClientManagementSection) {
@@ -34,11 +34,7 @@ export function mapManagementSection(item: ClientManagementSection) {
 
 export function mapProgressPhotoOutput(photo: ClientProgressPhoto, storage?: FileStoragePort) {
   const imageValue = photo.imageUrl;
-  const resolvedImageUrl = imageValue.startsWith('http')
-    ? imageValue
-    : storage
-      ? storage.getPublicUrl(imageValue)
-      : imageValue;
+  const resolvedImageUrl = resolveStoredFileUrl(imageValue, storage);
   return {
     archived: photo.archived,
     clientId: photo.clientId,
@@ -50,9 +46,9 @@ export function mapProgressPhotoOutput(photo: ClientProgressPhoto, storage?: Fil
   };
 }
 
-function mapClientCoreOutput(client: Client) {
+function mapClientCoreOutput(client: Client, storage?: FileStoragePort) {
   return {
-    avatarUrl: client.avatarUrl ?? resolveDefaultAvatarUrl(client.id),
+    avatarUrl: client.avatarUrl ? resolveStoredFileUrl(client.avatarUrl, storage) : resolveDefaultAvatarUrl(client.id),
     birthDate: formatDate(client.birthDate),
     coachMembershipId: client.coachMembershipId,
     createdAt: formatIso(client.createdAt),

@@ -3,6 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useTranslation } from 'react-i18next';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import type { CardioSessionItem, LogIntervalMutationInput } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { LIGHT } from '../../theme/light';
 
 type Phase = 'work' | 'rest' | 'done';
@@ -174,18 +176,25 @@ export function CardioBlockOverlay({ item, onClose, onLogInterval }: CardioBlock
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {phase === 'work' && !isFinished && (
-            <CardioWorkPhase
-              item={item}
-              duration={duration}
-              distance={distance}
-              rpe={rpe}
-              heartRate={heartRate}
-              setDuration={setDuration}
-              setDistance={setDistance}
-              setRpe={setRpe}
-              setHeartRate={setHeartRate}
-              onRegister={handleRegister}
-            />
+            <>
+              <ExerciseNotesPanel
+                coachInstructions={item.coachInstructions}
+                plannedSet={resolvePlannedSet(item.plannedSets, currentInterval)}
+                trainerNote={item.notes}
+              />
+              <CardioWorkPhase
+                item={item}
+                duration={duration}
+                distance={distance}
+                rpe={rpe}
+                heartRate={heartRate}
+                setDuration={setDuration}
+                setDistance={setDistance}
+                setRpe={setRpe}
+                setHeartRate={setHeartRate}
+                onRegister={handleRegister}
+              />
+            </>
           )}
           {phase === 'rest' && item.restSeconds > 0 && (
             <CardioRestPhase restSeconds={item.restSeconds} onComplete={handleRestComplete} />

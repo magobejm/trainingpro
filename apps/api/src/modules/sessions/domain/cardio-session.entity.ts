@@ -10,8 +10,15 @@ export type CardioIntervalLog = {
 };
 
 export type CardioSessionBlock = {
+  coachInstructions: null | string;
   displayName: string;
   id: string;
+  notes: null | string;
+  plannedSets: Array<{
+    advancedTechnique: null | string;
+    note: null | string;
+    setIndex: number;
+  }>;
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;

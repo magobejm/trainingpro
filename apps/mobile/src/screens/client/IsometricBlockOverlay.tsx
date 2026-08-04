@@ -3,6 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useTranslation } from 'react-i18next';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import type { IsometricSessionItem, LogIsometricSetMutationInput } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { LIGHT } from '../../theme/light';
 
 type Phase = 'hold' | 'rest' | 'done';
@@ -181,16 +183,23 @@ export function IsometricBlockOverlay({ item, onClose, onLogSet }: IsometricBloc
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {phase === 'hold' && !isFinished && (
-            <IsometricHoldPhase
-              elapsedSeconds={elapsedSeconds}
-              isHolding={isHolding}
-              weight={weight}
-              rpe={rpe}
-              setWeight={setWeight}
-              setRpe={setRpe}
-              onToggleHold={() => setIsHolding((v) => !v)}
-              onRegister={handleRegister}
-            />
+            <>
+              <ExerciseNotesPanel
+                coachInstructions={item.coachInstructions}
+                plannedSet={resolvePlannedSet(item.plannedSets, currentSet)}
+                trainerNote={item.notes}
+              />
+              <IsometricHoldPhase
+                elapsedSeconds={elapsedSeconds}
+                isHolding={isHolding}
+                weight={weight}
+                rpe={rpe}
+                setWeight={setWeight}
+                setRpe={setRpe}
+                onToggleHold={() => setIsHolding((v) => !v)}
+                onRegister={handleRegister}
+              />
+            </>
           )}
           {phase === 'rest' && item.restSeconds != null && item.restSeconds > 0 && (
             <IsometricRestPhase restSeconds={item.restSeconds} onComplete={handleRestComplete} />

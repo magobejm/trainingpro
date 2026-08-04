@@ -3,6 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useTranslation } from 'react-i18next';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import type { LogMobilitySetMutationInput, MobilitySessionItem } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { LIGHT } from '../../theme/light';
 
 type Phase = 'work' | 'rest' | 'done';
@@ -162,16 +164,23 @@ export function MobilityBlockOverlay({ item, onClose, onLogSet }: MobilityBlockO
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {phase === 'work' && !isFinished && (
-            <MobilityWorkPhase
-              item={item}
-              reps={reps}
-              rom={rom}
-              rpe={rpe}
-              setReps={setReps}
-              setRom={setRom}
-              setRpe={setRpe}
-              onRegister={handleRegister}
-            />
+            <>
+              <ExerciseNotesPanel
+                coachInstructions={item.coachInstructions}
+                plannedSet={resolvePlannedSet(item.plannedSets, currentRound)}
+                trainerNote={item.notes}
+              />
+              <MobilityWorkPhase
+                item={item}
+                reps={reps}
+                rom={rom}
+                rpe={rpe}
+                setReps={setReps}
+                setRom={setRom}
+                setRpe={setRpe}
+                onRegister={handleRegister}
+              />
+            </>
           )}
           {phase === 'rest' && item.restSeconds > 0 && (
             <MobilityRestPhase restSeconds={item.restSeconds} onComplete={handleRestComplete} />

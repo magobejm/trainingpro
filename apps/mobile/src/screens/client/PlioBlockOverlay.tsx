@@ -3,6 +3,8 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 
 import { useTranslation } from 'react-i18next';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import type { LogPlioSetMutationInput, PlioSessionItem } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { LIGHT } from '../../theme/light';
 
 type Phase = 'work' | 'rest' | 'done';
@@ -147,16 +149,23 @@ export function PlioBlockOverlay({ item, onClose, onLogSet }: PlioBlockOverlayPr
         </View>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {phase === 'work' && !isFinished && (
-            <PlioWorkPhase
-              item={item}
-              reps={reps}
-              weight={weight}
-              rpe={rpe}
-              setReps={setReps}
-              setWeight={setWeight}
-              setRpe={setRpe}
-              onRegister={handleRegister}
-            />
+            <>
+              <ExerciseNotesPanel
+                coachInstructions={item.coachInstructions}
+                plannedSet={resolvePlannedSet(item.plannedSets, currentRound)}
+                trainerNote={item.notes}
+              />
+              <PlioWorkPhase
+                item={item}
+                reps={reps}
+                weight={weight}
+                rpe={rpe}
+                setReps={setReps}
+                setWeight={setWeight}
+                setRpe={setRpe}
+                onRegister={handleRegister}
+              />
+            </>
           )}
           {phase === 'rest' && item.restSeconds > 0 && (
             <PlioRestPhase restSeconds={item.restSeconds} onComplete={handleRestComplete} />

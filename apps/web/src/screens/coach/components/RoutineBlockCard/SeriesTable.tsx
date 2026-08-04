@@ -227,61 +227,24 @@ function SeriesDataRow({
 }) {
   return (
     <View style={[st.row, idx % 2 === 0 ? st.rowEven : st.rowOdd]}>
-      <View style={[st.actionCell, { width: ACTION_COL_W }]}>
-        <TouchableOpacity onPress={() => onOpenNote(idx)} style={st.actionBtn}>
-          <Text style={[st.actionIcon, !!set.note && st.actionIconActive]}>{ICON_NOTE}</Text>
-        </TouchableOpacity>
-        {!readOnly && idx > 0 ? (
-          <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.actionBtn}>
-            <Text style={st.copyIcon}>{ICON_COPY}</Text>
-          </TouchableOpacity>
-        ) : null}
-        {!readOnly && (
-          <TouchableOpacity onPress={() => onRemoveSet(idx)} style={st.actionBtn}>
-            <Text style={st.actionIconRemove}>{ICON_TRASH}</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
-        {advancedEnabled && !readOnly ? (
-          <TouchableOpacity style={st.seriesCellClickable} onPress={() => onOpenAdvanced(idx)}>
-            <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
-              <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
-                {idx + 1}
-              </Text>
-            </View>
-            {set.advancedTechnique ? (
-              <View style={st.advancedLabelRow}>
-                <Text style={st.advancedLabel} numberOfLines={1}>
-                  {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
-                </Text>
-                <TouchableOpacity
-                  onPress={(e) => {
-                    (e as BaseSyntheticEvent).stopPropagation?.();
-                    onRemoveAdvanced(idx);
-                  }}
-                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                >
-                  <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : null}
-          </TouchableOpacity>
-        ) : (
-          <>
-            <Text style={st.seriesNumber}>{idx + 1}</Text>
-            {set.advancedTechnique ? (
-              <View style={st.advancedLabelRow}>
-                <Text style={st.advancedLabel} numberOfLines={1}>
-                  {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
-                </Text>
-              </View>
-            ) : null}
-          </>
-        )}
-      </View>
-
+      <SeriesRowActions
+        idx={idx}
+        onCopyPrev={onCopyPrev}
+        onOpenNote={onOpenNote}
+        onRemoveSet={onRemoveSet}
+        readOnly={readOnly}
+        set={set}
+        t={t}
+      />
+      <SeriesRowNumberCell
+        advancedEnabled={advancedEnabled}
+        idx={idx}
+        onOpenAdvanced={onOpenAdvanced}
+        onRemoveAdvanced={onRemoveAdvanced}
+        readOnly={readOnly}
+        set={set}
+        t={t}
+      />
       <SeriesRowValueCells
         idx={idx}
         lockedFields={lockedFields}
@@ -292,6 +255,105 @@ function SeriesDataRow({
         set={set}
         t={t}
       />
+    </View>
+  );
+}
+
+function SeriesRowActions({
+  set,
+  idx,
+  readOnly,
+  onOpenNote,
+  onCopyPrev,
+  onRemoveSet,
+  t,
+}: {
+  set: DraftSet;
+  idx: number;
+  readOnly: boolean;
+  onOpenNote: (i: number) => void;
+  onCopyPrev: (i: number) => void;
+  onRemoveSet: (i: number) => void;
+  t: (k: string) => string;
+}) {
+  return (
+    <View style={[st.actionCell, { width: ACTION_COL_W }]}>
+      <TouchableOpacity
+        accessibilityLabel={t('coach.routine.seriesTable.noteAction').replace('{{n}}', String(idx + 1))}
+        onPress={() => onOpenNote(idx)}
+        style={st.actionBtn}
+      >
+        <Text style={[st.actionIcon, !!set.note && st.actionIconActive]}>{ICON_NOTE}</Text>
+      </TouchableOpacity>
+      {!readOnly && idx > 0 ? (
+        <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.actionBtn}>
+          <Text style={st.copyIcon}>{ICON_COPY}</Text>
+        </TouchableOpacity>
+      ) : null}
+      {!readOnly && (
+        <TouchableOpacity onPress={() => onRemoveSet(idx)} style={st.actionBtn}>
+          <Text style={st.actionIconRemove}>{ICON_TRASH}</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+function SeriesRowNumberCell({
+  set,
+  idx,
+  readOnly,
+  advancedEnabled,
+  onOpenAdvanced,
+  onRemoveAdvanced,
+  t,
+}: {
+  set: DraftSet;
+  idx: number;
+  readOnly: boolean;
+  advancedEnabled: boolean;
+  onOpenAdvanced: (i: number) => void;
+  onRemoveAdvanced: (i: number) => void;
+  t: (k: string) => string;
+}) {
+  return (
+    <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
+      {advancedEnabled && !readOnly ? (
+        <TouchableOpacity style={st.seriesCellClickable} onPress={() => onOpenAdvanced(idx)}>
+          <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
+            <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
+              {idx + 1}
+            </Text>
+          </View>
+          {set.advancedTechnique ? (
+            <View style={st.advancedLabelRow}>
+              <Text style={st.advancedLabel} numberOfLines={1}>
+                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+              </Text>
+              <TouchableOpacity
+                onPress={(e) => {
+                  (e as BaseSyntheticEvent).stopPropagation?.();
+                  onRemoveAdvanced(idx);
+                }}
+                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+              >
+                <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
+        </TouchableOpacity>
+      ) : (
+        <>
+          <Text style={st.seriesNumber}>{idx + 1}</Text>
+          {set.advancedTechnique ? (
+            <View style={st.advancedLabelRow}>
+              <Text style={st.advancedLabel} numberOfLines={1}>
+                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+              </Text>
+            </View>
+          ) : null}
+        </>
+      )}
     </View>
   );
 }

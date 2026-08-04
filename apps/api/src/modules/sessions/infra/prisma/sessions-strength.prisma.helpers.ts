@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
 import type {
   CardioSessionItem,
   SessionInstance,
@@ -21,6 +22,7 @@ export function mapSession(
 ): SessionInstance {
   const strengthItems: SessionStrengthItem[] = row.items.map((item) => ({
     type: 'strength' as const,
+    coachInstructions: item.coachInstructions,
     displayName: item.displayName,
     id: item.id,
     logs: item.logs.map((L) => ({
@@ -32,6 +34,7 @@ export function mapSession(
       weightDoneKg: L.weightDoneKg ? Number(L.weightDoneKg) : null,
     })),
     notes: item.notes,
+    plannedSets: readPlannedSetsJson(item.plannedSetsJson),
     repsMax: item.repsMax,
     repsMin: item.repsMin,
     restSeconds: item.restSeconds,
@@ -46,6 +49,7 @@ export function mapSession(
 
   const plioItems: SessionPlioItem[] = row.plioBlocks.map((b) => ({
     type: 'plio' as const,
+    coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     id: b.id,
     logs: b.logs.map(
@@ -57,6 +61,8 @@ export function mapSession(
         weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
       }),
     ),
+    notes: b.notes,
+    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
@@ -66,6 +72,7 @@ export function mapSession(
 
   const mobilityItems: SessionMobilityItem[] = row.mobilityBlocks.map((b) => ({
     type: 'mobility' as const,
+    coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     id: b.id,
     logs: b.logs.map(
@@ -77,6 +84,8 @@ export function mapSession(
         setIndex: l.setIndex,
       }),
     ),
+    notes: b.notes,
+    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
@@ -86,6 +95,7 @@ export function mapSession(
 
   const isometricItems: SessionIsometricItem[] = row.isometricBlocks.map((b) => ({
     type: 'isometric' as const,
+    coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     id: b.id,
     logs: b.logs.map(
@@ -97,6 +107,8 @@ export function mapSession(
         weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
       }),
     ),
+    notes: b.notes,
+    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
     restSeconds: b.restSeconds ?? null,
     setsPlanned: b.setsPlanned,
     sortOrder: b.sortOrder,
@@ -115,10 +127,13 @@ export function mapSession(
       : null;
     return {
       type: 'sport' as const,
+      coachInstructions: b.coachInstructions,
       displayName: b.displayName,
       durationMinutes: b.durationMinutes,
       id: b.id,
       log,
+      notes: b.notes,
+      plannedSets: readPlannedSetsJson(b.plannedSetsJson),
       sortOrder: b.sortOrder,
       targetRpe: b.targetRpe,
     };
@@ -126,6 +141,7 @@ export function mapSession(
 
   const cardioItems: CardioSessionItem[] = row.cardioBlocks.map((b) => ({
     type: 'cardio' as const,
+    coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     id: b.id,
     intervalLogs: b.intervalLogs.map(
@@ -138,6 +154,8 @@ export function mapSession(
         sessionCardioBlockId: l.sessionCardioBlockId,
       }),
     ),
+    notes: b.notes,
+    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,

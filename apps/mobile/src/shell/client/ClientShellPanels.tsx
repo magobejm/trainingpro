@@ -11,6 +11,7 @@ import {
   type ClientRoutineExercise,
 } from '../../data/hooks/useClientRoutineQuery';
 import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
+import { RoutineExerciseNotes } from '../../screens/client/RoutineExerciseNotes';
 import { LIGHT } from '../../theme/light';
 import { InfoButton, PrimaryButton, StatSquare } from '../../theme/primitives';
 import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
@@ -339,9 +340,13 @@ function ExerciseCard(props: {
   expanded: boolean;
   onToggle: () => void;
 }): React.JSX.Element {
+  const { t } = useTranslation();
   const ex = props.exercise;
   const typeBadge = resolveTypeBadge(ex.type);
   const repsValue = ex.repsMin && ex.repsMax ? `${ex.repsMin}-${ex.repsMax}` : (ex.repsMin ?? ex.repsMax);
+  const hasNotes = Boolean(
+    ex.coachInstructions?.trim() || ex.notes?.trim() || ex.sets.some((set) => set.note || set.advancedTechnique),
+  );
   return (
     <Pressable onPress={props.onToggle} style={[s.exerciseCard, { marginBottom: 16 }]}>
       <View style={s.exerciseHeader}>
@@ -354,7 +359,7 @@ function ExerciseCard(props: {
           ) : null}
         </View>
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          {ex.notes ? (
+          {hasNotes ? (
             <View style={panelStyles.iconBtn}>
               <Text>{'📄'}</Text>
             </View>
@@ -367,7 +372,7 @@ function ExerciseCard(props: {
       {props.expanded && (
         <View style={s.exerciseBody}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={s.sectionLabel}>{'Indicaciones'}</Text>
+            <Text style={s.sectionLabel}>{t('mobile.client.exercise.details')}</Text>
             {repsValue ? (
               <Text style={{ color: LIGHT.textStrong, fontSize: 14, fontWeight: '700' }}>{String(repsValue)}</Text>
             ) : null}
@@ -379,7 +384,7 @@ function ExerciseCard(props: {
             <ExMeta label={'RIR'} value={ex.targetRir} />
             <ExMeta label={'Descanso'} value={ex.restSeconds ? `${ex.restSeconds}s` : null} />
           </View>
-          {ex.notes ? <Text style={s.exerciseNotes}>{ex.notes}</Text> : null}
+          <RoutineExerciseNotes exercise={ex} />
           <View style={[s.exerciseTypeBadge, { alignSelf: 'flex-start', backgroundColor: typeBadge.bg, marginTop: 8 }]}>
             <Text style={[s.exerciseTypeText, { color: typeBadge.text }]}>{typeBadge.label}</Text>
           </View>

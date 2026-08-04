@@ -217,6 +217,12 @@
   "client.wizard.clear": "Clear",
   "client.wizard.autocomplete": "Autocomplete",
   "client.wizard.hints": "Coach hint",
+  "client.notes.exerciseInstructions": "Exercise instructions",
+  "client.notes.trainerNote": "Trainer note",
+  "client.notes.setNote": "Set {{n}} note",
+  "client.notes.setNotes": "Set notes",
+  "client.notes.advancedTechnique": "Technique",
+  "mobile.client.exercise.details": "Details",
 
   "client.summary.title": "Logged sets",
   "client.summary.edit": "Edit",

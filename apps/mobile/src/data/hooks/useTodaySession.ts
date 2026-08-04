@@ -2,6 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
+export type PlannedSet = {
+  advancedTechnique: null | string;
+  note: null | string;
+  setIndex: number;
+};
+
 export type SetLog = {
   effortRir: null | number;
   effortRpe: null | number;
@@ -13,10 +19,12 @@ export type SetLog = {
 
 export type StrengthSessionItem = {
   type: 'strength';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   logs: SetLog[];
   notes: null | string;
+  plannedSets: PlannedSet[];
   repsMax: null | number;
   repsMin: null | number;
   restSeconds: null | number;
@@ -39,9 +47,12 @@ export type PlioSetLog = {
 
 export type PlioSessionItem = {
   type: 'plio';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   logs: PlioSetLog[];
+  notes: null | string;
+  plannedSets: PlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;
@@ -59,9 +70,12 @@ export type MobilitySetLog = {
 
 export type MobilitySessionItem = {
   type: 'mobility';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   logs: MobilitySetLog[];
+  notes: null | string;
+  plannedSets: PlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;
@@ -79,9 +93,12 @@ export type IsometricSetLog = {
 
 export type IsometricSessionItem = {
   type: 'isometric';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   logs: IsometricSetLog[];
+  notes: null | string;
+  plannedSets: PlannedSet[];
   restSeconds: null | number;
   setsPlanned: null | number;
   sortOrder: number;
@@ -97,10 +114,13 @@ export type SportLog = {
 
 export type SportSessionItem = {
   type: 'sport';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   durationMinutes: number;
   log: SportLog | null;
+  notes: null | string;
+  plannedSets: PlannedSet[];
   sortOrder: number;
   targetRpe: null | number;
 };
@@ -116,9 +136,12 @@ export type IntervalLog = {
 
 export type CardioSessionItem = {
   type: 'cardio';
+  coachInstructions: null | string;
   id: string;
   displayName: string;
   intervalLogs: IntervalLog[];
+  notes: null | string;
+  plannedSets: PlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;

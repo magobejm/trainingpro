@@ -10,7 +10,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
-import type { ClientRoutine } from '../../domain/client-routine';
+import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 import type { ClientObjective } from '../../domain/client-objective';
@@ -24,6 +24,8 @@ import {
   normalizeUpdateInput,
 } from './client.repository.prisma.mappers';
 import { createClientRecord, resolveObjectiveId } from './client.repository.prisma.helpers';
+import { mapPlanSetsToPlannedSnapshots } from '../../../../common/notes/planned-set.mapper';
+import { stripMetaNotes } from '../../../../common/notes/parse-meta-notes';
 import { decrementClientCount, readActiveClient, resolveCoachMembership } from './client.repository.prisma.ops';
 
 const CLIENT_WITH_RELATIONS_INCLUDE = {
@@ -233,18 +235,64 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   }
 }
 
+const PLAN_BLOCK_SETS_INCLUDE = {
+  orderBy: { setIndex: 'asc' as const },
+};
+
 const PLAN_WITH_DAYS_INCLUDE = {
   routineObjectives: { include: { objective: true } },
   days: {
     where: { archivedAt: null },
     orderBy: { dayIndex: 'asc' as const },
     include: {
-      exercises: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
-      cardioBlocks: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
-      plioBlocks: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
-      mobilityBlocks: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
-      isometricBlocks: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
-      sportBlocks: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } },
+      exercises: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          libraryExercise: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
+      cardioBlocks: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          libraryCardioMethod: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
+      plioBlocks: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          libraryPlioExercise: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
+      mobilityBlocks: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          libraryMobilityExercise: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
+      isometricBlocks: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          libraryIsometricExercise: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
+      sportBlocks: {
+        where: { archivedAt: null },
+        orderBy: { sortOrder: 'asc' as const },
+        include: {
+          librarySport: { select: { coachInstructions: true } },
+          sets: PLAN_BLOCK_SETS_INCLUDE,
+        },
+      },
     },
   },
 } as const;
@@ -279,85 +327,171 @@ function mapPlanDay(day: PlanDay): ClientRoutine['planDays'][number] {
 
 function buildDayExercises(day: PlanDay): ClientRoutine['planDays'][number]['exercises'] {
   return [
-    ...day.exercises.map((e) => ({
+    ...mapStrengthExercises(day.exercises),
+    ...mapCardioExercises(day.cardioBlocks),
+    ...mapPlioExercises(day.plioBlocks),
+    ...mapMobilityExercises(day.mobilityBlocks),
+    ...mapIsometricExercises(day.isometricBlocks),
+    ...mapSportExercises(day.sportBlocks),
+  ].sort((a, b) => a.sortOrder - b.sortOrder);
+}
+
+function mapStrengthExercises(exercises: PlanDay['exercises']): ClientRoutineExercise[] {
+  return exercises.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.libraryExercise?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: e.repsMax ?? null,
       repsMin: e.repsMin ?? null,
       restSeconds: e.restSeconds ?? null,
+      sets: e.sets,
       setsPlanned: e.setsPlanned ?? null,
       sortOrder: e.sortOrder,
       targetRir: e.targetRir ?? null,
       targetRpe: e.targetRpe ?? null,
-      type: 'strength' as const,
-    })),
-    ...day.cardioBlocks.map((e) => ({
+      type: 'strength',
+    }),
+  );
+}
+
+function mapCardioExercises(blocks: PlanDay['cardioBlocks']): ClientRoutineExercise[] {
+  return blocks.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.libraryCardioMethod?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
+      sets: e.sets,
       setsPlanned: e.roundsPlanned ?? null,
       sortOrder: e.sortOrder,
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
-      type: 'cardio' as const,
-    })),
-    ...day.plioBlocks.map((e) => ({
+      type: 'cardio',
+    }),
+  );
+}
+
+function mapPlioExercises(blocks: PlanDay['plioBlocks']): ClientRoutineExercise[] {
+  return blocks.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.libraryPlioExercise?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
+      sets: e.sets,
       setsPlanned: e.roundsPlanned ?? null,
       sortOrder: e.sortOrder,
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
-      type: 'plio' as const,
-    })),
-    ...day.mobilityBlocks.map((e) => ({
+      type: 'plio',
+    }),
+  );
+}
+
+function mapMobilityExercises(blocks: PlanDay['mobilityBlocks']): ClientRoutineExercise[] {
+  return blocks.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.libraryMobilityExercise?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
+      sets: e.sets,
       setsPlanned: e.roundsPlanned ?? null,
       sortOrder: e.sortOrder,
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
-      type: 'mobility' as const,
-    })),
-    ...day.isometricBlocks.map((e) => ({
+      type: 'mobility',
+    }),
+  );
+}
+
+function mapIsometricExercises(blocks: PlanDay['isometricBlocks']): ClientRoutineExercise[] {
+  return blocks.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.libraryIsometricExercise?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: null,
       repsMin: null,
       restSeconds: null,
+      sets: e.sets,
       setsPlanned: e.setsPlanned ?? null,
       sortOrder: e.sortOrder,
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
-      type: 'isometric' as const,
-    })),
-    ...day.sportBlocks.map((e) => ({
+      type: 'isometric',
+    }),
+  );
+}
+
+function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercise[] {
+  return blocks.map((e) =>
+    mapRoutineExercise({
+      coachInstructions: e.librarySport?.coachInstructions ?? null,
       displayName: e.displayName,
       id: e.id,
-      notes: e.notes ?? null,
+      notes: e.notes,
       repsMax: null,
       repsMin: null,
       restSeconds: null,
+      sets: e.sets,
       setsPlanned: null,
       sortOrder: e.sortOrder,
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
-      type: 'sport' as const,
-    })),
-  ].sort((a, b) => a.sortOrder - b.sortOrder);
+      type: 'sport',
+    }),
+  );
+}
+
+function mapRoutineExercise(input: {
+  coachInstructions: null | string;
+  displayName: string;
+  id: string;
+  notes: null | string;
+  repsMax: null | number;
+  repsMin: null | number;
+  restSeconds: null | number;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  setsPlanned: null | number;
+  sortOrder: number;
+  targetRir: null | number;
+  targetRpe: null | number;
+  type: ClientRoutineExercise['type'];
+}): ClientRoutineExercise {
+  const plannedSets = mapPlanSetsToPlannedSnapshots(input.sets);
+  return {
+    coachInstructions: normalizeCoachInstructions(input.coachInstructions),
+    displayName: input.displayName,
+    id: input.id,
+    notes: stripMetaNotes(input.notes),
+    repsMax: input.repsMax,
+    repsMin: input.repsMin,
+    restSeconds: input.restSeconds,
+    sets: plannedSets,
+    setsPlanned: input.setsPlanned,
+    sortOrder: input.sortOrder,
+    targetRir: input.targetRir,
+    targetRpe: input.targetRpe,
+    type: input.type,
+  };
+}
+
+function normalizeCoachInstructions(value: null | string | undefined): null | string {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }
 
 async function updateProgressPhotoArchived(

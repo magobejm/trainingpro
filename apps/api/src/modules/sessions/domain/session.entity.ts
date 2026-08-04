@@ -1,3 +1,9 @@
+export type SessionPlannedSet = {
+  advancedTechnique: null | string;
+  note: null | string;
+  setIndex: number;
+};
+
 export type SessionSetLog = {
   effortRir: null | number;
   effortRpe: null | number;
@@ -9,10 +15,12 @@ export type SessionSetLog = {
 
 export type SessionStrengthItem = {
   type: 'strength';
+  coachInstructions: null | string;
   displayName: string;
   id: string;
   logs: SessionSetLog[];
   notes: null | string;
+  plannedSets: SessionPlannedSet[];
   repsMax: null | number;
   repsMin: null | number;
   restSeconds: null | number;
@@ -66,9 +74,12 @@ export type SessionSportLog = {
 
 export type SessionPlioItem = {
   type: 'plio';
+  coachInstructions: null | string;
   displayName: string;
   id: string;
   logs: SessionPlioSetLog[];
+  notes: null | string;
+  plannedSets: SessionPlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;
@@ -78,9 +89,12 @@ export type SessionPlioItem = {
 
 export type SessionMobilityItem = {
   type: 'mobility';
+  coachInstructions: null | string;
   displayName: string;
   id: string;
   logs: SessionMobilitySetLog[];
+  notes: null | string;
+  plannedSets: SessionPlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;
@@ -90,9 +104,12 @@ export type SessionMobilityItem = {
 
 export type SessionIsometricItem = {
   type: 'isometric';
+  coachInstructions: null | string;
   displayName: string;
   id: string;
   logs: SessionIsometricSetLog[];
+  notes: null | string;
+  plannedSets: SessionPlannedSet[];
   restSeconds: null | number;
   setsPlanned: null | number;
   sortOrder: number;
@@ -101,10 +118,13 @@ export type SessionIsometricItem = {
 
 export type SessionSportItem = {
   type: 'sport';
+  coachInstructions: null | string;
   displayName: string;
   durationMinutes: number;
   id: string;
   log: SessionSportLog | null;
+  notes: null | string;
+  plannedSets: SessionPlannedSet[];
   sortOrder: number;
   targetRpe: null | number;
 };
@@ -128,9 +148,12 @@ export type SessionIntervalLog = {
 
 export type CardioSessionItem = {
   type: 'cardio';
+  coachInstructions: null | string;
   displayName: string;
   id: string;
   intervalLogs: SessionIntervalLog[];
+  notes: null | string;
+  plannedSets: SessionPlannedSet[];
   restSeconds: number;
   roundsPlanned: number;
   sortOrder: number;

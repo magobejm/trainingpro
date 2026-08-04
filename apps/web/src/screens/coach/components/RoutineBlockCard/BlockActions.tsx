@@ -9,17 +9,21 @@ interface BlockActionsProps {
   isGrouped?: boolean;
   isLast: boolean;
   daysCount: number;
+  hasTrainerNote: boolean;
   readOnly: boolean;
   onMove: (d: -1 | 1) => void;
+  onOpenNotes: () => void;
   onRemove: () => void;
   onShowMove: () => void;
   onShowDetail?: () => void;
   onToggleCollapse: () => void;
   onToggleEdit: () => void;
+  t: (k: string) => string;
 }
 
 const ICON_DETAIL = '🔍';
 const ICON_EDIT = '✏️';
+const ICON_NOTE = '📝';
 const ICON_TRASH = '🗑';
 const ICON_UP = '↑';
 const ICON_DOWN = '↓';
@@ -31,6 +35,13 @@ export function BlockActions(props: BlockActionsProps) {
     <View style={s.blockActions}>
       {!props.readOnly && !props.isGrouped && renderMoveButtons(props)}
       {!props.readOnly && !props.isGrouped && <View style={s.blockActionSep} />}
+      <Pressable
+        accessibilityLabel={props.t('coach.routine.block.trainerNote')}
+        onPress={props.onOpenNotes}
+        style={[s.viewDetailBtn, props.hasTrainerNote && s.blockEditBtnActive]}
+      >
+        <Text style={s.viewDetailBtnText}>{ICON_NOTE}</Text>
+      </Pressable>
       {props.onShowDetail && (
         <Pressable onPress={props.onShowDetail} style={s.viewDetailBtn}>
           <Text style={s.viewDetailBtnText}>{ICON_DETAIL}</Text>

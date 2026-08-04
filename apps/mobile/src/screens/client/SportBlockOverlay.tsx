@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { LogSportMutationInput, SportSessionItem } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
 import { LIGHT } from '../../theme/light';
 
 const MODAL_ANIMATION = 'slide';
@@ -60,6 +61,11 @@ export function SportBlockOverlay({ item, onClose, onLog }: SportBlockOverlayPro
             </View>
           ) : (
             <>
+              <ExerciseNotesPanel
+                coachInstructions={item.coachInstructions}
+                plannedSet={item.plannedSets.find((set) => set.note || set.advancedTechnique) ?? null}
+                trainerNote={item.notes}
+              />
               <InputRow
                 label={t('client.sportWizard.durationMinutes')}
                 value={minutes}

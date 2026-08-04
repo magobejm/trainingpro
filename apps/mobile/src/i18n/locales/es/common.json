@@ -217,6 +217,12 @@
   "client.wizard.clear": "Limpiar",
   "client.wizard.autocomplete": "Autocompletar",
   "client.wizard.hints": "Sugerencia del coach",
+  "client.notes.exerciseInstructions": "Indicaciones del ejercicio",
+  "client.notes.trainerNote": "Nota del entrenador",
+  "client.notes.setNote": "Nota serie {{n}}",
+  "client.notes.setNotes": "Notas por serie",
+  "client.notes.advancedTechnique": "Técnica",
+  "mobile.client.exercise.details": "Detalles",
 
   "client.summary.title": "Series registradas",
   "client.summary.edit": "Editar",

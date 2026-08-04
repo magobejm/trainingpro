@@ -4,6 +4,8 @@ import Slider from '@react-native-community/slider';
 import { useTranslation } from 'react-i18next';
 import type { ExerciseHistoryEntry, LogSetMutationInput, StrengthSessionItem } from '../../data/hooks/useTodaySession';
 import { useExerciseHistoryQuery } from '../../data/hooks/useTodaySession';
+import { ExerciseNotesPanel } from './ExerciseNotesPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { IntervalTimer } from '../../features/timers/IntervalTimer';
 import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
@@ -59,23 +61,20 @@ function HistoryDrawer({ sourceExerciseId }: { sourceExerciseId: string }) {
 
 function TrainerVarsPanel({
   item,
+  currentSet,
   onAutocomplete,
   onClear,
 }: {
   item: StrengthSessionItem;
+  currentSet: number;
   onAutocomplete: () => void;
   onClear: () => void;
 }) {
   const { t } = useTranslation();
+  const plannedSet = resolvePlannedSet(item.plannedSets, currentSet);
   return (
     <View style={styles.trainerVarsPanel}>
-      {item.notes ? (
-        <Text style={styles.trainerHint}>
-          {t('client.wizard.hints')}
-          {COLON_SPACE}
-          {item.notes}
-        </Text>
-      ) : null}
+      <ExerciseNotesPanel coachInstructions={item.coachInstructions} plannedSet={plannedSet} trainerNote={item.notes} />
       {item.restSeconds != null && (
         <Text style={styles.restBanner}>{t('client.wizard.restRecommended', { seconds: item.restSeconds })}</Text>
       )}
@@ -316,8 +315,19 @@ export function SetWizardOverlay({ item, initialSetIndex, editingSetIndex, onClo
           </Pressable>
 
           {showTrainerVars ? (
-            <TrainerVarsPanel item={item} onAutocomplete={handleAutocomplete} onClear={handleClear} />
+            <TrainerVarsPanel
+              currentSet={currentSet}
+              item={item}
+              onAutocomplete={handleAutocomplete}
+              onClear={handleClear}
+            />
           ) : null}
+
+          <ExerciseNotesPanel
+            coachInstructions={showTrainerVars ? null : item.coachInstructions}
+            plannedSet={showTrainerVars ? null : resolvePlannedSet(item.plannedSets, currentSet)}
+            trainerNote={showTrainerVars ? null : item.notes}
+          />
 
           <InputGrid
             reps={reps}

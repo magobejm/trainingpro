@@ -8,11 +8,11 @@ const NOTES_CATEGORY_MAP: Record<string, string> = {
   cardio: 'cardioMethodTypes',
   isometric: 'isometricTypes',
   plio: 'plioTypes',
-  warmup: 'mobilityTypes',
+  mobility: 'mobilityTypes',
   sport: 'sportTypes',
 };
 
-function useNotesFallback(block: DraftBlock): string {
+function useLibraryInstructions(block: DraftBlock): string {
   const { data } = useUnifiedExercisesQuery({
     baseCategory: NOTES_CATEGORY_MAP[block.type] ?? 'muscleGroups',
     search: block.displayName,
@@ -35,6 +35,10 @@ interface BlockNotesModalProps {
 
 function ModalHeader({ title }: { title: string }) {
   return <Text style={styles.headerTitle}>{title}</Text>;
+}
+
+function SectionTitle({ title }: { title: string }) {
+  return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
 function ModalFooterEdit({ onSave, onCancel, t }: { onSave: () => void; onCancel: () => void; t: (k: string) => string }) {
@@ -64,7 +68,7 @@ function noop() {}
 
 export function BlockNotesModal(props: BlockNotesModalProps) {
   const { block, visible, isEditing, onClose, onUpdate, t } = props;
-  const libraryFallback = useNotesFallback(block);
+  const libraryInstructions = useLibraryInstructions(block);
   const [draft, setDraft] = useState(block.notes ?? '');
 
   useEffect(() => {
@@ -80,26 +84,36 @@ export function BlockNotesModal(props: BlockNotesModalProps) {
 
   if (!visible) return null;
 
-  const readValue = draft || libraryFallback;
-  const placeholder = t('coach.routine.block.notesPlaceholder');
+  const libraryEmpty = !libraryInstructions.trim();
+  const trainerEmpty = !draft.trim();
 
   return (
     <Modal animationType={MODAL_ANIMATION} transparent visible={visible}>
       <Pressable onPress={onClose} style={styles.overlay}>
         <Pressable onPress={noop} style={styles.modal}>
-          <ModalHeader title={t('coach.routine.block.notes')} />
+          <ModalHeader title={t('coach.routine.block.trainerNote')} />
+
+          <SectionTitle title={t('coach.routine.block.libraryInstructions')} />
+          <Text style={[styles.readOnlyText, libraryEmpty && styles.placeholderText]}>
+            {libraryEmpty ? t('coach.routine.block.noLibraryInstructions') : libraryInstructions}
+          </Text>
+
+          <SectionTitle title={t('coach.routine.block.trainerNote')} />
           {isEditing ? (
             <TextInput
               multiline
               onChangeText={setDraft}
-              placeholder={placeholder}
+              placeholder={t('coach.routine.block.trainerNotePlaceholder')}
               placeholderTextColor={PLACEHOLDER_COLOR}
               style={styles.textInput}
               value={draft}
             />
           ) : (
-            <Text style={[styles.readOnlyText, !readValue && styles.placeholderText]}>{readValue || placeholder}</Text>
+            <Text style={[styles.readOnlyText, trainerEmpty && styles.placeholderText]}>
+              {trainerEmpty ? t('coach.routine.block.noTrainerNote') : draft}
+            </Text>
           )}
+
           {isEditing ? (
             <ModalFooterEdit onCancel={onClose} onSave={handleSave} t={t} />
           ) : (
@@ -127,8 +141,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerTitle: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
   textInput: {
-    minHeight: 140,
+    minHeight: 120,
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 6,
@@ -137,7 +152,7 @@ const styles = StyleSheet.create({
     color: '#334155',
     textAlignVertical: 'top',
   },
-  readOnlyText: { fontSize: 14, color: '#334155', lineHeight: 22, minHeight: 80 },
+  readOnlyText: { fontSize: 14, color: '#334155', lineHeight: 22, minHeight: 40 },
   placeholderText: { color: '#94a3b8' },
   footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
   btnPrimary: {
@@ -155,5 +170,4 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   btnSecondaryText: { color: '#475569', fontSize: 13 },
-  closeBtnText: { fontSize: 20, color: '#64748b', lineHeight: 22 },
 });

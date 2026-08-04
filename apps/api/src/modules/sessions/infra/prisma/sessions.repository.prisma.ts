@@ -38,11 +38,11 @@ import {
   mapSessionSportCreate,
   mapSetLog,
   mapSportLog,
-  readDayExercises,
-  readDayIsometricBlocks,
-  readDayMobilityBlocks,
-  readDayPlioBlocks,
-  readDaySportBlocks,
+  mapTemplateExerciseSnapshot,
+  mapTemplateIsometricSnapshot,
+  mapTemplateMobilitySnapshot,
+  mapTemplatePlioSnapshot,
+  mapTemplateSportSnapshot,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
 import { mapSession, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
@@ -354,16 +354,17 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!planDayRow) {
       throw new NotFoundException('Plan day not found for this template');
     }
-    const exercises = readDayExercises(row.days as Parameters<typeof readDayExercises>[0], resolvedPlanDayId);
-    const plioBlocks = readDayPlioBlocks(row.days as Parameters<typeof readDayPlioBlocks>[0], resolvedPlanDayId);
-    const mobilityBlocks = readDayMobilityBlocks(row.days as Parameters<typeof readDayMobilityBlocks>[0], resolvedPlanDayId);
-    const isometricBlocks = readDayIsometricBlocks(
-      row.days as Parameters<typeof readDayIsometricBlocks>[0],
-      resolvedPlanDayId,
-    );
-    const sportBlocks = readDaySportBlocks(row.days as Parameters<typeof readDaySportBlocks>[0], resolvedPlanDayId);
+    const day = row.days.find((d) => d.id === resolvedPlanDayId);
+    if (!day) {
+      throw new NotFoundException('Plan day not found for this template');
+    }
+    const exercises = day.exercises.map(mapTemplateExerciseSnapshot);
+    const plioBlocks = day.plioBlocks.map(mapTemplatePlioSnapshot);
+    const mobilityBlocks = day.mobilityBlocks.map(mapTemplateMobilitySnapshot);
+    const isometricBlocks = day.isometricBlocks.map(mapTemplateIsometricSnapshot);
+    const sportBlocks = day.sportBlocks.map(mapTemplateSportSnapshot);
     const hasContent =
-      (exercises?.length ?? 0) > 0 ||
+      exercises.length > 0 ||
       plioBlocks.length > 0 ||
       mobilityBlocks.length > 0 ||
       isometricBlocks.length > 0 ||
@@ -373,7 +374,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     }
     return {
       id: row.id,
-      items: exercises ?? [],
+      items: exercises,
       plioBlocks,
       mobilityBlocks,
       isometricBlocks,

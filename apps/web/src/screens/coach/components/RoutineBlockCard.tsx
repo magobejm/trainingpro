@@ -6,7 +6,6 @@ import { s } from '../RoutinePlanner.styles';
 import type { BlockType, DraftBlock } from '../RoutinePlanner.types';
 import { MoveMenu } from './RoutineBlockCard/MoveMenu';
 import { BlockFields } from './RoutineBlockCard/BlockFields';
-import { BlockNotes } from './RoutineBlockCard/BlockNotes';
 import { BlockNotesModal } from './RoutineBlockCard/BlockNotesModal';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
 import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
@@ -66,6 +65,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
       <BlockHeader
         daysCount={props.daysCount}
         displayName={props.block.displayName}
+        hasTrainerNote={Boolean(props.block.notes?.trim())}
         importedFromWarmup={props.block.fromWarmupTemplate}
         isCollapsed={state.isCollapsed}
         isEditing={state.isEditing}
@@ -73,6 +73,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
         isGrouped={props.isGrouped}
         isLast={props.isLast}
         onMove={props.onMove}
+        onOpenNotes={() => state.setShowNotesModal(true)}
         onRemove={props.onRemove}
         onShowMove={() => state.setShowMove(!state.showMove)}
         onShowDetail={() => state.setShowDetailModal(true)}
@@ -97,7 +98,6 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
           <View style={s.blockBodyRow}>
             <View style={s.blockImageCol}>
               <BlockImage blockType={props.block.type} />
-              <BlockNotes onOpenModal={() => state.setShowNotesModal(true)} t={t} />
             </View>
             <View style={s.blockBodyFieldsWrap}>
               <BlockFields

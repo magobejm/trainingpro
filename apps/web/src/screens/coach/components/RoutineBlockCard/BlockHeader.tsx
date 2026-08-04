@@ -20,6 +20,8 @@ interface BlockHeaderProps {
   onRemove: () => void;
   onShowMove: () => void;
   onShowDetail: () => void;
+  onOpenNotes: () => void;
+  hasTrainerNote: boolean;
   onToggleCollapse: () => void;
   onToggleEdit: () => void;
   t: (k: string) => string;
@@ -55,18 +57,21 @@ export function BlockHeader(props: BlockHeaderProps) {
       </Pressable>
       <BlockActions
         daysCount={props.daysCount}
+        hasTrainerNote={props.hasTrainerNote}
         isCollapsed={props.isCollapsed}
         isEditing={props.isEditing}
         isFirst={props.isFirst}
         isGrouped={props.isGrouped}
         isLast={props.isLast}
         onMove={props.onMove}
+        onOpenNotes={props.onOpenNotes}
         onRemove={props.onRemove}
         onShowMove={props.onShowMove}
         onShowDetail={props.onShowDetail}
         onToggleCollapse={props.onToggleCollapse}
         onToggleEdit={props.onToggleEdit}
         readOnly={props.readOnly}
+        t={props.t}
       />
     </View>
   );

@@ -105,6 +105,10 @@ export function upsertSportLog(prisma: PrismaService, input: LogSportInput, sess
   });
 }
 
+const PLAN_BLOCK_SETS_INCLUDE = {
+  orderBy: { setIndex: 'asc' as const },
+};
+
 export function readWorkoutTemplate(prisma: PrismaService, templateId: string, coachMembershipId: string) {
   return prisma.planTemplate.findFirst({
     where: {
@@ -121,22 +125,42 @@ export function readWorkoutTemplate(prisma: PrismaService, templateId: string, c
           exercises: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },
+            include: {
+              libraryExercise: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
           },
           plioBlocks: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },
+            include: {
+              libraryPlioExercise: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
           },
           mobilityBlocks: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },
+            include: {
+              libraryMobilityExercise: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
           },
           isometricBlocks: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },
+            include: {
+              libraryIsometricExercise: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
           },
           sportBlocks: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },
+            include: {
+              librarySport: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
           },
         },
       },

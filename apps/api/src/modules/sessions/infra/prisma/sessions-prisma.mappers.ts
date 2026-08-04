@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
+import { buildSessionNoteSnapshot, plannedSetsJsonToInput } from '../../../../common/notes/session-note-snapshot';
 import type {
   SessionIsometricSetLog,
   SessionMobilitySetLog,
@@ -9,10 +10,12 @@ import type {
 } from '../../domain/session.entity';
 
 export type TemplateExerciseSnapshot = {
+  coachInstructions: null | string;
   displayName: string;
   exerciseLibraryId: null | string;
   notes: null | string;
   perSetWeightRangesJson: Prisma.JsonValue | null;
+  plannedSetsJson: Prisma.JsonValue | null;
   repsMax: null | number;
   repsMin: null | number;
   restSeconds: null | number;
@@ -25,7 +28,10 @@ export type TemplateExerciseSnapshot = {
 };
 
 export type TemplatePlioSnapshot = {
+  coachInstructions: null | string;
   displayName: string;
+  notes: null | string;
+  plannedSetsJson: Prisma.JsonValue | null;
   plioExerciseLibraryId: null | string;
   roundsPlanned: number;
   sortOrder: number;
@@ -35,8 +41,11 @@ export type TemplatePlioSnapshot = {
 };
 
 export type TemplateMobilitySnapshot = {
+  coachInstructions: null | string;
   displayName: string;
   mobilityExerciseLibraryId: null | string;
+  notes: null | string;
+  plannedSetsJson: Prisma.JsonValue | null;
   roundsPlanned: number;
   sortOrder: number;
   workSeconds: number;
@@ -45,8 +54,11 @@ export type TemplateMobilitySnapshot = {
 };
 
 export type TemplateIsometricSnapshot = {
+  coachInstructions: null | string;
   displayName: string;
   isometricExerciseLibraryId: null | string;
+  notes: null | string;
+  plannedSetsJson: Prisma.JsonValue | null;
   restSeconds: number;
   setsPlanned: null | number;
   sortOrder: number;
@@ -54,7 +66,10 @@ export type TemplateIsometricSnapshot = {
 };
 
 export type TemplateSportSnapshot = {
+  coachInstructions: null | string;
   displayName: string;
+  notes: null | string;
+  plannedSetsJson: Prisma.JsonValue | null;
   sportLibraryId: null | string;
   durationMinutes: number;
   sortOrder: number;
@@ -69,9 +84,11 @@ export function assertSessionMutable(status: SessionStatus): void {
 
 export function mapSessionItemCreate(item: TemplateExerciseSnapshot): Prisma.SessionStrengthItemCreateWithoutSessionInput {
   return {
+    coachInstructions: item.coachInstructions,
     displayName: item.displayName,
     notes: item.notes,
     perSetRangesJson: toInputJson(item.perSetWeightRangesJson),
+    plannedSetsJson: toInputJson(item.plannedSetsJson),
     repsMax: item.repsMax,
     repsMin: item.repsMin,
     restSeconds: item.restSeconds,
@@ -159,7 +176,10 @@ export function readFirstDaySportBlocks(days: { sportBlocks?: TemplateSportSnaps
 
 export function mapSessionPlioCreate(block: TemplatePlioSnapshot): Prisma.SessionPlioBlockCreateWithoutSessionInput {
   return {
+    coachInstructions: block.coachInstructions,
     displayName: block.displayName,
+    notes: block.notes,
+    plannedSetsJson: toInputJson(block.plannedSetsJson),
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     sourcePlioExerciseId: block.plioExerciseLibraryId,
@@ -173,7 +193,10 @@ export function mapSessionMobilityCreate(
   block: TemplateMobilitySnapshot,
 ): Prisma.SessionMobilityBlockCreateWithoutSessionInput {
   return {
+    coachInstructions: block.coachInstructions,
     displayName: block.displayName,
+    notes: block.notes,
+    plannedSetsJson: toInputJson(block.plannedSetsJson),
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     sourceMobilityExerciseId: block.mobilityExerciseLibraryId,
@@ -187,7 +210,10 @@ export function mapSessionIsometricCreate(
   block: TemplateIsometricSnapshot,
 ): Prisma.SessionIsometricBlockCreateWithoutSessionInput {
   return {
+    coachInstructions: block.coachInstructions,
     displayName: block.displayName,
+    notes: block.notes,
+    plannedSetsJson: toInputJson(block.plannedSetsJson),
     restSeconds: block.restSeconds,
     setsPlanned: block.setsPlanned,
     sortOrder: block.sortOrder,
@@ -198,10 +224,172 @@ export function mapSessionIsometricCreate(
 
 export function mapSessionSportCreate(block: TemplateSportSnapshot): Prisma.SessionSportBlockCreateWithoutSessionInput {
   return {
+    coachInstructions: block.coachInstructions,
     displayName: block.displayName,
     durationMinutes: block.durationMinutes,
+    notes: block.notes,
+    plannedSetsJson: toInputJson(block.plannedSetsJson),
     sortOrder: block.sortOrder,
     sourceSportId: block.sportLibraryId,
+    targetRpe: block.targetRpe,
+  };
+}
+
+export function mapTemplateExerciseSnapshot(exercise: {
+  displayName: string;
+  exerciseLibraryId: null | string;
+  libraryExercise?: { coachInstructions: null | string } | null;
+  notes: null | string;
+  perSetWeightRangesJson: Prisma.JsonValue | null;
+  repsMax: null | number;
+  repsMin: null | number;
+  restSeconds: null | number;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  setsPlanned: null | number;
+  sortOrder: number;
+  targetRir: null | number;
+  targetRpe: null | number;
+  weightRangeMaxKg: Prisma.Decimal | null;
+  weightRangeMinKg: Prisma.Decimal | null;
+}): TemplateExerciseSnapshot {
+  const noteSnapshot = buildSessionNoteSnapshot({
+    coachInstructions: exercise.libraryExercise?.coachInstructions ?? null,
+    notes: exercise.notes,
+    sets: exercise.sets,
+  });
+  return {
+    coachInstructions: noteSnapshot.coachInstructions,
+    displayName: exercise.displayName,
+    exerciseLibraryId: exercise.exerciseLibraryId,
+    notes: noteSnapshot.notes,
+    perSetWeightRangesJson: exercise.perSetWeightRangesJson,
+    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    repsMax: exercise.repsMax,
+    repsMin: exercise.repsMin,
+    restSeconds: exercise.restSeconds,
+    setsPlanned: exercise.setsPlanned,
+    sortOrder: exercise.sortOrder,
+    targetRir: exercise.targetRir,
+    targetRpe: exercise.targetRpe,
+    weightRangeMaxKg: exercise.weightRangeMaxKg,
+    weightRangeMinKg: exercise.weightRangeMinKg,
+  };
+}
+
+export function mapTemplatePlioSnapshot(block: {
+  displayName: string;
+  libraryPlioExercise?: { coachInstructions: null | string } | null;
+  notes: null | string;
+  plioExerciseLibraryId: null | string;
+  roundsPlanned: number;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sortOrder: number;
+  workSeconds: number;
+  restSeconds: number;
+  targetRpe: null | number;
+}): TemplatePlioSnapshot {
+  const noteSnapshot = buildSessionNoteSnapshot({
+    coachInstructions: block.libraryPlioExercise?.coachInstructions ?? null,
+    notes: block.notes,
+    sets: block.sets,
+  });
+  return {
+    coachInstructions: noteSnapshot.coachInstructions,
+    displayName: block.displayName,
+    notes: noteSnapshot.notes,
+    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plioExerciseLibraryId: block.plioExerciseLibraryId,
+    roundsPlanned: block.roundsPlanned,
+    sortOrder: block.sortOrder,
+    workSeconds: block.workSeconds,
+    restSeconds: block.restSeconds,
+    targetRpe: block.targetRpe,
+  };
+}
+
+export function mapTemplateMobilitySnapshot(block: {
+  displayName: string;
+  libraryMobilityExercise?: { coachInstructions: null | string } | null;
+  mobilityExerciseLibraryId: null | string;
+  notes: null | string;
+  roundsPlanned: number;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sortOrder: number;
+  workSeconds: number;
+  restSeconds: number;
+  targetRpe: null | number;
+}): TemplateMobilitySnapshot {
+  const noteSnapshot = buildSessionNoteSnapshot({
+    coachInstructions: block.libraryMobilityExercise?.coachInstructions ?? null,
+    notes: block.notes,
+    sets: block.sets,
+  });
+  return {
+    coachInstructions: noteSnapshot.coachInstructions,
+    displayName: block.displayName,
+    mobilityExerciseLibraryId: block.mobilityExerciseLibraryId,
+    notes: noteSnapshot.notes,
+    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    roundsPlanned: block.roundsPlanned,
+    sortOrder: block.sortOrder,
+    workSeconds: block.workSeconds,
+    restSeconds: block.restSeconds,
+    targetRpe: block.targetRpe,
+  };
+}
+
+export function mapTemplateIsometricSnapshot(block: {
+  displayName: string;
+  isometricExerciseLibraryId: null | string;
+  libraryIsometricExercise?: { coachInstructions: null | string } | null;
+  notes: null | string;
+  restSeconds: number;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  setsPlanned: null | number;
+  sortOrder: number;
+  targetRpe: null | number;
+}): TemplateIsometricSnapshot {
+  const noteSnapshot = buildSessionNoteSnapshot({
+    coachInstructions: block.libraryIsometricExercise?.coachInstructions ?? null,
+    notes: block.notes,
+    sets: block.sets,
+  });
+  return {
+    coachInstructions: noteSnapshot.coachInstructions,
+    displayName: block.displayName,
+    isometricExerciseLibraryId: block.isometricExerciseLibraryId,
+    notes: noteSnapshot.notes,
+    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    restSeconds: block.restSeconds,
+    setsPlanned: block.setsPlanned,
+    sortOrder: block.sortOrder,
+    targetRpe: block.targetRpe,
+  };
+}
+
+export function mapTemplateSportSnapshot(block: {
+  displayName: string;
+  durationMinutes: number;
+  librarySport?: { coachInstructions: null | string } | null;
+  notes: null | string;
+  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sortOrder: number;
+  sportLibraryId: null | string;
+  targetRpe: null | number;
+}): TemplateSportSnapshot {
+  const noteSnapshot = buildSessionNoteSnapshot({
+    coachInstructions: block.librarySport?.coachInstructions ?? null,
+    notes: block.notes,
+    sets: block.sets,
+  });
+  return {
+    coachInstructions: noteSnapshot.coachInstructions,
+    displayName: block.displayName,
+    durationMinutes: block.durationMinutes,
+    notes: noteSnapshot.notes,
+    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    sortOrder: block.sortOrder,
+    sportLibraryId: block.sportLibraryId,
     targetRpe: block.targetRpe,
   };
 }

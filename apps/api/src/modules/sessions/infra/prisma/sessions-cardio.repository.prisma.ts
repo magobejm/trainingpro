@@ -1,19 +1,9 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, SessionStatus, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import type {
-  CardioIntervalLog,
-  CardioSessionInstance,
-} from '../../domain/cardio-session.entity';
+import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
 import type { FinishSessionInput } from '../../domain/session.input';
 import {
@@ -22,7 +12,7 @@ import {
   mapCardioIntervalLog,
   mapCardioSession,
   mapCardioSessionBlockCreate,
-  readFirstDayCardioBlocks,
+  mapCardioTemplateBlockSnapshot,
 } from './sessions-cardio.prisma.helpers';
 
 type CoachMembership = {
@@ -30,18 +20,13 @@ type CoachMembership = {
   organizationId: string;
 };
 
-type ExistingCardioSession = NonNullable<
-  Awaited<ReturnType<SessionsCardioRepositoryPrisma['readExistingSession']>>
->;
+type ExistingCardioSession = NonNullable<Awaited<ReturnType<SessionsCardioRepositoryPrisma['readExistingSession']>>>;
 
 @Injectable()
 export class SessionsCardioRepositoryPrisma {
   constructor(private readonly prisma: PrismaService) {}
 
-  async ensureCardioSession(
-    context: AuthContext,
-    input: EnsureCardioSessionInput,
-  ): Promise<CardioSessionInstance> {
+  async ensureCardioSession(context: AuthContext, input: EnsureCardioSessionInput): Promise<CardioSessionInstance> {
     const membership = await this.resolveCoachMembership(context);
     const existing = await this.readExistingSession(input);
     if (existing) {
@@ -50,10 +35,7 @@ export class SessionsCardioRepositoryPrisma {
     return this.createCardioSession(context, input, membership);
   }
 
-  async finishCardioSession(
-    context: AuthContext,
-    input: FinishSessionInput,
-  ): Promise<CardioSessionInstance> {
+  async finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
     const session = await this.readCardioSessionForMutation(input.sessionId);
     assertCardioSessionMutable(session.status);
     const updated = await this.prisma.sessionInstance.update({
@@ -71,10 +53,7 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(updated);
   }
 
-  async getCardioSessionById(
-    context: AuthContext,
-    sessionId: string,
-  ): Promise<CardioSessionInstance | null> {
+  async getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
@@ -98,10 +77,7 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioIntervalLog(row);
   }
 
-  async startCardioSession(
-    context: AuthContext,
-    sessionId: string,
-  ): Promise<CardioSessionInstance> {
+  async startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance> {
     const session = await this.readCardioSessionForMutation(sessionId);
     if (session.startedAt || session.status === SessionStatus.COMPLETED) {
       return mapCardioSession(session);
@@ -136,11 +112,7 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(existing);
   }
 
-  private async createCardioSession(
-    context: AuthContext,
-    input: EnsureCardioSessionInput,
-    membership: CoachMembership,
-  ) {
+  private async createCardioSession(context: AuthContext, input: EnsureCardioSessionInput, membership: CoachMembership) {
     const template = await this.readCardioTemplateSnapshot(input.templateId, membership.id);
     const row = await this.prisma.sessionInstance.create({
       data: {
@@ -175,8 +147,12 @@ export class SessionsCardioRepositoryPrisma {
     if (!row) {
       throw new NotFoundException('Cardio template not found');
     }
-    const blocks = readFirstDayCardioBlocks(row.days);
-    if (!blocks) {
+    const firstDay = row.days[0];
+    if (!firstDay) {
+      throw new BadRequestException('Template has no days');
+    }
+    const blocks = firstDay.cardioBlocks.map(mapCardioTemplateBlockSnapshot);
+    if (blocks.length === 0) {
       throw new BadRequestException('Template has no cardio blocks');
     }
     return {
@@ -225,6 +201,10 @@ export class SessionsCardioRepositoryPrisma {
             cardioBlocks: {
               where: { archivedAt: null },
               orderBy: { sortOrder: 'asc' },
+              include: {
+                libraryCardioMethod: { select: { coachInstructions: true } },
+                sets: { orderBy: { setIndex: 'asc' } },
+              },
             },
           },
         },

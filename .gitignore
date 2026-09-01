@@ -1,7 +1,8 @@
 node_modules
 logs
 .worktrees
-docs
+docs/*
+!docs/AGENTS_CHECKLIST.md
 /plans/
 .claude/*
 tmp/*

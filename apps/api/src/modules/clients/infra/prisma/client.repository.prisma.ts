@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- routine plan mappers kept with repository until a dedicated mapper module split. */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {

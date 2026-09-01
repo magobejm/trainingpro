@@ -15,6 +15,13 @@ module.exports = {
   },
   overrides: [
     {
+      files: ['apps/api/**/*.prisma*.ts'],
+      rules: {
+        'max-lines': 'off',
+        'max-lines-per-function': 'off',
+      },
+    },
+    {
       files: ['packages/ui/**/*.{ts,tsx,js,jsx}'],
       rules: {
         'no-restricted-globals': ['error', 'fetch'],

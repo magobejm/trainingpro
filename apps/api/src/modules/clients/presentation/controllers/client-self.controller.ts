@@ -9,6 +9,7 @@ import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensu
 import { GetClientCalendarSummaryUseCase } from '../../application/use-cases/get-client-calendar-summary.usecase';
 import { GetClientExerciseHistoryUseCase } from '../../application/use-cases/get-client-exercise-history.usecase';
 import { GetClientMeUseCase } from '../../application/use-cases/get-client-me.usecase';
+import { GetClientPlanDayUseCase } from '../../application/use-cases/get-client-plan-day.usecase';
 import { GetClientRoutineUseCase } from '../../application/use-cases/get-client-routine.usecase';
 import { ListClientCalendarUseCase } from '../../application/use-cases/list-client-calendar.usecase';
 import { ListClientSessionsUseCase } from '../../application/use-cases/list-client-sessions.usecase';
@@ -27,6 +28,7 @@ export class ClientSelfController {
     private readonly getClientCalendarSummaryUseCase: GetClientCalendarSummaryUseCase,
     private readonly getClientExerciseHistoryUseCase: GetClientExerciseHistoryUseCase,
     private readonly getClientMeUseCase: GetClientMeUseCase,
+    private readonly getClientPlanDayUseCase: GetClientPlanDayUseCase,
     private readonly getClientRoutineUseCase: GetClientRoutineUseCase,
     private readonly listClientCalendarUseCase: ListClientCalendarUseCase,
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
@@ -46,6 +48,12 @@ export class ClientSelfController {
   async getMyRoutine(@Req() request: HttpAuthRequest): Promise<ClientRoutine> {
     const context = readAuthContext(request);
     return this.getClientRoutineUseCase.execute(context);
+  }
+
+  @Get('me/plan-days/:planDayId')
+  async getMyPlanDay(@Param('planDayId') planDayId: string, @Req() request: HttpAuthRequest) {
+    const context = readAuthContext(request);
+    return this.getClientPlanDayUseCase.execute(context, planDayId);
   }
 
   @Get('me/exercises/:sourceExerciseId/history')

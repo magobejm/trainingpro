@@ -12,11 +12,7 @@ import { mapAction, mapIncident, mustAlertCoach } from './incident-prisma.mapper
 export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async addAdjustmentDraft(
-    context: AuthContext,
-    incidentId: string,
-    draft: string,
-  ): Promise<IncidentView> {
+  async addAdjustmentDraft(context: AuthContext, incidentId: string, draft: string): Promise<IncidentView> {
     const incident = await this.readCoachIncident(context, incidentId);
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.incident.update({
@@ -35,11 +31,7 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
     return mapIncident(updated);
   }
 
-  async addCoachResponse(
-    context: AuthContext,
-    incidentId: string,
-    response: string,
-  ): Promise<IncidentView> {
+  async addCoachResponse(context: AuthContext, incidentId: string, response: string): Promise<IncidentView> {
     const incident = await this.readCoachIncident(context, incidentId);
     const updated = await this.prisma.$transaction(async (tx) => {
       const row = await tx.incident.update({
@@ -277,6 +269,7 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
       sessionId: input.sessionId ?? null,
       sessionItemId: input.sessionItemId ?? null,
       severity: input.severity,
+      tag: input.tag ?? null,
     };
   }
 

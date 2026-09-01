@@ -1,5 +1,6 @@
+/* eslint-disable max-lines -- routine plan mappers kept with repository until a dedicated mapper module split. */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Prisma, Role } from '@prisma/client';
+import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {
   buildArchiveAuditFields,
   buildCreateAuditFields,
@@ -10,6 +11,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
+import { mapExerciseGroupFields, PLAN_EXERCISE_GROUP_INCLUDE } from '../../../../common/plan/plan-exercise-group.mapper';
 import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
@@ -233,67 +235,85 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     if (!client?.trainingPlanId) return null;
     return loadClientRoutine(this.prisma, client.trainingPlanId);
   }
+
+  async findClientPlanDayByEmail(email: string, planDayId: string): Promise<ClientRoutine['planDays'][number] | null> {
+    const planDay = await loadAccessibleClientPlanDay(this.prisma, email, planDayId);
+    return planDay ? mapPlanDay(planDay) : null;
+  }
+
+  async findClientPlanDayTemplateIdByEmail(email: string, planDayId: string): Promise<string | null> {
+    const planDay = await loadAccessibleClientPlanDay(this.prisma, email, planDayId);
+    return planDay?.templateId ?? null;
+  }
 }
 
 const PLAN_BLOCK_SETS_INCLUDE = {
   orderBy: { setIndex: 'asc' as const },
 };
 
+const PLAN_DAY_CONTENT_INCLUDE = {
+  exercises: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      libraryExercise: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+  cardioBlocks: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      libraryCardioMethod: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+  plioBlocks: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      libraryPlioExercise: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+  mobilityBlocks: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      libraryMobilityExercise: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+  isometricBlocks: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      libraryIsometricExercise: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+  sportBlocks: {
+    where: { archivedAt: null },
+    orderBy: { sortOrder: 'asc' as const },
+    include: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      librarySport: { select: { coachInstructions: true } },
+      sets: PLAN_BLOCK_SETS_INCLUDE,
+    },
+  },
+} as const;
+
 const PLAN_WITH_DAYS_INCLUDE = {
   routineObjectives: { include: { objective: true } },
   days: {
     where: { archivedAt: null },
     orderBy: { dayIndex: 'asc' as const },
-    include: {
-      exercises: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          libraryExercise: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-      cardioBlocks: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          libraryCardioMethod: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-      plioBlocks: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          libraryPlioExercise: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-      mobilityBlocks: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          libraryMobilityExercise: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-      isometricBlocks: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          libraryIsometricExercise: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-      sportBlocks: {
-        where: { archivedAt: null },
-        orderBy: { sortOrder: 'asc' as const },
-        include: {
-          librarySport: { select: { coachInstructions: true } },
-          sets: PLAN_BLOCK_SETS_INCLUDE,
-        },
-      },
-    },
+    include: PLAN_DAY_CONTENT_INCLUDE,
   },
 } as const;
 
@@ -313,6 +333,49 @@ async function loadClientRoutine(prisma: PrismaService, planId: string): Promise
     objectives: plan.routineObjectives.map((o) => o.objective.label),
     planDays: plan.days.map(mapPlanDay),
   };
+}
+
+type AccessiblePlanDay = PlanDay & { templateId: string };
+
+async function loadAccessibleClientPlanDay(
+  prisma: PrismaService,
+  email: string,
+  planDayId: string,
+): Promise<AccessiblePlanDay | null> {
+  const client = await prisma.client.findFirst({
+    where: { email: email.toLowerCase(), archivedAt: null },
+    select: { coachMembershipId: true, id: true, trainingPlanId: true },
+  });
+  if (!client) return null;
+
+  const planDay = await prisma.planDay.findFirst({
+    where: {
+      archivedAt: null,
+      id: planDayId,
+      template: {
+        archivedAt: null,
+        OR: [{ coachMembershipId: client.coachMembershipId }, { scope: LibraryItemScope.GLOBAL }],
+      },
+    },
+    include: PLAN_DAY_CONTENT_INCLUDE,
+  });
+  if (!planDay) return null;
+
+  const inAssignedPlan = client.trainingPlanId === planDay.templateId;
+  if (!inAssignedPlan) {
+    const calendarEvent = await prisma.calendarEvent.findFirst({
+      where: {
+        archivedAt: null,
+        clientId: client.id,
+        planDayId,
+        type: 'workout',
+      },
+      select: { id: true },
+    });
+    if (!calendarEvent) return null;
+  }
+
+  return { ...planDay, templateId: planDay.templateId };
 }
 
 function mapPlanDay(day: PlanDay): ClientRoutine['planDays'][number] {
@@ -341,6 +404,7 @@ function mapStrengthExercises(exercises: PlanDay['exercises']): ClientRoutineExe
     mapRoutineExercise({
       coachInstructions: e.libraryExercise?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: e.repsMax ?? null,
@@ -361,6 +425,7 @@ function mapCardioExercises(blocks: PlanDay['cardioBlocks']): ClientRoutineExerc
     mapRoutineExercise({
       coachInstructions: e.libraryCardioMethod?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: null,
@@ -381,6 +446,7 @@ function mapPlioExercises(blocks: PlanDay['plioBlocks']): ClientRoutineExercise[
     mapRoutineExercise({
       coachInstructions: e.libraryPlioExercise?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: null,
@@ -401,6 +467,7 @@ function mapMobilityExercises(blocks: PlanDay['mobilityBlocks']): ClientRoutineE
     mapRoutineExercise({
       coachInstructions: e.libraryMobilityExercise?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: null,
@@ -421,6 +488,7 @@ function mapIsometricExercises(blocks: PlanDay['isometricBlocks']): ClientRoutin
     mapRoutineExercise({
       coachInstructions: e.libraryIsometricExercise?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: null,
@@ -441,6 +509,7 @@ function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercis
     mapRoutineExercise({
       coachInstructions: e.librarySport?.coachInstructions ?? null,
       displayName: e.displayName,
+      group: e.group,
       id: e.id,
       notes: e.notes,
       repsMax: null,
@@ -459,6 +528,7 @@ function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercis
 function mapRoutineExercise(input: {
   coachInstructions: null | string;
   displayName: string;
+  group?: PlanDay['exercises'][number]['group'];
   id: string;
   notes: null | string;
   repsMax: null | number;
@@ -472,9 +542,11 @@ function mapRoutineExercise(input: {
   type: ClientRoutineExercise['type'];
 }): ClientRoutineExercise {
   const plannedSets = mapPlanSetsToPlannedSnapshots(input.sets);
+  const groupFields = mapExerciseGroupFields(input.group);
   return {
     coachInstructions: normalizeCoachInstructions(input.coachInstructions),
     displayName: input.displayName,
+    ...groupFields,
     id: input.id,
     notes: stripMetaNotes(input.notes),
     repsMax: input.repsMax,

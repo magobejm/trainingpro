@@ -23,6 +23,8 @@ export const LIGHT = {
   redSoft: '#fee2e2',
   redBg: '#ef4444',
   purple: '#a855f7',
+  indigo: '#6366f1',
+  indigoSoft: '#e0e7ff',
   orange: '#fb923c',
   amber: '#fbbf24',
   shadow: 'rgba(30, 58, 138, 0.08)',

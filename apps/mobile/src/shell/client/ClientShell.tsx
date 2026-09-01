@@ -11,11 +11,13 @@ import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { IncidentsScreen } from '../../screens/client/IncidentsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
+import { RoutineScreen } from '../../screens/client/RoutineScreen';
+import { RoutineDayPreviewPanel } from './RoutineDayPreviewPanel';
 import { BottomNav, type TabId } from '../../theme/primitives';
 import { SPRING, type MoreMenuId, type OverlayId, type ProgressMode } from './client-shell.constants';
 import { s } from './client-shell.styles';
 import { HomeHub } from './ClientShellHome';
-import { DayDetailPanel, ProfilePanel, RoutinePanel } from './ClientShellPanels';
+import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 
 type ShellState = {
@@ -149,12 +151,12 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'routine' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <RoutinePanel onClose={st.closeOverlay} onSelectDay={st.openDay} />
+          <RoutineScreen onClose={st.closeOverlay} onSelectDay={st.openDay} />
         </Animated.View>
       )}
       {st.overlay === 'routineDay' && st.selectedDay !== null && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <DayDetailPanel day={st.selectedDay} onClose={st.closeOverlay} onStartTraining={st.openSession} />
+          <RoutineDayPreviewPanel day={st.selectedDay} onClose={st.closeOverlay} onOpenSession={st.openSession} />
         </Animated.View>
       )}
       {st.overlay === 'session' && st.activeSessionId !== null && (

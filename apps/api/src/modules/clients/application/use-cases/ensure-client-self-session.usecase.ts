@@ -27,12 +27,22 @@ export class EnsureClientSelfSessionUseCase {
     if (!client) {
       throw new NotFoundException('Client profile not found');
     }
-    if (!client.trainingPlanId) {
+
+    let templateId = client.trainingPlanId;
+    if (input.planDayId) {
+      const calendarTemplateId = await this.clientsRepository.findClientPlanDayTemplateIdByEmail(email, input.planDayId);
+      if (calendarTemplateId) {
+        templateId = calendarTemplateId;
+      }
+    }
+
+    if (!templateId) {
       throw new ConflictException('No training plan assigned');
     }
+
     return this.sessionsRepository.ensureSessionForClient(context, {
       clientId: client.id,
-      templateId: client.trainingPlanId,
+      templateId,
       planDayId: input.planDayId,
       sessionDate: input.sessionDate,
       coachMembershipId: client.coachMembershipId,

@@ -42,7 +42,7 @@ export class ListClientCalendarUseCase {
         planDayId: true,
         planDay: { select: { title: true } },
       },
-      orderBy: [{ date: 'asc' }],
+      orderBy: [{ date: 'asc' }, { createdAt: 'desc' }],
     });
     return {
       data: rows.map((r) => ({

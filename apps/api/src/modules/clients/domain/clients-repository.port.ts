@@ -3,12 +3,14 @@ import type { ClientCreateInput } from './client-create.input';
 import type { ClientManagementSection } from './client-management-section';
 import type { ClientObjective } from './client-objective';
 import type { ClientProgressPhoto } from './client-progress-photo';
-import type { ClientRoutine } from './client-routine';
+import type { ClientRoutine, ClientRoutineDay } from './client-routine';
 import type { ClientUpdateInput } from './client-update.input';
 import type { Client } from './client';
 
 export type ClientsRepositoryPort = {
   findClientByEmail: (email: string) => Promise<Client | null>;
+  findClientPlanDayByEmail: (email: string, planDayId: string) => Promise<ClientRoutineDay | null>;
+  findClientPlanDayTemplateIdByEmail: (email: string, planDayId: string) => Promise<string | null>;
   findClientRoutineByEmail: (email: string) => Promise<ClientRoutine | null>;
   archiveClient: (context: AuthContext, clientId: string) => Promise<void>;
   canCoachAccessClient: (coachSubject: string, clientId: string) => Promise<boolean>;

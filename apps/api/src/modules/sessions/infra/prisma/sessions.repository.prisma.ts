@@ -45,7 +45,7 @@ import {
   mapTemplateSportSnapshot,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
-import { mapSession, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
+import { mapSessionWithGroups, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
 import {
   readWorkoutTemplate,
   upsertIsometricSetLog,
@@ -108,7 +108,23 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       include: sessionInclude(),
     });
     if (existing) {
-      return mapSession(existing);
+      const canReplacePendingDay =
+        input.planDayId &&
+        existing.planDayId !== input.planDayId &&
+        existing.status === SessionStatus.PENDING &&
+        !existing.startedAt;
+
+      if (canReplacePendingDay) {
+        await this.prisma.sessionInstance.update({
+          where: { id: existing.id },
+          data: {
+            ...buildUpdateAuditFields(context),
+            archivedAt: new Date(),
+          },
+        });
+      } else {
+        return mapSessionWithGroups(this.prisma, existing);
+      }
     }
     const template = await this.readTemplateSnapshot(input.templateId, membership.id, input.planDayId);
     const row = await this.prisma.sessionInstance.create({
@@ -136,7 +152,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       },
       include: sessionInclude(),
     });
-    return mapSession(row);
+    return mapSessionWithGroups(this.prisma, row);
   }
 
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
@@ -194,7 +210,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       },
       include: sessionInclude(),
     });
-    return mapSession(updated);
+    return mapSessionWithGroups(this.prisma, updated);
   }
 
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
@@ -207,7 +223,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       include: sessionInclude(),
     });
     void context;
-    return row ? mapSession(row) : null;
+    return row ? mapSessionWithGroups(this.prisma, row) : null;
   }
 
   logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog> {
@@ -285,7 +301,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   async startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance> {
     const session = await this.readSessionForMutation(input.sessionId);
     if (session.startedAt || session.status === SessionStatus.COMPLETED) {
-      return mapSession(session);
+      return mapSessionWithGroups(this.prisma, session);
     }
     const updated = await this.prisma.sessionInstance.update({
       where: { id: session.id },
@@ -300,7 +316,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       },
       include: sessionInclude(),
     });
-    return mapSession(updated);
+    return mapSessionWithGroups(this.prisma, updated);
   }
 
   private async canCoachAccessSession(context: AuthContext, sessionId: string) {

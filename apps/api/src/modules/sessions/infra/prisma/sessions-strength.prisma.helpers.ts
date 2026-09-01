@@ -1,5 +1,11 @@
 import { Prisma } from '@prisma/client';
+import {
+  buildPlanDayGroupLookup,
+  type ExerciseGroupFields,
+  PLAN_EXERCISE_GROUP_INCLUDE,
+} from '../../../../common/plan/plan-exercise-group.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
+import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   CardioSessionItem,
   SessionInstance,
@@ -19,11 +25,16 @@ import type {
 // eslint-disable-next-line max-lines-per-function
 export function mapSession(
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
+  groupLookup: Map<number, ExerciseGroupFields> = new Map(),
 ): SessionInstance {
+  const readGroup = (sortOrder: number): ExerciseGroupFields =>
+    groupLookup.get(sortOrder) ?? { groupId: null, groupType: null };
+
   const strengthItems: SessionStrengthItem[] = row.items.map((item) => ({
     type: 'strength' as const,
     coachInstructions: item.coachInstructions,
     displayName: item.displayName,
+    ...readGroup(item.sortOrder),
     id: item.id,
     logs: item.logs.map((L) => ({
       effortRir: L.effortRir,
@@ -51,6 +62,7 @@ export function mapSession(
     type: 'plio' as const,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
+    ...readGroup(b.sortOrder),
     id: b.id,
     logs: b.logs.map(
       (l): SessionPlioSetLog => ({
@@ -74,6 +86,7 @@ export function mapSession(
     type: 'mobility' as const,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
+    ...readGroup(b.sortOrder),
     id: b.id,
     logs: b.logs.map(
       (l): SessionMobilitySetLog => ({
@@ -97,6 +110,7 @@ export function mapSession(
     type: 'isometric' as const,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
+    ...readGroup(b.sortOrder),
     id: b.id,
     logs: b.logs.map(
       (l): SessionIsometricSetLog => ({
@@ -130,6 +144,7 @@ export function mapSession(
       coachInstructions: b.coachInstructions,
       displayName: b.displayName,
       durationMinutes: b.durationMinutes,
+      ...readGroup(b.sortOrder),
       id: b.id,
       log,
       notes: b.notes,
@@ -143,6 +158,7 @@ export function mapSession(
     type: 'cardio' as const,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
+    ...readGroup(b.sortOrder),
     id: b.id,
     intervalLogs: b.intervalLogs.map(
       (l): SessionIntervalLog => ({
@@ -249,4 +265,56 @@ export function sessionInclude() {
 
 export function toDecimal(value: null | number | undefined) {
   return typeof value === 'number' ? new Prisma.Decimal(value) : null;
+}
+
+const PLAN_DAY_GROUP_BLOCKS_INCLUDE = {
+  cardioBlocks: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+  exercises: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+  isometricBlocks: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+  mobilityBlocks: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+  plioBlocks: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+  sportBlocks: {
+    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    where: { archivedAt: null },
+  },
+} as const;
+
+export async function loadPlanDayGroupLookup(
+  prisma: PrismaService,
+  planDayId: null | string | undefined,
+): Promise<Map<number, ExerciseGroupFields>> {
+  if (!planDayId) {
+    return new Map();
+  }
+  const day = await prisma.planDay.findFirst({
+    include: PLAN_DAY_GROUP_BLOCKS_INCLUDE,
+    where: { archivedAt: null, id: planDayId },
+  });
+  if (!day) {
+    return new Map();
+  }
+  return buildPlanDayGroupLookup(day);
+}
+
+export async function mapSessionWithGroups(
+  prisma: PrismaService,
+  row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
+): Promise<SessionInstance> {
+  const groupLookup = await loadPlanDayGroupLookup(prisma, row.planDayId);
+  return mapSession(row, groupLookup);
 }

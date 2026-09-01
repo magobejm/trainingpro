@@ -11,6 +11,8 @@ export type ClientRoutineSet = {
 export type ClientRoutineExercise = {
   coachInstructions: null | string;
   displayName: string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   notes: null | string;
   repsMax: null | number;
@@ -58,5 +60,26 @@ export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
       }
     },
     queryKey: ['clients', 'me', 'routine'],
+  });
+}
+
+export function useClientPlanDayQuery(planDayId: string | null): UseQueryResult<ClientRoutineDay, Error> {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const clearSession = useAuthStore((state) => state.clearSession);
+  return useQuery({
+    enabled: Boolean(accessToken && planDayId),
+    queryFn: async () => {
+      try {
+        return await createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientRoutineDay>(
+          `/clients/me/plan-days/${planDayId}`,
+        );
+      } catch (error) {
+        if (error instanceof UnauthorizedApiError) {
+          clearSession();
+        }
+        throw error;
+      }
+    },
+    queryKey: ['clients', 'me', 'plan-days', planDayId],
   });
 }

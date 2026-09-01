@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { LIGHT } from '../../theme/light';
 
 type WorkoutClockProps = {
   startedAt: null | string;
@@ -62,8 +63,8 @@ export function WorkoutClock({ startedAt, onFinish }: WorkoutClockProps) {
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    backgroundColor: '#1a1a2e',
-    borderTopColor: '#2a2a4e',
+    backgroundColor: LIGHT.bgCard,
+    borderTopColor: LIGHT.border,
     borderTopWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -76,24 +77,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dot: {
-    backgroundColor: '#ef4444',
+    backgroundColor: LIGHT.redBg,
     borderRadius: 5,
     height: 10,
     width: 10,
   },
   time: {
-    color: '#e2e8f0',
+    color: LIGHT.textStrong,
     fontSize: 16,
     fontWeight: '600',
   },
   btn: {
-    backgroundColor: '#ef4444',
-    borderRadius: 8,
+    backgroundColor: LIGHT.redBg,
+    borderRadius: LIGHT.radiusSm,
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
   btnText: {
-    color: '#fff',
+    color: LIGHT.textOnNavy,
     fontSize: 14,
     fontWeight: '700',
   },

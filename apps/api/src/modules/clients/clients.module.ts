@@ -22,6 +22,7 @@ import { DeleteClientProgressPhotoUseCase } from './application/use-cases/delete
 import { GetClientUseCase } from './application/use-cases/get-client.usecase';
 import { GetClientManagementSectionsUseCase } from './application/use-cases/get-client-management-sections.usecase';
 import { GetClientMeUseCase } from './application/use-cases/get-client-me.usecase';
+import { GetClientPlanDayUseCase } from './application/use-cases/get-client-plan-day.usecase';
 import { GetClientRoutineUseCase } from './application/use-cases/get-client-routine.usecase';
 import { ListClientProgressPhotosUseCase } from './application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from './application/use-cases/list-clients.usecase';
@@ -64,6 +65,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     GetClientUseCase,
     GetClientManagementSectionsUseCase,
     GetClientMeUseCase,
+    GetClientPlanDayUseCase,
     GetClientRoutineUseCase,
     ListClientProgressPhotosUseCase,
     ListClientsUseCase,

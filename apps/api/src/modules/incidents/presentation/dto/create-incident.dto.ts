@@ -8,10 +8,12 @@ export class CreateIncidentDto {
     sessionId: z.string().uuid().nullable().optional(),
     sessionItemId: z.string().uuid().nullable().optional(),
     severity,
+    tag: z.string().max(60).nullable().optional(),
   });
 
   description!: string;
   sessionId?: null | string;
   sessionItemId?: null | string;
   severity!: 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
+  tag?: null | string;
 }

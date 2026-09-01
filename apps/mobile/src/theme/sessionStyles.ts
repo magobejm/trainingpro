@@ -84,6 +84,68 @@ export const SESSION = StyleSheet.create({
   screenPadding: { padding: 16, paddingBottom: 40 },
 });
 
+/** Active exercise screen styles */
+export const ACTIVE = StyleSheet.create({
+  root: { backgroundColor: LIGHT.bgSoft, flex: 1 },
+  header: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgCard,
+    borderBottomColor: LIGHT.border,
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  backBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusFull,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  backArrow: { color: LIGHT.text, fontSize: 20, fontWeight: '700' },
+  title: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '800', textAlign: 'center' },
+  body: { padding: 16, paddingBottom: 120 },
+  footer: {
+    backgroundColor: LIGHT.bgCard,
+    borderTopColor: LIGHT.border,
+    borderTopWidth: 1,
+    gap: 8,
+    padding: 16,
+  },
+  footerSecondary: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusMd,
+    paddingVertical: 12,
+  },
+  footerSecondaryText: { color: LIGHT.accentDark, fontSize: 14, fontWeight: '600' },
+  footerPrimary: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.emeraldBg,
+    borderRadius: LIGHT.radiusMd,
+    paddingVertical: 14,
+  },
+  footerPrimaryText: { color: LIGHT.textOnNavy, fontSize: 16, fontWeight: '700' },
+  footerElapsed: {
+    color: LIGHT.textMuted,
+    fontSize: 13,
+    textAlign: 'center',
+  },
+  setCard: {
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusXl,
+    borderWidth: 1,
+    marginBottom: 16,
+    padding: 16,
+  },
+});
+
 export const SCREEN = StyleSheet.create({
   root: { backgroundColor: LIGHT.bgSoft, flex: 1 },
   header: {

@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientMeQuery, resolveDisplayName } from '../../data/hooks/useClientMeQuery';
 import { useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
+import { getWeekDateRange, resolveRoutineWeekSchedule } from '../../screens/client/routine-schedule.utils';
 import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
@@ -18,7 +20,25 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
   const { t } = useTranslation();
   const { data: client } = useClientMeQuery();
   const { data: routine } = useClientRoutineQuery();
-  const todayInfo = resolveTodayInfo(routine?.planDays ?? []);
+  const today = useMemo(() => new Date(), []);
+  const weekRange = useMemo(() => getWeekDateRange(today), [today]);
+  const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
+  const schedule = useMemo(() => {
+    if (!routine) return null;
+    return resolveRoutineWeekSchedule(routine.planDays, calendarQuery.data?.data ?? [], today);
+  }, [calendarQuery.data?.data, routine, today]);
+
+  const dateLabel = today.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
+  const focusLabel = useMemo(() => {
+    if (!schedule) return '—';
+    if (schedule.mode === 'assigned') {
+      return schedule.days[0]?.title ?? '—';
+    }
+    if (schedule.today) return schedule.today.title;
+    if (schedule.isRestDay) return t('mobile.client.routine.restDay');
+    return '—';
+  }, [schedule, t]);
+  const routineSubtitle = focusLabel;
 
   return (
     <View style={s.homeScroll}>
@@ -37,8 +57,8 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
         <View style={s.todayCard}>
           <View style={s.todayCardHeader}>
             <View>
-              <Text style={s.todayCardDate}>{todayInfo.dateLabel}</Text>
-              <Text style={s.todayCardFocus}>{todayInfo.focusLabel}</Text>
+              <Text style={s.todayCardDate}>{dateLabel}</Text>
+              <Text style={s.todayCardFocus}>{focusLabel}</Text>
             </View>
             <Text style={{ color: LIGHT.textOnNavyMuted, fontSize: 18 }}>{'📅'}</Text>
           </View>
@@ -48,7 +68,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
         <ActionCard
           icon={<Text style={{ fontSize: 24 }}>{'🏋️'}</Text>}
           onPress={props.onOpenRoutine}
-          subtitle={todayInfo.routineSubtitle}
+          subtitle={routineSubtitle}
           title={t('mobile.client.home.routine')}
         />
         <ActionCard
@@ -72,18 +92,4 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
       </View>
     </View>
   );
-}
-
-function resolveTodayInfo(planDays: { dayIndex: number; title: string }[]): {
-  dateLabel: string;
-  focusLabel: string;
-  routineSubtitle: string;
-} {
-  const now = new Date();
-  const dateLabel = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric' });
-  const dayIndex = now.getDay();
-  const trainingDay = planDays.length > 0 ? planDays[dayIndex % planDays.length] : null;
-  const focusLabel = trainingDay?.title ?? '—';
-  const routineSubtitle = trainingDay ? trainingDay.title : '—';
-  return { dateLabel, focusLabel, routineSubtitle };
 }

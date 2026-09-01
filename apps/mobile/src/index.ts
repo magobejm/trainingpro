@@ -5,7 +5,6 @@ export { CardioSessionScreen } from './screens/client/CardioSessionScreen';
 export { IncidentCreateScreen } from './screens/client/IncidentCreateScreen';
 export { ProgressScreen } from './screens/client/ProgressScreen';
 export { TodaySessionScreen } from './screens/client/TodaySessionScreen';
-export { WeeklyReportScreen } from './screens/client/WeeklyReportScreen';
 export { ChatScreen } from './screens/shared/ChatScreen';
 export { ClientProfileScreen } from './screens/coach/ClientProfileScreen';
 export { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';

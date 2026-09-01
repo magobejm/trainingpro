@@ -7,6 +7,8 @@ export type ClientRoutineSet = {
 export type ClientRoutineExercise = {
   coachInstructions: null | string;
   displayName: string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   notes: null | string;
   repsMax: null | number;

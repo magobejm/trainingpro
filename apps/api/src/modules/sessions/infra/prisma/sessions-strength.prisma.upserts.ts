@@ -1,4 +1,4 @@
-import { TemplateKind } from '@prisma/client';
+import { LibraryItemScope, TemplateKind } from '@prisma/client';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   LogIsometricSetInput,
@@ -113,9 +113,9 @@ export function readWorkoutTemplate(prisma: PrismaService, templateId: string, c
   return prisma.planTemplate.findFirst({
     where: {
       archivedAt: null,
-      coachMembershipId,
       id: templateId,
       kind: { in: [TemplateKind.STRENGTH, TemplateKind.ROUTINE] },
+      OR: [{ coachMembershipId }, { scope: LibraryItemScope.GLOBAL }],
     },
     include: {
       days: {

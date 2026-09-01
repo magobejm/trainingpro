@@ -20,6 +20,8 @@ export type SetLog = {
 export type StrengthSessionItem = {
   type: 'strength';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   logs: SetLog[];
@@ -48,6 +50,8 @@ export type PlioSetLog = {
 export type PlioSessionItem = {
   type: 'plio';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   logs: PlioSetLog[];
@@ -71,6 +75,8 @@ export type MobilitySetLog = {
 export type MobilitySessionItem = {
   type: 'mobility';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   logs: MobilitySetLog[];
@@ -94,6 +100,8 @@ export type IsometricSetLog = {
 export type IsometricSessionItem = {
   type: 'isometric';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   logs: IsometricSetLog[];
@@ -115,6 +123,8 @@ export type SportLog = {
 export type SportSessionItem = {
   type: 'sport';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   durationMinutes: number;
@@ -137,6 +147,8 @@ export type IntervalLog = {
 export type CardioSessionItem = {
   type: 'cardio';
   coachInstructions: null | string;
+  groupId: null | string;
+  groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
   intervalLogs: IntervalLog[];

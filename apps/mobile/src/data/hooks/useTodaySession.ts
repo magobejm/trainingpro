@@ -4,8 +4,18 @@ import { useAuthStore } from '../../store/auth.store';
 
 export type PlannedSet = {
   advancedTechnique: null | string;
+  durationSeconds?: null | number;
+  fcMaxPct?: null | number;
+  fcReservePct?: null | number;
+  heartRate?: null | number;
   note: null | string;
+  reps?: null | number;
+  restSeconds?: null | number;
+  rir?: null | number;
+  rom?: null | string;
+  rpe?: null | number;
   setIndex: number;
+  weightKg?: null | number;
 };
 
 export type SetLog = {
@@ -24,6 +34,7 @@ export type StrengthSessionItem = {
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
+  lockedFields?: string[];
   logs: SetLog[];
   notes: null | string;
   plannedSets: PlannedSet[];
@@ -54,6 +65,7 @@ export type PlioSessionItem = {
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
+  lockedFields?: string[];
   logs: PlioSetLog[];
   notes: null | string;
   plannedSets: PlannedSet[];
@@ -79,6 +91,7 @@ export type MobilitySessionItem = {
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
+  lockedFields?: string[];
   logs: MobilitySetLog[];
   notes: null | string;
   plannedSets: PlannedSet[];
@@ -104,6 +117,7 @@ export type IsometricSessionItem = {
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   displayName: string;
+  lockedFields?: string[];
   logs: IsometricSetLog[];
   notes: null | string;
   plannedSets: PlannedSet[];
@@ -128,6 +142,7 @@ export type SportSessionItem = {
   id: string;
   displayName: string;
   durationMinutes: number;
+  lockedFields?: string[];
   log: SportLog | null;
   notes: null | string;
   plannedSets: PlannedSet[];
@@ -152,6 +167,7 @@ export type CardioSessionItem = {
   id: string;
   displayName: string;
   intervalLogs: IntervalLog[];
+  lockedFields?: string[];
   notes: null | string;
   plannedSets: PlannedSet[];
   restSeconds: number;
@@ -292,7 +308,8 @@ export type EnsureClientSessionResult = {
 export function useEnsureClientSessionMutation() {
   const auth = useAuth();
   return useMutation({
-    mutationFn: (input: { sessionDate: string; planDayId?: string }) => ensureClientSession(auth, input),
+    mutationFn: (input: { confirmDayChange?: boolean; planDayId?: string; sessionDate: string }) =>
+      ensureClientSession(auth, input),
   });
 }
 
@@ -382,7 +399,7 @@ function useAuth() {
 
 async function ensureClientSession(
   auth: ReturnType<typeof useAuth>,
-  input: { sessionDate: string; planDayId?: string },
+  input: { confirmDayChange?: boolean; planDayId?: string; sessionDate: string },
 ): Promise<EnsureClientSessionResult> {
   if (!auth) {
     throw new Error('Missing authenticated context');

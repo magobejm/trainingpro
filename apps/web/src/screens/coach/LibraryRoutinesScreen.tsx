@@ -17,6 +17,7 @@ import {
 } from '../../data/hooks/useWarmupTemplates';
 import { useUnifiedExercisesQuery } from '../../data/hooks/useUnifiedLibraryQuery';
 import { readFrontEnv } from '../../data/env';
+import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
@@ -99,7 +100,8 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
       if (!clientId) return;
       void assignRoutine.mutateAsync({ clientId, templateId: tpl.id }).then(() => {
         clearRoutine();
-        onRouteChange('coach.clients');
+        useCalendarContextStore.getState().openForClient(clientId);
+        onRouteChange('coach.calendar');
       });
     },
     onViewRoutine: (tpl: RoutineTemplateView) => {

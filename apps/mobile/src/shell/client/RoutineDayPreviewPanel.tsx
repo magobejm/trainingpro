@@ -1,13 +1,20 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientCalendarSessionsQuery } from '../../data/hooks/useClientCalendar';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
-import { useClientPlanDayQuery } from '../../data/hooks/useClientRoutineQuery';
+import { useClientPlanDayQuery, useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
 import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
 import { RoutineDayScreen } from '../../screens/client/RoutineDayScreen';
-import { formatLocalDate } from '../../screens/client/routine-schedule.utils';
+import {
+  formatLocalDate,
+  getWeekDateRange,
+  isSelectedPlanDayScheduledForToday,
+  resolveRoutineWeekSchedule,
+} from '../../screens/client/routine-schedule.utils';
+import { ConfirmModal } from '../../theme/ConfirmModal';
 import { s } from './client-shell.styles';
 
 type RoutineDayPreviewPanelProps = {
@@ -20,11 +27,25 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const ensureMutation = useEnsureClientSessionMutation();
-  const todayStr = formatLocalDate(new Date());
+  const today = useMemo(() => new Date(), []);
+  const todayStr = formatLocalDate(today);
+  const weekRange = useMemo(() => getWeekDateRange(today), [today]);
+  const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
+  const routineQuery = useClientRoutineQuery();
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
-  const needsPlanDayFetch = props.day.exercises.length === 0;
-  const planDayQuery = useClientPlanDayQuery(needsPlanDayFetch ? props.day.id : null);
+  const planDayQuery = useClientPlanDayQuery(props.day.id);
   const resolvedDay = planDayQuery.data ?? props.day;
+  const [dayChangeOpen, setDayChangeOpen] = useState(false);
+
+  const schedule = useMemo(() => {
+    if (!routineQuery.data) return null;
+    return resolveRoutineWeekSchedule(routineQuery.data.planDays, calendarQuery.data?.data ?? [], today);
+  }, [calendarQuery.data?.data, routineQuery.data, today]);
+
+  const needsDayChangeConfirm = useMemo(
+    () => !isSelectedPlanDayScheduledForToday(resolvedDay.id, schedule),
+    [resolvedDay.id, schedule],
+  );
 
   const todaySession = sessionsQuery.data?.[0] ?? null;
   const isCompleted = todaySession?.status === 'COMPLETED';
@@ -36,6 +57,25 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     return undefined;
   }, [isCompleted, isInProgress, t]);
 
+  const runEnsureSession = useCallback(
+    (confirmDayChange: boolean) => {
+      ensureMutation.mutate(
+        { confirmDayChange, planDayId: resolvedDay.id, sessionDate: todayStr },
+        {
+          onSuccess: (result) => {
+            void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] });
+            void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+            if (result.status === 'COMPLETED') {
+              return;
+            }
+            props.onOpenSession(result.id);
+          },
+        },
+      );
+    },
+    [ensureMutation, props.onOpenSession, queryClient, resolvedDay.id, todayStr],
+  );
+
   const handleStart = useCallback(() => {
     if (isCompleted) return;
 
@@ -44,21 +84,20 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
       return;
     }
 
-    ensureMutation.mutate(
-      { sessionDate: todayStr, planDayId: resolvedDay.id },
-      {
-        onSuccess: (result) => {
-          void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] });
-          if (result.status === 'COMPLETED') {
-            return;
-          }
-          props.onOpenSession(result.id);
-        },
-      },
-    );
-  }, [ensureMutation, isCompleted, isInProgress, props.onOpenSession, queryClient, resolvedDay.id, todaySession, todayStr]);
+    if (needsDayChangeConfirm) {
+      setDayChangeOpen(true);
+      return;
+    }
 
-  if (needsPlanDayFetch && planDayQuery.isLoading) {
+    runEnsureSession(false);
+  }, [isCompleted, isInProgress, needsDayChangeConfirm, props.onOpenSession, runEnsureSession, todaySession]);
+
+  const handleConfirmDayChange = useCallback(() => {
+    setDayChangeOpen(false);
+    runEnsureSession(true);
+  }, [runEnsureSession]);
+
+  if (planDayQuery.isLoading && !planDayQuery.data) {
     return (
       <View style={s.sidePanel}>
         <View style={s.centered}>
@@ -69,15 +108,27 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   }
 
   return (
-    <RoutineDayScreen
-      day={resolvedDay}
-      mode={'preview'}
-      onClose={props.onClose}
-      onStart={handleStart}
-      startDisabled={isCompleted}
-      startError={ensureMutation.isError || planDayQuery.isError}
-      startLabel={startLabel}
-      startPending={ensureMutation.isPending}
-    />
+    <>
+      <RoutineDayScreen
+        day={resolvedDay}
+        mode={'preview'}
+        onClose={props.onClose}
+        onStart={handleStart}
+        startDisabled={isCompleted}
+        startError={ensureMutation.isError || planDayQuery.isError}
+        startLabel={startLabel}
+        startPending={ensureMutation.isPending}
+      />
+      <ConfirmModal
+        cancelLabel={t('mobile.client.dayChange.cancel')}
+        confirmLabel={t('mobile.client.dayChange.confirm')}
+        message={t('mobile.client.dayChange.message')}
+        question={t('mobile.client.dayChange.question')}
+        title={t('mobile.client.dayChange.title')}
+        visible={dayChangeOpen}
+        onCancel={() => setDayChangeOpen(false)}
+        onConfirm={handleConfirmDayChange}
+      />
+    </>
   );
 }

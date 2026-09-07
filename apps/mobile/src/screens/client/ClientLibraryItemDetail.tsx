@@ -1,7 +1,8 @@
-import React from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
+import { YouTubeVideoModal } from '../../components/YouTubeVideoModal';
 import type { LibraryDisplayItem } from './client-library.helpers';
 import { LIGHT } from '../../theme/light';
 
@@ -14,11 +15,7 @@ const MODAL_ANIM = 'slide' as const;
 
 export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
   const { t } = useTranslation();
-
-  const handleOpenVideo = async (url: string) => {
-    const canOpen = await Linking.canOpenURL(url);
-    if (canOpen) await Linking.openURL(url);
-  };
+  const [videoOpen, setVideoOpen] = useState(false);
 
   const typeLabel = item?.methodType ?? item?.plioType ?? item?.mobilityType ?? item?.isometricType ?? null;
   const bodyText = item?.instructions ?? item?.description ?? null;
@@ -68,12 +65,13 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
           ) : null}
 
           {videoUrl ? (
-            <Pressable onPress={() => handleOpenVideo(videoUrl)} style={styles.videoBtn}>
+            <Pressable onPress={() => setVideoOpen(true)} style={styles.videoBtn}>
               <Text style={styles.videoBtnText}>{t('client.library.detail.viewVideo')}</Text>
             </Pressable>
           ) : null}
         </ScrollView>
       </View>
+      <YouTubeVideoModal title={item?.name} visible={videoOpen} youtubeUrl={videoUrl} onClose={() => setVideoOpen(false)} />
     </Modal>
   );
 }

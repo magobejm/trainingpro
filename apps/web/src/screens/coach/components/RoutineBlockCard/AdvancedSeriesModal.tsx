@@ -10,6 +10,7 @@ interface AdvancedSeriesModalProps {
   visible: boolean;
   seriesIndex: number;
   currentValue?: string;
+  viewOnly?: boolean;
   onClose: () => void;
   onApply: (technique: string) => void;
   onRemove: () => void;
@@ -19,6 +20,7 @@ export function AdvancedSeriesModal({
   visible,
   seriesIndex,
   currentValue,
+  viewOnly = false,
   onClose,
   onApply,
   onRemove,
@@ -45,21 +47,23 @@ export function AdvancedSeriesModal({
           </View>
 
           <View style={st.body}>
-            <ScrollView style={st.sidebar}>
-              {ADVANCED_TECHNIQUE_IDS.map((id) => (
-                <TouchableOpacity
-                  key={id}
-                  onPress={() => setSelected(id)}
-                  style={[st.sidebarItem, selected === id && st.sidebarItemActive]}
-                >
-                  <Text style={[st.sidebarItemText, selected === id && st.sidebarItemTextActive]}>
-                    {t(`coach.routine.advancedTechnique.${id}`)}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {!viewOnly ? (
+              <ScrollView style={st.sidebar}>
+                {ADVANCED_TECHNIQUE_IDS.map((id) => (
+                  <TouchableOpacity
+                    key={id}
+                    onPress={() => setSelected(id)}
+                    style={[st.sidebarItem, selected === id && st.sidebarItemActive]}
+                  >
+                    <Text style={[st.sidebarItemText, selected === id && st.sidebarItemTextActive]}>
+                      {t(`coach.routine.advancedTechnique.${id}`)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : null}
 
-            <View style={st.content}>
+            <View style={[st.content, viewOnly && { paddingLeft: 20 }]}>
               <Text style={st.contentTitle}>{t(nameKey)}</Text>
               <ScrollView style={st.descScroll}>
                 <Text style={st.descText}>{t(descKey)}</Text>
@@ -68,21 +72,27 @@ export function AdvancedSeriesModal({
           </View>
 
           <View style={st.footer}>
-            {currentValue ? (
+            {!viewOnly && currentValue ? (
               <TouchableOpacity onPress={onRemove} style={st.removeBtn}>
                 <Text style={st.removeBtnText}>{t('coach.routine.advancedSeries.removeTechnique')}</Text>
               </TouchableOpacity>
             ) : null}
             <View style={{ flex: 1 }} />
-            <TouchableOpacity
-              onPress={() => {
-                onApply(selected);
-                onClose();
-              }}
-              style={st.applyBtn}
-            >
-              <Text style={st.applyBtnText}>{t('coach.routine.advancedSeries.applyToSet', { n: seriesIndex + 1 })}</Text>
-            </TouchableOpacity>
+            {viewOnly ? (
+              <TouchableOpacity onPress={onClose} style={st.applyBtn}>
+                <Text style={st.applyBtnText}>{t('common.close')}</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => {
+                  onApply(selected);
+                  onClose();
+                }}
+                style={st.applyBtn}
+              >
+                <Text style={st.applyBtnText}>{t('coach.routine.advancedSeries.applyToSet', { n: seriesIndex + 1 })}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>

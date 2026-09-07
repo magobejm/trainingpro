@@ -5,31 +5,29 @@ import { LIGHT } from '../../theme/light';
 import { formatRestLabel } from './session-completion.utils';
 
 type RestTimerOverlayProps = {
-  seconds: number;
+  endAt: number;
   visible: boolean;
   onHide: () => void;
   onFinish: () => void;
 };
 
-export function RestTimerOverlay({ seconds, visible, onHide, onFinish }: RestTimerOverlayProps): React.JSX.Element | null {
+export function RestTimerOverlay({ endAt, visible, onHide, onFinish }: RestTimerOverlayProps): React.JSX.Element | null {
   const { t } = useTranslation();
-  const [remaining, setRemaining] = useState(seconds);
+  const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
 
   useEffect(() => {
     if (!visible) return;
-    setRemaining(seconds);
-    const interval = setInterval(() => {
-      setRemaining((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          onFinish();
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+    const tick = () => {
+      const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      setRemaining(next);
+      if (next <= 0) {
+        onFinish();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, [visible, seconds, onFinish]);
+  }, [visible, endAt, onFinish]);
 
   if (!visible) return null;
 
@@ -68,11 +66,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   label: {
-    color: LIGHT.textMuted,
+    color: LIGHT.accent,
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 8,
+    marginBottom: 16,
     textTransform: 'uppercase',
   },
   time: {

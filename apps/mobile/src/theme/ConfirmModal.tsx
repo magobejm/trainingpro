@@ -6,6 +6,7 @@ type ConfirmModalProps = {
   cancelLabel: string;
   confirmLabel: string;
   message: string;
+  question?: string;
   title: string;
   visible: boolean;
   onCancel: () => void;
@@ -19,6 +20,7 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
         <Pressable style={styles.sheet} onPress={(event) => event.stopPropagation()}>
           <Text style={styles.title}>{props.title}</Text>
           <Text style={styles.message}>{props.message}</Text>
+          {props.question ? <Text style={styles.question}>{props.question}</Text> : null}
           <View style={styles.actions}>
             <Pressable style={styles.cancelBtn} onPress={props.onCancel}>
               <Text style={styles.cancelText}>{props.cancelLabel}</Text>
@@ -55,8 +57,14 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   message: {
-    color: LIGHT.textMuted,
+    color: LIGHT.accentDark,
     fontSize: 15,
+    lineHeight: 22,
+  },
+  question: {
+    color: LIGHT.textStrong,
+    fontSize: 15,
+    fontWeight: '800',
     lineHeight: 22,
   },
   actions: {

@@ -8,6 +8,7 @@ import {
   useRoutineTemplatesQuery,
   type RoutineTemplateView,
 } from '../../data/hooks/useRoutineTemplates';
+import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useRoutinePlannerDraft } from './useRoutinePlannerDraft';
@@ -110,7 +111,7 @@ function buildAssignOnly(
     await assignMutation.mutateAsync({ clientId, templateId });
     uiState.setSaveSuccess(true);
     setTimeout(() => uiState.setSaveSuccess(false), 3000);
-    onRouteChange?.('coach.library.routines');
+    goToAssignedClientCalendar(clientId, onRouteChange);
   };
 }
 
@@ -130,7 +131,7 @@ function buildSaveAndAssign(
     draftState.setDraft(createEmptyDraft(t));
     uiState.setEditingId(null);
     draftState.setActiveDayIdx(0);
-    onRouteChange?.('coach.library.routines');
+    goToAssignedClientCalendar(assignClientId, onRouteChange);
   };
 }
 
@@ -265,7 +266,7 @@ function buildAfterSaveHandler(
     if (clientId) {
       await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
       clearInitialTemplate();
-      onRouteChange?.('coach.clients');
+      goToAssignedClientCalendar(clientId, onRouteChange);
     } else {
       // Always go back to the routine library after saving (new or edit)
       onRouteChange?.('coach.library.routines');
@@ -285,6 +286,11 @@ function resolveAssignHandler(
   return async (templateId: string) => {
     await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
     clearInitialTemplate();
-    onRouteChange?.('coach.clients');
+    goToAssignedClientCalendar(clientId, onRouteChange);
   };
+}
+
+function goToAssignedClientCalendar(clientId: string, onRouteChange: undefined | ((route: ShellRoute) => void)) {
+  useCalendarContextStore.getState().openForClient(clientId);
+  onRouteChange?.('coach.calendar');
 }

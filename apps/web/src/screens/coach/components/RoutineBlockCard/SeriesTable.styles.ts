@@ -1,5 +1,5 @@
 export const SERIES_COL_W = 48;
-export const ACTION_COL_W = 76;
+export const ACTION_COL_W = 52;
 
 export const st = {
   row: {

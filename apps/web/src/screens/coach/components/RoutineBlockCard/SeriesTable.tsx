@@ -15,7 +15,6 @@ interface ColDef {
   selectOptions?: string[];
 }
 
-const ICON_NOTE = '📝';
 const ICON_TRASH = '🗑';
 const ICON_REMOVE = '✕';
 const ICON_COPY = '⟳';
@@ -93,7 +92,6 @@ interface SeriesTableProps {
   onUpdateSet: (index: number, patch: Partial<DraftSet>) => void;
   onRemoveSet: (index: number) => void;
   onCopyPrev: (index: number) => void;
-  onOpenNote: (index: number) => void;
   onOpenAdvanced: (index: number) => void;
   onRemoveAdvanced: (index: number) => void;
   onToggleLock: (fieldKey: string) => void;
@@ -109,7 +107,6 @@ export function SeriesTable({
   onUpdateSet,
   onRemoveSet,
   onCopyPrev,
-  onOpenNote,
   onOpenAdvanced,
   onRemoveAdvanced,
   onToggleLock,
@@ -140,7 +137,6 @@ export function SeriesTable({
             lockedFields={lockedFields}
             onCopyPrev={onCopyPrev}
             onOpenAdvanced={onOpenAdvanced}
-            onOpenNote={onOpenNote}
             onRemoveAdvanced={onRemoveAdvanced}
             onRemoveSet={onRemoveSet}
             onUpdateSet={onUpdateSet}
@@ -201,7 +197,6 @@ function SeriesDataRow({
   lockedFields,
   readOnly,
   advancedEnabled,
-  onOpenNote,
   onRemoveSet,
   onOpenAdvanced,
   onRemoveAdvanced,
@@ -216,7 +211,6 @@ function SeriesDataRow({
   lockedFields: string[];
   readOnly: boolean;
   advancedEnabled: boolean;
-  onOpenNote: (i: number) => void;
   onRemoveSet: (i: number) => void;
   onOpenAdvanced: (i: number) => void;
   onRemoveAdvanced: (i: number) => void;
@@ -227,15 +221,7 @@ function SeriesDataRow({
 }) {
   return (
     <View style={[st.row, idx % 2 === 0 ? st.rowEven : st.rowOdd]}>
-      <SeriesRowActions
-        idx={idx}
-        onCopyPrev={onCopyPrev}
-        onOpenNote={onOpenNote}
-        onRemoveSet={onRemoveSet}
-        readOnly={readOnly}
-        set={set}
-        t={t}
-      />
+      <SeriesRowActions idx={idx} onCopyPrev={onCopyPrev} onRemoveSet={onRemoveSet} readOnly={readOnly} />
       <SeriesRowNumberCell
         advancedEnabled={advancedEnabled}
         idx={idx}
@@ -260,31 +246,18 @@ function SeriesDataRow({
 }
 
 function SeriesRowActions({
-  set,
   idx,
   readOnly,
-  onOpenNote,
   onCopyPrev,
   onRemoveSet,
-  t,
 }: {
-  set: DraftSet;
   idx: number;
   readOnly: boolean;
-  onOpenNote: (i: number) => void;
   onCopyPrev: (i: number) => void;
   onRemoveSet: (i: number) => void;
-  t: (k: string) => string;
 }) {
   return (
     <View style={[st.actionCell, { width: ACTION_COL_W }]}>
-      <TouchableOpacity
-        accessibilityLabel={t('coach.routine.seriesTable.noteAction').replace('{{n}}', String(idx + 1))}
-        onPress={() => onOpenNote(idx)}
-        style={st.actionBtn}
-      >
-        <Text style={[st.actionIcon, !!set.note && st.actionIconActive]}>{ICON_NOTE}</Text>
-      </TouchableOpacity>
       {!readOnly && idx > 0 ? (
         <TouchableOpacity onPress={() => onCopyPrev(idx)} style={st.actionBtn}>
           <Text style={st.copyIcon}>{ICON_COPY}</Text>
@@ -316,39 +289,44 @@ function SeriesRowNumberCell({
   onRemoveAdvanced: (i: number) => void;
   t: (k: string) => string;
 }) {
+  const showAdvancedLabel = Boolean(set.advancedTechnique);
+  const isSeriesClickable = (advancedEnabled && !readOnly) || (readOnly && showAdvancedLabel);
+
   return (
     <View style={[st.seriesCell, { width: SERIES_COL_W }]}>
-      {advancedEnabled && !readOnly ? (
+      {isSeriesClickable ? (
         <TouchableOpacity style={st.seriesCellClickable} onPress={() => onOpenAdvanced(idx)}>
           <View style={[st.seriesNumberBtn, set.advancedTechnique ? st.seriesNumberBtnActive : null]}>
             <Text style={[st.seriesNumberBtnText, set.advancedTechnique ? st.seriesNumberBtnTextActive : null]}>
               {idx + 1}
             </Text>
           </View>
-          {set.advancedTechnique ? (
+          {showAdvancedLabel ? (
             <View style={st.advancedLabelRow}>
               <Text style={st.advancedLabel} numberOfLines={1}>
-                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+                {advancedTechniqueDisplayLabel(set.advancedTechnique!, t)}
               </Text>
-              <TouchableOpacity
-                onPress={(e) => {
-                  (e as BaseSyntheticEvent).stopPropagation?.();
-                  onRemoveAdvanced(idx);
-                }}
-                hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-              >
-                <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
-              </TouchableOpacity>
+              {advancedEnabled && !readOnly ? (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    (e as BaseSyntheticEvent).stopPropagation?.();
+                    onRemoveAdvanced(idx);
+                  }}
+                  hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                >
+                  <Text style={st.advancedRemoveIcon}>{ICON_REMOVE}</Text>
+                </TouchableOpacity>
+              ) : null}
             </View>
           ) : null}
         </TouchableOpacity>
       ) : (
         <>
           <Text style={st.seriesNumber}>{idx + 1}</Text>
-          {set.advancedTechnique ? (
+          {showAdvancedLabel ? (
             <View style={st.advancedLabelRow}>
               <Text style={st.advancedLabel} numberOfLines={1}>
-                {advancedTechniqueDisplayLabel(set.advancedTechnique, t)}
+                {advancedTechniqueDisplayLabel(set.advancedTechnique!, t)}
               </Text>
             </View>
           ) : null}

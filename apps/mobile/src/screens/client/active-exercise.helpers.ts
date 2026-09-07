@@ -9,6 +9,8 @@ import type {
   SessionItem,
   StrengthSessionItem,
 } from '../../data/hooks/useTodaySession';
+import { filterActiveSetColumns, isFieldLocked, isRestFieldLocked } from '../../utils/locked-fields.utils';
+import { resolvePlannedSet } from './planned-set.utils';
 
 export type SetFieldKey = 'duration' | 'distance' | 'heartRate' | 'reps' | 'rest' | 'rir' | 'rpe' | 'rom' | 'weight';
 
@@ -37,6 +39,11 @@ export function getSetCount(item: SessionItem): number {
 }
 
 export function getSetColumns(item: SessionItem): SetColumn[] {
+  const columns = getBaseSetColumns(item);
+  return filterActiveSetColumns(columns, item.lockedFields);
+}
+
+function getBaseSetColumns(item: SessionItem): SetColumn[] {
   switch (item.type) {
     case 'strength':
       return [
@@ -86,34 +93,61 @@ export function getSetColumns(item: SessionItem): SetColumn[] {
 }
 
 export function readTargetValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
+  const planned = resolvePlannedSet(item.plannedSets, setIndex);
+
   if (item.type === 'strength') {
-    if (key === 'reps') return String(item.repsMax ?? item.repsMin ?? '-');
-    if (key === 'rir') return item.targetRir != null ? String(item.targetRir) : '-';
-    if (key === 'rpe') return item.targetRpe != null ? String(item.targetRpe) : '-';
+    if (key === 'reps') return formatTargetNumber(planned?.reps ?? item.repsMax ?? item.repsMin);
+    if (key === 'rir') return formatTargetNumber(planned?.rir ?? item.targetRir);
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
     if (key === 'weight') {
-      if (item.weightRangeMaxKg != null) return `${item.weightRangeMaxKg}kg`;
-      return '-';
+      const kg = planned?.weightKg ?? item.weightRangeMaxKg ?? item.weightRangeMinKg;
+      return kg != null ? `${kg}kg` : '-';
     }
   }
   if (item.type === 'cardio') {
     if (key === 'duration') return item.workSeconds ? `${item.workSeconds}s` : '-';
     if (key === 'distance') return item.targetDistanceMeters ? `${item.targetDistanceMeters}m` : '-';
-    if (key === 'rpe') return item.targetRpe != null ? String(item.targetRpe) : '-';
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+    if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
   }
-  if (item.type === 'plio' || item.type === 'mobility') {
-    if (key === 'duration') return item.restSeconds ? `${item.restSeconds}s` : '-';
-    if (key === 'rpe') return item.targetRpe != null ? String(item.targetRpe) : '-';
+  if (item.type === 'plio') {
+    if (key === 'reps') return formatTargetNumber(planned?.reps);
+    if (key === 'weight') {
+      const kg = planned?.weightKg;
+      return kg != null ? `${kg}kg` : '-';
+    }
+    if (key === 'duration') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+  }
+  if (item.type === 'mobility') {
+    if (key === 'reps') return formatTargetNumber(planned?.reps);
+    if (key === 'rom') return planned?.rom?.trim() ? planned.rom : '-';
+    if (key === 'duration') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
   }
   if (item.type === 'isometric') {
-    if (key === 'rpe') return item.targetRpe != null ? String(item.targetRpe) : '-';
-    if (key === 'rest') return item.restSeconds ? `${item.restSeconds}s` : '-';
+    if (key === 'duration') return formatTargetSeconds(planned?.durationSeconds);
+    if (key === 'weight') {
+      const kg = planned?.weightKg;
+      return kg != null ? `${kg}kg` : '-';
+    }
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+    if (key === 'rest') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
   }
   if (item.type === 'sport') {
     if (key === 'duration') return `${item.durationMinutes}m`;
-    if (key === 'rpe') return item.targetRpe != null ? String(item.targetRpe) : '-';
+    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+    if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
   }
-  void setIndex;
   return '-';
+}
+
+function formatTargetNumber(value: null | number | undefined): string {
+  return value != null ? String(value) : '-';
+}
+
+function formatTargetSeconds(value: null | number | undefined): string {
+  return value != null && value > 0 ? `${value}s` : '-';
 }
 
 export function readActualValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
@@ -173,6 +207,7 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
 }
 
 export function getRestSeconds(item: SessionItem): number {
+  if (isRestFieldLocked(item.lockedFields)) return 0;
   if (item.type === 'strength' || item.type === 'isometric') return item.restSeconds ?? 0;
   if (item.type === 'cardio' || item.type === 'plio' || item.type === 'mobility') return item.restSeconds;
   return 0;
@@ -183,6 +218,34 @@ function parseNumber(value: string): null | number {
   if (!trimmed) return null;
   const parsed = Number(trimmed.replace(',', '.'));
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function lockedOrDraftNumber(
+  item: SessionItem,
+  setIndex: number,
+  webFieldKey: string,
+  activeKey: SetFieldKey,
+  draftValue: string,
+): null | number {
+  if (isFieldLocked(item.lockedFields, webFieldKey)) {
+    return parseNumber(readActualValue(item, setIndex, activeKey));
+  }
+  return parseNumber(draftValue);
+}
+
+function lockedOrDraftText(
+  item: SessionItem,
+  setIndex: number,
+  webFieldKey: string,
+  activeKey: SetFieldKey,
+  draftValue: string,
+): null | string {
+  if (isFieldLocked(item.lockedFields, webFieldKey)) {
+    const actual = readActualValue(item, setIndex, activeKey).trim();
+    return actual || null;
+  }
+  const trimmed = draftValue.trim();
+  return trimmed || null;
 }
 
 export function buildLogPayload(
@@ -200,51 +263,51 @@ export function buildLogPayload(
   switch (item.type) {
     case 'strength':
       return {
-        effortRir: parseNumber(values.rir),
-        effortRpe: parseNumber(values.rpe),
-        repsDone: parseNumber(values.reps),
+        effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+        repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
         sessionItemId: item.id,
         setIndex,
-        weightDoneKg: parseNumber(values.weight),
+        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     case 'plio':
       return {
-        effortRpe: parseNumber(values.rpe),
-        repsDone: parseNumber(values.reps),
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+        repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
         sessionPlioBlockId: item.id,
         setIndex,
-        weightDoneKg: parseNumber(values.weight),
+        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     case 'mobility':
       return {
-        effortRpe: parseNumber(values.rpe),
-        repsDone: parseNumber(values.reps),
-        romDone: values.rom.trim() || null,
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+        repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
+        romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
         sessionMobilityBlockId: item.id,
         setIndex,
       };
     case 'isometric':
       return {
-        durationSecondsDone: parseNumber(values.duration),
-        effortRpe: parseNumber(values.rpe),
+        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         sessionIsometricBlockId: item.id,
         setIndex,
-        weightDoneKg: parseNumber(values.weight),
+        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     case 'cardio':
       return {
-        avgHeartRate: parseNumber(values.heartRate),
-        distanceDoneMeters: parseNumber(values.distance),
-        durationSecondsDone: parseNumber(values.duration),
-        effortRpe: parseNumber(values.rpe),
+        avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
+        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distance', 'distance', values.distance),
+        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         intervalIndex: setIndex,
         sessionCardioBlockId: item.id,
       };
     case 'sport':
       return {
-        avgHeartRate: parseNumber(values.heartRate),
-        durationMinutesDone: parseNumber(values.duration),
-        effortRpe: parseNumber(values.rpe),
+        avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
+        durationMinutesDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         sessionSportBlockId: item.id,
       };
     default:

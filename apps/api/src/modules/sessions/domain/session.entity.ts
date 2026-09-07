@@ -1,7 +1,17 @@
 export type SessionPlannedSet = {
   advancedTechnique: null | string;
+  durationSeconds?: null | number;
+  fcMaxPct?: null | number;
+  fcReservePct?: null | number;
+  heartRate?: null | number;
   note: null | string;
+  reps?: null | number;
+  restSeconds?: null | number;
+  rir?: null | number;
+  rom?: null | string;
+  rpe?: null | number;
   setIndex: number;
+  weightKg?: null | number;
 };
 
 export type SessionSetLog = {
@@ -25,6 +35,7 @@ export type SessionStrengthItem = {
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
+  lockedFields: string[];
   logs: SessionSetLog[];
   notes: null | string;
   plannedSets: SessionPlannedSet[];
@@ -86,6 +97,7 @@ export type SessionPlioItem = {
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
+  lockedFields: string[];
   logs: SessionPlioSetLog[];
   notes: null | string;
   plannedSets: SessionPlannedSet[];
@@ -103,6 +115,7 @@ export type SessionMobilityItem = {
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
+  lockedFields: string[];
   logs: SessionMobilitySetLog[];
   notes: null | string;
   plannedSets: SessionPlannedSet[];
@@ -120,6 +133,7 @@ export type SessionIsometricItem = {
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
+  lockedFields: string[];
   logs: SessionIsometricSetLog[];
   notes: null | string;
   plannedSets: SessionPlannedSet[];
@@ -137,6 +151,7 @@ export type SessionSportItem = {
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
+  lockedFields: string[];
   log: SessionSportLog | null;
   notes: null | string;
   plannedSets: SessionPlannedSet[];
@@ -169,6 +184,7 @@ export type CardioSessionItem = {
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;
   intervalLogs: SessionIntervalLog[];
+  lockedFields: string[];
   notes: null | string;
   plannedSets: SessionPlannedSet[];
   restSeconds: number;

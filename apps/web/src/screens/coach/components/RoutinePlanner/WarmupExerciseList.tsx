@@ -12,7 +12,6 @@ import {
   ICON_COLLAPSE,
   ICON_DETAIL,
   ICON_EXPAND,
-  ICON_SET_NOTE,
   RESIZE_COVER,
   TITLE_MAX_LINES,
 } from './warmup-exercise-list.constants';
@@ -23,7 +22,7 @@ import {
   resolveLibraryId,
 } from './warmup-exercise-list.helpers';
 import { el } from './warmup-exercise-list.styles';
-import { WarmupBlockDetailModal, WarmupSetNoteModal } from './WarmupExerciseList.modals';
+import { WarmupBlockDetailModal } from './WarmupExerciseList.modals';
 
 interface Props {
   items: WarmupTemplateItemInput[];
@@ -87,13 +86,10 @@ function ExerciseRow({
   item: WarmupTemplateItemInput;
   onShowDetail: (item: UnifiedExerciseItem) => void;
 }) {
-  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const [blockDetailOpen, setBlockDetailOpen] = useState(false);
-  const [setNoteRowIdx, setSetNoteRowIdx] = useState<number | null>(null);
   const libraryId = resolveLibraryId(item);
   const baseCategory = BASE_CATEGORY_MAP[item.blockType] ?? 'muscleGroups';
-  const displaySets = resolveDisplaySets(item);
   const badgeColor = BLOCK_TYPE_COLORS[item.blockType] ?? { bg: '#f1f5f9', text: '#64748b' };
 
   const { data: results = [] } = useUnifiedExercisesQuery({ baseCategory, search: item.displayName });
@@ -124,27 +120,13 @@ function ExerciseRow({
           </View>
         </View>
 
-        {expanded && (
-          <ExerciseBody
-            item={item}
-            imageUrl={imageUrl}
-            onOpenBlockDetail={() => setBlockDetailOpen(true)}
-            onOpenSetNote={(rowIdx) => setSetNoteRowIdx(rowIdx)}
-          />
-        )}
+        {expanded && <ExerciseBody item={item} imageUrl={imageUrl} onOpenBlockDetail={() => setBlockDetailOpen(true)} />}
       </View>
       <WarmupBlockDetailModal
         item={item}
         libraryItem={libraryItem}
         onClose={() => setBlockDetailOpen(false)}
         visible={blockDetailOpen}
-      />
-      <WarmupSetNoteModal
-        note={setNoteRowIdx != null ? displaySets[setNoteRowIdx]?.note : undefined}
-        onClose={() => setSetNoteRowIdx(null)}
-        setNumber={setNoteRowIdx != null ? setNoteRowIdx + 1 : 1}
-        t={t}
-        visible={setNoteRowIdx !== null}
       />
     </>
   );
@@ -154,12 +136,10 @@ function ExerciseBody({
   item,
   imageUrl,
   onOpenBlockDetail,
-  onOpenSetNote,
 }: {
   item: WarmupTemplateItemInput;
   imageUrl: string;
   onOpenBlockDetail: () => void;
-  onOpenSetNote: (rowIdx: number) => void;
 }) {
   const { t } = useTranslation();
   const sets = resolveDisplaySets(item);
@@ -199,7 +179,6 @@ function ExerciseBody({
           <ScrollView horizontal showsHorizontalScrollIndicator={HIDE_H_SCROLL_INDICATOR}>
             <View>
               <View style={el.tableHeaderRow}>
-                <View style={el.tableNoteHeaderCell} />
                 <Text style={[el.tableCell, el.tableCellSerie, el.tableHeaderText]}>
                   {t('coach.routine.seriesTable.seriesCol')}
                 </Text>
@@ -214,17 +193,6 @@ function ExerciseBody({
               </View>
               {sets.map((s, rowIdx) => (
                 <View key={`${s.setIndex}-${rowIdx}`} style={el.tableRow}>
-                  <View style={el.tableNoteActionCell}>
-                    <Pressable
-                      accessibilityLabel={t('coach.routine.seriesNote.title', {
-                        n: rowIdx + 1,
-                      })}
-                      onPress={() => onOpenSetNote(rowIdx)}
-                      style={el.setNoteBtn}
-                    >
-                      <Text style={[el.setNoteIcon, s.note ? el.setNoteIconActive : null]}>{ICON_SET_NOTE}</Text>
-                    </Pressable>
-                  </View>
                   <Text style={[el.tableCell, el.tableCellSerie, el.tableCellValue]}>{s.setIndex + 1}</Text>
                   <Text style={[el.tableCell, el.tableCellValue]}>
                     {hasReps ? (s.reps != null ? String(s.reps) : ph) : ph}

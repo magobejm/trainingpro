@@ -4,6 +4,9 @@ import {
   type ExerciseGroupFields,
   PLAN_EXERCISE_GROUP_INCLUDE,
 } from '../../../../common/plan/plan-exercise-group.mapper';
+import { buildPlanDayPlannedSetsLookup } from '../../../../common/plan/plan-day-planned-sets.mapper';
+import { buildPlanDayLockedFieldsLookup } from '../../../../common/plan/read-locked-fields';
+import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
@@ -26,9 +29,14 @@ import type {
 export function mapSession(
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
   groupLookup: Map<number, ExerciseGroupFields> = new Map(),
+  lockedFieldsLookup: Map<number, string[]> = new Map(),
+  plannedSetsLookup: Map<number, PlannedSetSnapshot[]> = new Map(),
 ): SessionInstance {
   const readGroup = (sortOrder: number): ExerciseGroupFields =>
     groupLookup.get(sortOrder) ?? { groupId: null, groupType: null };
+  const readLockedFields = (sortOrder: number): string[] => lockedFieldsLookup.get(sortOrder) ?? [];
+  const readPlannedSets = (sortOrder: number, storedJson: Prisma.JsonValue | null): PlannedSetSnapshot[] =>
+    plannedSetsLookup.get(sortOrder) ?? readPlannedSetsJson(storedJson);
 
   const strengthItems: SessionStrengthItem[] = row.items.map((item) => ({
     type: 'strength' as const,
@@ -36,6 +44,7 @@ export function mapSession(
     displayName: item.displayName,
     ...readGroup(item.sortOrder),
     id: item.id,
+    lockedFields: readLockedFields(item.sortOrder),
     logs: item.logs.map((L) => ({
       effortRir: L.effortRir,
       effortRpe: L.effortRpe,
@@ -45,7 +54,7 @@ export function mapSession(
       weightDoneKg: L.weightDoneKg ? Number(L.weightDoneKg) : null,
     })),
     notes: item.notes,
-    plannedSets: readPlannedSetsJson(item.plannedSetsJson),
+    plannedSets: readPlannedSets(item.sortOrder, item.plannedSetsJson),
     repsMax: item.repsMax,
     repsMin: item.repsMin,
     restSeconds: item.restSeconds,
@@ -64,6 +73,7 @@ export function mapSession(
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
     id: b.id,
+    lockedFields: readLockedFields(b.sortOrder),
     logs: b.logs.map(
       (l): SessionPlioSetLog => ({
         effortRpe: l.effortRpe,
@@ -74,7 +84,7 @@ export function mapSession(
       }),
     ),
     notes: b.notes,
-    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
+    plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
@@ -88,6 +98,7 @@ export function mapSession(
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
     id: b.id,
+    lockedFields: readLockedFields(b.sortOrder),
     logs: b.logs.map(
       (l): SessionMobilitySetLog => ({
         effortRpe: l.effortRpe,
@@ -98,7 +109,7 @@ export function mapSession(
       }),
     ),
     notes: b.notes,
-    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
+    plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
@@ -112,6 +123,7 @@ export function mapSession(
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
     id: b.id,
+    lockedFields: readLockedFields(b.sortOrder),
     logs: b.logs.map(
       (l): SessionIsometricSetLog => ({
         durationSecondsDone: l.durationSecondsDone,
@@ -122,7 +134,7 @@ export function mapSession(
       }),
     ),
     notes: b.notes,
-    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
+    plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
     restSeconds: b.restSeconds ?? null,
     setsPlanned: b.setsPlanned,
     sortOrder: b.sortOrder,
@@ -146,9 +158,10 @@ export function mapSession(
       durationMinutes: b.durationMinutes,
       ...readGroup(b.sortOrder),
       id: b.id,
+      lockedFields: readLockedFields(b.sortOrder),
       log,
       notes: b.notes,
-      plannedSets: readPlannedSetsJson(b.plannedSetsJson),
+      plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
       sortOrder: b.sortOrder,
       targetRpe: b.targetRpe,
     };
@@ -170,8 +183,9 @@ export function mapSession(
         sessionCardioBlockId: l.sessionCardioBlockId,
       }),
     ),
+    lockedFields: readLockedFields(b.sortOrder),
     notes: b.notes,
-    plannedSets: readPlannedSetsJson(b.plannedSetsJson),
+    plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
@@ -267,29 +281,95 @@ export function toDecimal(value: null | number | undefined) {
   return typeof value === 'number' ? new Prisma.Decimal(value) : null;
 }
 
+const PLAN_BLOCK_SETS_SELECT = {
+  orderBy: { setIndex: 'asc' as const },
+};
+
 const PLAN_DAY_GROUP_BLOCKS_INCLUDE = {
   cardioBlocks: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      restSeconds: true,
+      roundsPlanned: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      sortOrder: true,
+      targetRpe: true,
+      workSeconds: true,
+    },
     where: { archivedAt: null },
   },
   exercises: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      perSetWeightRangesJson: true,
+      repsMax: true,
+      repsMin: true,
+      restSeconds: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      setsPlanned: true,
+      sortOrder: true,
+      targetRir: true,
+      targetRpe: true,
+      weightRangeMaxKg: true,
+      weightRangeMinKg: true,
+    },
     where: { archivedAt: null },
   },
   isometricBlocks: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      restSeconds: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      setsPlanned: true,
+      sortOrder: true,
+      targetRpe: true,
+    },
     where: { archivedAt: null },
   },
   mobilityBlocks: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      restSeconds: true,
+      roundsPlanned: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      sortOrder: true,
+      targetRpe: true,
+      workSeconds: true,
+    },
     where: { archivedAt: null },
   },
   plioBlocks: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      restSeconds: true,
+      roundsPlanned: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      sortOrder: true,
+      targetRpe: true,
+      workSeconds: true,
+    },
     where: { archivedAt: null },
   },
   sportBlocks: {
-    select: { group: PLAN_EXERCISE_GROUP_INCLUDE, sortOrder: true },
+    select: {
+      durationMinutes: true,
+      group: PLAN_EXERCISE_GROUP_INCLUDE,
+      lockedFieldsJson: true,
+      notes: true,
+      sets: PLAN_BLOCK_SETS_SELECT,
+      sortOrder: true,
+      targetRpe: true,
+    },
     where: { archivedAt: null },
   },
 } as const;
@@ -298,23 +378,39 @@ export async function loadPlanDayGroupLookup(
   prisma: PrismaService,
   planDayId: null | string | undefined,
 ): Promise<Map<number, ExerciseGroupFields>> {
+  const lookups = await loadPlanDayLookups(prisma, planDayId);
+  return lookups.groupLookup;
+}
+
+async function loadPlanDayLookups(
+  prisma: PrismaService,
+  planDayId: null | string | undefined,
+): Promise<{
+  groupLookup: Map<number, ExerciseGroupFields>;
+  lockedFieldsLookup: Map<number, string[]>;
+  plannedSetsLookup: Map<number, PlannedSetSnapshot[]>;
+}> {
   if (!planDayId) {
-    return new Map();
+    return { groupLookup: new Map(), lockedFieldsLookup: new Map(), plannedSetsLookup: new Map() };
   }
   const day = await prisma.planDay.findFirst({
     include: PLAN_DAY_GROUP_BLOCKS_INCLUDE,
     where: { archivedAt: null, id: planDayId },
   });
   if (!day) {
-    return new Map();
+    return { groupLookup: new Map(), lockedFieldsLookup: new Map(), plannedSetsLookup: new Map() };
   }
-  return buildPlanDayGroupLookup(day);
+  return {
+    groupLookup: buildPlanDayGroupLookup(day),
+    lockedFieldsLookup: buildPlanDayLockedFieldsLookup(day),
+    plannedSetsLookup: buildPlanDayPlannedSetsLookup(day),
+  };
 }
 
 export async function mapSessionWithGroups(
   prisma: PrismaService,
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): Promise<SessionInstance> {
-  const groupLookup = await loadPlanDayGroupLookup(prisma, row.planDayId);
-  return mapSession(row, groupLookup);
+  const { groupLookup, lockedFieldsLookup, plannedSetsLookup } = await loadPlanDayLookups(prisma, row.planDayId);
+  return mapSession(row, groupLookup, lockedFieldsLookup, plannedSetsLookup);
 }

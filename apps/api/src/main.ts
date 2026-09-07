@@ -10,7 +10,7 @@ loadEnvFiles();
 async function bootstrap(): Promise<void> {
   const app = await NestFactory.create(AppModule);
   app.enableCors({
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Active-Role'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Active-Role', 'X-Timezone-Offset'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     origin: isAllowedCorsOrigin,
   });

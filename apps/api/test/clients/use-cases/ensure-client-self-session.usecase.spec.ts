@@ -1,12 +1,19 @@
 import { ConflictException, NotFoundException } from '@nestjs/common';
+import { DayChangeConfirmationRequiredError } from '../../../src/modules/clients/application/services/client-calendar-plan-day-swap.service';
 import { EnsureClientSelfSessionUseCase } from '../../../src/modules/clients/application/use-cases/ensure-client-self-session.usecase';
 
 const mockClientsRepository = {
   findClientByEmail: jest.fn(),
+  findClientPlanDayTemplateIdByEmail: jest.fn(),
 };
 
 const mockSessionsRepository = {
   ensureSessionForClient: jest.fn(),
+};
+
+const mockCalendarPlanDaySwapService = {
+  execute: jest.fn(),
+  needsSwap: jest.fn(),
 };
 
 const CLIENT_CONTEXT = {
@@ -29,8 +36,15 @@ describe('EnsureClientSelfSessionUseCase', () => {
 
   beforeEach(() => {
     mockClientsRepository.findClientByEmail.mockReset();
+    mockClientsRepository.findClientPlanDayTemplateIdByEmail.mockReset();
     mockSessionsRepository.ensureSessionForClient.mockReset();
-    useCase = new EnsureClientSelfSessionUseCase(mockClientsRepository as never, mockSessionsRepository as never);
+    mockCalendarPlanDaySwapService.execute.mockReset();
+    mockCalendarPlanDaySwapService.needsSwap.mockReset();
+    useCase = new EnsureClientSelfSessionUseCase(
+      mockClientsRepository as never,
+      mockSessionsRepository as never,
+      mockCalendarPlanDaySwapService as never,
+    );
   });
 
   it('throws NotFoundException when email is missing from context', async () => {
@@ -73,18 +87,38 @@ describe('EnsureClientSelfSessionUseCase', () => {
     expect(result).toBe(fakeSession);
   });
 
-  it('propagates planDayId when provided', async () => {
+  it('requires confirmation before swapping calendar days', async () => {
     const sessionDate = new Date('2026-04-14');
-    const planDayId = 'plan-day-id-1';
+    const planDayId = 'plan-day-id-2';
+    mockClientsRepository.findClientByEmail.mockResolvedValue(FULL_CLIENT);
+    mockCalendarPlanDaySwapService.needsSwap.mockResolvedValue(true);
+
+    await expect(useCase.execute(CLIENT_CONTEXT, { sessionDate, planDayId })).rejects.toThrow(
+      DayChangeConfirmationRequiredError,
+    );
+    expect(mockCalendarPlanDaySwapService.execute).not.toHaveBeenCalled();
+  });
+
+  it('swaps calendar days and ensures session when confirmation is provided', async () => {
+    const sessionDate = new Date('2026-04-14');
+    const planDayId = 'plan-day-id-2';
     const fakeSession = { id: 'session-id-2', sessionDate, status: 'PENDING' };
     mockClientsRepository.findClientByEmail.mockResolvedValue(FULL_CLIENT);
+    mockCalendarPlanDaySwapService.needsSwap.mockResolvedValue(true);
     mockSessionsRepository.ensureSessionForClient.mockResolvedValue(fakeSession);
 
-    await useCase.execute(CLIENT_CONTEXT, { sessionDate, planDayId });
+    const result = await useCase.execute(CLIENT_CONTEXT, { confirmDayChange: true, sessionDate, planDayId });
 
+    expect(mockCalendarPlanDaySwapService.execute).toHaveBeenCalledWith(CLIENT_CONTEXT, {
+      clientId: FULL_CLIENT.id,
+      coachMembershipId: FULL_CLIENT.coachMembershipId,
+      requestedPlanDayId: planDayId,
+      sessionDate,
+    });
     expect(mockSessionsRepository.ensureSessionForClient).toHaveBeenCalledWith(
       CLIENT_CONTEXT,
       expect.objectContaining({ planDayId }),
     );
+    expect(result).toBe(fakeSession);
   });
 });

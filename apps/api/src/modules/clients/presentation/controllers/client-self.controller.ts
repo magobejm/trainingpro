@@ -113,8 +113,9 @@ export class ClientSelfController {
   async ensureMySession(@Body() body: EnsureClientSelfSessionDto, @Req() request: HttpAuthRequest) {
     const context = readAuthContext(request);
     const session = await this.ensureClientSelfSessionUseCase.execute(context, {
-      sessionDate: new Date(body.sessionDate),
+      confirmDayChange: body.confirmDayChange,
       planDayId: body.planDayId,
+      sessionDate: new Date(body.sessionDate),
     });
     return {
       ...session,

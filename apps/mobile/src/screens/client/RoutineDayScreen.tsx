@@ -44,7 +44,19 @@ export function RoutineDayScreen(props: RoutineDayScreenProps): React.JSX.Elemen
 
 function PreviewDay(props: PreviewProps): React.JSX.Element {
   const { t } = useTranslation();
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+
+  const toggleExpanded = (exerciseId: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(exerciseId)) {
+        next.delete(exerciseId);
+      } else {
+        next.add(exerciseId);
+      }
+      return next;
+    });
+  };
   const blocks = useMemo(() => buildExerciseBlocks(props.day.exercises), [props.day.exercises]);
 
   return (
@@ -58,8 +70,8 @@ function PreviewDay(props: PreviewProps): React.JSX.Element {
               <ExerciseCard
                 key={exercise.id}
                 exercise={exercise}
-                expanded={expandedId === exercise.id}
-                onToggle={() => setExpandedId(expandedId === exercise.id ? null : exercise.id)}
+                expanded={expandedIds.has(exercise.id)}
+                onToggle={() => toggleExpanded(exercise.id)}
               />
             ))}
           </ExerciseBlockContainer>

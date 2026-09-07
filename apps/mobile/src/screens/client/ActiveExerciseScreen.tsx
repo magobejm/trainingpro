@@ -29,7 +29,9 @@ import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
 import { formatRestLabel } from './session-completion.utils';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
+import { RestTimerOverlay } from './RestTimerOverlay';
 import { resolvePlannedSet } from './planned-set.utils';
+import type { RestState } from './session-rest.types';
 import { ScaleModal } from './ScaleModal';
 import { SetNoteModal } from './SetNoteModal';
 
@@ -41,8 +43,11 @@ type ActiveExerciseScreenProps = {
   workoutElapsed?: string;
   completedRestKeys: string[];
   onClose: () => void;
+  onCollapseRest: () => void;
+  onExpandRest: () => void;
   onFinishExercise: () => void;
   onNavigateExercise: (item: SessionItem) => void;
+  onRestFinish: () => void;
   onLogInterval: (input: LogIntervalMutationInput) => void;
   onLogIsometricSet: (input: LogIsometricSetMutationInput) => void;
   onLogMobilitySet: (input: LogMobilitySetMutationInput) => void;
@@ -50,6 +55,7 @@ type ActiveExerciseScreenProps = {
   onLogSet: (input: LogSetMutationInput) => void;
   onLogSport: (input: LogSportMutationInput) => void;
   onStartRest: (setKey: string, seconds: number) => void;
+  restState: RestState | null;
 };
 
 type ScaleState = { kind: 'rpe' | 'rir'; setIndex: number } | null;
@@ -189,13 +195,29 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
             const setKey = `${props.item.id}:${setIndex}`;
             const restDone = props.completedRestKeys.includes(setKey);
             const restSeconds = getRestSeconds(props.item);
+            const isActiveRest = props.restState?.setKey === setKey;
+            const restLocked = props.restState != null && props.restState.setKey !== setKey;
             return (
               <View key={setKey} style={styles.setCard}>
                 <View style={styles.setHeader}>
-                  <Text style={styles.setTitle}>{`${t('client.today.set')} ${setIndex}`}</Text>
-                  <Pressable onPress={() => setSetNoteIndex(setIndex)}>
-                    <Text>{'📄'}</Text>
-                  </Pressable>
+                  <View style={styles.setHeaderLeft}>
+                    <Text style={styles.setTitle}>{`${t('client.today.set')} ${setIndex}`}</Text>
+                    <Pressable onPress={() => setSetNoteIndex(setIndex)}>
+                      <Text>{'📄'}</Text>
+                    </Pressable>
+                  </View>
+                  {restSeconds > 0 ? (
+                    <SetRestButton
+                      active={isActiveRest}
+                      completed={restDone}
+                      disabled={restLocked}
+                      endAt={isActiveRest ? props.restState!.endAt : null}
+                      restSeconds={restSeconds}
+                      onExpand={props.onExpandRest}
+                      onFinish={props.onRestFinish}
+                      onStart={() => props.onStartRest(setKey, restSeconds)}
+                    />
+                  ) : null}
                 </View>
                 <View style={styles.grid}>
                   {columns.map((column) => (
@@ -221,19 +243,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                   <Pressable style={styles.saveBtn} onPress={() => handleSaveSet(setIndex)}>
                     <Text style={styles.saveBtnText}>{t('mobile.client.session.saveSet')}</Text>
                   </Pressable>
-                  {restSeconds > 0 ? (
-                    <Pressable
-                      disabled={restDone}
-                      onPress={() => props.onStartRest(setKey, restSeconds)}
-                      style={[styles.restBtn, restDone && styles.restBtnDone]}
-                    >
-                      <Text style={[styles.restBtnText, restDone && styles.restBtnTextDone]}>
-                        {restDone
-                          ? t('mobile.client.rest.completed')
-                          : `${t('client.today.restTimer')} ${formatRestLabel(restSeconds)}`}
-                      </Text>
-                    </Pressable>
-                  ) : null}
                 </View>
               </View>
             );
@@ -302,8 +311,69 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           visible={showPrevious}
           onClose={() => setShowPrevious(false)}
         />
+        {props.restState?.expanded ? (
+          <RestTimerOverlay
+            endAt={props.restState.endAt}
+            visible
+            onHide={props.onCollapseRest}
+            onFinish={props.onRestFinish}
+          />
+        ) : null}
       </View>
     </Modal>
+  );
+}
+
+function SetRestButton(props: {
+  active: boolean;
+  completed: boolean;
+  disabled: boolean;
+  endAt: number | null;
+  restSeconds: number;
+  onExpand: () => void;
+  onFinish: () => void;
+  onStart: () => void;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  const [remaining, setRemaining] = useState(() =>
+    props.endAt ? Math.max(0, Math.ceil((props.endAt - Date.now()) / 1000)) : props.restSeconds,
+  );
+
+  useEffect(() => {
+    if (!props.active || !props.endAt) return;
+    const tick = () => {
+      const next = Math.max(0, Math.ceil((props.endAt! - Date.now()) / 1000));
+      setRemaining(next);
+      if (next <= 0) {
+        props.onFinish();
+      }
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [props.active, props.endAt, props.onFinish]);
+
+  if (props.completed) {
+    return (
+      <View style={[styles.restBtn, styles.restBtnDone]}>
+        <Text style={[styles.restBtnText, styles.restBtnTextDone]}>{t('mobile.client.rest.completed')}</Text>
+      </View>
+    );
+  }
+
+  if (props.active && props.endAt) {
+    return (
+      <Pressable onPress={props.onExpand} style={[styles.restBtn, styles.restBtnActive]}>
+        <View style={styles.restDot} />
+        <Text style={styles.restBtnActiveText}>{formatRestLabel(remaining)}</Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Pressable disabled={props.disabled} onPress={props.onStart} style={styles.restBtn}>
+      <Text style={styles.restBtnText}>{`${t('client.today.restTimer')} ${formatRestLabel(props.restSeconds)}`}</Text>
+    </Pressable>
   );
 }
 
@@ -413,6 +483,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
+  setHeaderLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
   setTitle: {
     color: LIGHT.textStrong,
     fontSize: 14,
@@ -457,15 +532,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   setFooter: {
-    flexDirection: 'row',
-    gap: 8,
     marginTop: 12,
   },
   saveBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.accentSoft,
     borderRadius: LIGHT.radiusMd,
-    flex: 1,
     paddingVertical: 10,
   },
   saveBtnText: {
@@ -476,9 +548,15 @@ const styles = StyleSheet.create({
   restBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.emeraldSoft,
-    borderRadius: LIGHT.radiusMd,
-    flex: 1,
-    paddingVertical: 10,
+    borderRadius: LIGHT.radiusFull,
+    flexDirection: 'row',
+    gap: 6,
+    minWidth: 112,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+  },
+  restBtnActive: {
+    backgroundColor: LIGHT.emeraldBg,
   },
   restBtnDone: {
     backgroundColor: LIGHT.bgSoft,
@@ -488,8 +566,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
+  restBtnActiveText: {
+    color: LIGHT.textOnNavy,
+    fontSize: 13,
+    fontWeight: '800',
+  },
   restBtnTextDone: {
     color: LIGHT.textMuted,
+  },
+  restDot: {
+    backgroundColor: LIGHT.textOnNavy,
+    borderRadius: 4,
+    height: 8,
+    width: 8,
   },
   footer: {
     alignItems: 'center',

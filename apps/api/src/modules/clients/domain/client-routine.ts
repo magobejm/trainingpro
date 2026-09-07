@@ -1,12 +1,25 @@
 export type ClientRoutineSet = {
   advancedTechnique: null | string;
+  durationSeconds?: null | number;
+  fcMaxPct?: null | number;
+  fcReservePct?: null | number;
+  heartRate?: null | number;
   note: null | string;
+  reps?: null | number;
+  restSeconds?: null | number;
+  rir?: null | number;
+  rom?: null | string;
+  rpe?: null | number;
   setIndex: number;
+  weightKg?: null | number;
 };
 
 export type ClientRoutineExercise = {
   coachInstructions: null | string;
   displayName: string;
+  lockedFields: string[];
+  mediaUrl: null | string;
+  youtubeUrl: null | string;
   groupId: null | string;
   groupType: 'CIRCUIT' | 'SUPERSET' | null;
   id: string;

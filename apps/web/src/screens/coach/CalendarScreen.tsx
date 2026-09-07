@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays } from 'lucide-react';
@@ -32,6 +32,7 @@ import {
   createWeekMoveHandler,
   createCopyPasteHandlers,
 } from './CalendarScreen.handlers';
+import { useCalendarContextStore } from '../../store/calendarContext.store';
 
 const COLOR_PRIMARY = '#3b82f6' as const;
 
@@ -57,6 +58,19 @@ function useClientViewMode() {
   return { selectedClientId, viewMode, setSelectedClient, setCoachOnlyView, setAllView };
 }
 
+function useFocusAssignedClient(clients: ClientView[], setSelectedClient: (client: ClientView | null) => void) {
+  const focusClientId = useCalendarContextStore((state) => state.focusClientId);
+  const consumeFocusClientId = useCalendarContextStore((state) => state.consumeFocusClientId);
+
+  useEffect(() => {
+    if (!focusClientId || clients.length === 0) return;
+    const client = clients.find((item) => item.id === focusClientId);
+    if (!client) return;
+    setSelectedClient(client);
+    consumeFocusClientId();
+  }, [clients, consumeFocusClientId, focusClientId, setSelectedClient]);
+}
+
 function useCalendarLogic() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
@@ -70,6 +84,7 @@ function useCalendarLogic() {
   const clientsQuery = useClientsQuery();
   const objectivesQuery = useClientObjectivesQuery();
   const clients = clientsQuery.data ?? [];
+  useFocusAssignedClient(clients, setSelectedClient);
   const selectedClient = useMemo(
     () => (selectedClientId ? (clients.find((c) => c.id === selectedClientId) ?? null) : null),
     [clients, selectedClientId],

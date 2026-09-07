@@ -2,25 +2,28 @@ import type { QueryClient } from '@tanstack/react-query';
 
 type ClientUpdateInput = Record<string, unknown>;
 
-export function syncAvatarInCache(
-  queryClient: QueryClient,
-  clientId: string,
-  avatarUrl: string,
-): void {
+export function syncAvatarInCache(queryClient: QueryClient, clientId: string, avatarUrl: string): void {
   updateDetailAvatar(queryClient, clientId, avatarUrl);
   updateListAvatar(queryClient, clientId, avatarUrl);
 }
 
-export function syncClientInCache(
-  queryClient: QueryClient,
-  clientId: string,
-  input: ClientUpdateInput,
-): void {
+export function syncClientInCache(queryClient: QueryClient, clientId: string, input: ClientUpdateInput): void {
   queryClient.setQueriesData({ queryKey: ['clients', 'detail', clientId] }, (previous) => {
     if (!isObject(previous)) {
       return previous;
     }
     return { ...previous, ...input };
+  });
+  queryClient.setQueriesData({ queryKey: ['clients', 'list'] }, (previous) => {
+    if (!Array.isArray(previous)) {
+      return previous;
+    }
+    return previous.map((item) => {
+      if (!isObject(item) || item.id !== clientId) {
+        return item;
+      }
+      return { ...item, ...input };
+    });
   });
 }
 

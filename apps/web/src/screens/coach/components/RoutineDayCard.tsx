@@ -48,8 +48,6 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         isCollapsed={isCollapsed}
         isFirst={props.isFirst}
         isLast={props.isLast}
-        notes={day.notes}
-        notesTitle={day.notesTitle}
         onAddBlock={vm.onAddBlockClick}
         onMoveDay={props.onMoveDay}
         onPickWarmup={props.onAddWarmupTemplate}
@@ -57,7 +55,6 @@ export function RoutineDayCard(props: RoutineDayCardProps) {
         onRemoveWarmup={props.onRemoveWarmupTemplate}
         onRename={props.onRename}
         onToggleCollapse={vm.toggleCollapsed}
-        onUpdateNotes={(notes, notesTitle) => props.onUpdateDay({ ...day, notes, notesTitle })}
         onViewWarmup={props.onViewWarmupTemplate}
         readOnly={!!readOnly}
         t={t}

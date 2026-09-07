@@ -25,7 +25,12 @@ import {
   normalizeUpdateInput,
 } from './client.repository.prisma.mappers';
 import { createClientRecord, resolveObjectiveId } from './client.repository.prisma.helpers';
-import { mapPlanSetsToPlannedSnapshots } from '../../../../common/notes/planned-set.mapper';
+import {
+  resolveClientRoutineSets,
+  type PlanSetRow,
+  type RoutineBlockPrescription,
+} from '../../../../common/plan/client-routine-set.mapper';
+import { readLockedFields } from '../../../../common/plan/read-locked-fields';
 import { stripMetaNotes } from '../../../../common/notes/parse-meta-notes';
 import { decrementClientCount, readActiveClient, resolveCoachMembership } from './client.repository.prisma.ops';
 
@@ -250,13 +255,24 @@ const PLAN_BLOCK_SETS_INCLUDE = {
   orderBy: { setIndex: 'asc' as const },
 };
 
+const LIBRARY_ROUTINE_SELECT = {
+  coachInstructions: true,
+  mediaUrl: true,
+  youtubeUrl: true,
+} as const;
+
+const LIBRARY_SPORT_SELECT = {
+  coachInstructions: true,
+  mediaUrl: true,
+} as const;
+
 const PLAN_DAY_CONTENT_INCLUDE = {
   exercises: {
     where: { archivedAt: null },
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      libraryExercise: { select: { coachInstructions: true } },
+      libraryExercise: { select: LIBRARY_ROUTINE_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -265,7 +281,7 @@ const PLAN_DAY_CONTENT_INCLUDE = {
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      libraryCardioMethod: { select: { coachInstructions: true } },
+      libraryCardioMethod: { select: LIBRARY_ROUTINE_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -274,7 +290,7 @@ const PLAN_DAY_CONTENT_INCLUDE = {
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      libraryPlioExercise: { select: { coachInstructions: true } },
+      libraryPlioExercise: { select: LIBRARY_ROUTINE_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -283,7 +299,7 @@ const PLAN_DAY_CONTENT_INCLUDE = {
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      libraryMobilityExercise: { select: { coachInstructions: true } },
+      libraryMobilityExercise: { select: LIBRARY_ROUTINE_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -292,7 +308,7 @@ const PLAN_DAY_CONTENT_INCLUDE = {
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      libraryIsometricExercise: { select: { coachInstructions: true } },
+      libraryIsometricExercise: { select: LIBRARY_ROUTINE_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -301,7 +317,7 @@ const PLAN_DAY_CONTENT_INCLUDE = {
     orderBy: { sortOrder: 'asc' as const },
     include: {
       group: PLAN_EXERCISE_GROUP_INCLUDE,
-      librarySport: { select: { coachInstructions: true } },
+      librarySport: { select: LIBRARY_SPORT_SELECT },
       sets: PLAN_BLOCK_SETS_INCLUDE,
     },
   },
@@ -398,6 +414,30 @@ function buildDayExercises(day: PlanDay): ClientRoutine['planDays'][number]['exe
   ].sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
+function strengthPrescription(e: PlanDay['exercises'][number]): RoutineBlockPrescription {
+  return {
+    notes: e.notes,
+    perSetWeightRangesJson: e.perSetWeightRangesJson,
+    repsMax: e.repsMax ?? null,
+    repsMin: e.repsMin ?? null,
+    restSeconds: e.restSeconds ?? null,
+    setsPlanned: e.setsPlanned ?? null,
+    targetRir: e.targetRir ?? null,
+    targetRpe: e.targetRpe ?? null,
+    weightRangeMaxKg: e.weightRangeMaxKg,
+    weightRangeMinKg: e.weightRangeMinKg,
+  };
+}
+
+function blockPrescription(
+  notes: null | string,
+  restSeconds: null | number,
+  setsPlanned: null | number,
+  targetRpe: null | number,
+): RoutineBlockPrescription {
+  return { notes, restSeconds, setsPlanned, targetRpe };
+}
+
 function mapStrengthExercises(exercises: PlanDay['exercises']): ClientRoutineExercise[] {
   return exercises.map((e) =>
     mapRoutineExercise({
@@ -405,7 +445,10 @@ function mapStrengthExercises(exercises: PlanDay['exercises']): ClientRoutineExe
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.libraryExercise?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: strengthPrescription(e),
       repsMax: e.repsMax ?? null,
       repsMin: e.repsMin ?? null,
       restSeconds: e.restSeconds ?? null,
@@ -415,6 +458,7 @@ function mapStrengthExercises(exercises: PlanDay['exercises']): ClientRoutineExe
       targetRir: e.targetRir ?? null,
       targetRpe: e.targetRpe ?? null,
       type: 'strength',
+      youtubeUrl: e.libraryExercise?.youtubeUrl ?? null,
     }),
   );
 }
@@ -426,7 +470,10 @@ function mapCardioExercises(blocks: PlanDay['cardioBlocks']): ClientRoutineExerc
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.libraryCardioMethod?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: blockPrescription(e.notes, e.restSeconds ?? null, e.roundsPlanned ?? null, e.targetRpe ?? null),
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
@@ -436,6 +483,7 @@ function mapCardioExercises(blocks: PlanDay['cardioBlocks']): ClientRoutineExerc
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'cardio',
+      youtubeUrl: e.libraryCardioMethod?.youtubeUrl ?? null,
     }),
   );
 }
@@ -447,7 +495,10 @@ function mapPlioExercises(blocks: PlanDay['plioBlocks']): ClientRoutineExercise[
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.libraryPlioExercise?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: blockPrescription(e.notes, e.restSeconds ?? null, e.roundsPlanned ?? null, e.targetRpe ?? null),
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
@@ -457,6 +508,7 @@ function mapPlioExercises(blocks: PlanDay['plioBlocks']): ClientRoutineExercise[
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'plio',
+      youtubeUrl: e.libraryPlioExercise?.youtubeUrl ?? null,
     }),
   );
 }
@@ -468,7 +520,10 @@ function mapMobilityExercises(blocks: PlanDay['mobilityBlocks']): ClientRoutineE
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.libraryMobilityExercise?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: blockPrescription(e.notes, e.restSeconds ?? null, e.roundsPlanned ?? null, e.targetRpe ?? null),
       repsMax: null,
       repsMin: null,
       restSeconds: e.restSeconds ?? null,
@@ -478,6 +533,7 @@ function mapMobilityExercises(blocks: PlanDay['mobilityBlocks']): ClientRoutineE
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'mobility',
+      youtubeUrl: e.libraryMobilityExercise?.youtubeUrl ?? null,
     }),
   );
 }
@@ -489,7 +545,10 @@ function mapIsometricExercises(blocks: PlanDay['isometricBlocks']): ClientRoutin
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.libraryIsometricExercise?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: blockPrescription(e.notes, null, e.setsPlanned ?? null, e.targetRpe ?? null),
       repsMax: null,
       repsMin: null,
       restSeconds: null,
@@ -499,6 +558,7 @@ function mapIsometricExercises(blocks: PlanDay['isometricBlocks']): ClientRoutin
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'isometric',
+      youtubeUrl: e.libraryIsometricExercise?.youtubeUrl ?? null,
     }),
   );
 }
@@ -510,7 +570,10 @@ function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercis
       displayName: e.displayName,
       group: e.group,
       id: e.id,
+      lockedFields: readLockedFields(e.lockedFieldsJson),
+      mediaUrl: e.librarySport?.mediaUrl ?? null,
       notes: e.notes,
+      prescription: blockPrescription(e.notes, null, e.sets?.length ?? null, e.targetRpe ?? null),
       repsMax: null,
       repsMin: null,
       restSeconds: null,
@@ -520,6 +583,7 @@ function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercis
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'sport',
+      youtubeUrl: null,
     }),
   );
 }
@@ -529,24 +593,33 @@ function mapRoutineExercise(input: {
   displayName: string;
   group?: PlanDay['exercises'][number]['group'];
   id: string;
+  lockedFields?: string[];
+  mediaUrl: null | string;
   notes: null | string;
+  prescription?: RoutineBlockPrescription;
   repsMax: null | number;
   repsMin: null | number;
   restSeconds: null | number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   setsPlanned: null | number;
   sortOrder: number;
   targetRir: null | number;
   targetRpe: null | number;
   type: ClientRoutineExercise['type'];
+  youtubeUrl: null | string;
 }): ClientRoutineExercise {
-  const plannedSets = mapPlanSetsToPlannedSnapshots(input.sets);
+  const plannedSets = resolveClientRoutineSets(input.sets, input.type, {
+    ...input.prescription,
+    setsPlanned: input.prescription?.setsPlanned ?? input.setsPlanned,
+  });
   const groupFields = mapExerciseGroupFields(input.group);
   return {
     coachInstructions: normalizeCoachInstructions(input.coachInstructions),
     displayName: input.displayName,
+    lockedFields: input.lockedFields ?? [],
     ...groupFields,
     id: input.id,
+    mediaUrl: input.mediaUrl?.trim() ? input.mediaUrl.trim() : null,
     notes: stripMetaNotes(input.notes),
     repsMax: input.repsMax,
     repsMin: input.repsMin,
@@ -557,6 +630,7 @@ function mapRoutineExercise(input: {
     targetRir: input.targetRir,
     targetRpe: input.targetRpe,
     type: input.type,
+    youtubeUrl: input.youtubeUrl?.trim() ? input.youtubeUrl.trim() : null,
   };
 }
 

@@ -1,6 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
+import { mapClientRoutineSetsToPlannedSnapshots } from '../../../../common/notes/planned-set.mapper';
 import { buildSessionNoteSnapshot, plannedSetsJsonToInput } from '../../../../common/notes/session-note-snapshot';
+import {
+  resolveClientRoutineSets,
+  type PlanSetRow,
+  type RoutineBlockPrescription,
+} from '../../../../common/plan/client-routine-set.mapper';
+import type { ClientRoutineExercise } from '../../../clients/domain/client-routine';
 import type {
   SessionIsometricSetLog,
   SessionMobilitySetLog,
@@ -80,6 +87,14 @@ export function assertSessionMutable(status: SessionStatus): void {
   if (status === SessionStatus.COMPLETED) {
     throw new BadRequestException('Session already completed');
   }
+}
+
+function buildStoredPlannedSetsJson(
+  type: ClientRoutineExercise['type'],
+  sets: PlanSetRow[] | undefined,
+  prescription: RoutineBlockPrescription & { notes?: null | string },
+): Prisma.JsonValue {
+  return plannedSetsJsonToInput(mapClientRoutineSetsToPlannedSnapshots(resolveClientRoutineSets(sets, type, prescription)));
 }
 
 export function mapSessionItemCreate(item: TemplateExerciseSnapshot): Prisma.SessionStrengthItemCreateWithoutSessionInput {
@@ -244,7 +259,7 @@ export function mapTemplateExerciseSnapshot(exercise: {
   repsMax: null | number;
   repsMin: null | number;
   restSeconds: null | number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   setsPlanned: null | number;
   sortOrder: number;
   targetRir: null | number;
@@ -263,7 +278,18 @@ export function mapTemplateExerciseSnapshot(exercise: {
     exerciseLibraryId: exercise.exerciseLibraryId,
     notes: noteSnapshot.notes,
     perSetWeightRangesJson: exercise.perSetWeightRangesJson,
-    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plannedSetsJson: buildStoredPlannedSetsJson('strength', exercise.sets, {
+      notes: exercise.notes,
+      perSetWeightRangesJson: exercise.perSetWeightRangesJson,
+      repsMax: exercise.repsMax,
+      repsMin: exercise.repsMin,
+      restSeconds: exercise.restSeconds,
+      setsPlanned: exercise.setsPlanned,
+      targetRir: exercise.targetRir,
+      targetRpe: exercise.targetRpe,
+      weightRangeMaxKg: exercise.weightRangeMaxKg,
+      weightRangeMinKg: exercise.weightRangeMinKg,
+    }),
     repsMax: exercise.repsMax,
     repsMin: exercise.repsMin,
     restSeconds: exercise.restSeconds,
@@ -282,7 +308,7 @@ export function mapTemplatePlioSnapshot(block: {
   notes: null | string;
   plioExerciseLibraryId: null | string;
   roundsPlanned: number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   sortOrder: number;
   workSeconds: number;
   restSeconds: number;
@@ -297,7 +323,12 @@ export function mapTemplatePlioSnapshot(block: {
     coachInstructions: noteSnapshot.coachInstructions,
     displayName: block.displayName,
     notes: noteSnapshot.notes,
-    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plannedSetsJson: buildStoredPlannedSetsJson('plio', block.sets, {
+      notes: block.notes,
+      restSeconds: block.restSeconds,
+      setsPlanned: block.roundsPlanned,
+      targetRpe: block.targetRpe,
+    }),
     plioExerciseLibraryId: block.plioExerciseLibraryId,
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
@@ -313,7 +344,7 @@ export function mapTemplateMobilitySnapshot(block: {
   mobilityExerciseLibraryId: null | string;
   notes: null | string;
   roundsPlanned: number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   sortOrder: number;
   workSeconds: number;
   restSeconds: number;
@@ -329,7 +360,12 @@ export function mapTemplateMobilitySnapshot(block: {
     displayName: block.displayName,
     mobilityExerciseLibraryId: block.mobilityExerciseLibraryId,
     notes: noteSnapshot.notes,
-    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plannedSetsJson: buildStoredPlannedSetsJson('mobility', block.sets, {
+      notes: block.notes,
+      restSeconds: block.restSeconds,
+      setsPlanned: block.roundsPlanned,
+      targetRpe: block.targetRpe,
+    }),
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     workSeconds: block.workSeconds,
@@ -344,7 +380,7 @@ export function mapTemplateIsometricSnapshot(block: {
   libraryIsometricExercise?: { coachInstructions: null | string } | null;
   notes: null | string;
   restSeconds: number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   setsPlanned: null | number;
   sortOrder: number;
   targetRpe: null | number;
@@ -359,7 +395,12 @@ export function mapTemplateIsometricSnapshot(block: {
     displayName: block.displayName,
     isometricExerciseLibraryId: block.isometricExerciseLibraryId,
     notes: noteSnapshot.notes,
-    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plannedSetsJson: buildStoredPlannedSetsJson('isometric', block.sets, {
+      notes: block.notes,
+      restSeconds: block.restSeconds,
+      setsPlanned: block.setsPlanned,
+      targetRpe: block.targetRpe,
+    }),
     restSeconds: block.restSeconds,
     setsPlanned: block.setsPlanned,
     sortOrder: block.sortOrder,
@@ -372,7 +413,7 @@ export function mapTemplateSportSnapshot(block: {
   durationMinutes: number;
   librarySport?: { coachInstructions: null | string } | null;
   notes: null | string;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   sortOrder: number;
   sportLibraryId: null | string;
   targetRpe: null | number;
@@ -387,7 +428,10 @@ export function mapTemplateSportSnapshot(block: {
     displayName: block.displayName,
     durationMinutes: block.durationMinutes,
     notes: noteSnapshot.notes,
-    plannedSetsJson: plannedSetsJsonToInput(noteSnapshot.plannedSetsJson),
+    plannedSetsJson: buildStoredPlannedSetsJson('sport', block.sets, {
+      notes: block.notes,
+      targetRpe: block.targetRpe,
+    }),
     sortOrder: block.sortOrder,
     sportLibraryId: block.sportLibraryId,
     targetRpe: block.targetRpe,

@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
+import { ApiClientError } from '../../data/api-client';
 import {
   useFinishSessionMutation,
   useLogIntervalMutation,
@@ -13,24 +14,26 @@ import {
   useSessionQuery,
   useStartSessionMutation,
 } from '../../data/hooks/useTodaySession';
-import type { SessionItem, SessionView } from '../../data/hooks/useTodaySession';
-import { WorkoutClock } from '../../features/timers/WorkoutClock';
+import type {
+  LogIntervalMutationInput,
+  LogIsometricSetMutationInput,
+  LogMobilitySetMutationInput,
+  LogPlioSetMutationInput,
+  LogSetMutationInput,
+  LogSportMutationInput,
+  SessionItem,
+  SessionView,
+} from '../../data/hooks/useTodaySession';
 import { SESSION } from '../../theme/sessionStyles';
 import { LIGHT } from '../../theme/light';
+import { showError, showToast } from '../../shell/client/feedback';
 import { ActiveExerciseScreen } from './ActiveExerciseScreen';
-import { MiniRestTimer } from './MiniRestTimer';
-import { RestTimerOverlay } from './RestTimerOverlay';
 import { RoutineDayScreen } from './RoutineDayScreen';
+import type { RestState } from './session-rest.types';
 
 type TodaySessionScreenProps = {
   onClose: () => void;
   sessionId: string;
-};
-
-type RestState = {
-  endAt: number;
-  expanded: boolean;
-  seconds: number;
 };
 
 function formatElapsed(startedAt: null | string): string {
@@ -48,15 +51,17 @@ type TodaySessionBodyProps = {
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
-  logIntervalMutation: ReturnType<typeof useLogIntervalMutation>;
-  logIsometricSetMutation: ReturnType<typeof useLogIsometricSetMutation>;
-  logMobilitySetMutation: ReturnType<typeof useLogMobilitySetMutation>;
-  logPlioSetMutation: ReturnType<typeof useLogPlioSetMutation>;
-  logSetMutation: ReturnType<typeof useLogSetMutation>;
-  logSportMutation: ReturnType<typeof useLogSportMutation>;
+  onLogInterval: (input: LogIntervalMutationInput) => void;
+  onLogIsometricSet: (input: LogIsometricSetMutationInput) => void;
+  onLogMobilitySet: (input: LogMobilitySetMutationInput) => void;
+  onLogPlioSet: (input: LogPlioSetMutationInput) => void;
+  onLogSet: (input: LogSetMutationInput) => void;
+  onLogSport: (input: LogSportMutationInput) => void;
   onClose: () => void;
   onFinishDay: () => void;
   onRestFinish: () => void;
+  onCollapseRest: () => void;
+  onExpandRest: () => void;
   onSelectExercise: (item: SessionItem, group: SessionItem[]) => void;
   onStartRest: (setKey: string, seconds: number) => void;
   restState: RestState | null;
@@ -94,14 +99,6 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
               onFinishDay={props.onFinishDay}
               workoutElapsed={props.workoutElapsed}
             />
-            {props.isRunning && props.restState && !props.restState.expanded ? (
-              <MiniRestTimer
-                endAt={props.restState.endAt}
-                onPress={() => props.setRestState((prev) => (prev ? { ...prev, expanded: true } : null))}
-                onFinish={props.onRestFinish}
-              />
-            ) : null}
-            {props.isRunning ? <WorkoutClock startedAt={props.session.startedAt} onFinish={props.onFinishDay} /> : null}
           </>
         ) : null}
       </View>
@@ -110,35 +107,40 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
         <ActiveExerciseScreen
           exerciseGroup={props.exerciseGroup.length > 0 ? props.exerciseGroup : [props.selectedExercise]}
           item={props.selectedExercise}
+          restState={props.restState}
           sessionId={props.sessionId}
           visible
           workoutElapsed={props.workoutElapsed}
           completedRestKeys={props.completedRestKeys}
-          onClose={() => props.setSelectedExercise(null)}
-          onNavigateExercise={props.setSelectedExercise}
-          onFinishExercise={() => props.setSelectedExercise(null)}
+          onClose={() => {
+            props.setRestState(null);
+            props.setSelectedExercise(null);
+          }}
+          onNavigateExercise={(item) => {
+            props.setRestState(null);
+            props.setSelectedExercise(item);
+          }}
+          onCollapseRest={props.onCollapseRest}
+          onExpandRest={props.onExpandRest}
+          onRestFinish={props.onRestFinish}
+          onFinishExercise={() => {
+            props.setRestState(null);
+            props.setSelectedExercise(null);
+          }}
           onStartRest={props.onStartRest}
-          onLogSet={(input) => props.logSetMutation.mutate(input)}
-          onLogPlioSet={(input) => props.logPlioSetMutation.mutate(input)}
-          onLogMobilitySet={(input) => props.logMobilitySetMutation.mutate(input)}
-          onLogIsometricSet={(input) => props.logIsometricSetMutation.mutate(input)}
-          onLogSport={(input) => props.logSportMutation.mutate(input)}
-          onLogInterval={(input) => props.logIntervalMutation.mutate(input)}
-        />
-      ) : null}
-
-      {props.restState?.expanded ? (
-        <RestTimerOverlay
-          seconds={props.restState.seconds}
-          visible
-          onHide={() => props.setRestState((prev) => (prev ? { ...prev, expanded: false } : null))}
-          onFinish={props.onRestFinish}
+          onLogSet={props.onLogSet}
+          onLogPlioSet={props.onLogPlioSet}
+          onLogMobilitySet={props.onLogMobilitySet}
+          onLogIsometricSet={props.onLogIsometricSet}
+          onLogSport={props.onLogSport}
+          onLogInterval={props.onLogInterval}
         />
       ) : null}
     </SafeAreaView>
   );
 }
 
+/* eslint-disable max-lines-per-function -- session screen wires mutations, rest timer, and selected exercise sync. */
 export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const sessionQuery = useSessionQuery(sessionId);
@@ -179,21 +181,124 @@ export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenPro
     startMutation.mutate({ startMode: 'INTERACTIVE' });
   }, [session?.status, startMutation]);
 
+  React.useEffect(() => {
+    if (!session || !selectedExercise) {
+      return;
+    }
+    const updated = session.items.find((entry) => entry.id === selectedExercise.id);
+    if (updated) {
+      setSelectedExercise(updated);
+    }
+  }, [session, selectedExercise?.id]);
+
+  React.useEffect(() => {
+    if (!session || exerciseGroup.length === 0) {
+      return;
+    }
+    const updatedGroup = exerciseGroup
+      .map((entry) => session.items.find((item) => item.id === entry.id))
+      .filter((entry): entry is SessionItem => entry != null);
+    if (updatedGroup.length > 0) {
+      setExerciseGroup(updatedGroup);
+    }
+  }, [session, exerciseGroup.map((entry) => entry.id).join('|')]);
+
+  const handleMutationError = useCallback(
+    (error: unknown) => {
+      const message = error instanceof ApiClientError ? error.message : t('mobile.client.session.saveSetError');
+      showError(message);
+    },
+    [t],
+  );
+
+  const handleLogSet = useCallback(
+    (input: Parameters<ReturnType<typeof useLogSetMutation>['mutate']>[0]) => {
+      logSetMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logSetMutation, t],
+  );
+
+  const handleLogPlioSet = useCallback(
+    (input: Parameters<ReturnType<typeof useLogPlioSetMutation>['mutate']>[0]) => {
+      logPlioSetMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logPlioSetMutation, t],
+  );
+
+  const handleLogMobilitySet = useCallback(
+    (input: Parameters<ReturnType<typeof useLogMobilitySetMutation>['mutate']>[0]) => {
+      logMobilitySetMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logMobilitySetMutation, t],
+  );
+
+  const handleLogIsometricSet = useCallback(
+    (input: Parameters<ReturnType<typeof useLogIsometricSetMutation>['mutate']>[0]) => {
+      logIsometricSetMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logIsometricSetMutation, t],
+  );
+
+  const handleLogSport = useCallback(
+    (input: Parameters<ReturnType<typeof useLogSportMutation>['mutate']>[0]) => {
+      logSportMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logSportMutation, t],
+  );
+
+  const handleLogInterval = useCallback(
+    (input: Parameters<ReturnType<typeof useLogIntervalMutation>['mutate']>[0]) => {
+      logIntervalMutation.mutate(input, {
+        onError: handleMutationError,
+        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
+      });
+    },
+    [handleMutationError, logIntervalMutation, t],
+  );
+
   const handleFinishDay = useCallback(() => {
     finishMutation.mutate({ isIncomplete: false }, { onSuccess: () => onClose() });
   }, [finishMutation, onClose]);
 
   const handleStartRest = useCallback((setKey: string, seconds: number) => {
-    setCompletedRestKeys((current) => (current.includes(setKey) ? current : [...current, setKey]));
     setRestState({
-      seconds,
       endAt: Date.now() + seconds * 1000,
       expanded: true,
+      seconds,
+      setKey,
     });
   }, []);
 
+  const handleExpandRest = useCallback(() => {
+    setRestState((prev) => (prev ? { ...prev, expanded: true } : null));
+  }, []);
+
+  const handleCollapseRest = useCallback(() => {
+    setRestState((prev) => (prev ? { ...prev, expanded: false } : null));
+  }, []);
+
   const handleRestFinish = useCallback(() => {
-    setRestState(null);
+    setRestState((prev) => {
+      if (prev) {
+        setCompletedRestKeys((current) => (current.includes(prev.setKey) ? current : [...current, prev.setKey]));
+      }
+      return null;
+    });
   }, []);
 
   const handleSelectExercise = useCallback((item: SessionItem, group: SessionItem[]) => {
@@ -216,14 +321,16 @@ export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenPro
       isCompleted={isCompleted}
       isPending={isPending}
       isRunning={isRunning}
-      logIntervalMutation={logIntervalMutation}
-      logIsometricSetMutation={logIsometricSetMutation}
-      logMobilitySetMutation={logMobilitySetMutation}
-      logPlioSetMutation={logPlioSetMutation}
-      logSetMutation={logSetMutation}
-      logSportMutation={logSportMutation}
+      onLogInterval={handleLogInterval}
+      onLogIsometricSet={handleLogIsometricSet}
+      onLogMobilitySet={handleLogMobilitySet}
+      onLogPlioSet={handleLogPlioSet}
+      onLogSet={handleLogSet}
+      onLogSport={handleLogSport}
       onClose={onClose}
       onFinishDay={handleFinishDay}
+      onCollapseRest={handleCollapseRest}
+      onExpandRest={handleExpandRest}
       onRestFinish={handleRestFinish}
       onSelectExercise={handleSelectExercise}
       onStartRest={handleStartRest}

@@ -1,11 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientRoutineQuery, type ClientRoutine, type ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { s } from '../../shell/client/client-shell.styles';
-import { ConfirmModal } from '../../theme/ConfirmModal';
 import { LIGHT } from '../../theme/light';
 import {
   formatScheduledDateLabel,
@@ -17,13 +16,12 @@ import {
 
 type RoutineScreenProps = {
   onClose: () => void;
-  onSelectDay: (day: ClientRoutineDay, isToday: boolean) => void;
+  onSelectDay: (day: ClientRoutineDay) => void;
 };
 
 export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const { data: routine, isLoading } = useClientRoutineQuery();
-  const [pendingDay, setPendingDay] = useState<ClientRoutineDay | null>(null);
   const today = useMemo(() => new Date(), []);
   const weekRange = useMemo(() => getWeekDateRange(today), [today]);
   const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
@@ -32,20 +30,6 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
     if (!routine) return null;
     return resolveRoutineWeekSchedule(routine.planDays, calendarQuery.data?.data ?? [], today);
   }, [calendarQuery.data?.data, routine, today]);
-
-  const handleSelectDay = (day: ClientRoutineDay, isToday: boolean) => {
-    if (isToday) {
-      onSelectDay(day, true);
-      return;
-    }
-    setPendingDay(day);
-  };
-
-  const handleConfirmOtherDay = () => {
-    if (!pendingDay) return;
-    onSelectDay(pendingDay, false);
-    setPendingDay(null);
-  };
 
   if (isLoading || calendarQuery.isLoading) {
     return (
@@ -75,26 +59,17 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
       <ScrollView contentContainerStyle={s.panelContent}>
         <RoutineHeroCard routine={routine} t={t} />
         {schedule?.mode === 'calendar' ? (
-          <CalendarScheduleSections onSelectDay={handleSelectDay} schedule={schedule} t={t} />
+          <CalendarScheduleSections onSelectDay={onSelectDay} schedule={schedule} t={t} />
         ) : (
-          <AssignedRoutineSection days={schedule?.days ?? routine.planDays} onSelectDay={handleSelectDay} t={t} />
+          <AssignedRoutineSection days={schedule?.days ?? routine.planDays} onSelectDay={onSelectDay} t={t} />
         )}
       </ScrollView>
-      <ConfirmModal
-        cancelLabel={t('client.finish.cancel')}
-        confirmLabel={t('mobile.client.routine.confirmOtherDayContinue')}
-        message={t('mobile.client.routine.confirmOtherDayMessage')}
-        title={t('mobile.client.routine.confirmOtherDayTitle')}
-        visible={pendingDay != null}
-        onCancel={() => setPendingDay(null)}
-        onConfirm={handleConfirmOtherDay}
-      />
     </View>
   );
 }
 
 function CalendarScheduleSections(props: {
-  onSelectDay: (day: ClientRoutineDay, isToday: boolean) => void;
+  onSelectDay: (day: ClientRoutineDay) => void;
   schedule: Extract<ReturnType<typeof resolveRoutineWeekSchedule>, { mode: 'calendar' }>;
   t: (key: string) => string;
 }): React.JSX.Element {
@@ -107,7 +82,7 @@ function CalendarScheduleSections(props: {
         {schedule.today ? (
           <ScheduledWorkoutCard
             isActive
-            onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(schedule.today!), true)}
+            onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(schedule.today!))}
             subtitle={t('mobile.client.routine.scheduledToday')}
             workout={schedule.today}
           />
@@ -126,7 +101,7 @@ function CalendarScheduleSections(props: {
             {schedule.otherDays.map((workout) => (
               <ScheduledWorkoutCard
                 key={`${workout.date}-${workout.planDayId}`}
-                onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout), false)}
+                onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout))}
                 subtitle={formatScheduledDateLabel(workout.date)}
                 workout={workout}
               />
@@ -140,7 +115,7 @@ function CalendarScheduleSections(props: {
 
 function AssignedRoutineSection(props: {
   days: ClientRoutineDay[];
-  onSelectDay: (day: ClientRoutineDay, isToday: boolean) => void;
+  onSelectDay: (day: ClientRoutineDay) => void;
   t: (key: string) => string;
 }): React.JSX.Element {
   return (
@@ -148,7 +123,7 @@ function AssignedRoutineSection(props: {
       <Text style={s.routineSectionLabel}>{props.t('mobile.client.routine.assignedDays')}</Text>
       <View style={styles.otherDays}>
         {props.days.map((day) => (
-          <RoutineDayCard key={day.id} day={day} onPress={() => props.onSelectDay(day, false)} />
+          <RoutineDayCard key={day.id} day={day} onPress={() => props.onSelectDay(day)} />
         ))}
       </View>
     </>

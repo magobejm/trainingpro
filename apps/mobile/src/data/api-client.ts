@@ -72,16 +72,33 @@ function resolveBaseUrl(baseUrl?: string): string {
 
 async function throwIfUnauthorized(response: Response): Promise<void> {
   if (response.status === 401) {
-    throw new UnauthorizedApiError('Unauthorized', 401);
+    throw new UnauthorizedApiError(await readErrorMessage(response, 'Unauthorized'), 401);
   }
   if (response.status === 403) {
-    throw new ForbiddenApiError('Forbidden', 403);
+    throw new ForbiddenApiError(await readErrorMessage(response, 'Forbidden'), 403);
   }
+}
+
+async function readErrorMessage(response: Response, fallback: string): Promise<string> {
+  const payload = await safeReadText(response);
+  if (!payload) {
+    return fallback;
+  }
+  try {
+    const parsed = JSON.parse(payload) as { message?: unknown };
+    if (typeof parsed.message === 'string' && parsed.message.trim()) {
+      return parsed.message;
+    }
+  } catch {
+    return payload;
+  }
+  return payload;
 }
 
 function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
+    'X-Timezone-Offset': String(-new Date().getTimezoneOffset()),
     ...(extra ?? {}),
   };
   if (config.accessToken) {

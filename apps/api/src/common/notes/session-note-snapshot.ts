@@ -30,19 +30,45 @@ export function readPlannedSetsJson(value: Prisma.JsonValue | null): PlannedSetS
     return [];
   }
   return value
-    .map((entry) => {
+    .flatMap((entry) => {
       if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        return null;
+        return [];
       }
       const row = entry as Record<string, unknown>;
-      return {
+      const snapshot: PlannedSetSnapshot = {
         advancedTechnique: typeof row.advancedTechnique === 'string' ? row.advancedTechnique : null,
         note: typeof row.note === 'string' ? row.note : null,
         setIndex: typeof row.setIndex === 'number' ? row.setIndex : 0,
       };
+      const durationSeconds = readOptionalNumber(row.durationSeconds);
+      if (durationSeconds != null) snapshot.durationSeconds = durationSeconds;
+      const fcMaxPct = readOptionalNumber(row.fcMaxPct);
+      if (fcMaxPct != null) snapshot.fcMaxPct = fcMaxPct;
+      const fcReservePct = readOptionalNumber(row.fcReservePct);
+      if (fcReservePct != null) snapshot.fcReservePct = fcReservePct;
+      const heartRate = readOptionalNumber(row.heartRate);
+      if (heartRate != null) snapshot.heartRate = heartRate;
+      const reps = readOptionalNumber(row.reps);
+      if (reps != null) snapshot.reps = reps;
+      const restSeconds = readOptionalNumber(row.restSeconds);
+      if (restSeconds != null) snapshot.restSeconds = restSeconds;
+      const rir = readOptionalNumber(row.rir);
+      if (rir != null) snapshot.rir = rir;
+      if (typeof row.rom === 'string') snapshot.rom = row.rom;
+      const rpe = readOptionalNumber(row.rpe);
+      if (rpe != null) snapshot.rpe = rpe;
+      const weightKg = readOptionalNumber(row.weightKg);
+      if (weightKg != null) snapshot.weightKg = weightKg;
+      return [snapshot];
     })
-    .filter((entry): entry is PlannedSetSnapshot => entry !== null)
     .sort((a, b) => a.setIndex - b.setIndex);
+}
+
+function readOptionalNumber(value: unknown): null | number {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+  return null;
 }
 
 function normalizeText(value: null | string | undefined): null | string {

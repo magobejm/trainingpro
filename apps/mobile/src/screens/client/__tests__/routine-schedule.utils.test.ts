@@ -4,11 +4,29 @@ import {
   formatLocalDate,
   formatScheduledDateLabel,
   getWeekDateRange,
+  isSelectedPlanDayScheduledForToday,
   resolveRoutineWeekSchedule,
   scheduledWorkoutToRoutineDay,
 } from '../routine-schedule.utils';
 
-describe('routine-schedule.utils', () => {
+describe('routine-schedule.utils dates', () => {
+  it('formats local dates without UTC drift', () => {
+    expect(formatLocalDate(new Date(2026, 8, 1))).toBe('2026-09-01');
+  });
+
+  it('builds monday-sunday week ranges', () => {
+    expect(getWeekDateRange(new Date(2026, 8, 1))).toEqual({
+      from: '2026-08-31',
+      to: '2026-09-06',
+    });
+  });
+
+  it('formats scheduled date labels', () => {
+    expect(formatScheduledDateLabel('2026-09-03', 'es-ES')).toContain('3');
+  });
+});
+
+describe('routine-schedule.utils calendar matching', () => {
   const planDays: ClientRoutineDay[] = [
     {
       dayIndex: 1,
@@ -39,22 +57,17 @@ describe('routine-schedule.utils', () => {
     ...overrides,
   });
 
-  it('formats local dates without UTC drift', () => {
-    expect(formatLocalDate(new Date(2026, 8, 1))).toBe('2026-09-01');
-  });
-
-  it('builds monday-sunday week ranges', () => {
-    expect(getWeekDateRange(new Date(2026, 8, 1))).toEqual({
-      from: '2026-08-31',
-      to: '2026-09-06',
-    });
-  });
-
   it('uses calendar workouts for today and other days in the same week', () => {
     const schedule = resolveRoutineWeekSchedule(
       planDays,
       [
-        calendarEvent({ date: '2026-09-01', id: 'today', planDayId: 'legacy-day', planDayTitle: 'Legacy Day 2' }),
+        calendarEvent({
+          date: '2026-09-01',
+          id: 'today',
+          planDayId: 'legacy-day',
+          planDayTitle: 'Legacy Day 2',
+          title: 'Legacy Day 2',
+        }),
         calendarEvent({ date: '2026-09-03', id: 'other', planDayId: 'day-2', planDayTitle: 'Day 2 - Upper Body' }),
       ],
       new Date(2026, 8, 1),
@@ -62,7 +75,7 @@ describe('routine-schedule.utils', () => {
 
     expect(schedule.mode).toBe('calendar');
     if (schedule.mode !== 'calendar') return;
-    expect(schedule.today?.planDayId).toBe('legacy-day');
+    expect(schedule.today?.planDayId).toBe('day-2');
     expect(schedule.today?.title).toBe('Legacy Day 2');
     expect(schedule.isRestDay).toBe(false);
     expect(schedule.otherDays).toHaveLength(1);
@@ -87,6 +100,90 @@ describe('routine-schedule.utils', () => {
     expect(schedule).toEqual({ mode: 'assigned', days: planDays });
   });
 
+  it('matches assigned plan days by title when calendar events omit planDayId', () => {
+    const schedule = resolveRoutineWeekSchedule(
+      planDays,
+      [
+        calendarEvent({
+          date: '2026-09-01',
+          id: 'today',
+          planDayId: null,
+          planDayTitle: 'Day 1 - Lower Body',
+          title: 'Día 1',
+        }),
+      ],
+      new Date(2026, 8, 1),
+    );
+
+    expect(schedule.mode).toBe('calendar');
+    if (schedule.mode !== 'calendar') return;
+    expect(schedule.today?.planDayId).toBe('day-1');
+    expect(schedule.today?.routineDay?.exercises).toHaveLength(1);
+  });
+});
+
+describe('routine-schedule.utils renamed days', () => {
+  const planDays: ClientRoutineDay[] = [
+    {
+      dayIndex: 1,
+      exercises: [{ displayName: 'Squat', id: 'ex-1', sortOrder: 0 } as ClientRoutineDay['exercises'][number]],
+      id: 'day-1',
+      notes: null,
+      title: 'Day 1 - Lower Body',
+    },
+    {
+      dayIndex: 2,
+      exercises: [],
+      id: 'day-2',
+      notes: null,
+      title: 'Day 2 - Upper Body',
+    },
+  ];
+
+  const calendarEvent = (overrides: Partial<ClientCalendarEvent>): ClientCalendarEvent => ({
+    color: null,
+    content: null,
+    date: '2026-09-01',
+    id: 'event-1',
+    planDayId: 'day-1',
+    planDayTitle: 'Day 1 - Lower Body',
+    time: null,
+    title: 'Day 1 - Lower Body',
+    type: 'workout',
+    ...overrides,
+  });
+
+  it('matches renamed plan days when calendar still uses generic day labels', () => {
+    const renamedDays: ClientRoutineDay[] = [
+      {
+        dayIndex: 1,
+        exercises: [{ displayName: 'Squat', id: 'ex-1', sortOrder: 0 } as ClientRoutineDay['exercises'][number]],
+        id: 'day-1',
+        notes: null,
+        title: 'Pata',
+      },
+      {
+        dayIndex: 2,
+        exercises: [],
+        id: 'day-2',
+        notes: null,
+        title: 'Día 2',
+      },
+    ];
+
+    const schedule = resolveRoutineWeekSchedule(
+      renamedDays,
+      [calendarEvent({ date: '2026-09-08', id: 'other', planDayId: null, planDayTitle: undefined, title: 'Día 1' })],
+      new Date(2026, 8, 7),
+    );
+
+    expect(schedule.mode).toBe('calendar');
+    if (schedule.mode !== 'calendar') return;
+    expect(schedule.otherDays[0]?.planDayId).toBe('day-1');
+    expect(schedule.otherDays[0]?.routineDay?.title).toBe('Pata');
+    expect(schedule.otherDays[0]?.routineDay?.exercises).toHaveLength(1);
+  });
+
   it('builds a preview day from calendar data when the plan day is outside the assigned routine', () => {
     const workout = scheduledWorkoutToRoutineDay({
       date: '2026-09-01',
@@ -100,7 +197,14 @@ describe('routine-schedule.utils', () => {
     expect(workout.exercises).toEqual([]);
   });
 
-  it('formats scheduled date labels', () => {
-    expect(formatScheduledDateLabel('2026-09-03', 'es-ES')).toContain('3');
+  it('detects when selected plan day matches today schedule', () => {
+    const schedule = resolveRoutineWeekSchedule(
+      planDays,
+      [calendarEvent({ date: '2026-09-01', id: 'today', planDayId: 'day-1' })],
+      new Date(2026, 8, 1),
+    );
+
+    expect(isSelectedPlanDayScheduledForToday('day-1', schedule)).toBe(true);
+    expect(isSelectedPlanDayScheduledForToday('day-2', schedule)).toBe(false);
   });
 });

@@ -88,7 +88,9 @@ export function useAssignRoutineMutation() {
   return useMutation({
     mutationFn: ({ clientId, templateId }: { clientId: string; templateId: string }) =>
       updateClient(auth, clientId, { trainingPlanId: templateId }),
-    onSuccess: (_data, { clientId }) => {
+    onSuccess: (_data, { clientId, templateId }) => {
+      const trainingPlanId = normalizePlanTemplateId(String(templateId)) ?? templateId;
+      syncClientInCache(queryClient, clientId, { trainingPlanId });
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
       void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
     },

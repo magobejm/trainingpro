@@ -5,7 +5,6 @@ import type { DraftBlock, DraftSet } from '../../RoutinePlanner.types';
 import { s } from '../../RoutinePlanner.styles';
 import { SeriesTable } from './SeriesTable';
 import { AdvancedSeriesModal } from './AdvancedSeriesModal';
-import { SeriesNoteModal } from './SeriesNoteModal';
 import { copyPreviousSet } from '../../RoutinePlanner.helpers';
 import { RoutineNumberField } from '../RoutineNumberField';
 
@@ -27,7 +26,6 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
   const sets = block.sets ?? [];
   const lockedFields = block.lockedFields ?? [];
   const [advancedModalSeriesIdx, setAdvancedModalSeriesIdx] = useState<number | null>(null);
-  const [noteModalSeriesIdx, setNoteModalSeriesIdx] = useState<number | null>(null);
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
 
   const updateSets = (newSets: DraftSet[]) => onUpdateField('sets', newSets);
@@ -80,12 +78,6 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
     }
   };
 
-  const handleSaveNote = (note: string) => {
-    if (noteModalSeriesIdx !== null) {
-      handleUpdateSet(noteModalSeriesIdx, { note: note || undefined });
-    }
-  };
-
   const seriesCount = sets.length;
 
   return (
@@ -124,7 +116,6 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
           onOpenAdvanced={(idx) => {
             setAdvancedModalSeriesIdx(idx);
           }}
-          onOpenNote={(idx) => setNoteModalSeriesIdx(idx)}
           onRemoveAdvanced={(idx) => handleUpdateSet(idx, { advancedTechnique: undefined })}
           onRemoveSet={handleRemoveSet}
           onToggleLock={handleToggleLock}
@@ -144,17 +135,7 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
           onClose={() => setAdvancedModalSeriesIdx(null)}
           onRemove={handleRemoveAdvanced}
           seriesIndex={advancedModalSeriesIdx}
-          visible
-        />
-      )}
-
-      {/* Series note modal */}
-      {noteModalSeriesIdx !== null && (
-        <SeriesNoteModal
-          onClose={() => setNoteModalSeriesIdx(null)}
-          onSave={handleSaveNote}
-          seriesIndex={noteModalSeriesIdx}
-          value={sets[noteModalSeriesIdx]?.note ?? ''}
+          viewOnly={readOnly}
           visible
         />
       )}

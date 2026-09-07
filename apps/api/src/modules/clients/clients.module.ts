@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { ChatModule } from '../chat/chat.module';
 import { FilesModule } from '../files/files.module';
 import { SessionsModule } from '../sessions/sessions.module';
+import { ClientCalendarPlanDaySwapService } from './application/services/client-calendar-plan-day-swap.service';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
 import { EnsureClientSelfSessionUseCase } from './application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from './application/use-cases/get-client-calendar-summary.usecase';
@@ -42,7 +44,7 @@ import { ClientsController } from './presentation/controllers/clients.controller
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
-  imports: [AuthModule, FilesModule, SessionsModule],
+  imports: [AuthModule, ChatModule, FilesModule, SessionsModule],
   controllers: [ClientLibraryController, ClientSelfController, ClientsController],
   providers: [
     ArchiveClientUseCase,
@@ -59,6 +61,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientSessionsUseCase,
     ListClientWellnessUseCase,
     ClientAuthProvisionerService,
+    ClientCalendarPlanDaySwapService,
     CreateClientProgressPhotoUseCase,
     CreateClientUseCase,
     DeleteClientProgressPhotoUseCase,

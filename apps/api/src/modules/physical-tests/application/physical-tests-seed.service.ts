@@ -8,7 +8,17 @@ export class PhysicalTestsSeedService implements OnModuleInit {
   constructor(private readonly prisma: PrismaService) {}
 
   async onModuleInit(): Promise<void> {
-    await this.seedCatalog();
+    if (!process.env.DATABASE_URL) {
+      return;
+    }
+    try {
+      await this.seedCatalog();
+    } catch (err) {
+      // Don't crash bootstrap — /health must stay reachable in CI smoke
+      // (no Postgres) and during a transient DB outage at boot.
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn(`[PhysicalTestsSeedService] catalog seed skipped; will retry on next boot: ${message}`);
+    }
   }
 
   async seedCatalog(): Promise<void> {

@@ -64,6 +64,31 @@ const FOOD_FIELDS: FieldConfig[] = [
     placeholderKey: 'coach.library.foods.fatPlaceholder',
   },
   {
+    field: 'fiberG',
+    keyboardType: 'numeric',
+    placeholderKey: 'coach.library.foods.fiberPlaceholder',
+  },
+  {
+    field: 'sugarG',
+    keyboardType: 'numeric',
+    placeholderKey: 'coach.library.foods.sugarPlaceholder',
+  },
+  {
+    field: 'saturatedFatG',
+    keyboardType: 'numeric',
+    placeholderKey: 'coach.library.foods.saturatedFatPlaceholder',
+  },
+  {
+    field: 'saltG',
+    keyboardType: 'numeric',
+    placeholderKey: 'coach.library.foods.saltPlaceholder',
+  },
+  {
+    field: 'unsaturatedFatG',
+    keyboardType: 'numeric',
+    placeholderKey: 'coach.library.foods.unsaturatedFatPlaceholder',
+  },
+  {
     field: 'notes',
     multiline: true,
     numberOfLines: 2,
@@ -138,15 +163,11 @@ export function FoodCreateFields(props: BaseProps): React.JSX.Element {
   return <FormFields {...props} fields={FOOD_FIELDS} options={{}} />;
 }
 
-export function IsometricBaseFields(
-  props: BaseProps & Pick<CatalogProps, 'isometricTypeOptions'>,
-): React.JSX.Element {
+export function IsometricBaseFields(props: BaseProps & Pick<CatalogProps, 'isometricTypeOptions'>): React.JSX.Element {
   return <FormFields {...props} fields={ISOMETRIC_FIELDS} options={props} />;
 }
 
-export function PlioBaseFields(
-  props: BaseProps & Pick<CatalogProps, 'plioTypeOptions'>,
-): React.JSX.Element {
+export function PlioBaseFields(props: BaseProps & Pick<CatalogProps, 'plioTypeOptions'>): React.JSX.Element {
   return <FormFields {...props} fields={PLIO_FIELDS} options={props} />;
 }
 
@@ -161,9 +182,7 @@ const MOBILITY_TYPE_FIELDS: FieldConfig[] = [
   },
 ];
 
-export function MobilityBaseFields(
-  props: BaseProps & Pick<CatalogProps, 'mobilityTypeOptions'>,
-): React.JSX.Element {
+export function MobilityBaseFields(props: BaseProps & Pick<CatalogProps, 'mobilityTypeOptions'>): React.JSX.Element {
   return <FormFields {...props} fields={MOBILITY_TYPE_FIELDS} options={props} />;
 }
 
@@ -224,19 +243,13 @@ function readOptions(field: string, options: CatalogProps, t: Translator): Optio
     return options.methodTypeOptions ?? [];
   }
   if (field === 'isometricType') {
-    return (
-      options.isometricTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
-    );
+    return options.isometricTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }];
   }
   if (field === 'mobilityType') {
-    return (
-      options.mobilityTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
-    );
+    return options.mobilityTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }];
   }
   if (field === 'plioType') {
-    return (
-      options.plioTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }]
-    );
+    return options.plioTypeOptions ?? [{ id: 'undefined', label: t('coach.library.type.undefined') }];
   }
   return [];
 }

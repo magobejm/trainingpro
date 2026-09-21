@@ -19,32 +19,57 @@ export const CATEGORY_FILTER_KEYS = [
   'dulces_y_desayuno',
 ] as const;
 
+export const MICRONUTRIENT_KEYS = [
+  'hierro',
+  'calcio',
+  'magnesio',
+  'zinc',
+  'potasio',
+  'vitamina_c',
+  'vitamina_d',
+  'vitamina_a',
+  'folato',
+  'vitamina_b12',
+] as const;
+
 export type FoodCreateFormState = {
   caloriesKcal: string;
   carbsG: string;
   fatG: string;
+  fiberG: string;
   foodCategory: string;
   foodType: string;
   mediaType: string;
   mediaUrl: string;
+  micronutrients: string;
   name: string;
   notes: string;
   proteinG: string;
+  saltG: string;
+  saturatedFatG: string;
   servingUnit: string;
+  sugarG: string;
+  unsaturatedFatG: string;
 };
 
 export const EMPTY_FOOD_FORM: FoodCreateFormState = {
   caloriesKcal: '',
   carbsG: '',
   fatG: '',
+  fiberG: '',
   foodCategory: '',
   foodType: '',
   mediaType: '',
   mediaUrl: '',
+  micronutrients: '',
   name: '',
   notes: '',
   proteinG: '',
+  saltG: '',
+  saturatedFatG: '',
   servingUnit: '',
+  sugarG: '',
+  unsaturatedFatG: '',
 };
 
 type Unit = (typeof UNIT_FILTER_KEYS)[number];
@@ -58,16 +83,19 @@ export function buildFoodPayload(form: FoodCreateFormState) {
     proteinG: parseOptionalNumber(form.proteinG),
     carbsG: parseOptionalNumber(form.carbsG),
     fatG: parseOptionalNumber(form.fatG),
+    fiberG: parseOptionalNumber(form.fiberG),
     notes: normalizeNullable(form.notes),
+    micronutrients: parseMicronutrients(form.micronutrients),
     mediaUrl: normalizeNullable(form.mediaUrl),
     mediaType: normalizeNullable(form.mediaType),
+    saltG: parseOptionalNumber(form.saltG),
+    saturatedFatG: parseOptionalNumber(form.saturatedFatG),
+    sugarG: parseOptionalNumber(form.sugarG),
+    unsaturatedFatG: parseOptionalNumber(form.unsaturatedFatG),
   };
 }
 
-export function resolveFoodFormError(
-  form: FoodCreateFormState,
-  t: (key: string) => string,
-): string {
+export function resolveFoodFormError(form: FoodCreateFormState, t: (key: string) => string): string {
   if (!form.name.trim()) {
     return t('coach.clientProfile.validation.required');
   }
@@ -101,4 +129,19 @@ function normalizeServingUnitValue(value: string): '100g' | '100ml' | 'porcion' 
     return value;
   }
   return '100g';
+}
+
+export function parseMicronutrients(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+export function toggleMicronutrient(current: string, id: string): string {
+  const selected = parseMicronutrients(current);
+  if (selected.includes(id)) {
+    return selected.filter((item) => item !== id).join(',');
+  }
+  return [...selected, id].join(',');
 }

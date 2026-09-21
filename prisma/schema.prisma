@@ -589,6 +589,12 @@ model Food {
   proteinG          Int?                @map("protein_g")
   carbsG            Int?                @map("carbs_g")
   fatG              Int?                @map("fat_g")
+  fiberG            Decimal?            @map("fiber_g") @db.Decimal(6, 2)
+  sugarG            Decimal?            @map("sugar_g") @db.Decimal(6, 2)
+  saturatedFatG     Decimal?            @map("saturated_fat_g") @db.Decimal(6, 2)
+  saltG             Decimal?            @map("salt_g") @db.Decimal(6, 2)
+  unsaturatedFatG   Decimal?            @map("unsaturated_fat_g") @db.Decimal(6, 2)
+  micronutrients    String[]            @default([]) @map("micronutrients")
   notes             String?
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   mediaType         String?             @map("media_type") @db.VarChar(40)

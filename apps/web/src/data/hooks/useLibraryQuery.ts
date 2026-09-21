@@ -99,16 +99,29 @@ export type SportLibraryItem = {
 export type FoodLibraryItem = {
   caloriesKcal: null | number;
   carbsG: null | number;
+  considerations?: Array<{
+    code: string;
+    priority: 'P1' | 'P2' | 'P3' | 'P4';
+    tone: 'bad' | 'good' | 'neutral';
+    values?: { x?: number };
+    variant: number;
+  }>;
   fatG: null | number;
+  fiberG: null | number;
   foodCategory: null | string;
   foodType: null | string;
   id: string;
   media: LibraryMedia;
+  micronutrients?: string[];
   name: string;
   notes: null | string;
   proteinG: null | number;
+  saltG: null | number;
+  saturatedFatG: null | number;
   scope: Scope;
   servingUnit: null | string;
+  sugarG: null | number;
+  unsaturatedFatG: null | number;
 };
 
 type ListResponse<T> = {
@@ -142,8 +155,7 @@ export function useLibraryCardioMethodsQuery(filter: {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () =>
-      fetchLibraryList<CardioMethodLibraryItem>(auth, '/library/cardio-methods', filter),
+    queryFn: () => fetchLibraryList<CardioMethodLibraryItem>(auth, '/library/cardio-methods', filter),
     queryKey: ['library', 'cardio-methods', filter, auth?.activeRole, auth?.accessToken],
   });
 }

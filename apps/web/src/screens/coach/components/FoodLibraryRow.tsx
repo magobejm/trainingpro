@@ -1,12 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { FoodLibraryItem } from '../../../data/hooks/useLibraryQuery';
+import { ConsiderationBadges } from '../nutrition/ConsiderationBadges';
 
 type Props = {
   expanded: boolean;
   item: FoodLibraryItem;
   onToggle: () => void;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 };
 
 export function FoodLibraryRow(props: Props): React.JSX.Element {
@@ -41,7 +42,7 @@ function readScopeKey(scope: string): 'coach' | 'global' {
 
 function FoodDetail(props: {
   item: FoodLibraryItem;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
   const lines = buildDetailLines(props.item, props.t);
   return (
@@ -49,6 +50,7 @@ function FoodDetail(props: {
       {lines.map((line) => (
         <DetailLine key={line.label} label={line.label} value={line.value} />
       ))}
+      <ConsiderationBadges items={props.item.considerations} t={props.t} />
     </View>
   );
 }
@@ -59,10 +61,26 @@ function buildDetailLines(item: FoodLibraryItem, t: (key: string) => string) {
     { label: t('coach.library.foods.detail.protein'), value: readValue(item.proteinG, t) },
     { label: t('coach.library.foods.detail.carbs'), value: readValue(item.carbsG, t) },
     { label: t('coach.library.foods.detail.fat'), value: readValue(item.fatG, t) },
+    { label: t('coach.library.foods.detail.fiber'), value: readValue(item.fiberG, t) },
+    { label: t('coach.library.foods.detail.sugar'), value: readValue(item.sugarG, t) },
+    { label: t('coach.library.foods.detail.saturatedFat'), value: readValue(item.saturatedFatG, t) },
+    { label: t('coach.library.foods.detail.salt'), value: readValue(item.saltG, t) },
+    { label: t('coach.library.foods.detail.unsaturatedFat'), value: readValue(item.unsaturatedFatG, t) },
+    {
+      label: t('coach.library.foods.detail.micronutrients'),
+      value: readMicronutrients(item.micronutrients, t),
+    },
     { label: t('coach.library.foods.detail.type'), value: readTypeLabel(item.foodType, t) },
     { label: t('coach.library.foods.detail.category'), value: readCategoryLabel(item.foodCategory, t) },
     { label: t('coach.library.foods.detail.notes'), value: item.notes ?? t('coach.library.foods.detail.empty') },
   ];
+}
+
+function readMicronutrients(value: string[] | undefined, t: (key: string) => string): string {
+  if (!value || value.length === 0) {
+    return t('coach.library.foods.detail.empty');
+  }
+  return value.map((item) => t(`coach.library.foods.micronutrients.${item}`)).join(', ');
 }
 
 function readValue(value: null | number, t: (key: string) => string): string {

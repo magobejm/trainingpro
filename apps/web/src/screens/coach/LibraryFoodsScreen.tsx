@@ -6,6 +6,7 @@ import '../../i18n';
 import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
 import { FoodLibraryRow } from './components/FoodLibraryRow';
+import { FoodMicronutrientChips } from './components/FoodMicronutrientChips';
 import { FoodCreateFields } from './components/LibraryCreateFormFields';
 import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -53,8 +54,7 @@ function useFoodsViewModel() {
     ...form,
     listQuery,
     ...buildFoodActions(state, form, t),
-    onToggleDetail: (itemId: string) =>
-      setExpandedId((current) => (current === itemId ? '' : itemId)),
+    onToggleDetail: (itemId: string) => setExpandedId((current) => (current === itemId ? '' : itemId)),
     t,
   };
 }
@@ -63,12 +63,9 @@ function useFoodState() {
   const [createError, setCreateError] = useState('');
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [query, setQuery] = useState('');
-  const [activeUnitFilter, setActiveUnitFilter] =
-    useState<(typeof UNIT_FILTER_KEYS)[number]>('all');
-  const [activeTypeFilter, setActiveTypeFilter] =
-    useState<(typeof TYPE_FILTER_KEYS)[number]>('all');
-  const [activeCategoryFilter, setActiveCategoryFilter] =
-    useState<(typeof CATEGORY_FILTER_KEYS)[number]>('all');
+  const [activeUnitFilter, setActiveUnitFilter] = useState<(typeof UNIT_FILTER_KEYS)[number]>('all');
+  const [activeTypeFilter, setActiveTypeFilter] = useState<(typeof TYPE_FILTER_KEYS)[number]>('all');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<(typeof CATEGORY_FILTER_KEYS)[number]>('all');
   return {
     activeCategoryFilter,
     activeTypeFilter,
@@ -106,8 +103,7 @@ function buildFoodActions(
     onCloseCreateModal: () => state.setCreateModalVisible(false),
     onCreate: () => createFood(form, state.setCreateError, state.setCreateModalVisible, t),
     onOpenCreateModal: () => state.setCreateModalVisible(true),
-    onSelectCategoryFilter: (id: string) =>
-      state.setActiveCategoryFilter(isCategoryFilter(id) ? id : 'all'),
+    onSelectCategoryFilter: (id: string) => state.setActiveCategoryFilter(isCategoryFilter(id) ? id : 'all'),
     onSelectTypeFilter: (id: string) => state.setActiveTypeFilter(isTypeFilter(id) ? id : 'all'),
     onSelectUnitFilter: (id: string) => state.setActiveUnitFilter(isUnitFilter(id) ? id : 'all'),
   };
@@ -185,6 +181,7 @@ function renderCreateModal(props: ViewModel): React.JSX.Element {
         onSelect={(id) => props.setServingUnit(id === 'all' ? '' : id)}
       />
       <FoodCreateFields form={props.form} setField={props.setField} t={props.t} />
+      <FoodMicronutrientChips selected={props.form.micronutrients} setField={props.setField} t={props.t} />
       {props.createError ? <Text style={styles.error}>{props.createError}</Text> : null}
     </LibraryCreateModal>
   );
@@ -198,16 +195,8 @@ function renderSearchCard(props: ViewModel): React.JSX.Element {
         placeholder={props.t('coach.library.foods.searchPlaceholder')}
         value={props.query}
       />
-      <FilterChips
-        activeId={props.activeUnitFilter}
-        items={props.unitFilters}
-        onSelect={props.onSelectUnitFilter}
-      />
-      <FilterChips
-        activeId={props.activeTypeFilter}
-        items={props.typeFilters}
-        onSelect={props.onSelectTypeFilter}
-      />
+      <FilterChips activeId={props.activeUnitFilter} items={props.unitFilters} onSelect={props.onSelectUnitFilter} />
+      <FilterChips activeId={props.activeTypeFilter} items={props.typeFilters} onSelect={props.onSelectTypeFilter} />
       <FilterChips
         activeId={props.activeCategoryFilter}
         items={props.categoryFilters}

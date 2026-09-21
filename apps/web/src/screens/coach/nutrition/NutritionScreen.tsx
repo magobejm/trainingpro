@@ -14,6 +14,7 @@ import { NutritionHubView } from './NutritionHubView';
 import { PlanSetupWizard } from './PlanSetupWizard';
 import { readSetupData } from './nutrition-tdee.utils';
 import type { NutritionPlanType, PlanSetupData } from './nutrition.types';
+import { ConsiderationBadges } from './ConsiderationBadges';
 import { styles } from './nutrition.styles';
 
 type ViewState =
@@ -170,6 +171,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
               })}
             </Text>
             {food.notes ? <Text style={styles.cardMuted}>{food.notes}</Text> : null}
+            <ConsiderationBadges items={food.considerations} t={props.t} />
           </View>
         ) : null}
       </ScrollView>

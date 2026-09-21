@@ -5,14 +5,20 @@ export type FoodWriteInput = {
   caloriesKcal?: null | number;
   carbsG?: null | number;
   fatG?: null | number;
+  fiberG?: null | number;
   foodCategory?: null | string;
   foodType?: null | string;
   mediaType?: null | string;
   mediaUrl?: null | string;
+  micronutrients?: string[];
   name: string;
   notes?: null | string;
   proteinG?: null | number;
+  saltG?: null | number;
+  saturatedFatG?: null | number;
   servingUnit: string;
+  sugarG?: null | number;
+  unsaturatedFatG?: null | number;
 };
 
 export function useCreateFoodMutation() {

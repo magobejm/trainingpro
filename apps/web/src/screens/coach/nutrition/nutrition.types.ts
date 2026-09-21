@@ -1,12 +1,27 @@
+export type NutritionConsideration = {
+  code: string;
+  priority: 'P1' | 'P2' | 'P3' | 'P4';
+  tone: 'bad' | 'good' | 'neutral';
+  values?: { x?: number };
+  variant: number;
+};
+
 export type MealIngredient = {
   amountGrams: number;
   food: {
     caloriesKcal: null | number;
     carbsG: null | number;
     fatG: null | number;
+    fiberG?: null | number;
     id: string;
+    micronutrients?: string[];
     name: string;
     proteinG: null | number;
+    saltG?: null | number;
+    saturatedFatG?: null | number;
+    servingUnit?: null | string;
+    sugarG?: null | number;
+    unsaturatedFatG?: null | number;
   };
   foodId: string;
   sortOrder: number;
@@ -14,10 +29,21 @@ export type MealIngredient = {
 
 export type NutritionMeal = {
   category: string;
+  considerations?: NutritionConsideration[];
   id: string;
   ingredients: MealIngredient[];
   name: string;
   notes: null | string;
+  totals?: {
+    caloriesKcal?: null | number;
+    carbsG?: null | number;
+    fatG?: null | number;
+    fiberG?: null | number;
+    proteinG?: null | number;
+    saltG?: null | number;
+    saturatedFatG?: null | number;
+    sugarG?: null | number;
+  };
 };
 
 export type NutritionCheckpoint = {

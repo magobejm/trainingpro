@@ -2,8 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { useClientNutritionQuery, type NutritionPlan } from '../../data/hooks/useClientNutrition';
+import { useClientNutritionQuery, type ClientNutrition, type NutritionPlan } from '../../data/hooks/useClientNutrition';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
+import { ConsiderationBadges } from './ConsiderationBadges';
 import {
   buildMealGroups,
   hasNutritionPlanData,
@@ -95,7 +96,7 @@ function renderBody(
       {activePlan.description ? <Text style={styles.planDescription}>{activePlan.description}</Text> : null}
       {setup ? <MacrosCard setup={setup} t={t} /> : null}
       {mealGroups.length > 0 ? (
-        <MealGroupsList groups={mealGroups} t={t} />
+        <MealGroupsList foods={query.data?.foods} groups={mealGroups} meals={query.data?.meals} t={t} />
       ) : (
         <View style={styles.center}>
           <Text style={styles.empty}>{t('client.nutrition.noMeals')}</Text>
@@ -178,10 +179,14 @@ function MacroPill({
 }
 
 function MealGroupsList({
+  foods,
   groups,
+  meals,
   t,
 }: {
+  foods?: ClientNutrition['foods'];
   groups: MealCategoryGroup[];
+  meals?: ClientNutrition['meals'];
   t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
   return (
@@ -194,12 +199,27 @@ function MealGroupsList({
             <View key={`${group.category}-${index}`} style={styles.mealRow}>
               <Text style={styles.mealName}>{item.label}</Text>
               {item.sublabel ? <Text style={styles.mealMeta}>{item.sublabel}</Text> : null}
+              <ConsiderationBadges items={lookupConsiderations(item, meals, foods)} t={t} />
             </View>
           ))}
         </View>
       ))}
     </View>
   );
+}
+
+function lookupConsiderations(
+  item: MealCategoryGroup['items'][number],
+  meals: ClientNutrition['meals'],
+  foods: ClientNutrition['foods'],
+) {
+  if (item.mealId) {
+    return meals?.find((meal) => meal.id === item.mealId)?.considerations ?? [];
+  }
+  if (item.foodId) {
+    return foods?.find((food) => food.id === item.foodId)?.considerations ?? [];
+  }
+  return [];
 }
 
 function formatCategoryLabel(category: string, t: (key: string) => string): string {
@@ -264,10 +284,8 @@ const styles = StyleSheet.create({
   mealMeta: { color: LIGHT.textMuted, fontSize: 12 },
   mealName: { color: LIGHT.textStrong, flex: 1, fontSize: 14, fontWeight: '600' },
   mealRow: {
-    alignItems: 'center',
     borderTopColor: LIGHT.border,
     borderTopWidth: 1,
-    flexDirection: 'row',
     gap: 8,
     paddingTop: 8,
   },

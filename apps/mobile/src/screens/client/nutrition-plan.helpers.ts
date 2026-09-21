@@ -34,9 +34,10 @@ export type StructuredDayMeal = {
 };
 
 export type StructuredDay = {
-  days: StructuredDayMeal[];
+  days?: StructuredDayMeal[];
   id: string;
   label: string;
+  meals?: StructuredDayMeal[];
 };
 
 export type StructuredWeek = {
@@ -51,7 +52,12 @@ export type StructuredPlanContent = {
 
 export type MealCategoryGroup = {
   category: string;
-  items: Array<{ label: string; sublabel?: string }>;
+  items: Array<{
+    foodId?: string;
+    label: string;
+    mealId?: string;
+    sublabel?: string;
+  }>;
 };
 
 const MEAL_CATEGORY_ORDER = ['breakfast', 'lunch', 'dinner', 'snack', 'other'] as const;
@@ -88,13 +94,10 @@ export function buildMealGroups(plan: NutritionPlan): MealCategoryGroup[] {
       groups.push({
         category,
         items: items.map((item) => ({
+          foodId: item.foodId,
           label: item.type === 'meal' ? (item.mealName ?? '—') : (item.foodName ?? '—'),
-          sublabel:
-            item.type === 'food' && item.amountGrams
-              ? `${item.amountGrams} g`
-              : item.type === 'meal'
-                ? undefined
-                : undefined,
+          mealId: item.mealId,
+          sublabel: item.type === 'food' && item.amountGrams ? `${item.amountGrams} g` : undefined,
         })),
       });
     }
@@ -107,7 +110,9 @@ export function buildMealGroups(plan: NutritionPlan): MealCategoryGroup[] {
       groups.push({
         category,
         items: items.map((item) => ({
+          foodId: item.foodId,
           label: item.type === 'meal' ? (item.mealName ?? '—') : (item.foodName ?? '—'),
+          mealId: item.mealId,
           sublabel: item.amountGrams ? `${item.amountGrams} g` : undefined,
         })),
       });
@@ -120,10 +125,12 @@ export function buildMealGroups(plan: NutritionPlan): MealCategoryGroup[] {
   if (!firstWeek) return [];
   const groups: MealCategoryGroup[] = [];
   for (const day of firstWeek.days) {
+    const meals = day.meals ?? day.days ?? [];
     groups.push({
       category: day.label,
-      items: day.days.map((meal) => ({
+      items: meals.map((meal) => ({
         label: meal.name,
+        mealId: meal.mealId,
         sublabel: meal.time,
       })),
     });

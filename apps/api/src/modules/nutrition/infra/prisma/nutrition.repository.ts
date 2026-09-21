@@ -15,13 +15,20 @@ import { LibraryBaseRepository } from '../../../library/infra/prisma/library-bas
 import { LibraryEditPolicy } from '../../../library/domain/policies/library-edit.policy';
 import { toDomainScope } from '../../../library/infra/prisma/library.repository.prisma.helpers';
 
-type FoodSnapshotRow = {
+export type FoodSnapshotRow = {
   caloriesKcal: number | null;
   carbsG: number | null;
   fatG: number | null;
+  fiberG: Prisma.Decimal | null;
   id: string;
+  micronutrients: string[];
   name: string;
   proteinG: number | null;
+  saltG: Prisma.Decimal | null;
+  saturatedFatG: Prisma.Decimal | null;
+  servingUnit: string | null;
+  sugarG: Prisma.Decimal | null;
+  unsaturatedFatG: Prisma.Decimal | null;
 };
 
 type MealIngredientRow = MealIngredient & {
@@ -77,9 +84,16 @@ const MEAL_INCLUDE = {
           caloriesKcal: true,
           carbsG: true,
           fatG: true,
+          fiberG: true,
           id: true,
+          micronutrients: true,
           name: true,
           proteinG: true,
+          saltG: true,
+          saturatedFatG: true,
+          servingUnit: true,
+          sugarG: true,
+          unsaturatedFatG: true,
         },
       },
     },
@@ -343,6 +357,40 @@ export class NutritionRepository extends LibraryBaseRepository {
         archivedAt: null,
         clientId: client.id,
       },
+    });
+  }
+
+  async listMealsByIds(ids: string[]): Promise<MealRow[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.prisma.meal.findMany({
+      include: MEAL_INCLUDE,
+      where: { archivedAt: null, id: { in: ids } },
+    });
+  }
+
+  async listFoodsByIds(ids: string[]): Promise<FoodSnapshotRow[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+    return this.prisma.food.findMany({
+      select: {
+        caloriesKcal: true,
+        carbsG: true,
+        fatG: true,
+        fiberG: true,
+        id: true,
+        micronutrients: true,
+        name: true,
+        proteinG: true,
+        saltG: true,
+        saturatedFatG: true,
+        servingUnit: true,
+        sugarG: true,
+        unsaturatedFatG: true,
+      },
+      where: { archivedAt: null, id: { in: ids } },
     });
   }
 

@@ -9,11 +9,17 @@ export type FoodWriteInput = {
   caloriesKcal?: null | number;
   carbsG?: null | number;
   fatG?: null | number;
+  fiberG?: null | number;
+  micronutrients?: string[];
   mediaType?: null | string;
   mediaUrl?: null | string;
   name: string;
   notes?: null | string;
   proteinG?: null | number;
+  saltG?: null | number;
+  saturatedFatG?: null | number;
+  sugarG?: null | number;
+  unsaturatedFatG?: null | number;
   foodCategory?: null | string;
   foodType?: null | string;
   servingUnit: string;

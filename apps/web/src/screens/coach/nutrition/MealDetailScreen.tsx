@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useDeleteMealMutation, useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
+import { ConsiderationBadges } from './ConsiderationBadges';
 import { styles } from './nutrition.styles';
 
 type Props = {
@@ -70,6 +71,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
           <Text style={styles.macroValue}>{t('coach.nutrition.macros.grams', { value: Math.round(totals.fat) })}</Text>
         </View>
       </View>
+      <ConsiderationBadges items={meal.considerations} t={t} />
       <Text style={styles.sectionTitle}>{t('coach.nutrition.meals.ingredients')}</Text>
       {meal.ingredients.map((item) => (
         <View key={`${item.foodId}-${item.sortOrder}`} style={styles.card}>

@@ -1,15 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -23,7 +12,7 @@ import { CreateFoodDto } from '../dto/create-food.dto';
 import { LibraryItemIdParamDto } from '../dto/library-item-id-param.dto';
 import { ListFoodsQueryDto } from '../dto/list-foods-query.dto';
 import { UpdateFoodDto } from '../dto/update-food.dto';
-import { toOutput } from './library.controller.helpers';
+import { toFoodOutput } from './library.controller.helpers';
 
 @Controller('library/foods')
 @UseGuards(AuthGuard, RolesGuard)
@@ -40,25 +29,21 @@ export class LibraryFoodController {
   async listFoods(@Query() query: ListFoodsQueryDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const items = await this.listFoodsUseCase.execute(auth, query);
-    return { items: items.map(toOutput) };
+    return { items: items.map(toFoodOutput) };
   }
 
   @Post()
   async createFood(@Body() body: CreateFoodDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const item = await this.createFoodUseCase.execute(auth, body);
-    return toOutput(item);
+    return toFoodOutput(item);
   }
 
   @Patch(':itemId')
-  async updateFood(
-    @Param() params: LibraryItemIdParamDto,
-    @Body() body: UpdateFoodDto,
-    @Req() request: HttpAuthRequest,
-  ) {
+  async updateFood(@Param() params: LibraryItemIdParamDto, @Body() body: UpdateFoodDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const item = await this.updateFoodUseCase.execute(auth, params.itemId, body);
-    return toOutput(item);
+    return toFoodOutput(item);
   }
 
   @Delete(':itemId')

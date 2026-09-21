@@ -7,30 +7,20 @@ import {
   NutritionRepository,
   PlanWriteInput,
 } from '../infra/prisma/nutrition.repository';
+import {
+  collectPlanRefIds,
+  mapFoodConsideration,
+  mapMeal,
+  type FoodConsiderationOutput,
+  type MealOutput,
+} from './nutrition-meal.mapper';
 
-export type MealFoodSnapshotOutput = {
-  caloriesKcal: number | null;
-  carbsG: number | null;
-  fatG: number | null;
-  id: string;
-  name: string;
-  proteinG: number | null;
-};
-
-export type MealIngredientOutput = {
-  amountGrams: number;
-  food: MealFoodSnapshotOutput;
-  foodId: string;
-  sortOrder: number;
-};
-
-export type MealOutput = {
-  category: string;
-  id: string;
-  ingredients: MealIngredientOutput[];
-  name: string;
-  notes: string | null;
-};
+export type {
+  FoodConsiderationOutput,
+  MealFoodSnapshotOutput,
+  MealIngredientOutput,
+  MealOutput,
+} from './nutrition-meal.mapper';
 
 export type CheckpointOutput = {
   content: Prisma.JsonValue;
@@ -59,7 +49,9 @@ export type PlanOutput = {
 
 export type ClientNutritionOutput = {
   estructuradoPlan?: PlanOutput;
+  foods: FoodConsiderationOutput[];
   librePlan?: PlanOutput;
+  meals: MealOutput[];
 };
 
 @Injectable()
@@ -128,36 +120,29 @@ export class NutritionService {
     const rows = await this.repository.getClientAssignedPlans(context);
     const librePlan = rows.find((row) => row.type === NutritionPlanType.LIBRE);
     const estructuradoPlan = rows.find((row) => row.type === NutritionPlanType.ESTRUCTURADO);
+    const refs = collectClientRefs(librePlan?.content, estructuradoPlan?.content);
+    const [mealRows, foodRows] = await Promise.all([
+      this.repository.listMealsByIds(refs.mealIds),
+      this.repository.listFoodsByIds(refs.foodIds),
+    ]);
     return {
       ...(librePlan ? { librePlan: mapPlan(librePlan) } : {}),
       ...(estructuradoPlan ? { estructuradoPlan: mapPlan(estructuradoPlan) } : {}),
+      foods: foodRows.map(mapFoodConsideration),
+      meals: mealRows.map(mapMeal),
     };
   }
 }
 
-function mapMeal(row: {
-  category: string;
-  id: string;
-  ingredients: Array<{
-    amountGrams: Prisma.Decimal;
-    food: MealFoodSnapshotOutput;
-    foodId: string;
-    sortOrder: number;
-  }>;
-  name: string;
-  notes: string | null;
-}): MealOutput {
+function collectClientRefs(
+  libreContent: Prisma.JsonValue | undefined,
+  structuredContent: Prisma.JsonValue | undefined,
+): { foodIds: string[]; mealIds: string[] } {
+  const libre = collectPlanRefIds(libreContent);
+  const structured = collectPlanRefIds(structuredContent);
   return {
-    category: row.category,
-    id: row.id,
-    ingredients: row.ingredients.map((ingredient) => ({
-      amountGrams: toNumber(ingredient.amountGrams) ?? 0,
-      food: ingredient.food,
-      foodId: ingredient.foodId,
-      sortOrder: ingredient.sortOrder,
-    })),
-    name: row.name,
-    notes: row.notes,
+    foodIds: [...new Set([...libre.foodIds, ...structured.foodIds])],
+    mealIds: [...new Set([...libre.mealIds, ...structured.mealIds])],
   };
 }
 
@@ -219,11 +204,4 @@ function mapCheckpoint(row: {
     setupData: row.setupData,
     startDate: row.startDate ? row.startDate.toISOString() : null,
   };
-}
-
-function toNumber(value: Prisma.Decimal | null | number): number | null {
-  if (value === null) {
-    return null;
-  }
-  return Number(value);
 }

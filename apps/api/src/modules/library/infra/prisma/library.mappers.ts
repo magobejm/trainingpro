@@ -1,4 +1,4 @@
-import { LibraryItemScope, type Food } from '@prisma/client';
+import { LibraryItemScope, Prisma, type Food } from '@prisma/client';
 import type { CardioMethodWriteInput } from '../../domain/cardio-method.input';
 import type { ExerciseWriteInput } from '../../domain/exercise.input';
 import type { FoodWriteInput } from '../../domain/food.input';
@@ -90,15 +90,21 @@ export function mapFood(row: Food): FoodLibraryItem {
     coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
     fatG: row.fatG,
+    fiberG: toNullableNumber(row.fiberG),
     foodCategory: row.foodCategory,
     foodType: row.foodType,
     id: row.id,
     media: { type: row.mediaType, url: row.mediaUrl },
+    micronutrients: row.micronutrients ?? [],
     name: row.name,
     notes: row.notes,
     proteinG: row.proteinG,
+    saltG: toNullableNumber(row.saltG),
+    saturatedFatG: toNullableNumber(row.saturatedFatG),
     scope: toDomainScope(row.scope),
     servingUnit: row.servingUnit,
+    sugarG: toNullableNumber(row.sugarG),
+    unsaturatedFatG: toNullableNumber(row.unsaturatedFatG),
     updatedAt: row.updatedAt,
   };
 }
@@ -145,16 +151,22 @@ export function normalizeFoodInput(input: Partial<FoodWriteInput>): Partial<Food
     ...(input.caloriesKcal !== undefined && { caloriesKcal: input.caloriesKcal ?? null }),
     ...(input.carbsG !== undefined && { carbsG: input.carbsG ?? null }),
     ...(input.fatG !== undefined && { fatG: input.fatG ?? null }),
+    ...(input.fiberG !== undefined && { fiberG: input.fiberG ?? null }),
     ...(input.foodCategory !== undefined && { foodCategory: toNullable(input.foodCategory) }),
     ...(input.foodType !== undefined && { foodType: normalizeFoodType(input.foodType) }),
     ...(input.mediaType !== undefined && { mediaType: toNullable(input.mediaType) }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
+    ...(input.micronutrients !== undefined && { micronutrients: normalizeMicronutrients(input.micronutrients) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
     ...(input.notes !== undefined && { notes: toNullable(input.notes) }),
     ...(input.proteinG !== undefined && { proteinG: input.proteinG ?? null }),
+    ...(input.saltG !== undefined && { saltG: input.saltG ?? null }),
+    ...(input.saturatedFatG !== undefined && { saturatedFatG: input.saturatedFatG ?? null }),
     ...(input.servingUnit !== undefined && {
       servingUnit: normalizeServingUnit(input.servingUnit) ?? undefined,
     }),
+    ...(input.sugarG !== undefined && { sugarG: input.sugarG ?? null }),
+    ...(input.unsaturatedFatG !== undefined && { unsaturatedFatG: input.unsaturatedFatG ?? null }),
   };
 }
 
@@ -220,6 +232,20 @@ export function normalizeSportInput(input: Partial<SportWriteInput>): Partial<Sp
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
   };
+}
+
+function toNullableNumber(value: Prisma.Decimal | number | null): number | null {
+  if (value === null) {
+    return null;
+  }
+  return typeof value === 'number' ? value : value.toNumber();
+}
+
+function normalizeMicronutrients(value: string[] | undefined): string[] {
+  if (!value) {
+    return [];
+  }
+  return [...new Set(value.map((item) => item.trim()).filter(Boolean))];
 }
 
 function toDomainScope(scope: LibraryItemScope): 'coach' | 'global' {

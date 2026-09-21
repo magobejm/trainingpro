@@ -8,7 +8,9 @@ type Props = {
   item: SectionItem;
   onArchive: () => void;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
+  onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
+  onOpenTests?: () => void;
   onOpenTrainingPlanner: () => void;
   rowIndex: number;
   onToggleMenu: () => void;
@@ -25,7 +27,9 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
     <div {...dragProps} style={rowStyle}>
       <RowMain
         item={props.item}
+        onOpenNutrition={props.onOpenNutrition}
         onOpenProgress={props.onOpenProgress}
+        onOpenTests={props.onOpenTests}
         onOpenTrainingPlanner={props.onOpenTrainingPlanner}
         onToggleMenu={props.onToggleMenu}
         t={props.t}
@@ -47,7 +51,9 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
 
 function RowMain(props: {
   item: SectionItem;
+  onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
+  onOpenTests?: () => void;
   onOpenTrainingPlanner: () => void;
   onToggleMenu: () => void;
   t: Props['t'];
@@ -61,7 +67,15 @@ function RowMain(props: {
         {props.item.icon({ color: props.item.iconColor || '#64748b', size: 18 })}
       </View>
       <Pressable
-        onPress={() => onOpenSection(props.item.id, props.onOpenTrainingPlanner, props.onOpenProgress)}
+        onPress={() =>
+          onOpenSection(
+            props.item.id,
+            props.onOpenTrainingPlanner,
+            props.onOpenProgress,
+            props.onOpenNutrition,
+            props.onOpenTests,
+          )
+        }
         style={styles.rowText}
       >
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
@@ -111,9 +125,17 @@ function readDragProps(
   };
 }
 
-function onOpenSection(id: SectionId, onOpenTrainingPlanner: () => void, onOpenProgress?: () => void): void {
+function onOpenSection(
+  id: SectionId,
+  onOpenTrainingPlanner: () => void,
+  onOpenProgress?: () => void,
+  onOpenNutrition?: () => void,
+  onOpenTests?: () => void,
+): void {
   if (id === 'training') onOpenTrainingPlanner();
   if (id === 'progress') onOpenProgress?.();
+  if (id === 'nutrition') onOpenNutrition?.();
+  if (id === 'tests') onOpenTests?.();
 }
 
 function readSubtitle(item: SectionItem, trainingPlanName: string | undefined, t: Props['t']): string {
@@ -166,6 +188,7 @@ function isSectionId(value: unknown): value is SectionId {
   return (
     value === 'training' ||
     value === 'nutrition' ||
+    value === 'tests' ||
     value === 'mood' ||
     value === 'volume' ||
     value === 'progress' ||

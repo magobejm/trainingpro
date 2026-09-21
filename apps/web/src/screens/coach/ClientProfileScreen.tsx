@@ -18,6 +18,7 @@ import { type FormErrors, validateClientProfileForm } from './client-profile.val
 import { styles } from './ClientProfileScreen.styles';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useProgressContextStore } from '../../store/progressContext.store';
+import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import {
   archiveClient,
@@ -31,11 +32,20 @@ type Props = {
   clientId: string;
   onArchived?: () => void;
   onOpenEditScreen?: (clientId: string) => void;
+  onOpenNutrition?: () => void;
+  onOpenTestsScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
 };
 
 export function ClientProfileScreen(props: Props): React.JSX.Element {
-  const vm = useClientProfileModel(props.clientId, props.onArchived, props.onRouteChange, props.onOpenEditScreen);
+  const vm = useClientProfileModel(
+    props.clientId,
+    props.onArchived,
+    props.onRouteChange,
+    props.onOpenEditScreen,
+    props.onOpenNutrition,
+    props.onOpenTestsScreen,
+  );
   return <ClientProfileView vm={vm} />;
 }
 
@@ -44,6 +54,8 @@ function useClientProfileModel(
   onArchived?: () => void,
   onRouteChange?: (route: ShellRoute) => void,
   onOpenEditScreen?: (clientId: string) => void,
+  onOpenNutrition?: () => void,
+  onOpenTestsScreen?: (clientId: string) => void,
 ) {
   const { t } = useTranslation();
   const query = useClientByIdQuery(clientId);
@@ -51,16 +63,20 @@ function useClientProfileModel(
   const openForView = useRoutinePlannerContextStore((state) => state.openForView);
   const prepareClientAssignment = useRoutinePlannerContextStore((state) => state.prepareClientAssignment);
   const openProgressForClient = useProgressContextStore((state) => state.openForClient);
+  const openNutritionForClient = useNutritionContextStore((state) => state.openForClient);
   const mutations = useProfileMutations(clientId);
   const state = useProfileState();
   useSyncFormFromQuery(query.data, state.setForm, state.setErrors, state.setNoteDraft);
   return buildViewModel({
     onArchived,
     onOpenEditScreen,
+    onOpenNutrition,
+    onOpenTestsScreen,
     onRouteChange,
     query,
     objectives: objectivesQuery.data ?? [],
     openForView,
+    openNutritionForClient,
     openProgressForClient,
     prepareClientAssignment,
     ...mutations,
@@ -127,8 +143,11 @@ interface ViewModelInput {
   noteDraft: string;
   onArchived?: () => void;
   onOpenEditScreen?: (clientId: string) => void;
+  onOpenNutrition?: () => void;
+  onOpenTestsScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
   openForView: (templateId: string, clientId?: string, clientDisplayName?: string) => void;
+  openNutritionForClient: (clientId: string, clientDisplayName: string) => void;
   openProgressForClient: (clientId: string, clientDisplayName: string) => void;
   prepareClientAssignment: (clientId: string, clientDisplayName: string) => void;
   query: ReturnType<typeof useClientByIdQuery>;
@@ -153,6 +172,8 @@ function buildViewModel(input: ViewModelInput) {
   const noteActions = buildNoteActions(input, updateMutation);
   const onOpenRoutinePlanner = buildOpenRoutinePlannerAction(input);
   const onOpenProgress = buildOpenProgressAction(input);
+  const onOpenNutrition = buildOpenNutritionAction(input);
+  const onOpenTests = buildOpenTestsAction(input);
 
   return {
     ...input,
@@ -163,7 +184,9 @@ function buildViewModel(input: ViewModelInput) {
     trainingPlan: client?.trainingPlan ?? undefined,
     onOpenEdit: () => (input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true)),
     onOpenRoutinePlanner,
+    onOpenNutrition,
     onOpenProgress,
+    onOpenTests,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     ...noteActions,
   };
@@ -193,6 +216,24 @@ function buildOpenProgressAction(input: ViewModelInput): () => void {
     const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
     input.openProgressForClient(client.id, clientDisplayName);
     input.onRouteChange?.('coach.progress');
+  };
+}
+
+function buildOpenNutritionAction(input: ViewModelInput): () => void {
+  return () => {
+    const client = input.query.data;
+    if (!client) return;
+    const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
+    input.openNutritionForClient(client.id, clientDisplayName);
+    input.onOpenNutrition?.();
+  };
+}
+
+function buildOpenTestsAction(input: ViewModelInput): () => void {
+  return () => {
+    const client = input.query.data;
+    if (!client || !input.onOpenTestsScreen) return;
+    input.onOpenTestsScreen(client.id);
   };
 }
 
@@ -247,7 +288,9 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}
+        onOpenNutrition={props.vm.onOpenNutrition}
         onOpenProgress={props.vm.onOpenProgress}
+        onOpenTests={props.vm.onOpenTests}
         onOpenTrainingPlanner={props.vm.onOpenRoutinePlanner}
         onUnassignTrainingPlan={props.vm.onUnassignPlan}
         t={props.vm.t}

@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth.store';
 export type ClientManagementSectionCode =
   | 'training'
   | 'nutrition'
+  | 'tests'
   | 'mood'
   | 'volume'
   | 'progress'
@@ -24,9 +25,7 @@ type SectionsResponse = {
   items: ClientManagementSectionView[];
 };
 
-export function useClientManagementSectionsQuery(
-  clientId: string,
-): UseQueryResult<ClientManagementSectionView[], Error> {
+export function useClientManagementSectionsQuery(clientId: string): UseQueryResult<ClientManagementSectionView[], Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth) && clientId.length > 0,
@@ -56,14 +55,9 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
-async function fetchSections(
-  auth: ReturnType<typeof useAuth>,
-  clientId: string,
-): Promise<ClientManagementSectionView[]> {
+async function fetchSections(auth: ReturnType<typeof useAuth>, clientId: string): Promise<ClientManagementSectionView[]> {
   if (!auth) throw new Error('Missing authenticated context');
-  const response = await createApiClient(auth).get<SectionsResponse>(
-    `/clients/${clientId}/management-sections`,
-  );
+  const response = await createApiClient(auth).get<SectionsResponse>(`/clients/${clientId}/management-sections`);
   return response.items;
 }
 
@@ -73,9 +67,8 @@ async function updateSections(
   items: ClientManagementSectionView[],
 ): Promise<ClientManagementSectionView[]> {
   if (!auth) throw new Error('Missing authenticated context');
-  const response = await createApiClient(auth).patch<SectionsResponse>(
-    `/clients/${clientId}/management-sections`,
-    { items },
-  );
+  const response = await createApiClient(auth).patch<SectionsResponse>(`/clients/${clientId}/management-sections`, {
+    items,
+  });
   return response.items;
 }

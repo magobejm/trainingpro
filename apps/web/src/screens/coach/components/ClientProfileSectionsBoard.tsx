@@ -20,7 +20,9 @@ import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 type Props = {
   clientId: string;
   hasTrainingPlan: boolean;
+  onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
+  onOpenTests?: () => void;
   onOpenTrainingPlanner: () => void;
   onUnassignTrainingPlan: () => void;
   t: (key: string, params?: Record<string, number | string>) => string;
@@ -104,7 +106,9 @@ function renderRow(item: SectionItem, index: number, total: number, props: Props
       item={item}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
+      onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
+      onOpenTests={props.onOpenTests}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={() => vm.onToggleMenu(item.id)}
       onUnassignTrainingPlan={props.onUnassignTrainingPlan}

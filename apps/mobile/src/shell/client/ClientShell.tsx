@@ -9,6 +9,8 @@ import { ClientMoodScreen } from '../../screens/client/ClientMoodScreen';
 import { ClientPlanningScreen } from '../../screens/client/ClientPlanningScreen';
 import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { IncidentsScreen } from '../../screens/client/IncidentsScreen';
+import { NutritionPlanScreen } from '../../screens/client/NutritionPlanScreen';
+import { PhysicalTestsScreen } from '../../screens/client/PhysicalTestsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
 import { RoutineScreen } from '../../screens/client/RoutineScreen';
@@ -110,6 +112,7 @@ function dispatchMoreMenu(
 ): void {
   if (id === 'incidents') openOverlay('incidents');
   else if (id === 'measures') openOverlay('measures');
+  else if (id === 'physicalTests') openOverlay('physicalTests');
   else if (id === 'planning') openOverlay('planning');
   else if (id === 'volume') openProgress('volume');
 }
@@ -124,6 +127,7 @@ export function ClientShell(): React.JSX.Element {
       {st.activeTab === 'home' && (
         <HomeHub
           onOpenMood={() => st.openOverlay('mood')}
+          onOpenNutrition={() => st.openOverlay('nutrition')}
           onOpenProfile={() => st.openOverlay('profile')}
           onOpenProgress={() => st.openProgress('progress')}
           onOpenRoutine={() => st.openOverlay('routine')}
@@ -197,6 +201,16 @@ export function ClientShell(): React.JSX.Element {
       {st.overlay === 'library' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <ClientLibraryScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
+      {st.overlay === 'nutrition' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <NutritionPlanScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
+      {st.overlay === 'physicalTests' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <PhysicalTestsScreen onClose={st.closeOverlay} />
         </Animated.View>
       )}
     </View>

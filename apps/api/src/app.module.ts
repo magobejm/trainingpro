@@ -19,6 +19,8 @@ import { IncidentsModule } from './modules/incidents/incidents.module';
 import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { NotesModule } from './modules/notes/notes.module';
+import { NutritionModule } from './modules/nutrition/nutrition.module';
+import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.module';
 
 @Module({
   imports: [
@@ -41,6 +43,8 @@ import { NotesModule } from './modules/notes/notes.module';
     AiEvaluatorModule,
     NotesModule,
     CalendarModule,
+    NutritionModule,
+    PhysicalTestsModule,
   ],
   controllers: [HealthController],
 })

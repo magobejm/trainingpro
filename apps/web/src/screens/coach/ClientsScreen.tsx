@@ -5,8 +5,10 @@ import '../../i18n';
 import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { styles } from './clients-screen.styles';
+import { ClientNutritionPlanScreen } from './ClientNutritionPlanScreen';
 import { ClientProfileScreen } from './ClientProfileScreen';
 import { ClientProfileEditScreen } from './ClientProfileEditScreen';
+import { ClientTestsScreen } from './ClientTestsScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { ClientsDirectoryPanel } from './components/ClientsDirectoryPanel';
 import { CreateClientModal } from './components/CreateClientModal';
@@ -19,7 +21,7 @@ import { useProgressContextStore } from '../../store/progressContext.store';
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
 };
-type ScreenMode = 'list' | 'profile' | 'profileEdit';
+type ScreenMode = 'list' | 'nutrition' | 'profile' | 'profileEdit' | 'tests';
 type SelectedClient = {
   avatarUrl: null | string;
   email: string;
@@ -87,6 +89,11 @@ function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
   return {
     onBackToList: () => backToList(state),
     onBackToProfile: () => state.setScreenMode('profile'),
+    onOpenNutrition: () => state.setScreenMode('nutrition'),
+    onOpenTestsScreen: (clientId: string) => {
+      state.setSelectedClientId(clientId);
+      state.setScreenMode('tests');
+    },
     onClearSelectedClient: () => state.setSelectedClientId(''),
     onOpenProfileEdit: (clientId: string) => {
       state.setSelectedClientId(clientId);
@@ -150,6 +157,12 @@ function ClientsView(props: ViewProps): React.JSX.Element {
 }
 
 function renderMainContent(props: ViewProps): React.JSX.Element {
+  if (props.screenMode === 'nutrition' && props.selectedClientId) {
+    return renderNutritionPage(props);
+  }
+  if (props.screenMode === 'tests' && props.selectedClientId) {
+    return renderTestsPage(props);
+  }
   if ((props.screenMode === 'profile' || props.screenMode === 'profileEdit') && props.selectedClientId) {
     return renderProfilePage(props);
   }
@@ -253,8 +266,60 @@ function renderProfile(props: ViewProps): React.JSX.Element {
         props.onBackToList();
       }}
       onOpenEditScreen={props.onOpenProfileEdit}
+      onOpenNutrition={props.onOpenNutrition}
+      onOpenTestsScreen={props.onOpenTestsScreen}
       onRouteChange={props.onRouteChange}
     />
+  );
+}
+
+function renderNutritionPage(props: ViewProps): React.JSX.Element {
+  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
+  return (
+    <>
+      <View style={styles.breadcrumbCard}>
+        <Pressable onPress={props.onBackToProfile} style={styles.backButton}>
+          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
+        </Pressable>
+        <Text style={styles.breadcrumb}>
+          {formatBreadcrumb([props.t('coach.clients.title'), currentLabel, props.t('coach.nutrition.client.title')])}
+        </Text>
+      </View>
+      <View style={styles.profileCard}>
+        <ClientNutritionPlanScreen
+          clientId={props.selectedClientId}
+          clientName={props.selectedClientName}
+          onBack={props.onBackToProfile}
+        />
+      </View>
+    </>
+  );
+}
+
+function renderTestsPage(props: ViewProps): React.JSX.Element {
+  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
+  return (
+    <>
+      <View style={styles.breadcrumbCard}>
+        <Pressable onPress={props.onBackToProfile} style={styles.backButton}>
+          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
+        </Pressable>
+        <Text style={styles.breadcrumb}>
+          {formatBreadcrumb([
+            props.t('coach.clients.title'),
+            currentLabel,
+            props.t('coach.clientProfile.details.tests.title'),
+          ])}
+        </Text>
+      </View>
+      <View style={styles.profileCard}>
+        <ClientTestsScreen
+          clientId={props.selectedClientId}
+          clientName={props.selectedClientName}
+          onBack={props.onBackToProfile}
+        />
+      </View>
+    </>
   );
 }
 

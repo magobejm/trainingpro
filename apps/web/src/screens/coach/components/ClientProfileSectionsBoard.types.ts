@@ -5,6 +5,7 @@ import {
   Apple,
   BarChart2,
   CalendarDays,
+  CheckSquare,
   Dumbbell,
   LineChart,
   MessageSquare,
@@ -15,6 +16,7 @@ import {
 export type SectionId =
   | 'training'
   | 'nutrition'
+  | 'tests'
   | 'mood'
   | 'volume'
   | 'progress'
@@ -36,6 +38,7 @@ export type SectionItem = {
 export const DEFAULT_ORDER: SectionId[] = [
   'training',
   'nutrition',
+  'tests',
   'mood',
   'volume',
   'progress',
@@ -62,6 +65,14 @@ export const SECTIONS: SectionItem[] = [
     iconColor: '#64748b', // slate-500
     id: 'nutrition',
     titleKey: 'coach.clientProfile.details.nutritionPlan.title',
+  },
+  {
+    emptyKey: 'coach.clientProfile.details.tests.empty',
+    icon: (props) => React.createElement(CheckSquare, props),
+    badgeColor: 'rgba(16, 185, 129, 0.1)', // emerald-50
+    iconColor: '#10b981', // emerald-500
+    id: 'tests',
+    titleKey: 'coach.clientProfile.details.tests.title',
   },
   {
     emptyKey: 'coach.clientProfile.details.mood.empty',

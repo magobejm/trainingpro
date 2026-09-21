@@ -12,6 +12,7 @@ import {
   CalendarDays,
   BookOpen,
   FileText,
+  Utensils,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View, ViewStyle } from 'react-native';
@@ -40,6 +41,7 @@ import { RoutinePlannerScreen } from './screens/coach/RoutinePlannerScreen';
 import { WarmupPlannerScreen } from './screens/coach/WarmupPlannerScreen';
 import { CalendarScreen } from './screens/coach/CalendarScreen';
 import { NotesScreen } from './screens/coach/NotesScreen';
+import { NutritionScreen } from './screens/coach/nutrition/NutritionScreen';
 import { useAuthStore } from './store/auth.store';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
@@ -260,6 +262,7 @@ function resolveCoachBuilderScreen(route: ShellRoute): null | React.JSX.Element 
 
 function resolveCoachMonitoringScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
   if (route === 'coach.progress') return <ProgressScreen onRouteChange={setRoute} />;
+  if (route === 'coach.nutrition') return <NutritionScreen />;
   if (route === 'coach.evaluator') return <TechniqueEvaluatorScreen />;
   if (route === 'coach.incidents') return <IncidentsScreen />;
   if (route === 'coach.chat') return <ChatScreen />;
@@ -327,6 +330,12 @@ function resolveCoachNavItems(): ShellNavItem[] {
       id: 'coach.warmup.planner',
       labelKey: 'app.nav.coach.warmup.planner',
       badgeColor: 'rgba(249, 115, 22, 0.1)',
+    },
+    {
+      icon: (p) => <Utensils {...p} />,
+      id: 'coach.nutrition',
+      labelKey: 'app.nav.coach.nutrition',
+      badgeColor: 'rgba(16, 185, 129, 0.1)',
     },
     {
       icon: (p) => <BarChart2 {...p} />,

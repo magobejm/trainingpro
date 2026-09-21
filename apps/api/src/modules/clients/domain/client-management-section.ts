@@ -1,6 +1,7 @@
 export type ClientManagementSectionCode =
   | 'training'
   | 'nutrition'
+  | 'tests'
   | 'mood'
   | 'volume'
   | 'progress'
@@ -19,6 +20,7 @@ export type ClientManagementSection = {
 export const CLIENT_MANAGEMENT_SECTION_DEFAULT_ORDER: ClientManagementSectionCode[] = [
   'training',
   'nutrition',
+  'tests',
   'mood',
   'volume',
   'progress',

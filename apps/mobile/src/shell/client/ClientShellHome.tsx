@@ -11,6 +11,7 @@ import { s } from './client-shell.styles';
 
 type HomeHubProps = {
   onOpenMood: () => void;
+  onOpenNutrition: () => void;
   onOpenProfile: () => void;
   onOpenProgress: () => void;
   onOpenRoutine: () => void;
@@ -72,9 +73,9 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
           title={t('mobile.client.home.routine')}
         />
         <ActionCard
-          disabled
           icon={<Text style={{ fontSize: 24 }}>{'🍽️'}</Text>}
-          subtitle={t('mobile.client.home.nutritionComingSoon')}
+          onPress={props.onOpenNutrition}
+          subtitle={t('mobile.client.home.nutritionSubtitle')}
           title={t('mobile.client.home.nutrition')}
         />
         <ActionCard

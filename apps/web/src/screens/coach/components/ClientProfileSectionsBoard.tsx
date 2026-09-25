@@ -16,10 +16,13 @@ import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types'
 import { ClientProfileArchivedDrawer } from './ClientProfileSectionsBoard.ArchivedDrawer';
 import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.Header';
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
+import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
+import { buildDefaultWellnessRange } from '../client-mood.helpers';
 
 type Props = {
   clientId: string;
   hasTrainingPlan: boolean;
+  onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
@@ -38,6 +41,7 @@ type BoardUiState = {
 
 type BoardViewModel = {
   items: ClientManagementSectionView[];
+  wellness: ClientWellnessResponse | undefined;
   onArchive: (id: SectionId) => Promise<void>;
   onCloseArchived: () => void;
   onDropArchive: (sourceId: null | SectionId) => void;
@@ -52,6 +56,7 @@ type BoardViewModel = {
 export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
   const vm = useBoardViewModel(props.clientId);
   const lists = useMemo(() => buildSectionLists(vm.items), [vm.items]);
+  const moodSubtitle = resolveMoodSubtitle(vm.wellness, props.t);
   return (
     <View style={styles.board}>
       <ClientProfileSectionsBoardHeader
@@ -61,7 +66,9 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
         t={props.t}
       />
       <View style={styles.mainList}>
-        {lists.activeSections.map((item, index) => renderRow(item, index, lists.activeSections.length, props, vm))}
+        {lists.activeSections.map((item, index) =>
+          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle),
+        )}
       </View>
       <ClientProfileArchivedDrawer
         archived={lists.archivedSections}
@@ -78,8 +85,11 @@ function useBoardViewModel(clientId: string): BoardViewModel {
   const ui = useBoardUiState();
   const items = useClientManagementSectionsQuery(clientId).data ?? [];
   const mutation = useUpdateClientManagementSectionsMutation(clientId);
+  const range = useMemo(() => buildDefaultWellnessRange(), []);
+  const wellness = useClientWellnessQuery(clientId, range.dateFrom, range.dateTo).data;
   return {
     items,
+    wellness,
     onArchive: (id) => saveItems(mutation, archiveSection(items, id), ui.setOpenMenuId),
     onCloseArchived: () => ui.setShowArchivedDrawer(false),
     onDropArchive: (sourceId) => onDropArchive(items, sourceId, mutation, ui.setOpenMenuId),
@@ -98,14 +108,23 @@ function useBoardUiState(): BoardUiState {
   return { openMenuId, setOpenMenuId, setShowArchivedDrawer, showArchivedDrawer };
 }
 
-function renderRow(item: SectionItem, index: number, total: number, props: Props, vm: BoardViewModel): React.JSX.Element {
+function renderRow(
+  item: SectionItem,
+  index: number,
+  total: number,
+  props: Props,
+  vm: BoardViewModel,
+  moodSubtitle?: string,
+): React.JSX.Element {
   return (
     <ClientProfileSectionRow
       key={item.id}
       hasTrainingPlan={props.hasTrainingPlan}
       item={item}
+      moodSubtitle={moodSubtitle}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
+      onOpenMood={props.onOpenMood}
       onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
       onOpenTests={props.onOpenTests}
@@ -119,6 +138,17 @@ function renderRow(item: SectionItem, index: number, total: number, props: Props
       trainingPlanName={props.trainingPlanName}
     />
   );
+}
+
+function resolveMoodSubtitle(wellness: ClientWellnessResponse | undefined, t: Props['t']): string | undefined {
+  if (!wellness) return undefined;
+  if (wellness.summary.reportsCount > 0) {
+    return t('coach.clientProfile.details.mood.reportsCount', { count: wellness.summary.reportsCount });
+  }
+  if (wellness.summary.sessionsWithWellness > 0) {
+    return t('coach.clientProfile.details.mood.sessionsCount', { count: wellness.summary.sessionsWithWellness });
+  }
+  return undefined;
 }
 
 function onDropReorderByIndex(

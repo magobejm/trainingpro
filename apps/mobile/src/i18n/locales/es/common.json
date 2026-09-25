@@ -506,6 +506,7 @@
   "client.mood.empty": "Aún no hay datos de bienestar",
   "client.mood.error": "No se pudo cargar el bienestar",
   "client.mood.readOnlyHint": "Datos registrados en tus entrenamientos y reportes semanales",
+  "client.mood.addWeeklyReport": "Añadir reporte semanal",
   "client.mood.kpi.avgMood": "Ánimo post (media)",
   "client.mood.kpi.avgMotivation": "Motivación pre (media)",
   "client.mood.kpi.avgFatigue": "Fatiga post (media)",

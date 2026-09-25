@@ -506,6 +506,7 @@
   "client.mood.empty": "No wellness data yet",
   "client.mood.error": "Unable to load wellness data",
   "client.mood.readOnlyHint": "Data recorded from your workouts and weekly reports",
+  "client.mood.addWeeklyReport": "Add weekly report",
   "client.mood.kpi.avgMood": "Avg post mood",
   "client.mood.kpi.avgMotivation": "Avg pre motivation",
   "client.mood.kpi.avgFatigue": "Avg post fatigue",

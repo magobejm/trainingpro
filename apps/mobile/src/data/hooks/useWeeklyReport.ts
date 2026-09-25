@@ -40,6 +40,7 @@ export function useUpsertWeeklyReportMutation() {
     mutationFn: (input: UpsertWeeklyReportInput) => upsertWeeklyReport(auth, input),
     onSuccess: (_result, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['weekly-report', variables.reportDate] });
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'wellness'] });
     },
   });
 }
@@ -61,10 +62,7 @@ async function fetchWeeklyReport(auth: ReturnType<typeof useAuth>, reportDate: s
   return createApiClient(auth).get<null | WeeklyReportView>(`/reports/weekly?${query}`);
 }
 
-async function upsertWeeklyReport(
-  auth: ReturnType<typeof useAuth>,
-  input: UpsertWeeklyReportInput,
-) {
+async function upsertWeeklyReport(auth: ReturnType<typeof useAuth>, input: UpsertWeeklyReportInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

@@ -32,6 +32,7 @@ type Props = {
   clientId: string;
   onArchived?: () => void;
   onOpenEditScreen?: (clientId: string) => void;
+  onOpenMoodScreen?: (clientId: string) => void;
   onOpenNutrition?: () => void;
   onOpenTestsScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
@@ -44,6 +45,7 @@ export function ClientProfileScreen(props: Props): React.JSX.Element {
     props.onRouteChange,
     props.onOpenEditScreen,
     props.onOpenNutrition,
+    props.onOpenMoodScreen,
     props.onOpenTestsScreen,
   );
   return <ClientProfileView vm={vm} />;
@@ -55,6 +57,7 @@ function useClientProfileModel(
   onRouteChange?: (route: ShellRoute) => void,
   onOpenEditScreen?: (clientId: string) => void,
   onOpenNutrition?: () => void,
+  onOpenMoodScreen?: (clientId: string) => void,
   onOpenTestsScreen?: (clientId: string) => void,
 ) {
   const { t } = useTranslation();
@@ -71,6 +74,7 @@ function useClientProfileModel(
     onArchived,
     onOpenEditScreen,
     onOpenNutrition,
+    onOpenMoodScreen,
     onOpenTestsScreen,
     onRouteChange,
     query,
@@ -143,6 +147,7 @@ interface ViewModelInput {
   noteDraft: string;
   onArchived?: () => void;
   onOpenEditScreen?: (clientId: string) => void;
+  onOpenMoodScreen?: (clientId: string) => void;
   onOpenNutrition?: () => void;
   onOpenTestsScreen?: (clientId: string) => void;
   onRouteChange?: (route: ShellRoute) => void;
@@ -173,6 +178,7 @@ function buildViewModel(input: ViewModelInput) {
   const onOpenRoutinePlanner = buildOpenRoutinePlannerAction(input);
   const onOpenProgress = buildOpenProgressAction(input);
   const onOpenNutrition = buildOpenNutritionAction(input);
+  const onOpenMood = buildOpenMoodAction(input);
   const onOpenTests = buildOpenTestsAction(input);
 
   return {
@@ -185,6 +191,7 @@ function buildViewModel(input: ViewModelInput) {
     onOpenEdit: () => (input.onOpenEditScreen && client ? input.onOpenEditScreen(client.id) : input.setEditing(true)),
     onOpenRoutinePlanner,
     onOpenNutrition,
+    onOpenMood,
     onOpenProgress,
     onOpenTests,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
@@ -226,6 +233,14 @@ function buildOpenNutritionAction(input: ViewModelInput): () => void {
     const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
     input.openNutritionForClient(client.id, clientDisplayName);
     input.onOpenNutrition?.();
+  };
+}
+
+function buildOpenMoodAction(input: ViewModelInput): () => void {
+  return () => {
+    const client = input.query.data;
+    if (!client || !input.onOpenMoodScreen) return;
+    input.onOpenMoodScreen(client.id);
   };
 }
 
@@ -288,6 +303,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}
+        onOpenMood={props.vm.onOpenMood}
         onOpenNutrition={props.vm.onOpenNutrition}
         onOpenProgress={props.vm.onOpenProgress}
         onOpenTests={props.vm.onOpenTests}

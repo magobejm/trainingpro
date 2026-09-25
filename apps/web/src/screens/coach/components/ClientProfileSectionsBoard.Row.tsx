@@ -6,8 +6,10 @@ import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types'
 type Props = {
   hasTrainingPlan: boolean;
   item: SectionItem;
+  moodSubtitle?: string;
   onArchive: () => void;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
+  onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
@@ -27,6 +29,8 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
     <div {...dragProps} style={rowStyle}>
       <RowMain
         item={props.item}
+        moodSubtitle={props.moodSubtitle}
+        onOpenMood={props.onOpenMood}
         onOpenNutrition={props.onOpenNutrition}
         onOpenProgress={props.onOpenProgress}
         onOpenTests={props.onOpenTests}
@@ -51,6 +55,8 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
 
 function RowMain(props: {
   item: SectionItem;
+  moodSubtitle?: string;
+  onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
@@ -59,7 +65,7 @@ function RowMain(props: {
   t: Props['t'];
   trainingPlanName?: string;
 }): React.JSX.Element {
-  const subtitle = readSubtitle(props.item, props.trainingPlanName, props.t);
+  const subtitle = readSubtitle(props.item, props.trainingPlanName, props.t, props.moodSubtitle);
   return (
     <>
       <Text style={styles.dragHandle}>{'⋮⋮'}</Text>
@@ -74,6 +80,7 @@ function RowMain(props: {
             props.onOpenProgress,
             props.onOpenNutrition,
             props.onOpenTests,
+            props.onOpenMood,
           )
         }
         style={styles.rowText}
@@ -131,16 +138,24 @@ function onOpenSection(
   onOpenProgress?: () => void,
   onOpenNutrition?: () => void,
   onOpenTests?: () => void,
+  onOpenMood?: () => void,
 ): void {
   if (id === 'training') onOpenTrainingPlanner();
   if (id === 'progress') onOpenProgress?.();
   if (id === 'nutrition') onOpenNutrition?.();
   if (id === 'tests') onOpenTests?.();
+  if (id === 'mood') onOpenMood?.();
 }
 
-function readSubtitle(item: SectionItem, trainingPlanName: string | undefined, t: Props['t']): string {
-  if (item.id !== 'training') return t(item.emptyKey);
-  return trainingPlanName || t(item.emptyKey);
+function readSubtitle(
+  item: SectionItem,
+  trainingPlanName: string | undefined,
+  t: Props['t'],
+  moodSubtitle?: string,
+): string {
+  if (item.id === 'training') return trainingPlanName || t(item.emptyKey);
+  if (item.id === 'mood' && moodSubtitle) return moodSubtitle;
+  return t(item.emptyKey);
 }
 
 function onDragOverRow(event: React.DragEvent<HTMLDivElement>): void {

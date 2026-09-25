@@ -277,7 +277,10 @@ export function useStartSessionMutation(sessionId: string) {
       startMode?: 'INTERACTIVE' | 'TIMER' | null;
     }) => startSession(auth, sessionId, payload),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'wellness'] }),
+      ]);
     },
   });
 }
@@ -298,6 +301,7 @@ export function useFinishSessionMutation(sessionId: string) {
         queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
         queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] }),
         queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] }),
+        queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'wellness'] }),
       ]);
     },
   });

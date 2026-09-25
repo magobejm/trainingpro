@@ -29,7 +29,15 @@ import { LIGHT } from '../../theme/light';
 import { showError, showToast } from '../../shell/client/feedback';
 import { ActiveExerciseScreen } from './ActiveExerciseScreen';
 import { RoutineDayScreen } from './RoutineDayScreen';
+import { SessionFinishCheckinSheet, type FinishCheckinPayload } from './SessionFinishCheckinSheet';
+import { SessionStartCheckinSheet, type StartCheckinScores } from './SessionStartCheckinSheet';
+import { WeeklyReportFormSheet } from './WeeklyReportFormSheet';
 import type { RestState } from './session-rest.types';
+import {
+  useUpsertWeeklyReportMutation,
+  useWeeklyReportQuery,
+  type UpsertWeeklyReportInput,
+} from '../../data/hooks/useWeeklyReport';
 
 type TodaySessionScreenProps = {
   onClose: () => void;
@@ -158,7 +166,12 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const [exerciseGroup, setExerciseGroup] = useState<SessionItem[]>([]);
   const [completedRestKeys, setCompletedRestKeys] = useState<string[]>([]);
   const [restState, setRestState] = useState<RestState | null>(null);
+  const [checkinSheet, setCheckinSheet] = useState<'finish' | 'start' | 'weekly' | null>(null);
   const [, tick] = useState(0);
+  const startPromptedRef = React.useRef(false);
+  const reportDate = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const weeklyQuery = useWeeklyReportQuery(reportDate);
+  const weeklyMutation = useUpsertWeeklyReportMutation();
 
   React.useEffect(() => {
     if (!sessionQuery.data?.startedAt) return;
@@ -172,15 +185,14 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const isCompleted = session?.status === 'COMPLETED';
   const showActiveDay = isRunning || isCompleted;
   const workoutElapsed = session?.startedAt ? formatElapsed(session.startedAt) : undefined;
-  const autoStartedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (session?.status !== 'PENDING' || autoStartedRef.current || startMutation.isPending) {
+    if (session?.status !== 'PENDING' || startPromptedRef.current) {
       return;
     }
-    autoStartedRef.current = true;
-    startMutation.mutate({ startMode: 'INTERACTIVE' });
-  }, [session?.status, startMutation]);
+    startPromptedRef.current = true;
+    setCheckinSheet('start');
+  }, [session?.status]);
 
   React.useEffect(() => {
     if (!session || !selectedExercise) {
@@ -291,8 +303,63 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   );
 
   const handleFinishDay = useCallback(() => {
-    finishMutation.mutate({ isIncomplete: false }, { onSuccess: () => onFinishedDay() });
-  }, [finishMutation, onFinishedDay]);
+    setCheckinSheet('finish');
+  }, []);
+
+  const handleStartSubmit = useCallback(
+    async (scores: null | StartCheckinScores) => {
+      try {
+        await startMutation.mutateAsync({
+          preFatigue: scores?.preFatigue ?? null,
+          preMotivation: scores?.preMotivation ?? null,
+          preRecovery: scores?.preRecovery ?? null,
+          startMode: 'INTERACTIVE',
+        });
+        setCheckinSheet(null);
+      } catch (error) {
+        handleMutationError(error);
+      }
+    },
+    [handleMutationError, startMutation],
+  );
+
+  const handleFinishSubmit = useCallback(
+    async (payload: FinishCheckinPayload | null) => {
+      try {
+        await finishMutation.mutateAsync(
+          payload ?? { comment: null, isIncomplete: false, postFatigue: null, postMood: null, postPain: null },
+        );
+        if (!weeklyQuery.data) {
+          setCheckinSheet('weekly');
+          return;
+        }
+        setCheckinSheet(null);
+        onFinishedDay();
+      } catch (error) {
+        handleMutationError(error);
+      }
+    },
+    [finishMutation, handleMutationError, onFinishedDay, weeklyQuery.data],
+  );
+
+  const handleWeeklySubmit = useCallback(
+    async (input: UpsertWeeklyReportInput) => {
+      try {
+        await weeklyMutation.mutateAsync(input);
+        showToast(t('client.report.saved'));
+        setCheckinSheet(null);
+        onFinishedDay();
+      } catch (error) {
+        handleMutationError(error);
+      }
+    },
+    [handleMutationError, onFinishedDay, t, weeklyMutation],
+  );
+
+  const handleWeeklySkip = useCallback(() => {
+    setCheckinSheet(null);
+    onFinishedDay();
+  }, [onFinishedDay]);
 
   const handleStartRest = useCallback((setKey: string, seconds: number) => {
     setRestState({
@@ -334,37 +401,60 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   }
 
   return (
-    <TodaySessionBody
-      completedRestKeys={completedRestKeys}
-      exerciseGroup={exerciseGroup}
-      isCompleted={isCompleted}
-      isPending={isPending}
-      isRunning={isRunning}
-      onLogInterval={handleLogInterval}
-      onLogIsometricSet={handleLogIsometricSet}
-      onLogMobilitySet={handleLogMobilitySet}
-      onLogPlioSet={handleLogPlioSet}
-      onLogSet={handleLogSet}
-      onLogSport={handleLogSport}
-      onClose={onClose}
-      onFinishDay={handleFinishDay}
-      onCollapseRest={handleCollapseRest}
-      onExpandRest={handleExpandRest}
-      onRestFinish={handleRestFinish}
-      onSelectExercise={handleSelectExercise}
-      onStartRest={handleStartRest}
-      restState={restState}
-      selectedExercise={selectedExercise}
-      session={session}
-      sessionId={sessionId}
-      setCompletedRestKeys={setCompletedRestKeys}
-      setExerciseGroup={setExerciseGroup}
-      setRestState={setRestState}
-      setSelectedExercise={setSelectedExercise}
-      showActiveDay={showActiveDay}
-      t={t}
-      workoutElapsed={workoutElapsed}
-    />
+    <>
+      <TodaySessionBody
+        completedRestKeys={completedRestKeys}
+        exerciseGroup={exerciseGroup}
+        isCompleted={isCompleted}
+        isPending={isPending}
+        isRunning={isRunning}
+        onLogInterval={handleLogInterval}
+        onLogIsometricSet={handleLogIsometricSet}
+        onLogMobilitySet={handleLogMobilitySet}
+        onLogPlioSet={handleLogPlioSet}
+        onLogSet={handleLogSet}
+        onLogSport={handleLogSport}
+        onClose={onClose}
+        onFinishDay={handleFinishDay}
+        onCollapseRest={handleCollapseRest}
+        onExpandRest={handleExpandRest}
+        onRestFinish={handleRestFinish}
+        onSelectExercise={handleSelectExercise}
+        onStartRest={handleStartRest}
+        restState={restState}
+        selectedExercise={selectedExercise}
+        session={session}
+        sessionId={sessionId}
+        setCompletedRestKeys={setCompletedRestKeys}
+        setExerciseGroup={setExerciseGroup}
+        setRestState={setRestState}
+        setSelectedExercise={setSelectedExercise}
+        showActiveDay={showActiveDay}
+        t={t}
+        workoutElapsed={workoutElapsed}
+      />
+      <SessionStartCheckinSheet
+        isSubmitting={startMutation.isPending}
+        onSkip={() => void handleStartSubmit(null)}
+        onSubmit={(scores) => void handleStartSubmit(scores)}
+        visible={checkinSheet === 'start'}
+      />
+      <SessionFinishCheckinSheet
+        isSubmitting={finishMutation.isPending}
+        onSkip={() => void handleFinishSubmit(null)}
+        onSubmit={(payload) => void handleFinishSubmit(payload)}
+        visible={checkinSheet === 'finish'}
+      />
+      <WeeklyReportFormSheet
+        initial={weeklyQuery.data ?? null}
+        isSubmitting={weeklyMutation.isPending}
+        onClose={handleWeeklySkip}
+        onSubmit={(input) => void handleWeeklySubmit(input)}
+        reportDate={reportDate}
+        sourceSessionId={sessionId}
+        visible={checkinSheet === 'weekly'}
+      />
+    </>
   );
 }
 

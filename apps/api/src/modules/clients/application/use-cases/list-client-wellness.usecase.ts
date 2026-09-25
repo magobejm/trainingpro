@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { CLIENTS_REPOSITORY, type ClientsRepositoryPort } from '../../domain/clients-repository.port';
 
 export type ClientWellnessSession = {
   id: string;
@@ -40,19 +41,24 @@ export type ClientWellnessResponse = {
 };
 
 type ListClientWellnessInput = {
+  clientId?: string;
   dateFrom: Date;
   dateTo: Date;
 };
 
 @Injectable()
 export class ListClientWellnessUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(CLIENTS_REPOSITORY)
+    private readonly clientsRepository: ClientsRepositoryPort,
+  ) {}
 
   async execute(context: AuthContext, input: ListClientWellnessInput): Promise<ClientWellnessResponse> {
-    const client = await this.resolveClient(context);
+    const clientId = await this.resolveClientId(context, input.clientId);
     const [sessionRows, reportRows] = await Promise.all([
-      this.querySessions(client.id, input.dateFrom, input.dateTo),
-      this.queryWeeklyReports(client.id, input.dateFrom, input.dateTo),
+      this.querySessions(clientId, input.dateFrom, input.dateTo),
+      this.queryWeeklyReports(clientId, input.dateFrom, input.dateTo),
     ]);
     const sessions = sessionRows.map((r) => ({
       id: r.id,
@@ -124,15 +130,17 @@ export class ListClientWellnessUseCase {
     });
   }
 
-  private async resolveClient(context: AuthContext) {
+  private async resolveClientId(context: AuthContext, clientId?: string): Promise<string> {
+    if (clientId) {
+      const allowed = await this.clientsRepository.canCoachAccessClient(context.subject, clientId);
+      if (!allowed) throw new NotFoundException('Client not found');
+      return clientId;
+    }
     const email = context.email;
     if (!email) throw new NotFoundException('Client profile not found');
-    const client = await this.prisma.client.findFirst({
-      where: { archivedAt: null, email },
-      select: { id: true },
-    });
+    const client = await this.clientsRepository.findClientByEmail(email);
     if (!client) throw new NotFoundException('Client profile not found');
-    return client;
+    return client.id;
   }
 }
 

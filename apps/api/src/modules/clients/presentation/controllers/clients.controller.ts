@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -28,6 +29,7 @@ import { GetClientUseCase } from '../../application/use-cases/get-client.usecase
 import { GetClientManagementSectionsUseCase } from '../../application/use-cases/get-client-management-sections.usecase';
 import { ListClientProgressPhotosUseCase } from '../../application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from '../../application/use-cases/list-clients.usecase';
+import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { ListClientObjectivesUseCase } from '../../application/use-cases/list-client-objectives.usecase';
 import { ResetClientPasswordUseCase } from '../../application/use-cases/reset-client-password.usecase';
 import { SaveClientManagementSectionsUseCase } from '../../application/use-cases/save-client-management-sections.usecase';
@@ -35,6 +37,7 @@ import { SetClientProgressPhotoArchivedUseCase } from '../../application/use-cas
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
 import { UploadClientAvatarUseCase } from '../../application/use-cases/upload-client-avatar.usecase';
 import { UploadClientProgressPhotoUseCase } from '../../application/use-cases/upload-client-progress-photo.usecase';
+import { ClientCalendarQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientProgressPhotoIdParamDto } from '../dto/client-progress-photo-id-param.dto';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
 import { CreateClientProgressPhotoDto } from '../dto/create-client-progress-photo.dto';
@@ -71,6 +74,7 @@ export class ClientsController {
     private readonly getClientManagementSectionsUseCase: GetClientManagementSectionsUseCase,
     private readonly listClientProgressPhotosUseCase: ListClientProgressPhotosUseCase,
     private readonly listClientsUseCase: ListClientsUseCase,
+    private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly listClientObjectivesUseCase: ListClientObjectivesUseCase,
     private readonly resetClientPasswordUseCase: ResetClientPasswordUseCase,
     private readonly saveClientManagementSectionsUseCase: SaveClientManagementSectionsUseCase,
@@ -125,19 +129,27 @@ export class ClientsController {
     return { items: items.map(mapManagementSection) };
   }
 
-  @Patch(':clientId')
+  @Get(':clientId/wellness')
   @UseGuards(ClientOwnershipGuard)
-  async update(
+  async getWellness(
     @Param() params: ClientIdParamDto,
-    @Body() body: UpdateClientDto,
+    @Query() query: ClientCalendarQueryDto,
     @Req() request: HttpAuthRequest,
   ) {
     const auth = readAuthContext(request);
-    const updated = await this.updateClientUseCase.execute(
-      auth,
-      params.clientId,
-      mapUpdateDto(body),
-    );
+    const { dateFrom, dateTo } = ClientCalendarQueryDto.schema.parse(query);
+    return this.listClientWellnessUseCase.execute(auth, {
+      clientId: params.clientId,
+      dateFrom: new Date(dateFrom),
+      dateTo: new Date(dateTo),
+    });
+  }
+
+  @Patch(':clientId')
+  @UseGuards(ClientOwnershipGuard)
+  async update(@Param() params: ClientIdParamDto, @Body() body: UpdateClientDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const updated = await this.updateClientUseCase.execute(auth, params.clientId, mapUpdateDto(body));
     return mapClientOutput(updated, this.storage);
   }
 
@@ -149,11 +161,7 @@ export class ClientsController {
     @Req() request: HttpAuthRequest,
   ) {
     const auth = readAuthContext(request);
-    const items = await this.saveClientManagementSectionsUseCase.execute(
-      auth,
-      params.clientId,
-      body.items,
-    );
+    const items = await this.saveClientManagementSectionsUseCase.execute(auth, params.clientId, body.items);
     return { items: items.map(mapManagementSection) };
   }
 
@@ -173,11 +181,7 @@ export class ClientsController {
     @Req() request: HttpAuthRequest,
   ) {
     const auth = readAuthContext(request);
-    const created = await this.createClientProgressPhotoUseCase.execute(
-      auth,
-      params.clientId,
-      body.imageUrl,
-    );
+    const created = await this.createClientProgressPhotoUseCase.execute(auth, params.clientId, body.imageUrl);
     return mapProgressPhotoOutput(created, this.storage);
   }
 
@@ -193,11 +197,7 @@ export class ClientsController {
       throw new BadRequestException('Missing progress photo file');
     }
     const auth = readAuthContext(request);
-    const uploaded = await this.uploadClientProgressPhotoUseCase.execute(
-      auth,
-      params.clientId,
-      file,
-    );
+    const uploaded = await this.uploadClientProgressPhotoUseCase.execute(auth, params.clientId, file);
     return mapProgressPhotoOutput(uploaded, this.storage);
   }
 
@@ -220,10 +220,7 @@ export class ClientsController {
 
   @Delete(':clientId/progress-photos/:photoId')
   @UseGuards(ClientOwnershipGuard)
-  async deleteProgressPhoto(
-    @Param() params: ClientProgressPhotoIdParamDto,
-    @Req() request: HttpAuthRequest,
-  ) {
+  async deleteProgressPhoto(@Param() params: ClientProgressPhotoIdParamDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     await this.deleteClientProgressPhotoUseCase.execute(auth, params.clientId, params.photoId);
     return { status: 'deleted' };

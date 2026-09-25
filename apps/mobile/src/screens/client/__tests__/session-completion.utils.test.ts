@@ -29,6 +29,29 @@ describe('session-completion.utils', () => {
     expect(isSessionItemComplete({ ...strengthComplete, logs: [], setsPlanned: 2 })).toBe(false);
   });
 
+  it('requires unique set indexes for strength completion', () => {
+    expect(
+      isSessionItemComplete({
+        ...strengthComplete,
+        logs: [
+          { ...strengthComplete.logs[0]!, setIndex: 1 },
+          { ...strengthComplete.logs[0]!, setIndex: 1 },
+        ],
+        setsPlanned: 2,
+      }),
+    ).toBe(false);
+    expect(
+      isSessionItemComplete({
+        ...strengthComplete,
+        logs: [
+          { ...strengthComplete.logs[0]!, setIndex: 1 },
+          { ...strengthComplete.logs[0]!, setIndex: 2 },
+        ],
+        setsPlanned: 2,
+      }),
+    ).toBe(true);
+  });
+
   it('formats rest labels', () => {
     expect(formatRestLabel(45)).toBe('45s');
     expect(formatRestLabel(60)).toBe('1m');

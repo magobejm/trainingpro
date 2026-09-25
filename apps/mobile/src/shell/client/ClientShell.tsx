@@ -22,6 +22,8 @@ import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 
+type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
+
 type ShellState = {
   activeTab: TabId;
   activeSessionId: string | null;
@@ -30,6 +32,7 @@ type ShellState = {
   selectedDay: ClientRoutineDay | null;
   slideX: Animated.Value;
   closeOverlay: () => void;
+  finishSessionToList: () => void;
   openDay: (day: ClientRoutineDay) => void;
   openOverlay: (id: OverlayId) => void;
   openProgress: (mode: ProgressMode) => void;
@@ -37,6 +40,11 @@ type ShellState = {
   setActiveTab: (tab: TabId) => void;
 };
 
+function isListOverlay(id: OverlayId): id is ListOverlay {
+  return id === 'calendar' || id === 'planning' || id === 'routine';
+}
+
+/* eslint-disable max-lines-per-function -- overlay stack plus session/day back navigation. */
 function useShellState(): ShellState {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [overlay, setOverlay] = useState<OverlayId>(null);
@@ -44,9 +52,27 @@ function useShellState(): ShellState {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [progressMode, setProgressMode] = useState<ProgressMode>('progress');
   const slideX = useRef(new Animated.Value(600)).current;
+  const listOriginRef = useRef<ListOverlay | null>(null);
+  const overlayRef = useRef<OverlayId>(null);
+  const selectedDayRef = useRef<ClientRoutineDay | null>(null);
+  overlayRef.current = overlay;
+  selectedDayRef.current = selectedDay;
+
+  const animateHome = useCallback(() => {
+    Animated.spring(slideX, { toValue: 600, ...SPRING }).start(() => {
+      setOverlay(null);
+      setProgressMode('progress');
+      setSelectedDay(null);
+      setActiveSessionId(null);
+      listOriginRef.current = null;
+    });
+  }, [slideX]);
 
   const openOverlay = useCallback(
     (id: OverlayId) => {
+      if (isListOverlay(id)) {
+        listOriginRef.current = id;
+      }
       setOverlay(id);
       Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
     },
@@ -54,13 +80,41 @@ function useShellState(): ShellState {
   );
 
   const closeOverlay = useCallback(() => {
-    Animated.spring(slideX, { toValue: 600, ...SPRING }).start(() => {
-      setOverlay(null);
-      setProgressMode('progress');
-      if (overlay === 'routineDay') setSelectedDay(null);
-      if (overlay === 'session') setActiveSessionId(null);
-    });
-  }, [overlay, slideX]);
+    const current = overlayRef.current;
+    if (current === 'session') {
+      setActiveSessionId(null);
+      if (selectedDayRef.current) {
+        setOverlay('routineDay');
+        return;
+      }
+      if (listOriginRef.current) {
+        setOverlay(listOriginRef.current);
+        return;
+      }
+      animateHome();
+      return;
+    }
+    if (current === 'routineDay') {
+      setSelectedDay(null);
+      if (listOriginRef.current) {
+        setOverlay(listOriginRef.current);
+        return;
+      }
+      animateHome();
+      return;
+    }
+    animateHome();
+  }, [animateHome]);
+
+  const finishSessionToList = useCallback(() => {
+    setActiveSessionId(null);
+    setSelectedDay(null);
+    if (listOriginRef.current) {
+      setOverlay(listOriginRef.current);
+      return;
+    }
+    animateHome();
+  }, [animateHome]);
 
   const openProgress = useCallback(
     (mode: ProgressMode) => {
@@ -73,6 +127,9 @@ function useShellState(): ShellState {
 
   const openDay = useCallback(
     (day: ClientRoutineDay) => {
+      if (isListOverlay(overlayRef.current)) {
+        listOriginRef.current = overlayRef.current;
+      }
       setSelectedDay(day);
       setOverlay('routineDay');
       Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
@@ -82,6 +139,9 @@ function useShellState(): ShellState {
 
   const openSession = useCallback(
     (sessionId: string) => {
+      if (isListOverlay(overlayRef.current)) {
+        listOriginRef.current = overlayRef.current;
+      }
       setActiveSessionId(sessionId);
       setOverlay('session');
       Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
@@ -93,6 +153,7 @@ function useShellState(): ShellState {
     activeSessionId,
     activeTab,
     closeOverlay,
+    finishSessionToList,
     openDay,
     openOverlay,
     openProgress,
@@ -165,7 +226,11 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'session' && st.activeSessionId !== null && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <TodaySessionScreen onClose={st.closeOverlay} sessionId={st.activeSessionId} />
+          <TodaySessionScreen
+            onClose={st.closeOverlay}
+            onFinishedDay={st.finishSessionToList}
+            sessionId={st.activeSessionId}
+          />
         </Animated.View>
       )}
       {st.overlay === 'progress' && (

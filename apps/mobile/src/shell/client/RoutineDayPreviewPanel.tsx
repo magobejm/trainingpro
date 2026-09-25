@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { isDayChangeConfirmationRequired } from '../../data/api-client';
 import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientCalendarSessionsQuery } from '../../data/hooks/useClientCalendar';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
@@ -23,6 +24,7 @@ type RoutineDayPreviewPanelProps = {
   onOpenSession: (sessionId: string) => void;
 };
 
+/* eslint-disable max-lines-per-function -- preview start gates day-change confirm against calendar and session state. */
 export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): React.JSX.Element {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -43,8 +45,8 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   }, [calendarQuery.data?.data, routineQuery.data, today]);
 
   const needsDayChangeConfirm = useMemo(
-    () => !isSelectedPlanDayScheduledForToday(resolvedDay.id, schedule),
-    [resolvedDay.id, schedule],
+    () => !calendarQuery.isLoading && !isSelectedPlanDayScheduledForToday(resolvedDay.id, schedule),
+    [calendarQuery.isLoading, resolvedDay.id, schedule],
   );
 
   const todaySession = sessionsQuery.data?.[0] ?? null;
@@ -53,15 +55,22 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
 
   const startLabel = useMemo(() => {
     if (isCompleted) return t('mobile.client.session.workoutFinished');
-    if (isInProgress) return t('mobile.client.day.continueTraining');
+    if (isInProgress && todaySession?.planDayId === resolvedDay.id) {
+      return t('mobile.client.day.continueTraining');
+    }
     return undefined;
-  }, [isCompleted, isInProgress, t]);
+  }, [isCompleted, isInProgress, resolvedDay.id, t, todaySession?.planDayId]);
 
   const runEnsureSession = useCallback(
     (confirmDayChange: boolean) => {
       ensureMutation.mutate(
         { confirmDayChange, planDayId: resolvedDay.id, sessionDate: todayStr },
         {
+          onError: (error) => {
+            if (!confirmDayChange && isDayChangeConfirmationRequired(error)) {
+              setDayChangeOpen(true);
+            }
+          },
           onSuccess: (result) => {
             void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] });
             void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
@@ -77,9 +86,13 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   );
 
   const handleStart = useCallback(() => {
-    if (isCompleted) return;
+    if (isCompleted || calendarQuery.isLoading) return;
 
     if (isInProgress && todaySession) {
+      if (todaySession.planDayId && todaySession.planDayId !== resolvedDay.id) {
+        setDayChangeOpen(true);
+        return;
+      }
       props.onOpenSession(todaySession.id);
       return;
     }
@@ -90,7 +103,16 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     }
 
     runEnsureSession(false);
-  }, [isCompleted, isInProgress, needsDayChangeConfirm, props.onOpenSession, runEnsureSession, todaySession]);
+  }, [
+    calendarQuery.isLoading,
+    isCompleted,
+    isInProgress,
+    needsDayChangeConfirm,
+    props.onOpenSession,
+    resolvedDay.id,
+    runEnsureSession,
+    todaySession,
+  ]);
 
   const handleConfirmDayChange = useCallback(() => {
     setDayChangeOpen(false);
@@ -107,6 +129,8 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     );
   }
 
+  const startError = ensureMutation.isError && !dayChangeOpen && !isDayChangeConfirmationRequired(ensureMutation.error);
+
   return (
     <>
       <RoutineDayScreen
@@ -114,8 +138,8 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
         mode={'preview'}
         onClose={props.onClose}
         onStart={handleStart}
-        startDisabled={isCompleted}
-        startError={ensureMutation.isError || planDayQuery.isError}
+        startDisabled={isCompleted || calendarQuery.isLoading}
+        startError={startError}
         startLabel={startLabel}
         startPending={ensureMutation.isPending}
       />

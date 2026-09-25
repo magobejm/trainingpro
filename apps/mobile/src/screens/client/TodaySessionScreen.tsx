@@ -33,6 +33,7 @@ import type { RestState } from './session-rest.types';
 
 type TodaySessionScreenProps = {
   onClose: () => void;
+  onFinishedDay: () => void;
   sessionId: string;
 };
 
@@ -51,12 +52,12 @@ type TodaySessionBodyProps = {
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
-  onLogInterval: (input: LogIntervalMutationInput) => void;
-  onLogIsometricSet: (input: LogIsometricSetMutationInput) => void;
-  onLogMobilitySet: (input: LogMobilitySetMutationInput) => void;
-  onLogPlioSet: (input: LogPlioSetMutationInput) => void;
-  onLogSet: (input: LogSetMutationInput) => void;
-  onLogSport: (input: LogSportMutationInput) => void;
+  onLogInterval: (input: LogIntervalMutationInput) => Promise<void> | void;
+  onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<void> | void;
+  onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<void> | void;
+  onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<void> | void;
+  onLogSet: (input: LogSetMutationInput) => Promise<void> | void;
+  onLogSport: (input: LogSportMutationInput) => Promise<void> | void;
   onClose: () => void;
   onFinishDay: () => void;
   onRestFinish: () => void;
@@ -141,7 +142,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
 }
 
 /* eslint-disable max-lines-per-function -- session screen wires mutations, rest timer, and selected exercise sync. */
-export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenProps): React.JSX.Element {
+export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodaySessionScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const sessionQuery = useSessionQuery(sessionId);
   const startMutation = useStartSessionMutation(sessionId);
@@ -212,68 +213,86 @@ export function TodaySessionScreen({ onClose, sessionId }: TodaySessionScreenPro
   );
 
   const handleLogSet = useCallback(
-    (input: Parameters<ReturnType<typeof useLogSetMutation>['mutate']>[0]) => {
-      logSetMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogSetMutation>['mutate']>[0]) => {
+      try {
+        await logSetMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logSetMutation, t],
   );
 
   const handleLogPlioSet = useCallback(
-    (input: Parameters<ReturnType<typeof useLogPlioSetMutation>['mutate']>[0]) => {
-      logPlioSetMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogPlioSetMutation>['mutate']>[0]) => {
+      try {
+        await logPlioSetMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logPlioSetMutation, t],
   );
 
   const handleLogMobilitySet = useCallback(
-    (input: Parameters<ReturnType<typeof useLogMobilitySetMutation>['mutate']>[0]) => {
-      logMobilitySetMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogMobilitySetMutation>['mutate']>[0]) => {
+      try {
+        await logMobilitySetMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logMobilitySetMutation, t],
   );
 
   const handleLogIsometricSet = useCallback(
-    (input: Parameters<ReturnType<typeof useLogIsometricSetMutation>['mutate']>[0]) => {
-      logIsometricSetMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogIsometricSetMutation>['mutate']>[0]) => {
+      try {
+        await logIsometricSetMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logIsometricSetMutation, t],
   );
 
   const handleLogSport = useCallback(
-    (input: Parameters<ReturnType<typeof useLogSportMutation>['mutate']>[0]) => {
-      logSportMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogSportMutation>['mutate']>[0]) => {
+      try {
+        await logSportMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logSportMutation, t],
   );
 
   const handleLogInterval = useCallback(
-    (input: Parameters<ReturnType<typeof useLogIntervalMutation>['mutate']>[0]) => {
-      logIntervalMutation.mutate(input, {
-        onError: handleMutationError,
-        onSuccess: () => showToast(t('mobile.client.session.setSaved')),
-      });
+    async (input: Parameters<ReturnType<typeof useLogIntervalMutation>['mutate']>[0]) => {
+      try {
+        await logIntervalMutation.mutateAsync(input);
+        showToast(t('mobile.client.session.setSaved'));
+      } catch (error) {
+        handleMutationError(error);
+        throw error;
+      }
     },
     [handleMutationError, logIntervalMutation, t],
   );
 
   const handleFinishDay = useCallback(() => {
-    finishMutation.mutate({ isIncomplete: false }, { onSuccess: () => onClose() });
-  }, [finishMutation, onClose]);
+    finishMutation.mutate({ isIncomplete: false }, { onSuccess: () => onFinishedDay() });
+  }, [finishMutation, onFinishedDay]);
 
   const handleStartRest = useCallback((setKey: string, seconds: number) => {
     setRestState({

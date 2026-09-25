@@ -7,7 +7,6 @@ import { BlurredImageFrame } from '../../components/BlurredImageFrame';
 import { getFullMediaUrl } from '../../utils/library-media.helpers';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.utils';
 import { ExerciseInstructionsModal } from './ExerciseInstructionsModal';
-import { RoutineSetDetailModal } from './RoutineSetDetailModal';
 import { formatExerciseRepRange, isAdvancedRoutineSet, routineSetColumnsForType } from './routine-exercise-set.utils';
 import { LIGHT } from '../../theme/light';
 import { s } from '../../shell/client/client-shell.styles';
@@ -23,7 +22,6 @@ export function ExerciseCard({ exercise, expanded, onToggle }: ExerciseCardProps
   const { t } = useTranslation();
   const [genericInstructionsOpen, setGenericInstructionsOpen] = useState(false);
   const [trainerNoteOpen, setTrainerNoteOpen] = useState(false);
-  const [selectedSet, setSelectedSet] = useState<ClientRoutineSet | null>(null);
   const [videoOpen, setVideoOpen] = useState(false);
   const typeBadge = resolveTypeBadge(exercise.type);
   const repRange = formatExerciseRepRange(exercise);
@@ -108,15 +106,7 @@ export function ExerciseCard({ exercise, expanded, onToggle }: ExerciseCardProps
                     ))}
                   </View>
                   {exercise.sets.map((set) => (
-                    <RoutineSetRow
-                      key={set.setIndex}
-                      columns={columns}
-                      set={set}
-                      t={t}
-                      onPress={(entry) => {
-                        if (isAdvancedRoutineSet(entry)) setSelectedSet(entry);
-                      }}
-                    />
+                    <RoutineSetRow columns={columns} key={set.setIndex} set={set} t={t} />
                   ))}
                 </View>
               </ScrollView>
@@ -141,7 +131,6 @@ export function ExerciseCard({ exercise, expanded, onToggle }: ExerciseCardProps
         visible={trainerNoteOpen}
         onClose={() => setTrainerNoteOpen(false)}
       />
-      <RoutineSetDetailModal set={selectedSet} visible={selectedSet != null} onClose={() => setSelectedSet(null)} />
       <YouTubeVideoModal
         title={exercise.displayName}
         visible={videoOpen}
@@ -156,9 +145,8 @@ function RoutineSetRow(props: {
   columns: ReturnType<typeof routineSetColumnsForType>;
   set: ClientRoutineSet;
   t: (key: string) => string;
-  onPress: (set: ClientRoutineSet) => void;
 }): React.JSX.Element {
-  const { set, columns, t, onPress } = props;
+  const { set, columns, t } = props;
   const advanced = isAdvancedRoutineSet(set);
   const setLabel = `${t('client.today.set')} ${set.setIndex + 1}`;
 
@@ -166,12 +154,12 @@ function RoutineSetRow(props: {
     <View style={styles.tableRow}>
       <View style={styles.seriesCol}>
         {advanced ? (
-          <Pressable onPress={() => onPress(set)}>
-            <Text style={styles.seriesLink}>{setLabel}</Text>
+          <View>
+            <Text style={styles.seriesNumber}>{setLabel}</Text>
             <Text numberOfLines={1} style={styles.advancedLabel}>
               {advancedTechniqueDisplayLabel(set.advancedTechnique!.trim(), t)}
             </Text>
-          </Pressable>
+          </View>
         ) : (
           <Text style={styles.seriesNumber}>{setLabel}</Text>
         )}
@@ -300,12 +288,6 @@ const styles = StyleSheet.create({
     color: LIGHT.textStrong,
     fontSize: 13,
     fontWeight: '700',
-  },
-  seriesLink: {
-    color: LIGHT.accentDark,
-    fontSize: 13,
-    fontWeight: '700',
-    textDecorationLine: 'underline',
   },
   advancedLabel: {
     color: LIGHT.indigo,

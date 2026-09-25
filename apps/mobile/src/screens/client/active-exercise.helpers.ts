@@ -327,4 +327,11 @@ export function getSourceExerciseId(item: SessionItem): null | string {
   return item.type === 'strength' ? item.sourceExerciseId : null;
 }
 
+export function draftHasValues(values: SetRowState | undefined): boolean {
+  if (!values) {
+    return false;
+  }
+  return Object.values(values).some((value) => value.trim().length > 0);
+}
+
 export type { StrengthSessionItem, SessionItem };

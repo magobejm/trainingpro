@@ -25,6 +25,13 @@ export class ApiClientError extends Error {
 export class UnauthorizedApiError extends ApiClientError {}
 export class ForbiddenApiError extends ApiClientError {}
 
+export function isDayChangeConfirmationRequired(error: unknown): boolean {
+  if (!(error instanceof ApiClientError) || error.status !== 409) {
+    return false;
+  }
+  return error.message.includes('DAY_CHANGE_CONFIRMATION_REQUIRED');
+}
+
 export function createApiClient(config: ApiClientOptions) {
   const baseUrl = resolveBaseUrl(config.baseUrl);
   const send = <T>(request: RequestOptions): Promise<T> => executeRequest<T>(baseUrl, config, request);

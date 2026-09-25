@@ -151,7 +151,7 @@ export function isSelectedPlanDayScheduledForToday(
   schedule: RoutineWeekSchedule | null,
 ): boolean {
   if (!schedule || schedule.mode === 'assigned') {
-    return true;
+    return false;
   }
   if (!schedule.today) {
     return false;

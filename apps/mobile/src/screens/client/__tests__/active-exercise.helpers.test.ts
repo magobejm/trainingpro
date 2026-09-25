@@ -1,4 +1,4 @@
-import { buildLogPayload, getSetColumns, readTargetValue } from '../active-exercise.helpers';
+import { buildLogPayload, draftHasValues, getSetColumns, readTargetValue } from '../active-exercise.helpers';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
 
 describe('active-exercise.helpers', () => {
@@ -54,5 +54,34 @@ describe('active-exercise.helpers', () => {
     expect(readTargetValue(item, 2, 'reps')).toBe('8');
     expect(readTargetValue(item, 1, 'weight')).toBe('60kg');
     expect(readTargetValue(item, 2, 'rir')).toBe('1');
+  });
+
+  it('detects draft rows with values', () => {
+    expect(
+      draftHasValues({
+        distance: '',
+        duration: '',
+        heartRate: '',
+        reps: '8',
+        rest: '',
+        rir: '',
+        rpe: '',
+        rom: '',
+        weight: '',
+      }),
+    ).toBe(true);
+    expect(
+      draftHasValues({
+        distance: '',
+        duration: '',
+        heartRate: '',
+        reps: '',
+        rest: '',
+        rir: '',
+        rpe: '',
+        rom: '',
+        weight: '',
+      }),
+    ).toBe(false);
   });
 });

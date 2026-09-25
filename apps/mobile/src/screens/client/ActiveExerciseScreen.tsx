@@ -15,6 +15,7 @@ import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
 import {
   buildLogPayload,
+  draftHasValues,
   getRestSeconds,
   getSetColumns,
   getSetCount,
@@ -25,15 +26,14 @@ import {
   type SetColumn,
   type SetFieldKey,
 } from './active-exercise.helpers';
+import { CircularCountdown } from './CircularCountdown';
 import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
 import { formatRestLabel } from './session-completion.utils';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
 import { RestTimerOverlay } from './RestTimerOverlay';
-import { resolvePlannedSet } from './planned-set.utils';
 import type { RestState } from './session-rest.types';
 import { ScaleModal } from './ScaleModal';
-import { SetNoteModal } from './SetNoteModal';
 
 type ActiveExerciseScreenProps = {
   exerciseGroup: SessionItem[];
@@ -48,12 +48,12 @@ type ActiveExerciseScreenProps = {
   onFinishExercise: () => void;
   onNavigateExercise: (item: SessionItem) => void;
   onRestFinish: () => void;
-  onLogInterval: (input: LogIntervalMutationInput) => void;
-  onLogIsometricSet: (input: LogIsometricSetMutationInput) => void;
-  onLogMobilitySet: (input: LogMobilitySetMutationInput) => void;
-  onLogPlioSet: (input: LogPlioSetMutationInput) => void;
-  onLogSet: (input: LogSetMutationInput) => void;
-  onLogSport: (input: LogSportMutationInput) => void;
+  onLogInterval: (input: LogIntervalMutationInput) => Promise<void> | void;
+  onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<void> | void;
+  onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<void> | void;
+  onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<void> | void;
+  onLogSet: (input: LogSetMutationInput) => Promise<void> | void;
+  onLogSport: (input: LogSportMutationInput) => Promise<void> | void;
   onStartRest: (setKey: string, seconds: number) => void;
   restState: RestState | null;
 };
@@ -79,9 +79,9 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [showComment, setShowComment] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showPrevious, setShowPrevious] = useState(false);
-  const [setNoteIndex, setSetNoteIndex] = useState<number | null>(null);
   const [scaleState, setScaleState] = useState<ScaleState>(null);
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
+  const [finishing, setFinishing] = useState(false);
 
   const groupIndex = props.exerciseGroup.findIndex((entry) => entry.id === props.item.id);
   const setCount = getSetCount(props.item);
@@ -106,17 +106,38 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     setDraftValues(next);
   }, [props.item, setCount]);
 
-  const handleSaveSet = (setIndex: number) => {
+  const saveSet = (setIndex: number): Promise<void> => {
     const values = draftValues[setIndex];
-    if (!values) return;
+    if (!values) return Promise.resolve();
     const payload = buildLogPayload(props.item, setIndex, values);
-    if (!payload) return;
-    if ('sessionItemId' in payload) props.onLogSet(payload);
-    else if ('sessionPlioBlockId' in payload) props.onLogPlioSet(payload);
-    else if ('sessionMobilityBlockId' in payload) props.onLogMobilitySet(payload);
-    else if ('sessionIsometricBlockId' in payload) props.onLogIsometricSet(payload);
-    else if ('sessionCardioBlockId' in payload) props.onLogInterval(payload);
-    else if ('sessionSportBlockId' in payload) props.onLogSport(payload);
+    if (!payload) return Promise.resolve();
+    if ('sessionItemId' in payload) return Promise.resolve(props.onLogSet(payload));
+    if ('sessionPlioBlockId' in payload) return Promise.resolve(props.onLogPlioSet(payload));
+    if ('sessionMobilityBlockId' in payload) return Promise.resolve(props.onLogMobilitySet(payload));
+    if ('sessionIsometricBlockId' in payload) return Promise.resolve(props.onLogIsometricSet(payload));
+    if ('sessionCardioBlockId' in payload) return Promise.resolve(props.onLogInterval(payload));
+    if ('sessionSportBlockId' in payload) return Promise.resolve(props.onLogSport(payload));
+    return Promise.resolve();
+  };
+
+  const handleSaveSet = (setIndex: number) => {
+    void saveSet(setIndex);
+  };
+
+  const handleFinishExercise = async () => {
+    if (finishing) return;
+    setFinishing(true);
+    try {
+      const pending: Array<Promise<void>> = [];
+      for (let setIndex = 1; setIndex <= setCount; setIndex += 1) {
+        if (!draftHasValues(draftValues[setIndex])) continue;
+        pending.push(saveSet(setIndex));
+      }
+      await Promise.all(pending);
+      props.onFinishExercise();
+    } catch {
+      setFinishing(false);
+    }
   };
 
   const handleScaleSave = (value: number) => {
@@ -202,9 +223,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                 <View style={styles.setHeader}>
                   <View style={styles.setHeaderLeft}>
                     <Text style={styles.setTitle}>{`${t('client.today.set')} ${setIndex}`}</Text>
-                    <Pressable onPress={() => setSetNoteIndex(setIndex)}>
-                      <Text>{'📄'}</Text>
-                    </Pressable>
                   </View>
                   {restSeconds > 0 ? (
                     <SetRestButton
@@ -257,7 +275,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           ) : (
             <View style={styles.footerSpacer} />
           )}
-          <Pressable style={styles.finishBtn} onPress={props.onFinishExercise}>
+          <Pressable disabled={finishing} style={styles.finishBtn} onPress={() => void handleFinishExercise()}>
             <Text style={styles.finishBtnText}>{t('mobile.client.session.finishExercise')}</Text>
           </Pressable>
           {props.workoutElapsed ? (
@@ -281,12 +299,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           onClose={() => setScaleState(null)}
           onSave={handleScaleSave}
         />
-        <SetNoteModal
-          item={props.item}
-          setIndex={setNoteIndex}
-          visible={setNoteIndex != null}
-          onClose={() => setSetNoteIndex(null)}
-        />
         <ExerciseCommentModal
           sessionId={props.sessionId}
           sessionItemId={getStrengthSessionItemId(props.item)}
@@ -297,11 +309,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           <Modal transparent animationType={'fade'} visible onRequestClose={() => setShowNotes(false)}>
             <Pressable style={styles.notesOverlay} onPress={() => setShowNotes(false)}>
               <View style={styles.notesCard}>
-                <ExerciseNotesPanel
-                  coachInstructions={props.item.coachInstructions}
-                  plannedSet={resolvePlannedSet(props.item.plannedSets, 1)}
-                  trainerNote={props.item.notes}
-                />
+                <ExerciseNotesPanel coachInstructions={props.item.coachInstructions} trainerNote={props.item.notes} />
               </View>
             </Pressable>
           </Modal>
@@ -314,6 +322,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
         {props.restState?.expanded ? (
           <RestTimerOverlay
             endAt={props.restState.endAt}
+            totalSeconds={props.restState.seconds}
             visible
             onHide={props.onCollapseRest}
             onFinish={props.onRestFinish}
@@ -363,9 +372,8 @@ function SetRestButton(props: {
 
   if (props.active && props.endAt) {
     return (
-      <Pressable onPress={props.onExpand} style={[styles.restBtn, styles.restBtnActive]}>
-        <View style={styles.restDot} />
-        <Text style={styles.restBtnActiveText}>{formatRestLabel(remaining)}</Text>
+      <Pressable onPress={props.onExpand} style={styles.restBtnCircle}>
+        <CircularCountdown remaining={remaining} size={56} strokeWidth={5} totalSeconds={props.restSeconds} />
       </Pressable>
     );
   }
@@ -555,8 +563,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
   },
-  restBtnActive: {
-    backgroundColor: LIGHT.emeraldBg,
+  restBtnCircle: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   restBtnDone: {
     backgroundColor: LIGHT.bgSoft,
@@ -566,19 +575,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
   },
-  restBtnActiveText: {
-    color: LIGHT.textOnNavy,
-    fontSize: 13,
-    fontWeight: '800',
-  },
   restBtnTextDone: {
     color: LIGHT.textMuted,
-  },
-  restDot: {
-    backgroundColor: LIGHT.textOnNavy,
-    borderRadius: 4,
-    height: 8,
-    width: 8,
   },
   footer: {
     alignItems: 'center',

@@ -207,4 +207,15 @@ describe('routine-schedule.utils renamed days', () => {
     expect(isSelectedPlanDayScheduledForToday('day-1', schedule)).toBe(true);
     expect(isSelectedPlanDayScheduledForToday('day-2', schedule)).toBe(false);
   });
+
+  it('requires confirmation when the week has no calendar workouts', () => {
+    const schedule = resolveRoutineWeekSchedule(planDays, [], new Date(2026, 8, 1));
+    expect(schedule.mode).toBe('assigned');
+    expect(isSelectedPlanDayScheduledForToday('day-1', schedule)).toBe(false);
+    expect(isSelectedPlanDayScheduledForToday('day-2', schedule)).toBe(false);
+  });
+
+  it('requires confirmation when the schedule is missing', () => {
+    expect(isSelectedPlanDayScheduledForToday('day-1', null)).toBe(false);
+  });
 });

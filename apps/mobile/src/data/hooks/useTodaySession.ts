@@ -276,8 +276,8 @@ export function useStartSessionMutation(sessionId: string) {
       preRecovery?: null | number;
       startMode?: 'INTERACTIVE' | 'TIMER' | null;
     }) => startSession(auth, sessionId, payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -293,8 +293,12 @@ export function useFinishSessionMutation(sessionId: string) {
       postMood?: null | number;
       postPain?: null | number;
     }) => finishSession(auth, sessionId, payload),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['session', sessionId] }),
+        queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] }),
+        queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] }),
+      ]);
     },
   });
 }
@@ -318,8 +322,8 @@ export function useLogSetMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogSetMutationInput) => logSet(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -329,8 +333,8 @@ export function useLogPlioSetMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogPlioSetMutationInput) => logPlioSet(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -340,8 +344,8 @@ export function useLogMobilitySetMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogMobilitySetMutationInput) => logMobilitySet(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -351,8 +355,8 @@ export function useLogIsometricSetMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogIsometricSetMutationInput) => logIsometricSet(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -362,8 +366,8 @@ export function useLogSportMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogSportMutationInput) => logSport(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }
@@ -373,8 +377,8 @@ export function useLogIntervalMutation(sessionId: string) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: LogIntervalMutationInput) => logInterval(auth, sessionId, input),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['session', sessionId] });
     },
   });
 }

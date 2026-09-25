@@ -1,12 +1,13 @@
 import React, { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
+import { useClientCalendarEventsQuery, useClientCalendarSessionsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientRoutineQuery, type ClientRoutine, type ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { s } from '../../shell/client/client-shell.styles';
 import { LIGHT } from '../../theme/light';
 import {
+  formatLocalDate,
   formatScheduledDateLabel,
   getWeekDateRange,
   resolveRoutineWeekSchedule,
@@ -23,13 +24,25 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
   const { t } = useTranslation();
   const { data: routine, isLoading } = useClientRoutineQuery();
   const today = useMemo(() => new Date(), []);
+  const todayStr = formatLocalDate(today);
   const weekRange = useMemo(() => getWeekDateRange(today), [today]);
   const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
+  const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
 
   const schedule = useMemo(() => {
     if (!routine) return null;
     return resolveRoutineWeekSchedule(routine.planDays, calendarQuery.data?.data ?? [], today);
   }, [calendarQuery.data?.data, routine, today]);
+
+  const completedPlanDayIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const session of sessionsQuery.data ?? []) {
+      if (session.status === 'COMPLETED' && session.planDayId) {
+        ids.add(session.planDayId);
+      }
+    }
+    return ids;
+  }, [sessionsQuery.data]);
 
   if (isLoading || calendarQuery.isLoading) {
     return (
@@ -59,9 +72,19 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
       <ScrollView contentContainerStyle={s.panelContent}>
         <RoutineHeroCard routine={routine} t={t} />
         {schedule?.mode === 'calendar' ? (
-          <CalendarScheduleSections onSelectDay={onSelectDay} schedule={schedule} t={t} />
+          <CalendarScheduleSections
+            completedPlanDayIds={completedPlanDayIds}
+            onSelectDay={onSelectDay}
+            schedule={schedule}
+            t={t}
+          />
         ) : (
-          <AssignedRoutineSection days={schedule?.days ?? routine.planDays} onSelectDay={onSelectDay} t={t} />
+          <AssignedRoutineSection
+            completedPlanDayIds={completedPlanDayIds}
+            days={schedule?.days ?? routine.planDays}
+            onSelectDay={onSelectDay}
+            t={t}
+          />
         )}
       </ScrollView>
     </View>
@@ -69,6 +92,7 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
 }
 
 function CalendarScheduleSections(props: {
+  completedPlanDayIds: Set<string>;
   onSelectDay: (day: ClientRoutineDay) => void;
   schedule: Extract<ReturnType<typeof resolveRoutineWeekSchedule>, { mode: 'calendar' }>;
   t: (key: string) => string;
@@ -82,6 +106,7 @@ function CalendarScheduleSections(props: {
         {schedule.today ? (
           <ScheduledWorkoutCard
             isActive
+            isDone={props.completedPlanDayIds.has(schedule.today.planDayId)}
             onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(schedule.today!))}
             subtitle={t('mobile.client.routine.scheduledToday')}
             workout={schedule.today}
@@ -100,6 +125,7 @@ function CalendarScheduleSections(props: {
           <View style={styles.otherDays}>
             {schedule.otherDays.map((workout) => (
               <ScheduledWorkoutCard
+                isDone={props.completedPlanDayIds.has(workout.planDayId)}
                 key={`${workout.date}-${workout.planDayId}`}
                 onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout))}
                 subtitle={formatScheduledDateLabel(workout.date)}
@@ -114,6 +140,7 @@ function CalendarScheduleSections(props: {
 }
 
 function AssignedRoutineSection(props: {
+  completedPlanDayIds: Set<string>;
   days: ClientRoutineDay[];
   onSelectDay: (day: ClientRoutineDay) => void;
   t: (key: string) => string;
@@ -123,7 +150,12 @@ function AssignedRoutineSection(props: {
       <Text style={s.routineSectionLabel}>{props.t('mobile.client.routine.assignedDays')}</Text>
       <View style={styles.otherDays}>
         {props.days.map((day) => (
-          <RoutineDayCard key={day.id} day={day} onPress={() => props.onSelectDay(day)} />
+          <RoutineDayCard
+            day={day}
+            isDone={props.completedPlanDayIds.has(day.id)}
+            key={day.id}
+            onPress={() => props.onSelectDay(day)}
+          />
         ))}
       </View>
     </>
@@ -149,19 +181,28 @@ function RoutineHeroCard(props: { routine: ClientRoutine; t: (key: string) => st
 
 function ScheduledWorkoutCard(props: {
   isActive?: boolean;
+  isDone?: boolean;
   onPress: () => void;
   subtitle: string;
   workout: ScheduledWorkout;
 }): React.JSX.Element {
+  const { t } = useTranslation();
   const exerciseCount = props.workout.routineDay?.exercises.length;
   return (
-    <Pressable onPress={props.onPress} style={[s.dayCard, props.isActive && s.dayCardActive]}>
+    <Pressable
+      onPress={props.onPress}
+      style={[s.dayCard, props.isActive && s.dayCardActive, props.isDone && styles.dayCardDone]}
+    >
       <View style={s.dayInfo}>
         <Text style={s.dayName}>{props.workout.title}</Text>
         <Text style={styles.daySubtitle}>{props.subtitle}</Text>
       </View>
       <View style={styles.dayRight}>
-        {exerciseCount != null ? (
+        {props.isDone ? (
+          <View style={styles.donePill}>
+            <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+          </View>
+        ) : exerciseCount != null ? (
           <View style={s.dayExPill}>
             <Text style={s.dayExPillText}>{`${exerciseCount} ejercicios`}</Text>
           </View>
@@ -175,19 +216,30 @@ function ScheduledWorkoutCard(props: {
 function RoutineDayCard(props: {
   day: ClientRoutineDay;
   isActive?: boolean;
+  isDone?: boolean;
   onPress: () => void;
   subtitle?: string;
 }): React.JSX.Element {
+  const { t } = useTranslation();
   return (
-    <Pressable onPress={props.onPress} style={[s.dayCard, props.isActive && s.dayCardActive]}>
+    <Pressable
+      onPress={props.onPress}
+      style={[s.dayCard, props.isActive && s.dayCardActive, props.isDone && styles.dayCardDone]}
+    >
       <View style={s.dayInfo}>
         <Text style={s.dayName}>{props.day.title}</Text>
         <Text style={styles.daySubtitle}>{props.subtitle ?? `Día ${props.day.dayIndex}`}</Text>
       </View>
       <View style={styles.dayRight}>
-        <View style={s.dayExPill}>
-          <Text style={s.dayExPillText}>{`${props.day.exercises.length} ejercicios`}</Text>
-        </View>
+        {props.isDone ? (
+          <View style={styles.donePill}>
+            <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+          </View>
+        ) : (
+          <View style={s.dayExPill}>
+            <Text style={s.dayExPillText}>{`${props.day.exercises.length} ejercicios`}</Text>
+          </View>
+        )}
         <Text style={s.dayChevron}>{'›'}</Text>
       </View>
     </Pressable>
@@ -230,5 +282,19 @@ const styles = StyleSheet.create({
     color: LIGHT.textMuted,
     fontSize: 13,
     marginTop: 4,
+  },
+  dayCardDone: {
+    borderColor: LIGHT.emerald,
+  },
+  donePill: {
+    backgroundColor: LIGHT.emeraldSoft,
+    borderRadius: LIGHT.radiusFull,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  donePillText: {
+    color: LIGHT.success,
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

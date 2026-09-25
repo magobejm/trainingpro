@@ -2,16 +2,23 @@ import React, { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
-import { formatRestLabel } from './session-completion.utils';
+import { CircularCountdown } from './CircularCountdown';
 
 type RestTimerOverlayProps = {
   endAt: number;
+  totalSeconds: number;
   visible: boolean;
   onHide: () => void;
   onFinish: () => void;
 };
 
-export function RestTimerOverlay({ endAt, visible, onHide, onFinish }: RestTimerOverlayProps): React.JSX.Element | null {
+export function RestTimerOverlay({
+  endAt,
+  totalSeconds,
+  visible,
+  onHide,
+  onFinish,
+}: RestTimerOverlayProps): React.JSX.Element | null {
   const { t } = useTranslation();
   const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
 
@@ -35,7 +42,7 @@ export function RestTimerOverlay({ endAt, visible, onHide, onFinish }: RestTimer
     <View style={styles.overlay}>
       <View style={styles.card}>
         <Text style={styles.label}>{t('client.today.restTimer')}</Text>
-        <Text style={styles.time}>{formatRestLabel(remaining)}</Text>
+        <CircularCountdown remaining={remaining} size={220} strokeWidth={14} totalSeconds={totalSeconds} />
         <View style={styles.actions}>
           <Pressable style={styles.secondaryBtn} onPress={onHide}>
             <Text style={styles.secondaryText}>{t('mobile.client.rest.hide')}</Text>
@@ -62,6 +69,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: LIGHT.bgCard,
     borderRadius: LIGHT.radiusXl,
+    gap: 24,
     padding: 32,
     width: '100%',
   },
@@ -70,14 +78,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
-    marginBottom: 16,
     textTransform: 'uppercase',
-  },
-  time: {
-    color: LIGHT.textStrong,
-    fontSize: 56,
-    fontWeight: '800',
-    marginBottom: 24,
   },
   actions: {
     flexDirection: 'row',

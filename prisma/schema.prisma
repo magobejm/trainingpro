@@ -1189,6 +1189,8 @@ model PlanCardioSet {
   fcMaxPct          Int?            @map("fc_max_pct")
   fcReservePct      Int?            @map("fc_reserve_pct")
   heartRate         Int?            @map("heart_rate")
+  durationSeconds   Int?            @map("duration_seconds")
+  restSeconds       Int?            @map("rest_seconds")
   rpe               Decimal?             @db.Decimal(3, 1)
   advancedTechnique String?         @map("advanced_technique") @db.VarChar(40)
   note              String?
@@ -1208,6 +1210,7 @@ model PlanPlioSet {
   reps              Int?
   rpe               Decimal?             @db.Decimal(3, 1)
   weightKg          Decimal?      @map("weight_kg") @db.Decimal(6, 2)
+  durationSeconds   Int?          @map("duration_seconds")
   restSeconds       Int?          @map("rest_seconds")
   advancedTechnique String?       @map("advanced_technique") @db.VarChar(40)
   note              String?
@@ -1246,6 +1249,7 @@ model PlanMobilitySet {
   reps              Int?
   rpe               Decimal?             @db.Decimal(3, 1)
   rom               String?           @db.VarChar(30)
+  weightKg          Decimal?          @map("weight_kg") @db.Decimal(6, 2)
   restSeconds       Int?              @map("rest_seconds")
   advancedTechnique String?           @map("advanced_technique") @db.VarChar(40)
   note              String?
@@ -1270,6 +1274,8 @@ model PlanSportSet {
   fcReservePct      Int?           @map("fc_reserve_pct")
   heartRate         Int?           @map("heart_rate")
   restSeconds       Int?           @map("rest_seconds")
+  durationSeconds   Int?           @map("duration_seconds")
+  rom               String?        @db.VarChar(30)
   advancedTechnique String?        @map("advanced_technique") @db.VarChar(40)
   note              String?
   createdAt    DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1302,6 +1308,7 @@ model SessionInstance {
   postFatigue           Int?                  @map("post_fatigue")
   postPain              Int?                  @map("post_pain")
   postMood              Int?                  @map("post_mood")
+  sessionRpe            Decimal?              @map("session_rpe") @db.Decimal(3, 1)
   archivedAt            DateTime?             @map("archived_at") @db.Timestamptz(6)
   createdBy             String                @map("created_by") @db.Uuid
   updatedBy             String                @map("updated_by") @db.Uuid

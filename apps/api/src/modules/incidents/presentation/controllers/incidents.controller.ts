@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { AddAdjustmentDraftUseCase } from '../../application/use-cases/add-adjustment-draft.usecase';
+import { ArchiveIncidentUseCase } from '../../application/use-cases/archive-incident.usecase';
 import { CreateIncidentUseCase } from '../../application/use-cases/create-incident.usecase';
 import { ListIncidentsUseCase } from '../../application/use-cases/list-incidents.usecase';
 import { MarkIncidentReviewedUseCase } from '../../application/use-cases/mark-incident-reviewed.usecase';
@@ -23,6 +24,7 @@ import { TagIncidentDto } from '../dto/tag-incident.dto';
 export class IncidentsController {
   constructor(
     private readonly addAdjustmentDraftUseCase: AddAdjustmentDraftUseCase,
+    private readonly archiveIncidentUseCase: ArchiveIncidentUseCase,
     private readonly createIncidentUseCase: CreateIncidentUseCase,
     private readonly listIncidentsUseCase: ListIncidentsUseCase,
     private readonly markIncidentReviewedUseCase: MarkIncidentReviewedUseCase,
@@ -41,6 +43,13 @@ export class IncidentsController {
     return this.listIncidentsUseCase.execute(readAuthContext(request), query);
   }
 
+  @Delete(':incidentId')
+  @Roles('client')
+  async archive(@Param() params: IncidentIdParamDto, @Req() request: HttpAuthRequest) {
+    await this.archiveIncidentUseCase.execute(readAuthContext(request), params.incidentId);
+    return { status: 'deleted' };
+  }
+
   @Post(':incidentId/review')
   @Roles('coach')
   async review(@Param() params: IncidentIdParamDto, @Req() request: HttpAuthRequest) {
@@ -49,22 +58,14 @@ export class IncidentsController {
 
   @Post(':incidentId/respond')
   @Roles('coach')
-  async respond(
-    @Param() params: IncidentIdParamDto,
-    @Body() body: RespondIncidentDto,
-    @Req() request: HttpAuthRequest,
-  ) {
+  async respond(@Param() params: IncidentIdParamDto, @Body() body: RespondIncidentDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     return this.respondIncidentUseCase.execute(auth, params.incidentId, body.response);
   }
 
   @Post(':incidentId/tag')
   @Roles('coach')
-  async tag(
-    @Param() params: IncidentIdParamDto,
-    @Body() body: TagIncidentDto,
-    @Req() request: HttpAuthRequest,
-  ) {
+  async tag(@Param() params: IncidentIdParamDto, @Body() body: TagIncidentDto, @Req() request: HttpAuthRequest) {
     return this.tagIncidentUseCase.execute(readAuthContext(request), params.incidentId, body.tag);
   }
 

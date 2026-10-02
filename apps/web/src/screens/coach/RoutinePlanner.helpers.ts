@@ -1,3 +1,4 @@
+import { resolveLockedFields, SPORT_DEFAULT_LOCKED_VARIABLES } from './exercise-set-variables';
 import { normalizePlanTemplateId } from '../../data/normalize-plan-template-id';
 import type { BlockType, DraftBlock, DraftDay, DraftExerciseGroup, DraftSet, DraftState } from './RoutinePlanner.types';
 import { mapTemplateToDraft as mapTemplateToDraftImpl } from './RoutinePlanner.draft-mapper';
@@ -43,11 +44,11 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
     base.restSeconds = 60;
   }
   if (type === 'isometric') {
-    base.restSeconds = 60;
     base.setsPlanned = 3;
   }
   if (type === 'sport') {
     base.durationMinutes = 30;
+    base.lockedFields = [...SPORT_DEFAULT_LOCKED_VARIABLES];
   }
   return base;
 }
@@ -122,7 +123,7 @@ const mapStrength = (b: DraftBlock, si: number) => ({
   exerciseLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   groupId: b.groupId ?? null,
-  lockedFields: b.lockedFields ?? [],
+  lockedFields: resolveLockedFields(b.type, b.lockedFields),
   sets: (b.sets ?? []).map(mapStrengthSet),
   sortOrder: si,
   notes: appendMeta(b.notes, {
@@ -168,7 +169,7 @@ const mapCardio = (b: DraftBlock, si: number) => ({
   cardioMethodLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'work', mode: 'COACH_INPUT' as const }],
   groupId: b.groupId ?? null,
-  lockedFields: b.lockedFields ?? [],
+  lockedFields: resolveLockedFields(b.type, b.lockedFields),
   methodType: 'interval',
   sets: (b.sets ?? []).map(mapCardioSet),
   sortOrder: si,
@@ -183,9 +184,11 @@ const mapCardio = (b: DraftBlock, si: number) => ({
 function mapCardioSet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     fcMaxPct: s.fcMaxPct ?? null,
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
+    restSeconds: s.restSeconds ?? null,
     rpe: s.rpe ?? null,
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
@@ -206,7 +209,7 @@ const mapPlio = (b: DraftBlock, si: number) => ({
   ...parsePlioValues(b),
   displayName: b.displayName,
   groupId: b.groupId ?? null,
-  lockedFields: b.lockedFields ?? [],
+  lockedFields: resolveLockedFields(b.type, b.lockedFields),
   plioExerciseLibraryId: b.libraryId ?? null,
   sets: (b.sets ?? []).map(mapPlioSet),
   sortOrder: si,
@@ -221,6 +224,7 @@ const mapPlio = (b: DraftBlock, si: number) => ({
 function mapPlioSet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: s.rpe ?? null,
     weightKg: s.weightKg ?? null,
@@ -243,7 +247,7 @@ const mapMobility = (b: DraftBlock, si: number) => ({
   ...parseMobilityValues(b),
   displayName: b.displayName,
   groupId: b.groupId ?? null,
-  lockedFields: b.lockedFields ?? [],
+  lockedFields: resolveLockedFields(b.type, b.lockedFields),
   mobilityExerciseLibraryId: b.libraryId ?? null,
   sets: (b.sets ?? []).map(mapMobilitySet),
   sortOrder: si,
@@ -265,6 +269,7 @@ function mapMobilitySet(s: DraftSet) {
     rpe: s.rpe ?? null,
     rom: s.rom ?? null,
     restSeconds: s.restSeconds ?? null,
+    weightKg: s.weightKg ?? null,
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
@@ -284,7 +289,7 @@ function mapSport(block: DraftBlock, sortOrder: number) {
     displayName: block.displayName,
     durationMinutes: block.durationMinutes ?? 30,
     groupId: block.groupId ?? null,
-    lockedFields: block.lockedFields ?? [],
+    lockedFields: resolveLockedFields(block.type, block.lockedFields),
     notes: block.notes ?? '',
     sets: (block.sets ?? []).map(mapSportSet),
     sortOrder,
@@ -296,6 +301,7 @@ function mapSport(block: DraftBlock, sortOrder: number) {
 function mapSportSet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: s.rpe ?? null,
     rir: s.rir ?? null,
@@ -304,6 +310,7 @@ function mapSportSet(s: DraftSet) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     restSeconds: s.restSeconds ?? null,
+    rom: s.rom ?? null,
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };
@@ -314,7 +321,7 @@ function mapIsometric(block: DraftBlock, sortOrder: number) {
     displayName: block.displayName,
     groupId: block.groupId ?? null,
     isometricExerciseLibraryId: block.libraryId ?? null,
-    lockedFields: block.lockedFields ?? [],
+    lockedFields: resolveLockedFields(block.type, block.lockedFields),
     notes: block.notes ?? '',
     restSeconds: block.restSeconds ?? 0,
     sets: (block.sets ?? []).map(mapIsometricSet),

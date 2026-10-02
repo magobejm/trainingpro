@@ -10,9 +10,24 @@ import type {
   StrengthSessionItem,
 } from '../../data/hooks/useTodaySession';
 import { filterActiveSetColumns, isFieldLocked, isRestFieldLocked } from '../../utils/locked-fields.utils';
+import { toYouTubeEmbedUrl } from '../../utils/library-media.helpers';
 import { resolvePlannedSet } from './planned-set.utils';
+import { resolveLockedFields, setVariablesForType, type SetVariableKey } from './exercise-set-variables';
+import { exerciseTypeShowsRepRange, formatRepRangeBounds } from './routine-exercise-set.utils';
+import { formatRestLabel } from './session-completion.utils';
 
-export type SetFieldKey = 'duration' | 'distance' | 'heartRate' | 'reps' | 'rest' | 'rir' | 'rpe' | 'rom' | 'weight';
+export type SetFieldKey =
+  | 'duration'
+  | 'distance'
+  | 'fcMaxPct'
+  | 'fcReservePct'
+  | 'heartRate'
+  | 'reps'
+  | 'rest'
+  | 'rir'
+  | 'rpe'
+  | 'rom'
+  | 'weight';
 
 export type SetColumn = {
   key: SetFieldKey;
@@ -38,106 +53,65 @@ export function getSetCount(item: SessionItem): number {
   }
 }
 
-export function getSetColumns(item: SessionItem): SetColumn[] {
-  const columns = getBaseSetColumns(item);
-  return filterActiveSetColumns(columns, item.lockedFields);
+export function formatSessionRepRange(item: SessionItem): null | string {
+  if (!exerciseTypeShowsRepRange(item.type)) return null;
+  if (item.type === 'strength') return formatRepRangeBounds(item.repsMin, item.repsMax);
+  const reps = item.plannedSets.map((set) => set.reps).filter((value): value is number => value != null);
+  if (reps.length === 0) return null;
+  return formatRepRangeBounds(Math.min(...reps), Math.max(...reps));
 }
 
+export function getSetColumns(item: SessionItem): SetColumn[] {
+  const columns = getBaseSetColumns(item);
+  return filterActiveSetColumns(columns, resolveLockedFields(item.type, item.lockedFields));
+}
+
+const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
+  reps: { key: 'reps', label: 'Reps' },
+  weightKg: { key: 'weight', label: 'Peso' },
+  rpe: { key: 'rpe', label: 'RPE', scale: 'rpe' },
+  fcMaxPct: { key: 'fcMaxPct', label: '%FC máx' },
+  durationSeconds: { key: 'duration', label: 'Duración' },
+  heartRate: { key: 'heartRate', label: 'Pulsaciones' },
+  rir: { key: 'rir', label: 'RIR', scale: 'rir' },
+  fcReservePct: { key: 'fcReservePct', label: '%FC res' },
+  rom: { key: 'rom', label: 'ROM', scale: 'rom' },
+  restSeconds: { key: 'rest', label: 'Descanso' },
+};
+
 function getBaseSetColumns(item: SessionItem): SetColumn[] {
-  switch (item.type) {
-    case 'strength':
-      return [
-        { key: 'reps', label: 'Reps' },
-        { key: 'rir', label: 'RIR', scale: 'rir' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'weight', label: 'Peso' },
-      ];
-    case 'cardio':
-      return [
-        { key: 'duration', label: 'Duración' },
-        { key: 'distance', label: 'Distancia' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'heartRate', label: 'FC' },
-      ];
-    case 'plio':
-      return [
-        { key: 'reps', label: 'Reps' },
-        { key: 'weight', label: 'Peso' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'duration', label: 'Descanso' },
-      ];
-    case 'mobility':
-      return [
-        { key: 'reps', label: 'Reps' },
-        { key: 'rom', label: 'ROM', scale: 'rom' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'duration', label: 'Descanso' },
-      ];
-    case 'isometric':
-      return [
-        { key: 'duration', label: 'Duración' },
-        { key: 'weight', label: 'Peso' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'rest', label: 'Descanso' },
-      ];
-    case 'sport':
-      return [
-        { key: 'duration', label: 'Duración' },
-        { key: 'rpe', label: 'RPE', scale: 'rpe' },
-        { key: 'heartRate', label: 'FC' },
-        { key: 'reps', label: '—' },
-      ];
-    default:
-      return [];
-  }
+  return setVariablesForType(item.type).map((key) => ACTIVE_COLUMN_BY_KEY[key]);
 }
 
 export function readTargetValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
   const planned = resolvePlannedSet(item.plannedSets, setIndex);
-
-  if (item.type === 'strength') {
-    if (key === 'reps') return formatTargetNumber(planned?.reps ?? item.repsMax ?? item.repsMin);
-    if (key === 'rir') return formatTargetNumber(planned?.rir ?? item.targetRir);
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
-    if (key === 'weight') {
-      const kg = planned?.weightKg ?? item.weightRangeMaxKg ?? item.weightRangeMinKg;
-      return kg != null ? `${kg}kg` : '-';
-    }
+  if (key === 'reps') {
+    const fallback = item.type === 'strength' ? (item.repsMax ?? item.repsMin) : null;
+    return formatTargetNumber(planned?.reps ?? fallback);
   }
-  if (item.type === 'cardio') {
-    if (key === 'duration') return item.workSeconds ? `${item.workSeconds}s` : '-';
-    if (key === 'distance') return item.targetDistanceMeters ? `${item.targetDistanceMeters}m` : '-';
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
-    if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
+  if (key === 'weight') {
+    const fallback = item.type === 'strength' ? (item.weightRangeMaxKg ?? item.weightRangeMinKg) : null;
+    const kg = planned?.weightKg ?? fallback;
+    return kg != null ? `${kg}kg` : '-';
   }
-  if (item.type === 'plio') {
-    if (key === 'reps') return formatTargetNumber(planned?.reps);
-    if (key === 'weight') {
-      const kg = planned?.weightKg;
-      return kg != null ? `${kg}kg` : '-';
-    }
-    if (key === 'duration') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+  if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+  if (key === 'rir') {
+    const fallback = item.type === 'strength' ? item.targetRir : null;
+    return formatTargetNumber(planned?.rir ?? fallback);
   }
-  if (item.type === 'mobility') {
-    if (key === 'reps') return formatTargetNumber(planned?.reps);
-    if (key === 'rom') return planned?.rom?.trim() ? planned.rom : '-';
-    if (key === 'duration') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
+  if (key === 'rom') return planned?.rom?.trim() ? planned.rom : '-';
+  if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
+  if (key === 'fcMaxPct') return formatTargetNumber(planned?.fcMaxPct);
+  if (key === 'fcReservePct') return formatTargetNumber(planned?.fcReservePct);
+  if (key === 'rest') {
+    const rest = planned?.restSeconds ?? ('restSeconds' in item ? item.restSeconds : null);
+    return formatTargetSeconds(rest);
   }
-  if (item.type === 'isometric') {
-    if (key === 'duration') return formatTargetSeconds(planned?.durationSeconds);
-    if (key === 'weight') {
-      const kg = planned?.weightKg;
-      return kg != null ? `${kg}kg` : '-';
-    }
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
-    if (key === 'rest') return formatTargetSeconds(planned?.restSeconds ?? item.restSeconds);
-  }
-  if (item.type === 'sport') {
-    if (key === 'duration') return `${item.durationMinutes}m`;
-    if (key === 'rpe') return formatTargetNumber(planned?.rpe ?? item.targetRpe);
-    if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
+  if (key === 'duration') {
+    if (planned?.durationSeconds != null) return formatTargetSeconds(planned.durationSeconds);
+    if (item.type === 'cardio' && item.workSeconds) return `${item.workSeconds}s`;
+    if (item.type === 'sport') return `${item.durationMinutes}m`;
+    return '-';
   }
   return '-';
 }
@@ -147,7 +121,7 @@ function formatTargetNumber(value: null | number | undefined): string {
 }
 
 function formatTargetSeconds(value: null | number | undefined): string {
-  return value != null && value > 0 ? `${value}s` : '-';
+  return value != null && value > 0 ? formatRestLabel(value) : '-';
 }
 
 export function readActualValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
@@ -207,9 +181,10 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
 }
 
 export function getRestSeconds(item: SessionItem): number {
-  if (isRestFieldLocked(item.lockedFields)) return 0;
+  if (isRestFieldLocked(resolveLockedFields(item.type, item.lockedFields))) return 0;
   if (item.type === 'strength' || item.type === 'isometric') return item.restSeconds ?? 0;
   if (item.type === 'cardio' || item.type === 'plio' || item.type === 'mobility') return item.restSeconds;
+  if (item.type === 'sport') return item.plannedSets[0]?.restSeconds ?? 0;
   return 0;
 }
 
@@ -325,6 +300,12 @@ export function getStrengthSessionItemId(item: SessionItem): null | string {
 
 export function getSourceExerciseId(item: SessionItem): null | string {
   return item.type === 'strength' ? item.sourceExerciseId : null;
+}
+
+export function readSessionYoutubeUrl(item: SessionItem): null | string {
+  const url = item.youtubeUrl?.trim();
+  if (!url || !toYouTubeEmbedUrl(url)) return null;
+  return url;
 }
 
 export function draftHasValues(values: SetRowState | undefined): boolean {

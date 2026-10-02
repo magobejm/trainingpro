@@ -8,6 +8,7 @@ import { PlanDayCard } from './ClientPlanningDayCard';
 import { PlanHero } from './ClientPlanningHero';
 import { TypeDistribution } from './ClientPlanningTypeDistribution';
 import { WeekDistributionGrid } from './ClientPlanningWeekGrid';
+import { ClientNeatSection } from './ClientNeatSection';
 import { aggregateMicrocycleTypes, buildWeekSlots } from './client-planning.helpers';
 import { LIGHT } from '../../theme/light';
 import { SCREEN } from '../../theme/sessionStyles';
@@ -69,6 +70,9 @@ function PlanningContent({ onClose, onSelectDay, routine }: ContentProps): React
           {routine.planDays.map((day) => (
             <PlanDayCard key={day.id} day={day} onPress={() => onSelectDay(day)} />
           ))}
+        </View>
+        <View style={styles.daysSection}>
+          <ClientNeatSection neats={routine.neats} />
         </View>
       </ScrollView>
     </View>

@@ -39,9 +39,11 @@ const strengthSetSchema = z.object({
 
 const cardioSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
+  durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   fcMaxPct: z.number().int().min(0).max(100).nullable().optional(),
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
   heartRate: z.number().int().min(0).max(300).nullable().optional(),
+  restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   rpe: rpeHalfSchema,
   advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
@@ -49,6 +51,7 @@ const cardioSetSchema = z.object({
 
 const plioSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
+  durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: rpeHalfSchema,
   weightKg: z.number().min(0).max(9999).nullable().optional(),
@@ -73,12 +76,14 @@ const mobilitySetSchema = z.object({
   rpe: rpeHalfSchema,
   rom: z.string().max(30).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  weightKg: z.number().min(0).max(9999).nullable().optional(),
   advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });
 
 const sportSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
+  durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: rpeHalfSchema,
   rir: z.number().int().min(0).max(10).nullable().optional(),
@@ -87,6 +92,7 @@ const sportSetSchema = z.object({
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
   heartRate: z.number().int().min(0).max(300).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  rom: z.string().max(30).nullable().optional(),
   advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
 });

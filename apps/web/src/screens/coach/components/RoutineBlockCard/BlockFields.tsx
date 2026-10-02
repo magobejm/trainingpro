@@ -6,7 +6,10 @@ import { s } from '../../RoutinePlanner.styles';
 import { SeriesTable } from './SeriesTable';
 import { AdvancedSeriesModal } from './AdvancedSeriesModal';
 import { copyPreviousSet } from '../../RoutinePlanner.helpers';
+import { blockTypeShowsRepRange } from '../../exercise-rep-range';
+import { canUnlockSetVariable, resolveLockedFields } from '../../exercise-set-variables';
 import { RoutineNumberField } from '../RoutineNumberField';
+import { ActionConfirmModal } from '../ActionConfirmModal';
 
 interface BlockFieldsProps {
   block: DraftBlock;
@@ -24,9 +27,10 @@ function seriesFieldKey(type: DraftBlock['type']): keyof DraftBlock {
 
 export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }: BlockFieldsProps) {
   const sets = block.sets ?? [];
-  const lockedFields = block.lockedFields ?? [];
+  const lockedFields = resolveLockedFields(block.type, block.lockedFields);
   const [advancedModalSeriesIdx, setAdvancedModalSeriesIdx] = useState<number | null>(null);
   const [advancedEnabled, setAdvancedEnabled] = useState(false);
+  const [lockLimitVisible, setLockLimitVisible] = useState(false);
 
   const updateSets = (newSets: DraftSet[]) => onUpdateField('sets', newSets);
 
@@ -62,7 +66,13 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
   };
 
   const handleToggleLock = (fieldKey: string) => {
-    const next = lockedFields.includes(fieldKey) ? lockedFields.filter((k) => k !== fieldKey) : [...lockedFields, fieldKey];
+    if (lockedFields.includes(fieldKey) && !canUnlockSetVariable(block.type, lockedFields, fieldKey)) {
+      setLockLimitVisible(true);
+      return;
+    }
+    const next = lockedFields.includes(fieldKey)
+      ? lockedFields.filter((key) => key !== fieldKey)
+      : [...lockedFields, fieldKey];
     onUpdateField('lockedFields', next);
   };
 
@@ -139,6 +149,15 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
           visible
         />
       )}
+      <ActionConfirmModal
+        cancelLabel={t('common.close')}
+        confirmLabel={t('common.close')}
+        message={t('coach.routine.seriesTable.lockLimitMessage')}
+        onCancel={() => setLockLimitVisible(false)}
+        onConfirm={() => setLockLimitVisible(false)}
+        title={t('coach.routine.seriesTable.lockLimitTitle')}
+        visible={lockLimitVisible}
+      />
     </View>
   );
 }
@@ -200,22 +219,10 @@ function SeriesSpinbox({
 /** Per-type global fields (everything except the Series spinbox) */
 function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   const x = txtField(block, onUpdateField, readOnly, t);
-  if (block.type === 'strength') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   if (block.type === 'cardio')
     return <CardioGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
-  if (block.type === 'plio') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
-  if (block.type === 'mobility') return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
-  if (block.type === 'isometric')
-    return (
-      <RoutineNumberField
-        label={t('coach.routine.block.rest')}
-        onChange={(v) => onUpdateField('restSeconds', v)}
-        readOnly={readOnly}
-        value={block.restSeconds}
-      />
-    );
-  if (block.type === 'sport')
-    return <SportGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  if (block.type === 'isometric') return null;
+  if (blockTypeShowsRepRange(block.type)) return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   return (
     <RoutineNumberField
       label={t('coach.routine.block.duration')}
@@ -229,24 +236,6 @@ function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
 function CardioGlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   return (
     <>
-      <TextField
-        label={t('coach.routine.block.totalTime')}
-        onChange={(v) => {
-          onUpdateField('totalTimeSeconds', v ? Number(v) : undefined);
-        }}
-        readOnly={readOnly}
-        value={block.totalTimeSeconds !== undefined ? String(block.totalTimeSeconds) : ''}
-        placeholder={t('coach.routine.block.totalTimePlaceholder')}
-      />
-    </>
-  );
-}
-
-function SportGlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  const x = txtField(block, onUpdateField, readOnly, t);
-  return (
-    <>
-      {x('coach.routine.block.repsRange', 'repsRange')}
       <TextField
         label={t('coach.routine.block.totalTime')}
         onChange={(v) => {

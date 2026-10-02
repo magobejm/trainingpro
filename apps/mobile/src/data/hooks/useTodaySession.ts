@@ -178,13 +178,16 @@ export type CardioSessionItem = {
   workSeconds: number;
 };
 
-export type SessionItem =
+export type SessionItem = (
   | CardioSessionItem
   | IsometricSessionItem
   | MobilitySessionItem
   | PlioSessionItem
   | SportSessionItem
-  | StrengthSessionItem;
+  | StrengthSessionItem
+) & {
+  youtubeUrl?: null | string;
+};
 
 export type LogPlioSetMutationInput = {
   effortRpe?: null | number;
@@ -235,6 +238,7 @@ export type SessionView = {
   preFatigue: null | number;
   preMotivation: null | number;
   preRecovery: null | number;
+  sessionRpe: null | number;
   startedAt: null | string;
   startMode: 'INTERACTIVE' | 'TIMER' | null;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
@@ -295,6 +299,7 @@ export function useFinishSessionMutation(sessionId: string) {
       postFatigue?: null | number;
       postMood?: null | number;
       postPain?: null | number;
+      sessionRpe?: null | number;
     }) => finishSession(auth, sessionId, payload),
     onSuccess: async () => {
       await Promise.all([
@@ -447,6 +452,7 @@ async function finishSession(
     postFatigue?: null | number;
     postMood?: null | number;
     postPain?: null | number;
+    sessionRpe?: null | number;
   },
 ) {
   if (!auth) {

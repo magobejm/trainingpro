@@ -118,9 +118,11 @@ export function mapCardioCreate(b: RoutineCardioInput, groupId: null | string): 
 function mapCardioSetCreate(s: RoutineCardioSetInput) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     fcMaxPct: s.fcMaxPct ?? null,
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
+    restSeconds: s.restSeconds ?? null,
     rpe: toDecimal(s.rpe),
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
@@ -147,6 +149,7 @@ export function mapPlioCreate(b: RoutinePlioInput, groupId: null | string): any 
 function mapPlioSetCreate(s: RoutinePlioSetInput) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: toDecimal(s.rpe),
     weightKg: toDecimal(s.weightKg),
@@ -183,6 +186,7 @@ function mapMobilitySetCreate(s: RoutineMobilitySetInput) {
     restSeconds: s.restSeconds ?? null,
     rom: s.rom ?? null,
     setIndex: s.setIndex,
+    weightKg: toDecimal(s.weightKg),
   };
 }
 
@@ -204,6 +208,7 @@ export function mapSportCreate(b: RoutineSportInput, groupId: null | string): an
 function mapSportSetCreate(s: RoutineSportSetInput) {
   return {
     setIndex: s.setIndex,
+    durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: toDecimal(s.rpe),
     rir: s.rir ?? null,
@@ -212,6 +217,7 @@ function mapSportSetCreate(s: RoutineSportSetInput) {
     fcReservePct: s.fcReservePct ?? null,
     heartRate: s.heartRate ?? null,
     restSeconds: s.restSeconds ?? null,
+    rom: s.rom ?? null,
     advancedTechnique: s.advancedTechnique ?? null,
     note: s.note ?? null,
   };

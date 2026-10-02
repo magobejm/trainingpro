@@ -2,6 +2,7 @@ import React from 'react';
 import type { BaseSyntheticEvent } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
+import { setVariablesForType, type SetVariableKey } from '../../exercise-set-variables';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
@@ -21,66 +22,50 @@ const ICON_COPY = '⟳';
 const ICON_LOCK_ON = '🔒';
 const ICON_LOCK_OFF = '🔓';
 
+const VARIABLE_WIDTH: Record<SetVariableKey, number> = {
+  durationSeconds: 100,
+  fcMaxPct: 90,
+  fcReservePct: 100,
+  heartRate: 100,
+  reps: 100,
+  restSeconds: 100,
+  rir: 70,
+  rom: 90,
+  rpe: 70,
+  weightKg: 90,
+};
+
+const VARIABLE_LABEL_KEY: Record<SetVariableKey, string> = {
+  durationSeconds: 'coach.routine.seriesTable.col.durationSeconds',
+  fcMaxPct: 'coach.routine.seriesTable.col.fcMaxPct',
+  fcReservePct: 'coach.routine.seriesTable.col.fcReservePct',
+  heartRate: 'coach.routine.block.heartRate',
+  reps: 'coach.routine.seriesTable.col.reps',
+  restSeconds: 'coach.routine.block.rest',
+  rir: 'coach.routine.block.rir',
+  rom: 'coach.routine.seriesTable.col.rom',
+  rpe: 'coach.routine.block.rpe',
+  weightKg: 'coach.routine.block.weightKg',
+};
+
 function colsForType(t: (k: string) => string, type: BlockType): ColDef[] {
-  switch (type) {
-    case 'cardio':
-      return [
-        { key: 'fcMaxPct', label: t('coach.routine.seriesTable.col.fcMaxPct'), width: 90 },
-        { key: 'fcReservePct', label: t('coach.routine.seriesTable.col.fcReservePct'), width: 100 },
-        { key: 'heartRate', label: t('coach.routine.block.heartRate'), width: 100 },
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-      ];
-    case 'plio':
-      return [
-        { key: 'reps', label: t('coach.routine.seriesTable.col.reps'), width: 100 },
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-        { key: 'weightKg', label: t('coach.routine.block.weightKg'), width: 90 },
-        { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
-      ];
-    case 'isometric':
-      return [
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-        { key: 'durationSeconds', label: t('coach.routine.seriesTable.col.durationSeconds'), width: 100 },
-        { key: 'weightKg', label: t('coach.routine.block.weightKg'), width: 90 },
-        { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
-      ];
-    case 'mobility':
-      return [
-        { key: 'reps', label: t('coach.routine.seriesTable.col.reps'), width: 100 },
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-        {
-          key: 'rom',
-          label: 'ROM',
-          width: 90,
-          isSelect: true,
-          selectOptions: [
-            t('coach.routine.seriesTable.rom.full'),
-            t('coach.routine.seriesTable.rom.partial'),
-            t('coach.routine.seriesTable.rom.minimal'),
-          ],
-        },
-        { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
-      ];
-    case 'sport':
-      return [
-        { key: 'reps', label: t('coach.routine.seriesTable.col.reps'), width: 100 },
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-        { key: 'rir', label: t('coach.routine.block.rir'), width: 70 },
-        { key: 'weightKg', label: t('coach.routine.block.weightKg'), width: 90 },
-        { key: 'fcMaxPct', label: t('coach.routine.seriesTable.col.fcMaxPct'), width: 90 },
-        { key: 'fcReservePct', label: t('coach.routine.seriesTable.col.fcReservePct'), width: 100 },
-        { key: 'heartRate', label: t('coach.routine.block.heartRate'), width: 100 },
-        { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
-      ];
-    default:
-      return [
-        { key: 'reps', label: t('coach.routine.seriesTable.col.reps'), width: 100 },
-        { key: 'rpe', label: t('coach.routine.block.rpe'), width: 70 },
-        { key: 'weightKg', label: t('coach.routine.block.weightKg'), width: 90 },
-        { key: 'rir', label: t('coach.routine.block.rir'), width: 70 },
-        { key: 'restSeconds', label: t('coach.routine.block.rest'), width: 100 },
-      ];
-  }
+  const romOptions = [
+    t('coach.routine.seriesTable.rom.full'),
+    t('coach.routine.seriesTable.rom.partial'),
+    t('coach.routine.seriesTable.rom.minimal'),
+  ];
+  return setVariablesForType(type).map((key) => {
+    if (key === 'rom') {
+      return {
+        key: 'rom',
+        label: t('coach.routine.seriesTable.col.rom'),
+        width: VARIABLE_WIDTH.rom,
+        isSelect: true,
+        selectOptions: romOptions,
+      };
+    }
+    return { key, label: t(VARIABLE_LABEL_KEY[key]), width: VARIABLE_WIDTH[key] };
+  });
 }
 
 interface SeriesTableProps {
@@ -113,9 +98,7 @@ export function SeriesTable({
   t,
 }: SeriesTableProps) {
   const allCols = colsForType(t, type);
-  const activeCols = allCols.filter((c) => !lockedFields.includes(c.key as string));
-  const lockedCols = allCols.filter((c) => lockedFields.includes(c.key as string));
-  const orderedCols = [...activeCols, ...lockedCols];
+  const orderedCols = allCols;
   const tableWidth = ACTION_COL_W + SERIES_COL_W + orderedCols.reduce((sum, c) => sum + c.width + 8, 0);
   const phDash = t('coach.routine.seriesTable.placeholderDash');
 

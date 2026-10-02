@@ -1,6 +1,7 @@
 /* eslint-disable max-lines, max-lines-per-function -- unified active exercise matrix with inline set editors and modals. */
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import type {
   LogIntervalMutationInput,
@@ -11,17 +12,21 @@ import type {
   LogSportMutationInput,
   SessionItem,
 } from '../../data/hooks/useTodaySession';
+import { YouTubeVideoModal } from '../../components/YouTubeVideoModal';
 import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
+import { showToast } from '../../shell/client/feedback';
 import {
   buildLogPayload,
   draftHasValues,
+  formatSessionRepRange,
   getRestSeconds,
   getSetColumns,
   getSetCount,
   getSourceExerciseId,
   getStrengthSessionItemId,
   readActualValue,
+  readSessionYoutubeUrl,
   readTargetValue,
   type SetColumn,
   type SetFieldKey,
@@ -45,7 +50,7 @@ type ActiveExerciseScreenProps = {
   onClose: () => void;
   onCollapseRest: () => void;
   onExpandRest: () => void;
-  onFinishExercise: () => void;
+  onFinishExercise: (itemId: string) => void;
   onNavigateExercise: (item: SessionItem) => void;
   onRestFinish: () => void;
   onLogInterval: (input: LogIntervalMutationInput) => Promise<void> | void;
@@ -64,6 +69,8 @@ function emptyRow(): Record<SetFieldKey, string> {
   return {
     distance: '',
     duration: '',
+    fcMaxPct: '',
+    fcReservePct: '',
     heartRate: '',
     reps: '',
     rest: '',
@@ -79,6 +86,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [showComment, setShowComment] = useState(false);
   const [showNotes, setShowNotes] = useState(false);
   const [showPrevious, setShowPrevious] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
   const [scaleState, setScaleState] = useState<ScaleState>(null);
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
   const [finishing, setFinishing] = useState(false);
@@ -93,6 +101,8 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
       const row: Record<SetFieldKey, string> = {
         distance: readActualValue(props.item, setIndex, 'distance'),
         duration: readActualValue(props.item, setIndex, 'duration'),
+        fcMaxPct: readActualValue(props.item, setIndex, 'fcMaxPct'),
+        fcReservePct: readActualValue(props.item, setIndex, 'fcReservePct'),
         heartRate: readActualValue(props.item, setIndex, 'heartRate'),
         reps: readActualValue(props.item, setIndex, 'reps'),
         rest: '',
@@ -105,6 +115,10 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     }
     setDraftValues(next);
   }, [props.item, setCount]);
+
+  useEffect(() => {
+    setShowVideo(false);
+  }, [props.item.id]);
 
   const saveSet = (setIndex: number): Promise<void> => {
     const values = draftValues[setIndex];
@@ -134,7 +148,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
         pending.push(saveSet(setIndex));
       }
       await Promise.all(pending);
-      props.onFinishExercise();
+      props.onFinishExercise(props.item.id);
     } catch {
       setFinishing(false);
     }
@@ -158,10 +172,16 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     if (next) props.onNavigateExercise(next);
   };
 
-  const repsRange =
-    props.item.type === 'strength' && props.item.repsMin && props.item.repsMax
-      ? `${props.item.repsMin}-${props.item.repsMax}`
-      : null;
+  const repsRange = formatSessionRepRange(props.item);
+  const youtubeUrl = readSessionYoutubeUrl(props.item);
+
+  const handleOpenVideo = () => {
+    if (!youtubeUrl) {
+      showToast(t('mobile.client.exercise.videoEmpty'));
+      return;
+    }
+    setShowVideo(true);
+  };
 
   return (
     <Modal visible={props.visible} animationType={'slide'} onRequestClose={props.onClose}>
@@ -191,17 +211,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
               </Pressable>
             ) : null}
           </View>
-          <View style={styles.headerActions}>
-            <Pressable style={styles.actionBtn} onPress={() => setShowComment(true)}>
-              <Text>{'💬'}</Text>
-            </Pressable>
-            <Pressable disabled style={[styles.actionBtn, styles.actionBtnDisabled]} onPress={() => {}}>
-              <Text>{'🎬'}</Text>
-            </Pressable>
-            <Pressable style={styles.actionBtn} onPress={() => setShowNotes(true)}>
-              <Text>{'📄'}</Text>
-            </Pressable>
-          </View>
         </View>
 
         {repsRange ? (
@@ -209,6 +218,12 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
             {t('mobile.client.session.repRange')} <Text style={styles.repRangeValue}>{repsRange}</Text>
           </Text>
         ) : null}
+
+        <ExerciseActionBar
+          onOpenComment={() => setShowComment(true)}
+          onOpenNotes={() => setShowNotes(true)}
+          onOpenVideo={handleOpenVideo}
+        />
 
         <ScrollView contentContainerStyle={styles.scroll}>
           {Array.from({ length: setCount }, (_, index) => {
@@ -299,7 +314,15 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           onClose={() => setScaleState(null)}
           onSave={handleScaleSave}
         />
+        <YouTubeVideoModal
+          title={props.item.displayName}
+          visible={showVideo}
+          youtubeUrl={youtubeUrl}
+          onClose={() => setShowVideo(false)}
+        />
         <ExerciseCommentModal
+          exerciseName={props.item.displayName}
+          routineDayLabel={t('client.today.title')}
           sessionId={props.sessionId}
           sessionItemId={getStrengthSessionItemId(props.item)}
           visible={showComment}
@@ -411,6 +434,85 @@ function SetColumnCell(props: {
   );
 }
 
+function ExerciseActionBar(props: {
+  onOpenComment: () => void;
+  onOpenNotes: () => void;
+  onOpenVideo: () => void;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  return (
+    <View style={styles.actionBar}>
+      <ExerciseActionButton
+        icon={<CommentGlyph />}
+        iconBg={LIGHT.accent}
+        label={t('mobile.client.comment.title')}
+        labelColor={LIGHT.accentDark}
+        surface={'#dbeafe'}
+        onPress={props.onOpenComment}
+      />
+      <ExerciseActionButton
+        icon={<VideoGlyph />}
+        iconBg={LIGHT.redBg}
+        label={t('mobile.client.exercise.video')}
+        labelColor={'#b91c1c'}
+        surface={'#fee2e2'}
+        onPress={props.onOpenVideo}
+      />
+      <ExerciseActionButton
+        icon={<NotesGlyph />}
+        iconBg={LIGHT.orange}
+        label={t('mobile.client.exercise.indications')}
+        labelColor={'#c2410c'}
+        surface={'#ffedd5'}
+        onPress={props.onOpenNotes}
+      />
+    </View>
+  );
+}
+
+function ExerciseActionButton(props: {
+  icon: React.ReactNode;
+  iconBg: string;
+  label: string;
+  labelColor: string;
+  surface: string;
+  onPress: () => void;
+}): React.JSX.Element {
+  return (
+    <Pressable onPress={props.onPress} style={[styles.actionCard, { backgroundColor: props.surface }]}>
+      <View style={[styles.actionIcon, { backgroundColor: props.iconBg }]}>{props.icon}</View>
+      <Text numberOfLines={1} style={[styles.actionLabel, { color: props.labelColor }]}>
+        {props.label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function CommentGlyph(): React.JSX.Element {
+  return (
+    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
+      <Path d={'M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'} fill={'#ffffff'} />
+    </Svg>
+  );
+}
+
+function VideoGlyph(): React.JSX.Element {
+  return (
+    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
+      <Path d={'M8 6.5v11l10-5.5L8 6.5z'} fill={'#ffffff'} />
+    </Svg>
+  );
+}
+
+function NotesGlyph(): React.JSX.Element {
+  return (
+    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
+      <Path d={'M7 3h8l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'} fill={'#ffffff'} />
+      <Path d={'M15 3v5h5'} stroke={'#fb923c'} strokeWidth={1.6} />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     backgroundColor: LIGHT.bgSoft,
@@ -447,22 +549,30 @@ const styles = StyleSheet.create({
   navDisabled: {
     opacity: 0.3,
   },
-  headerActions: {
+  actionBar: {
     flexDirection: 'row',
-    gap: 6,
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 8,
   },
-  actionBtn: {
+  actionCard: {
     alignItems: 'center',
-    backgroundColor: LIGHT.bgCard,
-    borderColor: LIGHT.border,
-    borderRadius: LIGHT.radiusFull,
-    borderWidth: 1,
-    height: 40,
-    justifyContent: 'center',
-    width: 40,
+    borderRadius: LIGHT.radiusLg,
+    flex: 1,
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 10,
   },
-  actionBtnDisabled: {
-    opacity: 0.4,
+  actionIcon: {
+    alignItems: 'center',
+    borderRadius: 14,
+    height: 36,
+    justifyContent: 'center',
+    width: 36,
+  },
+  actionLabel: {
+    fontSize: 11,
+    fontWeight: '800',
   },
   repRange: {
     color: LIGHT.textMuted,

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AddAdjustmentDraftUseCase } from './application/use-cases/add-adjustment-draft.usecase';
+import { ArchiveIncidentUseCase } from './application/use-cases/archive-incident.usecase';
 import { CreateIncidentUseCase } from './application/use-cases/create-incident.usecase';
 import { ListIncidentsUseCase } from './application/use-cases/list-incidents.usecase';
 import { MarkIncidentReviewedUseCase } from './application/use-cases/mark-incident-reviewed.usecase';
@@ -16,6 +17,7 @@ import { IncidentsController } from './presentation/controllers/incidents.contro
   controllers: [IncidentsController],
   providers: [
     AddAdjustmentDraftUseCase,
+    ArchiveIncidentUseCase,
     CreateIncidentUseCase,
     ListIncidentsUseCase,
     MarkIncidentReviewedUseCase,

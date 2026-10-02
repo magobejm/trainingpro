@@ -1,3 +1,4 @@
+import { resolveLockedFields } from './exercise-set-variables';
 import type { BlockType, DraftBlock, DraftSet } from './RoutinePlanner.types';
 
 type MetaMap = Record<string, unknown>;
@@ -20,7 +21,7 @@ export function mapTemplateBlock(
     displayName: item.displayName,
     groupId: toStringValue(item.groupId),
     libraryId: extractLibraryId(type, item),
-    lockedFields: readLockedFieldsArray(item.lockedFields),
+    lockedFields: resolveLockedFields(type, readLockedFieldsArray(item.lockedFields)),
     notes: metaParsed.baseNotes,
     sortOrder: toNumber(item.sortOrder),
     targetRpe: toNumber(item.targetRpe),

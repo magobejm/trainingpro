@@ -5,6 +5,7 @@ import { LIGHT } from './light';
 type ConfirmModalProps = {
   cancelLabel: string;
   confirmLabel: string;
+  confirmTone?: 'accent' | 'danger';
   message: string;
   question?: string;
   title: string;
@@ -25,7 +26,10 @@ export function ConfirmModal(props: ConfirmModalProps): React.JSX.Element {
             <Pressable style={styles.cancelBtn} onPress={props.onCancel}>
               <Text style={styles.cancelText}>{props.cancelLabel}</Text>
             </Pressable>
-            <Pressable style={styles.confirmBtn} onPress={props.onConfirm}>
+            <Pressable
+              onPress={props.onConfirm}
+              style={[styles.confirmBtn, props.confirmTone === 'danger' ? styles.confirmBtnDanger : null]}
+            >
               <Text style={styles.confirmText}>{props.confirmLabel}</Text>
             </Pressable>
           </View>
@@ -90,6 +94,9 @@ const styles = StyleSheet.create({
     borderRadius: LIGHT.radiusMd,
     flex: 1,
     paddingVertical: 12,
+  },
+  confirmBtnDanger: {
+    backgroundColor: LIGHT.redBg,
   },
   confirmText: {
     color: LIGHT.textOnNavy,

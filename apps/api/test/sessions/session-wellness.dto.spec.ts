@@ -31,4 +31,11 @@ describe('session wellness DTOs', () => {
   it('rejects finish scores outside 1-10', () => {
     expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, postMood: 12 }).success).toBe(false);
   });
+
+  it('accepts session RPE in half-point steps', () => {
+    expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, sessionRpe: 7.5 }).success).toBe(true);
+    expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, sessionRpe: 10 }).success).toBe(true);
+    expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, sessionRpe: 7.25 }).success).toBe(false);
+    expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, sessionRpe: 11 }).success).toBe(false);
+  });
 });

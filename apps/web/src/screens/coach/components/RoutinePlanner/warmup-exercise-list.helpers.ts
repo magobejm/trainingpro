@@ -1,4 +1,5 @@
 import type { WarmupTemplateItemInput } from '../../../../data/hooks/useWarmupTemplates';
+import { blockTypeShowsRepRange, blockTypeShowsTotalTime } from '../../exercise-rep-range';
 import { resolvePlaceholder } from './ExercisePickerModal.utils';
 import type { BlockType } from '../../RoutinePlanner.types';
 
@@ -24,6 +25,10 @@ export function resolveLibraryId(item: WarmupTemplateItemInput): string | null {
 
 export type PerSet = {
   setIndex: number;
+  durationSeconds?: number;
+  fcMaxPct?: number;
+  fcReservePct?: number;
+  heartRate?: number;
   reps?: number;
   rpe?: number;
   weightKg?: number;
@@ -40,6 +45,10 @@ export function parseSets(item: WarmupTemplateItemInput): PerSet[] {
     .filter((s): s is Record<string, unknown> => s !== null && typeof s === 'object')
     .map((s, i) => ({
       setIndex: typeof s.setIndex === 'number' ? s.setIndex : i,
+      durationSeconds: typeof s.durationSeconds === 'number' ? s.durationSeconds : undefined,
+      fcMaxPct: typeof s.fcMaxPct === 'number' ? s.fcMaxPct : undefined,
+      fcReservePct: typeof s.fcReservePct === 'number' ? s.fcReservePct : undefined,
+      heartRate: typeof s.heartRate === 'number' ? s.heartRate : undefined,
       reps: typeof s.reps === 'number' ? s.reps : undefined,
       rpe: typeof s.rpe === 'number' ? s.rpe : undefined,
       weightKg: typeof s.weightKg === 'number' ? s.weightKg : undefined,
@@ -104,30 +113,9 @@ export function buildWarmupMainFieldChips(item: WarmupTemplateItemInput, t: (key
   };
 
   const out: MainFieldChip[] = [];
-  switch (item.blockType) {
-    case 'mobility':
-    case 'strength':
-    case 'plio':
-      pushSeries(out);
-      pushRepsRange(out);
-      break;
-    case 'cardio':
-      pushSeries(out);
-      pushWork(out);
-      pushTotalTime(out);
-      break;
-    case 'sport':
-      pushSeries(out);
-      pushRepsRange(out);
-      pushWork(out);
-      pushTotalTime(out);
-      break;
-    case 'isometric':
-      pushSeries(out);
-      break;
-    default:
-      pushSeries(out);
-      pushRepsRange(out);
-  }
+  pushSeries(out);
+  if (blockTypeShowsRepRange(item.blockType)) pushRepsRange(out);
+  if (item.blockType === 'cardio' || item.blockType === 'sport') pushWork(out);
+  if (blockTypeShowsTotalTime(item.blockType)) pushTotalTime(out);
   return out;
 }

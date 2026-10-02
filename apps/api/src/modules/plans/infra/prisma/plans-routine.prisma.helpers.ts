@@ -210,6 +210,8 @@ function mapCardioSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    durationSeconds: s.durationSeconds ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcReservePct: s.fcReservePct ?? null,
@@ -217,6 +219,8 @@ function mapCardioSetOutput(s: any) {
     heartRate: s.heartRate ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    restSeconds: s.restSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -255,6 +259,8 @@ function mapPlioSetOutput(s: any) {
   return {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     advancedTechnique: s.advancedTechnique ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    durationSeconds: s.durationSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -313,6 +319,7 @@ function mapMobilitySetOutput(s: any) {
     rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     setIndex: s.setIndex,
+    weightKg: s.weightKg ? Number(s.weightKg) : null,
   };
 }
 
@@ -344,6 +351,8 @@ function mapSportSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    durationSeconds: s.durationSeconds ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcReservePct: s.fcReservePct ?? null,
@@ -357,6 +366,8 @@ function mapSportSetOutput(s: any) {
     restSeconds: s.restSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rir: s.rir ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    rom: s.rom ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     rpe: s.rpe != null ? Number(s.rpe) : null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

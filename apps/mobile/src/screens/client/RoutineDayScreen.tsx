@@ -9,7 +9,7 @@ import { LIGHT } from '../../theme/light';
 import { PrimaryButton } from '../../theme/primitives';
 import { ExerciseCard } from './ExerciseCard';
 import { buildExerciseBlocks } from './exercise-group.utils';
-import { isSessionItemComplete } from './session-completion.utils';
+import { isListedExerciseDone } from './session-completion.utils';
 
 type PreviewProps = {
   day: ClientRoutineDay;
@@ -25,6 +25,7 @@ type PreviewProps = {
 type ActiveProps = {
   dayTitle: string;
   exercises: SessionItem[];
+  finishedExerciseIds?: ReadonlySet<string>;
   mode: 'active';
   onClose: () => void;
   onFinishDay: () => void;
@@ -120,7 +121,7 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
         {blocks.map((block) => (
           <ExerciseBlockContainer block={block} key={block.exercises.map((e) => e.id).join('-')}>
             {block.exercises.map((exercise) => {
-              const complete = isSessionItemComplete(exercise);
+              const complete = isListedExerciseDone(exercise, props.finishedExerciseIds);
               const group = block.exercises;
               return (
                 <Pressable
@@ -128,10 +129,17 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
                   onPress={() => props.onSelectExercise(exercise, group)}
                   style={[styles.activeRow, complete && styles.activeRowDone]}
                 >
-                  <Text style={styles.activeRowName}>{exercise.displayName}</Text>
+                  <View style={styles.activeRowLeft}>
+                    <Text style={styles.activeRowName}>{exercise.displayName}</Text>
+                    {complete ? (
+                      <View style={styles.donePill}>
+                        <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+                      </View>
+                    ) : null}
+                  </View>
                   {complete ? (
-                    <View style={styles.donePill}>
-                      <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+                    <View style={styles.editBtn}>
+                      <Text style={styles.editBtnText}>{t('mobile.client.exercise.edit')}</Text>
                     </View>
                   ) : (
                     <Text style={styles.chevron}>{'›'}</Text>
@@ -279,9 +287,16 @@ const styles = StyleSheet.create({
   activeRowDone: {
     borderColor: LIGHT.emerald,
   },
+  activeRowLeft: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingRight: 8,
+  },
   activeRowName: {
     color: LIGHT.textStrong,
-    flex: 1,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -294,6 +309,17 @@ const styles = StyleSheet.create({
   donePillText: {
     color: LIGHT.success,
     fontSize: 12,
+    fontWeight: '700',
+  },
+  editBtn: {
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusMd,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  editBtnText: {
+    color: LIGHT.accent,
+    fontSize: 13,
     fontWeight: '700',
   },
   chevron: {

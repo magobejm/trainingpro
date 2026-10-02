@@ -154,6 +154,7 @@ export class SessionsController {
         postMood: body.postMood,
         postPain: body.postPain,
         sessionId: params.sessionId,
+        sessionRpe: body.sessionRpe,
       },
       readOffset(timezoneOffset),
     );

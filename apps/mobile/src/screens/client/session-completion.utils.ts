@@ -46,14 +46,10 @@ export function isSessionItemComplete(item: SessionItem): boolean {
   return true;
 }
 
+export function isListedExerciseDone(item: SessionItem, finishedIds: ReadonlySet<string> | undefined): boolean {
+  return Boolean(finishedIds?.has(item.id)) || isSessionItemComplete(item);
+}
+
 export function formatRestLabel(seconds: number): string {
-  if (seconds < 60) {
-    return `${seconds}s`;
-  }
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  if (remainder === 0) {
-    return `${minutes}m`;
-  }
-  return `${minutes}m ${remainder}s`;
+  return `${Math.max(0, Math.round(seconds))} seg`;
 }

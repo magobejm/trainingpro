@@ -9,6 +9,7 @@ import { buildPlanDayLockedFieldsLookup } from '../../../../common/plan/read-loc
 import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import { attachSessionYoutubeUrls, buildSessionYoutubeLookup } from '../../domain/session-youtube.mapper';
 import type {
   CardioSessionItem,
   SessionInstance,
@@ -65,6 +66,7 @@ export function mapSession(
     targetRpe: item.targetRpe,
     weightRangeMaxKg: item.weightRangeMaxKg ? Number(item.weightRangeMaxKg) : null,
     weightRangeMinKg: item.weightRangeMinKg ? Number(item.weightRangeMinKg) : null,
+    youtubeUrl: null,
   }));
 
   const plioItems: SessionPlioItem[] = row.plioBlocks.map((b) => ({
@@ -90,6 +92,7 @@ export function mapSession(
     sortOrder: b.sortOrder,
     targetRpe: b.targetRpe,
     workSeconds: b.workSeconds,
+    youtubeUrl: null,
   }));
 
   const mobilityItems: SessionMobilityItem[] = row.mobilityBlocks.map((b) => ({
@@ -115,6 +118,7 @@ export function mapSession(
     sortOrder: b.sortOrder,
     targetRpe: b.targetRpe,
     workSeconds: b.workSeconds,
+    youtubeUrl: null,
   }));
 
   const isometricItems: SessionIsometricItem[] = row.isometricBlocks.map((b) => ({
@@ -139,6 +143,7 @@ export function mapSession(
     setsPlanned: b.setsPlanned,
     sortOrder: b.sortOrder,
     targetRpe: b.targetRpe,
+    youtubeUrl: null,
   }));
 
   const sportItems: SessionSportItem[] = row.sportBlocks.map((b) => {
@@ -164,6 +169,7 @@ export function mapSession(
       plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
       sortOrder: b.sortOrder,
       targetRpe: b.targetRpe,
+      youtubeUrl: null,
     };
   });
 
@@ -192,6 +198,7 @@ export function mapSession(
     targetDistanceMeters: b.targetDistanceMeters,
     targetRpe: b.targetRpe,
     workSeconds: b.workSeconds,
+    youtubeUrl: null,
   }));
 
   const items = [...strengthItems, ...plioItems, ...mobilityItems, ...isometricItems, ...sportItems, ...cardioItems].sort(
@@ -213,6 +220,7 @@ export function mapSession(
     preMotivation: row.preMotivation,
     preRecovery: row.preRecovery,
     sessionDate: row.sessionDate,
+    sessionRpe: row.sessionRpe !== null && row.sessionRpe !== undefined ? Number(row.sessionRpe) : null,
     startMode: (row.startMode as SessionStartMode | null) ?? null,
     startedAt: row.startedAt,
     status: row.status,
@@ -412,5 +420,61 @@ export async function mapSessionWithGroups(
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): Promise<SessionInstance> {
   const { groupLookup, lockedFieldsLookup, plannedSetsLookup } = await loadPlanDayLookups(prisma, row.planDayId);
-  return mapSession(row, groupLookup, lockedFieldsLookup, plannedSetsLookup);
+  const session = mapSession(row, groupLookup, lockedFieldsLookup, plannedSetsLookup);
+  const youtubeLookup = await loadSessionYoutubeLookup(prisma, row);
+  return attachSessionYoutubeUrls(session, youtubeLookup);
+}
+
+function uniqueIds(values: Array<null | string | undefined>): string[] {
+  return [...new Set(values.filter((value): value is string => Boolean(value)))];
+}
+
+async function loadSessionYoutubeLookup(
+  prisma: PrismaService,
+  row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
+): Promise<Map<string, string>> {
+  const exerciseIds = uniqueIds(row.items.map((item) => item.sourceExerciseId));
+  const cardioIds = uniqueIds(row.cardioBlocks.map((item) => item.sourceCardioMethodId));
+  const plioIds = uniqueIds(row.plioBlocks.map((item) => item.sourcePlioExerciseId));
+  const mobilityIds = uniqueIds(row.mobilityBlocks.map((item) => item.sourceMobilityExerciseId));
+  const isometricIds = uniqueIds(row.isometricBlocks.map((item) => item.sourceIsometricExerciseId));
+  if (
+    exerciseIds.length === 0 &&
+    cardioIds.length === 0 &&
+    plioIds.length === 0 &&
+    mobilityIds.length === 0 &&
+    isometricIds.length === 0
+  ) {
+    return new Map();
+  }
+
+  const [exercises, cardioMethods, plioExercises, mobilityExercises, isometricExercises] = await Promise.all([
+    exerciseIds.length
+      ? prisma.exercise.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: exerciseIds } } })
+      : Promise.resolve([]),
+    cardioIds.length
+      ? prisma.cardioMethod.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: cardioIds } } })
+      : Promise.resolve([]),
+    plioIds.length
+      ? prisma.plioExercise.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: plioIds } } })
+      : Promise.resolve([]),
+    mobilityIds.length
+      ? prisma.mobilityExercise.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: mobilityIds } } })
+      : Promise.resolve([]),
+    isometricIds.length
+      ? prisma.isometricExercise.findMany({
+          select: { id: true, youtubeUrl: true },
+          where: { id: { in: isometricIds } },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  return buildSessionYoutubeLookup({
+    cardio: row.cardioBlocks,
+    isometric: row.isometricBlocks,
+    library: { cardioMethods, exercises, isometricExercises, mobilityExercises, plioExercises },
+    mobility: row.mobilityBlocks,
+    plio: row.plioBlocks,
+    strength: row.items,
+  });
 }

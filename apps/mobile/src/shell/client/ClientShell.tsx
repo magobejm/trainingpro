@@ -21,6 +21,7 @@ import { s } from './client-shell.styles';
 import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
+import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
 
 type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
 
@@ -196,6 +197,8 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.activeTab === 'chat' && <ChatScreen embedded />}
       {st.activeTab === 'more' && <MoreScreen onNavigate={(id) => dispatchMoreMenu(id, st.openOverlay, st.openProgress)} />}
+
+      <MorningCheckinGate />
 
       {showBottomNav ? (
         <BottomNav

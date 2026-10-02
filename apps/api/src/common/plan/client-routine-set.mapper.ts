@@ -58,9 +58,11 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
     case 'cardio':
       return {
         ...base,
+        durationSeconds: set.durationSeconds ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
         fcReservePct: set.fcReservePct ?? null,
         heartRate: set.heartRate ?? null,
+        restSeconds: set.restSeconds ?? null,
         rpe: mapDecimal(set.rpe),
       };
     case 'isometric':
@@ -78,10 +80,12 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
         restSeconds: set.restSeconds ?? null,
         rom: set.rom ?? null,
         rpe: mapDecimal(set.rpe),
+        weightKg: mapDecimal(set.weightKg),
       };
     case 'plio':
       return {
         ...base,
+        durationSeconds: set.durationSeconds ?? null,
         reps: set.reps ?? null,
         restSeconds: set.restSeconds ?? null,
         rpe: mapDecimal(set.rpe),
@@ -90,12 +94,14 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
     case 'sport':
       return {
         ...base,
+        durationSeconds: set.durationSeconds ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
         fcReservePct: set.fcReservePct ?? null,
         heartRate: set.heartRate ?? null,
         reps: set.reps ?? null,
         restSeconds: set.restSeconds ?? null,
         rir: set.rir ?? null,
+        rom: set.rom ?? null,
         rpe: mapDecimal(set.rpe),
         weightKg: mapDecimal(set.weightKg),
       };
@@ -191,6 +197,7 @@ function enrichSet(
         fcMaxPct: set.fcMaxPct ?? readMetaNumber(meta, 'intensidadFcMax'),
         fcReservePct: set.fcReservePct ?? readMetaNumber(meta, 'intensidadFcReserva'),
         heartRate: set.heartRate ?? readMetaNumber(meta, 'pulsaciones'),
+        restSeconds: set.restSeconds ?? blockRest,
         rpe: set.rpe ?? blockRpe,
       };
     case 'isometric':
@@ -201,13 +208,20 @@ function enrichSet(
         weightKg: set.weightKg ?? blockWeight,
       };
     case 'mobility':
+      return {
+        ...set,
+        reps: set.reps ?? fallbackReps(set.setIndex, meta, prescription),
+        restSeconds: set.restSeconds ?? blockRest,
+        rpe: set.rpe ?? blockRpe,
+        weightKg: set.weightKg ?? blockWeight,
+      };
     case 'plio':
       return {
         ...set,
         reps: set.reps ?? fallbackReps(set.setIndex, meta, prescription),
         restSeconds: set.restSeconds ?? blockRest,
         rpe: set.rpe ?? blockRpe,
-        weightKg: type === 'plio' ? (set.weightKg ?? blockWeight) : set.weightKg,
+        weightKg: set.weightKg ?? blockWeight,
       };
     case 'sport':
       return {

@@ -6,6 +6,7 @@ import { useClientRoutineQuery, type ClientRoutine, type ClientRoutineDay } from
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { s } from '../../shell/client/client-shell.styles';
 import { LIGHT } from '../../theme/light';
+import { ClientNeatSection } from './ClientNeatSection';
 import {
   formatLocalDate,
   formatScheduledDateLabel,
@@ -86,6 +87,7 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
             t={t}
           />
         )}
+        <ClientNeatSection neats={routine.neats} />
       </ScrollView>
     </View>
   );

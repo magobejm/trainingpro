@@ -36,14 +36,26 @@ describe('resolveClientRoutineSets mapping', () => {
 
   it('maps cardio metrics only for cardio blocks', () => {
     const sets = resolveClientRoutineSets(
-      [{ setIndex: 0, fcMaxPct: 85, fcReservePct: 70, heartRate: 150, rpe: 7 }],
+      [
+        {
+          setIndex: 0,
+          durationSeconds: 45,
+          fcMaxPct: 85,
+          fcReservePct: 70,
+          heartRate: 150,
+          restSeconds: 30,
+          rpe: 7,
+        },
+      ],
       'cardio',
     );
 
     expect(sets[0]).toMatchObject({
+      durationSeconds: 45,
       fcMaxPct: 85,
       fcReservePct: 70,
       heartRate: 150,
+      restSeconds: 30,
       rpe: 7,
       setIndex: 0,
     });

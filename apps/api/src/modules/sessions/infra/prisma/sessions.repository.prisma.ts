@@ -206,6 +206,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         postFatigue: input.postFatigue ?? null,
         postMood: input.postMood ?? null,
         postPain: input.postPain ?? null,
+        sessionRpe: input.sessionRpe ?? null,
         status: SessionStatus.COMPLETED,
       },
       include: sessionInclude(),

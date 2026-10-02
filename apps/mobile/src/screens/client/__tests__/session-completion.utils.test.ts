@@ -1,5 +1,5 @@
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
-import { formatRestLabel, isSessionItemComplete } from '../session-completion.utils';
+import { formatRestLabel, isListedExerciseDone, isSessionItemComplete } from '../session-completion.utils';
 
 describe('session-completion.utils', () => {
   const strengthComplete: SessionItem = {
@@ -52,9 +52,23 @@ describe('session-completion.utils', () => {
     ).toBe(true);
   });
 
-  it('formats rest labels', () => {
-    expect(formatRestLabel(45)).toBe('45s');
-    expect(formatRestLabel(60)).toBe('1m');
-    expect(formatRestLabel(90)).toBe('1m 30s');
+  it('shows the done badge when the client finishes the exercise from the list', () => {
+    const unfinished = { ...strengthComplete, logs: [], setsPlanned: 3 };
+    expect(isListedExerciseDone(unfinished, undefined)).toBe(false);
+    expect(isListedExerciseDone(unfinished, new Set())).toBe(false);
+    expect(isListedExerciseDone(unfinished, new Set(['other']))).toBe(false);
+    expect(isListedExerciseDone(unfinished, new Set(['s1']))).toBe(true);
+    expect(isListedExerciseDone(strengthComplete, new Set())).toBe(true);
+  });
+
+  it('formats rest labels in seconds, never years', () => {
+    expect(formatRestLabel(13)).toBe('13 seg');
+    expect(formatRestLabel(14)).toBe('14 seg');
+    expect(formatRestLabel(15)).toBe('15 seg');
+    expect(formatRestLabel(45)).toBe('45 seg');
+    expect(formatRestLabel(60)).toBe('60 seg');
+    expect(formatRestLabel(90)).toBe('90 seg');
+    expect(formatRestLabel(13)).not.toMatch(/año/i);
+    expect(formatRestLabel(90)).not.toMatch(/año/i);
   });
 });

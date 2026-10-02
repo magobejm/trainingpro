@@ -2,11 +2,11 @@ import type { SetColumn } from '../screens/client/active-exercise.helpers';
 
 const WEB_TO_ACTIVE_FIELD: Record<string, string[]> = {
   durationSeconds: ['duration'],
-  fcMaxPct: [],
-  fcReservePct: [],
+  fcMaxPct: ['fcMaxPct'],
+  fcReservePct: ['fcReservePct'],
   heartRate: ['heartRate'],
   reps: ['reps'],
-  restSeconds: ['rest', 'duration'],
+  restSeconds: ['rest'],
   rir: ['rir'],
   rom: ['rom'],
   rpe: ['rpe'],

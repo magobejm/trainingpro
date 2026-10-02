@@ -18,6 +18,7 @@ export type FinishSessionInput = {
   postMood?: null | number;
   postPain?: null | number;
   sessionId: string;
+  sessionRpe?: null | number;
 };
 
 export type StartSessionInput = {

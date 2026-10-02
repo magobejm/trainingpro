@@ -17,6 +17,7 @@ export type IncidentListItem = {
   sessionId: null | string;
   severity: 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
   status: 'CLOSED' | 'OPEN' | 'REVIEWED';
+  tag: null | string;
 };
 
 const INCIDENTS_KEY = ['incidents', 'my'] as const;
@@ -35,6 +36,17 @@ export function useCreateIncidentMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (input: CreateIncidentInput) => createIncident(auth, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: INCIDENTS_KEY });
+    },
+  });
+}
+
+export function useArchiveIncidentMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (incidentId: string) => archiveIncident(auth, incidentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: INCIDENTS_KEY });
     },
@@ -60,4 +72,11 @@ async function createIncident(auth: ReturnType<typeof useAuth>, input: CreateInc
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).post('/incidents', input);
+}
+
+async function archiveIncident(auth: ReturnType<typeof useAuth>, incidentId: string) {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  return createApiClient(auth).delete<{ status: string }>(`/incidents/${incidentId}`);
 }

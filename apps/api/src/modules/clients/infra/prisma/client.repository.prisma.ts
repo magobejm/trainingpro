@@ -12,6 +12,7 @@ import type { ClientManagementSection } from '../../domain/client-management-sec
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
 import { mapExerciseGroupFields, PLAN_EXERCISE_GROUP_INCLUDE } from '../../../../common/plan/plan-exercise-group.mapper';
 import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
+import { mapClientRoutineNeats } from '../../domain/map-client-routine-neats';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 import type { ClientObjective } from '../../domain/client-objective';
@@ -330,6 +331,7 @@ const PLAN_WITH_DAYS_INCLUDE = {
     orderBy: { dayIndex: 'asc' as const },
     include: PLAN_DAY_CONTENT_INCLUDE,
   },
+  neats: { orderBy: { sortOrder: 'asc' as const } },
 } as const;
 
 type PlanWithDays = Prisma.PlanTemplateGetPayload<{ include: typeof PLAN_WITH_DAYS_INCLUDE }>;
@@ -345,6 +347,7 @@ async function loadClientRoutine(prisma: PrismaService, planId: string): Promise
     expectedCompletionDays: plan.expectedCompletionDays ?? null,
     id: plan.id,
     name: plan.name,
+    neats: mapClientRoutineNeats(plan.neats),
     objectives: plan.routineObjectives.map((o) => o.objective.label),
     planDays: plan.days.map(mapPlanDay),
   };

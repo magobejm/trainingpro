@@ -8,11 +8,23 @@ const resources = {
   es: { common: esCommon },
 } as const;
 
-void i18next.use(initReactI18next).init({
-  resources,
-  fallbackLng: 'es',
-  defaultNS: 'common',
-  interpolation: { escapeValue: false },
-});
+const UI_LANGUAGE = 'es';
+
+function applyDocumentLanguage(lng: string): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.lang = lng;
+  document.documentElement.setAttribute('translate', 'no');
+}
+
+void i18next
+  .use(initReactI18next)
+  .init({
+    resources,
+    lng: UI_LANGUAGE,
+    fallbackLng: UI_LANGUAGE,
+    defaultNS: 'common',
+    interpolation: { escapeValue: false },
+  })
+  .then(() => applyDocumentLanguage(UI_LANGUAGE));
 
 export default i18next;

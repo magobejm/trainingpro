@@ -47,10 +47,17 @@ export type ClientRoutineDay = {
   title: string;
 };
 
+export type ClientRoutineNeat = {
+  description: null | string;
+  id: string;
+  title: string;
+};
+
 export type ClientRoutine = {
   expectedCompletionDays: null | number;
   id: string;
   name: string;
+  neats?: ClientRoutineNeat[];
   objectives: string[];
   planDays: ClientRoutineDay[];
 };

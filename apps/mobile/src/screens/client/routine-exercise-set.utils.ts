@@ -1,5 +1,7 @@
 import type { ClientRoutineExercise, ClientRoutineSet } from '../../data/hooks/useClientRoutineQuery';
 import { filterRoutineSetColumns } from '../../utils/locked-fields.utils';
+import { resolveLockedFields, setVariablesForType, type SetVariableKey } from './exercise-set-variables';
+import { formatRestLabel } from './session-completion.utils';
 
 export type RoutineSetColumn = {
   format: (set: ClientRoutineSet) => string;
@@ -19,7 +21,7 @@ function formatWeight(value: null | number | undefined): string {
 
 function formatRest(value: null | number | undefined): string {
   if (value == null) return '-';
-  return `${value}s`;
+  return formatRestLabel(value);
 }
 
 function formatText(value: null | string | undefined): string {
@@ -28,95 +30,62 @@ function formatText(value: null | string | undefined): string {
 }
 
 export function routineSetColumnsForType(type: ClientRoutineExercise['type'], lockedFields?: string[]): RoutineSetColumn[] {
-  return filterRoutineSetColumns(getRoutineSetColumnsForType(type), lockedFields);
+  return filterRoutineSetColumns(getRoutineSetColumnsForType(type), resolveLockedFields(type, lockedFields));
 }
 
+const ROUTINE_COLUMN_BY_KEY: Record<SetVariableKey, RoutineSetColumn> = {
+  reps: { key: 'reps', labelKey: 'client.label.reps', format: (set) => formatNumber(set.reps) },
+  weightKg: {
+    key: 'weightKg',
+    labelKey: 'mobile.client.exercise.seriesTable.weight',
+    format: (set) => formatWeight(set.weightKg),
+  },
+  rpe: { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
+  fcMaxPct: {
+    key: 'fcMaxPct',
+    labelKey: 'mobile.client.exercise.seriesTable.fcMaxPct',
+    format: (set) => formatNumber(set.fcMaxPct),
+  },
+  durationSeconds: {
+    key: 'durationSeconds',
+    labelKey: 'mobile.client.exercise.seriesTable.duration',
+    format: (set) => formatRest(set.durationSeconds),
+  },
+  heartRate: {
+    key: 'heartRate',
+    labelKey: 'mobile.client.exercise.seriesTable.heartRate',
+    format: (set) => formatNumber(set.heartRate),
+  },
+  rir: { key: 'rir', labelKey: 'client.label.rir', format: (set) => formatNumber(set.rir) },
+  fcReservePct: {
+    key: 'fcReservePct',
+    labelKey: 'mobile.client.exercise.seriesTable.fcReservePct',
+    format: (set) => formatNumber(set.fcReservePct),
+  },
+  rom: { key: 'rom', labelKey: 'mobile.client.exercise.seriesTable.rom', format: (set) => formatText(set.rom) },
+  restSeconds: { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
+};
+
 function getRoutineSetColumnsForType(type: ClientRoutineExercise['type']): RoutineSetColumn[] {
-  switch (type) {
-    case 'cardio':
-      return [
-        {
-          key: 'fcMaxPct',
-          labelKey: 'mobile.client.exercise.seriesTable.fcMaxPct',
-          format: (set) => formatNumber(set.fcMaxPct),
-        },
-        {
-          key: 'fcReservePct',
-          labelKey: 'mobile.client.exercise.seriesTable.fcReservePct',
-          format: (set) => formatNumber(set.fcReservePct),
-        },
-        {
-          key: 'heartRate',
-          labelKey: 'mobile.client.exercise.seriesTable.heartRate',
-          format: (set) => formatNumber(set.heartRate),
-        },
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-      ];
-    case 'isometric':
-      return [
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-        {
-          key: 'durationSeconds',
-          labelKey: 'mobile.client.exercise.seriesTable.duration',
-          format: (set) => formatRest(set.durationSeconds),
-        },
-        {
-          key: 'weightKg',
-          labelKey: 'mobile.client.exercise.seriesTable.weight',
-          format: (set) => formatWeight(set.weightKg),
-        },
-        { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
-      ];
-    case 'mobility':
-      return [
-        { key: 'reps', labelKey: 'client.label.reps', format: (set) => formatNumber(set.reps) },
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-        { key: 'rom', labelKey: 'mobile.client.exercise.seriesTable.rom', format: (set) => formatText(set.rom) },
-        { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
-      ];
-    case 'plio':
-      return [
-        { key: 'reps', labelKey: 'client.label.reps', format: (set) => formatNumber(set.reps) },
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-        {
-          key: 'weightKg',
-          labelKey: 'mobile.client.exercise.seriesTable.weight',
-          format: (set) => formatWeight(set.weightKg),
-        },
-        { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
-      ];
-    case 'sport':
-      return [
-        { key: 'reps', labelKey: 'client.label.reps', format: (set) => formatNumber(set.reps) },
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-        { key: 'rir', labelKey: 'client.label.rir', format: (set) => formatNumber(set.rir) },
-        {
-          key: 'weightKg',
-          labelKey: 'mobile.client.exercise.seriesTable.weight',
-          format: (set) => formatWeight(set.weightKg),
-        },
-        { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
-      ];
-    default:
-      return [
-        { key: 'reps', labelKey: 'client.label.reps', format: (set) => formatNumber(set.reps) },
-        {
-          key: 'weightKg',
-          labelKey: 'mobile.client.exercise.seriesTable.weight',
-          format: (set) => formatWeight(set.weightKg),
-        },
-        { key: 'rir', labelKey: 'client.label.rir', format: (set) => formatNumber(set.rir) },
-        { key: 'rpe', labelKey: 'client.label.rpe', format: (set) => formatNumber(set.rpe) },
-        { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },
-      ];
+  return setVariablesForType(type).map((key) => ROUTINE_COLUMN_BY_KEY[key]);
+}
+
+export function exerciseTypeShowsRepRange(type: ClientRoutineExercise['type']): boolean {
+  return type === 'strength' || type === 'plio' || type === 'mobility' || type === 'sport';
+}
+
+export function formatRepRangeBounds(repsMin: null | number | undefined, repsMax: null | number | undefined): null | string {
+  if (repsMin != null && repsMax != null) {
+    return repsMin === repsMax ? String(repsMin) : `${repsMin}-${repsMax}`;
   }
+  if (repsMin != null) return String(repsMin);
+  if (repsMax != null) return String(repsMax);
+  return null;
 }
 
 export function formatExerciseRepRange(exercise: ClientRoutineExercise): null | string {
-  if (exercise.repsMin && exercise.repsMax) return `${exercise.repsMin}-${exercise.repsMax}`;
-  if (exercise.repsMin != null) return String(exercise.repsMin);
-  if (exercise.repsMax != null) return String(exercise.repsMax);
-  return null;
+  if (!exerciseTypeShowsRepRange(exercise.type)) return null;
+  return formatRepRangeBounds(exercise.repsMin, exercise.repsMax);
 }
 
 export function isAdvancedRoutineSet(set: ClientRoutineSet): boolean {

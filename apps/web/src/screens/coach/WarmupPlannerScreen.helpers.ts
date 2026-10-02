@@ -1,3 +1,4 @@
+import { blockTypeShowsRepRange } from './exercise-rep-range';
 import { mapWarmupTemplateItemsToBlocks } from './RoutinePlanner.helpers';
 import type { BlockType, DraftBlock, DraftExerciseGroup } from './RoutinePlanner.types';
 import { appendMeta, parseRange } from './WarmupPlanner.helpers';
@@ -47,7 +48,9 @@ function mapGroup(group: DraftExerciseGroup): WarmupTemplateGroupInput {
 }
 
 function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput {
-  const range = parseRange(block.repsRange, block.repsPlanned);
+  const range = blockTypeShowsRepRange(block.type)
+    ? parseRange(block.repsRange, block.repsPlanned)
+    : { max: null, min: null };
   const notes = buildNotes(block);
   return {
     blockType: mapTypeToApi(block.type),
@@ -80,7 +83,7 @@ function buildNotes(block: DraftBlock): null | string {
     intensidadFcReserva: block.intensityFcReserve,
     pesoKg: block.weightKg,
     pulsaciones: block.heartRate,
-    rangoReps: block.repsRange,
+    rangoReps: blockTypeShowsRepRange(block.type) ? block.repsRange : undefined,
     repeticiones: block.repsPlanned,
   });
 }

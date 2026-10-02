@@ -13,9 +13,11 @@ export type RoutineStrengthSetInput = {
 
 export type RoutineCardioSetInput = {
   setIndex: number;
+  durationSeconds?: null | number;
   fcMaxPct?: null | number;
   fcReservePct?: null | number;
   heartRate?: null | number;
+  restSeconds?: null | number;
   rpe?: null | number;
   advancedTechnique?: null | string;
   note?: null | string;
@@ -23,6 +25,7 @@ export type RoutineCardioSetInput = {
 
 export type RoutinePlioSetInput = {
   setIndex: number;
+  durationSeconds?: null | number;
   reps?: null | number;
   rpe?: null | number;
   weightKg?: null | number;
@@ -48,12 +51,14 @@ export type RoutineMobilitySetInput = {
   rpe?: null | number;
   rom?: null | string;
   restSeconds?: null | number;
+  weightKg?: null | number;
   advancedTechnique?: null | string;
   note?: null | string;
 };
 
 export type RoutineSportSetInput = {
   setIndex: number;
+  durationSeconds?: null | number;
   reps?: null | number;
   rpe?: null | number;
   rir?: null | number;
@@ -62,6 +67,7 @@ export type RoutineSportSetInput = {
   fcReservePct?: null | number;
   heartRate?: null | number;
   restSeconds?: null | number;
+  rom?: null | string;
   advancedTechnique?: null | string;
   note?: null | string;
 };

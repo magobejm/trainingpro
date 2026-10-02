@@ -49,6 +49,7 @@ export type SessionStrengthItem = {
   targetRpe: null | number;
   weightRangeMaxKg: null | number;
   weightRangeMinKg: null | number;
+  youtubeUrl: null | string;
 };
 
 export type ExerciseHistoryEntry = {
@@ -106,6 +107,7 @@ export type SessionPlioItem = {
   sortOrder: number;
   targetRpe: null | number;
   workSeconds: number;
+  youtubeUrl: null | string;
 };
 
 export type SessionMobilityItem = {
@@ -124,6 +126,7 @@ export type SessionMobilityItem = {
   sortOrder: number;
   targetRpe: null | number;
   workSeconds: number;
+  youtubeUrl: null | string;
 };
 
 export type SessionIsometricItem = {
@@ -141,6 +144,7 @@ export type SessionIsometricItem = {
   setsPlanned: null | number;
   sortOrder: number;
   targetRpe: null | number;
+  youtubeUrl: null | string;
 };
 
 export type SessionSportItem = {
@@ -157,6 +161,7 @@ export type SessionSportItem = {
   plannedSets: SessionPlannedSet[];
   sortOrder: number;
   targetRpe: null | number;
+  youtubeUrl: null | string;
 };
 
 export type SessionBlockItem = {
@@ -193,6 +198,7 @@ export type CardioSessionItem = {
   targetDistanceMeters: null | number;
   targetRpe: null | number;
   workSeconds: number;
+  youtubeUrl: null | string;
 };
 
 export type SessionItem =
@@ -220,6 +226,7 @@ export type SessionInstance = {
   preMotivation: null | number;
   preRecovery: null | number;
   sessionDate: Date;
+  sessionRpe: null | number;
   startMode: null | SessionStartMode;
   startedAt: Date | null;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';

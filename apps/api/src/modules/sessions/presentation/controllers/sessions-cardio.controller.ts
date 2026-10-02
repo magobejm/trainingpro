@@ -52,11 +52,7 @@ export class SessionsCardioController {
     @Headers('x-timezone-offset') timezoneOffset?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logIntervalUseCase.execute(
-      auth,
-      { ...body, sessionId: params.sessionId },
-      readOffset(timezoneOffset),
-    );
+    return this.logIntervalUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
   }
 
   @Post(':sessionId/finish')
@@ -69,7 +65,7 @@ export class SessionsCardioController {
     const auth = readAuthContext(request);
     const session = await this.finishCardioSessionUseCase.execute(
       auth,
-      { comment: body.comment, isIncomplete: body.isIncomplete, sessionId: params.sessionId },
+      { comment: body.comment, isIncomplete: body.isIncomplete, sessionId: params.sessionId, sessionRpe: body.sessionRpe },
       readOffset(timezoneOffset),
     );
     return mapSession(session);
@@ -83,11 +79,7 @@ export class SessionsCardioController {
   }
 }
 
-function mapSession(session: {
-  finishedAt: Date | null;
-  sessionDate: Date;
-  startedAt: Date | null;
-}) {
+function mapSession(session: { finishedAt: Date | null; sessionDate: Date; startedAt: Date | null }) {
   return {
     ...session,
     finishedAt: session.finishedAt ? session.finishedAt.toISOString() : null,

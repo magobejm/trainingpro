@@ -46,6 +46,7 @@ export class SessionsCardioRepositoryPrisma {
         finishedAt: new Date(),
         isCompleted: true,
         isIncomplete: input.isIncomplete,
+        sessionRpe: input.sessionRpe ?? null,
         status: SessionStatus.COMPLETED,
       },
       include: cardioSessionInclude(),

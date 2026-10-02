@@ -29,15 +29,13 @@ import { LIGHT } from '../../theme/light';
 import { showError, showToast } from '../../shell/client/feedback';
 import { ActiveExerciseScreen } from './ActiveExerciseScreen';
 import { RoutineDayScreen } from './RoutineDayScreen';
-import { SessionFinishCheckinSheet, type FinishCheckinPayload } from './SessionFinishCheckinSheet';
-import { SessionStartCheckinSheet, type StartCheckinScores } from './SessionStartCheckinSheet';
-import { WeeklyReportFormSheet } from './WeeklyReportFormSheet';
+import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
+import { useOptionalCoachNotice } from './MorningCheckinGate';
+import { SessionRpeModal } from './SessionRpeModal';
+import { finishSessionWithRpePayload, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
+import { localDateKey } from './daily-checkin.utils';
+import { useDailyCheckinStore } from '../../store/daily-checkin.store';
 import type { RestState } from './session-rest.types';
-import {
-  useUpsertWeeklyReportMutation,
-  useWeeklyReportQuery,
-  type UpsertWeeklyReportInput,
-} from '../../data/hooks/useWeeklyReport';
 
 type TodaySessionScreenProps = {
   onClose: () => void;
@@ -57,6 +55,7 @@ function formatElapsed(startedAt: null | string): string {
 type TodaySessionBodyProps = {
   completedRestKeys: string[];
   exerciseGroup: SessionItem[];
+  finishedExerciseIds: ReadonlySet<string>;
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
@@ -79,6 +78,7 @@ type TodaySessionBodyProps = {
   sessionId: string;
   setCompletedRestKeys: React.Dispatch<React.SetStateAction<string[]>>;
   setExerciseGroup: React.Dispatch<React.SetStateAction<SessionItem[]>>;
+  setFinishedExerciseIds: React.Dispatch<React.SetStateAction<Set<string>>>;
   setRestState: React.Dispatch<React.SetStateAction<RestState | null>>;
   setSelectedExercise: React.Dispatch<React.SetStateAction<SessionItem | null>>;
   showActiveDay: boolean;
@@ -102,6 +102,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
               mode={'active'}
               dayTitle={props.t('client.today.title')}
               exercises={props.session.items}
+              finishedExerciseIds={props.finishedExerciseIds}
               session={props.session}
               onClose={props.onClose}
               onSelectExercise={props.isCompleted ? () => {} : props.onSelectExercise}
@@ -132,7 +133,8 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           onCollapseRest={props.onCollapseRest}
           onExpandRest={props.onExpandRest}
           onRestFinish={props.onRestFinish}
-          onFinishExercise={() => {
+          onFinishExercise={(itemId) => {
+            props.setFinishedExerciseIds((current) => new Set(current).add(itemId));
             props.setRestState(null);
             props.setSelectedExercise(null);
           }}
@@ -164,14 +166,15 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
 
   const [selectedExercise, setSelectedExercise] = useState<SessionItem | null>(null);
   const [exerciseGroup, setExerciseGroup] = useState<SessionItem[]>([]);
+  const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
   const [completedRestKeys, setCompletedRestKeys] = useState<string[]>([]);
   const [restState, setRestState] = useState<RestState | null>(null);
-  const [checkinSheet, setCheckinSheet] = useState<'finish' | 'start' | 'weekly' | null>(null);
+  const [rpeVisible, setRpeVisible] = useState(false);
   const [, tick] = useState(0);
   const startPromptedRef = React.useRef(false);
-  const reportDate = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
-  const weeklyQuery = useWeeklyReportQuery(reportDate);
-  const weeklyMutation = useUpsertWeeklyReportMutation();
+  const notifyCoach = useOptionalCoachNotice();
+  const morningScores = useDailyCheckinStore((state) => state.scores);
+  const lastPromptDate = useDailyCheckinStore((state) => state.lastPromptDate);
 
   React.useEffect(() => {
     if (!sessionQuery.data?.startedAt) return;
@@ -186,13 +189,28 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const showActiveDay = isRunning || isCompleted;
   const workoutElapsed = session?.startedAt ? formatElapsed(session.startedAt) : undefined;
 
+  const handleMutationError = useCallback(
+    (error: unknown) => {
+      const message = error instanceof ApiClientError ? error.message : t('mobile.client.session.saveSetError');
+      showError(message);
+    },
+    [t],
+  );
+
   React.useEffect(() => {
     if (session?.status !== 'PENDING' || startPromptedRef.current) {
       return;
     }
     startPromptedRef.current = true;
-    setCheckinSheet('start');
-  }, [session?.status]);
+    const startPayload =
+      lastPromptDate === localDateKey()
+        ? startSessionPayloadFromMorningCheckin(morningScores)
+        : startSessionPayloadFromMorningCheckin(null);
+    void startMutation.mutateAsync(startPayload).catch((error) => {
+      startPromptedRef.current = false;
+      handleMutationError(error);
+    });
+  }, [handleMutationError, lastPromptDate, morningScores, session?.status, startMutation]);
 
   React.useEffect(() => {
     if (!session || !selectedExercise) {
@@ -215,14 +233,6 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
       setExerciseGroup(updatedGroup);
     }
   }, [session, exerciseGroup.map((entry) => entry.id).join('|')]);
-
-  const handleMutationError = useCallback(
-    (error: unknown) => {
-      const message = error instanceof ApiClientError ? error.message : t('mobile.client.session.saveSetError');
-      showError(message);
-    },
-    [t],
-  );
 
   const handleLogSet = useCallback(
     async (input: Parameters<ReturnType<typeof useLogSetMutation>['mutate']>[0]) => {
@@ -303,63 +313,31 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   );
 
   const handleFinishDay = useCallback(() => {
-    setCheckinSheet('finish');
-  }, []);
+    if (finishMutation.isPending || isCompleted) {
+      return;
+    }
+    setRpeVisible(true);
+  }, [finishMutation.isPending, isCompleted]);
 
-  const handleStartSubmit = useCallback(
-    async (scores: null | StartCheckinScores) => {
-      try {
-        await startMutation.mutateAsync({
-          preFatigue: scores?.preFatigue ?? null,
-          preMotivation: scores?.preMotivation ?? null,
-          preRecovery: scores?.preRecovery ?? null,
-          startMode: 'INTERACTIVE',
+  const handleSaveSessionRpe = useCallback(
+    (sessionRpe: number) => {
+      if (finishMutation.isPending) {
+        return;
+      }
+      void finishMutation
+        .mutateAsync(finishSessionWithRpePayload(sessionRpe))
+        .then(async () => {
+          const label = t(`mobile.client.rpe.band.${sessionRpeBand(sessionRpe).key}.label`);
+          await notifyCoach(formatSessionRpeChatNotice(sessionRpe, label));
+          setRpeVisible(false);
+          onFinishedDay();
+        })
+        .catch((error) => {
+          handleMutationError(error);
         });
-        setCheckinSheet(null);
-      } catch (error) {
-        handleMutationError(error);
-      }
     },
-    [handleMutationError, startMutation],
+    [finishMutation, handleMutationError, notifyCoach, onFinishedDay, t],
   );
-
-  const handleFinishSubmit = useCallback(
-    async (payload: FinishCheckinPayload | null) => {
-      try {
-        await finishMutation.mutateAsync(
-          payload ?? { comment: null, isIncomplete: false, postFatigue: null, postMood: null, postPain: null },
-        );
-        if (!weeklyQuery.data) {
-          setCheckinSheet('weekly');
-          return;
-        }
-        setCheckinSheet(null);
-        onFinishedDay();
-      } catch (error) {
-        handleMutationError(error);
-      }
-    },
-    [finishMutation, handleMutationError, onFinishedDay, weeklyQuery.data],
-  );
-
-  const handleWeeklySubmit = useCallback(
-    async (input: UpsertWeeklyReportInput) => {
-      try {
-        await weeklyMutation.mutateAsync(input);
-        showToast(t('client.report.saved'));
-        setCheckinSheet(null);
-        onFinishedDay();
-      } catch (error) {
-        handleMutationError(error);
-      }
-    },
-    [handleMutationError, onFinishedDay, t, weeklyMutation],
-  );
-
-  const handleWeeklySkip = useCallback(() => {
-    setCheckinSheet(null);
-    onFinishedDay();
-  }, [onFinishedDay]);
 
   const handleStartRest = useCallback((setKey: string, seconds: number) => {
     setRestState({
@@ -405,6 +383,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
       <TodaySessionBody
         completedRestKeys={completedRestKeys}
         exerciseGroup={exerciseGroup}
+        finishedExerciseIds={finishedExerciseIds}
         isCompleted={isCompleted}
         isPending={isPending}
         isRunning={isRunning}
@@ -427,32 +406,18 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         sessionId={sessionId}
         setCompletedRestKeys={setCompletedRestKeys}
         setExerciseGroup={setExerciseGroup}
+        setFinishedExerciseIds={setFinishedExerciseIds}
         setRestState={setRestState}
         setSelectedExercise={setSelectedExercise}
         showActiveDay={showActiveDay}
         t={t}
         workoutElapsed={workoutElapsed}
       />
-      <SessionStartCheckinSheet
-        isSubmitting={startMutation.isPending}
-        onSkip={() => void handleStartSubmit(null)}
-        onSubmit={(scores) => void handleStartSubmit(scores)}
-        visible={checkinSheet === 'start'}
-      />
-      <SessionFinishCheckinSheet
+      <SessionRpeModal
         isSubmitting={finishMutation.isPending}
-        onSkip={() => void handleFinishSubmit(null)}
-        onSubmit={(payload) => void handleFinishSubmit(payload)}
-        visible={checkinSheet === 'finish'}
-      />
-      <WeeklyReportFormSheet
-        initial={weeklyQuery.data ?? null}
-        isSubmitting={weeklyMutation.isPending}
-        onClose={handleWeeklySkip}
-        onSubmit={(input) => void handleWeeklySubmit(input)}
-        reportDate={reportDate}
-        sourceSessionId={sessionId}
-        visible={checkinSheet === 'weekly'}
+        onClose={() => setRpeVisible(false)}
+        onSubmit={handleSaveSessionRpe}
+        visible={rpeVisible}
       />
     </>
   );

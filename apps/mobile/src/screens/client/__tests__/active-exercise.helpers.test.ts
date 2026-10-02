@@ -3,8 +3,11 @@ import {
   draftHasValues,
   formatSessionRepRange,
   getSetColumns,
+  getSetCount,
+  readActualValue,
   readSessionYoutubeUrl,
   readTargetValue,
+  type SetRowState,
 } from '../active-exercise.helpers';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
 
@@ -190,5 +193,163 @@ describe('formatSessionRepRange', () => {
         plannedSets: [{ reps: 30, setIndex: 0 }],
       } as unknown as SessionItem),
     ).toBeNull();
+  });
+});
+
+function emptyDraft(overrides: Partial<SetRowState> = {}): SetRowState {
+  return {
+    distance: '',
+    duration: '',
+    fcMaxPct: '',
+    fcReservePct: '',
+    heartRate: '',
+    reps: '',
+    rest: '',
+    rir: '',
+    rpe: '',
+    rom: '',
+    weight: '',
+    ...overrides,
+  };
+}
+
+describe('buildLogPayload for all exercise types', () => {
+  it('sends plio durationSecondsDone with the rest of the set', () => {
+    const item = { type: 'plio', id: 'plio-1', lockedFields: [] } as unknown as SessionItem;
+    expect(buildLogPayload(item, 2, emptyDraft({ duration: '15', reps: '10', rpe: '7', weight: '20' }))).toEqual({
+      durationSecondsDone: 15,
+      effortRpe: 7,
+      repsDone: 10,
+      sessionPlioBlockId: 'plio-1',
+      setIndex: 2,
+      weightDoneKg: 20,
+    });
+  });
+
+  it('sends mobility weightDoneKg with rom', () => {
+    const item = { type: 'mobility', id: 'mob-1', lockedFields: [] } as unknown as SessionItem;
+    expect(buildLogPayload(item, 1, emptyDraft({ reps: '8', rom: 'completo', rpe: '5', weight: '8.5' }))).toEqual({
+      effortRpe: 5,
+      repsDone: 8,
+      romDone: 'completo',
+      sessionMobilityBlockId: 'mob-1',
+      setIndex: 1,
+      weightDoneKg: 8.5,
+    });
+  });
+
+  it('sends cardio duration, rest and rpe without distance', () => {
+    const item = { type: 'cardio', id: 'cardio-1', lockedFields: [] } as unknown as SessionItem;
+    const payload = buildLogPayload(
+      item,
+      1,
+      emptyDraft({ duration: '120', heartRate: '145', rest: '30', rpe: '6', distance: '1000' }),
+    );
+    expect(payload).toEqual({
+      avgHeartRate: 145,
+      durationSecondsDone: 120,
+      effortRpe: 6,
+      intervalIndex: 1,
+      restSecondsDone: 30,
+      sessionCardioBlockId: 'cardio-1',
+    });
+    expect(payload).not.toHaveProperty('distanceDoneMeters');
+  });
+
+  it('sends sport set logs in seconds with setIndex and all visible fields', () => {
+    const item = { type: 'sport', id: 'sport-1', lockedFields: [] } as unknown as SessionItem;
+    expect(
+      buildLogPayload(
+        item,
+        2,
+        emptyDraft({
+          duration: '90',
+          fcMaxPct: '85',
+          fcReservePct: '70',
+          heartRate: '150',
+          reps: '12',
+          rest: '45',
+          rir: '2',
+          rpe: '8',
+          rom: 'parcial',
+          weight: '5',
+        }),
+      ),
+    ).toEqual({
+      durationSecondsDone: 90,
+      effortRir: 2,
+      effortRpe: 8,
+      heartRateDone: 150,
+      hrMaxPctDone: 85,
+      hrReservePctDone: 70,
+      repsDone: 12,
+      restSecondsDone: 45,
+      romDone: 'parcial',
+      sessionSportBlockId: 'sport-1',
+      setIndex: 2,
+      weightDoneKg: 5,
+    });
+  });
+});
+
+describe('getSetCount and readActualValue for sport', () => {
+  it('counts sport sets from plannedSets', () => {
+    const item = {
+      type: 'sport',
+      plannedSets: [{ setIndex: 1 }, { setIndex: 2 }, { setIndex: 3 }],
+    } as unknown as SessionItem;
+    expect(getSetCount(item)).toBe(3);
+  });
+
+  it('reads sport set logs by setIndex in seconds', () => {
+    const item = {
+      type: 'sport',
+      log: null,
+      setLogs: [
+        {
+          durationSecondsDone: 90,
+          effortRir: 2,
+          effortRpe: 8,
+          heartRateDone: 150,
+          hrMaxPctDone: 85,
+          hrReservePctDone: 70,
+          repsDone: 12,
+          restSecondsDone: 45,
+          romDone: 'parcial',
+          sessionSportBlockId: 'sport-1',
+          setIndex: 2,
+          weightDoneKg: 5,
+        },
+      ],
+    } as unknown as SessionItem;
+    expect(readActualValue(item, 2, 'reps')).toBe('12');
+    expect(readActualValue(item, 2, 'weight')).toBe('5');
+    expect(readActualValue(item, 2, 'duration')).toBe('90');
+    expect(readActualValue(item, 2, 'rom')).toBe('parcial');
+    expect(readActualValue(item, 1, 'reps')).toBe('');
+  });
+
+  it('reads plio duration and mobility weight from logs', () => {
+    const plio = {
+      type: 'plio',
+      logs: [
+        { durationSecondsDone: 15, effortRpe: 7, repsDone: 8, sessionPlioBlockId: 'p1', setIndex: 1, weightDoneKg: 20 },
+      ],
+    } as unknown as SessionItem;
+    const mobility = {
+      type: 'mobility',
+      logs: [
+        {
+          effortRpe: 6,
+          repsDone: 10,
+          romDone: 'completo',
+          sessionMobilityBlockId: 'm1',
+          setIndex: 1,
+          weightDoneKg: 8.5,
+        },
+      ],
+    } as unknown as SessionItem;
+    expect(readActualValue(plio, 1, 'duration')).toBe('15');
+    expect(readActualValue(mobility, 1, 'weight')).toBe('8.5');
   });
 });

@@ -4,6 +4,13 @@ const path = require('path');
 const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
+const workspaceRoot = path.resolve(__dirname, '../..');
+config.watchFolders = [...(config.watchFolders ?? []), workspaceRoot];
+config.resolver.nodeModulesPaths = [path.resolve(__dirname, 'node_modules'), path.resolve(workspaceRoot, 'node_modules')];
+config.resolver.extraNodeModules = {
+  ...(config.resolver.extraNodeModules ?? {}),
+  '@trainerpro/shared': path.resolve(workspaceRoot, 'packages/shared'),
+};
 
 // Force `zustand` to its CommonJS build on every platform. Zustand v5 ships an
 // ESM build (`zustand/esm/*.mjs`) whose `devtools` middleware references

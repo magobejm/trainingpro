@@ -12,6 +12,7 @@ import { LogIsometricSetUseCase } from './application/use-cases/log-isometric-se
 import { LogMobilitySetUseCase } from './application/use-cases/log-mobility-set.usecase';
 import { LogPlioSetUseCase } from './application/use-cases/log-plio-set.usecase';
 import { LogSetUseCase } from './application/use-cases/log-set.usecase';
+import { LogSportSetUseCase } from './application/use-cases/log-sport-set.usecase';
 import { LogSportUseCase } from './application/use-cases/log-sport.usecase';
 import { StartCardioSessionUseCase } from './application/use-cases/start-cardio-session.usecase';
 import { StartSessionUseCase } from './application/use-cases/start-session.usecase';
@@ -39,6 +40,7 @@ import { SessionsController } from './presentation/controllers/sessions.controll
     LogMobilitySetUseCase,
     LogPlioSetUseCase,
     LogSetUseCase,
+    LogSportSetUseCase,
     LogSportUseCase,
     StartCardioSessionUseCase,
     StartSessionUseCase,

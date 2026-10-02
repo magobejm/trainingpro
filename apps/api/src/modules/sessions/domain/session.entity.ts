@@ -61,6 +61,7 @@ export type ExerciseHistoryEntry = {
 };
 
 export type SessionPlioSetLog = {
+  durationSecondsDone: null | number;
   effortRpe: null | number;
   repsDone: null | number;
   sessionPlioBlockId: string;
@@ -74,6 +75,7 @@ export type SessionMobilitySetLog = {
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
+  weightDoneKg: null | number;
 };
 
 export type SessionIsometricSetLog = {
@@ -89,6 +91,21 @@ export type SessionSportLog = {
   durationMinutesDone: null | number;
   effortRpe: null | number;
   sessionSportBlockId: string;
+};
+
+export type SessionSportSetLog = {
+  durationSecondsDone: null | number;
+  effortRir: null | number;
+  effortRpe: null | number;
+  heartRateDone: null | number;
+  hrMaxPctDone: null | number;
+  hrReservePctDone: null | number;
+  repsDone: null | number;
+  restSecondsDone: null | number;
+  romDone: null | string;
+  sessionSportBlockId: string;
+  setIndex: number;
+  weightDoneKg: null | number;
 };
 
 export type SessionPlioItem = {
@@ -159,6 +176,7 @@ export type SessionSportItem = {
   log: SessionSportLog | null;
   notes: null | string;
   plannedSets: SessionPlannedSet[];
+  setLogs: SessionSportSetLog[];
   sortOrder: number;
   targetRpe: null | number;
   youtubeUrl: null | string;
@@ -178,6 +196,7 @@ export type SessionIntervalLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   intervalIndex: number;
+  restSecondsDone: null | number;
   sessionCardioBlockId: string;
 };
 

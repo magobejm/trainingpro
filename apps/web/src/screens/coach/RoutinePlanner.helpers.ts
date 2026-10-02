@@ -1,4 +1,4 @@
-import { resolveLockedFields, SPORT_DEFAULT_LOCKED_VARIABLES } from './exercise-set-variables';
+import { resolveLockedFields, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
 import { normalizePlanTemplateId } from '../../data/normalize-plan-template-id';
 import type { BlockType, DraftBlock, DraftDay, DraftExerciseGroup, DraftSet, DraftState } from './RoutinePlanner.types';
 import { mapTemplateToDraft as mapTemplateToDraftImpl } from './RoutinePlanner.draft-mapper';

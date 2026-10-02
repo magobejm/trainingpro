@@ -265,6 +265,7 @@ const LIBRARY_ROUTINE_SELECT = {
 const LIBRARY_SPORT_SELECT = {
   coachInstructions: true,
   mediaUrl: true,
+  youtubeUrl: true,
 } as const;
 
 const PLAN_DAY_CONTENT_INCLUDE = {
@@ -586,7 +587,7 @@ function mapSportExercises(blocks: PlanDay['sportBlocks']): ClientRoutineExercis
       targetRir: null,
       targetRpe: e.targetRpe ?? null,
       type: 'sport',
-      youtubeUrl: null,
+      youtubeUrl: e.librarySport?.youtubeUrl ?? null,
     }),
   );
 }

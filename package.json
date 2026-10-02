@@ -17,6 +17,7 @@
     "db:reset": "docker compose down -v postgres && docker compose up -d postgres && pnpm --filter @trainerpro/api db:migrate:deploy && pnpm --filter @trainerpro/api db:seed",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r --if-present test",
     "build": "pnpm -r build",
     "format": "prettier --check .",
     "lint-staged": "lint-staged",

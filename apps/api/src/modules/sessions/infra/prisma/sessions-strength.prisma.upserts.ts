@@ -6,6 +6,7 @@ import type {
   LogPlioSetInput,
   LogSetInput,
   LogSportInput,
+  LogSportSetInput,
 } from '../../domain/session.input';
 import { toDecimal } from './sessions-strength.prisma.helpers';
 
@@ -34,6 +35,7 @@ export function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, 
   return prisma.plioSetLog.upsert({
     where: { sessionPlioBlockId_setIndex: { sessionPlioBlockId, setIndex: input.setIndex } },
     create: {
+      durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
       sessionId: input.sessionId,
@@ -42,6 +44,7 @@ export function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, 
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
     update: {
+      durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
       weightDoneKg: toDecimal(input.weightDoneKg),
@@ -59,11 +62,13 @@ export function upsertMobilitySetLog(prisma: PrismaService, input: LogMobilitySe
       sessionId: input.sessionId,
       sessionMobilityBlockId,
       setIndex: input.setIndex,
+      weightDoneKg: toDecimal(input.weightDoneKg),
     },
     update: {
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
       romDone: input.romDone ?? null,
+      weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
 }
@@ -101,6 +106,39 @@ export function upsertSportLog(prisma: PrismaService, input: LogSportInput, sess
       avgHeartRate: input.avgHeartRate ?? null,
       durationMinutesDone: input.durationMinutesDone ?? null,
       effortRpe: input.effortRpe ?? null,
+    },
+  });
+}
+
+export function upsertSportSetLog(prisma: PrismaService, input: LogSportSetInput, sessionSportBlockId: string) {
+  return prisma.sportSetLog.upsert({
+    where: { sessionSportBlockId_setIndex: { sessionSportBlockId, setIndex: input.setIndex } },
+    create: {
+      durationSecondsDone: input.durationSecondsDone ?? null,
+      effortRir: input.effortRir ?? null,
+      effortRpe: input.effortRpe ?? null,
+      heartRateDone: input.heartRateDone ?? null,
+      hrMaxPctDone: input.hrMaxPctDone ?? null,
+      hrReservePctDone: input.hrReservePctDone ?? null,
+      repsDone: input.repsDone ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
+      romDone: input.romDone ?? null,
+      sessionId: input.sessionId,
+      sessionSportBlockId,
+      setIndex: input.setIndex,
+      weightDoneKg: toDecimal(input.weightDoneKg),
+    },
+    update: {
+      durationSecondsDone: input.durationSecondsDone ?? null,
+      effortRir: input.effortRir ?? null,
+      effortRpe: input.effortRpe ?? null,
+      heartRateDone: input.heartRateDone ?? null,
+      hrMaxPctDone: input.hrMaxPctDone ?? null,
+      hrReservePctDone: input.hrReservePctDone ?? null,
+      repsDone: input.repsDone ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
+      romDone: input.romDone ?? null,
+      weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
 }

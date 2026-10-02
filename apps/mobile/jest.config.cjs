@@ -8,4 +8,7 @@ module.exports = {
   transform: {
     '^.+\\.(t|j)s$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
   },
+  moduleNameMapper: {
+    '^@trainerpro/shared$': '<rootDir>/../../packages/shared/src/index.ts',
+  },
 };

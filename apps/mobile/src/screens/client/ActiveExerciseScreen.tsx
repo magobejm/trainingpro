@@ -39,6 +39,8 @@ import { PreviousDaysOverlay } from './PreviousDaysOverlay';
 import { RestTimerOverlay } from './RestTimerOverlay';
 import type { RestState } from './session-rest.types';
 import { ScaleModal } from './ScaleModal';
+import { RomScaleModal } from './RomScaleModal';
+import { isRomScaleValue } from './rom-scale.utils';
 
 type ActiveExerciseScreenProps = {
   exerciseGroup: SessionItem[];
@@ -64,6 +66,7 @@ type ActiveExerciseScreenProps = {
 };
 
 type ScaleState = { kind: 'rpe' | 'rir'; setIndex: number } | null;
+type RomState = { setIndex: number } | null;
 
 function emptyRow(): Record<SetFieldKey, string> {
   return {
@@ -88,6 +91,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [showPrevious, setShowPrevious] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
   const [scaleState, setScaleState] = useState<ScaleState>(null);
+  const [romState, setRomState] = useState<RomState>(null);
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
   const [finishing, setFinishing] = useState(false);
 
@@ -105,7 +109,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
         fcReservePct: readActualValue(props.item, setIndex, 'fcReservePct'),
         heartRate: readActualValue(props.item, setIndex, 'heartRate'),
         reps: readActualValue(props.item, setIndex, 'reps'),
-        rest: '',
+        rest: readActualValue(props.item, setIndex, 'rest'),
         rir: readActualValue(props.item, setIndex, 'rir'),
         rpe: readActualValue(props.item, setIndex, 'rpe'),
         rom: readActualValue(props.item, setIndex, 'rom'),
@@ -165,6 +169,18 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
       },
     }));
     setScaleState(null);
+  };
+
+  const handleRomSave = (value: string) => {
+    if (!romState) return;
+    setDraftValues((current) => ({
+      ...current,
+      [romState.setIndex]: {
+        ...(current[romState.setIndex] ?? emptyRow()),
+        rom: value,
+      },
+    }));
+    setRomState(null);
   };
 
   const navigateGroup = (direction: -1 | 1) => {
@@ -267,6 +283,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                           },
                         }))
                       }
+                      onOpenRom={() => setRomState({ setIndex })}
                       onOpenScale={() => setScaleState({ kind: column.scale === 'rpe' ? 'rpe' : 'rir', setIndex })}
                       target={readTargetValue(props.item, setIndex, column.key)}
                     />
@@ -313,6 +330,12 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           onChange={() => {}}
           onClose={() => setScaleState(null)}
           onSave={handleScaleSave}
+        />
+        <RomScaleModal
+          value={draftValues[romState?.setIndex ?? 1]?.rom ?? ''}
+          visible={romState != null}
+          onClose={() => setRomState(null)}
+          onSave={handleRomSave}
         />
         <YouTubeVideoModal
           title={props.item.displayName}
@@ -412,18 +435,21 @@ function SetColumnCell(props: {
   column: SetColumn;
   draft: string;
   onChange: (value: string) => void;
+  onOpenRom: () => void;
   onOpenScale: () => void;
   target: string;
 }): React.JSX.Element {
+  const { t } = useTranslation();
   const isScale = props.column.scale === 'rpe' || props.column.scale === 'rir';
   const isRom = props.column.scale === 'rom';
+  const romLabel = isRomScaleValue(props.draft) ? t(`mobile.client.exercise.rom.${props.draft}`) : props.draft;
   return (
     <View style={styles.column}>
       <Text style={styles.columnLabel}>{props.column.label}</Text>
       <Text style={styles.targetValue}>{props.target}</Text>
       {isScale || isRom ? (
-        <Pressable style={styles.scaleInput} onPress={isScale ? props.onOpenScale : undefined}>
-          <Text style={styles.scaleInputText}>{props.draft || '-'}</Text>
+        <Pressable style={styles.scaleInput} onPress={isRom ? props.onOpenRom : props.onOpenScale}>
+          <Text style={styles.scaleInputText}>{(isRom ? romLabel : props.draft) || '-'}</Text>
         </Pressable>
       ) : props.column.key === 'reps' && props.column.label === '—' ? (
         <Text style={styles.scaleInputText}>{'—'}</Text>

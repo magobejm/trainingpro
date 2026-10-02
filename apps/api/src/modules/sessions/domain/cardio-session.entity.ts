@@ -6,6 +6,7 @@ export type CardioIntervalLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   intervalIndex: number;
+  restSecondsDone: null | number;
   sessionCardioBlockId: string;
 };
 

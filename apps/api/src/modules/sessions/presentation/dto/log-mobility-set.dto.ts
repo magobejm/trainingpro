@@ -7,6 +7,7 @@ export class LogMobilitySetDto {
     romDone: z.string().max(30).nullable().optional(),
     sessionMobilityBlockId: z.string().uuid(),
     setIndex: z.number().int().min(1).max(100),
+    weightDoneKg: z.number().min(0).max(1000).nullable().optional(),
   });
 
   effortRpe?: null | number;
@@ -14,4 +15,5 @@ export class LogMobilitySetDto {
   romDone?: null | string;
   sessionMobilityBlockId!: string;
   setIndex!: number;
+  weightDoneKg?: null | number;
 }

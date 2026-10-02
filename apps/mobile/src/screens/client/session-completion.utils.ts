@@ -10,7 +10,7 @@ function plannedSetCount(item: SessionItem): number {
     case 'cardio':
       return item.roundsPlanned;
     case 'sport':
-      return 1;
+      return item.plannedSets.length || 1;
     default:
       return 0;
   }
@@ -26,7 +26,7 @@ function loggedSetIndexes(item: SessionItem): Set<number> {
     case 'cardio':
       return new Set(item.intervalLogs.map((entry) => entry.intervalIndex));
     case 'sport':
-      return item.log != null ? new Set([1]) : new Set();
+      return new Set((item.setLogs ?? []).map((entry) => entry.setIndex));
     default:
       return new Set();
   }

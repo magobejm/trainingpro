@@ -99,6 +99,7 @@ export function mapCardioIntervalLog(row: {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   intervalIndex: number;
+  restSecondsDone: null | number;
   sessionCardioBlockId: string;
 }): CardioIntervalLog {
   return {
@@ -107,6 +108,7 @@ export function mapCardioIntervalLog(row: {
     durationSecondsDone: row.durationSecondsDone,
     effortRpe: row.effortRpe,
     intervalIndex: row.intervalIndex,
+    restSecondsDone: row.restSecondsDone,
     sessionCardioBlockId: row.sessionCardioBlockId,
   };
 }

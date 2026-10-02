@@ -12,7 +12,7 @@ import type {
 import { filterActiveSetColumns, isFieldLocked, isRestFieldLocked } from '../../utils/locked-fields.utils';
 import { toYouTubeEmbedUrl } from '../../utils/library-media.helpers';
 import { resolvePlannedSet } from './planned-set.utils';
-import { resolveLockedFields, setVariablesForType, type SetVariableKey } from './exercise-set-variables';
+import { resolveLockedFields, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 import { exerciseTypeShowsRepRange, formatRepRangeBounds } from './routine-exercise-set.utils';
 import { formatRestLabel } from './session-completion.utils';
 
@@ -47,7 +47,7 @@ export function getSetCount(item: SessionItem): number {
     case 'mobility':
       return item.roundsPlanned;
     case 'sport':
-      return 1;
+      return item.plannedSets.length || 1;
     default:
       return 1;
   }
@@ -141,6 +141,7 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
       if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
       if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
+      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
       return '';
     }
     case 'mobility': {
@@ -149,6 +150,7 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
       if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
       if (key === 'rom') return log.romDone ?? '';
+      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
       return '';
     }
     case 'isometric': {
@@ -163,16 +165,24 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
       const log = item.intervalLogs.find((entry) => entry.intervalIndex === setIndex);
       if (!log) return '';
       if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
-      if (key === 'distance') return log.distanceDoneMeters != null ? String(log.distanceDoneMeters) : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
       if (key === 'heartRate') return log.avgHeartRate != null ? String(log.avgHeartRate) : '';
+      if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
       return '';
     }
     case 'sport': {
-      if (!item.log) return '';
-      if (key === 'duration') return item.log.durationMinutesDone != null ? String(item.log.durationMinutesDone) : '';
-      if (key === 'rpe') return item.log.effortRpe != null ? String(item.log.effortRpe) : '';
-      if (key === 'heartRate') return item.log.avgHeartRate != null ? String(item.log.avgHeartRate) : '';
+      const log = (item.setLogs ?? []).find((entry) => entry.setIndex === setIndex);
+      if (!log) return '';
+      if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
+      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
+      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
+      if (key === 'fcMaxPct') return log.hrMaxPctDone != null ? String(log.hrMaxPctDone) : '';
+      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
+      if (key === 'heartRate') return log.heartRateDone != null ? String(log.heartRateDone) : '';
+      if (key === 'rir') return log.effortRir != null ? String(log.effortRir) : '';
+      if (key === 'fcReservePct') return log.hrReservePctDone != null ? String(log.hrReservePctDone) : '';
+      if (key === 'rom') return log.romDone ?? '';
+      if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
       return '';
     }
     default:
@@ -247,6 +257,7 @@ export function buildLogPayload(
       };
     case 'plio':
       return {
+        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
         sessionPlioBlockId: item.id,
@@ -260,6 +271,7 @@ export function buildLogPayload(
         romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
         sessionMobilityBlockId: item.id,
         setIndex,
+        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     case 'isometric':
       return {
@@ -272,18 +284,26 @@ export function buildLogPayload(
     case 'cardio':
       return {
         avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
-        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distance', 'distance', values.distance),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         intervalIndex: setIndex,
+        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
         sessionCardioBlockId: item.id,
       };
     case 'sport':
       return {
-        avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
-        durationMinutesDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+        heartRateDone: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
+        hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
+        hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
+        repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
+        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
+        romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
         sessionSportBlockId: item.id,
+        setIndex,
+        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     default:
       return null;

@@ -231,6 +231,7 @@ export function normalizeSportInput(input: Partial<SportWriteInput>): Partial<Sp
     ...(input.icon !== undefined && { icon: input.icon.trim() }),
     ...(input.mediaUrl !== undefined && { mediaUrl: toNullable(input.mediaUrl) }),
     ...(input.name !== undefined && { name: input.name.trim() }),
+    ...(input.youtubeUrl !== undefined && { youtubeUrl: toNullable(input.youtubeUrl) }),
   };
 }
 

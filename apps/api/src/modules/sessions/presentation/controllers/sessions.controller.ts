@@ -12,6 +12,7 @@ import { LogIsometricSetUseCase } from '../../application/use-cases/log-isometri
 import { LogMobilitySetUseCase } from '../../application/use-cases/log-mobility-set.usecase';
 import { LogPlioSetUseCase } from '../../application/use-cases/log-plio-set.usecase';
 import { LogSetUseCase } from '../../application/use-cases/log-set.usecase';
+import { LogSportSetUseCase } from '../../application/use-cases/log-sport-set.usecase';
 import { LogSportUseCase } from '../../application/use-cases/log-sport.usecase';
 import { StartSessionUseCase } from '../../application/use-cases/start-session.usecase';
 import { EnsureSessionDto } from '../dto/ensure-session.dto';
@@ -21,8 +22,10 @@ import { LogIsometricSetDto } from '../dto/log-isometric-set.dto';
 import { LogMobilitySetDto } from '../dto/log-mobility-set.dto';
 import { LogPlioSetDto } from '../dto/log-plio-set.dto';
 import { LogSetDto } from '../dto/log-set.dto';
+import { LogSportSetDto } from '../dto/log-sport-set.dto';
 import { LogSportDto } from '../dto/log-sport.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
+import { SportBlockSetParamsDto } from '../dto/sport-block-set-params.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
 
 @Controller('sessions')
@@ -38,6 +41,7 @@ export class SessionsController {
     private readonly logMobilitySetUseCase: LogMobilitySetUseCase,
     private readonly logPlioSetUseCase: LogPlioSetUseCase,
     private readonly logSetUseCase: LogSetUseCase,
+    private readonly logSportSetUseCase: LogSportSetUseCase,
     private readonly logSportUseCase: LogSportUseCase,
     private readonly startSessionUseCase: StartSessionUseCase,
   ) {}
@@ -119,6 +123,21 @@ export class SessionsController {
   ) {
     const auth = readAuthContext(request);
     return this.logSportUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+  }
+
+  @Post(':sessionId/sport-blocks/:blockId/sets')
+  async logSportSet(
+    @Param() params: SportBlockSetParamsDto,
+    @Body() body: LogSportSetDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    const auth = readAuthContext(request);
+    return this.logSportSetUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId, sessionSportBlockId: params.blockId },
+      readOffset(timezoneOffset),
+    );
   }
 
   @Post(':sessionId/log-set')

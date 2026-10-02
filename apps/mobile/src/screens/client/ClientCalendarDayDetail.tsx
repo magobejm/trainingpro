@@ -2,7 +2,6 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { showComingSoon } from '../../shell/client/feedback';
 import type { DayData } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
@@ -12,11 +11,18 @@ type DayDetailModalProps = {
   dateStr: string;
   onClose: () => void;
   onOpenSession: (sessionId: string) => void;
+  onRequestMeeting: (dateStr: string) => void;
 };
 
 const MODAL_ANIM = 'fade' as const;
 
-export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDetailModalProps): React.JSX.Element {
+export function DayDetailModal({
+  data,
+  dateStr,
+  onClose,
+  onOpenSession,
+  onRequestMeeting,
+}: DayDetailModalProps): React.JSX.Element {
   const { t } = useTranslation();
   const date = new Date(dateStr);
   const dateLabel = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', weekday: 'long' });
@@ -47,7 +53,13 @@ export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDet
               <Text style={styles.btnPrimaryText}>{t('client.calendar.detail.viewSession')}</Text>
             </Pressable>
           ) : null}
-          <Pressable onPress={() => showComingSoon(t('client.calendar.detail.requestMeeting'))} style={styles.btnSecondary}>
+          <Pressable
+            onPress={() => {
+              onRequestMeeting(dateStr);
+              onClose();
+            }}
+            style={styles.btnSecondary}
+          >
             <Text style={styles.btnSecondaryText}>{t('client.calendar.detail.requestMeeting')}</Text>
           </Pressable>
         </View>

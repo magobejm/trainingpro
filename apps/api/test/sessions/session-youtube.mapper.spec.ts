@@ -15,9 +15,11 @@ describe('buildSessionYoutubeLookup', () => {
         isometricExercises: [{ id: 'iso-lib', youtubeUrl: 'https://youtu.be/iso' }],
         mobilityExercises: [{ id: 'mob-lib', youtubeUrl: 'https://youtu.be/mob' }],
         plioExercises: [{ id: 'plio-lib', youtubeUrl: 'https://youtu.be/plio' }],
+        sports: [],
       },
       mobility: [{ id: 'mob-1', sourceMobilityExerciseId: 'mob-lib' }],
       plio: [{ id: 'plio-1', sourcePlioExerciseId: 'plio-lib' }],
+      sport: [],
       strength: [{ id: 'str-1', sourceExerciseId: 'ex-lib' }],
     });
 
@@ -26,6 +28,27 @@ describe('buildSessionYoutubeLookup', () => {
     expect(lookup.get('plio-1')).toBe('https://youtu.be/plio');
     expect(lookup.get('mob-1')).toBe('https://youtu.be/mob');
     expect(lookup.get('iso-1')).toBe('https://youtu.be/iso');
+  });
+
+  it('maps sport library youtube urls onto session sport items', () => {
+    const lookup = buildSessionYoutubeLookup({
+      cardio: [],
+      isometric: [],
+      library: {
+        cardioMethods: [],
+        exercises: [],
+        isometricExercises: [],
+        mobilityExercises: [],
+        plioExercises: [],
+        sports: [{ id: 'sport-lib', youtubeUrl: 'https://youtu.be/sport' }],
+      },
+      mobility: [],
+      plio: [],
+      sport: [{ id: 'sport-1', sourceSportId: 'sport-lib' }],
+      strength: [],
+    });
+
+    expect(lookup.get('sport-1')).toBe('https://youtu.be/sport');
   });
 
   it('skips blank urls and missing library rows', () => {
@@ -38,9 +61,11 @@ describe('buildSessionYoutubeLookup', () => {
         isometricExercises: [],
         mobilityExercises: [],
         plioExercises: [],
+        sports: [],
       },
       mobility: [],
       plio: [],
+      sport: [],
       strength: [
         { id: 'str-1', sourceExerciseId: 'ex-lib' },
         { id: 'str-2', sourceExerciseId: null },

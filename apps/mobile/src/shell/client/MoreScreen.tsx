@@ -15,6 +15,7 @@ const MORE_ITEMS: { emoji: string; id: MoreMenuId; labelKey: string }[] = [
   { emoji: '📐', id: 'measures', labelKey: 'mobile.client.more.measures' },
   { emoji: '🏃', id: 'physicalTests', labelKey: 'mobile.client.more.physicalTests' },
   { emoji: '📋', id: 'planning', labelKey: 'mobile.client.more.planning' },
+  { emoji: '📅', id: 'calendar', labelKey: 'mobile.client.more.calendar' },
   { emoji: '📊', id: 'volume', labelKey: 'mobile.client.more.volume' },
 ];
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Banner } from '@trainerpro/ui';
@@ -14,18 +14,19 @@ import { LIGHT } from '../../theme/light';
 
 type ChatScreenProps = {
   embedded?: boolean;
+  initialMessage?: string;
 };
 
 export function ChatScreen(props: ChatScreenProps): React.JSX.Element {
-  const vm = useChatViewModel();
+  const vm = useChatViewModel(props.initialMessage);
   return <ChatView embedded={props.embedded} {...vm} />;
 }
 
-function useChatViewModel() {
+function useChatViewModel(initialMessage?: string) {
   const { t } = useTranslation();
   const threadId = useThreadId();
   const messagesQuery = useChatMessagesQuery(threadId);
-  const composer = useMessageComposer(threadId, t);
+  const composer = useMessageComposer(threadId, t, initialMessage);
   return { ...composer, messagesQuery, t, threadId };
 }
 
@@ -34,11 +35,14 @@ function useThreadId(): string {
   return threadQuery.data?.id ?? '';
 }
 
-function useMessageComposer(threadId: string, t: (key: string) => string) {
+function useMessageComposer(threadId: string, t: (key: string) => string, initialMessage?: string) {
   const sendMessage = useSendChatMessageMutation(threadId);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initialMessage ?? '');
   const [error, setError] = useState('');
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
+  useEffect(() => {
+    if (initialMessage) setText(initialMessage);
+  }, [initialMessage]);
   const canSend = useMemo(() => canSendMessage(text, attachments, threadId), [attachments, text, threadId]);
   const onAttach = (attachment: AttachmentDraft) => setAttachments((current) => [...current, attachment]);
   const onSend = () =>

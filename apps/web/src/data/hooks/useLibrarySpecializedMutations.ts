@@ -37,6 +37,7 @@ export type SportWriteInput = {
   icon: string;
   mediaUrl?: string | null;
   name: string;
+  youtubeUrl?: string | null;
 };
 
 export function useCreateIsometricExerciseMutation() {

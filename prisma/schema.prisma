@@ -701,6 +701,7 @@ model Sport {
   movementPatternId String?             @map("movement_pattern_id") @db.Uuid
   anatomicalPlaneId String?             @map("anatomical_plane_id") @db.Uuid
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
+  youtubeUrl        String?             @map("youtube_url") @db.VarChar(500)
   archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -1334,6 +1335,7 @@ model SessionInstance {
   mobilityLogs          MobilitySetLog[]
   isometricLogs         IsometricSetLog[]
   sportLogs             SportSessionLog[]
+  sportSetLogs          SportSetLog[]
   incidents             Incident[]
   weeklyReports         WeeklyReport[]
 
@@ -1423,6 +1425,7 @@ model IntervalLog {
   intervalIndex        Int                @map("interval_index")
   distanceDoneMeters   Int?               @map("distance_done_meters")
   durationSecondsDone  Int?               @map("duration_seconds_done")
+  restSecondsDone      Int?               @map("rest_seconds_done")
   effortRpe            Int?               @map("effort_rpe")
   avgHeartRate         Int?               @map("avg_heart_rate")
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1466,6 +1469,7 @@ model PlioSetLog {
   repsDone           Int?             @map("reps_done")
   weightDoneKg       Decimal?         @map("weight_done_kg") @db.Decimal(6, 2)
   effortRpe          Int?             @map("effort_rpe")
+  durationSecondsDone Int?            @map("duration_seconds_done")
   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
   session            SessionInstance  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
@@ -1505,6 +1509,7 @@ model MobilitySetLog {
   sessionMobilityBlockId String              @map("session_mobility_block_id") @db.Uuid
   setIndex              Int                  @map("set_index")
   repsDone              Int?                 @map("reps_done")
+  weightDoneKg          Decimal?             @map("weight_done_kg") @db.Decimal(6, 2)
   romDone               String?              @map("rom_done") @db.VarChar(30)
   effortRpe             Int?                 @map("effort_rpe")
   createdAt             DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -1573,6 +1578,7 @@ model SessionSportBlock {
   updatedAt       DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
   session         SessionInstance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   logs            SportSessionLog[]
+  setLogs         SportSetLog[]
 
   @@index([sessionId, archivedAt], map: "idx_session_sport_session_archived")
   @@map("session_sport_block")
@@ -1593,6 +1599,31 @@ model SportSessionLog {
   @@unique([sessionSportBlockId], map: "uq_sport_log_block")
   @@index([sessionId], map: "idx_sport_log_session")
   @@map("sport_session_log")
+}
+
+model SportSetLog {
+  id                  String            @id @default(uuid()) @db.Uuid
+  sessionId           String            @map("session_id") @db.Uuid
+  sessionSportBlockId String            @map("session_sport_block_id") @db.Uuid
+  setIndex            Int               @map("set_index")
+  repsDone            Int?              @map("reps_done")
+  weightDoneKg        Decimal?          @map("weight_done_kg") @db.Decimal(6, 2)
+  effortRpe           Int?              @map("effort_rpe")
+  hrMaxPctDone        Int?              @map("hr_max_pct_done")
+  durationSecondsDone Int?              @map("duration_seconds_done")
+  heartRateDone       Int?              @map("heart_rate_done")
+  effortRir           Int?              @map("effort_rir")
+  hrReservePctDone    Int?              @map("hr_reserve_pct_done")
+  romDone             String?           @map("rom_done") @db.VarChar(30)
+  restSecondsDone     Int?              @map("rest_seconds_done")
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  session             SessionInstance   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionSportBlock   SessionSportBlock @relation(fields: [sessionSportBlockId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionSportBlockId, setIndex], map: "uq_sport_set_log_block_set")
+  @@index([sessionId], map: "idx_sport_set_log_session")
+  @@map("sport_set_log")
 }
 
 model Incident {

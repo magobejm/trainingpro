@@ -110,7 +110,7 @@ export function mapSports(items: SportLibraryItem[]): LibraryItem[] {
     description: item.description ?? null,
     notes: null,
     imageUrl: item.mediaUrl ?? null,
-    youtubeUrl: null,
+    youtubeUrl: item.youtubeUrl ?? null,
   }));
 }
 

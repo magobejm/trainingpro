@@ -69,6 +69,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
       description: item.description ?? '',
       mediaUrl: item.mediaUrl ?? '',
       name: item.name,
+      youtubeUrl: item.youtubeUrl ?? '',
     });
     setEditError('');
     setEditModalVisible(true);
@@ -142,7 +143,9 @@ export function LibrarySportsScreen(): React.JSX.Element {
           imageUrl={form.mediaUrl}
           isUploading={uploadImageMutation.isPending}
           onUpload={() => onUploadImage(false)}
+          setYoutubeUrl={setField('youtubeUrl')}
           t={t}
+          youtubeUrl={form.youtubeUrl}
         />
         {createError ? <Text style={styles.error}>{t(createError)}</Text> : null}
       </LibraryCreateModal>
@@ -163,7 +166,9 @@ export function LibrarySportsScreen(): React.JSX.Element {
           imageUrl={form.mediaUrl}
           isUploading={uploadImageMutation.isPending}
           onUpload={() => onUploadImage(true)}
+          setYoutubeUrl={setField('youtubeUrl')}
           t={t}
+          youtubeUrl={form.youtubeUrl}
         />
         {editError ? <Text style={styles.error}>{t(editError)}</Text> : null}
       </LibraryCreateModal>
@@ -197,6 +202,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
                 onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
                 scope={item.scope}
                 t={t}
+                youtubeUrl={item.youtubeUrl}
               />
             </View>
           ))}

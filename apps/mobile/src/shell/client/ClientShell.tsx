@@ -22,18 +22,21 @@ import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
+import { buildMeetingRequestMessage } from '../../screens/client/meeting-request.utils';
 
 type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
 
 type ShellState = {
   activeTab: TabId;
   activeSessionId: string | null;
+  chatDraft?: string;
   overlay: OverlayId;
   progressMode: ProgressMode;
   selectedDay: ClientRoutineDay | null;
   slideX: Animated.Value;
   closeOverlay: () => void;
   finishSessionToList: () => void;
+  openChatWithDraft: (message: string) => void;
   openDay: (day: ClientRoutineDay) => void;
   openOverlay: (id: OverlayId) => void;
   openProgress: (mode: ProgressMode) => void;
@@ -52,6 +55,7 @@ function useShellState(): ShellState {
   const [selectedDay, setSelectedDay] = useState<ClientRoutineDay | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [progressMode, setProgressMode] = useState<ProgressMode>('progress');
+  const [chatDraft, setChatDraft] = useState<string | undefined>();
   const slideX = useRef(new Animated.Value(600)).current;
   const listOriginRef = useRef<ListOverlay | null>(null);
   const overlayRef = useRef<OverlayId>(null);
@@ -150,11 +154,22 @@ function useShellState(): ShellState {
     [slideX],
   );
 
+  const openChatWithDraft = useCallback(
+    (message: string) => {
+      setChatDraft(message);
+      setActiveTab('chat');
+      animateHome();
+    },
+    [animateHome],
+  );
+
   return {
     activeSessionId,
     activeTab,
+    chatDraft,
     closeOverlay,
     finishSessionToList,
+    openChatWithDraft,
     openDay,
     openOverlay,
     openProgress,
@@ -173,6 +188,7 @@ function dispatchMoreMenu(
   openProgress: (mode: ProgressMode) => void,
 ): void {
   if (id === 'incidents') openOverlay('incidents');
+  else if (id === 'calendar') openOverlay('calendar');
   else if (id === 'measures') openOverlay('measures');
   else if (id === 'physicalTests') openOverlay('physicalTests');
   else if (id === 'planning') openOverlay('planning');
@@ -195,7 +211,7 @@ export function ClientShell(): React.JSX.Element {
           onOpenRoutine={() => st.openOverlay('routine')}
         />
       )}
-      {st.activeTab === 'chat' && <ChatScreen embedded />}
+      {st.activeTab === 'chat' && <ChatScreen embedded initialMessage={st.chatDraft} />}
       {st.activeTab === 'more' && <MoreScreen onNavigate={(id) => dispatchMoreMenu(id, st.openOverlay, st.openProgress)} />}
 
       <MorningCheckinGate />
@@ -258,7 +274,11 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'calendar' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <ClientCalendarScreen onClose={st.closeOverlay} onOpenSession={st.openSession} />
+          <ClientCalendarScreen
+            onClose={st.closeOverlay}
+            onOpenSession={st.openSession}
+            onRequestMeeting={(dateStr) => st.openChatWithDraft(buildMeetingRequestMessage(dateStr, t))}
+          />
         </Animated.View>
       )}
       {st.overlay === 'planning' && (

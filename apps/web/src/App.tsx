@@ -17,32 +17,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View, ViewStyle } from 'react-native';
 import './i18n';
-import { CoachesScreen } from './screens/admin/CoachesScreen';
-import { SubscriptionScreen } from './screens/admin/SubscriptionScreen';
-import { ClientsScreen } from './screens/coach/ClientsScreen';
-import { LibraryCardioMethodsScreen } from './screens/coach/LibraryCardioMethodsScreen';
-import { LibraryExercisesScreen } from './screens/coach/LibraryExercisesScreen';
-import { LibraryFoodsScreen } from './screens/coach/LibraryFoodsScreen';
-import { LibraryRoutinesScreen } from './screens/coach/LibraryRoutinesScreen';
-import { LibraryIsometricScreen } from './screens/coach/LibraryIsometricScreen';
-import { LibraryPlioScreen } from './screens/coach/LibraryPlioScreen';
-import { LibraryMobilityScreen } from './screens/coach/LibraryMobilityScreen';
-import { LibrarySportsScreen } from './screens/coach/LibrarySportsScreen';
-import { UnifiedExerciseLibraryScreen } from './screens/coach/UnifiedExerciseLibraryScreen';
-import { PlanBuilderCardioScreen } from './screens/coach/PlanBuilderCardioScreen';
-import { PlanBuilderDietScreen } from './screens/coach/PlanBuilderDietScreen';
-import { PlanBuilderStrengthScreen } from './screens/coach/PlanBuilderStrengthScreen';
-import { ProgressScreen } from './screens/coach/ProgressScreen';
-import { TechniqueEvaluatorScreen } from './screens/coach/TechniqueEvaluatorScreen';
-import { IncidentsScreen } from './screens/coach/IncidentsScreen';
-import { ChatScreen } from './screens/coach/ChatScreen';
-import { NotificationSettingsScreen } from './screens/coach/NotificationSettingsScreen';
-import { RoutinePlannerScreen } from './screens/coach/RoutinePlannerScreen';
-import { WarmupPlannerScreen } from './screens/coach/WarmupPlannerScreen';
-import { CalendarScreen } from './screens/coach/CalendarScreen';
-import { NotesScreen } from './screens/coach/NotesScreen';
-import { NutritionScreen } from './screens/coach/nutrition/NutritionScreen';
-import { useAuthStore } from './store/auth.store';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
 import { SidebarIdentity, TopBar } from './layout/ShellChrome';
@@ -53,8 +27,81 @@ import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
+import { useAuthStore } from './store/auth.store';
 import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from './store/warmupPlannerContext.store';
+
+const CoachesScreen = React.lazy(() =>
+  import('./screens/admin/CoachesScreen').then((mod) => ({ default: mod.CoachesScreen })),
+);
+const SubscriptionScreen = React.lazy(() =>
+  import('./screens/admin/SubscriptionScreen').then((mod) => ({ default: mod.SubscriptionScreen })),
+);
+const LibraryCardioMethodsScreen = React.lazy(() =>
+  import('./screens/coach/LibraryCardioMethodsScreen').then((mod) => ({ default: mod.LibraryCardioMethodsScreen })),
+);
+const LibraryExercisesScreen = React.lazy(() =>
+  import('./screens/coach/LibraryExercisesScreen').then((mod) => ({ default: mod.LibraryExercisesScreen })),
+);
+const LibraryFoodsScreen = React.lazy(() =>
+  import('./screens/coach/LibraryFoodsScreen').then((mod) => ({ default: mod.LibraryFoodsScreen })),
+);
+const LibraryRoutinesScreen = React.lazy(() =>
+  import('./screens/coach/LibraryRoutinesScreen').then((mod) => ({ default: mod.LibraryRoutinesScreen })),
+);
+const LibraryIsometricScreen = React.lazy(() =>
+  import('./screens/coach/LibraryIsometricScreen').then((mod) => ({ default: mod.LibraryIsometricScreen })),
+);
+const LibraryPlioScreen = React.lazy(() =>
+  import('./screens/coach/LibraryPlioScreen').then((mod) => ({ default: mod.LibraryPlioScreen })),
+);
+const LibraryMobilityScreen = React.lazy(() =>
+  import('./screens/coach/LibraryMobilityScreen').then((mod) => ({ default: mod.LibraryMobilityScreen })),
+);
+const LibrarySportsScreen = React.lazy(() =>
+  import('./screens/coach/LibrarySportsScreen').then((mod) => ({ default: mod.LibrarySportsScreen })),
+);
+const UnifiedExerciseLibraryScreen = React.lazy(() =>
+  import('./screens/coach/UnifiedExerciseLibraryScreen').then((mod) => ({ default: mod.UnifiedExerciseLibraryScreen })),
+);
+const PlanBuilderCardioScreen = React.lazy(() =>
+  import('./screens/coach/PlanBuilderCardioScreen').then((mod) => ({ default: mod.PlanBuilderCardioScreen })),
+);
+const PlanBuilderDietScreen = React.lazy(() =>
+  import('./screens/coach/PlanBuilderDietScreen').then((mod) => ({ default: mod.PlanBuilderDietScreen })),
+);
+const PlanBuilderStrengthScreen = React.lazy(() =>
+  import('./screens/coach/PlanBuilderStrengthScreen').then((mod) => ({ default: mod.PlanBuilderStrengthScreen })),
+);
+const ProgressScreen = React.lazy(() =>
+  import('./screens/coach/ProgressScreen').then((mod) => ({ default: mod.ProgressScreen })),
+);
+const TechniqueEvaluatorScreen = React.lazy(() =>
+  import('./screens/coach/TechniqueEvaluatorScreen').then((mod) => ({ default: mod.TechniqueEvaluatorScreen })),
+);
+const IncidentsScreen = React.lazy(() =>
+  import('./screens/coach/IncidentsScreen').then((mod) => ({ default: mod.IncidentsScreen })),
+);
+const ChatScreen = React.lazy(() => import('./screens/coach/ChatScreen').then((mod) => ({ default: mod.ChatScreen })));
+const NotificationSettingsScreen = React.lazy(() =>
+  import('./screens/coach/NotificationSettingsScreen').then((mod) => ({ default: mod.NotificationSettingsScreen })),
+);
+const RoutinePlannerScreen = React.lazy(() =>
+  import('./screens/coach/RoutinePlannerScreen').then((mod) => ({ default: mod.RoutinePlannerScreen })),
+);
+const WarmupPlannerScreen = React.lazy(() =>
+  import('./screens/coach/WarmupPlannerScreen').then((mod) => ({ default: mod.WarmupPlannerScreen })),
+);
+const CalendarScreen = React.lazy(() =>
+  import('./screens/coach/CalendarScreen').then((mod) => ({ default: mod.CalendarScreen })),
+);
+const NotesScreen = React.lazy(() => import('./screens/coach/NotesScreen').then((mod) => ({ default: mod.NotesScreen })));
+const NutritionScreen = React.lazy(() =>
+  import('./screens/coach/nutrition/NutritionScreen').then((mod) => ({ default: mod.NutritionScreen })),
+);
+const ClientsScreen = React.lazy(() =>
+  import('./screens/coach/ClientsScreen').then((mod) => ({ default: mod.ClientsScreen })),
+);
 
 export function App(): React.JSX.Element {
   useSessionSync();
@@ -159,7 +206,11 @@ function ShellContentArea(props: {
   return (
     <View style={styles.content}>
       <TopBar roleLabel={props.t(`auth.role.${props.activeRole}`)} title={props.t('screen.dashboard.title')} />
-      <View style={styles.contentBody}>{resolveRouteScreen(props.route, props.activeRole, props.setRoute)}</View>
+      <View style={styles.contentBody}>
+        <React.Suspense fallback={<Text style={styles.logoutLabel}>{'…'}</Text>}>
+          {resolveRouteScreen(props.route, props.activeRole, props.setRoute)}
+        </React.Suspense>
+      </View>
     </View>
   );
 }

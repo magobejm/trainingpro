@@ -10,6 +10,7 @@ export type LogIntervalInput = {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   intervalIndex: number;
+  restSecondsDone?: null | number;
   sessionCardioBlockId: string;
   sessionId: string;
 };

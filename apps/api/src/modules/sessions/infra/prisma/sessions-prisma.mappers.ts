@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
 import { mapClientRoutineSetsToPlannedSnapshots } from '../../../../common/notes/planned-set.mapper';
@@ -14,6 +15,7 @@ import type {
   SessionPlioSetLog,
   SessionSetLog,
   SessionSportLog,
+  SessionSportSetLog,
 } from '../../domain/session.entity';
 
 export type TemplateExerciseSnapshot = {
@@ -457,6 +459,7 @@ export function mapSetLog(row: {
 }
 
 export function mapPlioSetLog(row: {
+  durationSecondsDone: null | number;
   effortRpe: null | number;
   repsDone: null | number;
   sessionPlioBlockId: string;
@@ -464,6 +467,7 @@ export function mapPlioSetLog(row: {
   weightDoneKg: Prisma.Decimal | null;
 }): SessionPlioSetLog {
   return {
+    durationSecondsDone: row.durationSecondsDone,
     effortRpe: row.effortRpe,
     repsDone: row.repsDone,
     sessionPlioBlockId: row.sessionPlioBlockId,
@@ -478,6 +482,7 @@ export function mapMobilitySetLog(row: {
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
+  weightDoneKg: Prisma.Decimal | null;
 }): SessionMobilitySetLog {
   return {
     effortRpe: row.effortRpe,
@@ -485,6 +490,7 @@ export function mapMobilitySetLog(row: {
     romDone: row.romDone,
     sessionMobilityBlockId: row.sessionMobilityBlockId,
     setIndex: row.setIndex,
+    weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
   };
 }
 
@@ -515,6 +521,36 @@ export function mapSportLog(row: {
     durationMinutesDone: row.durationMinutesDone,
     effortRpe: row.effortRpe,
     sessionSportBlockId: row.sessionSportBlockId,
+  };
+}
+
+export function mapSportSetLog(row: {
+  durationSecondsDone: null | number;
+  effortRir: null | number;
+  effortRpe: null | number;
+  heartRateDone: null | number;
+  hrMaxPctDone: null | number;
+  hrReservePctDone: null | number;
+  repsDone: null | number;
+  restSecondsDone: null | number;
+  romDone: null | string;
+  sessionSportBlockId: string;
+  setIndex: number;
+  weightDoneKg: Prisma.Decimal | null;
+}): SessionSportSetLog {
+  return {
+    durationSecondsDone: row.durationSecondsDone,
+    effortRir: row.effortRir,
+    effortRpe: row.effortRpe,
+    heartRateDone: row.heartRateDone,
+    hrMaxPctDone: row.hrMaxPctDone,
+    hrReservePctDone: row.hrReservePctDone,
+    repsDone: row.repsDone,
+    restSecondsDone: row.restSecondsDone,
+    romDone: row.romDone,
+    sessionSportBlockId: row.sessionSportBlockId,
+    setIndex: row.setIndex,
+    weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
   };
 }
 

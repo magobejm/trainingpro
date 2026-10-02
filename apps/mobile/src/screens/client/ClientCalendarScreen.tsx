@@ -21,6 +21,7 @@ type Props = {
   initialMode?: CalendarMode;
   onClose: () => void;
   onOpenSession: (sessionId: string) => void;
+  onRequestMeeting: (dateStr: string) => void;
 };
 
 function ModeToggle({ mode, onChange }: { mode: CalendarMode; onChange: (m: CalendarMode) => void }): React.JSX.Element {
@@ -41,7 +42,7 @@ function ModeToggle({ mode, onChange }: { mode: CalendarMode; onChange: (m: Cale
   );
 }
 
-export function ClientCalendarScreen({ initialMode, onClose, onOpenSession }: Props): React.JSX.Element {
+export function ClientCalendarScreen({ initialMode, onClose, onOpenSession, onRequestMeeting }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const [mode, setMode] = useState<CalendarMode>(initialMode ?? 'progress');
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -87,6 +88,7 @@ export function ClientCalendarScreen({ initialMode, onClose, onOpenSession }: Pr
           dateStr={selectedDay}
           onClose={() => setSelectedDay(null)}
           onOpenSession={onOpenSession}
+          onRequestMeeting={onRequestMeeting}
         />
       ) : null}
     </View>

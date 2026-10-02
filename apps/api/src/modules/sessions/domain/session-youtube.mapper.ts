@@ -14,9 +14,11 @@ export type SessionYoutubeLookupInput = {
     isometricExercises: LibraryYoutubeRow[];
     mobilityExercises: LibraryYoutubeRow[];
     plioExercises: LibraryYoutubeRow[];
+    sports: LibraryYoutubeRow[];
   };
   mobility: Array<{ id: string; sourceMobilityExerciseId: null | string }>;
   plio: Array<{ id: string; sourcePlioExerciseId: null | string }>;
+  sport: Array<{ id: string; sourceSportId: null | string }>;
   strength: Array<{ id: string; sourceExerciseId: null | string }>;
 };
 
@@ -46,6 +48,7 @@ export function buildSessionYoutubeLookup(input: SessionYoutubeLookupInput): Map
   const plioExercises = indexYoutubeUrls(input.library.plioExercises);
   const mobilityExercises = indexYoutubeUrls(input.library.mobilityExercises);
   const isometricExercises = indexYoutubeUrls(input.library.isometricExercises);
+  const sports = indexYoutubeUrls(input.library.sports);
   const lookup = new Map<string, string>();
 
   for (const item of input.strength) {
@@ -62,6 +65,9 @@ export function buildSessionYoutubeLookup(input: SessionYoutubeLookupInput): Map
   }
   for (const item of input.isometric) {
     assignYoutubeUrl(lookup, item.id, item.sourceIsometricExerciseId, isometricExercises);
+  }
+  for (const item of input.sport) {
+    assignYoutubeUrl(lookup, item.id, item.sourceSportId, sports);
   }
 
   return lookup;

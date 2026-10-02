@@ -13,6 +13,7 @@ import type {
   SessionPlioSetLog,
   SessionSetLog,
   SessionSportLog,
+  SessionSportSetLog,
 } from '../../domain/session.entity';
 import type {
   EnsureSessionInput,
@@ -23,6 +24,7 @@ import type {
   LogPlioSetInput,
   LogSetInput,
   LogSportInput,
+  LogSportSetInput,
   StartSessionInput,
 } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
@@ -38,6 +40,7 @@ import {
   mapSessionSportCreate,
   mapSetLog,
   mapSportLog,
+  mapSportSetLog,
   mapTemplateExerciseSnapshot,
   mapTemplateIsometricSnapshot,
   mapTemplateMobilitySnapshot,
@@ -53,6 +56,7 @@ import {
   upsertPlioSetLog,
   upsertSetLog,
   upsertSportLog,
+  upsertSportSetLog,
 } from './sessions-strength.prisma.upserts';
 
 type CoachMembership = {
@@ -281,6 +285,19 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     const row = await upsertSportLog(this.prisma, input, block.id);
     void context;
     return mapSportLog(row);
+  }
+
+  async logSportSet(context: AuthContext, input: LogSportSetInput): Promise<SessionSportSetLog> {
+    const session = await this.readSessionForMutation(input.sessionId);
+    assertSessionMutable(session.status);
+    const block = await this.prisma.sessionSportBlock.findFirst({
+      where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
+      select: { id: true },
+    });
+    if (!block) throw new NotFoundException('Sport block not found');
+    const row = await upsertSportSetLog(this.prisma, input, block.id);
+    void context;
+    return mapSportSetLog(row);
   }
 
   async logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog> {

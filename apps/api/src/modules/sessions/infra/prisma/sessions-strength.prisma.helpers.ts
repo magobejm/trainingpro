@@ -22,6 +22,7 @@ import type {
   SessionPlioSetLog,
   SessionSportItem,
   SessionSportLog,
+  SessionSportSetLog,
   SessionStartMode,
   SessionStrengthItem,
 } from '../../domain/session.entity';
@@ -78,6 +79,7 @@ export function mapSession(
     lockedFields: readLockedFields(b.sortOrder),
     logs: b.logs.map(
       (l): SessionPlioSetLog => ({
+        durationSecondsDone: l.durationSecondsDone,
         effortRpe: l.effortRpe,
         repsDone: l.repsDone,
         sessionPlioBlockId: l.sessionPlioBlockId,
@@ -109,6 +111,7 @@ export function mapSession(
         romDone: l.romDone,
         sessionMobilityBlockId: l.sessionMobilityBlockId,
         setIndex: l.setIndex,
+        weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
       }),
     ),
     notes: b.notes,
@@ -167,6 +170,22 @@ export function mapSession(
       log,
       notes: b.notes,
       plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
+      setLogs: b.setLogs.map(
+        (l): SessionSportSetLog => ({
+          durationSecondsDone: l.durationSecondsDone,
+          effortRir: l.effortRir,
+          effortRpe: l.effortRpe,
+          heartRateDone: l.heartRateDone,
+          hrMaxPctDone: l.hrMaxPctDone,
+          hrReservePctDone: l.hrReservePctDone,
+          repsDone: l.repsDone,
+          restSecondsDone: l.restSecondsDone,
+          romDone: l.romDone,
+          sessionSportBlockId: l.sessionSportBlockId,
+          setIndex: l.setIndex,
+          weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
+        }),
+      ),
       sortOrder: b.sortOrder,
       targetRpe: b.targetRpe,
       youtubeUrl: null,
@@ -186,6 +205,7 @@ export function mapSession(
         durationSecondsDone: l.durationSecondsDone,
         effortRpe: l.effortRpe,
         intervalIndex: l.intervalIndex,
+        restSecondsDone: l.restSecondsDone,
         sessionCardioBlockId: l.sessionCardioBlockId,
       }),
     ),
@@ -271,6 +291,7 @@ export function sessionInclude() {
       where: { archivedAt: null },
       include: {
         logs: true,
+        setLogs: { orderBy: { setIndex: 'asc' as const } },
       },
     },
     cardioBlocks: {
@@ -438,17 +459,19 @@ async function loadSessionYoutubeLookup(
   const plioIds = uniqueIds(row.plioBlocks.map((item) => item.sourcePlioExerciseId));
   const mobilityIds = uniqueIds(row.mobilityBlocks.map((item) => item.sourceMobilityExerciseId));
   const isometricIds = uniqueIds(row.isometricBlocks.map((item) => item.sourceIsometricExerciseId));
+  const sportIds = uniqueIds(row.sportBlocks.map((item) => item.sourceSportId));
   if (
     exerciseIds.length === 0 &&
     cardioIds.length === 0 &&
     plioIds.length === 0 &&
     mobilityIds.length === 0 &&
-    isometricIds.length === 0
+    isometricIds.length === 0 &&
+    sportIds.length === 0
   ) {
     return new Map();
   }
 
-  const [exercises, cardioMethods, plioExercises, mobilityExercises, isometricExercises] = await Promise.all([
+  const [exercises, cardioMethods, plioExercises, mobilityExercises, isometricExercises, sports] = await Promise.all([
     exerciseIds.length
       ? prisma.exercise.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: exerciseIds } } })
       : Promise.resolve([]),
@@ -467,14 +490,18 @@ async function loadSessionYoutubeLookup(
           where: { id: { in: isometricIds } },
         })
       : Promise.resolve([]),
+    sportIds.length
+      ? prisma.sport.findMany({ select: { id: true, youtubeUrl: true }, where: { id: { in: sportIds } } })
+      : Promise.resolve([]),
   ]);
 
   return buildSessionYoutubeLookup({
     cardio: row.cardioBlocks,
     isometric: row.isometricBlocks,
-    library: { cardioMethods, exercises, isometricExercises, mobilityExercises, plioExercises },
+    library: { cardioMethods, exercises, isometricExercises, mobilityExercises, plioExercises, sports },
     mobility: row.mobilityBlocks,
     plio: row.plioBlocks,
+    sport: row.sportBlocks,
     strength: row.items,
   });
 }

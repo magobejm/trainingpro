@@ -94,6 +94,7 @@ export type SportLibraryItem = {
   name: string;
   scope: Scope;
   updatedAt: Date;
+  youtubeUrl: null | string;
 };
 
 export type FoodLibraryItem = {

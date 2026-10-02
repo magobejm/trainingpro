@@ -1,6 +1,3 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 echo "TrainerPro: Ejecutando verificaciones Pre-Commit..."
 
 # 1. Lint & format (solo archivos modificados)

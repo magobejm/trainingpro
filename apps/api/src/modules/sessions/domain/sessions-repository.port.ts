@@ -10,6 +10,7 @@ import type {
   LogPlioSetInput,
   LogSetInput,
   LogSportInput,
+  LogSportSetInput,
   StartSessionInput,
 } from './session.input';
 import type {
@@ -20,6 +21,7 @@ import type {
   SessionPlioSetLog,
   SessionSetLog,
   SessionSportLog,
+  SessionSportSetLog,
 } from './session.entity';
 
 export const SESSIONS_REPOSITORY = Symbol('SESSIONS_REPOSITORY');
@@ -40,6 +42,7 @@ export interface SessionsRepositoryPort {
   logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<SessionPlioSetLog>;
   logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog>;
   logSport(context: AuthContext, input: LogSportInput): Promise<SessionSportLog>;
+  logSportSet(context: AuthContext, input: LogSportSetInput): Promise<SessionSportSetLog>;
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance>;
   startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance>;
 }

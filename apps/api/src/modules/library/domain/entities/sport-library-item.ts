@@ -8,4 +8,5 @@ export type SportLibraryItem = {
   name: string;
   scope: 'coach' | 'global';
   updatedAt: Date;
+  youtubeUrl: null | string;
 };

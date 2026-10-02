@@ -7,6 +7,7 @@ export class LogIntervalDto {
     durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
     effortRpe: z.number().int().min(1).max(10).nullable().optional(),
     intervalIndex: z.number().int().min(1).max(1000),
+    restSecondsDone: z.number().int().min(0).max(3600).nullable().optional(),
     sessionCardioBlockId: z.string().uuid(),
   });
 
@@ -15,5 +16,6 @@ export class LogIntervalDto {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   intervalIndex!: number;
+  restSecondsDone?: null | number;
   sessionCardioBlockId!: string;
 }

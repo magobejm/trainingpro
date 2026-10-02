@@ -3,4 +3,5 @@ export type SportWriteInput = {
   icon: string;
   description?: null | string;
   mediaUrl?: null | string;
+  youtubeUrl?: null | string;
 };

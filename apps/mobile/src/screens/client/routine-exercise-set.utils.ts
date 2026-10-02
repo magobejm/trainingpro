@@ -1,6 +1,6 @@
 import type { ClientRoutineExercise, ClientRoutineSet } from '../../data/hooks/useClientRoutineQuery';
 import { filterRoutineSetColumns } from '../../utils/locked-fields.utils';
-import { resolveLockedFields, setVariablesForType, type SetVariableKey } from './exercise-set-variables';
+import { resolveLockedFields, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 import { formatRestLabel } from './session-completion.utils';
 
 export type RoutineSetColumn = {

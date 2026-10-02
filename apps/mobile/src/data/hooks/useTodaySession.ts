@@ -51,6 +51,7 @@ export type StrengthSessionItem = {
 };
 
 export type PlioSetLog = {
+  durationSecondsDone: null | number;
   effortRpe: null | number;
   repsDone: null | number;
   sessionPlioBlockId: string;
@@ -82,6 +83,7 @@ export type MobilitySetLog = {
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
+  weightDoneKg: null | number;
 };
 
 export type MobilitySessionItem = {
@@ -134,6 +136,21 @@ export type SportLog = {
   sessionSportBlockId: string;
 };
 
+export type SportSetLog = {
+  durationSecondsDone: null | number;
+  effortRir: null | number;
+  effortRpe: null | number;
+  heartRateDone: null | number;
+  hrMaxPctDone: null | number;
+  hrReservePctDone: null | number;
+  repsDone: null | number;
+  restSecondsDone: null | number;
+  romDone: null | string;
+  sessionSportBlockId: string;
+  setIndex: number;
+  weightDoneKg: null | number;
+};
+
 export type SportSessionItem = {
   type: 'sport';
   coachInstructions: null | string;
@@ -146,6 +163,7 @@ export type SportSessionItem = {
   log: SportLog | null;
   notes: null | string;
   plannedSets: PlannedSet[];
+  setLogs: SportSetLog[];
   sortOrder: number;
   targetRpe: null | number;
 };
@@ -156,6 +174,7 @@ export type IntervalLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   intervalIndex: number;
+  restSecondsDone: null | number;
   sessionCardioBlockId: string;
 };
 
@@ -190,6 +209,7 @@ export type SessionItem = (
 };
 
 export type LogPlioSetMutationInput = {
+  durationSecondsDone?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
   sessionPlioBlockId: string;
@@ -203,6 +223,7 @@ export type LogMobilitySetMutationInput = {
   romDone?: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
+  weightDoneKg?: null | number;
 };
 
 export type LogIsometricSetMutationInput = {
@@ -214,18 +235,26 @@ export type LogIsometricSetMutationInput = {
 };
 
 export type LogSportMutationInput = {
-  avgHeartRate?: null | number;
-  durationMinutesDone?: null | number;
+  durationSecondsDone?: null | number;
+  effortRir?: null | number;
   effortRpe?: null | number;
+  heartRateDone?: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
+  repsDone?: null | number;
+  restSecondsDone?: null | number;
+  romDone?: null | string;
   sessionSportBlockId: string;
+  setIndex: number;
+  weightDoneKg?: null | number;
 };
 
 export type LogIntervalMutationInput = {
   avgHeartRate?: null | number;
-  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   intervalIndex: number;
+  restSecondsDone?: null | number;
   sessionCardioBlockId: string;
 };
 
@@ -495,7 +524,8 @@ async function logIsometricSet(auth: ReturnType<typeof useAuth>, sessionId: stri
 
 async function logSport(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogSportMutationInput) {
   if (!auth) throw new Error('Missing authenticated context');
-  return createApiClient(auth).post(`/sessions/${sessionId}/log-sport`, input);
+  const { sessionSportBlockId, ...body } = input;
+  return createApiClient(auth).post(`/sessions/${sessionId}/sport-blocks/${sessionSportBlockId}/sets`, body);
 }
 
 async function logInterval(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogIntervalMutationInput) {

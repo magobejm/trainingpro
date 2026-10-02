@@ -1,3 +1,4 @@
+/* eslint-disable max-lines-per-function */
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
 import { formatRestLabel, isListedExerciseDone, isSessionItemComplete } from '../session-completion.utils';
 
@@ -70,5 +71,51 @@ describe('session-completion.utils', () => {
     expect(formatRestLabel(90)).toBe('90 seg');
     expect(formatRestLabel(13)).not.toMatch(/año/i);
     expect(formatRestLabel(90)).not.toMatch(/año/i);
+  });
+
+  it('counts sport completion from per-set logs', () => {
+    const sport: SessionItem = {
+      type: 'sport',
+      coachInstructions: null,
+      groupId: null,
+      groupType: null,
+      id: 'sp1',
+      displayName: 'Fútbol',
+      durationMinutes: 20,
+      log: null,
+      notes: null,
+      plannedSets: [
+        { advancedTechnique: null, note: null, setIndex: 1 },
+        { advancedTechnique: null, note: null, setIndex: 2 },
+      ],
+      setLogs: [
+        {
+          durationSecondsDone: 90,
+          effortRir: null,
+          effortRpe: 7,
+          heartRateDone: null,
+          hrMaxPctDone: null,
+          hrReservePctDone: null,
+          repsDone: 10,
+          restSecondsDone: null,
+          romDone: null,
+          sessionSportBlockId: 'sp1',
+          setIndex: 1,
+          weightDoneKg: null,
+        },
+      ],
+      sortOrder: 1,
+      targetRpe: 7,
+    };
+    expect(isSessionItemComplete(sport)).toBe(false);
+    expect(
+      isSessionItemComplete({
+        ...sport,
+        setLogs: [
+          { ...sport.setLogs[0]!, setIndex: 1 },
+          { ...sport.setLogs[0]!, setIndex: 2 },
+        ],
+      }),
+    ).toBe(true);
   });
 });

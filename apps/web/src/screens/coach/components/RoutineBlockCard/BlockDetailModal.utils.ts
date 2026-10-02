@@ -115,7 +115,7 @@ export const mapSport = (item: SportLibraryItem): DetailItem => ({
   description: item.description ?? null,
   notes: null,
   imageUrl: item.mediaUrl ?? null,
-  youtubeUrl: null,
+  youtubeUrl: item.youtubeUrl ?? null,
 });
 
 export function useLibrarySources(type: string, query: string) {

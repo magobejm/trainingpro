@@ -1,1 +1,11 @@
 export type ActiveRole = 'admin' | 'coach' | 'client';
+export {
+  MAX_ACTIVE_SET_VARIABLES,
+  SET_VARIABLE_PRIORITY,
+  SPORT_DEFAULT_LOCKED_VARIABLES,
+  canUnlockSetVariable,
+  resolveLockedFields,
+  setVariablesForType,
+  type ExerciseBlockType,
+  type SetVariableKey,
+} from './exercise-set-variables';

@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, IsUrl, MaxLength } from 'class-validator';
 
 export class CreateSportDto {
   @IsNotEmpty()
@@ -21,4 +21,10 @@ export class CreateSportDto {
   @IsString()
   @MaxLength(500)
   mediaUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  @IsUrl()
+  @MaxLength(500)
+  youtubeUrl?: string;
 }

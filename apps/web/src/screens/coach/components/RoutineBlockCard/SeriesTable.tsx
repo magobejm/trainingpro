@@ -2,7 +2,7 @@ import React from 'react';
 import type { BaseSyntheticEvent } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
-import { setVariablesForType, type SetVariableKey } from '../../exercise-set-variables';
+import { setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';

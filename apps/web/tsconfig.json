@@ -4,7 +4,8 @@
     "baseUrl": ".",
     "jsx": "react-jsx",
     "paths": {
-      "@trainerpro/ui": ["../../packages/ui/src/index.ts"]
+      "@trainerpro/ui": ["../../packages/ui/src/index.ts"],
+      "@trainerpro/shared": ["../../packages/shared/src/index.ts"]
     },
     "types": ["react", "react-dom", "react-native", "vite/client"]
   },

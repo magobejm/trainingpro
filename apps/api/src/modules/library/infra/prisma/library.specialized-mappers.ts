@@ -56,6 +56,7 @@ export function mapSport(row: Sport): SportLibraryItem {
     name: row.name,
     scope: row.scope === LibraryItemScope.COACH ? 'coach' : 'global',
     updatedAt: row.updatedAt,
+    youtubeUrl: row.youtubeUrl,
   };
 }
 

@@ -768,6 +768,8 @@
   "coach.progress.modal.e1rm": "1RM",
   "coach.progress.modal.insightText": "💡 Solid trend. Keep progressing load and monitor RPE to avoid overtraining.",
   "coach.progress.loading": "Loading...",
+  "coach.progress.sessionDetail.title": "Planned vs done",
+  "coach.progress.sessionDetail.open": "View sets",
   "coach.progress.filter.group.strength": "🏋️ Muscle group",
   "coach.progress.filter.group.cardio": "🚴 Cardio",
   "coach.progress.filter.group.plio": "💥 Plyometrics",

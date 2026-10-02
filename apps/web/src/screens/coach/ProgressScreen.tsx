@@ -14,6 +14,7 @@ import { MetricDetailModal } from './progress/MetricDetailModal';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
 import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
 import { ProgressRoutineFilter } from './progress/ProgressRoutineFilter';
+import { SessionDetailModal } from './progress/SessionDetailModal';
 import {
   STRENGTH_VARIABLES,
   CARDIO_VARIABLES,
@@ -81,6 +82,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   // Detail modal
   const [detailVariable, setDetailVariable] = useState<VariableDef | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailSessionId, setDetailSessionId] = useState<string | null>(null);
 
   // Progress queries
   const exerciseQuery = useExerciseProgressQuery(
@@ -376,6 +378,17 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
         exerciseName={selectedExerciseName}
         data={exerciseQuery.data ?? []}
       />
+      {mode === 'session' && (sessionQuery.data ?? []).length > 0 ? (
+        <View style={styles.variablesRow}>
+          {(sessionQuery.data ?? []).map((point) => (
+            <Pressable key={point.sessionId} onPress={() => setDetailSessionId(point.sessionId)} style={styles.backButton}>
+              <Text style={styles.backButtonText}>{`${point.sessionDate} · ${t('coach.progress.sessionDetail.open')}`}</Text>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      <SessionDetailModal onClose={() => setDetailSessionId(null)} sessionId={detailSessionId} />
       <CalendarRangeModal
         visible={showCalendarModal}
         range={range}

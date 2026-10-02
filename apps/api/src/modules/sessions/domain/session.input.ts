@@ -40,6 +40,7 @@ export type LogSetInput = {
 };
 
 export type LogPlioSetInput = {
+  durationSecondsDone?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
   sessionId: string;
@@ -55,6 +56,7 @@ export type LogMobilitySetInput = {
   sessionId: string;
   sessionMobilityBlockId: string;
   setIndex: number;
+  weightDoneKg?: null | number;
 };
 
 export type LogIsometricSetInput = {
@@ -72,4 +74,20 @@ export type LogSportInput = {
   effortRpe?: null | number;
   sessionId: string;
   sessionSportBlockId: string;
+};
+
+export type LogSportSetInput = {
+  durationSecondsDone?: null | number;
+  effortRir?: null | number;
+  effortRpe?: null | number;
+  heartRateDone?: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
+  repsDone?: null | number;
+  restSecondsDone?: null | number;
+  romDone?: null | string;
+  sessionId: string;
+  sessionSportBlockId: string;
+  setIndex: number;
+  weightDoneKg?: null | number;
 };

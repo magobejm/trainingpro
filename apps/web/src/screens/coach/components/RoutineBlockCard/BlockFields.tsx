@@ -7,7 +7,7 @@ import { SeriesTable } from './SeriesTable';
 import { AdvancedSeriesModal } from './AdvancedSeriesModal';
 import { copyPreviousSet } from '../../RoutinePlanner.helpers';
 import { blockTypeShowsRepRange } from '../../exercise-rep-range';
-import { canUnlockSetVariable, resolveLockedFields } from '../../exercise-set-variables';
+import { canUnlockSetVariable, resolveLockedFields } from '@trainerpro/shared';
 import { RoutineNumberField } from '../RoutineNumberField';
 import { ActionConfirmModal } from '../ActionConfirmModal';
 

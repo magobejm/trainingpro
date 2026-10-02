@@ -1,4 +1,4 @@
-import { resolveLockedFields } from './exercise-set-variables';
+import { resolveLockedFields } from '@trainerpro/shared';
 import type { BlockType, DraftBlock, DraftSet } from './RoutinePlanner.types';
 
 type MetaMap = Record<string, unknown>;

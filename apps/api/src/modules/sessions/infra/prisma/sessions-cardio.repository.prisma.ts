@@ -227,6 +227,7 @@ export class SessionsCardioRepositoryPrisma {
         durationSecondsDone: input.durationSecondsDone ?? null,
         effortRpe: input.effortRpe ?? null,
         intervalIndex: input.intervalIndex,
+        restSecondsDone: input.restSecondsDone ?? null,
         sessionCardioBlockId,
         sessionId: input.sessionId,
       },
@@ -235,6 +236,7 @@ export class SessionsCardioRepositoryPrisma {
         distanceDoneMeters: input.distanceDoneMeters ?? null,
         durationSecondsDone: input.durationSecondsDone ?? null,
         effortRpe: input.effortRpe ?? null,
+        restSecondsDone: input.restSecondsDone ?? null,
       },
     });
   }

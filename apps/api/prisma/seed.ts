@@ -128,6 +128,7 @@ async function seedCardioMethods(): Promise<void> {
         description: item.description ?? null,
         coachInstructions: item.coachInstructions ?? null,
         youtubeUrl: item.youtubeUrl,
+        ...bundledExerciseMedia(item.id),
       },
       update: {
         archivedAt: null,
@@ -304,6 +305,7 @@ async function seedPlioExercises(): Promise<void> {
         coachInstructions: item.coachInstructions ?? null,
         youtubeUrl: item.youtubeUrl,
         scope: LibraryItemScope.GLOBAL,
+        ...bundledExerciseMedia(item.id),
       },
       update: {
         archivedAt: null,

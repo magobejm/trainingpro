@@ -6,12 +6,12 @@ const MODAL_ANIMATION = 'fade' as const;
 
 type Props = {
   cancelLabel: string;
-  confirmLabel: string;
+  confirmLabel?: string;
   errorMessage?: string | null;
   isLoading?: boolean;
   message: string;
   onCancel: () => void;
-  onConfirm: () => void;
+  onConfirm?: () => void;
   title: string;
   visible: boolean;
 };
@@ -63,13 +63,15 @@ function ActionButtons(
       >
         <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
       </Pressable>
-      <Pressable
-        disabled={props.isLoading}
-        onPress={props.onConfirm}
-        style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}
-      >
-        <Text style={styles.confirmLabel}>{props.isLoading ? '...' : props.confirmLabel}</Text>
-      </Pressable>
+      {props.confirmLabel && props.onConfirm ? (
+        <Pressable
+          disabled={props.isLoading}
+          onPress={props.onConfirm}
+          style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}
+        >
+          <Text style={styles.confirmLabel}>{props.isLoading ? '...' : props.confirmLabel}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }

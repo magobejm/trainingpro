@@ -151,10 +151,8 @@ export function BlockFields({ block, readOnly, hideAdvanced, onUpdateField, t }:
       )}
       <ActionConfirmModal
         cancelLabel={t('common.close')}
-        confirmLabel={t('common.close')}
         message={t('coach.routine.seriesTable.lockLimitMessage')}
         onCancel={() => setLockLimitVisible(false)}
-        onConfirm={() => setLockLimitVisible(false)}
         title={t('coach.routine.seriesTable.lockLimitTitle')}
         visible={lockLimitVisible}
       />

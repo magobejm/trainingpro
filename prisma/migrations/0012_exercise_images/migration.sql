@@ -184,7 +184,6 @@ FROM (VALUES
   ('abc5607e-866b-478f-9b4d-01e0c9a4b88e', '/assets/exercises/abc5607e-866b-478f-9b4d-01e0c9a4b88e.webp'),
   ('ac0c4fcc-d444-4ee4-9eb0-217dea48e0fc', '/assets/exercises/ac0c4fcc-d444-4ee4-9eb0-217dea48e0fc.webp'),
   ('ac39d32b-fb38-4040-b0a2-dce61c11543c', '/assets/exercises/ac39d32b-fb38-4040-b0a2-dce61c11543c.webp'),
-  ('acbe8404-0aa6-4141-bc97-114386b8c167', '/assets/exercises/acbe8404-0aa6-4141-bc97-114386b8c167.webp'),
   ('acf27d82-4874-4de4-a7c5-71596a6d4acb', '/assets/exercises/acf27d82-4874-4de4-a7c5-71596a6d4acb.webp'),
   ('ad159508-e83d-4aa7-b4b6-b5d86dd1b575', '/assets/exercises/ad159508-e83d-4aa7-b4b6-b5d86dd1b575.webp'),
   ('ade8b0d3-8034-45a6-bac3-819cbabeb137', '/assets/exercises/ade8b0d3-8034-45a6-bac3-819cbabeb137.webp'),

@@ -20,7 +20,7 @@ import { ROUTINE_TEMPLATES_V1 } from './seeds/v1-routine-templates.seed';
 import { WARMUP_TEMPLATES_V1 } from './seeds/v1-warmup-templates.seed';
 import { seedMovementPatterns } from './seeds/v3-movement-patterns.seed';
 import { seedAnatomicalPlanes } from './seeds/v3-anatomical-planes.seed';
-import { mapDayForSeed, readRequiredId } from './seeds/seed-utils';
+import { bundledExerciseMedia, mapDayForSeed, readRequiredId } from './seeds/seed-utils';
 import { seedSessions } from './seeds/seed-sessions';
 
 const prisma = new PrismaClient();
@@ -207,6 +207,7 @@ async function seedExercises(): Promise<void> {
         instructions: item.instructions ?? null,
         coachInstructions: item.coachInstructions ?? null,
         youtubeUrl: item.youtubeUrl,
+        ...bundledExerciseMedia(item.id),
       },
       update: {
         archivedAt: null,

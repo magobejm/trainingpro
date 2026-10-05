@@ -4,6 +4,7 @@ import express from 'express';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ZodValidationPipe } from './common/zod-validation.pipe';
+import { PublicAssetUrlInterceptor } from './common/assets/public-asset-url.interceptor';
 
 loadEnvFiles();
 
@@ -16,8 +17,10 @@ async function bootstrap(): Promise<void> {
   });
   app.use('/assets/avatars', express.static(resolveAvatarAssetsPath()));
   app.use('/assets/placeholders', express.static(resolvePlaceholderAssetsPath()));
+  app.use('/assets/exercises', express.static(resolveStorageSubdir('exercises'), { maxAge: '30d' }));
   app.use('/uploads', express.static(resolveUploadsPath()));
   app.useGlobalPipes(new ZodValidationPipe());
+  app.useGlobalInterceptors(new PublicAssetUrlInterceptor());
   await app.listen(readPort());
 }
 
@@ -39,6 +42,16 @@ function resolvePlaceholderAssetsPath(): string {
   ];
   const match = candidates.find((item) => existsSync(item));
   return match ?? resolve(process.cwd(), 'apps/storage/placeholders');
+}
+
+function resolveStorageSubdir(name: string): string {
+  const candidates = [
+    resolve(process.cwd(), `apps/storage/${name}`),
+    resolve(process.cwd(), `../storage/${name}`),
+    resolve(process.cwd(), `../../apps/storage/${name}`),
+  ];
+  const match = candidates.find((item) => existsSync(item));
+  return match ?? resolve(process.cwd(), `apps/storage/${name}`);
 }
 
 function resolveUploadsPath(): string {

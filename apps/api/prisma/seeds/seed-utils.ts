@@ -1,5 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { FieldMode } from '@prisma/client';
+
+const EXERCISE_IMAGES_DIR = resolve(__dirname, '../../../storage/exercises');
+
+export function bundledExerciseMedia(id: string): { mediaType: string; mediaUrl: string } | Record<string, never> {
+  if (!existsSync(resolve(EXERCISE_IMAGES_DIR, `${id}.webp`))) {
+    return {};
+  }
+  return { mediaType: 'image', mediaUrl: `/assets/exercises/${id}.webp` };
+}
 
 export function mapExercisesForSeed(exercises: any[]) {
   return {

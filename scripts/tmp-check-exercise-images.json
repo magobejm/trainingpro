@@ -1,0 +1,26 @@
+{
+  "coachStatus": 200,
+  "clientStatus": 200,
+  "coachSummary": {
+    "label": "coach-strength",
+    "total": 330,
+    "withUrl": 278,
+    "absolute": 277,
+    "relative": 0,
+    "sample": "http://localhost:8080/assets/exercises/ced1700e-027d-446d-ac95-36fe200e6f2f.webp"
+  },
+  "clientSummary": {
+    "label": "client-strength",
+    "total": 330,
+    "withUrl": 278,
+    "absolute": 277,
+    "relative": 0,
+    "sample": "http://localhost:8080/assets/exercises/ced1700e-027d-446d-ac95-36fe200e6f2f.webp"
+  },
+  "image": {
+    "status": 200,
+    "type": "image/webp",
+    "bytes": 19048,
+    "webp": true
+  }
+}

@@ -356,7 +356,11 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
 
   private async canClientAccessSession(context: AuthContext, sessionId: string) {
     const row = await this.prisma.sessionInstance.findFirst({
-      where: { archivedAt: null, id: sessionId, client: { email: context.email ?? '' } },
+      where: {
+        archivedAt: null,
+        id: sessionId,
+        client: { archivedAt: null, email: context.email ?? '' },
+      },
       select: { id: true },
     });
     return Boolean(row);

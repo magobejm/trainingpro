@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { FilesModule } from '../files/files.module';
@@ -44,7 +44,8 @@ import { ClientsController } from './presentation/controllers/clients.controller
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
-  imports: [AuthModule, ChatModule, FilesModule, SessionsModule],
+  imports: [AuthModule, ChatModule, FilesModule, forwardRef(() => SessionsModule)],
+  exports: [ClientAccessPolicy],
   controllers: [ClientLibraryController, ClientSelfController, ClientsController],
   providers: [
     ArchiveClientUseCase,

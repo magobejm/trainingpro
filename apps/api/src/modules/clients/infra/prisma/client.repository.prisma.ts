@@ -14,6 +14,7 @@ import { mapExerciseGroupFields, PLAN_EXERCISE_GROUP_INCLUDE } from '../../../..
 import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
 import { mapClientRoutineNeats } from '../../domain/map-client-routine-neats';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
+import { assertAssignableTrainingPlan } from '../../domain/training-plan-assignment';
 import type { Client } from '../../domain/client';
 import type { ClientObjective } from '../../domain/client-objective';
 import type { ClientsRepositoryPort } from '../../domain/clients-repository.port';
@@ -62,6 +63,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async canCoachAccessClient(coachSubject: string, clientId: string): Promise<boolean> {
     const client = await this.prisma.client.findFirst({
       where: {
+        archivedAt: null,
         id: clientId,
         coachMembership: {
           archivedAt: null,
@@ -183,6 +185,13 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     const membership = await resolveCoachMembership(context, this.prisma);
     const updated = await this.prisma.$transaction(async (tx) => {
       const client = await readActiveClient(tx, membership, clientId);
+      if (typeof input.trainingPlanId === 'string') {
+        const plan = await tx.planTemplate.findFirst({
+          where: { archivedAt: null, id: input.trainingPlanId },
+          select: { coachMembershipId: true, scope: true },
+        });
+        assertAssignableTrainingPlan(plan, membership.id);
+      }
       const payload = normalizeUpdateInput(input);
       if (input.objectiveId !== undefined) {
         payload.objectiveRef = {

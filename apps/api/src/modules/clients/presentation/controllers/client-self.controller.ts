@@ -5,6 +5,8 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
+import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
+import { toStoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
 import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from '../../application/use-cases/get-client-calendar-summary.usecase';
 import { GetClientExerciseHistoryUseCase } from '../../application/use-cases/get-client-exercise-history.usecase';
@@ -35,13 +37,14 @@ export class ClientSelfController {
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     @Inject(FILE_STORAGE)
     private readonly storage: FileStoragePort,
+    private readonly mediaUrls: PrivateMediaUrlSigner,
   ) {}
 
   @Get('me')
   async getMe(@Req() request: HttpAuthRequest) {
     const context = readAuthContext(request);
     const client = await this.getClientMeUseCase.execute(context);
-    return mapClientOutput(client, this.storage);
+    return mapClientOutput(client, toStoredFileUrls(this.storage, this.mediaUrls));
   }
 
   @Get('me/routine')

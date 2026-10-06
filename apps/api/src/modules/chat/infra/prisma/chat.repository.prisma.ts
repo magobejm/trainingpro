@@ -1,19 +1,11 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { CHAT_PAGE_SIZE } from '../../domain/chat.constants';
-import type {
-  ChatRepositoryPort,
-  ResolveChatThreadInput,
-  SendChatMessageInput,
-} from '../../domain/chat.repository.port';
+import type { ChatRepositoryPort, ResolveChatThreadInput, SendChatMessageInput } from '../../domain/chat.repository.port';
 import { ChatMessagePolicy } from '../../domain/policies/chat-message.policy';
+import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { mapChatMessage, mapChatThread } from './chat-prisma.mappers';
 
 @Injectable()
@@ -21,6 +13,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
   constructor(
     private readonly messagePolicy: ChatMessagePolicy,
     private readonly prisma: PrismaService,
+    private readonly mediaUrls: PrivateMediaUrlSigner,
   ) {}
 
   async listMessagesByThread(context: AuthContext, threadId: string) {
@@ -31,7 +24,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
       take: CHAT_PAGE_SIZE,
       include: { attachments: true },
     });
-    return rows.map(mapChatMessage);
+    return rows.map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
   }
 
   async resolveThread(context: AuthContext, input: ResolveChatThreadInput) {
@@ -66,7 +59,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
             fileName: attachment.fileName,
             kind: attachment.kind,
             mimeType: attachment.mimeType,
-            publicUrl: attachment.publicUrl ?? null,
+            publicUrl: null,
             sizeBytes: attachment.sizeBytes,
             storagePath: attachment.storagePath,
           })),
@@ -83,7 +76,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
       where: { id: input.threadId },
       data: { updatedAt: new Date() },
     });
-    return mapChatMessage(row);
+    return mapChatMessage(row, (path) => this.mediaUrls.sign(path));
   }
 
   private async assertThreadAccess(context: AuthContext, threadId: string) {

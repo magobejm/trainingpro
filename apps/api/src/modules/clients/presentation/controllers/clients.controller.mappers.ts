@@ -1,5 +1,4 @@
-import type { FileStoragePort } from '../../../files/domain/file-storage.port';
-import { resolveStoredFileUrl } from '../../../files/domain/resolve-stored-file-url';
+import { resolveStoredFileUrl, type StoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
 import type { Client } from '../../domain/client';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
@@ -20,8 +19,8 @@ export function mapCreateDto(body: CreateClientDto) {
   };
 }
 
-export function mapClientOutput(client: Client, storage?: FileStoragePort) {
-  return { ...mapClientCoreOutput(client, storage), ...mapClientProfileOutput(client, storage) };
+export function mapClientOutput(client: Client, urls?: StoredFileUrls) {
+  return { ...mapClientCoreOutput(client, urls), ...mapClientProfileOutput(client, urls) };
 }
 
 export function mapManagementSection(item: ClientManagementSection) {
@@ -32,9 +31,9 @@ export function mapManagementSection(item: ClientManagementSection) {
   };
 }
 
-export function mapProgressPhotoOutput(photo: ClientProgressPhoto, storage?: FileStoragePort) {
+export function mapProgressPhotoOutput(photo: ClientProgressPhoto, urls?: StoredFileUrls) {
   const imageValue = photo.imageUrl;
-  const resolvedImageUrl = resolveStoredFileUrl(imageValue, storage);
+  const resolvedImageUrl = resolveStoredFileUrl(imageValue, urls);
   return {
     archived: photo.archived,
     clientId: photo.clientId,
@@ -46,9 +45,9 @@ export function mapProgressPhotoOutput(photo: ClientProgressPhoto, storage?: Fil
   };
 }
 
-function mapClientCoreOutput(client: Client, storage?: FileStoragePort) {
+function mapClientCoreOutput(client: Client, urls?: StoredFileUrls) {
   return {
-    avatarUrl: client.avatarUrl ? resolveStoredFileUrl(client.avatarUrl, storage) : resolveDefaultAvatarUrl(client.id),
+    avatarUrl: client.avatarUrl ? resolveStoredFileUrl(client.avatarUrl, urls) : resolveDefaultAvatarUrl(client.id),
     birthDate: formatDate(client.birthDate),
     coachMembershipId: client.coachMembershipId,
     createdAt: formatIso(client.createdAt),
@@ -70,7 +69,7 @@ function mapClientCoreOutput(client: Client, storage?: FileStoragePort) {
   };
 }
 
-function mapClientProfileOutput(client: Client, storage?: FileStoragePort) {
+function mapClientProfileOutput(client: Client, urls?: StoredFileUrls) {
   return {
     allergies: client.allergies,
     considerations: client.considerations,
@@ -79,7 +78,7 @@ function mapClientProfileOutput(client: Client, storage?: FileStoragePort) {
     fitnessLevel: client.fitnessLevel,
     hipCm: client.hipCm,
     injuries: client.injuries,
-    progressPhotos: client.progressPhotos.map((photo) => mapProgressPhotoOutput(photo, storage)),
+    progressPhotos: client.progressPhotos.map((photo) => mapProgressPhotoOutput(photo, urls)),
     secondaryObjectives: client.secondaryObjectives,
     waistCm: client.waistCm,
   };

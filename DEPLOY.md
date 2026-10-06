@@ -23,13 +23,29 @@ Coste objetivo: <2 USD/mes con tráfico bajo.
    - Copiar `URL` → `SUPABASE_URL`.
    - Copiar `service_role` secret → `SUPABASE_SERVICE_ROLE_KEY` (mantener oculto).
    - Copiar `anon` public key → `EXPO_PUBLIC_SUPABASE_ANON_KEY` (web).
-4. **Storage → New bucket**: `trainerpro-prod`, **privado**. El adaptador (`apps/api/src/modules/files/infra/supabase/supabase-storage.adapter.ts`) sube con service-role y sirve URLs firmadas.
+4. **Storage → New buckets**:
+   - `trainerpro-prod`, **público**. Solo catálogo subido por el coach (`library/`). Las imágenes GLOBAL del catálogo no van aquí: las sirve la API desde `/assets/exercises`.
+   - `trainerpro-prod-private`, **privado**. Avatares, fotos de progreso y adjuntos de chat (`clients/`, `chat/`). El adaptador lo crea con `public: false` y se niega a usarlo si el bucket es público.
 5. **Aplicar primera migración manualmente** desde local antes de activar CI:
    ```bash
    DIRECT_URL='postgresql://...:5432/postgres' \
    DATABASE_URL='postgresql://...:5432/postgres' \
      pnpm --filter @trainerpro/api db:migrate:deploy
    ```
+
+### Medios privados
+
+La API firma las rutas `clients/` y `chat/` con HMAC-SHA256 (`MEDIA_URL_SIGNING_SECRET`) y una caducidad (`PRIVATE_MEDIA_URL_TTL_SECONDS`, por defecto 3600). La URL es `/files/private/<ruta>?exp=&sig=`. No lleva sesión: la firma es la autorización, y solo la generan los endpoints que ya comprueban el acceso al cliente o al hilo. Una firma alterada, caducada o de otra ruta responde 403. `library/` y `/assets/exercises` siguen siendo públicos.
+
+Orden al pasar un bucket que ya tiene fotos de cliente:
+
+1. Desplegar la API con los dos buckets y el secreto.
+2. `pnpm --filter @trainerpro/api exec tsx scripts/move-private-media.ts` (solo lista).
+3. Repetir con `--apply`. Copia `clients/` y `chat/` al bucket privado, comprueba el tamaño y borra el original.
+4. Cuando `clients/` y `chat/` ya no estén en `trainerpro-prod`, márcalo público. Hasta entonces la biblioteca del coach no se puede abrir sin sesión.
+5. Abrir un cliente con foto y comprobar que la imagen carga desde `/files/private/` y que la URL pública antigua ya no existe.
+
+En `trainerpro-prod` el bucket ya existía como privado. Las fotos de cliente se copiaron a `trainerpro-prod-private`. No lo pongas público mientras la API desplegada siga subiendo avatares a ese bucket.
 
 ---
 
@@ -68,6 +84,8 @@ Crear los siguientes secrets (cada uno con `--data-file=-` y pegar el valor):
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `SUPABASE_STORAGE_BUCKET` → valor `trainerpro-prod`
+- `SUPABASE_PRIVATE_STORAGE_BUCKET` → valor `trainerpro-prod-private`
+- `MEDIA_URL_SIGNING_SECRET` → secreto aleatorio largo. Rotarlo invalida las URLs de medios privados ya emitidas; los clientes piden otras al recargar.
 - `GEMINI_API_KEY`
 
 ```bash
@@ -95,7 +113,8 @@ Dar al SA acceso a usar cada secret (más restrictivo que `secretAccessor` globa
 
 ```bash
 for S in DATABASE_URL DIRECT_URL SUPABASE_URL SUPABASE_SERVICE_ROLE_KEY \
-         SUPABASE_STORAGE_BUCKET GEMINI_API_KEY; do
+         SUPABASE_STORAGE_BUCKET SUPABASE_PRIVATE_STORAGE_BUCKET \
+         MEDIA_URL_SIGNING_SECRET GEMINI_API_KEY; do
   gcloud secrets add-iam-policy-binding $S \
     --member="serviceAccount:$SA" \
     --role=roles/secretmanager.secretAccessor \

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { assertPrivateStoragePath } from '../../../files/domain/private-storage-path';
 
 const attachmentSchema = z.object({
   fileName: z.string().min(1).max(160),
@@ -10,11 +11,23 @@ const attachmentSchema = z.object({
 });
 
 export class SendChatMessageDto {
-  static schema = z.object({
-    attachments: z.array(attachmentSchema).max(5).optional(),
-    text: z.string().max(2000).optional(),
-    threadId: z.string().uuid(),
-  });
+  static schema = z
+    .object({
+      attachments: z.array(attachmentSchema).max(5).optional(),
+      text: z.string().max(2000).optional(),
+      threadId: z.string().uuid(),
+    })
+    .superRefine((value, ctx) => {
+      (value.attachments ?? []).forEach((attachment, index) => {
+        if (!attachmentBelongsToThread(attachment.storagePath, value.threadId)) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'Attachment path must stay inside this chat thread',
+            path: ['attachments', index, 'storagePath'],
+          });
+        }
+      });
+    });
 
   attachments?: Array<{
     fileName: string;
@@ -26,4 +39,12 @@ export class SendChatMessageDto {
   }>;
   text?: string;
   threadId!: string;
+}
+
+function attachmentBelongsToThread(storagePath: string, threadId: string): boolean {
+  try {
+    return assertPrivateStoragePath(storagePath).startsWith(`chat/${threadId}/`);
+  } catch {
+    return false;
+  }
 }

@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
+import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../../files/domain/private-file-storage.port';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
 import { CreateClientProgressPhotoUseCase } from './create-client-progress-photo.usecase';
 
@@ -14,8 +14,8 @@ const EXT_BY_MIME: Record<string, string> = {
 @Injectable()
 export class UploadClientProgressPhotoUseCase {
   constructor(
-    @Inject(FILE_STORAGE)
-    private readonly storage: FileStoragePort,
+    @Inject(PRIVATE_FILE_STORAGE)
+    private readonly storage: PrivateFileStoragePort,
     private readonly createClientProgressPhotoUseCase: CreateClientProgressPhotoUseCase,
   ) {}
 
@@ -45,10 +45,7 @@ function validatePhotoFile(file: { mimetype: string; size: number }): void {
   }
 }
 
-function buildPhotoPath(
-  clientId: string,
-  file: { mimetype: string; originalname: string },
-): string {
+function buildPhotoPath(clientId: string, file: { mimetype: string; originalname: string }): string {
   const extension = EXT_BY_MIME[file.mimetype] ?? 'jpg';
   const safeName = sanitizeName(file.originalname);
   return `clients/progress/${clientId}/${Date.now()}-${safeName}.${extension}`;

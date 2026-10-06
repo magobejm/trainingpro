@@ -28,7 +28,13 @@ export function resolvePhotoUrl(imageUrl: string, imagePath?: string): string {
   const candidate = imageUrl || imagePath || '';
   if (!candidate) return '';
   if (candidate.startsWith('http://') || candidate.startsWith('https://')) return candidate;
+  if (isPrivateStoragePath(candidate)) return '';
   return `${resolveApiBaseUrl()}/uploads/${candidate.replace(/^\/+/, '')}`;
+}
+
+function isPrivateStoragePath(value: string): boolean {
+  const path = value.replace(/^\/+/, '');
+  return path.startsWith('clients/') || path.startsWith('chat/');
 }
 
 function resolveApiBaseUrl(): string {
@@ -36,13 +42,8 @@ function resolveApiBaseUrl(): string {
     process?: { env?: Record<string, string | undefined> };
   };
   const processEnv = scope.process?.env ?? {};
-  const metaEnv =
-    (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
-  return (
-    metaEnv.EXPO_PUBLIC_API_BASE_URL ??
-    processEnv.EXPO_PUBLIC_API_BASE_URL ??
-    'http://localhost:8080'
-  );
+  const metaEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
+  return metaEnv.EXPO_PUBLIC_API_BASE_URL ?? processEnv.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 }
 
 export function calculateAge(birthDate: string): null | number {

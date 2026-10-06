@@ -2,6 +2,10 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
+// Signed private media URLs expire after an hour. Remount refetches immediately;
+// this interval refreshes a screen that stays open.
+const PRIVATE_MEDIA_REFRESH_MS = 30 * 60 * 1000;
+
 export type ClientView = {
   allergies: null | string;
   avatarUrl: null | string;
@@ -67,6 +71,7 @@ export function useClientsQuery(): UseQueryResult<ClientView[], Error> {
     enabled: Boolean(auth),
     queryFn: () => fetchClients(auth),
     queryKey: ['clients', 'list', auth?.activeRole, auth?.accessToken],
+    refetchInterval: PRIVATE_MEDIA_REFRESH_MS,
   });
 }
 
@@ -76,6 +81,7 @@ export function useClientByIdQuery(clientId: string): UseQueryResult<ClientView,
     enabled: Boolean(auth) && clientId.length > 0,
     queryFn: () => fetchClientById(auth, clientId),
     queryKey: ['clients', 'detail', clientId, auth?.activeRole, auth?.accessToken],
+    refetchInterval: PRIVATE_MEDIA_REFRESH_MS,
   });
 }
 

@@ -21,6 +21,8 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
+import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
+import { toStoredFileUrls, type StoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
 import { ArchiveClientUseCase } from '../../application/use-cases/archive-client.usecase';
 import { CreateClientProgressPhotoUseCase } from '../../application/use-cases/create-client-progress-photo.usecase';
 import { CreateClientUseCase } from '../../application/use-cases/create-client.usecase';
@@ -84,14 +86,19 @@ export class ClientsController {
     private readonly uploadClientProgressPhotoUseCase: UploadClientProgressPhotoUseCase,
     @Inject(FILE_STORAGE)
     private readonly storage: FileStoragePort,
+    private readonly mediaUrls: PrivateMediaUrlSigner,
   ) {}
+
+  private storedFiles(): StoredFileUrls {
+    return toStoredFileUrls(this.storage, this.mediaUrls);
+  }
 
   @Post()
   async create(@Body() body: CreateClientDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const result = await this.createClientUseCase.execute(auth, mapCreateDto(body));
     return {
-      client: mapClientOutput(result.client, this.storage),
+      client: mapClientOutput(result.client, this.storedFiles()),
       credentials: result.credentials,
     };
   }
@@ -100,7 +107,7 @@ export class ClientsController {
   async list(@Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const clients = await this.listClientsUseCase.execute(auth);
-    return { items: clients.map((client) => mapClientOutput(client, this.storage)) };
+    return { items: clients.map((client) => mapClientOutput(client, this.storedFiles())) };
   }
 
   @Get('catalog/objectives')
@@ -116,7 +123,7 @@ export class ClientsController {
     const client = await this.getClientUseCase.execute(auth, params.clientId);
     const objectiveOptions = await this.listClientObjectivesUseCase.execute();
     return {
-      ...mapClientOutput(client, this.storage),
+      ...mapClientOutput(client, this.storedFiles()),
       objectiveOptions,
     };
   }
@@ -150,7 +157,7 @@ export class ClientsController {
   async update(@Param() params: ClientIdParamDto, @Body() body: UpdateClientDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const updated = await this.updateClientUseCase.execute(auth, params.clientId, mapUpdateDto(body));
-    return mapClientOutput(updated, this.storage);
+    return mapClientOutput(updated, this.storedFiles());
   }
 
   @Patch(':clientId/management-sections')
@@ -170,7 +177,7 @@ export class ClientsController {
   async listProgressPhotos(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const items = await this.listClientProgressPhotosUseCase.execute(auth, params.clientId);
-    return { items: items.map((item) => mapProgressPhotoOutput(item, this.storage)) };
+    return { items: items.map((item) => mapProgressPhotoOutput(item, this.storedFiles())) };
   }
 
   @Post(':clientId/progress-photos')
@@ -182,7 +189,7 @@ export class ClientsController {
   ) {
     const auth = readAuthContext(request);
     const created = await this.createClientProgressPhotoUseCase.execute(auth, params.clientId, body.imageUrl);
-    return mapProgressPhotoOutput(created, this.storage);
+    return mapProgressPhotoOutput(created, this.storedFiles());
   }
 
   @Post(':clientId/progress-photos/upload')
@@ -198,7 +205,7 @@ export class ClientsController {
     }
     const auth = readAuthContext(request);
     const uploaded = await this.uploadClientProgressPhotoUseCase.execute(auth, params.clientId, file);
-    return mapProgressPhotoOutput(uploaded, this.storage);
+    return mapProgressPhotoOutput(uploaded, this.storedFiles());
   }
 
   @Patch(':clientId/progress-photos/:photoId')
@@ -215,7 +222,7 @@ export class ClientsController {
       params.photoId,
       body.archived,
     );
-    return mapProgressPhotoOutput(updated, this.storage);
+    return mapProgressPhotoOutput(updated, this.storedFiles());
   }
 
   @Delete(':clientId/progress-photos/:photoId')

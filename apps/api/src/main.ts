@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ZodValidationPipe } from './common/zod-validation.pipe';
 import { PublicAssetUrlInterceptor } from './common/assets/public-asset-url.interceptor';
+import { blockPrivateUploadPaths } from './modules/files/presentation/block-private-uploads';
 
 loadEnvFiles();
 
@@ -18,6 +19,7 @@ async function bootstrap(): Promise<void> {
   app.use('/assets/avatars', express.static(resolveAvatarAssetsPath()));
   app.use('/assets/placeholders', express.static(resolvePlaceholderAssetsPath()));
   app.use('/assets/exercises', express.static(resolveStorageSubdir('exercises'), { maxAge: '30d' }));
+  app.use('/uploads', blockPrivateUploadPaths);
   app.use('/uploads', express.static(resolveUploadsPath()));
   app.useGlobalPipes(new ZodValidationPipe());
   app.useGlobalInterceptors(new PublicAssetUrlInterceptor());

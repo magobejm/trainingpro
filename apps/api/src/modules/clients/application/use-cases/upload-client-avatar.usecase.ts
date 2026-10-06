@@ -1,6 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
+import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../../files/domain/private-file-storage.port';
+import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { UpdateClientUseCase } from './update-client.usecase';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -13,8 +14,9 @@ const EXT_BY_MIME: Record<string, string> = {
 @Injectable()
 export class UploadClientAvatarUseCase {
   constructor(
-    @Inject(FILE_STORAGE)
-    private readonly storage: FileStoragePort,
+    @Inject(PRIVATE_FILE_STORAGE)
+    private readonly storage: PrivateFileStoragePort,
+    private readonly mediaUrls: PrivateMediaUrlSigner,
     private readonly updateClientUseCase: UpdateClientUseCase,
   ) {}
 
@@ -32,7 +34,7 @@ export class UploadClientAvatarUseCase {
       upsert: true,
     });
     await this.updateClientUseCase.execute(context, clientId, { avatarUrl: path });
-    return { avatarUrl: this.storage.getPublicUrl(path) };
+    return { avatarUrl: this.mediaUrls.sign(path) };
   }
 }
 

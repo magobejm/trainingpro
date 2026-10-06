@@ -2,6 +2,10 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
+// Signed private media URLs expire after an hour. Remount refetches immediately;
+// this interval refreshes a screen that stays open.
+const PRIVATE_MEDIA_REFRESH_MS = 30 * 60 * 1000;
+
 export type ClientProgressPhoto = {
   archived: boolean;
   clientId: string;
@@ -55,6 +59,7 @@ export function useClientMeQuery(): UseQueryResult<ClientMe, Error> {
       }
     },
     queryKey: ['clients', 'me'],
+    refetchInterval: PRIVATE_MEDIA_REFRESH_MS,
   });
 }
 

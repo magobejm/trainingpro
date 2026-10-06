@@ -58,6 +58,7 @@ function createStorage() {
     delete: async function (path: string) {
       this.deleted.push(path);
     },
+    download: async () => null,
     getPublicUrl: () => '',
     upload: async () => ({ path: '' }),
   };

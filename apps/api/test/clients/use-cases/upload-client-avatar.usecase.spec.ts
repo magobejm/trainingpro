@@ -3,7 +3,10 @@ import { UploadClientAvatarUseCase } from '../../../src/modules/clients/applicat
 
 const mockStorage = {
   upload: jest.fn(),
-  getPublicUrl: jest.fn(),
+};
+
+const mockSigner = {
+  sign: jest.fn(),
 };
 
 const mockUpdateClientUseCase = {
@@ -14,9 +17,9 @@ let useCase: UploadClientAvatarUseCase;
 
 beforeEach(() => {
   mockStorage.upload.mockReset();
-  mockStorage.getPublicUrl.mockReset();
+  mockSigner.sign.mockReset();
   mockUpdateClientUseCase.execute.mockReset();
-  useCase = new UploadClientAvatarUseCase(mockStorage as never, mockUpdateClientUseCase as never);
+  useCase = new UploadClientAvatarUseCase(mockStorage as never, mockSigner as never, mockUpdateClientUseCase as never);
 });
 
 it('should upload a valid avatar and update client avatarUrl', async () => {
@@ -28,7 +31,7 @@ it('should upload a valid avatar and update client avatarUrl', async () => {
     size: 100_000,
   };
   mockStorage.upload.mockResolvedValue(undefined);
-  mockStorage.getPublicUrl.mockReturnValue('https://cdn.example.com/avatar.jpg');
+  mockSigner.sign.mockReturnValue('https://api.example/files/private/avatar.jpg?exp=1&sig=abc');
   mockUpdateClientUseCase.execute.mockResolvedValue({});
 
   const result = await useCase.execute(context, 'client-123', file);
@@ -41,8 +44,8 @@ it('should upload a valid avatar and update client avatarUrl', async () => {
       avatarUrl: expect.stringMatching(/^clients\/avatars\/client-123\//),
     }),
   );
-  expect(mockStorage.getPublicUrl).toHaveBeenCalledWith(expect.stringMatching(/^clients\/avatars\/client-123\//));
-  expect(result).toEqual({ avatarUrl: 'https://cdn.example.com/avatar.jpg' });
+  expect(mockSigner.sign).toHaveBeenCalledWith(expect.stringMatching(/^clients\/avatars\/client-123\//));
+  expect(result).toEqual({ avatarUrl: 'https://api.example/files/private/avatar.jpg?exp=1&sig=abc' });
 });
 
 it('should throw BadRequestException for unsupported MIME type', async () => {

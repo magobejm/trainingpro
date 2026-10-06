@@ -1,10 +1,12 @@
-import { extractStorageObjectPath, resolveStoredFileUrl } from '../../src/modules/files/domain/resolve-stored-file-url';
-import type { FileStoragePort } from '../../src/modules/files/domain/file-storage.port';
+import {
+  extractStorageObjectPath,
+  resolveStoredFileUrl,
+  type StoredFileUrls,
+} from '../../src/modules/files/domain/resolve-stored-file-url';
 
-const storage: FileStoragePort = {
-  delete: async () => undefined,
+const urls: StoredFileUrls = {
   getPublicUrl: (path) => `https://prod.supabase.co/storage/v1/object/public/trainerpro-prod/${path}`,
-  upload: async () => ({ path: '' }),
+  signPrivateUrl: (path) => `https://api.example/files/private/${path}?exp=1&sig=abc`,
 };
 
 describe('extractStorageObjectPath', () => {
@@ -26,23 +28,26 @@ describe('extractStorageObjectPath', () => {
 });
 
 describe('resolveStoredFileUrl', () => {
-  it('rewrites legacy dev Supabase URLs using current storage config', () => {
+  it('signs private paths and legacy Supabase URLs for client media', () => {
+    expect(resolveStoredFileUrl('clients/progress/client-1/photo.jpg', urls)).toBe(
+      'https://api.example/files/private/clients/progress/client-1/photo.jpg?exp=1&sig=abc',
+    );
     expect(
       resolveStoredFileUrl(
         'http://127.0.0.1:54321/storage/v1/object/public/trainerpro-dev/clients/avatars/client-1/photo.jpg',
-        storage,
+        urls,
       ),
-    ).toBe('https://prod.supabase.co/storage/v1/object/public/trainerpro-prod/clients/avatars/client-1/photo.jpg');
+    ).toBe('https://api.example/files/private/clients/avatars/client-1/photo.jpg?exp=1&sig=abc');
   });
 
-  it('resolves bare storage paths', () => {
-    expect(resolveStoredFileUrl('clients/progress/client-1/photo.jpg', storage)).toBe(
-      'https://prod.supabase.co/storage/v1/object/public/trainerpro-prod/clients/progress/client-1/photo.jpg',
+  it('keeps library uploads on the public bucket', () => {
+    expect(resolveStoredFileUrl('library/images/coach-1/photo.jpg', urls)).toBe(
+      'https://prod.supabase.co/storage/v1/object/public/trainerpro-prod/library/images/coach-1/photo.jpg',
     );
   });
 
   it('keeps external asset URLs unchanged', () => {
     const url = 'https://api.example.com/assets/avatars/pixar-1.png';
-    expect(resolveStoredFileUrl(url, storage)).toBe(url);
+    expect(resolveStoredFileUrl(url, urls)).toBe(url);
   });
 });

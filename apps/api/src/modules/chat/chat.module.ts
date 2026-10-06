@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { FilesModule } from '../files/files.module';
 import { ListChatMessagesUseCase } from './application/use-cases/list-chat-messages.usecase';
 import { ResolveChatThreadUseCase } from './application/use-cases/resolve-chat-thread.usecase';
 import { SendChatMessageUseCase } from './application/use-cases/send-chat-message.usecase';
@@ -9,7 +10,7 @@ import { ChatRepositoryPrisma } from './infra/prisma/chat.repository.prisma';
 import { ChatController } from './presentation/controllers/chat.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, FilesModule],
   controllers: [ChatController],
   providers: [
     ChatMessagePolicy,

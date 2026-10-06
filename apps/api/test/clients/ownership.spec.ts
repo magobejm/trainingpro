@@ -60,6 +60,7 @@ function createOwnershipRepository() {
     getClientById: async (_context: { subject: string }, clientId: string) =>
       mapClientFromSeed(clients.find((client) => client.id === clientId) ?? null),
     listClientsByCoach: async () => [],
+    listObjectives: async () => [],
   };
 }
 

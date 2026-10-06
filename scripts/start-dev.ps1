@@ -217,6 +217,7 @@ Write-Host "  NUNCA ejecutes estos comandos (borran todos los datos):" -Foregrou
 Write-Host "    prisma migrate reset" -ForegroundColor Red
 Write-Host "    prisma migrate dev" -ForegroundColor Red
 Write-Host "    supabase db reset" -ForegroundColor Red
+Write-Host "    pnpm db:ci:reset   (solo el Postgres de Compose, y exige CONFIRM_DB_RESET)" -ForegroundColor Red
 Write-Host ""
 Write-Host "  Para aplicar migraciones usa siempre:" -ForegroundColor Green
 Write-Host "    pnpm --filter @trainerpro/api db:migrate:deploy" -ForegroundColor Green

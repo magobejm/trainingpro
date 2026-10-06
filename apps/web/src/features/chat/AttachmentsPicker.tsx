@@ -1,8 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
-import { useUploadPolicyMutation } from '../../data/hooks/useChat';
+import { postChatUpload } from '../../data/hooks/useChat';
+import { useAuthStore } from '../../store/auth.store';
+import { acceptChatFile, CHAT_ATTACHMENT_ACCEPT } from './chat-attachment.utils';
 
 export type AttachmentDraft = {
   fileName: string;
@@ -18,147 +20,90 @@ type Props = {
   threadId: string;
 };
 
-const MIME_OPTIONS = [
-  { id: 'image/jpeg', kind: 'IMAGE' },
-  { id: 'application/pdf', kind: 'PDF' },
-  { id: 'audio/mpeg', kind: 'AUDIO' },
-] as const;
-
 export function AttachmentsPicker(props: Props): React.JSX.Element {
-  const vm = useAttachmentsPickerModel(props);
-  return <AttachmentsPickerView {...vm} />;
-}
-
-function useAttachmentsPickerModel(props: Props) {
   const { t } = useTranslation();
-  const uploadPolicy = useUploadPolicyMutation();
-  const [fileName, setFileName] = useState('');
-  const [mimeType, setMimeType] = useState<(typeof MIME_OPTIONS)[number]['id']>('image/jpeg');
-  const [sizeKbText, setSizeKbText] = useState('250');
-  const activeKind = useMemo(() => resolveKind(mimeType), [mimeType]);
-  const canAttach = props.threadId.length > 0 && !uploadPolicy.isPending;
-  const onPressAttach = () =>
-    attachFile(props, {
-      activeKind,
-      fileName,
-      mimeType,
-      onClearFileName: () => setFileName(''),
-      sizeKbText,
-      t,
-      uploadPolicy,
-    });
-  return {
-    canAttach,
-    fileName,
-    mimeType,
-    onPressAttach,
-    setFileName,
-    setMimeType,
-    setSizeKbText,
-    sizeKbText,
-    t,
+  const [pending, setPending] = useState(false);
+  const accessToken = useAuthStore((state) => state.accessToken);
+  const activeRole = useAuthStore((state) => state.activeRole);
+  const canAttach = props.threadId.length > 0 && !pending && Boolean(accessToken && activeRole);
+  const onPress = () => {
+    if (!canAttach || !accessToken || !activeRole) {
+      return;
+    }
+    void uploadSelectedFile(props, { accessToken, activeRole, setPending, t });
   };
-}
-
-function AttachmentsPickerView(props: ReturnType<typeof useAttachmentsPickerModel>) {
   return (
     <View style={styles.root}>
-      <Text style={styles.label}>{props.t('coach.chat.attachments.title')}</Text>
-      <View style={styles.row}>
-        {renderMimeButtons(props.mimeType, props.setMimeType, props.t)}
-      </View>
-      <TextInput
-        onChangeText={props.setFileName}
-        placeholder={props.t('coach.chat.attachments.namePlaceholder')}
-        style={styles.input}
-        value={props.fileName}
-      />
-      <TextInput
-        onChangeText={props.setSizeKbText}
-        placeholder={props.t('coach.chat.attachments.sizePlaceholder')}
-        style={styles.input}
-        value={props.sizeKbText}
-      />
-      <Pressable disabled={!props.canAttach} onPress={props.onPressAttach} style={styles.button}>
-        <Text style={styles.buttonLabel}>{props.t('coach.chat.attachments.add')}</Text>
+      <Text style={styles.label}>{t('coach.chat.attachments.title')}</Text>
+      <Pressable disabled={!canAttach} onPress={onPress} style={styles.button}>
+        <Text style={styles.buttonLabel}>{t('coach.chat.attachments.add')}</Text>
       </Pressable>
     </View>
   );
 }
 
-type AttachArgs = {
-  activeKind: 'AUDIO' | 'IMAGE' | 'PDF';
-  fileName: string;
-  mimeType: (typeof MIME_OPTIONS)[number]['id'];
-  onClearFileName: () => void;
-  sizeKbText: string;
-  t: (key: string) => string;
-  uploadPolicy: ReturnType<typeof useUploadPolicyMutation>;
-};
-
-async function attachFile(props: Props, args: AttachArgs): Promise<void> {
+async function uploadSelectedFile(
+  props: Props,
+  args: {
+    accessToken: string;
+    activeRole: 'admin' | 'coach' | 'client';
+    setPending: (pending: boolean) => void;
+    t: (key: string) => string;
+  },
+): Promise<void> {
+  const file = await pickWebFile();
+  if (!file) {
+    return;
+  }
+  const accepted = acceptChatFile({ mimeType: file.type, name: file.name, sizeBytes: file.size });
+  if (!accepted) {
+    props.onError(args.t('coach.chat.attachments.error'));
+    return;
+  }
+  args.setPending(true);
   try {
-    const sizeBytes = parseSizeBytes(args.sizeKbText);
-    const policy = await args.uploadPolicy.mutateAsync({
-      fileName: args.fileName,
-      mimeType: args.mimeType,
-      sizeBytes,
-      threadId: props.threadId,
-    });
-    props.onAttach({
-      fileName: args.fileName.trim() || fallbackName(args.activeKind),
-      kind: policy.kind,
-      mimeType: args.mimeType,
-      sizeBytes,
-      storagePath: policy.path,
-    });
-    args.onClearFileName();
+    const form = new FormData();
+    form.append('file', file);
+    form.append('threadId', props.threadId);
+    const uploaded = await postChatUpload(
+      { accessToken: args.accessToken, activeRole: args.activeRole },
+      props.threadId,
+      form,
+    );
+    props.onError('');
+    props.onAttach(uploaded);
   } catch {
     props.onError(args.t('coach.chat.attachments.error'));
+  } finally {
+    args.setPending(false);
   }
 }
 
-function renderMimeButtons(
-  activeMimeType: string,
-  onChange: (value: (typeof MIME_OPTIONS)[number]['id']) => void,
-  t: (key: string) => string,
-) {
-  return MIME_OPTIONS.map((item) => (
-    <Pressable
-      key={item.id}
-      onPress={() => onChange(item.id)}
-      style={[styles.mimeButton, activeMimeType === item.id ? styles.mimeButtonActive : null]}
-    >
-      <Text style={styles.mimeLabel}>{renderKindLabel(item.kind, t)}</Text>
-    </Pressable>
-  ));
-}
-
-function renderKindLabel(kind: 'AUDIO' | 'IMAGE' | 'PDF', t: (key: string) => string): string {
-  const key = `coach.chat.attachments.kind.${kind.toLowerCase()}`;
-  return t(key);
-}
-
-function fallbackName(kind: 'AUDIO' | 'IMAGE' | 'PDF'): string {
-  if (kind === 'AUDIO') {
-    return 'audio-note.mp3';
-  }
-  if (kind === 'PDF') {
-    return 'document.pdf';
-  }
-  return 'image.jpg';
-}
-
-function parseSizeBytes(sizeKbText: string): number {
-  const sizeKb = Number(sizeKbText);
-  if (!Number.isFinite(sizeKb) || sizeKb <= 0) {
-    throw new Error('Invalid size');
-  }
-  return Math.round(sizeKb * 1000);
-}
-
-function resolveKind(mimeType: string): 'AUDIO' | 'IMAGE' | 'PDF' {
-  return MIME_OPTIONS.find((item) => item.id === mimeType)?.kind ?? 'IMAGE';
+function pickWebFile(): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = CHAT_ATTACHMENT_ACCEPT;
+    let settled = false;
+    const finish = (file: File | null) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(file);
+    };
+    input.addEventListener('change', () => {
+      finish(input.files?.[0] ?? null);
+    });
+    window.addEventListener(
+      'focus',
+      () => {
+        window.setTimeout(() => finish(null), 500);
+      },
+      { once: true },
+    );
+    input.click();
+  });
 }
 
 const styles = StyleSheet.create({
@@ -174,42 +119,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-  input: {
-    backgroundColor: '#ffffff',
-    borderColor: '#d6deea',
-    borderRadius: 10,
-    borderWidth: 1,
-    color: '#12253f',
-    minHeight: 40,
-    paddingHorizontal: 10,
-  },
   label: {
     color: '#4a607f',
     fontSize: 12,
     fontWeight: '700',
   },
-  mimeButton: {
-    backgroundColor: '#eff4ff',
-    borderColor: '#d1def5',
-    borderRadius: 999,
-    borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  mimeButtonActive: {
-    backgroundColor: '#dce8ff',
-    borderColor: '#6f99f0',
-  },
-  mimeLabel: {
-    color: '#2d4b80',
-    fontSize: 11,
-    fontWeight: '700',
-  },
   root: {
-    gap: 8,
-  },
-  row: {
-    flexDirection: 'row',
     gap: 8,
   },
 });

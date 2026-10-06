@@ -76,12 +76,61 @@ export function useSendChatMessageMutation(threadId: string) {
   });
 }
 
+export async function postChatUpload(
+  auth: { accessToken: string; activeRole: 'admin' | 'coach' | 'client' },
+  threadId: string,
+  form: FormData,
+): Promise<{
+  fileName: string;
+  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  mimeType: string;
+  sizeBytes: number;
+  storagePath: string;
+}> {
+  const baseUrl = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+  const response = await fetch(`${baseUrl}/files/chat-upload`, {
+    body: form,
+    headers: {
+      Authorization: `Bearer ${auth.accessToken}`,
+      'X-Active-Role': auth.activeRole,
+    },
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Chat upload failed');
+  }
+  const body: unknown = await response.json();
+  if (!isUploadedChatFile(body)) {
+    throw new Error('Chat upload failed');
+  }
+  return body;
+}
+
+function isUploadedChatFile(value: unknown): value is {
+  fileName: string;
+  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  mimeType: string;
+  sizeBytes: number;
+  storagePath: string;
+} {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.fileName === 'string' &&
+    (record.kind === 'AUDIO' || record.kind === 'IMAGE' || record.kind === 'PDF') &&
+    typeof record.mimeType === 'string' &&
+    typeof record.sizeBytes === 'number' &&
+    typeof record.storagePath === 'string' &&
+    record.storagePath.length > 0
+  );
+}
+
 export function useUploadPolicyMutation() {
   const auth = useAuth();
   return useMutation({
-    mutationFn: (
-      input: { fileName: string; mimeType: string; sizeBytes: number; threadId: string },
-    ) => {
+    mutationFn: (input: { fileName: string; mimeType: string; sizeBytes: number; threadId: string }) => {
       if (!auth) {
         throw new Error('Missing authenticated context');
       }

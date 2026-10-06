@@ -2,7 +2,7 @@
   "expo": {
     "name": "Trainer Pro Mobile",
     "slug": "trainer-pro-mobile",
-    "version": "1.1.0",
+    "version": "1.2.0",
     "orientation": "portrait",
     "platforms": ["ios", "android", "web"],
     "android": {
@@ -28,6 +28,6 @@
       "url": "https://u.expo.dev/e32025fc-78da-4dfc-89d8-60149b6e193d"
     },
     "ios": {},
-    "plugins": ["expo-secure-store"]
+    "plugins": ["expo-secure-store", "expo-document-picker"]
   }
 }

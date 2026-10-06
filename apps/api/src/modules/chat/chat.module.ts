@@ -6,6 +6,7 @@ import { CreateUploadPolicyUseCase } from './application/use-cases/create-upload
 import { ListChatMessagesUseCase } from './application/use-cases/list-chat-messages.usecase';
 import { ResolveChatThreadUseCase } from './application/use-cases/resolve-chat-thread.usecase';
 import { SendChatMessageUseCase } from './application/use-cases/send-chat-message.usecase';
+import { UploadChatFileUseCase } from './application/use-cases/upload-chat-file.usecase';
 import { CHAT_REPOSITORY } from './domain/chat.repository.port';
 import { ChatMessagePolicy } from './domain/policies/chat-message.policy';
 import { ChatRepositoryPrisma } from './infra/prisma/chat.repository.prisma';
@@ -24,6 +25,7 @@ import { ChatController } from './presentation/controllers/chat.controller';
     ListChatMessagesUseCase,
     ResolveChatThreadUseCase,
     SendChatMessageUseCase,
+    UploadChatFileUseCase,
     ChatRepositoryPrisma,
     {
       provide: CHAT_REPOSITORY,

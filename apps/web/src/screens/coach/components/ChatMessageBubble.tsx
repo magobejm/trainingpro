@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChatMessage } from '../../../data/hooks/useChat';
 
 export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.Element {
@@ -8,19 +8,53 @@ export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.El
     <View style={[styles.bubble, isCoach ? styles.bubbleCoach : styles.bubbleClient]}>
       {props.message.text ? <Text style={styles.bubbleText}>{props.message.text}</Text> : null}
       {props.message.attachments.map((attachment) => (
-        <Text key={attachment.storagePath} style={styles.attachmentItem}>
-          {attachment.fileName}
-        </Text>
+        <AttachmentItem attachment={attachment} key={attachment.storagePath} />
       ))}
     </View>
   );
 }
 
+function AttachmentItem(props: { attachment: ChatMessage['attachments'][number] }): React.JSX.Element {
+  const url = props.attachment.publicUrl;
+  if (!url) {
+    return <Text style={styles.attachmentItem}>{props.attachment.fileName}</Text>;
+  }
+  if (props.attachment.kind === 'IMAGE') {
+    return (
+      <Pressable onPress={() => openAttachment(url)}>
+        <Image source={{ uri: url }} style={styles.attachmentImage} />
+        <Text style={styles.attachmentLink}>{props.attachment.fileName}</Text>
+      </Pressable>
+    );
+  }
+  return (
+    <Pressable onPress={() => openAttachment(url)}>
+      <Text style={styles.attachmentLink}>{props.attachment.fileName}</Text>
+    </Pressable>
+  );
+}
+
+function openAttachment(url: string): void {
+  void Linking.openURL(url);
+}
+
 const styles = StyleSheet.create({
+  attachmentImage: {
+    borderRadius: 8,
+    height: 140,
+    marginTop: 6,
+    width: 180,
+  },
   attachmentItem: {
     color: '#475f85',
     fontSize: 11,
     fontWeight: '600',
+  },
+  attachmentLink: {
+    color: '#1c74e9',
+    fontSize: 12,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
   },
   bubble: {
     borderRadius: 16,

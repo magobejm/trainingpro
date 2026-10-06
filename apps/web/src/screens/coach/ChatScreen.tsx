@@ -1,26 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Banner } from '@trainerpro/ui';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
-import {
-  useChatMessagesQuery,
-  useCoachThreadQuery,
-  useSendChatMessageMutation,
-} from '../../data/hooks/useChat';
-import {
-  AttachmentsPicker,
-  type AttachmentDraft,
-} from '../../features/chat/AttachmentsPicker';
+import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
+import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
 import { ChatMessageBubble } from './components/ChatMessageBubble';
 
@@ -72,12 +57,8 @@ function useMessageComposer(threadId: string, t: (key: string) => string) {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
-  const canSend = useMemo(
-    () => canSendMessage(text, attachments, threadId),
-    [attachments, text, threadId],
-  );
-  const onAttach = (attachment: AttachmentDraft) =>
-    setAttachments((current) => [...current, attachment]);
+  const canSend = useMemo(() => canSendMessage(text, attachments, threadId), [attachments, text, threadId]);
+  const onAttach = (attachment: AttachmentDraft) => setAttachments((current) => [...current, attachment]);
   const onSend = () =>
     sendChatMessage(canSend, sendMessage, {
       attachments,
@@ -87,7 +68,7 @@ function useMessageComposer(threadId: string, t: (key: string) => string) {
       t,
       text,
     });
-  return { canSend, error, onAttach, onSend, setError, setText, text };
+  return { attachments, canSend, error, onAttach, onSend, setError, setText, text };
 }
 
 async function sendChatMessage(
@@ -145,12 +126,7 @@ function ChatView(props: ViewModel) {
   );
 }
 
-function ChatHeader(props: {
-  retentionSubtitle: string;
-  retentionTitle: string;
-  subtitle: string;
-  title: string;
-}) {
+function ChatHeader(props: { retentionSubtitle: string; retentionTitle: string; subtitle: string; title: string }) {
   return (
     <>
       <Text style={styles.title}>{props.title}</Text>
@@ -170,11 +146,12 @@ function ChatComposer(props: ViewModel) {
         style={styles.textInput}
         value={props.text}
       />
-      <AttachmentsPicker
-        onAttach={props.onAttach}
-        onError={props.setError}
-        threadId={props.threadId}
-      />
+      <AttachmentsPicker onAttach={props.onAttach} onError={props.setError} threadId={props.threadId} />
+      {props.attachments.map((item) => (
+        <Text key={item.storagePath} style={styles.draft}>
+          {item.fileName}
+        </Text>
+      ))}
       {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
       <Pressable onPress={props.onSend} style={styles.sendButton}>
         <Text style={styles.sendLabel}>{props.t('coach.chat.send')}</Text>
@@ -225,6 +202,11 @@ function toClientCards(
 }
 
 const styles = StyleSheet.create({
+  draft: {
+    color: '#2d4b80',
+    fontSize: 12,
+    fontWeight: '700',
+  },
   empty: {
     color: '#5d6f85',
     fontSize: 13,

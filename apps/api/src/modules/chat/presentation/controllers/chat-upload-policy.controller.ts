@@ -10,7 +10,7 @@ import { CreateUploadPolicyDto } from '../dto/create-upload-policy.dto';
 @Controller('files')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('coach', 'client')
-export class FilesController {
+export class ChatUploadPolicyController {
   constructor(private readonly createUploadPolicyUseCase: CreateUploadPolicyUseCase) {}
 
   @Post('upload-policy')

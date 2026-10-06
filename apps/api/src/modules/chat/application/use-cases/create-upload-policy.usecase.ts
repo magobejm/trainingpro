@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import { FileUploadPolicy } from '../../domain/policies/file-upload.policy';
+import { FileUploadPolicy } from '../../../files/domain/policies/file-upload.policy';
+import { ChatThreadAccessService } from '../../infra/prisma/chat-thread-access.service';
 
 export type CreateUploadPolicyInput = {
   fileName: string;
@@ -11,10 +12,14 @@ export type CreateUploadPolicyInput = {
 
 @Injectable()
 export class CreateUploadPolicyUseCase {
-  constructor(private readonly uploadPolicy: FileUploadPolicy) {}
+  constructor(
+    private readonly threadAccess: ChatThreadAccessService,
+    private readonly uploadPolicy: FileUploadPolicy,
+  ) {}
 
-  execute(context: AuthContext, input: CreateUploadPolicyInput) {
+  async execute(context: AuthContext, input: CreateUploadPolicyInput) {
     this.assertRole(context.activeRole);
+    await this.threadAccess.assertAccess(context, input.threadId);
     return this.uploadPolicy.createPolicy(input);
   }
 

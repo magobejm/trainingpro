@@ -7,6 +7,7 @@ import type { ChatRepositoryPort, ResolveChatThreadInput, SendChatMessageInput }
 import { ChatMessagePolicy } from '../../domain/policies/chat-message.policy';
 import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { mapChatMessage, mapChatThread } from './chat-prisma.mappers';
+import { ChatThreadAccessService } from './chat-thread-access.service';
 
 @Injectable()
 export class ChatRepositoryPrisma implements ChatRepositoryPort {
@@ -14,10 +15,11 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
     private readonly messagePolicy: ChatMessagePolicy,
     private readonly prisma: PrismaService,
     private readonly mediaUrls: PrivateMediaUrlSigner,
+    private readonly threadAccess: ChatThreadAccessService,
   ) {}
 
   async listMessagesByThread(context: AuthContext, threadId: string) {
-    await this.assertThreadAccess(context, threadId);
+    await this.threadAccess.assertAccess(context, threadId);
     const rows = await this.prisma.chatMessage.findMany({
       where: { threadId },
       orderBy: { createdAt: 'asc' },
@@ -49,7 +51,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
   }
 
   async sendMessage(context: AuthContext, input: SendChatMessageInput) {
-    const sender = await this.assertThreadAccess(context, input.threadId);
+    const sender = await this.threadAccess.assertAccess(context, input.threadId);
     const expiresAt = this.messagePolicy.resolveExpiryDate(new Date());
     const row = await this.prisma.chatMessage.create({
       data: {
@@ -77,20 +79,6 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
       data: { updatedAt: new Date() },
     });
     return mapChatMessage(row, (path) => this.mediaUrls.sign(path));
-  }
-
-  private async assertThreadAccess(context: AuthContext, threadId: string) {
-    const row = await this.findThreadByContext(context, threadId);
-    if (!row) {
-      throw new ForbiddenException('Chat thread access denied');
-    }
-    if (context.activeRole === 'coach') {
-      return { senderRole: 'COACH' as const, thread: row };
-    }
-    if (context.activeRole === 'client') {
-      return { senderRole: 'CLIENT' as const, thread: row };
-    }
-    throw new ForbiddenException('Unsupported role for chat');
   }
 
   private async resolveParticipant(context: AuthContext, clientId?: string) {
@@ -138,35 +126,6 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
       coachMembershipId: client.coachMembershipId,
       organizationId: client.organizationId,
     };
-  }
-
-  private async findThreadByContext(context: AuthContext, threadId: string) {
-    if (context.activeRole === 'coach') {
-      return this.prisma.chatThread.findFirst({
-        where: {
-          archivedAt: null,
-          coachMembership: {
-            archivedAt: null,
-            isActive: true,
-            role: Role.COACH,
-            user: { email: context.email ?? '' },
-          },
-          id: threadId,
-        },
-        select: { id: true },
-      });
-    }
-    if (context.activeRole === 'client') {
-      return this.prisma.chatThread.findFirst({
-        where: {
-          archivedAt: null,
-          client: { archivedAt: null, email: context.email ?? '' },
-          id: threadId,
-        },
-        select: { id: true },
-      });
-    }
-    return null;
   }
 
   private async readClientByEmail(email: string | undefined) {

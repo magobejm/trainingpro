@@ -4,6 +4,7 @@ import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { TOKEN_VERIFIER } from '../../src/modules/auth/domain/token-verifier.token';
 import { ClientAccessPolicy } from '../../src/modules/clients/domain/policies/client-access.policy';
+import { EmitSessionCompletedEventUseCase } from '../../src/modules/notifications/application/use-cases/emit-session-completed-event.usecase';
 import { SESSIONS_REPOSITORY } from '../../src/modules/sessions/domain/sessions-repository.port';
 
 jest.setTimeout(30_000);
@@ -26,6 +27,8 @@ describe('Sessions snapshot rules', () => {
       .useValue({ canAccess: async () => true })
       .overrideProvider(SESSIONS_REPOSITORY)
       .useValue(repository)
+      .overrideProvider(EmitSessionCompletedEventUseCase)
+      .useValue({ execute: async () => undefined })
       .compile();
 
     const app = moduleRef.createNestApplication();

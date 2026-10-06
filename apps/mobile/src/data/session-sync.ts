@@ -1,6 +1,5 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
-import { useDailyCheckinStore } from '../store/daily-checkin.store';
 import { getSupabaseClient } from './supabase-client';
 import { decideSessionTransition, sessionTransitionClearsUserData, type SessionTransition } from './session-transition';
 
@@ -65,5 +64,4 @@ function signOutLocally(queryClient: QueryClient): void {
 
 function clearUserData(queryClient: QueryClient): void {
   queryClient.clear();
-  useDailyCheckinStore.getState().reset();
 }

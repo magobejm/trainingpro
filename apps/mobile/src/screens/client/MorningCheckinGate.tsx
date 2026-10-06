@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useClientThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
+import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
 import { showToast } from '../../shell/client/feedback';
 import {
   formatMorningCheckinChatNotice,
   localDateKey,
-  shouldPromptMorningCheckin,
+  readTodayCheckin,
   type MorningCheckinScores,
 } from './daily-checkin.utils';
 import { MorningCheckinModal } from './MorningCheckinModal';
@@ -18,11 +19,14 @@ export function MorningCheckinGate(): React.JSX.Element {
   const { t } = useTranslation();
   const [hydrated, setHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
   const [todayKey, setTodayKey] = useState(localDateKey);
-  const lastPromptDate = useDailyCheckinStore((state) => state.lastPromptDate);
+  const status = useAuthStore((state) => state.status);
+  const userId = useAuthStore((state) => state.userId);
+  const entries = useDailyCheckinStore((state) => state.entries);
   const saveToday = useDailyCheckinStore((state) => state.saveToday);
   const dismissToday = useDailyCheckinStore((state) => state.dismissToday);
   const notifyCoach = useOptionalCoachNotice();
-  const visible = hydrated && shouldPromptMorningCheckin(lastPromptDate, todayKey);
+  const todayEntry = readTodayCheckin(entries, userId, todayKey);
+  const visible = hydrated && status === 'signedIn' && userId !== null && todayEntry === null;
 
   useEffect(() => {
     return useDailyCheckinStore.persist.onFinishHydration(() => {
@@ -46,21 +50,24 @@ export function MorningCheckinGate(): React.JSX.Element {
 
   const handleSubmit = useCallback(
     (scores: MorningCheckinScores) => {
-      saveToday(todayKey, scores);
+      if (!userId) {
+        return;
+      }
+      saveToday(userId, todayKey, scores);
       showToast(t('mobile.client.checkin.saved'));
       void notifyCoach(formatMorningCheckinChatNotice(scores));
     },
-    [notifyCoach, saveToday, t, todayKey],
+    [notifyCoach, saveToday, t, todayKey, userId],
   );
 
-  return (
-    <MorningCheckinModal
-      isSubmitting={false}
-      onSkip={() => dismissToday(todayKey)}
-      onSubmit={handleSubmit}
-      visible={visible}
-    />
-  );
+  const handleSkip = useCallback(() => {
+    if (!userId) {
+      return;
+    }
+    dismissToday(userId, todayKey);
+  }, [dismissToday, todayKey, userId]);
+
+  return <MorningCheckinModal isSubmitting={false} onSkip={handleSkip} onSubmit={handleSubmit} visible={visible} />;
 }
 
 export function useOptionalCoachNotice(): (text: string) => Promise<void> {

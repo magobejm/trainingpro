@@ -102,10 +102,14 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return payload;
 }
 
+export function deviceTimezoneOffsetMinutes(): number {
+  return -new Date().getTimezoneOffset();
+}
+
 function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
-    'X-Timezone-Offset': String(-new Date().getTimezoneOffset()),
+    'X-Timezone-Offset': String(deviceTimezoneOffsetMinutes()),
     ...(extra ?? {}),
   };
   if (config.accessToken) {

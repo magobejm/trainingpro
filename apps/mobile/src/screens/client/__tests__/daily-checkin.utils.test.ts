@@ -2,11 +2,15 @@ import {
   canSubmitMorningCheckin,
   formatMorningCheckinChatNotice,
   localDateKey,
+  migrateDailyCheckin,
+  readTodayCheckin,
   scaleFiveToTen,
   shouldPromptMorningCheckin,
+  writeTodayCheckin,
   SLEEP_OPTIONS,
   MOTIVATION_OPTIONS,
   RECOVERY_OPTIONS,
+  type DailyCheckinEntries,
 } from '../daily-checkin.utils';
 
 describe('morning check-in', () => {
@@ -17,13 +21,54 @@ describe('morning check-in', () => {
   });
 
   it('opens a new daily record at local midnight', () => {
-    expect(localDateKey(new Date(2026, 9, 2, 23, 59, 59))).toBe('2026-10-02');
-    expect(localDateKey(new Date(2026, 9, 3, 0, 0, 0))).toBe('2026-10-03');
-    expect(shouldPromptMorningCheckin('2026-10-02', localDateKey(new Date(2026, 9, 3, 0, 0, 0)))).toBe(true);
+    expect(localDateKey(new Date(Date.UTC(2026, 9, 2, 23, 59, 59)), 0)).toBe('2026-10-02');
+    expect(localDateKey(new Date(Date.UTC(2026, 9, 3, 0, 0, 0)), 0)).toBe('2026-10-03');
+    expect(shouldPromptMorningCheckin('2026-10-02', localDateKey(new Date(Date.UTC(2026, 9, 3, 0, 0, 0)), 0))).toBe(true);
   });
 
-  it('builds a stable local date key', () => {
-    expect(localDateKey(new Date(2026, 9, 2, 8, 15))).toBe('2026-10-02');
+  it('builds a stable local date key from an explicit offset', () => {
+    const at2330Utc = new Date(Date.UTC(2026, 9, 2, 23, 30));
+    expect(localDateKey(at2330Utc, 120)).toBe('2026-10-03');
+    expect(localDateKey(at2330Utc, -300)).toBe('2026-10-02');
+    expect(localDateKey(at2330Utc, 0)).toBe('2026-10-02');
+  });
+
+  it('reads only the signed-in user entry for today', () => {
+    const scores = { sleep: 4, motivation: 5, recovery: 3 };
+    const entries: DailyCheckinEntries = {
+      'user-a': { date: '2026-10-02', scores },
+      'user-b': { date: '2026-10-01', scores },
+    };
+    expect(readTodayCheckin(entries, 'user-a', '2026-10-02')).toEqual({ date: '2026-10-02', scores });
+    expect(readTodayCheckin(entries, 'user-c', '2026-10-02')).toBeNull();
+    expect(readTodayCheckin(entries, 'user-b', '2026-10-02')).toBeNull();
+    expect(readTodayCheckin({ 'user-a': { date: '2026-10-02', scores: null } }, 'user-a', '2026-10-02')).toEqual({
+      date: '2026-10-02',
+      scores: null,
+    });
+  });
+
+  it('keeps other users from today and drops older days', () => {
+    const scores = { sleep: 2, motivation: 2, recovery: 2 };
+    const next = writeTodayCheckin(
+      {
+        'user-a': { date: '2026-10-01', scores },
+        'user-b': { date: '2026-10-02', scores },
+      },
+      'user-c',
+      '2026-10-02',
+      null,
+    );
+    expect(next).toEqual({
+      'user-b': { date: '2026-10-02', scores },
+      'user-c': { date: '2026-10-02', scores: null },
+    });
+  });
+
+  it('discards the previous global check-in because its user is unknown', () => {
+    expect(migrateDailyCheckin({ lastPromptDate: '2026-10-02', scores: { sleep: 4, motivation: 5, recovery: 3 } })).toEqual({
+      entries: {},
+    });
   });
 
   it('requires sleep, motivation and recovery from 1 to 5', () => {

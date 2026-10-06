@@ -1,47 +1,41 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
-import type { MorningCheckinScores } from '../screens/client/daily-checkin.utils';
+import { createJSONStorage, persist, type PersistOptions } from 'zustand/middleware';
+import { createAuthStateStorage } from '../data/auth-storage';
+import {
+  migrateDailyCheckin,
+  writeTodayCheckin,
+  type DailyCheckinEntries,
+  type MorningCheckinScores,
+} from '../screens/client/daily-checkin.utils';
 
 type DailyCheckinState = {
-  lastPromptDate: null | string;
-  scores: MorningCheckinScores | null;
-  dismissToday: (dateKey: string) => void;
-  reset: () => void;
-  saveToday: (dateKey: string, scores: MorningCheckinScores) => void;
+  dismissToday: (userId: string, date: string) => void;
+  entries: DailyCheckinEntries;
+  saveToday: (userId: string, date: string, scores: MorningCheckinScores) => void;
+};
+
+type PersistedDailyCheckin = {
+  entries: DailyCheckinEntries;
 };
 
 const STORAGE_KEY = 'trainerpro.mobile.daily-checkin';
-const memoryStorage = new Map<string, string>();
+
+const dailyCheckinPersistOptions: PersistOptions<DailyCheckinState, PersistedDailyCheckin> = {
+  migrate: (persisted) => migrateDailyCheckin(persisted),
+  name: STORAGE_KEY,
+  partialize: (state) => ({ entries: state.entries }),
+  storage: createJSONStorage(createAuthStateStorage),
+  version: 1,
+};
 
 export const useDailyCheckinStore = create<DailyCheckinState>()(
   persist(
     (set) => ({
-      lastPromptDate: null,
-      scores: null,
-      dismissToday: (dateKey) => set({ lastPromptDate: dateKey, scores: null }),
-      reset: () => set({ lastPromptDate: null, scores: null }),
-      saveToday: (dateKey, scores) => set({ lastPromptDate: dateKey, scores }),
+      entries: {},
+      dismissToday: (userId, date) => set((state) => ({ entries: writeTodayCheckin(state.entries, userId, date, null) })),
+      saveToday: (userId, date, scores) =>
+        set((state) => ({ entries: writeTodayCheckin(state.entries, userId, date, scores) })),
     }),
-    {
-      name: STORAGE_KEY,
-      partialize: (state) => ({ lastPromptDate: state.lastPromptDate, scores: state.scores }),
-      storage: createJSONStorage(createStateStorage),
-    },
+    dailyCheckinPersistOptions,
   ),
 );
-
-function createStateStorage(): StateStorage {
-  const scope = globalThis as { localStorage?: StateStorage };
-  if (scope.localStorage) {
-    return scope.localStorage;
-  }
-  return {
-    getItem: (name) => memoryStorage.get(name) ?? null,
-    removeItem: (name) => {
-      memoryStorage.delete(name);
-    },
-    setItem: (name, value) => {
-      memoryStorage.set(name, value);
-    },
-  };
-}

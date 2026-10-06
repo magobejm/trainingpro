@@ -33,7 +33,8 @@ import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
 import { useOptionalCoachNotice } from './MorningCheckinGate';
 import { SessionRpeModal } from './SessionRpeModal';
 import { finishSessionWithRpePayload, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
-import { localDateKey } from './daily-checkin.utils';
+import { localDateKey, readTodayCheckin } from './daily-checkin.utils';
+import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
 import type { RestState } from './session-rest.types';
 
@@ -172,9 +173,17 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const [rpeVisible, setRpeVisible] = useState(false);
   const [, tick] = useState(0);
   const startPromptedRef = React.useRef(false);
+  const [checkinHydrated, setCheckinHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
   const notifyCoach = useOptionalCoachNotice();
-  const morningScores = useDailyCheckinStore((state) => state.scores);
-  const lastPromptDate = useDailyCheckinStore((state) => state.lastPromptDate);
+  const userId = useAuthStore((state) => state.userId);
+  const entries = useDailyCheckinStore((state) => state.entries);
+  const todayScores = readTodayCheckin(entries, userId, localDateKey())?.scores ?? null;
+
+  React.useEffect(() => {
+    return useDailyCheckinStore.persist.onFinishHydration(() => {
+      setCheckinHydrated(true);
+    });
+  }, []);
 
   React.useEffect(() => {
     if (!sessionQuery.data?.startedAt) return;
@@ -198,19 +207,16 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   );
 
   React.useEffect(() => {
-    if (session?.status !== 'PENDING' || startPromptedRef.current) {
+    if (!checkinHydrated || session?.status !== 'PENDING' || startPromptedRef.current) {
       return;
     }
     startPromptedRef.current = true;
-    const startPayload =
-      lastPromptDate === localDateKey()
-        ? startSessionPayloadFromMorningCheckin(morningScores)
-        : startSessionPayloadFromMorningCheckin(null);
+    const startPayload = startSessionPayloadFromMorningCheckin(todayScores);
     void startMutation.mutateAsync(startPayload).catch((error) => {
       startPromptedRef.current = false;
       handleMutationError(error);
     });
-  }, [handleMutationError, lastPromptDate, morningScores, session?.status, startMutation]);
+  }, [checkinHydrated, handleMutationError, session?.status, startMutation, todayScores]);
 
   React.useEffect(() => {
     if (!session || !selectedExercise) {

@@ -1,3 +1,5 @@
+import { deviceTimezoneOffsetMinutes } from '../../data/api-client';
+
 export type MorningCheckinScores = {
   motivation: number;
   recovery: number;
@@ -34,11 +36,65 @@ export const RECOVERY_OPTIONS: MorningScaleOption[] = [
   { value: 5, emoji: '⚡', labelKey: 'mobile.client.checkin.recovery.5' },
 ];
 
-export function localDateKey(date: Date = new Date()): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+export type DailyCheckinEntry = {
+  date: string;
+  scores: MorningCheckinScores | null;
+};
+
+export type DailyCheckinEntries = Record<string, DailyCheckinEntry>;
+
+export function localDateKey(date: Date = new Date(), offsetMinutes: number = deviceTimezoneOffsetMinutes()): string {
+  const shifted = new Date(date.getTime() + offsetMinutes * 60_000);
+  const year = shifted.getUTCFullYear();
+  const month = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(shifted.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
+}
+
+export function readTodayCheckin(
+  entries: DailyCheckinEntries,
+  userId: string | null,
+  today: string,
+): DailyCheckinEntry | null {
+  if (!userId) {
+    return null;
+  }
+  const entry = entries[userId];
+  if (!entry || entry.date !== today) {
+    return null;
+  }
+  return entry;
+}
+
+export function writeTodayCheckin(
+  entries: DailyCheckinEntries,
+  userId: string,
+  date: string,
+  scores: MorningCheckinScores | null,
+): DailyCheckinEntries {
+  const next: DailyCheckinEntries = {};
+  for (const [id, entry] of Object.entries(entries)) {
+    if (entry.date === date) {
+      next[id] = entry;
+    }
+  }
+  next[userId] = { date, scores };
+  return next;
+}
+
+export function migrateDailyCheckin(persisted: unknown): { entries: DailyCheckinEntries } {
+  if (!isPersistedEntries(persisted)) {
+    return { entries: {} };
+  }
+  return { entries: persisted.entries };
+}
+
+function isPersistedEntries(persisted: unknown): persisted is { entries: DailyCheckinEntries } {
+  if (!persisted || typeof persisted !== 'object' || !('entries' in persisted)) {
+    return false;
+  }
+  const entries = persisted.entries;
+  return entries !== null && typeof entries === 'object' && !Array.isArray(entries);
 }
 
 export function shouldPromptMorningCheckin(lastPromptDate: null | string, todayKey: string): boolean {

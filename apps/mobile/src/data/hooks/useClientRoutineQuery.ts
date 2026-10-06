@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { createApiClient, UnauthorizedApiError } from '../api-client';
+import { handleUnauthorized } from '../auth-service';
 
 export type ClientRoutineSet = {
   advancedTechnique: null | string;
@@ -64,7 +65,6 @@ export type ClientRoutine = {
 
 export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const clearSession = useAuthStore((state) => state.clearSession);
   return useQuery({
     enabled: Boolean(accessToken),
     queryFn: async () => {
@@ -74,12 +74,12 @@ export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
         );
       } catch (error) {
         if (error instanceof UnauthorizedApiError) {
-          clearSession();
+          void handleUnauthorized();
         }
         throw error;
       }
     },
-    queryKey: ['clients', 'me', 'routine'],
+    queryKey: ['clients', 'me', 'routine', accessToken],
     refetchOnMount: 'always',
     staleTime: 0,
   });
@@ -87,7 +87,6 @@ export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
 
 export function useClientPlanDayQuery(planDayId: string | null): UseQueryResult<ClientRoutineDay, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const clearSession = useAuthStore((state) => state.clearSession);
   return useQuery({
     enabled: Boolean(accessToken && planDayId),
     queryFn: async () => {
@@ -97,12 +96,12 @@ export function useClientPlanDayQuery(planDayId: string | null): UseQueryResult<
         );
       } catch (error) {
         if (error instanceof UnauthorizedApiError) {
-          clearSession();
+          void handleUnauthorized();
         }
         throw error;
       }
     },
-    queryKey: ['clients', 'me', 'plan-days', planDayId],
+    queryKey: ['clients', 'me', 'plan-days', planDayId, accessToken],
     refetchOnMount: 'always',
     staleTime: 0,
   });

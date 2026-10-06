@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { createApiClient, UnauthorizedApiError } from '../api-client';
+import { handleUnauthorized } from '../auth-service';
 
 // Signed private media URLs expire after an hour. Remount refetches immediately;
 // this interval refreshes a screen that stays open.
@@ -45,7 +46,6 @@ export type ClientMe = {
 
 export function useClientMeQuery(): UseQueryResult<ClientMe, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const clearSession = useAuthStore((state) => state.clearSession);
   return useQuery({
     enabled: Boolean(accessToken),
     queryFn: async () => {
@@ -53,12 +53,12 @@ export function useClientMeQuery(): UseQueryResult<ClientMe, Error> {
         return await createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientMe>('/clients/me');
       } catch (error) {
         if (error instanceof UnauthorizedApiError) {
-          clearSession();
+          void handleUnauthorized();
         }
         throw error;
       }
     },
-    queryKey: ['clients', 'me'],
+    queryKey: ['clients', 'me', accessToken],
     refetchInterval: PRIVATE_MEDIA_REFRESH_MS,
   });
 }

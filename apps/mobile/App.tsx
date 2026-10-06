@@ -3,8 +3,10 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import './src/i18n';
-import { createQueryClient } from './src/data/query-client';
+import { useLogout } from './src/data/hooks/useAuthMutations';
 import { useMeQuery } from './src/data/hooks/useMeQuery';
+import { createQueryClient } from './src/data/query-client';
+import { startSessionSync } from './src/data/session-sync';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RoleSelectScreen } from './src/screens/auth/RoleSelectScreen';
 import { NotificationSettingsScreen } from './src/screens/coach/NotificationSettingsScreen';
@@ -18,6 +20,7 @@ type CoachRouteId = 'coach.chat' | 'coach.notifications';
 const queryClient = createQueryClient();
 
 export default function App(): React.JSX.Element {
+  useSessionSync();
   return (
     <QueryClientProvider client={queryClient}>
       <MobileRoot />
@@ -25,11 +28,37 @@ export default function App(): React.JSX.Element {
   );
 }
 
+function useSessionSync(): void {
+  React.useEffect(() => {
+    let stopSync = (): void => undefined;
+    let started = false;
+    const start = (): void => {
+      if (started) {
+        return;
+      }
+      started = true;
+      stopSync = startSessionSync(queryClient);
+    };
+    const unsubscribe = useAuthStore.persist.onFinishHydration(start);
+    if (useAuthStore.persist.hasHydrated()) {
+      start();
+    }
+    return () => {
+      unsubscribe();
+      stopSync();
+    };
+  }, []);
+}
+
 function MobileRoot(): React.JSX.Element {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   const roles = useAuthStore((state) => state.availableRoles);
+  const status = useAuthStore((state) => state.status);
   useMeQuery();
+  if (status === 'restoring') {
+    return <LoadingBody />;
+  }
   if (!accessToken) {
     return <LoginScreen />;
   }
@@ -58,13 +87,13 @@ function RoleShell(props: { role: AppRole }): React.JSX.Element {
 
 function CoachShell(): React.JSX.Element {
   const { t } = useTranslation();
-  const clearSession = useAuthStore((state) => state.clearSession);
+  const logout = useLogout();
   const [route, setRoute] = React.useState<CoachRouteId>('coach.notifications');
   return (
     <View style={styles.coachPage}>
       <View style={styles.coachHeader}>
         <Text style={styles.coachTitle}>{t('app.title')}</Text>
-        <Pressable onPress={clearSession} style={styles.logoutButton}>
+        <Pressable onPress={logout} style={styles.logoutButton}>
           <Text style={styles.logoutLabel}>{t('mobile.shell.logout')}</Text>
         </Pressable>
       </View>

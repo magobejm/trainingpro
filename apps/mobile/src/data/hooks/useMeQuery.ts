@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
-import { createApiClient, ForbiddenApiError, type ActiveRole, UnauthorizedApiError } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { createApiClient, ForbiddenApiError, type ActiveRole, UnauthorizedApiError } from '../api-client';
+import { handleUnauthorized } from '../auth-service';
 
 type MeApiResponse = {
   email: string;
@@ -19,7 +20,6 @@ const ALL_ROLES: ActiveRole[] = ['admin', 'coach', 'client'];
 export function useMeQuery(): UseQueryResult<MeQueryData, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
-  const clearSession = useAuthStore((state) => state.clearSession);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const setAvailableRoles = useAuthStore((state) => state.setAvailableRoles);
   const query = useQuery({
@@ -27,17 +27,17 @@ export function useMeQuery(): UseQueryResult<MeQueryData, Error> {
     queryFn: () => fetchMeWithFallback(accessToken ?? '', activeRole),
     queryKey: ['users', 'me', activeRole, accessToken],
   });
-  useClearSessionOnUnauthorized(query.error, clearSession);
+  useHandleUnauthorized(query.error);
   useSyncAuthState(query.data, setActiveRole, setAvailableRoles);
   return query;
 }
 
-function useClearSessionOnUnauthorized(error: Error | null, clearSession: () => void): void {
+function useHandleUnauthorized(error: Error | null): void {
   useEffect(() => {
     if (error instanceof UnauthorizedApiError) {
-      clearSession();
+      void handleUnauthorized();
     }
-  }, [error, clearSession]);
+  }, [error]);
 }
 
 function useSyncAuthState(

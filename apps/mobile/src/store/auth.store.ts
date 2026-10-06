@@ -1,20 +1,43 @@
 import { create } from 'zustand';
-import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware';
+import { createJSONStorage, persist, type PersistOptions } from 'zustand/middleware';
+import { createAuthStateStorage } from '../data/auth-storage';
 import type { ActiveRole } from '../data/api-client';
+
+export type AuthStatus = 'restoring' | 'signedIn' | 'signedOut';
+
+type ApplySessionOptions = {
+  resetRoles?: boolean;
+};
 
 type AuthState = {
   accessToken: null | string;
   activeRole: ActiveRole | null;
+  applySession: (accessToken: string, userId: string, options?: ApplySessionOptions) => void;
   availableRoles: ActiveRole[];
-  clearSession: () => void;
+  resetSession: () => void;
   setActiveRole: (role: ActiveRole) => void;
   setAvailableRoles: (roles: ActiveRole[]) => void;
-  setSession: (accessToken: string) => void;
+  status: AuthStatus;
+  userId: null | string;
+};
+
+type PersistedAuth = {
+  activeRole: ActiveRole | null;
+  availableRoles: ActiveRole[];
+  userId: null | string;
 };
 
 const STORAGE_KEY = 'trainerpro.mobile.auth';
 const DEFAULT_ROLE: ActiveRole = 'coach';
-const memoryStorage = new Map<string, string>();
+const KNOWN_ROLES: ActiveRole[] = ['admin', 'coach', 'client'];
+
+const authPersistOptions: PersistOptions<AuthState, PersistedAuth> = {
+  migrate: (persisted) => readPersistedAuth(persisted),
+  name: STORAGE_KEY,
+  partialize: selectPersistedState,
+  storage: createJSONStorage(createAuthStateStorage),
+  version: 1,
+};
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -22,74 +45,72 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       activeRole: DEFAULT_ROLE,
       availableRoles: [],
-      clearSession: () => set(resetAuthState),
+      status: 'restoring',
+      userId: null,
+      applySession: (accessToken, userId, options) =>
+        set((state) => ({
+          accessToken,
+          activeRole: options?.resetRoles ? DEFAULT_ROLE : state.activeRole,
+          availableRoles: options?.resetRoles ? [] : state.availableRoles,
+          status: 'signedIn',
+          userId,
+        })),
+      resetSession: () => set(signedOutState()),
       setActiveRole: (role) => set({ activeRole: role }),
       setAvailableRoles: (roles) =>
         set((state) => ({
           activeRole: selectActiveRole(state.activeRole, roles),
           availableRoles: roles,
         })),
-      setSession: (accessToken) =>
-        set((state) => ({
-          accessToken,
-          activeRole: state.activeRole ?? DEFAULT_ROLE,
-        })),
     }),
-    {
-      name: STORAGE_KEY,
-      partialize: selectPersistedState,
-      storage: createJSONStorage(createStateStorage),
-    },
+    authPersistOptions,
   ),
 );
 
-function resetAuthState(): Pick<AuthState, 'accessToken' | 'activeRole' | 'availableRoles'> {
+function signedOutState(): Pick<AuthState, 'accessToken' | 'activeRole' | 'availableRoles' | 'status' | 'userId'> {
   return {
     accessToken: null,
     activeRole: DEFAULT_ROLE,
     availableRoles: [],
+    status: 'signedOut',
+    userId: null,
   };
 }
 
-function selectPersistedState(state: AuthState) {
+function selectPersistedState(state: AuthState): PersistedAuth {
   return {
-    accessToken: state.accessToken,
     activeRole: state.activeRole,
     availableRoles: state.availableRoles,
+    userId: state.userId,
   };
 }
 
-function selectActiveRole(
-  currentRole: ActiveRole | null,
-  roles: ActiveRole[],
-): ActiveRole | null {
+function readPersistedAuth(persisted: unknown): PersistedAuth {
+  if (!persisted || typeof persisted !== 'object') {
+    return { activeRole: DEFAULT_ROLE, availableRoles: [], userId: null };
+  }
+  const record = persisted as { activeRole?: unknown; availableRoles?: unknown; userId?: unknown };
+  return {
+    activeRole: isActiveRole(record.activeRole) ? record.activeRole : DEFAULT_ROLE,
+    availableRoles: readRoles(record.availableRoles),
+    userId: typeof record.userId === 'string' ? record.userId : null,
+  };
+}
+
+function readRoles(value: unknown): ActiveRole[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(isActiveRole);
+}
+
+function selectActiveRole(currentRole: ActiveRole | null, roles: ActiveRole[]): ActiveRole | null {
   if (currentRole && roles.includes(currentRole)) {
     return currentRole;
   }
   return roles[0] ?? null;
 }
 
-function createStateStorage(): StateStorage {
-  const browserStorage = readBrowserStorage();
-  if (browserStorage) {
-    return browserStorage;
-  }
-  return createMemoryStorage();
-}
-
-function readBrowserStorage(): StateStorage | null {
-  const scope = globalThis as { localStorage?: StateStorage };
-  return scope.localStorage ?? null;
-}
-
-function createMemoryStorage(): StateStorage {
-  return {
-    getItem: (name) => memoryStorage.get(name) ?? null,
-    removeItem: (name) => {
-      memoryStorage.delete(name);
-    },
-    setItem: (name, value) => {
-      memoryStorage.set(name, value);
-    },
-  };
+function isActiveRole(role: unknown): role is ActiveRole {
+  return KNOWN_ROLES.includes(role as ActiveRole);
 }

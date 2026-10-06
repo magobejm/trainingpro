@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { useAuthStore } from '../../store/auth.store';
+import { useLogout } from '../../data/hooks/useAuthMutations';
 import { useClientMeQuery, type ClientMe } from '../../data/hooks/useClientMeQuery';
 import { LIGHT } from '../../theme/light';
 import { InfoButton, StatSquare } from '../../theme/primitives';
@@ -12,7 +12,7 @@ import { s } from './client-shell.styles';
 export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element {
   const { t } = useTranslation();
   const { data: client, isLoading } = useClientMeQuery();
-  const clearSession = useAuthStore((state) => state.clearSession);
+  const logout = useLogout();
   if (isLoading || !client) {
     return (
       <View style={s.sidePanel}>
@@ -62,7 +62,7 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
         </View>
         <MedicalSection client={client} />
         {client.notes ? <NotesSection notes={client.notes} t={t} /> : null}
-        <Pressable onPress={clearSession} style={s.logoutBtn}>
+        <Pressable onPress={logout} style={s.logoutBtn}>
           <Text style={s.logoutBtnText}>{t('mobile.shell.logout')}</Text>
         </Pressable>
       </ScrollView>

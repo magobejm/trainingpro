@@ -6,6 +6,7 @@ type DailyCheckinState = {
   lastPromptDate: null | string;
   scores: MorningCheckinScores | null;
   dismissToday: (dateKey: string) => void;
+  reset: () => void;
   saveToday: (dateKey: string, scores: MorningCheckinScores) => void;
 };
 
@@ -18,6 +19,7 @@ export const useDailyCheckinStore = create<DailyCheckinState>()(
       lastPromptDate: null,
       scores: null,
       dismissToday: (dateKey) => set({ lastPromptDate: dateKey, scores: null }),
+      reset: () => set({ lastPromptDate: null, scores: null }),
       saveToday: (dateKey, scores) => set({ lastPromptDate: dateKey, scores }),
     }),
     {

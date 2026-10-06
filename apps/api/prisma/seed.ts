@@ -20,7 +20,7 @@ import { ROUTINE_TEMPLATES_V1 } from './seeds/v1-routine-templates.seed';
 import { WARMUP_TEMPLATES_V1 } from './seeds/v1-warmup-templates.seed';
 import { seedMovementPatterns } from './seeds/v3-movement-patterns.seed';
 import { seedAnatomicalPlanes } from './seeds/v3-anatomical-planes.seed';
-import { bundledExerciseMedia, mapDayForSeed, readRequiredId } from './seeds/seed-utils';
+import { bundledExerciseMedia, bundledExerciseUrl, mapDayForSeed, readRequiredId } from './seeds/seed-utils';
 import { seedSessions } from './seeds/seed-sessions';
 
 const prisma = new PrismaClient();
@@ -343,6 +343,7 @@ async function seedIsometricExercises(): Promise<void> {
         coachInstructions: item.coachInstructions ?? null,
         youtubeUrl: item.youtubeUrl,
         scope: LibraryItemScope.GLOBAL,
+        ...bundledExerciseMedia(item.id),
       },
       update: {
         archivedAt: null,
@@ -363,7 +364,7 @@ async function seedWarmupExercises(): Promise<void> {
   for (const item of WARMUP_EXERCISES_V1) {
     await prisma.mobilityExercise.upsert({
       where: { id: item.id },
-      create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL },
+      create: { id: item.id, name: item.name, scope: LibraryItemScope.GLOBAL, ...bundledExerciseMedia(item.id) },
       update: { archivedAt: null, name: item.name, scope: LibraryItemScope.GLOBAL },
     });
   }
@@ -373,7 +374,13 @@ async function seedSports(): Promise<void> {
   for (const item of SPORTS_V1) {
     await prisma.sport.upsert({
       where: { id: item.id },
-      create: { id: item.id, name: item.name, icon: item.icon, description: item.description ?? null },
+      create: {
+        id: item.id,
+        name: item.name,
+        icon: item.icon,
+        description: item.description ?? null,
+        ...bundledExerciseUrl(item.id),
+      },
       update: { archivedAt: null, name: item.name, icon: item.icon, description: item.description ?? null },
     });
   }

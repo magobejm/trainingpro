@@ -1,0 +1,52 @@
+-- Link bundled sport images. Only fills empty media so coach uploads are kept.
+UPDATE "sport" AS t
+SET "media_url" = v.url
+FROM (VALUES
+  ('American Swing', '/assets/exercises/7dfd0ace-d036-41cc-be08-dd62cf2d46c4.webp'),
+  ('Arrancada (Snatch)', '/assets/exercises/a05c8e4f-50a6-4dfb-84f2-84f5e8288af2.webp'),
+  ('Baloncesto', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000002.webp'),
+  ('Bear Complex', '/assets/exercises/14c9c2e2-eaae-4969-9e74-75693ec8d257.webp'),
+  ('Boxeo', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000009.webp'),
+  ('Ciclismo', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000005.webp'),
+  ('Crol (Estilo libre)', '/assets/exercises/10141e2d-7103-4e70-bc20-d21e8e9a5419.webp'),
+  ('Devil Press', '/assets/exercises/1cf2c247-0e0b-4229-9d3d-9c5dba699ab5.webp'),
+  ('Dos tiempos (Clean & Jerk)', '/assets/exercises/96b3f1f8-f48e-4f82-b7b2-57897bc0ac71.webp'),
+  ('Double Unders', '/assets/exercises/9aeae9b6-9eb9-435a-b8bd-4c6028200ff8.webp'),
+  ('Dumbbell Box Step-overs', '/assets/exercises/63491424-803f-4626-a3fa-b16d8d528dbb.webp'),
+  ('Dumbbell Snatch', '/assets/exercises/c6504e0b-9a11-4a54-b9dd-214758e686fa.webp'),
+  ('Envión (Jerk)', '/assets/exercises/039e804c-9e14-47c6-b330-6bdbf59ce1da.webp'),
+  ('Espalda (Natación)', '/assets/exercises/19d950d1-66f2-4bae-92e1-37101e5e850c.webp'),
+  ('Fútbol', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000001.webp'),
+  ('Gimnasia', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000010.webp'),
+  ('Hang Clean', '/assets/exercises/274258e1-6f7b-4f9e-aa69-ef0323320d49.webp'),
+  ('Hang Snatch', '/assets/exercises/dc551949-4933-4875-b6ed-9672909355f7.webp'),
+  ('Kettlebell Snatch', '/assets/exercises/3ffd13be-3bb6-47a1-abfa-080456cbd60e.webp'),
+  ('Mariposa', '/assets/exercises/6cc6720d-5e10-4696-a4a7-132089bb416e.webp'),
+  ('Muscle Snatch', '/assets/exercises/619a01d7-22fb-47b8-9e46-84f6fd729d25.webp'),
+  ('Nado con aletas', '/assets/exercises/5c48f8ca-04f2-475f-b0ac-0d0422126b12.webp'),
+  ('Nado con palas', '/assets/exercises/0d515c6e-6280-443f-b15a-c5b6101ae420.webp'),
+  ('Nado con pull-buoy', '/assets/exercises/6efd5886-eede-468c-8939-b338a999fdca.webp'),
+  ('Natación', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000004.webp'),
+  ('Overhead Squat', '/assets/exercises/fd6bbc57-7559-483c-b205-c5d83756209f.webp'),
+  ('Padel', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000007.webp'),
+  ('Patada de crol con tabla', '/assets/exercises/9c22b394-ba0d-446f-9aa9-8692984be395.webp'),
+  ('Patada de mariposa (Delfín)', '/assets/exercises/4334c2e5-6f77-4df1-9c4c-0ccac7e8fc31.webp'),
+  ('Power Clean', '/assets/exercises/91f03e6d-803f-4194-8a52-89ba6518582e.webp'),
+  ('Power Snatch', '/assets/exercises/4bb0c5e1-0bb6-4f43-854b-b639fed129ca.webp'),
+  ('Rugby', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000011.webp'),
+  ('Running', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000006.webp'),
+  ('Salida desde bloque', '/assets/exercises/a33b5c77-e009-4d1a-9950-462ee547a845.webp'),
+  ('Shoulder to Overhead', '/assets/exercises/1d9c8184-cb77-4d8e-a06f-878095113987.webp'),
+  ('Sled Push (Trineo)', '/assets/exercises/90e9939c-72b7-498a-8081-b5694ca63722.webp'),
+  ('Split Jerk', '/assets/exercises/cd998204-cc1e-41d2-aeda-390eba9d5d7c.webp'),
+  ('Tenis', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000003.webp'),
+  ('Thrusters', '/assets/exercises/784b985a-37bc-44fc-860c-5c522aec9c78.webp'),
+  ('Tirón de arrancada / cargada', '/assets/exercises/0d6120fb-1ca8-4b36-99b0-cf8fe60938b5.webp'),
+  ('Triatlón', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000012.webp'),
+  ('Viraje de crol (Voltereta)', '/assets/exercises/dd06db10-550f-47b0-8b94-41acba145d67.webp'),
+  ('Voleibol', '/assets/exercises/c3d4e5f6-0003-4000-8000-000000000008.webp'),
+  ('Wall Ball Shots', '/assets/exercises/59b4201c-8497-400f-b18e-ca9f528fbaf7.webp')
+) AS v(name, url)
+WHERE t."name" = v.name
+  AND t."scope" = 'GLOBAL'
+  AND (t."media_url" IS NULL OR t."media_url" = '');

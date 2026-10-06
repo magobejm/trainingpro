@@ -12,6 +12,11 @@ export function bundledExerciseMedia(id: string): { mediaType: string; mediaUrl:
   return { mediaType: 'image', mediaUrl: `/assets/exercises/${id}.webp` };
 }
 
+export function bundledExerciseUrl(id: string): { mediaUrl: string } | Record<string, never> {
+  const media = bundledExerciseMedia(id);
+  return 'mediaUrl' in media ? { mediaUrl: media.mediaUrl } : {};
+}
+
 export function mapExercisesForSeed(exercises: any[]) {
   return {
     create: (exercises ?? []).map((e) => ({

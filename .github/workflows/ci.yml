@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @trainerpro/api db:generate
       - run: pnpm -r lint
       - run: pnpm -r typecheck
@@ -53,7 +53,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
-      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @trainerpro/api db:generate
       - run: pnpm --filter @trainerpro/api db:migrate:deploy
       - run: pnpm --filter @trainerpro/api db:migrate:status

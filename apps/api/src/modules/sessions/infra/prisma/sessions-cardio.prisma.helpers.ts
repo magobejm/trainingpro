@@ -5,6 +5,7 @@ import {
   plannedSetsJsonToInput,
   readPlannedSetsJson,
 } from '../../../../common/notes/session-note-snapshot';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { SessionPlannedSet } from '../../domain/session.entity';
 
@@ -59,7 +60,7 @@ export function mapCardioTemplateBlockSnapshot(block: {
   sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
   sortOrder: number;
   targetDistanceMeters: null | number;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
   workSeconds: number;
 }): CardioTemplateBlockSnapshot {
   const noteSnapshot = buildSessionNoteSnapshot({
@@ -78,7 +79,7 @@ export function mapCardioTemplateBlockSnapshot(block: {
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     targetDistanceMeters: block.targetDistanceMeters,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
     workSeconds: block.workSeconds,
   };
 }
@@ -97,7 +98,7 @@ export function mapCardioIntervalLog(row: {
   avgHeartRate: null | number;
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;
@@ -106,7 +107,7 @@ export function mapCardioIntervalLog(row: {
     avgHeartRate: row.avgHeartRate,
     distanceDoneMeters: row.distanceDoneMeters,
     durationSecondsDone: row.durationSecondsDone,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     intervalIndex: row.intervalIndex,
     restSecondsDone: row.restSecondsDone,
     sessionCardioBlockId: row.sessionCardioBlockId,
@@ -127,7 +128,7 @@ export function mapCardioSession(
       roundsPlanned: block.roundsPlanned,
       sortOrder: block.sortOrder,
       targetDistanceMeters: block.targetDistanceMeters,
-      targetRpe: block.targetRpe,
+      targetRpe: toRpeNumber(block.targetRpe),
       workSeconds: block.workSeconds,
     })),
     clientId: row.clientId,

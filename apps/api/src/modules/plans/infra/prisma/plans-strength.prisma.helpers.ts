@@ -10,9 +10,7 @@ export function mapDayCreate(day: PlanTemplateDayInput): Prisma.PlanDayCreateWit
   };
 }
 
-export function mapExerciseCreate(
-  exercise: PlanStrengthExerciseInput,
-): Prisma.PlanStrengthExerciseCreateWithoutDayInput {
+export function mapExerciseCreate(exercise: PlanStrengthExerciseInput): Prisma.PlanStrengthExerciseCreateWithoutDayInput {
   return {
     displayName: exercise.displayName.trim(),
     fieldModes: {
@@ -29,7 +27,7 @@ export function mapExerciseCreate(
     restSeconds: exercise.restSeconds ?? 0,
     setsPlanned: exercise.setsPlanned ?? null,
     targetRir: exercise.targetRir ?? null,
-    targetRpe: exercise.targetRpe ?? null,
+    targetRpe: toDecimal(exercise.targetRpe),
     sortOrder: exercise.sortOrder,
     weightRangeMaxKg: toDecimal(exercise.weightRangeMaxKg),
     weightRangeMinKg: toDecimal(exercise.weightRangeMinKg),
@@ -43,9 +41,7 @@ export function connectExercise(exerciseLibraryId: null | string | undefined) {
   return { connect: { id: exerciseLibraryId } };
 }
 
-export function normalizePerSetRanges(
-  exercise: PlanStrengthExerciseInput,
-): Prisma.InputJsonValue | undefined {
+export function normalizePerSetRanges(exercise: PlanStrengthExerciseInput): Prisma.InputJsonValue | undefined {
   if (!exercise.perSetWeightRanges || exercise.perSetWeightRanges.length === 0) {
     return undefined;
   }
@@ -92,9 +88,7 @@ export function mapTemplateDay(
   };
 }
 
-export function mapTemplateExercise(
-  exercise: Prisma.PlanStrengthExerciseGetPayload<{ include: { fieldModes: true } }>,
-) {
+export function mapTemplateExercise(exercise: Prisma.PlanStrengthExerciseGetPayload<{ include: { fieldModes: true } }>) {
   return {
     displayName: exercise.displayName,
     exerciseLibraryId: exercise.exerciseLibraryId,
@@ -115,7 +109,7 @@ export function mapTemplateExercise(
       restSeconds: exercise.restSeconds,
       setsPlanned: exercise.setsPlanned,
       targetRir: exercise.targetRir,
-      targetRpe: exercise.targetRpe,
+      targetRpe: toNumber(exercise.targetRpe),
     },
     sortOrder: exercise.sortOrder,
   };

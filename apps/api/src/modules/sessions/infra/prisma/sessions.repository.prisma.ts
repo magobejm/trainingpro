@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Role, SessionStatus } from '@prisma/client';
 import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
@@ -186,7 +187,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       if (!byDate.has(key)) {
         byDate.set(key, {
           effortRir: r.effortRir,
-          effortRpe: r.effortRpe,
+          effortRpe: toRpeNumber(r.effortRpe),
           repsDone: r.repsDone,
           sessionDate: r.session.sessionDate,
           weightDoneKg: r.weightDoneKg ? Number(r.weightDoneKg) : null,

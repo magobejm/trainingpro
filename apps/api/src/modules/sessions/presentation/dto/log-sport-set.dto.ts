@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 export class LogSportSetDto {
   static schema = z.object({
     durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
-    effortRir: z.number().int().min(0).max(10).nullable().optional(),
-    effortRpe: z.number().int().min(1).max(10).nullable().optional(),
+    effortRir: rirIntSchema,
+    effortRpe: rpeHalfSchema,
     heartRateDone: z.number().int().min(30).max(250).nullable().optional(),
     hrMaxPctDone: z.number().int().min(0).max(100).nullable().optional(),
     hrReservePctDone: z.number().int().min(0).max(100).nullable().optional(),

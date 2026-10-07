@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 const blockTypeSchema = z.enum(['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport']);
 
@@ -21,8 +22,8 @@ const itemSchema = z.object({
   setsPlanned: z.number().int().min(1).max(50).nullable().optional(),
   sortOrder: z.number().int().min(0).max(300),
   sportLibraryId: z.string().uuid().nullable().optional(),
-  targetRir: z.number().int().min(0).max(10).nullable().optional(),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRir: rirIntSchema,
+  targetRpe: rpeHalfSchema,
   mobilityExerciseLibraryId: z.string().uuid().nullable().optional(),
   workSeconds: z.number().int().min(0).max(36000).nullable().optional(),
 });

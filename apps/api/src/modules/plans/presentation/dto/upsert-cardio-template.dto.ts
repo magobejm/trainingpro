@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 const nullableNumber = z.number().int().min(0).max(200000).nullable().optional();
 
@@ -18,7 +19,7 @@ const cardioBlockSchema = z.object({
   roundsPlanned: z.number().int().min(1).max(100).optional(),
   sortOrder: z.number().int().min(0).max(200),
   targetDistanceMeters: nullableNumber,
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
   workSeconds: z.number().int().min(1).max(7200),
 });
 

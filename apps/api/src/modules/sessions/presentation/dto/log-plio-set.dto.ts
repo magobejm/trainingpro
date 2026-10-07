@@ -1,9 +1,10 @@
 import { z } from 'zod';
+import { rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 export class LogPlioSetDto {
   static schema = z.object({
     durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
-    effortRpe: z.number().int().min(1).max(10).nullable().optional(),
+    effortRpe: rpeHalfSchema,
     repsDone: z.number().int().min(0).max(200).nullable().optional(),
     sessionPlioBlockId: z.string().uuid(),
     setIndex: z.number().int().min(1).max(100),

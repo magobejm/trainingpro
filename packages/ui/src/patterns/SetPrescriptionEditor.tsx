@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { sanitizeRirInput, sanitizeRpeInput } from './effort-input';
 import type { FieldModeValue } from './FieldModeControl';
 
 export type SetRange = {
@@ -117,14 +118,14 @@ function GlobalSetRow2(props: Props) {
         label={props.labels.targetRpe}
         mode={props.globalModes.targetRpe}
         onChangeMode={(mode) => props.onChangeGlobalMode('targetRpe', mode)}
-        onChangeValue={(value) => props.onChangeGlobalValue('targetRpe', value)}
+        onChangeValue={(value) => props.onChangeGlobalValue('targetRpe', sanitizeRpeInput(value))}
         value={props.globalValues.targetRpe}
       />
       <ModeField
         label={props.labels.targetRir}
         mode={props.globalModes.targetRir}
         onChangeMode={(mode) => props.onChangeGlobalMode('targetRir', mode)}
-        onChangeValue={(value) => props.onChangeGlobalValue('targetRir', value)}
+        onChangeValue={(value) => props.onChangeGlobalValue('targetRir', sanitizeRirInput(value))}
         value={props.globalValues.targetRir}
       />
     </View>
@@ -188,12 +189,7 @@ function Field(props: { label: string; onChange: (value: string) => void; value:
   return (
     <View style={styles.field}>
       <Text style={styles.fieldLabel}>{props.label}</Text>
-      <TextInput
-        keyboardType="numeric"
-        onChangeText={props.onChange}
-        style={styles.input}
-        value={props.value}
-      />
+      <TextInput keyboardType="numeric" onChangeText={props.onChange} style={styles.input} value={props.value} />
     </View>
   );
 }

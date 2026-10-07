@@ -1,6 +1,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { type Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../../progress/domain/progress.models';
 import { aggregateCardioWeekly } from '../../../progress/domain/metrics/cardio-weekly.metric';
@@ -108,7 +109,7 @@ export class ExportWeeklyPdfUseCase {
       avgHeartRate: row.avgHeartRate,
       distanceDoneMeters: row.distanceDoneMeters,
       durationSecondsDone: row.durationSecondsDone,
-      effortRpe: row.effortRpe,
+      effortRpe: toRpeNumber(row.effortRpe),
       methodType: map.get(row.sessionCardioBlock.sourceCardioMethodId ?? '') ?? 'UNKNOWN',
       sessionDate: row.session.sessionDate,
     }));
@@ -190,11 +191,11 @@ function readDurationSeconds(
 }
 
 function readSessionEffort(
-  setLogs: Array<{ effortRpe: null | number }>,
-  intervalLogs: Array<{ effortRpe: null | number }>,
+  setLogs: Array<{ effortRpe: Prisma.Decimal | null | number }>,
+  intervalLogs: Array<{ effortRpe: Prisma.Decimal | null | number }>,
 ): null | number {
   const values = [...setLogs, ...intervalLogs]
-    .map((row) => row.effortRpe)
+    .map((row) => toRpeNumber(row.effortRpe))
     .filter((value): value is number => value !== null);
   if (values.length === 0) {
     return null;

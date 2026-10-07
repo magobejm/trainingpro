@@ -1,3 +1,4 @@
+import { LogSetDto } from '../../src/modules/sessions/presentation/dto/log-set.dto';
 import { LogIntervalDto } from '../../src/modules/sessions/presentation/dto/log-interval.dto';
 import { LogMobilitySetDto } from '../../src/modules/sessions/presentation/dto/log-mobility-set.dto';
 import { LogPlioSetDto } from '../../src/modules/sessions/presentation/dto/log-plio-set.dto';
@@ -5,7 +6,19 @@ import { LogSportSetDto } from '../../src/modules/sessions/presentation/dto/log-
 
 const BLOCK_ID = '11111111-1111-4111-8111-111111111111';
 
+const SESSION_ITEM_ID = '22222222-2222-4222-8222-222222222222';
+
 describe('log set variable DTOs', () => {
+  it('accepts half-step RPE and integer RIR, and rejects the rest', () => {
+    const base = { repsDone: 8, sessionItemId: SESSION_ITEM_ID, setIndex: 1, weightDoneKg: 40 };
+    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7.5, effortRir: 2 }).success).toBe(true);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7 }).success).toBe(true);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7.3 }).success).toBe(false);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 10.5 }).success).toBe(false);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRir: 1.5 }).success).toBe(false);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRir: 11 }).success).toBe(false);
+  });
+
   it('accepts plio durationSecondsDone', () => {
     const result = LogPlioSetDto.schema.safeParse({
       durationSecondsDone: 12,

@@ -1,13 +1,17 @@
+import { sanitizeRirInput, sanitizeRpeInput } from '@trainerpro/ui';
 import type { DraftSet } from '../../RoutinePlanner.types';
 
-export type SeriesNumericMode = 'integer' | 'weight' | 'rpeHalf';
+export type SeriesNumericMode = 'integer' | 'rir' | 'weight' | 'rpeHalf';
 
 const PARTIAL_DECIMAL = /^(\d+([.,]\d*)?|[.,]\d*)?$/;
 const INTEGER_ONLY = /^\d*$/;
 
 export function isAllowedNumericInput(text: string, mode: SeriesNumericMode): boolean {
   if (text === '') return true;
-  return mode === 'integer' ? INTEGER_ONLY.test(text) : PARTIAL_DECIMAL.test(text);
+  if (mode === 'integer') return INTEGER_ONLY.test(text);
+  if (mode === 'rir') return sanitizeRirInput(text) === text;
+  if (mode === 'rpeHalf') return sanitizeRpeInput(text) === text;
+  return PARTIAL_DECIMAL.test(text);
 }
 
 export function parseDecimalInput(text: string): number | undefined {
@@ -32,7 +36,7 @@ export function isValidRpeHalf(value: number): boolean {
 }
 
 export function formatStoredNumber(value: number, mode: SeriesNumericMode): string {
-  if (mode === 'integer') return String(Math.trunc(value));
+  if (mode === 'integer' || mode === 'rir') return String(Math.trunc(value));
   if (mode === 'rpeHalf') {
     return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.0$/, '');
   }
@@ -41,9 +45,10 @@ export function formatStoredNumber(value: number, mode: SeriesNumericMode): stri
 }
 
 export function parseAndValidateNumericInput(text: string, mode: SeriesNumericMode): number | undefined {
-  if (mode === 'integer') {
+  if (mode === 'integer' || mode === 'rir') {
     const trimmed = text.trim();
     if (!trimmed) return undefined;
+    if (mode === 'rir' && sanitizeRirInput(trimmed) !== trimmed) return undefined;
     const parsed = parseInt(trimmed, 10);
     return Number.isFinite(parsed) ? parsed : undefined;
   }
@@ -58,5 +63,6 @@ export function parseAndValidateNumericInput(text: string, mode: SeriesNumericMo
 export function numericModeForField(key: keyof DraftSet): SeriesNumericMode {
   if (key === 'weightKg') return 'weight';
   if (key === 'rpe') return 'rpeHalf';
+  if (key === 'rir') return 'rir';
   return 'integer';
 }

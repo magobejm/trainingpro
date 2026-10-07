@@ -1,13 +1,8 @@
 import { FieldMode, Prisma } from '@prisma/client';
 import type { PlanCardioTemplate } from '../../domain/entities/cardio-template.entity';
-import type {
-  PlanCardioBlockInput,
-  PlanCardioTemplateDayInput,
-} from '../../domain/plan-cardio.input';
+import type { PlanCardioBlockInput, PlanCardioTemplateDayInput } from '../../domain/plan-cardio.input';
 
-export function mapCardioDayCreate(
-  day: PlanCardioTemplateDayInput,
-): Prisma.PlanDayCreateWithoutTemplateInput {
+export function mapCardioDayCreate(day: PlanCardioTemplateDayInput): Prisma.PlanDayCreateWithoutTemplateInput {
   return {
     cardioBlocks: { create: day.cardioBlocks.map(mapCardioBlockCreate) },
     dayIndex: day.dayIndex,
@@ -44,9 +39,7 @@ export function cardioTemplateInclude() {
   };
 }
 
-function mapCardioBlockCreate(
-  block: PlanCardioBlockInput,
-): Prisma.PlanCardioBlockCreateWithoutDayInput {
+function mapCardioBlockCreate(block: PlanCardioBlockInput): Prisma.PlanCardioBlockCreateWithoutDayInput {
   return {
     displayName: block.displayName.trim(),
     fieldModes: {
@@ -61,14 +54,12 @@ function mapCardioBlockCreate(
     roundsPlanned: block.roundsPlanned ?? 1,
     sortOrder: block.sortOrder,
     targetDistanceMeters: block.targetDistanceMeters ?? null,
-    targetRpe: block.targetRpe ?? null,
+    targetRpe: block.targetRpe == null ? null : new Prisma.Decimal(block.targetRpe),
     workSeconds: block.workSeconds,
   };
 }
 
-function mapCardioDay(
-  day: Prisma.PlanDayGetPayload<{ include: { cardioBlocks: { include: { fieldModes: true } } } }>,
-) {
+function mapCardioDay(day: Prisma.PlanDayGetPayload<{ include: { cardioBlocks: { include: { fieldModes: true } } } }>) {
   return {
     cardioBlocks: day.cardioBlocks.map(mapCardioBlock),
     dayIndex: day.dayIndex,
@@ -77,9 +68,7 @@ function mapCardioDay(
   };
 }
 
-function mapCardioBlock(
-  block: Prisma.PlanCardioBlockGetPayload<{ include: { fieldModes: true } }>,
-) {
+function mapCardioBlock(block: Prisma.PlanCardioBlockGetPayload<{ include: { fieldModes: true } }>) {
   return {
     cardioMethodLibraryId: block.cardioMethodLibraryId,
     displayName: block.displayName,
@@ -93,7 +82,7 @@ function mapCardioBlock(
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     targetDistanceMeters: block.targetDistanceMeters,
-    targetRpe: block.targetRpe,
+    targetRpe: block.targetRpe == null ? null : Number(block.targetRpe),
     workSeconds: block.workSeconds,
   };
 }

@@ -38,7 +38,7 @@ import { formatRestLabel } from './session-completion.utils';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
 import { RestTimerOverlay } from './RestTimerOverlay';
 import type { RestState } from './session-rest.types';
-import { ScaleModal } from './ScaleModal';
+import { sanitizeRirInput, sanitizeRpeInput } from './effort-input.utils';
 import { RomScaleModal } from './RomScaleModal';
 import { isRomScaleValue } from './rom-scale.utils';
 
@@ -65,7 +65,6 @@ type ActiveExerciseScreenProps = {
   restState: RestState | null;
 };
 
-type ScaleState = { kind: 'rpe' | 'rir'; setIndex: number } | null;
 type RomState = { setIndex: number } | null;
 
 function emptyRow(): Record<SetFieldKey, string> {
@@ -90,7 +89,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [showNotes, setShowNotes] = useState(false);
   const [showPrevious, setShowPrevious] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const [scaleState, setScaleState] = useState<ScaleState>(null);
   const [romState, setRomState] = useState<RomState>(null);
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
   const [finishing, setFinishing] = useState(false);
@@ -156,19 +154,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     } catch {
       setFinishing(false);
     }
-  };
-
-  const handleScaleSave = (value: number) => {
-    if (!scaleState) return;
-    const key = scaleState.kind === 'rpe' ? 'rpe' : 'rir';
-    setDraftValues((current) => ({
-      ...current,
-      [scaleState.setIndex]: {
-        ...(current[scaleState.setIndex] ?? emptyRow()),
-        [key]: String(value),
-      },
-    }));
-    setScaleState(null);
   };
 
   const handleRomSave = (value: string) => {
@@ -284,7 +269,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                         }))
                       }
                       onOpenRom={() => setRomState({ setIndex })}
-                      onOpenScale={() => setScaleState({ kind: column.scale === 'rpe' ? 'rpe' : 'rir', setIndex })}
                       target={readTargetValue(props.item, setIndex, column.key)}
                     />
                   ))}
@@ -320,17 +304,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           )}
         </View>
 
-        <ScaleModal
-          kind={scaleState?.kind ?? 'rpe'}
-          value={Number(
-            draftValues[scaleState?.setIndex ?? 1]?.[scaleState?.kind === 'rpe' ? 'rpe' : 'rir'] ??
-              (scaleState?.kind === 'rpe' ? 8 : 2),
-          )}
-          visible={scaleState != null}
-          onChange={() => {}}
-          onClose={() => setScaleState(null)}
-          onSave={handleScaleSave}
-        />
         <RomScaleModal
           value={draftValues[romState?.setIndex ?? 1]?.rom ?? ''}
           visible={romState != null}
@@ -436,25 +409,41 @@ function SetColumnCell(props: {
   draft: string;
   onChange: (value: string) => void;
   onOpenRom: () => void;
-  onOpenScale: () => void;
   target: string;
 }): React.JSX.Element {
   const { t } = useTranslation();
-  const isScale = props.column.scale === 'rpe' || props.column.scale === 'rir';
+  const isRpe = props.column.scale === 'rpe';
+  const isRir = props.column.scale === 'rir';
   const isRom = props.column.scale === 'rom';
   const romLabel = isRomScaleValue(props.draft) ? t(`mobile.client.exercise.rom.${props.draft}`) : props.draft;
+  const onChangeText = (value: string) => {
+    if (isRpe) {
+      props.onChange(sanitizeRpeInput(value));
+      return;
+    }
+    if (isRir) {
+      props.onChange(sanitizeRirInput(value));
+      return;
+    }
+    props.onChange(value);
+  };
   return (
     <View style={styles.column}>
       <Text style={styles.columnLabel}>{props.column.label}</Text>
       <Text style={styles.targetValue}>{props.target}</Text>
-      {isScale || isRom ? (
-        <Pressable style={styles.scaleInput} onPress={isRom ? props.onOpenRom : props.onOpenScale}>
-          <Text style={styles.scaleInputText}>{(isRom ? romLabel : props.draft) || '-'}</Text>
+      {isRom ? (
+        <Pressable style={styles.scaleInput} onPress={props.onOpenRom}>
+          <Text style={styles.scaleInputText}>{romLabel || '-'}</Text>
         </Pressable>
       ) : props.column.key === 'reps' && props.column.label === '—' ? (
         <Text style={styles.scaleInputText}>{'—'}</Text>
       ) : (
-        <TextInput keyboardType={'numeric'} onChangeText={props.onChange} style={styles.input} value={props.draft} />
+        <TextInput
+          keyboardType={isRpe ? 'decimal-pad' : isRir ? 'number-pad' : 'numeric'}
+          onChangeText={onChangeText}
+          style={styles.input}
+          value={props.draft}
+        />
       )}
     </View>
   );

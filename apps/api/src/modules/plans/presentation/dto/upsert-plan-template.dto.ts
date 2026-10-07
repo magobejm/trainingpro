@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 const nullableNumber = z.number().min(0).max(5000).nullable().optional();
 
@@ -24,8 +25,8 @@ const exerciseSchema = z.object({
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   setsPlanned: z.number().int().min(1).max(30).nullable().optional(),
   sortOrder: z.number().int().min(0).max(200),
-  targetRir: z.number().int().min(0).max(10).nullable().optional(),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRir: rirIntSchema,
+  targetRpe: rpeHalfSchema,
   weightRangeMaxKg: nullableNumber,
   weightRangeMinKg: nullableNumber,
 });

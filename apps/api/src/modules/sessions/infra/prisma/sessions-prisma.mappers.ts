@@ -8,6 +8,7 @@ import {
   type PlanSetRow,
   type RoutineBlockPrescription,
 } from '../../../../common/plan/client-routine-set.mapper';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { ClientRoutineExercise } from '../../../clients/domain/client-routine';
 import type {
   SessionIsometricSetLog,
@@ -202,7 +203,7 @@ export function mapSessionPlioCreate(block: TemplatePlioSnapshot): Prisma.Sessio
     sourcePlioExerciseId: block.plioExerciseLibraryId,
     workSeconds: block.workSeconds,
     restSeconds: block.restSeconds,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -219,7 +220,7 @@ export function mapSessionMobilityCreate(
     sourceMobilityExerciseId: block.mobilityExerciseLibraryId,
     workSeconds: block.workSeconds,
     restSeconds: block.restSeconds,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -235,7 +236,7 @@ export function mapSessionIsometricCreate(
     setsPlanned: block.setsPlanned,
     sortOrder: block.sortOrder,
     sourceIsometricExerciseId: block.isometricExerciseLibraryId,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -248,7 +249,7 @@ export function mapSessionSportCreate(block: TemplateSportSnapshot): Prisma.Sess
     plannedSetsJson: toInputJson(block.plannedSetsJson),
     sortOrder: block.sortOrder,
     sourceSportId: block.sportLibraryId,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -265,7 +266,7 @@ export function mapTemplateExerciseSnapshot(exercise: {
   setsPlanned: null | number;
   sortOrder: number;
   targetRir: null | number;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
   weightRangeMaxKg: Prisma.Decimal | null;
   weightRangeMinKg: Prisma.Decimal | null;
 }): TemplateExerciseSnapshot {
@@ -288,7 +289,7 @@ export function mapTemplateExerciseSnapshot(exercise: {
       restSeconds: exercise.restSeconds,
       setsPlanned: exercise.setsPlanned,
       targetRir: exercise.targetRir,
-      targetRpe: exercise.targetRpe,
+      targetRpe: toRpeNumber(exercise.targetRpe),
       weightRangeMaxKg: exercise.weightRangeMaxKg,
       weightRangeMinKg: exercise.weightRangeMinKg,
     }),
@@ -298,7 +299,7 @@ export function mapTemplateExerciseSnapshot(exercise: {
     setsPlanned: exercise.setsPlanned,
     sortOrder: exercise.sortOrder,
     targetRir: exercise.targetRir,
-    targetRpe: exercise.targetRpe,
+    targetRpe: toRpeNumber(exercise.targetRpe),
     weightRangeMaxKg: exercise.weightRangeMaxKg,
     weightRangeMinKg: exercise.weightRangeMinKg,
   };
@@ -314,7 +315,7 @@ export function mapTemplatePlioSnapshot(block: {
   sortOrder: number;
   workSeconds: number;
   restSeconds: number;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
 }): TemplatePlioSnapshot {
   const noteSnapshot = buildSessionNoteSnapshot({
     coachInstructions: block.libraryPlioExercise?.coachInstructions ?? null,
@@ -329,14 +330,14 @@ export function mapTemplatePlioSnapshot(block: {
       notes: block.notes,
       restSeconds: block.restSeconds,
       setsPlanned: block.roundsPlanned,
-      targetRpe: block.targetRpe,
+      targetRpe: toRpeNumber(block.targetRpe),
     }),
     plioExerciseLibraryId: block.plioExerciseLibraryId,
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     workSeconds: block.workSeconds,
     restSeconds: block.restSeconds,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -350,7 +351,7 @@ export function mapTemplateMobilitySnapshot(block: {
   sortOrder: number;
   workSeconds: number;
   restSeconds: number;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
 }): TemplateMobilitySnapshot {
   const noteSnapshot = buildSessionNoteSnapshot({
     coachInstructions: block.libraryMobilityExercise?.coachInstructions ?? null,
@@ -366,13 +367,13 @@ export function mapTemplateMobilitySnapshot(block: {
       notes: block.notes,
       restSeconds: block.restSeconds,
       setsPlanned: block.roundsPlanned,
-      targetRpe: block.targetRpe,
+      targetRpe: toRpeNumber(block.targetRpe),
     }),
     roundsPlanned: block.roundsPlanned,
     sortOrder: block.sortOrder,
     workSeconds: block.workSeconds,
     restSeconds: block.restSeconds,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -385,7 +386,7 @@ export function mapTemplateIsometricSnapshot(block: {
   sets: PlanSetRow[];
   setsPlanned: null | number;
   sortOrder: number;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
 }): TemplateIsometricSnapshot {
   const noteSnapshot = buildSessionNoteSnapshot({
     coachInstructions: block.libraryIsometricExercise?.coachInstructions ?? null,
@@ -401,12 +402,12 @@ export function mapTemplateIsometricSnapshot(block: {
       notes: block.notes,
       restSeconds: block.restSeconds,
       setsPlanned: block.setsPlanned,
-      targetRpe: block.targetRpe,
+      targetRpe: toRpeNumber(block.targetRpe),
     }),
     restSeconds: block.restSeconds,
     setsPlanned: block.setsPlanned,
     sortOrder: block.sortOrder,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
@@ -418,7 +419,7 @@ export function mapTemplateSportSnapshot(block: {
   sets: PlanSetRow[];
   sortOrder: number;
   sportLibraryId: null | string;
-  targetRpe: null | number;
+  targetRpe: Prisma.Decimal | null | number;
 }): TemplateSportSnapshot {
   const noteSnapshot = buildSessionNoteSnapshot({
     coachInstructions: block.librarySport?.coachInstructions ?? null,
@@ -432,17 +433,17 @@ export function mapTemplateSportSnapshot(block: {
     notes: noteSnapshot.notes,
     plannedSetsJson: buildStoredPlannedSetsJson('sport', block.sets, {
       notes: block.notes,
-      targetRpe: block.targetRpe,
+      targetRpe: toRpeNumber(block.targetRpe),
     }),
     sortOrder: block.sortOrder,
     sportLibraryId: block.sportLibraryId,
-    targetRpe: block.targetRpe,
+    targetRpe: toRpeNumber(block.targetRpe),
   };
 }
 
 export function mapSetLog(row: {
   effortRir: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
   sessionItemId: string;
   setIndex: number;
@@ -450,7 +451,7 @@ export function mapSetLog(row: {
 }): SessionSetLog {
   return {
     effortRir: row.effortRir,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
     sessionItemId: row.sessionItemId,
     setIndex: row.setIndex,
@@ -460,7 +461,7 @@ export function mapSetLog(row: {
 
 export function mapPlioSetLog(row: {
   durationSecondsDone: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
   sessionPlioBlockId: string;
   setIndex: number;
@@ -468,7 +469,7 @@ export function mapPlioSetLog(row: {
 }): SessionPlioSetLog {
   return {
     durationSecondsDone: row.durationSecondsDone,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
     sessionPlioBlockId: row.sessionPlioBlockId,
     setIndex: row.setIndex,
@@ -477,7 +478,7 @@ export function mapPlioSetLog(row: {
 }
 
 export function mapMobilitySetLog(row: {
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
   romDone: null | string;
   sessionMobilityBlockId: string;
@@ -485,7 +486,7 @@ export function mapMobilitySetLog(row: {
   weightDoneKg: Prisma.Decimal | null;
 }): SessionMobilitySetLog {
   return {
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
     romDone: row.romDone,
     sessionMobilityBlockId: row.sessionMobilityBlockId,
@@ -496,14 +497,14 @@ export function mapMobilitySetLog(row: {
 
 export function mapIsometricSetLog(row: {
   durationSecondsDone: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   sessionIsometricBlockId: string;
   setIndex: number;
   weightDoneKg: Prisma.Decimal | null;
 }): SessionIsometricSetLog {
   return {
     durationSecondsDone: row.durationSecondsDone,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     sessionIsometricBlockId: row.sessionIsometricBlockId,
     setIndex: row.setIndex,
     weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
@@ -513,13 +514,13 @@ export function mapIsometricSetLog(row: {
 export function mapSportLog(row: {
   avgHeartRate: null | number;
   durationMinutesDone: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   sessionSportBlockId: string;
 }): SessionSportLog {
   return {
     avgHeartRate: row.avgHeartRate,
     durationMinutesDone: row.durationMinutesDone,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     sessionSportBlockId: row.sessionSportBlockId,
   };
 }
@@ -527,7 +528,7 @@ export function mapSportLog(row: {
 export function mapSportSetLog(row: {
   durationSecondsDone: null | number;
   effortRir: null | number;
-  effortRpe: null | number;
+  effortRpe: Prisma.Decimal | null | number;
   heartRateDone: null | number;
   hrMaxPctDone: null | number;
   hrReservePctDone: null | number;
@@ -541,7 +542,7 @@ export function mapSportSetLog(row: {
   return {
     durationSecondsDone: row.durationSecondsDone,
     effortRir: row.effortRir,
-    effortRpe: row.effortRpe,
+    effortRpe: toRpeNumber(row.effortRpe),
     heartRateDone: row.heartRateDone,
     hrMaxPctDone: row.hrMaxPctDone,
     hrReservePctDone: row.hrReservePctDone,

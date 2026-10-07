@@ -2,6 +2,7 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   ExercisePrQuery,
@@ -62,7 +63,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       avgHeartRate: row.avgHeartRate,
       distanceDoneMeters: row.distanceDoneMeters,
       durationSecondsDone: row.durationSecondsDone,
-      effortRpe: row.effortRpe,
+      effortRpe: toRpeNumber(row.effortRpe),
       methodType: methodMap.get(row.sessionCardioBlock.sourceCardioMethodId ?? '') ?? 'UNKNOWN',
       sessionDate: row.session.sessionDate,
     }));
@@ -187,7 +188,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
           setIndex: s.setIndex,
           repsDone: s.repsDone,
           weightDoneKg: s.weightDoneKg !== null ? Number(s.weightDoneKg) : null,
-          effortRpe: s.effortRpe,
+          effortRpe: toRpeNumber(s.effortRpe),
         })),
       ),
     );
@@ -408,7 +409,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       const reps = log.repsDone;
       const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
       if (!exerciseId || reps === null || weight === null) continue;
-      const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+      const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
       if (e1rm === null) continue;
       const prev = priorBestByExercise.get(exerciseId) ?? Number.NEGATIVE_INFINITY;
       if (e1rm > prev) priorBestByExercise.set(exerciseId, e1rm);
@@ -448,7 +449,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       const reps = log.repsDone;
       const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
       if (!exerciseId || reps === null || weight === null) continue;
-      const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+      const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
       if (e1rm === null) continue;
 
       const prevBest = priorBestByExercise.get(exerciseId);
@@ -513,8 +514,9 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
               totalInol += r / 25;
               inolCount++;
             }
-            if (log.effortRpe !== null) {
-              totalRpe += log.effortRpe;
+            const effortRpe = toRpeNumber(log.effortRpe);
+            if (effortRpe !== null) {
+              totalRpe += effortRpe;
               rpeCount++;
             }
           }
@@ -635,22 +637,24 @@ function microcycleBlockStartIso(sessionDateYmd: string, rangeFromYmd: string, c
   return base.toISOString().slice(0, 10);
 }
 
+type StoredRpe = Prisma.Decimal | number | null;
+
 type SessionProgressRow = {
   id: string;
   sessionDate: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
   client: { fcRest: number | null; fcMax: number | null } | null;
-  logs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: number | null }>;
-  intervalLogs: Array<{ durationSecondsDone: number | null; effortRpe: number | null; avgHeartRate: number | null }>;
-  plioLogs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: number | null }>;
-  mobilityLogs: Array<{ effortRpe: number | null }>;
+  logs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: StoredRpe }>;
+  intervalLogs: Array<{ durationSecondsDone: number | null; effortRpe: StoredRpe; avgHeartRate: number | null }>;
+  plioLogs: Array<{ repsDone: number | null; weightDoneKg: Prisma.Decimal | null; effortRpe: StoredRpe }>;
+  mobilityLogs: Array<{ effortRpe: StoredRpe }>;
   isometricLogs: Array<{
     durationSecondsDone: number | null;
     weightDoneKg: Prisma.Decimal | null;
-    effortRpe: number | null;
+    effortRpe: StoredRpe;
   }>;
-  sportLogs: Array<{ durationMinutesDone: number | null; effortRpe: number | null; avgHeartRate: number | null }>;
+  sportLogs: Array<{ durationMinutesDone: number | null; effortRpe: StoredRpe; avgHeartRate: number | null }>;
 };
 
 function sessionProgressSelect() {
@@ -688,8 +692,9 @@ function aggregateStrengthSetLogs(logs: SessionProgressRow['logs']): {
       totalInol += r / 25;
       inolCount++;
     }
-    if (log.effortRpe !== null) {
-      totalRpe += log.effortRpe;
+    const effortRpe = toRpeNumber(log.effortRpe);
+    if (effortRpe !== null) {
+      totalRpe += effortRpe;
       rpeCount++;
     }
   }
@@ -714,11 +719,11 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
   const durationMinutes = intervalDurationSeconds > 0 ? intervalDurationSeconds / 60 : null;
   const hrRows = session.intervalLogs.filter((l) => l.avgHeartRate !== null);
   const avgHr = hrRows.length > 0 ? Math.round(hrRows.reduce((s, l) => s + (l.avgHeartRate ?? 0), 0) / hrRows.length) : null;
-  const rpeRows = session.intervalLogs.filter((l) => l.effortRpe !== null);
+  const rpeValues = session.intervalLogs
+    .map((l) => toRpeNumber(l.effortRpe))
+    .filter((value): value is number => value !== null);
   const avgRpe =
-    rpeRows.length > 0
-      ? Math.round((rpeRows.reduce((s, l) => s + (l.effortRpe ?? 0), 0) / rpeRows.length) * 100) / 100
-      : null;
+    rpeValues.length > 0 ? Math.round((rpeValues.reduce((s, value) => s + value, 0) / rpeValues.length) * 100) / 100 : null;
   let trainingLoad: number | null = null;
   if (durationMinutes !== null && avgHr !== null) {
     const fcRest = session.client?.fcRest ?? 60;
@@ -752,7 +757,7 @@ function strengthE1rmStatsFromLogs(logs: SessionProgressRow['logs']): { sum: num
     const reps = log.repsDone;
     const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
     if (reps === null || weight === null) continue;
-    const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+    const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
     if (e1rm === null) continue;
     sum += e1rm;
     count++;
@@ -767,7 +772,7 @@ function avgIntensityPercentFromLogs(logs: SessionProgressRow['logs']): number |
     const reps = log.repsDone;
     const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
     if (reps === null || weight === null) continue;
-    const e1rm = estimateE1rm(weight, reps, log.effortRpe);
+    const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
     if (e1rm === null || e1rm <= 0) continue;
     sum += (weight / e1rm) * 100;
     count++;
@@ -870,8 +875,9 @@ function mapCategorySessionPlio(session: SessionProgressRow): SessionProgressPoi
     const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
     const r = log.repsDone ?? 0;
     ton += w * r;
-    if (log.effortRpe !== null) {
-      rpeSum += log.effortRpe;
+    const effortRpe = toRpeNumber(log.effortRpe);
+    if (effortRpe !== null) {
+      rpeSum += effortRpe;
       rpeN++;
     }
   }
@@ -899,8 +905,9 @@ function mapCategorySessionIsometric(session: SessionProgressRow): SessionProgre
     const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
     const sec = log.durationSecondsDone ?? 0;
     ton += w * (sec / 60);
-    if (log.effortRpe !== null) {
-      rpeSum += log.effortRpe;
+    const effortRpe = toRpeNumber(log.effortRpe);
+    if (effortRpe !== null) {
+      rpeSum += effortRpe;
       rpeN++;
     }
   }
@@ -921,7 +928,7 @@ function mapCategorySessionIsometric(session: SessionProgressRow): SessionProgre
 
 function mapCategorySessionMobility(session: SessionProgressRow): SessionProgressPoint {
   const baseDate = mapCategorySessionBase(session);
-  const rpeVals = session.mobilityLogs.map((l) => l.effortRpe).filter((v): v is number => v !== null);
+  const rpeVals = session.mobilityLogs.map((l) => toRpeNumber(l.effortRpe)).filter((v): v is number => v !== null);
   const avgRpe = rpeVals.length > 0 ? Math.round((rpeVals.reduce((a, b) => a + b, 0) / rpeVals.length) * 100) / 100 : null;
   return {
     ...baseDate,
@@ -947,11 +954,12 @@ function mapCategorySessionSport(session: SessionProgressRow): SessionProgressPo
   let durWeighted = 0;
   for (const log of session.sportLogs) {
     const dm = log.durationMinutesDone ?? 0;
-    const rpe = log.effortRpe ?? 0;
+    const rpe = toRpeNumber(log.effortRpe) ?? 0;
     abstractTonnage += dm * Math.max(1, rpe);
     inolAcc += (dm * rpe) / 10;
-    if (log.effortRpe !== null) {
-      rpeSum += log.effortRpe;
+    const effortRpe = toRpeNumber(log.effortRpe);
+    if (effortRpe !== null) {
+      rpeSum += effortRpe;
       rpeN++;
     }
     if (log.avgHeartRate !== null && dm > 0) {
@@ -1015,11 +1023,11 @@ function readDurationSeconds(
 }
 
 function readSessionEffort(
-  setLogs: Array<{ effortRpe: null | number }>,
-  intervalLogs: Array<{ effortRpe: null | number }>,
+  setLogs: Array<{ effortRpe: Prisma.Decimal | null | number }>,
+  intervalLogs: Array<{ effortRpe: Prisma.Decimal | null | number }>,
 ): null | number {
   const values = [...setLogs, ...intervalLogs]
-    .map((row) => row.effortRpe)
+    .map((row) => toRpeNumber(row.effortRpe))
     .filter((value): value is number => value !== null);
   if (values.length === 0) {
     return null;

@@ -6,6 +6,7 @@ import {
 } from '../../../../common/plan/plan-exercise-group.mapper';
 import { buildPlanDayPlannedSetsLookup } from '../../../../common/plan/plan-day-planned-sets.mapper';
 import { buildPlanDayLockedFieldsLookup } from '../../../../common/plan/read-locked-fields';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -49,7 +50,7 @@ export function mapSession(
     lockedFields: readLockedFields(item.sortOrder),
     logs: item.logs.map((L) => ({
       effortRir: L.effortRir,
-      effortRpe: L.effortRpe,
+      effortRpe: toRpeNumber(L.effortRpe),
       repsDone: L.repsDone,
       sessionItemId: L.sessionItemId,
       setIndex: L.setIndex,
@@ -64,7 +65,7 @@ export function mapSession(
     sortOrder: item.sortOrder,
     sourceExerciseId: item.sourceExerciseId,
     targetRir: item.targetRir,
-    targetRpe: item.targetRpe,
+    targetRpe: toRpeNumber(item.targetRpe),
     weightRangeMaxKg: item.weightRangeMaxKg ? Number(item.weightRangeMaxKg) : null,
     weightRangeMinKg: item.weightRangeMinKg ? Number(item.weightRangeMinKg) : null,
     youtubeUrl: null,
@@ -80,7 +81,7 @@ export function mapSession(
     logs: b.logs.map(
       (l): SessionPlioSetLog => ({
         durationSecondsDone: l.durationSecondsDone,
-        effortRpe: l.effortRpe,
+        effortRpe: toRpeNumber(l.effortRpe),
         repsDone: l.repsDone,
         sessionPlioBlockId: l.sessionPlioBlockId,
         setIndex: l.setIndex,
@@ -92,7 +93,7 @@ export function mapSession(
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe,
+    targetRpe: toRpeNumber(b.targetRpe),
     workSeconds: b.workSeconds,
     youtubeUrl: null,
   }));
@@ -106,7 +107,7 @@ export function mapSession(
     lockedFields: readLockedFields(b.sortOrder),
     logs: b.logs.map(
       (l): SessionMobilitySetLog => ({
-        effortRpe: l.effortRpe,
+        effortRpe: toRpeNumber(l.effortRpe),
         repsDone: l.repsDone,
         romDone: l.romDone,
         sessionMobilityBlockId: l.sessionMobilityBlockId,
@@ -119,7 +120,7 @@ export function mapSession(
     restSeconds: b.restSeconds,
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe,
+    targetRpe: toRpeNumber(b.targetRpe),
     workSeconds: b.workSeconds,
     youtubeUrl: null,
   }));
@@ -134,7 +135,7 @@ export function mapSession(
     logs: b.logs.map(
       (l): SessionIsometricSetLog => ({
         durationSecondsDone: l.durationSecondsDone,
-        effortRpe: l.effortRpe,
+        effortRpe: toRpeNumber(l.effortRpe),
         sessionIsometricBlockId: l.sessionIsometricBlockId,
         setIndex: l.setIndex,
         weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
@@ -145,7 +146,7 @@ export function mapSession(
     restSeconds: b.restSeconds ?? null,
     setsPlanned: b.setsPlanned,
     sortOrder: b.sortOrder,
-    targetRpe: b.targetRpe,
+    targetRpe: toRpeNumber(b.targetRpe),
     youtubeUrl: null,
   }));
 
@@ -155,7 +156,7 @@ export function mapSession(
       ? {
           avgHeartRate: rawLog.avgHeartRate,
           durationMinutesDone: rawLog.durationMinutesDone,
-          effortRpe: rawLog.effortRpe,
+          effortRpe: toRpeNumber(rawLog.effortRpe),
           sessionSportBlockId: rawLog.sessionSportBlockId,
         }
       : null;
@@ -174,7 +175,7 @@ export function mapSession(
         (l): SessionSportSetLog => ({
           durationSecondsDone: l.durationSecondsDone,
           effortRir: l.effortRir,
-          effortRpe: l.effortRpe,
+          effortRpe: toRpeNumber(l.effortRpe),
           heartRateDone: l.heartRateDone,
           hrMaxPctDone: l.hrMaxPctDone,
           hrReservePctDone: l.hrReservePctDone,
@@ -187,7 +188,7 @@ export function mapSession(
         }),
       ),
       sortOrder: b.sortOrder,
-      targetRpe: b.targetRpe,
+      targetRpe: toRpeNumber(b.targetRpe),
       youtubeUrl: null,
     };
   });
@@ -203,7 +204,7 @@ export function mapSession(
         avgHeartRate: l.avgHeartRate,
         distanceDoneMeters: l.distanceDoneMeters,
         durationSecondsDone: l.durationSecondsDone,
-        effortRpe: l.effortRpe,
+        effortRpe: toRpeNumber(l.effortRpe),
         intervalIndex: l.intervalIndex,
         restSecondsDone: l.restSecondsDone,
         sessionCardioBlockId: l.sessionCardioBlockId,
@@ -216,7 +217,7 @@ export function mapSession(
     roundsPlanned: b.roundsPlanned,
     sortOrder: b.sortOrder,
     targetDistanceMeters: b.targetDistanceMeters,
-    targetRpe: b.targetRpe,
+    targetRpe: toRpeNumber(b.targetRpe),
     workSeconds: b.workSeconds,
     youtubeUrl: null,
   }));

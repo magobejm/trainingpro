@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import Slider from '@react-native-community/slider';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
+import { completeRpeValue, sanitizeRpeInput } from './effort-input.utils';
 import {
   clampSessionRpe,
   DEFAULT_SESSION_RPE,
   formatSessionRpe,
-  SESSION_RPE_MAX,
-  SESSION_RPE_MIN,
   SESSION_RPE_STEP,
-  SESSION_RPE_STEPS,
   sessionRpeBand,
 } from './session-rpe.utils';
 
@@ -23,11 +20,12 @@ type Props = {
 
 export function SessionRpeModal(props: Props): React.JSX.Element {
   const { t } = useTranslation();
-  const [draft, setDraft] = useState(DEFAULT_SESSION_RPE);
+  const [draft, setDraft] = useState(formatSessionRpe(DEFAULT_SESSION_RPE));
+  const sessionRpe = completeRpeValue(draft);
 
   useEffect(() => {
     if (props.visible) {
-      setDraft(DEFAULT_SESSION_RPE);
+      setDraft(formatSessionRpe(DEFAULT_SESSION_RPE));
     }
   }, [props.visible]);
 
@@ -51,9 +49,12 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
             <SessionRpeCard draft={draft} onChange={setDraft} />
           </ScrollView>
           <Pressable
-            disabled={props.isSubmitting}
-            onPress={() => props.onSubmit(draft)}
-            style={[styles.saveBtn, props.isSubmitting ? styles.saveBtnDisabled : null]}
+            disabled={props.isSubmitting || sessionRpe == null}
+            onPress={() => {
+              if (sessionRpe == null) return;
+              props.onSubmit(sessionRpe);
+            }}
+            style={[styles.saveBtn, props.isSubmitting || sessionRpe == null ? styles.saveBtnDisabled : null]}
           >
             <Text style={styles.saveText}>{t('mobile.client.rpe.save')}</Text>
           </Pressable>
@@ -63,27 +64,35 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
   );
 }
 
-function SessionRpeCard(props: { draft: number; onChange: (value: number) => void }): React.JSX.Element {
+function SessionRpeCard(props: { draft: string; onChange: (value: string) => void }): React.JSX.Element {
   const { t } = useTranslation();
-  const band = sessionRpeBand(props.draft);
+  const current = completeRpeValue(props.draft) ?? DEFAULT_SESSION_RPE;
+  const band = sessionRpeBand(current);
   const label = t(`mobile.client.rpe.band.${band.key}.label`);
   const hint = t(`mobile.client.rpe.band.${band.key}.hint`);
+  const step = (delta: number) => {
+    const base = completeRpeValue(props.draft) ?? completeRpeValue(props.draft.replace(/[.,]$/, '')) ?? DEFAULT_SESSION_RPE;
+    props.onChange(formatSessionRpe(clampSessionRpe(base + delta)));
+  };
 
   return (
     <View style={styles.card}>
       <Text style={styles.question}>{t('mobile.client.rpe.question')}</Text>
       <Text style={styles.help}>{t('mobile.client.rpe.help')}</Text>
       <View style={styles.valueRow}>
-        <Pressable onPress={() => props.onChange(clampSessionRpe(props.draft - SESSION_RPE_STEP))} style={styles.stepBtn}>
+        <Pressable onPress={() => step(-SESSION_RPE_STEP)} style={styles.stepBtn}>
           <Text style={styles.stepText}>{'-0.5'}</Text>
         </Pressable>
         <View style={styles.valueWrap}>
-          <Text style={styles.value}>
-            {formatSessionRpe(props.draft)}
-            <Text style={styles.valueMax}>{' / 10'}</Text>
-          </Text>
+          <TextInput
+            keyboardType={'decimal-pad'}
+            onChangeText={(value) => props.onChange(sanitizeRpeInput(value))}
+            style={styles.value}
+            value={props.draft}
+          />
+          <Text style={styles.valueMax}>{'/ 10'}</Text>
         </View>
-        <Pressable onPress={() => props.onChange(clampSessionRpe(props.draft + SESSION_RPE_STEP))} style={styles.stepBtn}>
+        <Pressable onPress={() => step(SESSION_RPE_STEP)} style={styles.stepBtn}>
           <Text style={styles.stepText}>{'+0.5'}</Text>
         </Pressable>
       </View>
@@ -92,36 +101,6 @@ function SessionRpeCard(props: { draft: number; onChange: (value: number) => voi
           {`${label} • `}
           <Text style={styles.bandHint}>{hint}</Text>
         </Text>
-      </View>
-      <Slider
-        maximumTrackTintColor={LIGHT.indigoSoft}
-        maximumValue={SESSION_RPE_MAX}
-        minimumTrackTintColor={LIGHT.indigo}
-        minimumValue={SESSION_RPE_MIN}
-        onValueChange={(value) => props.onChange(clampSessionRpe(value))}
-        step={SESSION_RPE_STEP}
-        thumbTintColor={LIGHT.indigo}
-        value={props.draft}
-      />
-      <View style={styles.sliderLabels}>
-        <Text style={styles.sliderLabel}>{t('mobile.client.rpe.sliderMin')}</Text>
-        <Text style={styles.sliderLabel}>{t('mobile.client.rpe.sliderMid')}</Text>
-        <Text style={styles.sliderLabel}>{t('mobile.client.rpe.sliderMax')}</Text>
-      </View>
-      <Text style={styles.quickLabel}>{t('mobile.client.rpe.quickSelect')}</Text>
-      <View style={styles.chips}>
-        {SESSION_RPE_STEPS.map((value) => {
-          const selected = value === props.draft;
-          return (
-            <Pressable
-              key={value}
-              onPress={() => props.onChange(value)}
-              style={[styles.chip, selected ? styles.chipSelected : null]}
-            >
-              <Text style={[styles.chipText, selected ? styles.chipTextSelected : null]}>{formatSessionRpe(value)}</Text>
-            </Pressable>
-          );
-        })}
       </View>
     </View>
   );
@@ -145,18 +124,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  chip: {
-    backgroundColor: LIGHT.indigoSoft,
-    borderColor: LIGHT.indigoSoft,
-    borderRadius: 8,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  chipSelected: { backgroundColor: LIGHT.indigo, borderColor: LIGHT.indigo },
-  chipText: { color: LIGHT.text, fontSize: 12, fontWeight: '800' },
-  chipTextSelected: { color: LIGHT.textOnNavy },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   closeBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.accentSoft,
@@ -183,14 +150,6 @@ const styles = StyleSheet.create({
     width: 36,
   },
   question: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '800', marginBottom: 4 },
-  quickLabel: {
-    color: LIGHT.text,
-    fontSize: 10,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
   saveBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.indigo,
@@ -210,8 +169,6 @@ const styles = StyleSheet.create({
     padding: 24,
     width: '100%',
   },
-  sliderLabel: { color: LIGHT.indigo, fontSize: 10, fontWeight: '800' },
-  sliderLabels: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16, marginTop: 6 },
   stepBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.indigoSoft,
@@ -223,7 +180,14 @@ const styles = StyleSheet.create({
   stepText: { color: LIGHT.text, fontSize: 12, fontWeight: '800' },
   subtitle: { color: LIGHT.indigo, fontSize: 12, fontWeight: '600' },
   title: { color: LIGHT.textStrong, fontSize: 17, fontWeight: '800' },
-  value: { color: LIGHT.textStrong, fontSize: 32, fontWeight: '900' },
+  value: {
+    color: LIGHT.textStrong,
+    fontSize: 32,
+    fontWeight: '900',
+    minWidth: 72,
+    padding: 0,
+    textAlign: 'center',
+  },
   valueMax: { color: LIGHT.indigo, fontSize: 14, fontWeight: '800' },
   valueRow: {
     alignItems: 'center',

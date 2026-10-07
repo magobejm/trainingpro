@@ -1,15 +1,7 @@
 import { z } from 'zod';
+import { rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 const wellnessInt = z.number().int().min(1).max(10).nullable().optional();
-const sessionRpe = z
-  .number()
-  .min(1)
-  .max(10)
-  .refine((value) => Math.abs(value * 2 - Math.round(value * 2)) < 1e-8, {
-    message: 'RPE must use 0.5 increments',
-  })
-  .nullable()
-  .optional();
 
 export class FinishSessionDto {
   static schema = z.object({
@@ -18,7 +10,7 @@ export class FinishSessionDto {
     postFatigue: wellnessInt,
     postMood: wellnessInt,
     postPain: wellnessInt,
-    sessionRpe,
+    sessionRpe: rpeHalfSchema,
   });
 
   comment?: null | string;

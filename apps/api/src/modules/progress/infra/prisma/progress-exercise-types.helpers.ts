@@ -1,3 +1,5 @@
+import type { Prisma } from '@prisma/client';
+import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { ExerciseProgressQuery } from '../../domain/progress-repository.port';
 import type { ExerciseProgressPoint, PerformedExercisesResult } from '../../domain/progress.models';
@@ -11,11 +13,11 @@ const emptyHrFields = {
   plioEffort: null as number | null,
 };
 
-function avgRpeFromSets(sets: Array<{ effortRpe: number | null }>): number | null {
-  const rpeSets = sets.filter((r) => r.effortRpe !== null);
-  if (rpeSets.length === 0) return null;
-  const sum = rpeSets.reduce((acc, r) => acc + (r.effortRpe ?? 0), 0);
-  return Math.round((sum / rpeSets.length) * 10) / 10;
+function avgRpeFromSets(sets: Array<{ effortRpe: Prisma.Decimal | number | null }>): number | null {
+  const values = sets.map((r) => toRpeNumber(r.effortRpe)).filter((value): value is number => value !== null);
+  if (values.length === 0) return null;
+  const sum = values.reduce((acc, value) => acc + value, 0);
+  return Math.round((sum / values.length) * 10) / 10;
 }
 
 function buildSessionDate(d: Date): string {
@@ -85,7 +87,7 @@ export async function readCardioExerciseProgress(
     entry.totalSecs += dur;
     entry.totalDistanceMeters += row.distanceDoneMeters ?? 0;
     if (row.effortRpe !== null) {
-      entry.rpeSum += row.effortRpe;
+      entry.rpeSum += Number(row.effortRpe);
       entry.rpeCount++;
     }
     if (row.avgHeartRate !== null && dur > 0) {
@@ -298,7 +300,7 @@ export async function readSportProgress(
       sets: 1,
       totalReps,
       tonnage: 0,
-      avgRpe: row.effortRpe,
+      avgRpe: toRpeNumber(row.effortRpe),
       e1rm: null,
       inol: null,
       totalDurationSeconds: row.durationMinutesDone !== null ? row.durationMinutesDone * 60 : null,

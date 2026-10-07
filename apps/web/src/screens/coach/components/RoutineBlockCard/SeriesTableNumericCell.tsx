@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TextInput } from 'react-native';
+import { sanitizeRirInput, sanitizeRpeInput } from '@trainerpro/ui';
 import { st } from './SeriesTable.styles';
 import {
   formatStoredNumber,
@@ -45,6 +46,14 @@ export function SeriesTableNumericCell({ fieldKey, value, readOnly, placeholder,
       keyboardType={KB_NUMERIC}
       onBlur={commit}
       onChangeText={(text) => {
+        if (mode === 'rpeHalf') {
+          setRawText(sanitizeRpeInput(text));
+          return;
+        }
+        if (mode === 'rir') {
+          setRawText(sanitizeRirInput(text));
+          return;
+        }
         if (!isAllowedNumericInput(text, mode)) return;
         setRawText(text);
       }}

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effort.schema';
 
 const fieldModeSchema = z.object({
   fieldKey: z.string().trim().min(1).max(80),
@@ -15,23 +16,13 @@ const perSetRangeSchema = z.object({
   minKg: nullableNumber,
 });
 
-const rpeHalfSchema = z
-  .number()
-  .min(1)
-  .max(10)
-  .refine((value) => Math.abs(value * 2 - Math.round(value * 2)) < 1e-9, {
-    message: 'RPE must use 0.5 increments',
-  })
-  .nullable()
-  .optional();
-
 // Per-series schemas
 const strengthSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: rpeHalfSchema,
   weightKg: z.number().min(0).max(9999).nullable().optional(),
-  rir: z.number().int().min(0).max(10).nullable().optional(),
+  rir: rirIntSchema,
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   advancedTechnique: z.string().max(40).nullable().optional(),
   note: z.string().max(1000).nullable().optional(),
@@ -86,7 +77,7 @@ const sportSetSchema = z.object({
   durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: rpeHalfSchema,
-  rir: z.number().int().min(0).max(10).nullable().optional(),
+  rir: rirIntSchema,
   weightKg: z.number().min(0).max(9999).nullable().optional(),
   fcMaxPct: z.number().int().min(0).max(100).nullable().optional(),
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
@@ -112,8 +103,8 @@ const strengthSchema = z.object({
   sets: z.array(strengthSetSchema).max(30).optional().default([]),
   setsPlanned: z.number().int().min(1).max(30).nullable().optional(),
   sortOrder: z.number().int().min(0).max(200),
-  targetRir: z.number().int().min(0).max(10).nullable().optional(),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRir: rirIntSchema,
+  targetRpe: rpeHalfSchema,
   weightRangeMaxKg: nullableNumber,
   weightRangeMinKg: nullableNumber,
 });
@@ -131,7 +122,7 @@ const cardioSchema = z.object({
   sets: z.array(cardioSetSchema).max(30).optional().default([]),
   sortOrder: z.number().int().min(0).max(200),
   targetDistanceMeters: z.number().int().min(0).nullable().optional(),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
   workSeconds: z.number().int().min(1).max(36000),
 });
 
@@ -146,7 +137,7 @@ const plioSchema = z.object({
   roundsPlanned: z.number().int().min(1).max(200),
   sets: z.array(plioSetSchema).max(30).optional().default([]),
   sortOrder: z.number().int().min(0).max(200),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
   workSeconds: z.number().int().min(1).max(36000),
 });
 
@@ -160,7 +151,7 @@ const mobilityBlockSchema = z.object({
   roundsPlanned: z.number().int().min(1).max(200),
   sets: z.array(mobilitySetSchema).max(30).optional().default([]),
   sortOrder: z.number().int().min(0).max(200),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
   mobilityExerciseLibraryId: z.string().uuid().nullable().optional(),
   workSeconds: z.number().int().min(1).max(36000),
 });
@@ -175,7 +166,7 @@ const sportSchema = z.object({
   sets: z.array(sportSetSchema).max(30).optional().default([]),
   sortOrder: z.number().int().min(0).max(200),
   sportLibraryId: z.string().uuid().nullable().optional(),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
 });
 
 const isometricSchema = z.object({
@@ -188,7 +179,7 @@ const isometricSchema = z.object({
   sets: z.array(isometricSetSchema).max(30).optional().default([]),
   setsPlanned: nullableInt,
   sortOrder: z.number().int().min(0).max(200),
-  targetRpe: z.number().int().min(1).max(10).nullable().optional(),
+  targetRpe: rpeHalfSchema,
 });
 
 const exerciseGroupSchema = z.object({

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { sanitizeRpeInput } from '../effort-input';
 import type { FieldModeValue } from '../FieldModeControl';
 
 export type CardioIntervalDraft = {
@@ -88,11 +89,7 @@ function IntervalCard(props: IntervalCardProps) {
       />
       <MainNumericRow {...props} />
       <TargetsRow {...props} />
-      <ClearButton
-        interval={props.interval}
-        onChange={props.onChange}
-        removeLabel={props.removeLabel}
-      />
+      <ClearButton interval={props.interval} onChange={props.onChange} removeLabel={props.removeLabel} />
     </View>
   );
 }
@@ -125,7 +122,7 @@ function TargetsRow(props: IntervalCardProps) {
 
   const onDist = (v: string) => set({ ...i, targetDistanceMeters: v });
   const onDistMode = (m: FieldModeValue) => set({ ...i, distanceMode: m });
-  const onRpe = (v: string) => set({ ...i, targetRpe: v });
+  const onRpe = (v: string) => set({ ...i, targetRpe: sanitizeRpeInput(v) });
   const onRpeMode = (m: FieldModeValue) => set({ ...i, rpeMode: m });
 
   return (
@@ -227,12 +224,7 @@ function Field(props: { label: string; onChange: (value: string) => void; value:
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{props.label}</Text>
-      <TextInput
-        keyboardType="numeric"
-        onChangeText={props.onChange}
-        style={styles.input}
-        value={props.value}
-      />
+      <TextInput keyboardType="numeric" onChangeText={props.onChange} style={styles.input} value={props.value} />
     </View>
   );
 }

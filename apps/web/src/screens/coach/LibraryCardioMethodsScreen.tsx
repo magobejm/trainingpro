@@ -18,6 +18,8 @@ import { EMPTY_CARDIO_FORM, toCardioForm, type CardioCreateFormState } from './l
 import { buildCardioChips, findDefaultCardioTypeId } from './library-cardio.helpers';
 import { confirmCardioDelete, createCardio, saveCardioEdit } from './library-cardio.operations';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useQueryFilter } from '../../layout/useListContext';
 import { uploadLibraryMediaImage } from './library-media.upload';
 
 export function LibraryCardioMethodsScreen(): React.JSX.Element {
@@ -114,10 +116,7 @@ function useCardioResources(state: ReturnType<typeof useCardioState>) {
   };
 }
 
-function useDefaultCardioType(
-  createForm: ReturnType<typeof useCreateForm>,
-  defaultTypeId: string,
-): void {
+function useDefaultCardioType(createForm: ReturnType<typeof useCreateForm>, defaultTypeId: string): void {
   useEffect(() => {
     if (defaultTypeId && !createForm.form.methodTypeId) {
       createForm.setField('methodTypeId')(defaultTypeId);
@@ -156,8 +155,7 @@ function buildCardioPrimaryActions(
     onSelectFilter: (id: string) => state.setActiveFilter(id || 'all'),
     onSetCreateField: createForm.setField,
     onSetEditField: editForm.setField,
-    onToggleDetail: (itemId: string) =>
-      state.setExpandedId(state.expandedId === itemId ? '' : itemId),
+    onToggleDetail: (itemId: string) => state.setExpandedId(state.expandedId === itemId ? '' : itemId),
   };
 }
 
@@ -168,17 +166,9 @@ function buildCardioMediaActions(
 ) {
   return {
     onUploadCreateImage: () =>
-      uploadLibraryMediaImage(
-        createForm.uploadImageMutation,
-        createForm.setField('imageUrl'),
-        state.setCreateError,
-      ),
+      uploadLibraryMediaImage(createForm.uploadImageMutation, createForm.setField('imageUrl'), state.setCreateError),
     onUploadEditImage: () =>
-      uploadLibraryMediaImage(
-        editForm.uploadImageMutation,
-        editForm.setField('imageUrl'),
-        editForm.setEditError,
-      ),
+      uploadLibraryMediaImage(editForm.uploadImageMutation, editForm.setField('imageUrl'), editForm.setEditError),
   };
 }
 
@@ -187,24 +177,17 @@ function createCardioItem(
   createForm: ReturnType<typeof useCreateForm>,
   refs: ReturnType<typeof useCardioResources>,
 ): void {
-  createCardio(
-    state,
-    createForm.form,
-    refs.defaultTypeId,
-    refs.createMutation.mutate,
-    createForm.reset,
-  );
+  createCardio(state, createForm.form, refs.defaultTypeId, refs.createMutation.mutate, createForm.reset);
 }
 
 function useCardioState() {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { activeFilter, query, setActiveFilter, setQuery } = useQueryFilter(LIST_KEYS.libraryCardio);
   const [createError, setCreateError] = useState('');
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [deletingId, setDeletingId] = useState('');
   const [expandedId, setExpandedId] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState('');
-  const [query, setQuery] = useState('');
   return {
     activeFilter,
     createError,

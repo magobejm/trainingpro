@@ -13,6 +13,8 @@ import {
 import type { ClientData, NoteData } from './notes-screen.types';
 import { filterAndSortNotes } from './notes-screen.utils';
 import { matchesSearch } from '../../utils/normalize-search';
+import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
+import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
 
@@ -131,16 +133,10 @@ function useNotesScreenModel() {
   const { t } = useTranslation();
   const [generalNoteText, setGeneralNoteText] = useState('');
   const [clientNoteText, setClientNoteText] = useState('');
-  const [clientSearch, setClientSearch] = useState('');
-  const [selectedObjective, setSelectedObjective] = useState('');
-  const [selectedClient, setSelectedClient] = useState<ClientData | null>(null);
+  const { filters, setFilters } = useNotesFilters();
   const [editingNote, setEditingNote] = useState<NoteData | null>(null);
   const [editContent, setEditContent] = useState('');
   const [deleteConfirmNote, setDeleteConfirmNote] = useState<NoteData | null>(null);
-  const [historyFilter, setHistoryFilter] = useState<'all' | 'general' | 'client'>('all');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [showAllHistory, setShowAllHistory] = useState(false);
 
   const clients = useClientsQuery().data ?? [];
   const objectives = useClientObjectivesQuery().data ?? [];
@@ -149,87 +145,175 @@ function useNotesScreenModel() {
   const updateNoteMutation = useUpdateNoteMutation();
   const deleteNoteMutation = useDeleteNoteMutation();
 
+  const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
   const filteredClients = useMemo(
     () =>
       clients.filter((client) => {
         const name = `${client.firstName} ${client.lastName}`;
-        const matchesName = matchesSearch(name, clientSearch);
-        return matchesName && (selectedObjective ? client.objectiveId === selectedObjective : true);
+        const matchesName = matchesSearch(name, filters.clientSearch);
+        return matchesName && (filters.selectedObjective ? client.objectiveId === filters.selectedObjective : true);
       }),
-    [clientSearch, clients, selectedObjective],
+    [clients, filters.clientSearch, filters.selectedObjective],
   );
   const displayedNotes = useMemo(
-    () => filterAndSortNotes(notes, historyFilter, selectedClient, dateFrom, dateTo, showAllHistory),
-    [dateFrom, dateTo, historyFilter, notes, selectedClient, showAllHistory],
+    () =>
+      filterAndSortNotes(
+        notes,
+        filters.historyFilter,
+        selectedClient,
+        filters.dateFrom,
+        filters.dateTo,
+        filters.showAllHistory,
+      ),
+    [filters.dateFrom, filters.dateTo, filters.historyFilter, filters.showAllHistory, notes, selectedClient],
   );
 
-  const handleSaveGeneralNote = async () => {
-    if (!generalNoteText.trim()) return;
-    await createNoteMutation.mutateAsync({ type: 'general', content: generalNoteText.trim() });
-    setGeneralNoteText('');
-  };
-  const handleSaveClientNote = async () => {
-    if (!clientNoteText.trim() || !selectedClient) return;
-    await createNoteMutation.mutateAsync({
-      type: 'client',
-      clientId: selectedClient.id,
-      content: clientNoteText.trim(),
-    });
-    setClientNoteText('');
-  };
-  const handleEditNote = (note: NoteData) => {
-    setEditingNote(note);
-    setEditContent(note.content);
-  };
-  const handleSaveEdit = async () => {
-    if (!editingNote || !editContent.trim()) return;
-    await updateNoteMutation.mutateAsync({
-      noteId: editingNote.id,
-      input: { content: editContent.trim() },
-    });
-    setEditingNote(null);
-  };
-  const handleDeleteNote = async () => {
-    if (!deleteConfirmNote) return;
-    await deleteNoteMutation.mutateAsync(deleteConfirmNote.id);
-    setDeleteConfirmNote(null);
-  };
+  const commands = readNoteCommands({
+    clientNoteText,
+    createNoteMutation,
+    deleteConfirmNote,
+    deleteNoteMutation,
+    editContent,
+    editingNote,
+    generalNoteText,
+    selectedClient,
+    setClientNoteText,
+    setDeleteConfirmNote,
+    setEditContent,
+    setEditingNote,
+    setGeneralNoteText,
+    updateNoteMutation,
+  });
 
   return {
     clientNoteText,
-    clientSearch,
-    dateFrom,
-    dateTo,
+    clientSearch: filters.clientSearch,
+    dateFrom: filters.dateFrom,
+    dateTo: filters.dateTo,
     deleteConfirmNote,
     displayedNotes,
     editContent,
     editingNote,
     filteredClients,
     generalNoteText,
-    handleDeleteNote,
-    handleEditNote,
-    handleSaveClientNote,
-    handleSaveEdit,
-    handleSaveGeneralNote,
-    historyFilter,
+    ...commands,
+    historyFilter: filters.historyFilter,
     objectives,
     selectedClient,
-    selectedObjective,
+    selectedObjective: filters.selectedObjective,
     setClientNoteText,
-    setClientSearch,
-    setDateFrom,
-    setDateTo,
+    setClientSearch: (clientSearch: string) => setFilters((prev) => ({ ...prev, clientSearch })),
+    setDateFrom: (dateFrom: string) => setFilters((prev) => ({ ...prev, dateFrom })),
+    setDateTo: (dateTo: string) => setFilters((prev) => ({ ...prev, dateTo })),
     setDeleteConfirmNote,
     setEditContent,
     setEditingNote,
     setGeneralNoteText,
-    setHistoryFilter,
-    setSelectedClient,
-    setSelectedObjective,
-    setShowAllHistory,
-    showAllHistory,
+    setHistoryFilter: (historyFilter: NotesFilters['historyFilter']) => setFilters((prev) => ({ ...prev, historyFilter })),
+    setSelectedClient: (client: ClientData | null) =>
+      selectNotesClient(client, filters.selectedClientId, setClientNoteText, setFilters),
+    setSelectedObjective: (selectedObjective: string) => setFilters((prev) => ({ ...prev, selectedObjective })),
+    setShowAllHistory: (showAllHistory: boolean) => setFilters((prev) => ({ ...prev, showAllHistory })),
+    showAllHistory: filters.showAllHistory,
     t,
   };
+}
+
+function readNoteCommands(input: {
+  clientNoteText: string;
+  createNoteMutation: ReturnType<typeof useCreateNoteMutation>;
+  deleteConfirmNote: NoteData | null;
+  deleteNoteMutation: ReturnType<typeof useDeleteNoteMutation>;
+  editContent: string;
+  editingNote: NoteData | null;
+  generalNoteText: string;
+  selectedClient: { id: string } | null;
+  setClientNoteText: (value: string) => void;
+  setDeleteConfirmNote: (note: NoteData | null) => void;
+  setEditContent: (value: string) => void;
+  setEditingNote: (note: NoteData | null) => void;
+  setGeneralNoteText: (value: string) => void;
+  updateNoteMutation: ReturnType<typeof useUpdateNoteMutation>;
+}) {
+  return {
+    handleDeleteNote: async () => {
+      if (!input.deleteConfirmNote) return;
+      await input.deleteNoteMutation.mutateAsync(input.deleteConfirmNote.id);
+      input.setDeleteConfirmNote(null);
+    },
+    handleEditNote: (note: NoteData) => {
+      input.setEditingNote(note);
+      input.setEditContent(note.content);
+    },
+    handleSaveClientNote: async () => {
+      if (!input.clientNoteText.trim() || !input.selectedClient) return;
+      await input.createNoteMutation.mutateAsync({
+        clientId: input.selectedClient.id,
+        content: input.clientNoteText.trim(),
+        type: 'client',
+      });
+      input.setClientNoteText('');
+    },
+    handleSaveEdit: async () => {
+      if (!input.editingNote || !input.editContent.trim()) return;
+      await input.updateNoteMutation.mutateAsync({
+        input: { content: input.editContent.trim() },
+        noteId: input.editingNote.id,
+      });
+      input.setEditingNote(null);
+    },
+    handleSaveGeneralNote: async () => {
+      if (!input.generalNoteText.trim()) return;
+      await input.createNoteMutation.mutateAsync({ content: input.generalNoteText.trim(), type: 'general' });
+      input.setGeneralNoteText('');
+    },
+  };
+}
+
+type NotesFilters = {
+  clientSearch: string;
+  dateFrom: string;
+  dateTo: string;
+  historyFilter: 'all' | 'client' | 'general';
+  selectedClientId: string;
+  selectedObjective: string;
+  showAllHistory: boolean;
+};
+
+function useNotesFilters() {
+  const [filters, setFilters] = useListContext(LIST_KEYS.notes, emptyNotesFilters(), reviveNotesFilters);
+  useRouteClient(filters.selectedClientId);
+  return { filters, setFilters };
+}
+
+function emptyNotesFilters(): NotesFilters {
+  return {
+    clientSearch: '',
+    dateFrom: '',
+    dateTo: '',
+    historyFilter: 'all',
+    selectedClientId: '',
+    selectedObjective: '',
+    showAllHistory: false,
+  };
+}
+
+function reviveNotesFilters(stored: NotesFilters | null, initial: NotesFilters): NotesFilters {
+  const base = stored ?? initial;
+  if (base.selectedClientId) return base;
+  const urlClient = readRouteClientId();
+  return urlClient ? { ...base, selectedClientId: urlClient } : base;
+}
+
+function selectNotesClient(
+  client: ClientData | null,
+  currentId: string,
+  setClientNoteText: (value: string) => void,
+  setFilters: React.Dispatch<React.SetStateAction<NotesFilters>>,
+): void {
+  const nextId = client?.id ?? '';
+  if (nextId !== currentId) setClientNoteText('');
+  setFilters((prev) => ({ ...prev, selectedClientId: nextId }));
 }
 
 const screenRootStyle = {

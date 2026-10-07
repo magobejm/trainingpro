@@ -1,10 +1,10 @@
 /* eslint-disable max-lines */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../../i18n';
-import { useProgressContextStore } from '../../store/progressContext.store';
+import { useProgressRouteClient, useProgressSelection } from './progress/useProgressListState';
 import { useExerciseProgressQuery } from '../../data/hooks/useExerciseProgressQuery';
 import { useExercisePrQuery } from '../../data/hooks/useExercisePrQuery';
 import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuery';
@@ -27,8 +27,7 @@ import {
   getSessionVarsForCategory,
 } from './progress/progress-screen.variables';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
-import type { AnalysisMode, DateRange, SelectedExercise, VariableDef } from './progress/progress-screen.types';
-import type { SessionProgressCategory } from '../../data/types/session-progress';
+import type { AnalysisMode, DateRange, VariableDef } from './progress/progress-screen.types';
 import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 import type { MicrocycleProgressPoint } from '../../data/hooks/useMicrocycleProgressQuery';
@@ -38,6 +37,22 @@ import type { SessionProgressPoint } from '../../data/hooks/useSessionProgressQu
 
 function toDateStr(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+function useResetClientFilters(
+  clientId: string | null,
+  defaultVars: string[],
+  setCustomRange: (value: DateRange | null) => void,
+  setActiveVarIds: (value: Set<string>) => void,
+): void {
+  const previous = useRef(clientId);
+  const defaults = useRef(defaultVars);
+  useEffect(() => {
+    if (previous.current === clientId) return;
+    previous.current = clientId;
+    setCustomRange(null);
+    setActiveVarIds(new Set(defaults.current));
+  }, [clientId, setActiveVarIds, setCustomRange]);
 }
 
 function buildRange(weeks: number): DateRange {
@@ -56,28 +71,33 @@ type ProgressScreenProps = {
 // eslint-disable-next-line max-lines-per-function
 export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   const { t } = useTranslation();
-  const clientId = useProgressContextStore((s) => s.clientId);
-  const clientDisplayName = useProgressContextStore((s) => s.clientDisplayName);
+  const { clientDisplayName, clientId } = useProgressRouteClient();
+  const {
+    mode,
+    selectedCategory,
+    selectedDayIndex,
+    selectedExercise,
+    selectedTemplateId,
+    setMode,
+    setSelectedCategory,
+    setSelectedDayIndex,
+    setSelectedExercise,
+    setSelectedTemplateId,
+    setWeeksPreset,
+    weeksPreset,
+  } = useProgressSelection(clientId);
 
   // Filters
-  const [mode, setMode] = useState<AnalysisMode>('exercise');
-  const [weeksPreset, setWeeksPreset] = useState<4 | 8 | 12>(8);
   const [customRange, setCustomRange] = useState<DateRange | null>(null);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   const range: DateRange = customRange ?? buildRange(weeksPreset);
-
-  // Selection
-  const [selectedExercise, setSelectedExercise] = useState<SelectedExercise | null>(null);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
-  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<SessionProgressCategory | null>(null);
-
   const selectedExerciseId = selectedExercise?.id ?? null;
 
   // Variable toggles
   const defaultVars = STRENGTH_VARIABLES.slice(0, 2).map((v) => v.id);
   const [activeVarIds, setActiveVarIds] = useState<Set<string>>(new Set(defaultVars));
+  useResetClientFilters(clientId, defaultVars, setCustomRange, setActiveVarIds);
 
   // Detail modal
   const [detailVariable, setDetailVariable] = useState<VariableDef | null>(null);

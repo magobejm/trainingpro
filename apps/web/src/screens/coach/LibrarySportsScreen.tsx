@@ -20,6 +20,8 @@ import { LibraryItemCard } from './components/LibraryItemCard';
 import { readFrontEnv } from '../../data/env';
 import { EMPTY_SPORT_FORM, type SportCreateFormState } from './LibrarySportsScreen.create';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { usePersistedQuery } from '../../layout/useListContext';
 import { uploadLibraryMediaImage } from './library-media.upload';
 import { matchesSearch } from '../../utils/normalize-search';
 
@@ -34,7 +36,7 @@ const SPORTS_PLACEHOLDER = resolvePlaceholder();
 
 export function LibrarySportsScreen(): React.JSX.Element {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = usePersistedQuery(LIST_KEYS.librarySports);
   const [expandedId, setExpandedId] = useState('');
 
   // State for CRUD

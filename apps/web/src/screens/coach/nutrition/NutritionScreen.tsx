@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { LIST_KEYS } from '../../../layout/list-context';
+import { useListContext } from '../../../layout/useListContext';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
@@ -42,33 +44,63 @@ export function NutritionScreen(): React.JSX.Element {
 
 function useNutritionScreenModel() {
   const { t } = useTranslation();
-  const [view, setView] = useState<ViewState>('hub');
-  const [selectedMealId, setSelectedMealId] = useState('');
-  const [selectedFoodId, setSelectedFoodId] = useState('');
+  const [list, setList] = useListContext(LIST_KEYS.nutrition, emptyNutritionContext(), reviveNutritionContext);
   const [wizardDraft, setWizardDraft] = useState<null | WizardDraft>(null);
-  const [checkpointPlanId, setCheckpointPlanId] = useState('');
+  const setView = (view: ViewState) => setList((prev) => ({ ...prev, view }));
+  const setSelectedMealId = (selectedMealId: string) => setList((prev) => ({ ...prev, selectedMealId }));
+  const setSelectedFoodId = (selectedFoodId: string) => setList((prev) => ({ ...prev, selectedFoodId }));
+  const setCheckpointPlanId = (checkpointPlanId: string) => setList((prev) => ({ ...prev, checkpointPlanId }));
+  const setHubQuery = (hubQuery: string) => setList((prev) => ({ ...prev, hubQuery }));
   const plansQuery = useNutritionPlansQuery();
   const foodsQuery = useLibraryFoodsQuery({ query: '' });
-  const checkpointPlan = plansQuery.data?.find((plan) => plan.id === checkpointPlanId) ?? null;
+  const checkpointPlan = plansQuery.data?.find((plan) => plan.id === list.checkpointPlanId) ?? null;
 
   return {
     checkpointPlan,
     foodsQuery,
-    plansQuery,
+    hubQuery: list.hubQuery,
     onBackToHub: () => setView('hub'),
     onOpenCheckpoint: (planId: string) => setCheckpointPlanId(planId),
     onCloseCheckpoint: () => setCheckpointPlanId(''),
-    selectedFoodId,
-    selectedMealId,
+    plansQuery,
+    selectedFoodId: list.selectedFoodId,
+    selectedMealId: list.selectedMealId,
+    setHubQuery,
     setSelectedFoodId,
     setSelectedMealId,
     setView,
     setWizardDraft,
     t,
-    view,
+    view: list.view,
     wizardDraft,
   };
 }
+
+type NutritionContext = {
+  checkpointPlanId: string;
+  hubQuery: string;
+  selectedFoodId: string;
+  selectedMealId: string;
+  view: ViewState;
+};
+
+function emptyNutritionContext(): NutritionContext {
+  return { checkpointPlanId: '', hubQuery: '', selectedFoodId: '', selectedMealId: '', view: 'hub' };
+}
+
+function reviveNutritionContext(stored: NutritionContext | null, initial: NutritionContext): NutritionContext {
+  if (!stored || !PERSISTED_NUTRITION_VIEWS.has(stored.view)) return initial;
+  return stored;
+}
+
+const PERSISTED_NUTRITION_VIEWS = new Set<ViewState>([
+  'createMeal',
+  'createPlan',
+  'foodDetail',
+  'hub',
+  'mealDetail',
+  'meals',
+]);
 
 type ViewModel = ReturnType<typeof useNutritionScreenModel>;
 
@@ -186,6 +218,8 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
           props.setView('foodDetail');
         }}
         onOpenMeals={() => props.setView('meals')}
+        onQueryChange={props.setHubQuery}
+        query={props.hubQuery}
       />
       {props.checkpointPlan ? (
         <CheckpointsModal

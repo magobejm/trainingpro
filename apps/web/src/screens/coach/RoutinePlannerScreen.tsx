@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { pickNormalizedPlanTemplateId } from '../../data/normalize-plan-template-id';
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
@@ -8,6 +8,8 @@ import {
   useRoutineTemplatesQuery,
   type RoutineTemplateView,
 } from '../../data/hooks/useRoutineTemplates';
+import { readRouteClientId, writeRouteClientId } from '../../layout/list-context';
+import { useRouteClient } from '../../layout/useListContext';
 import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -40,6 +42,13 @@ export function RoutinePlannerScreen(props: Props): React.JSX.Element {
 
 function useRoutinePlannerScreenModel(onRouteChange?: (route: ShellRoute) => void) {
   const { t } = useTranslation();
+  const clientId = useRoutinePlannerContextStore((state) => state.clientId);
+  useEffect(() => {
+    if (clientId) return;
+    const urlClient = readRouteClientId();
+    if (urlClient) useRoutinePlannerContextStore.setState({ clientId: urlClient });
+  }, [clientId]);
+  useRouteClient(clientId ?? '');
   const model = useRoutinePlannerModelData(onRouteChange, t);
   return buildLayoutModel({ ...model, t });
 }
@@ -346,5 +355,6 @@ function resolveAssignHandler(
 
 function goToAssignedClientCalendar(clientId: string, onRouteChange: undefined | ((route: ShellRoute) => void)) {
   useCalendarContextStore.getState().openForClient(clientId);
+  writeRouteClientId(clientId);
   onRouteChange?.('coach.calendar');
 }

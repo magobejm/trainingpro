@@ -23,12 +23,13 @@ import { LibraryItemCard } from './components/LibraryItemCard';
 import { LibraryItemDetailModal } from './components/LibraryItemDetailModal';
 import { EMPTY_MOBILITY_FORM, type MobilityCreateFormState } from './LibraryMobilityScreen.create';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useQueryFilter } from '../../layout/useListContext';
 import { uploadLibraryMediaImage } from './library-media.upload';
 
 export function LibraryMobilityScreen(): React.JSX.Element {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { activeFilter, query, setActiveFilter, setQuery } = useQueryFilter(LIST_KEYS.libraryMobility);
   const [expandedId, setExpandedId] = useState('');
 
   // State for CRUD

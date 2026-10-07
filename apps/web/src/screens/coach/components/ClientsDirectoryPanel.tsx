@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
@@ -9,7 +9,11 @@ type Props = {
   clients: ClientView[];
   clientsError: unknown;
   clientsLoading: boolean;
+  objectiveFilter: string;
+  onObjectiveFilterChange: (nextValue: string) => void;
+  onSearchValueChange: (nextValue: string) => void;
   onSelectClient: (clientId: string) => void;
+  searchValue: string;
   selectedClientId: string;
   t: (key: string) => string;
 };
@@ -23,22 +27,20 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
 }
 
 function useDirectoryModel(props: Props) {
-  const [searchValue, setSearchValue] = useState('');
-  const [objectiveFilter, setObjectiveFilter] = useState('ALL');
   const objectives = readObjectiveOptions(props.clients, props.t);
   const items = useMemo(
-    () => buildClientCards(props.clients, searchValue, objectiveFilter, props.t),
-    [objectiveFilter, props.clients, props.t, searchValue],
+    () => buildClientCards(props.clients, props.searchValue, props.objectiveFilter, props.t),
+    [props.clients, props.objectiveFilter, props.searchValue, props.t],
   );
   const emptyLabel = readEmptyLabel(props.clientsLoading, props.t);
   return {
     emptyLabel,
     items,
-    objectiveFilter,
+    objectiveFilter: props.objectiveFilter,
     objectives,
-    searchValue,
-    setObjectiveFilter,
-    setSearchValue,
+    searchValue: props.searchValue,
+    setObjectiveFilter: props.onObjectiveFilterChange,
+    setSearchValue: props.onSearchValueChange,
   };
 }
 

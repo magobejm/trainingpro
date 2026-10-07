@@ -17,6 +17,7 @@ import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-prof
 import { type FormErrors, validateClientProfileForm } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
+import { writeRouteClientId } from '../../layout/list-context';
 import { useProgressContextStore } from '../../store/progressContext.store';
 import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -222,6 +223,7 @@ function buildOpenProgressAction(input: ViewModelInput): () => void {
     if (!client) return;
     const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
     input.openProgressForClient(client.id, clientDisplayName);
+    writeRouteClientId(client.id);
     input.onRouteChange?.('coach.progress');
   };
 }
@@ -260,11 +262,13 @@ function buildOpenRoutinePlannerAction(input: ViewModelInput): () => void {
       // Has a routine → open the planner in view-only mode (read-only, no save/assign)
       const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
       input.openForView(client.trainingPlan.id, client.id, clientDisplayName);
+      writeRouteClientId(client.id);
       input.onRouteChange?.('coach.routine.planner');
     } else {
       // No routine → go to library to pick/assign one
       const clientDisplayName = `${client.firstName} ${client.lastName}`.trim();
       input.prepareClientAssignment(client.id, clientDisplayName);
+      writeRouteClientId(client.id);
       input.onRouteChange?.('coach.library.routines');
     }
   };

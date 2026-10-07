@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SearchBar } from '@trainerpro/ui';
@@ -10,12 +10,13 @@ type Props = {
   onOpenCreatePlan: () => void;
   onOpenFoodDetail: (foodId: string) => void;
   onOpenMeals: () => void;
+  onQueryChange: (query: string) => void;
+  query: string;
 };
 
 export function NutritionHubView(props: Props): React.JSX.Element {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
-  const foodsQuery = useLibraryFoodsQuery({ query });
+  const foodsQuery = useLibraryFoodsQuery({ query: props.query });
   const foods = foodsQuery.data ?? [];
 
   return (
@@ -40,7 +41,11 @@ export function NutritionHubView(props: Props): React.JSX.Element {
       </View>
       <View style={styles.searchCard}>
         <Text style={styles.sectionTitle}>{t('coach.nutrition.hub.foodSearch')}</Text>
-        <SearchBar onChangeText={setQuery} placeholder={t('coach.nutrition.hub.foodSearchPlaceholder')} value={query} />
+        <SearchBar
+          onChangeText={props.onQueryChange}
+          placeholder={t('coach.nutrition.hub.foodSearchPlaceholder')}
+          value={props.query}
+        />
         {foodsQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
         {foods.length === 0 && !foodsQuery.isLoading ? (
           <Text style={styles.empty}>{t('coach.nutrition.hub.noFoods')}</Text>

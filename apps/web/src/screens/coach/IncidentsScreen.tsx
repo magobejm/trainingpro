@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
@@ -11,6 +11,8 @@ import {
   useTagIncidentMutation,
 } from '../../data/hooks/useIncidents';
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
+import { LIST_KEYS } from '../../layout/list-context';
+import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
 
 const COLORS = {
   action: '#225fdb',
@@ -30,10 +32,14 @@ export function IncidentsScreen(): React.JSX.Element {
 function useIncidentsViewModel() {
   const { t } = useTranslation();
   const clientsQuery = useClientsQuery();
-  const [clientId, setClientId] = useState('');
+  const [client, setClient] = useListContext(LIST_KEYS.incidents, { clientId: '' }, reviveClientId);
+  const clientId = client.clientId;
+  const setClientId = (nextId: string) => setClient({ clientId: nextId });
+  useRouteClient(clientId);
   const incidentsQuery = useIncidentsQuery({ clientId: clientId || undefined });
   const actions = useIncidentActions();
   const fields = useIncidentActionFields();
+  useClearIncidentDraft(clientId, fields);
   const clientItems = useMemo(
     () => mapClientItems(clientsQuery.data ?? [], t('coach.incidents.allClients')),
     [clientsQuery.data, t],
@@ -58,6 +64,18 @@ function useIncidentActions() {
   return { draftMutation, respondMutation, reviewMutation, tagMutation };
 }
 
+function useClearIncidentDraft(clientId: string, fields: ReturnType<typeof useIncidentActionFields>): void {
+  const previous = useRef(clientId);
+  const { setDraft, setReply, setTag } = fields;
+  useEffect(() => {
+    if (previous.current === clientId) return;
+    previous.current = clientId;
+    setReply('');
+    setTag('');
+    setDraft('');
+  }, [clientId, setDraft, setReply, setTag]);
+}
+
 function useIncidentActionFields() {
   const [reply, setReply] = useState('');
   const [tag, setTag] = useState('');
@@ -65,15 +83,10 @@ function useIncidentActionFields() {
   return { draft, reply, setDraft, setReply, setTag, tag };
 }
 
-function buildActions(
-  actions: ReturnType<typeof useIncidentActions>,
-  fields: ReturnType<typeof useIncidentActionFields>,
-) {
+function buildActions(actions: ReturnType<typeof useIncidentActions>, fields: ReturnType<typeof useIncidentActionFields>) {
   return {
-    onCreateDraft: (id: string) =>
-      actions.draftMutation.mutate({ id, payload: { draft: fields.draft } }),
-    onReply: (id: string) =>
-      actions.respondMutation.mutate({ id, payload: { response: fields.reply } }),
+    onCreateDraft: (id: string) => actions.draftMutation.mutate({ id, payload: { draft: fields.draft } }),
+    onReply: (id: string) => actions.respondMutation.mutate({ id, payload: { response: fields.reply } }),
     onReview: (id: string) => actions.reviewMutation.mutate({ id }),
     onTag: (id: string) => actions.tagMutation.mutate({ id, payload: { tag: fields.tag } }),
   };
@@ -106,11 +119,7 @@ function IncidentList(props: ViewModel) {
   if (props.incidents.length === 0) {
     return <Text style={styles.info}>{props.t('coach.incidents.empty')}</Text>;
   }
-  return (
-    <View style={styles.stack}>
-      {props.incidents.map((incident) => renderIncidentCard(props, incident))}
-    </View>
-  );
+  return <View style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
 }
 
 function renderIncidentCard(
@@ -166,18 +175,9 @@ function ActionInputs(props: ViewModel) {
 function ActionButtons(props: { incidentId: string; props: ViewModel }) {
   return (
     <View style={styles.row}>
-      <ActionButton
-        label={props.props.t('coach.incidents.review')}
-        onPress={() => props.props.onReview(props.incidentId)}
-      />
-      <ActionButton
-        label={props.props.t('coach.incidents.reply')}
-        onPress={() => props.props.onReply(props.incidentId)}
-      />
-      <ActionButton
-        label={props.props.t('coach.incidents.tag')}
-        onPress={() => props.props.onTag(props.incidentId)}
-      />
+      <ActionButton label={props.props.t('coach.incidents.review')} onPress={() => props.props.onReview(props.incidentId)} />
+      <ActionButton label={props.props.t('coach.incidents.reply')} onPress={() => props.props.onReply(props.incidentId)} />
+      <ActionButton label={props.props.t('coach.incidents.tag')} onPress={() => props.props.onTag(props.incidentId)} />
       <ActionButton
         label={props.props.t('coach.incidents.adjust')}
         onPress={() => props.props.onCreateDraft(props.incidentId)}

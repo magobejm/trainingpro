@@ -23,6 +23,8 @@ import {
   validateYoutube,
 } from './LibraryExercisesScreen.helpers';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useQueryFilter } from '../../layout/useListContext';
 import { toExerciseForm, toExerciseUpdatePayload } from './library-exercise.edit';
 import { uploadLibraryMediaImage } from './library-media.upload';
 export function LibraryExercisesScreen(): React.JSX.Element {
@@ -141,8 +143,7 @@ function buildExerciseActions(
     onSelectFilter: (id: string) => state.setActiveFilter(id || 'all'),
     onSetCreateField: createForm.setField,
     onSetEditField: editForm.setField,
-    onToggleDetail: (itemId: string) =>
-      state.setExpandedId(state.expandedId === itemId ? '' : itemId),
+    onToggleDetail: (itemId: string) => state.setExpandedId(state.expandedId === itemId ? '' : itemId),
     ...buildExerciseMediaActions(state, createForm, editForm),
   };
 }
@@ -153,28 +154,19 @@ function buildExerciseMediaActions(
 ) {
   return {
     onUploadCreateImage: () =>
-      uploadLibraryMediaImage(
-        createForm.uploadImageMutation,
-        createForm.setField('imageUrl'),
-        state.setCreateError,
-      ),
+      uploadLibraryMediaImage(createForm.uploadImageMutation, createForm.setField('imageUrl'), state.setCreateError),
     onUploadEditImage: () =>
-      uploadLibraryMediaImage(
-        editForm.uploadImageMutation,
-        editForm.setField('imageUrl'),
-        editForm.setEditError,
-      ),
+      uploadLibraryMediaImage(editForm.uploadImageMutation, editForm.setField('imageUrl'), editForm.setEditError),
   };
 }
 function useExercisesState() {
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { activeFilter, query, setActiveFilter, setQuery } = useQueryFilter(LIST_KEYS.libraryExercises);
   const [createError, setCreateError] = useState('');
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [deleteError, setDeleteError] = useState('');
   const [deletingId, setDeletingId] = useState('');
   const [expandedId, setExpandedId] = useState('');
   const [pendingDeleteId, setPendingDeleteId] = useState('');
-  const [query, setQuery] = useState('');
   return {
     activeFilter,
     createError,

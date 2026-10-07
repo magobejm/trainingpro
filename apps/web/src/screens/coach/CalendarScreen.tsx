@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays } from 'lucide-react';
@@ -32,59 +32,22 @@ import {
   createWeekMoveHandler,
   createCopyPasteHandlers,
 } from './CalendarScreen.handlers';
-import { useCalendarContextStore } from '../../store/calendarContext.store';
+import { useCalendarListContext } from './useCalendarListContext';
 
 const COLOR_PRIMARY = '#3b82f6' as const;
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
-type ViewMode = 'all' | 'coachOnly';
-
-function useClientViewMode() {
-  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('all');
-  const setSelectedClient = useCallback((client: ClientView | null) => {
-    setSelectedClientId(client?.id ?? null);
-    if (client) setViewMode('all');
-  }, []);
-  const setCoachOnlyView = useCallback(() => {
-    setSelectedClientId(null);
-    setViewMode('coachOnly');
-  }, []);
-  const setAllView = useCallback(() => {
-    setSelectedClientId(null);
-    setViewMode('all');
-  }, []);
-  return { selectedClientId, viewMode, setSelectedClient, setCoachOnlyView, setAllView };
-}
-
-function useFocusAssignedClient(clients: ClientView[], setSelectedClient: (client: ClientView | null) => void) {
-  const focusClientId = useCalendarContextStore((state) => state.focusClientId);
-  const consumeFocusClientId = useCalendarContextStore((state) => state.consumeFocusClientId);
-
-  useEffect(() => {
-    if (!focusClientId || clients.length === 0) return;
-    const client = clients.find((item) => item.id === focusClientId);
-    if (!client) return;
-    setSelectedClient(client);
-    consumeFocusClientId();
-  }, [clients, consumeFocusClientId, focusClientId, setSelectedClient]);
-}
-
 function useCalendarLogic() {
-  const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth());
-  const { selectedClientId, viewMode, setSelectedClient, setCoachOnlyView, setAllView } = useClientViewMode();
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
   const [clipboard, setClipboard] = useState<CalendarClipboard | null>(null);
-
-  const { dateFrom, dateTo } = gridRangeDates(year, month);
   const clientsQuery = useClientsQuery();
   const objectivesQuery = useClientObjectivesQuery();
   const clients = clientsQuery.data ?? [];
-  useFocusAssignedClient(clients, setSelectedClient);
+  const { month, selectedClientId, setAllView, setCoachOnlyView, setMonth, setSelectedClient, setYear, viewMode, year } =
+    useCalendarListContext(clients);
+  const { dateFrom, dateTo } = gridRangeDates(year, month);
   const selectedClient = useMemo(
     () => (selectedClientId ? (clients.find((c) => c.id === selectedClientId) ?? null) : null),
     [clients, selectedClientId],
@@ -104,10 +67,13 @@ function useCalendarLogic() {
 
   const handlePrevMonth = () => moveToPrevMonth(month, setMonth, setYear);
   const handleNextMonth = () => moveToNextMonth(month, setMonth, setYear);
-  const handleGoTo = useCallback((y: number, m: number) => {
-    setYear(y);
-    setMonth(m);
-  }, []);
+  const handleGoTo = useCallback(
+    (y: number, m: number) => {
+      setYear(y);
+      setMonth(m);
+    },
+    [setMonth, setYear],
+  );
   const handleDayClick = (dateStr: string) => setModal({ type: 'day', dateStr });
   const handleDeleteEvent = (eventId: string) => deleteEvent.mutate(eventId);
   const handleMoveEvent = (eventId: string, d: string) => updateEvent.mutate({ eventId, input: { date: d } });

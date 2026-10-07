@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import '../../i18n';
@@ -16,6 +16,9 @@ import { CreateClientModal } from './components/CreateClientModal';
 import { CreateClientResultBanner } from './components/CreateClientResultBanner';
 import { EmptyClientSelectionPanel } from './components/EmptyClientSelectionPanel';
 import { useClientCreateForm } from './useClientCreateForm';
+import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
+import { useMenuEpoch } from '../../layout/menu-client-context';
+import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useProgressContextStore } from '../../store/progressContext.store';
 
@@ -105,6 +108,10 @@ function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
       state.setScreenMode('profileEdit');
     },
     onSelectClient: (clientId: string) => selectClient(state, clientId),
+    objectiveFilter: state.objectiveFilter,
+    onObjectiveFilterChange: state.setObjectiveFilter,
+    onSearchValueChange: state.setSearchValue,
+    searchValue: state.searchValue,
   };
 }
 
@@ -127,10 +134,43 @@ function useClientsDataRefs() {
   return { clientsQuery, form, objectiveOptions };
 }
 
+type ClientsListContext = {
+  objectiveFilter: string;
+  screenMode: ScreenMode;
+  searchValue: string;
+  selectedClientId: string;
+};
+
 function useClientsViewState() {
-  const [selectedClientId, setSelectedClientId] = useState('');
-  const [screenMode, setScreenMode] = useState<ScreenMode>('list');
-  return { screenMode, selectedClientId, setScreenMode, setSelectedClientId };
+  const [context, setContext] = useListContext(LIST_KEYS.clients, emptyClientsContext(), reviveClientsContext);
+  const epoch = useMenuEpoch();
+  useEffect(() => {
+    if (epoch === 0) return;
+    setContext((prev) => ({ ...prev, screenMode: 'list', selectedClientId: '' }));
+  }, [epoch, setContext]);
+  useRouteClient(context.screenMode === 'list' ? '' : context.selectedClientId);
+  return {
+    objectiveFilter: context.objectiveFilter,
+    screenMode: context.screenMode,
+    searchValue: context.searchValue,
+    selectedClientId: context.selectedClientId,
+    setObjectiveFilter: (objectiveFilter: string) => setContext((prev) => ({ ...prev, objectiveFilter })),
+    setScreenMode: (screenMode: ScreenMode) => setContext((prev) => ({ ...prev, screenMode })),
+    setSearchValue: (searchValue: string) => setContext((prev) => ({ ...prev, searchValue })),
+    setSelectedClientId: (selectedClientId: string) => setContext((prev) => ({ ...prev, selectedClientId })),
+  };
+}
+
+function emptyClientsContext(): ClientsListContext {
+  return { objectiveFilter: 'ALL', screenMode: 'list', searchValue: '', selectedClientId: '' };
+}
+
+function reviveClientsContext(stored: ClientsListContext | null, initial: ClientsListContext): ClientsListContext {
+  const base = stored ?? initial;
+  const urlClient = readRouteClientId();
+  if (!urlClient) return base;
+  const screenMode = base.selectedClientId === urlClient && base.screenMode !== 'list' ? base.screenMode : 'profile';
+  return { ...base, screenMode, selectedClientId: urlClient };
 }
 
 function resolveSelectedClientName(
@@ -184,7 +224,11 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
           clients={props.clients}
           clientsError={props.clientsError}
           clientsLoading={props.clientsLoading}
+          objectiveFilter={props.objectiveFilter}
+          onObjectiveFilterChange={props.onObjectiveFilterChange}
+          onSearchValueChange={props.onSearchValueChange}
           onSelectClient={props.onSelectClient}
+          searchValue={props.searchValue}
           selectedClientId={props.selectedClientId}
           t={props.t}
         />

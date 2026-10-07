@@ -7,6 +7,8 @@ import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
+import { LIST_KEYS } from '../../layout/list-context';
+import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
 import { ChatMessageBubble } from './components/ChatMessageBubble';
 
 export function ChatScreen(): React.JSX.Element {
@@ -17,7 +19,10 @@ export function ChatScreen(): React.JSX.Element {
 function useChatViewModel() {
   const { t } = useTranslation();
   const clientsQuery = useClientsQuery();
-  const [clientId, setClientId] = useState('');
+  const [client, setClient] = useListContext(LIST_KEYS.chat, { clientId: '' }, reviveClientId);
+  const clientId = client.clientId;
+  const setClientId = (nextId: string) => setClient({ clientId: nextId });
+  useRouteClient(clientId);
   useDefaultClient(clientId, clientsQuery.data, setClientId);
   const threadId = useThreadId(clientId);
   const messagesQuery = useChatMessagesQuery(threadId);

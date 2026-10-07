@@ -26,11 +26,10 @@ import { useMeQuery } from './data/hooks/useMeQuery';
 import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
+import { applyMenuClientReset } from './layout/menu-client-context';
 import { requestUnsavedLeave } from './layout/unsaved-leave';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useAuthStore } from './store/auth.store';
-import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
-import { useWarmupPlannerContextStore } from './store/warmupPlannerContext.store';
 
 const CoachesScreen = React.lazy(() =>
   import('./screens/admin/CoachesScreen').then((mod) => ({ default: mod.CoachesScreen })),
@@ -157,22 +156,27 @@ function Shell(props: { activeRole: 'admin' | 'coach'; onLogout: () => Promise<v
 function useShellViewModel(activeRole: 'admin' | 'coach') {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
-  const clearRoutinePlannerContext = useRoutinePlannerContextStore((state) => state.clear);
-  const clearWarmupPlannerContext = useWarmupPlannerContextStore((state) => state.clear);
   const navItems = useMemo(() => resolveNavItems(activeRole), [activeRole]);
   const [route, setRoute] = usePersistentShellRoute(activeRole, navItems);
   const onSetRoute = (nextRoute: ShellRoute) => {
+    requestUnsavedLeave(() => setRoute(nextRoute));
+  };
+  const onMenuRoute = (nextRoute: ShellRoute) => {
     requestUnsavedLeave(() => {
-      if (nextRoute === 'coach.routine.planner') {
-        clearRoutinePlannerContext();
-      }
-      if (nextRoute === 'coach.warmup.planner') {
-        clearWarmupPlannerContext();
-      }
+      applyMenuClientReset(nextRoute);
       setRoute(nextRoute);
     });
   };
-  return { activeRole, email: meQuery.data?.email ?? '', navItems, onSetRoute, route, setRoute: onSetRoute, t };
+  return {
+    activeRole,
+    email: meQuery.data?.email ?? '',
+    navItems,
+    onMenuRoute,
+    onSetRoute,
+    route,
+    setRoute: onSetRoute,
+    t,
+  };
 }
 
 function ShellView(props: {
@@ -180,6 +184,7 @@ function ShellView(props: {
   email: string;
   navItems: ShellNavItem[];
   onLogout: () => Promise<void>;
+  onMenuRoute: (nextRoute: ShellRoute) => void;
   onSetRoute: (nextRoute: ShellRoute) => void;
   route: ShellRoute;
   setRoute: (route: ShellRoute) => void;
@@ -193,7 +198,7 @@ function ShellView(props: {
         navItems={props.navItems}
         onLogout={() => void props.onLogout()}
         route={props.route}
-        setRoute={props.onSetRoute}
+        setRoute={props.onMenuRoute}
       />
       <ShellContentArea {...props} />
     </View>

@@ -1,15 +1,7 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DimensionValue,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  ActivityIndicator,
-  Pressable,
-} from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -31,12 +23,13 @@ import { LibraryItemCard } from './components/LibraryItemCard';
 import { LibraryItemDetailModal } from './components/LibraryItemDetailModal';
 import { EMPTY_ISOMETRIC_FORM, type IsometricCreateFormState } from './LibraryIsometricScreen.create';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useQueryFilter } from '../../layout/useListContext';
 import { uploadLibraryMediaImage } from './library-media.upload';
 
 export function LibraryIsometricScreen(): React.JSX.Element {
   const { t } = useTranslation();
-  const [query, setQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('all');
+  const { activeFilter, query, setActiveFilter, setQuery } = useQueryFilter(LIST_KEYS.libraryIsometric);
   const [expandedId, setExpandedId] = useState('');
 
   const [createModalVisible, setCreateModalVisible] = useState(false);
@@ -270,11 +263,7 @@ function TopBar({
       <Text style={topBarStyles.title}>{t('coach.library.isometrics.title')}</Text>
       <View style={topBarStyles.actions}>
         <View style={topBarStyles.searchWrapper}>
-          <SearchBar
-            onChangeText={setQuery}
-            placeholder={t('coach.library.exercises.searchPlaceholder')}
-            value={query}
-          />
+          <SearchBar onChangeText={setQuery} placeholder={t('coach.library.exercises.searchPlaceholder')} value={query} />
         </View>
         <Pressable onPress={onOpenCreate} style={topBarStyles.createBtn}>
           <Text style={topBarStyles.createBtnText}>{t('coach.library.actions.create')}</Text>

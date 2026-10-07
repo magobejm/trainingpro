@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
 import { matchesSearch } from '../../utils/normalize-search';
@@ -17,6 +17,8 @@ import {
 } from '../../data/hooks/useWarmupTemplates';
 import { useUnifiedExercisesQuery } from '../../data/hooks/useUnifiedLibraryQuery';
 import { readFrontEnv } from '../../data/env';
+import { LIST_KEYS, readRouteClientId, writeRouteClientId } from '../../layout/list-context';
+import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
@@ -46,8 +48,7 @@ export function LibraryRoutinesScreen({ defaultTab = 'routines', onRouteChange }
 
 function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => void) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<Tab>(defaultTab);
-  const [query, setQuery] = useState('');
+  const { query, setQuery, setTab, tab } = useRoutineLibraryList(defaultTab);
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<Tab>('routines');
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -55,7 +56,7 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
   const warmups = useWarmupTemplatesQuery().data ?? [];
   const exercises = useUnifiedExercisesQuery({}).data ?? [];
   const mediaMap = useMemo<MediaMap>(() => Object.fromEntries(exercises.map((e) => [e.id, e.mediaUrl])), [exercises]);
-  const clientId = useRoutinePlannerContextStore((s) => s.clientId);
+  const clientId = useLibraryAssignmentClient();
   const openForEdit = useRoutinePlannerContextStore((s) => s.openForEdit);
   const openForView = useRoutinePlannerContextStore((s) => s.openForView);
   const clearRoutine = useRoutinePlannerContextStore((s) => s.clear);
@@ -101,6 +102,7 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
       void assignRoutine.mutateAsync({ clientId, templateId: tpl.id }).then(() => {
         clearRoutine();
         useCalendarContextStore.getState().openForClient(clientId);
+        writeRouteClientId(clientId);
         onRouteChange('coach.calendar');
       });
     },
@@ -139,6 +141,29 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
     tab,
     setTab,
   };
+}
+
+function useRoutineLibraryList(defaultTab: Tab) {
+  const key = defaultTab === 'warmups' ? LIST_KEYS.libraryWarmups : LIST_KEYS.libraryRoutines;
+  const [list, setList] = useListContext(key, { query: '', tab: defaultTab });
+  return {
+    query: list.query,
+    setQuery: (query: string) => setList((prev) => ({ ...prev, query })),
+    setTab: (tab: Tab) => setList((prev) => ({ ...prev, tab })),
+    tab: list.tab,
+  };
+}
+
+function useLibraryAssignmentClient(): string | null {
+  const clientId = useRoutinePlannerContextStore((state) => state.clientId);
+  const prepare = useRoutinePlannerContextStore((state) => state.prepareClientAssignment);
+  useEffect(() => {
+    if (clientId) return;
+    const urlClient = readRouteClientId();
+    if (urlClient) prepare(urlClient, '');
+  }, [clientId, prepare]);
+  useRouteClient(clientId ?? '');
+  return clientId;
 }
 
 type VM = ReturnType<typeof useViewModel>;

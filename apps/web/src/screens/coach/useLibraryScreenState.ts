@@ -17,6 +17,7 @@ import {
   useDeleteSportMutation,
 } from '../../data/hooks/useLibrarySpecializedMutations';
 import { CATEGORIES, CategoryKey } from './UnifiedExerciseLibraryScreen.components';
+import { LIST_KEYS, readListContext, writeListContext } from '../../layout/list-context';
 
 // eslint-disable-next-line max-lines-per-function
 export function useLibraryScreenState() {
@@ -49,10 +50,24 @@ export function useLibraryScreenState() {
     fixMemberships();
   }, [auth, queryClient]);
 
-  const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>('muscleGroups');
-  const [selectedCategoryFilters, setSelectedCategoryFilters] = useState<Record<string, Set<string>>>({});
-  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(new Set());
-  const [search, setSearch] = useState('');
+  const storedFilters = useState(readUnifiedFilters)[0];
+  const [expandedCategory, setExpandedCategory] = useState<CategoryKey | null>(storedFilters.expandedCategory);
+  const [selectedCategoryFilters, setSelectedCategoryFilters] = useState<Record<string, Set<string>>>(
+    storedFilters.selectedCategoryFilters,
+  );
+  const [selectedEquipment, setSelectedEquipment] = useState<Set<string>>(storedFilters.selectedEquipment);
+  const [search, setSearch] = useState(storedFilters.search);
+  useEffect(() => {
+    writeListContext(
+      LIST_KEYS.libraryUnified,
+      serializeUnifiedFilters({
+        expandedCategory,
+        search,
+        selectedCategoryFilters,
+        selectedEquipment,
+      }),
+    );
+  }, [expandedCategory, search, selectedCategoryFilters, selectedEquipment]);
 
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; kind: string } | null>(null);
@@ -210,4 +225,48 @@ function readApiErrorMessage(err: unknown): string {
 
 function isLibraryItemUsedInRoutineError(message: string): boolean {
   return message.toLowerCase().includes('routine template');
+}
+
+type UnifiedFilters = {
+  expandedCategory: CategoryKey | null;
+  search: string;
+  selectedCategoryFilters: Record<string, string[]>;
+  selectedEquipment: string[];
+};
+
+function readUnifiedFilters(): {
+  expandedCategory: CategoryKey | null;
+  search: string;
+  selectedCategoryFilters: Record<string, Set<string>>;
+  selectedEquipment: Set<string>;
+} {
+  const stored = readListContext<UnifiedFilters>(LIST_KEYS.libraryUnified);
+  const selectedCategoryFilters: Record<string, Set<string>> = {};
+  for (const [key, ids] of Object.entries(stored?.selectedCategoryFilters ?? {})) {
+    selectedCategoryFilters[key] = new Set(ids);
+  }
+  return {
+    expandedCategory: stored?.expandedCategory ?? 'muscleGroups',
+    search: stored?.search ?? '',
+    selectedCategoryFilters,
+    selectedEquipment: new Set(stored?.selectedEquipment ?? []),
+  };
+}
+
+function serializeUnifiedFilters(filters: {
+  expandedCategory: CategoryKey | null;
+  search: string;
+  selectedCategoryFilters: Record<string, Set<string>>;
+  selectedEquipment: Set<string>;
+}): UnifiedFilters {
+  const selectedCategoryFilters: Record<string, string[]> = {};
+  for (const [key, ids] of Object.entries(filters.selectedCategoryFilters)) {
+    selectedCategoryFilters[key] = [...ids];
+  }
+  return {
+    expandedCategory: filters.expandedCategory,
+    search: filters.search,
+    selectedCategoryFilters,
+    selectedEquipment: [...filters.selectedEquipment],
+  };
 }

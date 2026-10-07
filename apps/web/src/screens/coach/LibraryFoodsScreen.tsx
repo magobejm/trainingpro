@@ -23,6 +23,8 @@ import {
   UNIT_FILTER_KEYS,
 } from './foods.helpers';
 import { createFieldSetter } from './libraryCreateForm.utils';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useListContext } from '../../layout/useListContext';
 
 const COLORS = {
   bg: '#edf3fb',
@@ -60,25 +62,30 @@ function useFoodsViewModel() {
 }
 
 function useFoodState() {
-  const [createError, setCreateError] = useState('');
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [query, setQuery] = useState('');
-  const [activeUnitFilter, setActiveUnitFilter] = useState<(typeof UNIT_FILTER_KEYS)[number]>('all');
-  const [activeTypeFilter, setActiveTypeFilter] = useState<(typeof TYPE_FILTER_KEYS)[number]>('all');
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState<(typeof CATEGORY_FILTER_KEYS)[number]>('all');
+  const [createError, setCreateError] = React.useState('');
+  const [createModalVisible, setCreateModalVisible] = React.useState(false);
+  const [filters, setFilters] = useListContext(LIST_KEYS.libraryFoods, {
+    activeCategoryFilter: 'all' as (typeof CATEGORY_FILTER_KEYS)[number],
+    activeTypeFilter: 'all' as (typeof TYPE_FILTER_KEYS)[number],
+    activeUnitFilter: 'all' as (typeof UNIT_FILTER_KEYS)[number],
+    query: '',
+  });
   return {
-    activeCategoryFilter,
-    activeTypeFilter,
-    activeUnitFilter,
+    activeCategoryFilter: isCategoryFilter(filters.activeCategoryFilter) ? filters.activeCategoryFilter : 'all',
+    activeTypeFilter: isTypeFilter(filters.activeTypeFilter) ? filters.activeTypeFilter : 'all',
+    activeUnitFilter: isUnitFilter(filters.activeUnitFilter) ? filters.activeUnitFilter : 'all',
     createError,
     createModalVisible,
-    query,
-    setActiveCategoryFilter,
-    setActiveTypeFilter,
-    setActiveUnitFilter,
+    query: filters.query,
+    setActiveCategoryFilter: (activeCategoryFilter: (typeof CATEGORY_FILTER_KEYS)[number]) =>
+      setFilters((prev) => ({ ...prev, activeCategoryFilter })),
+    setActiveTypeFilter: (activeTypeFilter: (typeof TYPE_FILTER_KEYS)[number]) =>
+      setFilters((prev) => ({ ...prev, activeTypeFilter })),
+    setActiveUnitFilter: (activeUnitFilter: (typeof UNIT_FILTER_KEYS)[number]) =>
+      setFilters((prev) => ({ ...prev, activeUnitFilter })),
     setCreateError,
     setCreateModalVisible,
-    setQuery,
+    setQuery: (query: string) => setFilters((prev) => ({ ...prev, query })),
   };
 }
 

@@ -14,9 +14,15 @@ export type ClientCalendarPlanDaySwapInput = {
 type CalendarWorkoutEvent = {
   date: Date;
   id: string;
+  originDate: Date | null;
   planDayId: string | null;
   title: string | null;
 };
+
+export function originDateAfterMove(planned: Date, performed: Date, previousOrigin: Date | null): Date | null {
+  const origin = previousOrigin ?? planned;
+  return origin.toISOString().slice(0, 10) === performed.toISOString().slice(0, 10) ? null : origin;
+}
 
 @Injectable()
 export class ClientCalendarPlanDaySwapService {
@@ -48,11 +54,13 @@ export class ClientCalendarPlanDaySwapService {
     const requestedPlanDay = planDays.find((day) => day.id === input.requestedPlanDayId) ?? null;
     const todayPlanDay = todayPlanDayId ? (planDays.find((day) => day.id === todayPlanDayId) ?? null) : null;
 
+    const performedDate = this.normalizeDate(input.sessionDate);
     await this.prisma.$transaction(async (tx) => {
       if (todayEvent && sourceEvent && todayEvent.id !== sourceEvent.id) {
         await tx.calendarEvent.update({
           where: { id: todayEvent.id },
           data: {
+            originDate: originDateAfterMove(sourceEvent.date, todayEvent.date, sourceEvent.originDate),
             planDayId: input.requestedPlanDayId,
             title: requestedPlanDay?.title ?? todayEvent.title,
           },
@@ -60,6 +68,7 @@ export class ClientCalendarPlanDaySwapService {
         await tx.calendarEvent.update({
           where: { id: sourceEvent.id },
           data: {
+            originDate: null,
             planDayId: todayPlanDayId,
             title: todayPlanDay?.title ?? sourceEvent.title,
           },
@@ -82,7 +91,8 @@ export class ClientCalendarPlanDaySwapService {
         await tx.calendarEvent.update({
           where: { id: sourceEvent.id },
           data: {
-            date: this.normalizeDate(input.sessionDate),
+            date: performedDate,
+            originDate: originDateAfterMove(sourceEvent.date, performedDate, sourceEvent.originDate),
             planDayId: input.requestedPlanDayId,
             title: requestedPlanDay?.title ?? sourceEvent.title,
           },
@@ -162,6 +172,7 @@ export class ClientCalendarPlanDaySwapService {
       select: {
         date: true,
         id: true,
+        originDate: true,
         planDayId: true,
         title: true,
       },

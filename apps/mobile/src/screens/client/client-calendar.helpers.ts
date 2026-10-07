@@ -1,3 +1,4 @@
+import { workoutShift, type WorkoutShift } from '@trainerpro/shared';
 import type { ClientCalendarEvent, ClientSessionSummary } from '../../data/hooks/useClientCalendar';
 
 export type DayData = {
@@ -7,7 +8,9 @@ export type DayData = {
   sessionId: string | null;
   sessionStatus: string | null;
   mood: number | null;
+  originDate: string | null;
   planDayTitle: string | null;
+  shift: WorkoutShift | null;
 };
 
 export type GridCell = {
@@ -48,7 +51,9 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
       sessionId: null,
       sessionStatus: null,
       mood: null,
+      originDate: null,
       planDayTitle: null,
+      shift: null,
     };
 
   for (const s of sessions) {
@@ -66,6 +71,13 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
     const dateStr = e.date.slice(0, 10);
     const d = get(dateStr);
     if (e.type === 'workout' && !d.sessionId) d.hasPlanned = true;
+    if (e.type === 'workout' && e.isCompleted) {
+      const shift = workoutShift(dateStr, e.originDate);
+      if (shift) {
+        d.originDate = e.originDate ?? null;
+        d.shift = shift;
+      }
+    }
     if (e.type === 'reminder') d.hasMeeting = true;
     map.set(dateStr, d);
   }

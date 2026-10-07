@@ -1,4 +1,7 @@
-import { ClientCalendarPlanDaySwapService } from '../../../src/modules/clients/application/services/client-calendar-plan-day-swap.service';
+import {
+  ClientCalendarPlanDaySwapService,
+  originDateAfterMove,
+} from '../../../src/modules/clients/application/services/client-calendar-plan-day-swap.service';
 
 describe('ClientCalendarPlanDaySwapService', () => {
   const planDays = [
@@ -15,16 +18,23 @@ describe('ClientCalendarPlanDaySwapService', () => {
   it('resolves plan day id from calendar title when planDayId is null', () => {
     expect(
       service.resolveEventPlanDayId(
-        { id: 'event-1', date: new Date('2026-09-08'), planDayId: null, title: 'Día 2' },
+        { id: 'event-1', date: new Date('2026-09-08'), originDate: null, planDayId: null, title: 'Día 2' },
         planDays,
       ),
     ).toBe('day-2');
   });
 
+  it('keeps the planned day when the workout moves, and drops it when it returns', () => {
+    const thursday = new Date('2026-10-08T00:00:00.000Z');
+    const wednesday = new Date('2026-10-07T00:00:00.000Z');
+    expect(originDateAfterMove(thursday, wednesday, null)?.toISOString().slice(0, 10)).toBe('2026-10-08');
+    expect(originDateAfterMove(thursday, thursday, null)).toBeNull();
+  });
+
   it('prefers explicit planDayId over title', () => {
     expect(
       service.resolveEventPlanDayId(
-        { id: 'event-1', date: new Date('2026-09-08'), planDayId: 'day-1', title: 'Día 2' },
+        { id: 'event-1', date: new Date('2026-09-08'), originDate: null, planDayId: 'day-1', title: 'Día 2' },
         planDays,
       ),
     ).toBe('day-1');

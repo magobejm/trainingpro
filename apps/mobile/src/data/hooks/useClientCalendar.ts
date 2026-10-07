@@ -10,6 +10,8 @@ export type ClientCalendarEvent = {
   content: string | null;
   time: string | null;
   color: string | null;
+  isCompleted?: boolean;
+  originDate?: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
 };

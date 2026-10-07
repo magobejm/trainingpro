@@ -46,6 +46,8 @@ export function useCalendarEventsQuery(dateFrom: string, dateTo: string, clientI
       return response.data.map((ev: CalendarEventData) => ({
         ...ev,
         date: new Date(ev.date),
+        isCompleted: Boolean(ev.isCompleted),
+        originDate: ev.originDate ? String(ev.originDate).slice(0, 10) : null,
         createdAt: new Date(ev.createdAt),
         updatedAt: new Date(ev.updatedAt),
       }));

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { ClipboardPaste, Copy } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
@@ -8,6 +9,7 @@ import { getWeeks } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
 import { WeekRow } from './CalendarScreen.week-row';
 import { CalendarMonthHeader, CalendarDayNames } from './CalendarScreen.month-header';
+import { workoutStatusLines } from './calendar-workout-label';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -286,9 +288,11 @@ export function CalendarGrid({
 }
 
 function EventChip({ event, muted = false }: { event: CalendarEventData; muted?: boolean }): React.JSX.Element {
+  const { i18n, t } = useTranslation();
   const colorObj = (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
   const label = event.title ?? event.planDayTitle ?? (event.type === 'reminder' ? event.content : null) ?? '—';
   const displayText = event.time ? [event.time, label].join(' ') : label;
+  const statusLines = workoutStatusLines(event, t, i18n.language);
 
   function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
     e.stopPropagation();
@@ -309,14 +313,17 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
         fontSize: 13,
         fontWeight: 500,
         overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        whiteSpace: 'nowrap',
         maxWidth: '100%',
         cursor: 'grab',
         opacity: muted ? 0.5 : 1,
       }}
     >
-      {displayText}
+      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</div>
+      {statusLines.map((line) => (
+        <div key={line} style={{ fontSize: 10, fontWeight: 600, whiteSpace: 'normal' }}>
+          {line}
+        </div>
+      ))}
     </div>
   );
 }

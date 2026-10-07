@@ -18,6 +18,7 @@ type PrismaCalendarRow = {
   content: string | null;
   time: string | null;
   color: string | null;
+  originDate: Date | null;
   planDayId: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -126,6 +127,7 @@ export class CalendarRepositoryPrisma implements ICalendarRepository {
       content: row.content,
       time: row.time,
       color: row.color,
+      originDate: row.originDate,
       planDayId: row.planDayId,
       planDayTitle: row.planDay?.title,
       createdAt: row.createdAt,

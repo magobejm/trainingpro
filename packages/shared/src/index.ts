@@ -9,3 +9,4 @@ export {
   type ExerciseBlockType,
   type SetVariableKey,
 } from './exercise-set-variables';
+export { weekdayName, workoutShift, type WorkoutShift } from './workout-shift';

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
+import { weekdayName } from '@trainerpro/shared';
 import type { DayData } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
@@ -23,7 +24,7 @@ export function DayDetailModal({
   onOpenSession,
   onRequestMeeting,
 }: DayDetailModalProps): React.JSX.Element {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const date = new Date(dateStr);
   const dateLabel = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', weekday: 'long' });
   const trainingTitle = data?.planDayTitle ?? (data?.hasPlanned || data?.hasCompleted ? '—' : null);
@@ -39,6 +40,12 @@ export function DayDetailModal({
           <Text style={styles.sectionTitle}>{t('client.calendar.detail.training')}</Text>
           <Text style={styles.sectionValue}>{trainingTitle ?? t('client.calendar.detail.rest')}</Text>
           {moodEmoji ? <Text style={styles.mood}>{moodEmoji}</Text> : null}
+          {data?.hasCompleted ? <Text style={styles.shift}>{t('client.calendar.workout.done')}</Text> : null}
+          {data?.hasCompleted && data.shift && data.originDate ? (
+            <Text style={styles.shift}>
+              {t(`client.calendar.workout.${data.shift}`, { day: weekdayName(data.originDate, i18n.language) })}
+            </Text>
+          ) : null}
         </View>
 
         {data?.hasMeeting ? (
@@ -111,6 +118,7 @@ const styles = StyleSheet.create({
   dateLabel: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '600', marginBottom: 12, textTransform: 'capitalize' },
   mood: { fontSize: 24, marginTop: 4 },
   section: { marginBottom: 8 },
+  shift: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '600', marginTop: 4 },
   sectionTitle: { color: LIGHT.textMuted, fontSize: 12, marginBottom: 2 },
   sectionValue: { color: LIGHT.textStrong, fontSize: 15 },
 });

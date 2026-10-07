@@ -10,6 +10,8 @@ export type ClientCalendarEvent = {
   content: string | null;
   time: string | null;
   color: string | null;
+  isCompleted: boolean;
+  originDate: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
 };
@@ -39,11 +41,13 @@ export class ListClientCalendarUseCase {
         content: true,
         time: true,
         color: true,
+        originDate: true,
         planDayId: true,
         planDay: { select: { title: true } },
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'desc' }],
     });
+    const completed = await this.loadCompletedDays(client.id, input);
     return {
       data: rows.map((r) => ({
         id: r.id,
@@ -53,10 +57,25 @@ export class ListClientCalendarUseCase {
         content: r.content,
         time: r.time,
         color: r.color,
+        isCompleted: r.type === 'workout' && completed.has(r.date.toISOString().slice(0, 10)),
+        originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
         planDayId: r.planDayId,
         planDayTitle: r.planDay?.title,
       })),
     };
+  }
+
+  private async loadCompletedDays(clientId: string, input: ListClientCalendarInput): Promise<Set<string>> {
+    const rows = await this.prisma.sessionInstance.findMany({
+      where: {
+        archivedAt: null,
+        clientId,
+        isCompleted: true,
+        sessionDate: { gte: input.dateFrom, lte: input.dateTo },
+      },
+      select: { sessionDate: true },
+    });
+    return new Set(rows.map((row) => row.sessionDate.toISOString().slice(0, 10)));
   }
 
   private async resolveClient(context: AuthContext) {

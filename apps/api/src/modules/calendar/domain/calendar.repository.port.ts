@@ -13,7 +13,9 @@ export type CalendarEventEntity = {
   content: string | null;
   time: string | null;
   color: string | null;
+  originDate: Date | null;
   planDayId: string | null;
+  isCompleted?: boolean;
   planDayTitle?: string;
   createdAt: Date;
   updatedAt: Date;

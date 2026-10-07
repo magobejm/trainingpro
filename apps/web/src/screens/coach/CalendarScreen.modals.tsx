@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { FileText, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { formatCalendarDate, getColorForHex } from './calendar-screen.utils';
+import { workoutStatusLines } from './calendar-workout-label';
 
 export { AddNoteModal, AddReminderModal } from './CalendarScreen.modals.forms';
 
@@ -186,8 +188,10 @@ export function DayDetailModal({
 type EventRowProps = { event: CalendarEventData; onDelete: () => void; onEdit?: () => void; t: TFunc };
 
 function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Element {
+  const { i18n } = useTranslation();
   const colorObj = getColorForHex(event.color ?? '');
   const typeLabel = t(`coach.calendar.type.${event.type}`);
+  const statusLines = workoutStatusLines(event, t, i18n.language);
 
   return (
     <View
@@ -230,6 +234,11 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
         {event.content && (
           <Text style={{ fontSize: 13, color: colorObj.text, opacity: 0.8, marginTop: 2 }}>{event.content}</Text>
         )}
+        {statusLines.map((line) => (
+          <Text key={line} style={{ fontSize: 12, color: colorObj.text, fontWeight: '600', marginTop: 2 }}>
+            {line}
+          </Text>
+        ))}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
         {event.type !== 'workout' && onEdit != null && (

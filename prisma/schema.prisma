@@ -1838,6 +1838,7 @@ model CalendarEvent {
   content           String?            @db.Text
   time              String?            @db.VarChar(5)
   color             String?            @db.VarChar(30)
+  originDate        DateTime?          @map("origin_date") @db.Date
   planDayId         String?            @map("plan_day_id") @db.Uuid
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)

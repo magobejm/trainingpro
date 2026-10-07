@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
+import { pickNormalizedPlanTemplateId } from '../../../../data/normalize-plan-template-id';
 import { matchesSearch } from '../../../../utils/normalize-search';
 
 const MODAL_ANIM = 'fade' as const;
@@ -22,6 +23,7 @@ interface SaveRoutineModalProps {
   onSave: (name: string) => Promise<void>;
   onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
   onAssignOnly?: (clientId: string) => Promise<void>;
+  templateId?: string | null;
   t: (k: string, opts?: Record<string, unknown>) => string;
 }
 
@@ -84,10 +86,17 @@ function ConflictWarning({
   );
 }
 
+function isSameAssignedRoutine(client: ClientView | undefined, templateId: string | null | undefined): boolean {
+  if (!client || !templateId) return false;
+  const current = pickNormalizedPlanTemplateId(client.trainingPlan?.id, client.trainingPlanId);
+  const next = pickNormalizedPlanTemplateId(templateId);
+  return Boolean(current && next && current === next);
+}
+
 function noop() {}
 
 export function SaveRoutineModal(props: SaveRoutineModalProps) {
-  const { visible, initialName, isGlobal, onClose, onSave, onSaveAndAssign, onAssignOnly, t } = props;
+  const { visible, initialName, isGlobal, onClose, onSave, onSaveAndAssign, onAssignOnly, templateId, t } = props;
   const { data: clients = [] } = useClientsQuery();
   const { data: objectives = [] } = useClientObjectivesQuery();
   const [name, setName] = useState(initialName);
@@ -132,8 +141,11 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
     }
   }
 
+  const selectedClient = clients.find((client) => client.id === selectedClientId);
+  const alreadyAssigned = isSameAssignedRoutine(selectedClient, templateId);
+
   async function handleSaveAndAssign() {
-    if (!selectedClientId) return;
+    if (!selectedClientId || alreadyAssigned) return;
     const client = clients.find((c) => c.id === selectedClientId);
     if (!client) return;
     if (client.trainingPlan) {
@@ -263,22 +275,24 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
           </ScrollView>
 
           {/* ── Sticky footer ── */}
-          {saveError ? (
+          {alreadyAssigned || saveError ? (
             <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>{saveError}</Text>
+              <Text style={styles.errorBannerText}>
+                {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
+              </Text>
             </View>
           ) : null}
           {!conflict &&
             (isGlobal ? (
               <View style={styles.footer}>
                 <Pressable
-                  disabled={!selectedClientId || isSaving}
+                  disabled={!selectedClientId || isSaving || alreadyAssigned}
                   onPress={async () => {
-                    if (!selectedClientId || !onAssignOnly) return;
+                    if (!selectedClientId || !onAssignOnly || alreadyAssigned) return;
                     await onAssignOnly(selectedClientId);
                     onClose();
                   }}
-                  style={[styles.btnPrimary, (!selectedClientId || isSaving) && styles.btnDisabled]}
+                  style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
                 >
                   <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
                 </Pressable>
@@ -295,9 +309,9 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
                   </Text>
                 </Pressable>
                 <Pressable
-                  disabled={!selectedClientId || isSaving}
+                  disabled={!selectedClientId || isSaving || alreadyAssigned}
                   onPress={handleSaveAndAssign}
-                  style={[styles.btnPrimary, (!selectedClientId || isSaving) && styles.btnDisabled]}
+                  style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
                 >
                   <Text style={styles.btnPrimaryText}>
                     {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}

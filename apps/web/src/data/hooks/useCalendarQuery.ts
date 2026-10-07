@@ -118,21 +118,39 @@ export type RoutineDayCard = {
   categories: SessionProgressCategory[];
 };
 
-function inferRoutineDayCategories(day: {
+type RoutineDayBlocks = {
   exercises?: unknown[];
   cardioBlocks?: unknown[];
   plioBlocks?: unknown[];
   mobilityBlocks?: unknown[];
   sportBlocks?: unknown[];
   isometricBlocks?: unknown[];
-}): SessionProgressCategory[] {
+};
+
+function blockCount(items: unknown[] | undefined): number {
+  return Array.isArray(items) ? items.length : 0;
+}
+
+/** Strength plus every other block. The client app lists them all as exercises. */
+export function countRoutineDayExercises(day: RoutineDayBlocks): number {
+  return (
+    blockCount(day.exercises) +
+    blockCount(day.cardioBlocks) +
+    blockCount(day.plioBlocks) +
+    blockCount(day.mobilityBlocks) +
+    blockCount(day.sportBlocks) +
+    blockCount(day.isometricBlocks)
+  );
+}
+
+function inferRoutineDayCategories(day: RoutineDayBlocks): SessionProgressCategory[] {
   const out: SessionProgressCategory[] = [];
-  if ((day.exercises?.length ?? 0) > 0) out.push('strength');
-  if ((day.cardioBlocks?.length ?? 0) > 0) out.push('cardio');
-  if ((day.plioBlocks?.length ?? 0) > 0) out.push('plio');
-  if ((day.isometricBlocks?.length ?? 0) > 0) out.push('isometric');
-  if ((day.mobilityBlocks?.length ?? 0) > 0) out.push('mobility');
-  if ((day.sportBlocks?.length ?? 0) > 0) out.push('sport');
+  if (blockCount(day.exercises) > 0) out.push('strength');
+  if (blockCount(day.cardioBlocks) > 0) out.push('cardio');
+  if (blockCount(day.plioBlocks) > 0) out.push('plio');
+  if (blockCount(day.isometricBlocks) > 0) out.push('isometric');
+  if (blockCount(day.mobilityBlocks) > 0) out.push('mobility');
+  if (blockCount(day.sportBlocks) > 0) out.push('sport');
   return out;
 }
 
@@ -169,7 +187,7 @@ export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefi
         id: day.id,
         title: day.title,
         dayIndex: day.dayIndex,
-        exerciseCount: Array.isArray(day.exercises) ? day.exercises.length : 0,
+        exerciseCount: countRoutineDayExercises(day),
         color: '#dbeafe',
         categories: inferRoutineDayCategories(day as Parameters<typeof inferRoutineDayCategories>[0]),
       })) as RoutineDayCard[];

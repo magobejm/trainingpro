@@ -23,6 +23,7 @@ import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
+import { SaveRoutineModal } from './components/RoutinePlanner/SaveRoutineModal';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 
 type Tab = 'routines' | 'warmups';
@@ -49,6 +50,7 @@ export function LibraryRoutinesScreen({ defaultTab = 'routines', onRouteChange }
 function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => void) {
   const { t } = useTranslation();
   const { query, setQuery, setTab, tab } = useRoutineLibraryList(defaultTab);
+  const [assignTemplate, setAssignTemplate] = useState<RoutineTemplateView | null>(null);
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<Tab>('routines');
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -97,15 +99,11 @@ function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => voi
       openBlankWarmup();
       onRouteChange('coach.warmup.planner');
     },
-    onAssignRoutine: (tpl: RoutineTemplateView) => {
-      if (!clientId) return;
-      void assignRoutine.mutateAsync({ clientId, templateId: tpl.id }).then(() => {
-        clearRoutine();
-        useCalendarContextStore.getState().openForClient(clientId);
-        writeRouteClientId(clientId);
-        onRouteChange('coach.calendar');
-      });
-    },
+    assignTemplate,
+    onAssignRoutine: (tpl: RoutineTemplateView) => setAssignTemplate(tpl),
+    onCloseAssign: () => setAssignTemplate(null),
+    onConfirmAssign: (nextClientId: string) =>
+      confirmLibraryAssign(assignRoutine, clearRoutine, nextClientId, assignTemplate?.id ?? '', onRouteChange),
     onViewRoutine: (tpl: RoutineTemplateView) => {
       openForView(tpl.id);
       onRouteChange('coach.routine.planner');
@@ -208,6 +206,17 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
         onConfirm={vm.onConfirmDelete}
         title={vm.t('coach.routine.delete.title')}
         visible={Boolean(vm.pendingDeleteId)}
+      />
+      <SaveRoutineModal
+        initialName={vm.assignTemplate?.name ?? ''}
+        isGlobal
+        onAssignOnly={vm.onConfirmAssign}
+        onClose={vm.onCloseAssign}
+        onSave={async () => undefined}
+        onSaveAndAssign={async () => undefined}
+        t={vm.t}
+        templateId={vm.assignTemplate?.id}
+        visible={Boolean(vm.assignTemplate)}
       />
     </ScrollView>
   );
@@ -345,7 +354,7 @@ function RoutineCard(props: {
       <CardTopBar
         canEdit={canEdit}
         icon={<Trophy color={C.blue} size={18} />}
-        onAssign={props.clientId ? () => props.onAssign(tpl) : undefined}
+        onAssign={canEdit ? () => props.onAssign(tpl) : undefined}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
       />
@@ -409,16 +418,16 @@ function CardTopBar(props: {
       {props.icon}
       <View style={{ flex: 1 }} />
       {props.onAssign && (
-        <Pressable onPress={props.onAssign} style={ss.iconBtn}>
+        <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onAssign)} style={ss.iconBtn}>
           <UserPlus color={C.blue} size={16} />
         </Pressable>
       )}
       {props.canEdit ? (
         <>
-          <Pressable onPress={props.onEdit} style={ss.iconBtn}>
+          <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onEdit)} style={ss.iconBtn}>
             <Pencil color={C.muted} size={14} />
           </Pressable>
-          <Pressable onPress={props.onDelete} style={ss.iconBtn}>
+          <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onDelete)} style={ss.iconBtn}>
             <Trash2 color={C.muted} size={14} />
           </Pressable>
         </>
@@ -461,6 +470,26 @@ function pickWarmupImage(tpl: WarmupTemplateView, map: MediaMap): string {
     if (id && map[id]) return map[id] as string;
   }
   return WARMUP_PLACEHOLDER();
+}
+
+function pressWithoutOpeningCard(event: { stopPropagation?: () => void }, action?: () => void): void {
+  event.stopPropagation?.();
+  action?.();
+}
+
+function confirmLibraryAssign(
+  assignRoutine: { mutateAsync: (input: { clientId: string; templateId: string }) => Promise<unknown> },
+  clearRoutine: () => void,
+  clientId: string,
+  templateId: string,
+  onRouteChange: (route: ShellRoute) => void,
+): Promise<void> {
+  return assignRoutine.mutateAsync({ clientId, templateId }).then(() => {
+    clearRoutine();
+    useCalendarContextStore.getState().openForClient(clientId);
+    writeRouteClientId(clientId);
+    onRouteChange('coach.calendar');
+  });
 }
 
 function useFiltered<T extends { name: string }>(items: T[], query: string): T[] {

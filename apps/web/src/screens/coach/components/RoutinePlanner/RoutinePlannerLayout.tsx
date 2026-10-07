@@ -166,6 +166,7 @@ function RoutineFooterSection(props: LayoutProps) {
         isGlobal={showAssign}
         onAssignOnly={props.onAssignOnly}
         onClose={() => uiState.setShowSaveModal(false)}
+        templateId={uiState.editingId}
         onSave={props.onSave}
         onSaveAndAssign={props.onSaveAndAssign}
         t={t}

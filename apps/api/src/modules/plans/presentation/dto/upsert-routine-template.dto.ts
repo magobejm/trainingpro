@@ -211,8 +211,10 @@ const neatSchema = z.object({
 
 export class UpsertRoutineTemplateDto {
   static schema = z.object({
+    clientSaveId: z.string().uuid().optional(),
     days: z.array(daySchema).min(1),
     expectedCompletionDays: z.number().int().min(1).max(365).nullable().optional(),
+    expectedTemplateVersion: z.number().int().min(1).optional(),
     name: z.string().trim().min(1).max(120),
     neats: z.array(neatSchema).max(20).optional().default([]),
     objectiveIds: z.array(z.string().uuid()).max(3).optional().default([]),

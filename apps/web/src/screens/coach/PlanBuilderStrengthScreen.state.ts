@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react';
+import { saveTemplate } from '../../layout/template-save';
+import { useUnsavedWork } from '../../layout/useUnsavedWork';
 import { useTranslation } from 'react-i18next';
 import { useLibraryExercisesQuery } from '../../data/hooks/useLibraryQuery';
 import {
@@ -46,39 +48,38 @@ export function usePlanBuilderState() {
   };
   const templatesQuery = usePlanTemplatesQuery();
   const exercisesQuery = useLibraryExercisesQuery({ query: '' });
-  const pickerItems = useMemo(
-    () => mapPickerItems(exercisesQuery.data ?? []),
-    [exercisesQuery.data],
-  );
+  const pickerItems = useMemo(() => mapPickerItems(exercisesQuery.data ?? []), [exercisesQuery.data]);
   const selection = useBuilderSelection(pickerItems);
   const ops = useTemplateOperations(store.currentTemplateId);
 
   return { ops, pickerItems, selection, store, templatesQuery };
 }
 
+type StrengthSnapshot = { name: string; selected: BuilderExercise[] };
+
 function useTemplateSaveAction(
   ops: ReturnType<typeof useTemplateOperations>,
   store: ReturnType<typeof usePlanBuilderState>['store'],
   selection: ReturnType<typeof usePlanBuilderState>['selection'],
   t: (key: string) => string,
+  work: ReturnType<typeof useUnsavedWork<StrengthSnapshot>>,
 ) {
   const onComplete = () => {
     ops.setSaveSuccess(true);
     setTimeout(() => ops.setSaveSuccess(false), 3000);
+    const empty: StrengthSnapshot = { name: '', selected: [] };
+    work.release(empty);
     store.resetDraft();
     selection.resetSelection();
   };
   return () => {
-    const payload = buildTemplatePayload(
-      store.draft.name,
-      selection.selected,
-      t('coach.builder.dayTitleDefault'),
-    );
-    if (store.currentTemplateId) {
-      ops.updateTemplate.mutate(payload, { onSuccess: onComplete });
-    } else {
-      ops.createTemplate.mutate(payload, { onSuccess: onComplete });
-    }
+    const payload = buildTemplatePayload(store.draft.name, selection.selected, t('coach.builder.dayTitleDefault'));
+    void saveTemplate(work, store.currentTemplateId, (fields) => {
+      const body = { ...payload, ...fields };
+      return fields.templateId ? ops.updateTemplate.mutateAsync(body) : ops.createTemplate.mutateAsync(body);
+    })
+      .then(onComplete)
+      .catch(() => undefined);
   };
 }
 
@@ -87,6 +88,7 @@ function useBuilderActions(
   store: ReturnType<typeof usePlanBuilderState>['store'],
   selection: ReturnType<typeof usePlanBuilderState>['selection'],
   t: (key: string) => string,
+  work: ReturnType<typeof useUnsavedWork<StrengthSnapshot>>,
 ) {
   return {
     onDeleteConfirm: () => {
@@ -99,26 +101,39 @@ function useBuilderActions(
     onLoadTemplate: (template: unknown) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const safeTpl = template as any;
+      const selected = mapTemplateToBuilder(template);
       store.startEditing(safeTpl.id, { days: safeTpl.days, name: safeTpl.name });
-      selection.setSelection(mapTemplateToBuilder(template));
+      selection.setSelection(selected);
+      work.adopt({ name: String(safeTpl.name ?? ''), selected }, Number(safeTpl.templateVersion ?? 1));
     },
-    onSaveTemplate: useTemplateSaveAction(ops, store, selection, t),
+    onSaveTemplate: useTemplateSaveAction(ops, store, selection, t, work),
   };
 }
 
 export function usePlanBuilderViewModel() {
   const { t } = useTranslation();
   const { ops, pickerItems, selection, store, templatesQuery } = usePlanBuilderState();
-  const actions = useBuilderActions(ops, store, selection, t);
+  const snapshot: StrengthSnapshot = { name: store.draft.name, selected: selection.selected };
+  const work = useUnsavedWork({
+    onRestore: (value) => {
+      store.setTemplateName(value.name);
+      selection.setSelection(value.selected);
+    },
+    storageKey: `trainerpro.draft.strength.${store.currentTemplateId ?? 'new'}`,
+    value: snapshot,
+  });
+  const actions = useBuilderActions(ops, store, selection, t, work);
 
   return {
     ...selection,
     currentTemplateId: store.currentTemplateId,
     deleteIsPending: ops.deleteTemplateMutation.isPending,
     deletingId: ops.deletingId,
+    isSaving: ops.createTemplate.isPending || ops.updateTemplate.isPending || work.saving,
     onDeleteConfirm: actions.onDeleteConfirm,
     onDeleteRequest: ops.setDeletingId,
     onLoadTemplate: actions.onLoadTemplate,
+    onOverwrite: actions.onSaveTemplate,
     onSaveTemplate: actions.onSaveTemplate,
     pickerItems,
     saveSuccess: ops.saveSuccess,
@@ -127,27 +142,18 @@ export function usePlanBuilderViewModel() {
     t,
     templateName: store.draft.name,
     templates: templatesQuery.data ?? [],
+    work,
   };
 }
 
-function updateGlobalMode(
-  s: BuilderExercise[],
-  id: string,
-  f: keyof BuilderExercise['globalModes'],
-  m: FieldModeValue,
-) {
+function updateGlobalMode(s: BuilderExercise[], id: string, f: keyof BuilderExercise['globalModes'], m: FieldModeValue) {
   return s.map((i) => {
     if (i.id !== id) return i;
     return { ...i, globalModes: { ...i.globalModes, [f]: m } };
   });
 }
 
-function updateGlobalValue(
-  s: BuilderExercise[],
-  id: string,
-  f: keyof BuilderExercise['globalValues'],
-  v: string,
-) {
+function updateGlobalValue(s: BuilderExercise[], id: string, f: keyof BuilderExercise['globalValues'], v: string) {
   return s.map((i) => {
     if (i.id !== id) return i;
     return { ...i, globalValues: { ...i.globalValues, [f]: v } };

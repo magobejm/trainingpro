@@ -43,6 +43,8 @@ export type WarmupTemplateItemInput = {
 };
 
 export type UpsertWarmupTemplateInput = {
+  clientSaveId?: string;
+  expectedTemplateVersion?: number;
   groups?: WarmupTemplateGroupInput[];
   items: WarmupTemplateItemInput[];
   name: string;
@@ -86,7 +88,10 @@ export function useUpdateWarmupTemplateMutation(templateId: string) {
   const auth = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpsertWarmupTemplateInput) => updateTemplate(auth, templateId, input),
+    mutationFn: (input: UpsertWarmupTemplateInput & { templateId?: string }) => {
+      const { templateId: override, ...body } = input;
+      return updateTemplate(auth, override || templateId, body);
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['warmup-templates'] });
     },

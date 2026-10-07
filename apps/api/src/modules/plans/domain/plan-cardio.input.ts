@@ -26,6 +26,8 @@ export type PlanCardioTemplateDayInput = {
 };
 
 export type PlanCardioTemplateWriteInput = {
+  clientSaveId?: string;
   days: PlanCardioTemplateDayInput[];
+  expectedTemplateVersion?: number;
   name: string;
 };

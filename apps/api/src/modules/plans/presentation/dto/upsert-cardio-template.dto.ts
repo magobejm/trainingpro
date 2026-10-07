@@ -31,7 +31,9 @@ const daySchema = z.object({
 
 export class UpsertCardioTemplateDto {
   static schema = z.object({
+    clientSaveId: z.string().uuid().optional(),
     days: z.array(daySchema).min(1),
+    expectedTemplateVersion: z.number().int().min(1).optional(),
     name: z.string().trim().min(1).max(120),
   });
 

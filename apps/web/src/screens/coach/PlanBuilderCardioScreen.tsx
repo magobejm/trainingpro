@@ -1,14 +1,13 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import {
-  CardioIntervalEditor,
-  ExercisePicker,
-  type CardioIntervalDraft,
-} from '@trainerpro/ui';
+import { CardioIntervalEditor, ExercisePicker, type CardioIntervalDraft } from '@trainerpro/ui';
 import '../../i18n';
 import { useLibraryCardioMethodsQuery } from '../../data/hooks/useLibraryQuery';
-import { useCreateCardioTemplateMutation } from '../../data/hooks/useCardioTemplates';
+import { useCreateCardioTemplateMutation, useUpdateCardioTemplateMutation } from '../../data/hooks/useCardioTemplates';
+import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
+import { saveTemplate } from '../../layout/template-save';
+import { useUnsavedWork } from '../../layout/useUnsavedWork';
 
 type MethodOption = {
   id: string;
@@ -34,7 +33,20 @@ const COLORS = {
 
 export function PlanBuilderCardioScreen(): React.JSX.Element {
   const vm = useCardioBuilderViewModel();
-  return <PlanBuilderCardioView {...vm} />;
+  return (
+    <>
+      <UnsavedWorkDialogs
+        onOverwrite={vm.onSave}
+        onReload={() => {
+          vm.work.release();
+          window.location.reload();
+        }}
+        t={vm.t}
+        work={vm.work}
+      />
+      <PlanBuilderCardioView {...vm} />
+    </>
+  );
 }
 
 function useCardioBuilderViewModel() {
@@ -43,19 +55,45 @@ function useCardioBuilderViewModel() {
   const [intervals, setIntervals] = useState<CardioDraft[]>([]);
   const methodsQuery = useLibraryCardioMethodsQuery({ query: '' });
   const createTemplate = useCreateCardioTemplateMutation();
+  const updateTemplate = useUpdateCardioTemplateMutation();
   const pickerItems = useMemo(() => mapMethodPicker(methodsQuery.data ?? []), [methodsQuery.data]);
+  const snapshot = { intervals, templateName };
+  const work = useUnsavedWork({
+    onRestore: (value) => {
+      setTemplateName(value.templateName);
+      setIntervals(value.intervals);
+    },
+    storageKey: 'trainerpro.draft.cardio.new',
+    value: snapshot,
+  });
+  const onSave = () => {
+    const payload = buildPayload(templateName, intervals, t('coach.builder.dayTitleDefault'));
+    void saveTemplate(work, null, (fields) => {
+      const body = { ...payload, ...fields };
+      return fields.templateId
+        ? updateTemplate.mutateAsync({ ...body, templateId: fields.templateId })
+        : createTemplate.mutateAsync(body);
+    })
+      .then(() => work.release({ intervals: [], templateName: '' }))
+      .then(() => {
+        setTemplateName('');
+        setIntervals([]);
+      })
+      .catch(() => undefined);
+  };
   return {
     intervals,
+    isSaving: createTemplate.isPending || updateTemplate.isPending || work.saving,
     onAddMethod: (id: string) => setIntervals((state) => addMethod(state, id, pickerItems)),
     onAddPlaceholderBlock: () => setIntervals((state) => addFirstAvailable(state, pickerItems)),
     onChangeInterval: (index: number, next: CardioIntervalDraft) =>
       setIntervals((state) => replaceInterval(state, index, next)),
-    onSave: () =>
-      createTemplate.mutate(buildPayload(templateName, intervals, t('coach.builder.dayTitleDefault'))),
+    onSave,
     pickerItems,
     setTemplateName,
     t,
     templateName,
+    work,
   };
 }
 
@@ -65,10 +103,15 @@ function PlanBuilderCardioView(props: ViewModel) {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{props.t('coach.builder.cardio.title')}</Text>
+      <UnsavedStatus t={props.t} work={props.work} />
       <TemplateNameCard {...props} />
       <MethodPickerCard {...props} />
       <BlocksEditorCard {...props} />
-      <Pressable onPress={props.onSave} style={styles.button}>
+      <Pressable
+        disabled={props.isSaving}
+        onPress={props.onSave}
+        style={[styles.button, props.isSaving ? { opacity: 0.5 } : null]}
+      >
         <Text style={styles.buttonLabel}>{props.t('coach.builder.save')}</Text>
       </Pressable>
     </ScrollView>
@@ -136,9 +179,7 @@ function addMethod(state: CardioDraft[], id: string, options: MethodOption[]) {
 }
 
 function addFirstAvailable(state: CardioDraft[], options: MethodOption[]) {
-  const available = options.find(
-    (option) => !state.some((item) => item.cardioMethodLibraryId === option.id),
-  );
+  const available = options.find((option) => !state.some((item) => item.cardioMethodLibraryId === option.id));
   if (!available) {
     return state;
   }
@@ -164,9 +205,7 @@ function buildDraft(source: MethodOption): CardioDraft {
   };
 }
 
-function mapMethodPicker(
-  items: { id: string; methodType: string; name: string }[],
-): MethodOption[] {
+function mapMethodPicker(items: { id: string; methodType: string; name: string }[]): MethodOption[] {
   return items.map((item) => ({
     id: item.id,
     methodType: item.methodType,

@@ -37,6 +37,8 @@ const groupSchema = z.object({
 
 export class UpsertWarmupTemplateDto {
   static schema = z.object({
+    clientSaveId: z.string().uuid().optional(),
+    expectedTemplateVersion: z.number().int().min(1).optional(),
     groups: z.array(groupSchema).optional().default([]),
     items: z.array(itemSchema).min(1),
     name: z.string().trim().min(1).max(120),

@@ -732,6 +732,7 @@ model PlanTemplate {
   name                   String                  @db.VarChar(120)
   expectedCompletionDays Int?                    @map("expected_completion_days")
   templateVersion        Int                     @default(1) @map("template_version")
+  clientSaveId           String?                 @map("client_save_id") @db.Uuid
   archivedAt             DateTime?               @map("archived_at") @db.Timestamptz(6)
   createdBy              String?                 @map("created_by") @db.Uuid
   updatedBy              String?                 @map("updated_by") @db.Uuid
@@ -748,6 +749,7 @@ model PlanTemplate {
   @@index([scope, archivedAt], map: "idx_plan_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
+  @@unique([coachMembershipId, clientSaveId], map: "uq_plan_template_coach_client_save")
   @@map("plan_template")
 }
 
@@ -799,6 +801,7 @@ model WarmupTemplate {
   coachMembershipId String?              @map("coach_membership_id") @db.Uuid
   name              String               @db.VarChar(120)
   templateVersion   Int                  @default(1) @map("template_version")
+  clientSaveId      String?              @map("client_save_id") @db.Uuid
   archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
   createdBy         String?              @map("created_by") @db.Uuid
   updatedBy         String?              @map("updated_by") @db.Uuid
@@ -813,6 +816,7 @@ model WarmupTemplate {
   @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_warmup_template_org_archived")
+  @@unique([coachMembershipId, clientSaveId], map: "uq_warmup_template_coach_client_save")
   @@map("warmup_template")
 }
 

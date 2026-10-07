@@ -26,6 +26,7 @@ import { useMeQuery } from './data/hooks/useMeQuery';
 import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
+import { requestUnsavedLeave } from './layout/unsaved-leave';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useAuthStore } from './store/auth.store';
 import { useRoutinePlannerContextStore } from './store/routinePlannerContext.store';
@@ -161,15 +162,17 @@ function useShellViewModel(activeRole: 'admin' | 'coach') {
   const navItems = useMemo(() => resolveNavItems(activeRole), [activeRole]);
   const [route, setRoute] = usePersistentShellRoute(activeRole, navItems);
   const onSetRoute = (nextRoute: ShellRoute) => {
-    if (nextRoute === 'coach.routine.planner') {
-      clearRoutinePlannerContext();
-    }
-    if (nextRoute === 'coach.warmup.planner') {
-      clearWarmupPlannerContext();
-    }
-    setRoute(nextRoute);
+    requestUnsavedLeave(() => {
+      if (nextRoute === 'coach.routine.planner') {
+        clearRoutinePlannerContext();
+      }
+      if (nextRoute === 'coach.warmup.planner') {
+        clearWarmupPlannerContext();
+      }
+      setRoute(nextRoute);
+    });
   };
-  return { activeRole, email: meQuery.data?.email ?? '', navItems, onSetRoute, route, setRoute, t };
+  return { activeRole, email: meQuery.data?.email ?? '', navItems, onSetRoute, route, setRoute: onSetRoute, t };
 }
 
 function ShellView(props: {

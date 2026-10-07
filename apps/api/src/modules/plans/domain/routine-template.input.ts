@@ -193,8 +193,10 @@ export type RoutineNeatInput = {
 };
 
 export type RoutineTemplateWriteInput = {
+  clientSaveId?: string;
   days: RoutineDayInput[];
   expectedCompletionDays?: null | number;
+  expectedTemplateVersion?: number;
   name: string;
   neats?: RoutineNeatInput[];
   objectiveIds?: string[];

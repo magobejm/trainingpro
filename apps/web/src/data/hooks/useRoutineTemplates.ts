@@ -83,8 +83,10 @@ export type RoutineNeatInput = {
 };
 
 export type UpsertRoutineInput = {
+  clientSaveId?: string;
   days: RoutineDayInput[];
   expectedCompletionDays?: null | number;
+  expectedTemplateVersion?: number;
   name: string;
   neats?: RoutineNeatInput[];
   objectiveIds?: string[];
@@ -139,7 +141,10 @@ export function useUpdateRoutineTemplateMutation(templateId: string) {
   const auth = useAuth();
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpsertRoutineInput) => updateRoutine(auth, templateId, input),
+    mutationFn: (input: UpsertRoutineInput & { templateId?: string }) => {
+      const { templateId: override, ...body } = input;
+      return updateRoutine(auth, override || templateId, body);
+    },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['routine-templates'] });
     },

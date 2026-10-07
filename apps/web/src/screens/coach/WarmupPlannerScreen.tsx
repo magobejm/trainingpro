@@ -19,6 +19,9 @@ import {
 } from '../../data/hooks/useWarmupTemplates';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
+import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
+import { saveTemplate } from '../../layout/template-save';
+import { useUnsavedWork } from '../../layout/useUnsavedWork';
 
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 
@@ -26,7 +29,20 @@ type Props = { onRouteChange: (route: ShellRoute) => void };
 
 export function WarmupPlannerScreen({ onRouteChange }: Props): React.JSX.Element {
   const vm = useViewModel(onRouteChange);
-  return <WarmupPlannerView vm={vm} />;
+  return (
+    <>
+      <UnsavedWorkDialogs
+        onOverwrite={() => vm.onSave(vm.lastSaveName.current)}
+        onReload={() => {
+          vm.work.release();
+          window.location.reload();
+        }}
+        t={vm.t}
+        work={vm.work}
+      />
+      <WarmupPlannerView vm={vm} />
+    </>
+  );
 }
 
 /** Converts DraftState (warmup-level) to a DraftDay-compatible shape for useGroupManagement */
@@ -64,15 +80,26 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const viewOnly = useWarmupPlannerContextStore((st) => st.viewOnly);
   const fromLibrary = useWarmupPlannerContextStore((st) => st.fromLibrary);
   const clearInitialTemplate = useWarmupPlannerContextStore((st) => st.clearInitialTemplate);
+  const templateKey = initialTemplateId ?? editingId ?? 'new';
+  const work = useUnsavedWork({
+    onRestore: setDraft,
+    storageKey: `trainerpro.draft.warmup.${templateKey}`,
+    value: draft,
+  });
+  const lastSaveName = React.useRef('');
+  const adoptRef = React.useRef(work.adopt);
+  adoptRef.current = work.adopt;
 
   useEffect(() => {
     if (!initialTemplateId || list.length === 0 || isFetching) return;
     const tpl = list.find((item) => item.id === initialTemplateId);
     if (!tpl) return;
     const isGlobal = tpl.scope === 'GLOBAL';
+    const next = fromTemplate(tpl);
     setEditingId(isGlobal ? null : tpl.id);
     setIsReadOnly(isGlobal || viewOnly);
-    setDraft(fromTemplate(tpl));
+    setDraft(next);
+    adoptRef.current(next, tpl.templateVersion);
     clearInitialTemplate();
   }, [initialTemplateId, list, isFetching, clearInitialTemplate, viewOnly]);
 
@@ -92,18 +119,20 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   };
 
   const onSave = (name: string) => {
+    lastSaveName.current = name;
     const payload = { ...toPayload(draft), name };
-    const onSuccess = () => {
-      setShowSaveModal(false);
-      setDraft(EMPTY_DRAFT);
-      setEditingId(null);
-      onRouteChange('coach.library.warmups');
-    };
-    if (editingId) {
-      updateMutation.mutate(payload, { onSuccess });
-    } else {
-      createMutation.mutate(payload, { onSuccess });
-    }
+    void saveTemplate(work, editingId, (fields) => {
+      const body = { ...payload, ...fields };
+      return fields.templateId ? updateMutation.mutateAsync(body) : createMutation.mutateAsync(body);
+    })
+      .then(() => {
+        work.release(EMPTY_DRAFT);
+        setShowSaveModal(false);
+        setDraft(EMPTY_DRAFT);
+        setEditingId(null);
+        onRouteChange('coach.library.warmups');
+      })
+      .catch(() => undefined);
   };
 
   return {
@@ -114,7 +143,8 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     handleRemoveGroup,
     handleUpdateGroupNote,
     isReadOnly,
-    isSaving,
+    isSaving: isSaving || work.saving,
+    lastSaveName,
     onRouteChange,
     onSave,
     orderedBlocks,
@@ -128,6 +158,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     cancelGroupMode,
     fromLibrary,
     t,
+    work,
     toggleBlockSelection,
   };
 }
@@ -137,10 +168,15 @@ type VM = ReturnType<typeof useViewModel>;
 function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={s.page}>
+      <UnsavedStatus t={vm.t} work={vm.work} />
       <WarmupPlannerHeader vm={vm} />
       <WarmupBlocksCard vm={vm} />
       {!vm.isReadOnly && (
-        <Pressable onPress={() => vm.setShowSaveModal(true)} style={s.saveBtn}>
+        <Pressable
+          disabled={vm.isSaving}
+          onPress={() => vm.setShowSaveModal(true)}
+          style={[s.saveBtn, vm.isSaving ? { opacity: 0.5 } : null]}
+        >
           <Text style={s.saveBtnText}>{vm.t('coach.warmupPlanner.save')}</Text>
         </Pressable>
       )}

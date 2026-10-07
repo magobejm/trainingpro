@@ -1,20 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../../common/audit/audit-fields';
 import { AuthContext } from '../../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import { PlanCardioTemplate } from '../../../domain/entities/cardio-template.entity';
 import { PlanCardioTemplateWriteInput } from '../../../domain/plan-cardio.input';
-import {
-  cardioTemplateInclude,
-  mapCardioDayCreate,
-  mapCardioTemplate,
-} from '../plans-cardio.prisma.helpers';
+import { cardioTemplateInclude, mapCardioDayCreate, mapCardioTemplate } from '../plans-cardio.prisma.helpers';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
+import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
 
 @Injectable()
 export class PlansCardioRepository extends PlansBaseRepository {
@@ -22,14 +16,14 @@ export class PlansCardioRepository extends PlansBaseRepository {
     super(prisma);
   }
 
-  async createCardioTemplate(
-    ctx: AuthContext,
-    input: PlanCardioTemplateWriteInput,
-  ): Promise<PlanCardioTemplate> {
+  async createCardioTemplate(ctx: AuthContext, input: PlanCardioTemplateWriteInput): Promise<PlanCardioTemplate> {
     const membership = await this.resolveCoachMembership(ctx);
+    const reused = await this.findSavedEarlier(ctx, membership.id, input.clientSaveId, TemplateKind.CARDIO);
+    if (reused) return reused;
     const row = await this.prisma.planTemplate.create({
       data: {
         ...buildCreateAuditFields(ctx),
+        clientSaveId: input.clientSaveId,
         coachMembershipId: membership.id,
         days: { create: input.days.map(mapCardioDayCreate) },
         kind: TemplateKind.CARDIO,
@@ -41,10 +35,7 @@ export class PlansCardioRepository extends PlansBaseRepository {
     return mapCardioTemplate(row);
   }
 
-  async listCardioTemplates(
-    ctx: AuthContext,
-    opts?: { summary?: boolean },
-  ): Promise<PlanCardioTemplate[]> {
+  async listCardioTemplates(ctx: AuthContext, opts?: { summary?: boolean }): Promise<PlanCardioTemplate[]> {
     const m = await this.resolveCoachMembership(ctx);
     const rows = await this.prisma.planTemplate.findMany({
       include: opts?.summary ? undefined : cardioTemplateInclude(),
@@ -52,10 +43,7 @@ export class PlansCardioRepository extends PlansBaseRepository {
       where: {
         archivedAt: null,
         kind: TemplateKind.CARDIO,
-        OR: [
-          { coachMembershipId: m.id, scope: LibraryItemScope.COACH },
-          { scope: LibraryItemScope.GLOBAL },
-        ],
+        OR: [{ coachMembershipId: m.id, scope: LibraryItemScope.COACH }, { scope: LibraryItemScope.GLOBAL }],
       },
     });
     return rows.map((r) => {
@@ -93,6 +81,7 @@ export class PlansCardioRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Cardio template not found');
+      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
       await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
@@ -119,5 +108,19 @@ export class PlansCardioRepository extends PlansBaseRepository {
       where: { id: cur.id },
       data: { archivedAt: new Date() },
     });
+  }
+
+  private async findSavedEarlier(
+    ctx: AuthContext,
+    coachMembershipId: string,
+    clientSaveId: string | undefined,
+    kind: TemplateKind,
+  ): Promise<PlanCardioTemplate | null> {
+    if (!clientSaveId) return null;
+    const row = await this.prisma.planTemplate.findFirst({
+      select: { id: true },
+      where: { archivedAt: null, clientSaveId, coachMembershipId, kind },
+    });
+    return row ? this.getCardioTemplateById(ctx, row.id) : null;
   }
 }

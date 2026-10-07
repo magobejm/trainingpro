@@ -1,9 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, TemplateKind } from '@prisma/client';
-import {
-  buildCreateAuditFields,
-  buildUpdateAuditFields,
-} from '../../../../../common/audit/audit-fields';
+import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../../common/audit/audit-fields';
 import { AuthContext } from '../../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import { PlanTemplate } from '../../../domain/entities/plan-template.entity';
@@ -11,6 +8,7 @@ import { PlanTemplateWriteInput } from '../../../domain/plan-template.input';
 import { mapDayCreate, mapTemplate, templateInclude } from '../plans-strength.prisma.helpers';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
+import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
 
 @Injectable()
 export class PlansStrengthRepository extends PlansBaseRepository {
@@ -20,9 +18,12 @@ export class PlansStrengthRepository extends PlansBaseRepository {
 
   async createTemplate(ctx: AuthContext, input: PlanTemplateWriteInput): Promise<PlanTemplate> {
     const m = await this.resolveCoachMembership(ctx);
+    const reused = await this.findSavedEarlier(ctx, m.id, input.clientSaveId, TemplateKind.STRENGTH);
+    if (reused) return reused;
     const row = await this.prisma.planTemplate.create({
       data: {
         ...buildCreateAuditFields(ctx),
+        clientSaveId: input.clientSaveId,
         coachMembershipId: m.id,
         kind: TemplateKind.STRENGTH,
         name: input.name.trim(),
@@ -42,10 +43,7 @@ export class PlansStrengthRepository extends PlansBaseRepository {
       where: {
         archivedAt: null,
         kind: TemplateKind.STRENGTH,
-        OR: [
-          { coachMembershipId: m.id, scope: LibraryItemScope.COACH },
-          { scope: LibraryItemScope.GLOBAL },
-        ],
+        OR: [{ coachMembershipId: m.id, scope: LibraryItemScope.COACH }, { scope: LibraryItemScope.GLOBAL }],
       },
     });
     return rows.map((r) => {
@@ -70,11 +68,7 @@ export class PlansStrengthRepository extends PlansBaseRepository {
     return mapTemplate(hydrated);
   }
 
-  async updateTemplate(
-    ctx: AuthContext,
-    id: string,
-    input: PlanTemplateWriteInput,
-  ): Promise<PlanTemplate> {
+  async updateTemplate(ctx: AuthContext, id: string, input: PlanTemplateWriteInput): Promise<PlanTemplate> {
     const m = await this.resolveCoachMembership(ctx);
     return this.prisma.$transaction(async (tx) => {
       const cur = await tx.planTemplate.findFirst({
@@ -82,6 +76,7 @@ export class PlansStrengthRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Plan template not found');
+      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
       await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
@@ -120,5 +115,19 @@ export class PlansStrengthRepository extends PlansBaseRepository {
       select: { id: true },
     });
     return !!template;
+  }
+
+  private async findSavedEarlier(
+    ctx: AuthContext,
+    coachMembershipId: string,
+    clientSaveId: string | undefined,
+    kind: TemplateKind,
+  ): Promise<PlanTemplate | null> {
+    if (!clientSaveId) return null;
+    const row = await this.prisma.planTemplate.findFirst({
+      select: { id: true },
+      where: { archivedAt: null, clientSaveId, coachMembershipId, kind },
+    });
+    return row ? this.getTemplateById(ctx, row.id) : null;
   }
 }

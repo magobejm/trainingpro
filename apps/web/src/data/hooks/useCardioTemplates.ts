@@ -28,7 +28,9 @@ type CardioTemplateDayInput = {
 };
 
 export type UpsertCardioTemplateInput = {
+  clientSaveId?: string;
   days: CardioTemplateDayInput[];
+  expectedTemplateVersion?: number;
   name: string;
 };
 
@@ -63,6 +65,20 @@ export function useCreateCardioTemplateMutation() {
   });
 }
 
+export function useUpdateCardioTemplateMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UpsertCardioTemplateInput & { templateId: string }) => {
+      const { templateId, ...body } = input;
+      return updateTemplate(auth, templateId, body);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['cardio-templates'] });
+    },
+  });
+}
+
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
@@ -72,14 +88,18 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
-async function createTemplate(
-  auth: ReturnType<typeof useAuth>,
-  input: UpsertCardioTemplateInput,
-) {
+async function createTemplate(auth: ReturnType<typeof useAuth>, input: UpsertCardioTemplateInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).post<CardioTemplateView>('/plans/templates/cardio', input);
+}
+
+async function updateTemplate(auth: ReturnType<typeof useAuth>, templateId: string, input: UpsertCardioTemplateInput) {
+  if (!auth) {
+    throw new Error('Missing authenticated context');
+  }
+  return createApiClient(auth).patch<CardioTemplateView>(`/plans/templates/cardio/${templateId}`, input);
 }
 
 async function listTemplates(auth: ReturnType<typeof useAuth>): Promise<CardioTemplateView[]> {

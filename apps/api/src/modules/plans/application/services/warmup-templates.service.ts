@@ -1,12 +1,19 @@
 /* eslint-disable max-lines-per-function */
 import { randomUUID } from 'crypto';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { assertExpectedTemplateVersion } from '../template-save.policy';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { UpsertWarmupTemplateDto } from '../../presentation/dto/upsert-warmup-template.dto';
 
-type Input = { groups?: UpsertWarmupTemplateDto['groups']; items: UpsertWarmupTemplateDto['items']; name: string };
+type Input = {
+  clientSaveId?: string;
+  expectedTemplateVersion?: number;
+  groups?: UpsertWarmupTemplateDto['groups'];
+  items: UpsertWarmupTemplateDto['items'];
+  name: string;
+};
 type TemplateRow = {
   coachMembershipId: null | string;
   createdAt: Date;
@@ -23,16 +30,20 @@ export class WarmupTemplatesService {
 
   async create(context: AuthContext, input: Input) {
     const membership = await this.resolveCoachMembership(context);
+    const existingId = await this.findByClientSaveId(membership.id, input.clientSaveId);
+    if (existingId) return this.getOne(context, existingId);
     const templateId = randomUUID();
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO warmup_template (
-        id, scope, organization_id, coach_membership_id, name, template_version, created_by, updated_by, updated_at
-      ) VALUES ($1::uuid, 'COACH', $2::uuid, $3::uuid, $4, 1, $5::uuid, $5::uuid, now())`,
+        id, scope, organization_id, coach_membership_id, name, template_version,
+        created_by, updated_by, updated_at, client_save_id
+      ) VALUES ($1::uuid, 'COACH', $2::uuid, $3::uuid, $4, 1, $5::uuid, $5::uuid, now(), $6::uuid)`,
       templateId,
       membership.organizationId,
       membership.id,
       input.name.trim(),
       context.subject,
+      input.clientSaveId ?? null,
     );
     if (!templateId) {
       throw new NotFoundException('Warmup template could not be created');
@@ -106,6 +117,7 @@ export class WarmupTemplatesService {
 
   async update(context: AuthContext, templateId: string, input: Input) {
     await this.assertMutableTemplate(context, templateId);
+    await this.assertCurrentVersion(templateId, input.expectedTemplateVersion);
     await this.prisma.$executeRawUnsafe(
       `UPDATE warmup_template
        SET name = $1, template_version = template_version + 1, updated_at = now()
@@ -233,6 +245,30 @@ export class WarmupTemplatesService {
       throw new ForbiddenException('Global warmup templates are read-only');
     }
     await this.assertOwnedTemplate(context, templateId);
+  }
+
+  private async findByClientSaveId(coachMembershipId: string, clientSaveId?: string): Promise<string | null> {
+    if (!clientSaveId) return null;
+    const rows = await this.prisma.$queryRawUnsafe<{ id: string }[]>(
+      `SELECT id
+       FROM warmup_template
+       WHERE coach_membership_id = $1::uuid
+         AND client_save_id = $2::uuid
+         AND archived_at IS NULL`,
+      coachMembershipId,
+      clientSaveId,
+    );
+    return rows[0]?.id ?? null;
+  }
+
+  private async assertCurrentVersion(templateId: string, expected?: number): Promise<void> {
+    const rows = await this.prisma.$queryRawUnsafe<{ templateVersion: number }[]>(
+      `SELECT template_version AS "templateVersion" FROM warmup_template WHERE id = $1::uuid`,
+      templateId,
+    );
+    const current = rows[0]?.templateVersion;
+    if (current == null) throw new NotFoundException('Warmup template not found');
+    assertExpectedTemplateVersion(expected, current);
   }
 
   private async replaceItems(

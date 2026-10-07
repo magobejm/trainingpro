@@ -29,6 +29,8 @@ export type PlanTemplateDayInput = {
 };
 
 export type PlanTemplateWriteInput = {
+  clientSaveId?: string;
   days: PlanTemplateDayInput[];
+  expectedTemplateVersion?: number;
   name: string;
 };

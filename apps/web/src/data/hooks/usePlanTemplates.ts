@@ -28,7 +28,9 @@ export type TemplateDayInput = {
 };
 
 export type UpsertTemplateInput = {
+  clientSaveId?: string;
   days: TemplateDayInput[];
+  expectedTemplateVersion?: number;
   name: string;
 };
 
@@ -69,7 +71,10 @@ export function useUpdatePlanTemplateMutation(templateId: string) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: UpsertTemplateInput) => updateTemplate(auth, templateId, input),
+    mutationFn: (input: UpsertTemplateInput & { templateId?: string }) => {
+      const { templateId: override, ...body } = input;
+      return updateTemplate(auth, override || templateId, body);
+    },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['plan-templates'] });
     },
@@ -117,18 +122,11 @@ async function listTemplates(
   return response.items;
 }
 
-async function updateTemplate(
-  auth: ReturnType<typeof useAuth>,
-  templateId: string,
-  input: UpsertTemplateInput,
-) {
+async function updateTemplate(auth: ReturnType<typeof useAuth>, templateId: string, input: UpsertTemplateInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).patch<PlanTemplateView>(
-    `/plans/templates/strength/${templateId}`,
-    input,
-  );
+  return createApiClient(auth).patch<PlanTemplateView>(`/plans/templates/strength/${templateId}`, input);
 }
 
 async function deleteTemplate(auth: ReturnType<typeof useAuth>, templateId: string) {

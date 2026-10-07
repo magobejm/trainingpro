@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { ExercisePicker, SetPrescriptionEditor } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
+import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { usePlanBuilderViewModel } from './PlanBuilderStrengthScreen.state';
 import { styles } from './PlanBuilderStrengthScreen.styles';
 import '../../i18n';
@@ -14,7 +15,20 @@ const ICON_REMOVE = '×';
 
 export function PlanBuilderStrengthScreen(): React.JSX.Element {
   const vm = usePlanBuilderViewModel();
-  return <PlanBuilderStrengthView {...vm} />;
+  return (
+    <>
+      <UnsavedWorkDialogs
+        onOverwrite={vm.onOverwrite}
+        onReload={() => {
+          vm.work.release();
+          window.location.reload();
+        }}
+        t={vm.t}
+        work={vm.work}
+      />
+      <PlanBuilderStrengthView {...vm} />
+    </>
+  );
 }
 
 type ViewModel = ReturnType<typeof usePlanBuilderViewModel>;
@@ -22,15 +36,18 @@ type ViewModel = ReturnType<typeof usePlanBuilderViewModel>;
 function PlanBuilderStrengthView(props: ViewModel): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.page}>
+      <UnsavedStatus t={props.t} work={props.work} />
       <BuilderHeader {...props} />
       <View style={styles.card}>
         <SelectedExerciseList {...props} />
       </View>
-      <Pressable onPress={props.onSaveTemplate} style={styles.button}>
+      <Pressable
+        disabled={props.isSaving}
+        onPress={props.onSaveTemplate}
+        style={[styles.button, props.isSaving ? { opacity: 0.5 } : null]}
+      >
         <Text style={styles.buttonLabel}>
-          {props.currentTemplateId
-            ? props.t('coach.clientProfile.save')
-            : props.t('coach.builder.save')}
+          {props.currentTemplateId ? props.t('coach.clientProfile.save') : props.t('coach.builder.save')}
         </Text>
       </Pressable>
       <BuilderTemplateList {...props} />
@@ -147,13 +164,7 @@ function SelectedExerciseList(props: ViewModel): React.JSX.Element {
   );
 }
 
-function SelectedExerciseItem({
-  item,
-  props,
-}: {
-  item: ViewModel['selected'][0];
-  props: ViewModel;
-}) {
+function SelectedExerciseItem({ item, props }: { item: ViewModel['selected'][0]; props: ViewModel }) {
   return (
     <View style={styles.exerciseCard}>
       <SelectedExerciseHeader item={item} onRemove={props.onRemoveExercise} />
@@ -162,13 +173,7 @@ function SelectedExerciseItem({
   );
 }
 
-function SelectedExerciseHeader({
-  item,
-  onRemove,
-}: {
-  item: ViewModel['selected'][0];
-  onRemove: (id: string) => void;
-}) {
+function SelectedExerciseHeader({ item, onRemove }: { item: ViewModel['selected'][0]; onRemove: (id: string) => void }) {
   return (
     <View style={styles.exerciseHeader}>
       <Text style={styles.exerciseTitle}>{item.displayName}</Text>
@@ -190,13 +195,7 @@ function getLabels(t: ViewModel['t']) {
   };
 }
 
-function SelectedExerciseEditor({
-  item,
-  props,
-}: {
-  item: ViewModel['selected'][0];
-  props: ViewModel;
-}) {
+function SelectedExerciseEditor({ item, props }: { item: ViewModel['selected'][0]; props: ViewModel }) {
   return (
     <SetPrescriptionEditor
       addLabel={props.t('coach.builder.addSet')}

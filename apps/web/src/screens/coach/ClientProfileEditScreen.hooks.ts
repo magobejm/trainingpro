@@ -29,14 +29,7 @@ export function useClientProfileEditState(clientId: string, locale: string, t: T
   const state = useRawState(query.data);
   const refs = useRefs();
   cleanupBlobOnUnmount(state.pendingAvatarPreviewUrl);
-  const data = deriveViewData(
-    query.data,
-    objectivesQuery.data,
-    state.form,
-    state.galleryIndex,
-    locale,
-    t,
-  );
+  const data = deriveViewData(query.data, objectivesQuery.data, state.form, state.galleryIndex, locale, t);
   const actions = createActions(mutations, query.data?.id ?? '');
   return { actions, data, query, refs, state };
 }
@@ -153,11 +146,7 @@ function deriveViewData(
     age: calculateAge(form.birthDate),
     archivedPhotos: photos.archivedPhotos,
     avatarChoices: listAvailableAvatarUrls(),
-    birthDateLabel: formatDateDisplay(
-      form.birthDate,
-      locale,
-      t('coach.clientProfile.editPage.noDate'),
-    ),
+    birthDateLabel: formatDateDisplay(form.birthDate, locale, t('coach.clientProfile.editPage.noDate')),
     effectiveGalleryIndex: getEffectiveGalleryIndex(galleryIndex, photos.visiblePhotos.length),
     fullName: getFullName(queryData),
     lastSessionLabel: getLastSessionLabel(days, t),
@@ -177,16 +166,8 @@ function derivePhotoLists(value: unknown) {
   };
 }
 
-function getActiveSinceLabel(
-  queryData: Record<string, unknown> | undefined,
-  locale: string,
-  t: Translate,
-): string {
-  return formatMonthYear(
-    String(queryData?.createdAt ?? ''),
-    locale,
-    t('coach.clientProfile.editPage.dateUnavailable'),
-  );
+function getActiveSinceLabel(queryData: Record<string, unknown> | undefined, locale: string, t: Translate): string {
+  return formatMonthYear(String(queryData?.createdAt ?? ''), locale, t('coach.clientProfile.editPage.dateUnavailable'));
 }
 
 function getLastSessionLabel(days: number, t: Translate): string {
@@ -199,10 +180,7 @@ function getFullName(queryData: Record<string, unknown> | undefined): string {
   return `${queryData?.firstName ?? ''} ${queryData?.lastName ?? ''}`.trim();
 }
 
-function getEffectiveGalleryIndex(
-  galleryIndex: null | number,
-  totalVisible: number,
-): null | number {
+function getEffectiveGalleryIndex(galleryIndex: null | number, totalVisible: number): null | number {
   if (galleryIndex === null) return null;
   return Math.min(galleryIndex, Math.max(totalVisible - 1, 0));
 }
@@ -235,6 +213,7 @@ function createActions(mutations: ReturnType<typeof useMutations>, queryId: stri
     archivePhoto: (photoId: string) => mutations.archivePhotoMutation.mutateAsync(photoId),
     resetPassword: () => mutations.resetPasswordMutation.mutateAsync(queryId),
     restorePhoto: (photoId: string) => mutations.restorePhotoMutation.mutateAsync(photoId),
+    isSaving: mutations.updateMutation.isPending || mutations.uploadAvatarMutation.isPending,
     saveClient: mutations.updateMutation.mutateAsync,
     uploadAvatar: (file: File) => mutations.uploadAvatarMutation.mutateAsync(file),
     uploadPhoto: (file: File) => mutations.uploadPhotoMutation.mutateAsync(file),

@@ -10,6 +10,10 @@ const PLACEHOLDER_COLOR = '#94a3b8';
 const SEARCH_ICON = '🔍';
 const BACK_ICON = '‹';
 
+function isVersionConflict(error: unknown): boolean {
+  return typeof error === 'object' && error != null && 'status' in error && error.status === 409;
+}
+
 interface SaveRoutineModalProps {
   visible: boolean;
   initialName: string;
@@ -120,6 +124,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       await onSave(name);
       onClose();
     } catch (err) {
+      if (isVersionConflict(err)) return;
       const raw = (err as { message?: string })?.message ?? '';
       setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
     } finally {
@@ -146,6 +151,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       await onSaveAndAssign(name, selectedClientId);
       onClose();
     } catch (err) {
+      if (isVersionConflict(err)) return;
       const raw = (err as { message?: string })?.message ?? '';
       setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
     } finally {
@@ -162,6 +168,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       setConflict(null);
       onClose();
     } catch (err) {
+      if (isVersionConflict(err)) return;
       const raw = (err as { message?: string })?.message ?? '';
       setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
       setConflict(null);

@@ -18,6 +18,7 @@ import { mapRoutineDayCreate } from '../plans-routine.prisma.create-helpers';
 import type { RoutineDayInput, RoutineTemplateWriteInput } from '../../../domain/routine-template.input';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
+import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
 
 type RoutineMetadataRow = {
   expected_completion_days: null | number;
@@ -40,9 +41,12 @@ export class PlansRoutineRepository extends PlansBaseRepository {
 
   async createRoutineTemplate(ctx: AuthContext, input: RoutineTemplateWriteInput) {
     const m = await this.resolveCoachMembership(ctx);
+    const reused = await this.findRoutineSavedEarlier(ctx, m.id, input.clientSaveId);
+    if (reused) return reused;
     const row = await this.prisma.planTemplate.create({
       data: {
         ...buildCreateAuditFields(ctx),
+        clientSaveId: input.clientSaveId,
         coachMembershipId: m.id,
         days: { create: input.days.map(mapRoutineDayCreate) },
         kind: TemplateKind.ROUTINE,
@@ -59,6 +63,15 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       include: routineTemplateInclude(),
     });
     return mapRoutineTemplate(refreshed, metadataByTemplate.get(row.id));
+  }
+
+  private async findRoutineSavedEarlier(ctx: AuthContext, coachMembershipId: string, clientSaveId?: string) {
+    if (!clientSaveId) return null;
+    const row = await this.prisma.planTemplate.findFirst({
+      select: { id: true },
+      where: { archivedAt: null, clientSaveId, coachMembershipId, kind: TemplateKind.ROUTINE },
+    });
+    return row ? this.getRoutineTemplateById(ctx, row.id) : null;
   }
 
   async getRoutineTemplateById(ctx: AuthContext, id: string) {
@@ -104,6 +117,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Routine template not found');
+      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
 
       const oldDays = await tx.planDay.findMany({
         where: { templateId: cur.id },

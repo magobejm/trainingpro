@@ -56,6 +56,8 @@ interface LayoutProps {
   };
   onSave: (name: string) => Promise<void>;
   onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
+  saveDisabled?: boolean;
+  statusNode?: React.ReactNode;
   onAssignOnly?: (clientId: string) => Promise<void>;
   templates: RoutineTemplateView[];
   deleteMutation: {
@@ -152,7 +154,11 @@ function RoutineFooterSection(props: LayoutProps) {
   const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
-      <Pressable onPress={() => uiState.setShowSaveModal(true)} style={s.saveBtn}>
+      <Pressable
+        disabled={props.saveDisabled}
+        onPress={() => uiState.setShowSaveModal(true)}
+        style={[s.saveBtn, props.saveDisabled ? { opacity: 0.5 } : null]}
+      >
         <Text style={s.saveBtnText}>{showAssign ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
       </Pressable>
       <SaveRoutineModal
@@ -289,6 +295,7 @@ function RoutineLayoutSections(props: {
   return (
     <>
       {onBack && backLabelKey ? <RoutinePlannerBackHeader onBack={onBack} backLabelKey={backLabelKey} t={t} /> : null}
+      {props.props.statusNode}
       <RoutinePlannerTopSection
         draft={draftState.draft}
         editingId={uiState.editingId}

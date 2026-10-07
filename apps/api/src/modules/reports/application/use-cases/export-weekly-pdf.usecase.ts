@@ -1,18 +1,19 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { type Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../../progress/domain/progress.models';
-import { aggregateCardioWeekly } from '../../../progress/domain/metrics/cardio-weekly.metric';
-import { aggregateSrpeWeekly } from '../../../progress/domain/metrics/srpe';
-import { aggregateStrengthWeekly } from '../../../progress/domain/metrics/strength-weekly.metric';
+import { REPORT_PDF_RENDERER, type ReportPdfRenderer } from '../../domain/report-pdf-renderer.port';
 import type { ReportPdfFile, ReportPdfInput } from '../../domain/report-pdf.models';
-import { buildSimplePdf } from '../../infra/pdf/simple-pdf.builder';
+import { buildWeeklyReportLines } from '../weekly-report-lines';
 
 @Injectable()
 export class ExportWeeklyPdfUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Inject(REPORT_PDF_RENDERER) private readonly pdfRenderer: ReportPdfRenderer,
+  ) {}
 
   async execute(context: AuthContext, input: ReportPdfInput): Promise<ReportPdfFile> {
     const coach = await this.resolveCoach(context);
@@ -23,9 +24,9 @@ export class ExportWeeklyPdfUseCase {
       this.readCardioRows(input.clientId, input.from, input.to),
       this.readSrpeRows(input.clientId, input.from, input.to),
     ]);
-    const lines = buildLines({ cardioRows, srpeRows, strengthRows, weeklyReports }, input);
+    const lines = buildWeeklyReportLines({ cardioRows, srpeRows, strengthRows, weeklyReports }, input);
     return {
-      data: buildSimplePdf(lines),
+      data: this.pdfRenderer.render(lines),
       fileName: `report-${input.clientId}-${toDateKey(input.to)}.pdf`,
     };
   }
@@ -204,90 +205,6 @@ function readSessionEffort(
   return Math.round(avg * 100) / 100;
 }
 
-function buildLines(
-  data: {
-    cardioRows: CardioLogRow[];
-    srpeRows: SessionSrpeRow[];
-    strengthRows: StrengthLogRow[];
-    weeklyReports: Awaited<ReturnType<ExportWeeklyPdfUseCase['readWeeklyReports']>>;
-  },
-  input: ReportPdfInput,
-): string[] {
-  const strengthWeekly = aggregateStrengthWeekly(data.strengthRows);
-  const cardioWeekly = aggregateCardioWeekly(data.cardioRows);
-  const srpeWeekly = aggregateSrpeWeekly(data.srpeRows);
-  const lines = createHeaderLines(input);
-  appendWeeklyReportLines(lines, data.weeklyReports);
-  appendStrengthLines(lines, strengthWeekly);
-  appendCardioLines(lines, cardioWeekly);
-  appendSrpeLines(lines, srpeWeekly);
-  return lines;
-}
-
-function createHeaderLines(input: ReportPdfInput): string[] {
-  return [
-    'Trainer Pro - Reporte PDF',
-    `Cliente: ${input.clientId}`,
-    `Rango: ${toDateKey(input.from)} a ${toDateKey(input.to)}`,
-    '--- Resumen semanal ---',
-  ];
-}
-
-function appendWeeklyReportLines(
-  lines: string[],
-  reports: Awaited<ReturnType<ExportWeeklyPdfUseCase['readWeeklyReports']>>,
-): void {
-  for (const report of reports.slice(0, 6)) {
-    lines.push(buildWeeklyReportLine(report));
-  }
-}
-
-function buildWeeklyReportLine(report: {
-  adherencePercent: null | number;
-  energy: null | number;
-  mood: null | number;
-  reportDate: Date;
-  sleepHours: unknown;
-}): string {
-  const left = `${toDateKey(report.reportDate)} mood:${valueOrDash(report.mood)}`;
-  const middle = `energy:${valueOrDash(report.energy)} sleep:${valueOrDash(report.sleepHours)}`;
-  const right = `adherence:${valueOrDash(report.adherencePercent)}`;
-  return `${left} ${middle} ${right}`;
-}
-
-function appendStrengthLines(lines: string[], points: ReturnType<typeof aggregateStrengthWeekly>): void {
-  lines.push('--- Progreso fuerza ---');
-  for (const point of points.slice(0, 8)) {
-    lines.push(`${point.weekStart} ${point.muscleGroup} volume:${Math.round(point.volumeKg)}`);
-  }
-}
-
-function appendCardioLines(lines: string[], points: ReturnType<typeof aggregateCardioWeekly>): void {
-  lines.push('--- Progreso cardio ---');
-  for (const point of points.slice(0, 8)) {
-    lines.push(buildCardioLine(point));
-  }
-}
-
-function buildCardioLine(point: { methodType: string; totalDurationSeconds: number; weekStart: string }): string {
-  const minutes = Math.round(point.totalDurationSeconds / 60);
-  return `${point.weekStart} ${point.methodType} min:${minutes}`;
-}
-
-function appendSrpeLines(lines: string[], points: ReturnType<typeof aggregateSrpeWeekly>): void {
-  lines.push('--- Intensidad sRPE ---');
-  for (const point of points.slice(0, 8)) {
-    lines.push(`${point.weekStart} srpe:${Math.round(point.totalSrpe)}`);
-  }
-}
-
 function toDateKey(input: Date): string {
   return input.toISOString().slice(0, 10);
-}
-
-function valueOrDash(value: unknown): string {
-  if (value === null || value === undefined) {
-    return '-';
-  }
-  return `${value}`;
 }

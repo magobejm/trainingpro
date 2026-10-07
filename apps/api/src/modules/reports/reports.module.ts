@@ -4,7 +4,9 @@ import { AuthModule } from '../auth/auth.module';
 import { GetWeeklyReportUseCase } from './application/use-cases/get-weekly-report.usecase';
 import { UpsertWeeklyReportUseCase } from './application/use-cases/upsert-weekly-report.usecase';
 import { WeeklyReportPolicy } from './domain/policies/weekly-report.policy';
+import { REPORT_PDF_RENDERER } from './domain/report-pdf-renderer.port';
 import { REPORTS_REPOSITORY } from './domain/reports.repository.port';
+import { buildSimplePdf } from './infra/pdf/simple-pdf.builder';
 import { ReportsRepositoryPrisma } from './infra/prisma/reports.repository.prisma';
 import { ReportExportsController } from './presentation/controllers/report-exports.controller';
 import { ReportsController } from './presentation/controllers/reports.controller';
@@ -21,6 +23,10 @@ import { ReportsController } from './presentation/controllers/reports.controller
     {
       provide: REPORTS_REPOSITORY,
       useExisting: ReportsRepositoryPrisma,
+    },
+    {
+      provide: REPORT_PDF_RENDERER,
+      useValue: { render: buildSimplePdf },
     },
   ],
 })

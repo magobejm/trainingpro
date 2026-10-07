@@ -1,3 +1,4 @@
+import { cardioIntervalHasData, isRecordedNumber } from '../../../../common/performed-set';
 import type { CardioLogRow, CardioWeeklyPoint } from '../progress.models';
 import { toWeekStart } from './week-start';
 
@@ -11,16 +12,17 @@ type CardioAccumulator = {
 export function aggregateCardioWeekly(rows: CardioLogRow[]): CardioWeeklyPoint[] {
   const index = new Map<string, CardioAccumulator>();
   for (const row of rows) {
+    if (!cardioIntervalHasData(row)) continue;
     const weekStart = toWeekStart(row.sessionDate);
     const key = `${weekStart}:${row.methodType}`;
     const current = index.get(key) ?? createAccumulator(row.methodType, weekStart);
-    current.totalDurationSeconds += row.durationSecondsDone ?? 0;
-    current.totalDistanceMeters += row.distanceDoneMeters ?? 0;
-    if (row.effortRpe !== null) {
+    if (isRecordedNumber(row.durationSecondsDone)) current.totalDurationSeconds += row.durationSecondsDone;
+    if (isRecordedNumber(row.distanceDoneMeters)) current.totalDistanceMeters += row.distanceDoneMeters;
+    if (isRecordedNumber(row.effortRpe)) {
       current.avgRpeSum += row.effortRpe;
       current.avgRpeTotal += 1;
     }
-    if (row.avgHeartRate !== null) {
+    if (isRecordedNumber(row.avgHeartRate)) {
       current.avgHeartRateSum += row.avgHeartRate;
       current.avgHeartRateTotal += 1;
     }
@@ -45,8 +47,7 @@ function createAccumulator(methodType: string, weekStart: string): CardioAccumul
 }
 
 function toOutput(row: CardioAccumulator): CardioWeeklyPoint {
-  const avgHeartRate =
-    row.avgHeartRateTotal > 0 ? round(row.avgHeartRateSum / row.avgHeartRateTotal) : null;
+  const avgHeartRate = row.avgHeartRateTotal > 0 ? round(row.avgHeartRateSum / row.avgHeartRateTotal) : null;
   const avgRpe = row.avgRpeTotal > 0 ? round(row.avgRpeSum / row.avgRpeTotal) : null;
   return {
     avgHeartRate,

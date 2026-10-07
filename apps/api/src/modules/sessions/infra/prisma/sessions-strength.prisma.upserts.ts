@@ -1,4 +1,12 @@
 import { LibraryItemScope, TemplateKind } from '@prisma/client';
+import {
+  isometricSetHasData,
+  mobilitySetHasData,
+  plioSetHasData,
+  sportLogHasData,
+  sportSetHasData,
+  strengthSetHasData,
+} from '../../../../common/performed-set';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   LogIsometricSetInput,
@@ -10,7 +18,11 @@ import type {
 } from '../../domain/session.input';
 import { toDecimal } from './sessions-strength.prisma.helpers';
 
-export function upsertSetLog(prisma: PrismaService, input: LogSetInput, sessionItemId: string) {
+export async function upsertSetLog(prisma: PrismaService, input: LogSetInput, sessionItemId: string) {
+  if (!strengthSetHasData(input)) {
+    await prisma.setLog.deleteMany({ where: { sessionItemId, setIndex: input.setIndex } });
+    return null;
+  }
   return prisma.setLog.upsert({
     where: { sessionItemId_setIndex: { sessionItemId, setIndex: input.setIndex } },
     create: {
@@ -31,7 +43,11 @@ export function upsertSetLog(prisma: PrismaService, input: LogSetInput, sessionI
   });
 }
 
-export function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, sessionPlioBlockId: string) {
+export async function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, sessionPlioBlockId: string) {
+  if (!plioSetHasData(input)) {
+    await prisma.plioSetLog.deleteMany({ where: { sessionPlioBlockId, setIndex: input.setIndex } });
+    return null;
+  }
   return prisma.plioSetLog.upsert({
     where: { sessionPlioBlockId_setIndex: { sessionPlioBlockId, setIndex: input.setIndex } },
     create: {
@@ -52,7 +68,15 @@ export function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, 
   });
 }
 
-export function upsertMobilitySetLog(prisma: PrismaService, input: LogMobilitySetInput, sessionMobilityBlockId: string) {
+export async function upsertMobilitySetLog(
+  prisma: PrismaService,
+  input: LogMobilitySetInput,
+  sessionMobilityBlockId: string,
+) {
+  if (!mobilitySetHasData(input)) {
+    await prisma.mobilitySetLog.deleteMany({ where: { sessionMobilityBlockId, setIndex: input.setIndex } });
+    return null;
+  }
   return prisma.mobilitySetLog.upsert({
     where: { sessionMobilityBlockId_setIndex: { sessionMobilityBlockId, setIndex: input.setIndex } },
     create: {
@@ -73,7 +97,15 @@ export function upsertMobilitySetLog(prisma: PrismaService, input: LogMobilitySe
   });
 }
 
-export function upsertIsometricSetLog(prisma: PrismaService, input: LogIsometricSetInput, sessionIsometricBlockId: string) {
+export async function upsertIsometricSetLog(
+  prisma: PrismaService,
+  input: LogIsometricSetInput,
+  sessionIsometricBlockId: string,
+) {
+  if (!isometricSetHasData(input)) {
+    await prisma.isometricSetLog.deleteMany({ where: { sessionIsometricBlockId, setIndex: input.setIndex } });
+    return null;
+  }
   return prisma.isometricSetLog.upsert({
     where: { sessionIsometricBlockId_setIndex: { sessionIsometricBlockId, setIndex: input.setIndex } },
     create: {
@@ -92,7 +124,11 @@ export function upsertIsometricSetLog(prisma: PrismaService, input: LogIsometric
   });
 }
 
-export function upsertSportLog(prisma: PrismaService, input: LogSportInput, sessionSportBlockId: string) {
+export async function upsertSportLog(prisma: PrismaService, input: LogSportInput, sessionSportBlockId: string) {
+  if (!sportLogHasData(input)) {
+    await prisma.sportSessionLog.deleteMany({ where: { sessionSportBlockId } });
+    return null;
+  }
   return prisma.sportSessionLog.upsert({
     where: { sessionSportBlockId },
     create: {
@@ -110,7 +146,11 @@ export function upsertSportLog(prisma: PrismaService, input: LogSportInput, sess
   });
 }
 
-export function upsertSportSetLog(prisma: PrismaService, input: LogSportSetInput, sessionSportBlockId: string) {
+export async function upsertSportSetLog(prisma: PrismaService, input: LogSportSetInput, sessionSportBlockId: string) {
+  if (!sportSetHasData(input)) {
+    await prisma.sportSetLog.deleteMany({ where: { sessionSportBlockId, setIndex: input.setIndex } });
+    return null;
+  }
   return prisma.sportSetLog.upsert({
     where: { sessionSportBlockId_setIndex: { sessionSportBlockId, setIndex: input.setIndex } },
     create: {

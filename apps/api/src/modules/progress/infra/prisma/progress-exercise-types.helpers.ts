@@ -1,6 +1,21 @@
-import type { Prisma } from '@prisma/client';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
+import {
+  isRecordedNumber,
+  sportLogHasData,
+  summarizeCardioIntervals,
+  summarizeIsometricSets,
+  summarizeMobilitySets,
+  summarizePlioSets,
+} from '../../../../common/performed-set';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import {
+  cardioPerformedWhere,
+  isometricPerformedWhere,
+  mobilityPerformedWhere,
+  plioPerformedWhere,
+  sportPerformedWhere,
+  strengthPerformedWhere,
+} from './performed-id-filters';
 import type { ExerciseProgressQuery } from '../../domain/progress-repository.port';
 import type { ExerciseProgressPoint, PerformedExercisesResult } from '../../domain/progress.models';
 
@@ -12,13 +27,6 @@ const emptyHrFields = {
   fcReservePercent: null as number | null,
   plioEffort: null as number | null,
 };
-
-function avgRpeFromSets(sets: Array<{ effortRpe: Prisma.Decimal | number | null }>): number | null {
-  const values = sets.map((r) => toRpeNumber(r.effortRpe)).filter((value): value is number => value !== null);
-  if (values.length === 0) return null;
-  const sum = values.reduce((acc, value) => acc + value, 0);
-  return Math.round((sum / values.length) * 10) / 10;
-}
 
 function buildSessionDate(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -60,64 +68,43 @@ export async function readCardioExerciseProgress(
     },
     orderBy: [{ session: { sessionDate: 'asc' } }],
   });
-  type CardioEntry = {
-    sessionDate: Date;
-    totalSecs: number;
-    totalDistanceMeters: number;
-    intervalCount: number;
-    rpeSum: number;
-    rpeCount: number;
-    hrWeighted: number;
-    hrWeightSecs: number;
-  };
-  const bySession = new Map<string, CardioEntry>();
+  const bySession = new Map<string, { rows: typeof rows; sessionDate: Date }>();
   for (const row of rows) {
-    const dur = row.durationSecondsDone ?? 0;
-    const entry = bySession.get(row.sessionId) ?? {
-      sessionDate: row.session.sessionDate,
-      totalSecs: 0,
-      totalDistanceMeters: 0,
-      intervalCount: 0,
-      rpeSum: 0,
-      rpeCount: 0,
-      hrWeighted: 0,
-      hrWeightSecs: 0,
-    };
-    entry.intervalCount += 1;
-    entry.totalSecs += dur;
-    entry.totalDistanceMeters += row.distanceDoneMeters ?? 0;
-    if (row.effortRpe !== null) {
-      entry.rpeSum += Number(row.effortRpe);
-      entry.rpeCount++;
-    }
-    if (row.avgHeartRate !== null && dur > 0) {
-      entry.hrWeighted += row.avgHeartRate * dur;
-      entry.hrWeightSecs += dur;
-    }
+    const entry = bySession.get(row.sessionId) ?? { rows: [], sessionDate: row.session.sessionDate };
+    entry.rows.push(row);
     bySession.set(row.sessionId, entry);
   }
-  return [...bySession.entries()].map(([sessionId, e]) => {
-    const avgRpe = e.rpeCount > 0 ? Math.round((e.rpeSum / e.rpeCount) * 10) / 10 : null;
-    const avgHeartRate = e.hrWeightSecs > 0 ? Math.round(e.hrWeighted / e.hrWeightSecs) : null;
-    const avgPaceMinKm = paceMinPerKm(e.totalSecs, e.totalDistanceMeters);
-    const fcReservePercent = computeFcReservePercent(avgHeartRate, heartProfile.fcMax, heartProfile.fcRest);
-    return {
-      sessionDate: buildSessionDate(e.sessionDate),
-      sessionId,
-      sets: e.intervalCount,
-      totalReps: 0,
-      tonnage: 0,
-      avgRpe,
-      e1rm: null,
-      inol: null,
-      totalDurationSeconds: e.totalSecs,
-      durationMinutes: Math.round(e.totalSecs / 60),
-      avgHeartRate,
-      avgPaceMinKm,
-      fcReservePercent,
-      plioEffort: null,
-      setDetails: [],
-    };
+  return [...bySession.entries()].flatMap(([sessionId, entry]) => {
+    const summary = summarizeCardioIntervals(
+      entry.rows.map((row) => ({
+        avgHeartRate: row.avgHeartRate,
+        distanceDoneMeters: row.distanceDoneMeters,
+        durationSecondsDone: row.durationSecondsDone,
+        effortRpe: toRpeNumber(row.effortRpe),
+      })),
+    );
+    if (summary.sets === 0) return [];
+    const avgPaceMinKm = paceMinPerKm(summary.totalDurationSeconds, summary.totalDistanceMeters);
+    const fcReservePercent = computeFcReservePercent(summary.avgHeartRate, heartProfile.fcMax, heartProfile.fcRest);
+    return [
+      {
+        sessionDate: buildSessionDate(entry.sessionDate),
+        sessionId,
+        sets: summary.sets,
+        totalReps: 0,
+        tonnage: 0,
+        avgRpe: summary.avgRpe,
+        e1rm: null,
+        inol: null,
+        totalDurationSeconds: summary.totalDurationSeconds,
+        durationMinutes: Math.round(summary.totalDurationSeconds / 60),
+        avgHeartRate: summary.avgHeartRate,
+        avgPaceMinKm,
+        fcReservePercent,
+        plioEffort: null,
+        setDetails: [],
+      },
+    ];
   });
 }
 
@@ -136,6 +123,7 @@ export async function readPlioProgress(
       repsDone: true,
       effortRpe: true,
       weightDoneKg: true,
+      durationSecondsDone: true,
       sessionId: true,
       session: { select: { sessionDate: true } },
     },
@@ -147,32 +135,37 @@ export async function readPlioProgress(
     entry.sets.push(row);
     bySession.set(row.sessionId, entry);
   }
-  return [...bySession.entries()].map(([sessionId, { sessionDate, sets }]) => {
-    const totalReps = sets.reduce((acc, r) => acc + (r.repsDone ?? 0), 0);
-    const avgRpe = avgRpeFromSets(sets);
-    let tonnage = 0;
-    for (const r of sets) {
-      const w = r.weightDoneKg !== null ? Number(r.weightDoneKg) : 0;
-      const reps = r.repsDone ?? 0;
-      tonnage += w * reps;
-    }
-    tonnage = Math.round(tonnage * 100) / 100;
-    const plioEffort = avgRpe !== null && totalReps > 0 ? Math.round(totalReps * (avgRpe / 10) * 100) / 100 : null;
-    return {
-      sessionDate: buildSessionDate(sessionDate),
-      sessionId,
-      sets: sets.length,
-      totalReps,
-      tonnage,
-      avgRpe,
-      e1rm: null,
-      inol: null,
-      totalDurationSeconds: null,
-      durationMinutes: null,
-      ...emptyHrFields,
-      plioEffort,
-      setDetails: [],
-    };
+  return [...bySession.entries()].flatMap(([sessionId, { sessionDate, sets }]) => {
+    const summary = summarizePlioSets(
+      sets.map((set) => ({
+        durationSecondsDone: set.durationSecondsDone,
+        effortRpe: toRpeNumber(set.effortRpe),
+        repsDone: set.repsDone,
+        weightDoneKg: set.weightDoneKg !== null ? Number(set.weightDoneKg) : null,
+      })),
+    );
+    if (summary.sets === 0) return [];
+    const plioEffort =
+      summary.avgRpe !== null && summary.totalReps > 0
+        ? Math.round(summary.totalReps * (summary.avgRpe / 10) * 100) / 100
+        : null;
+    return [
+      {
+        sessionDate: buildSessionDate(sessionDate),
+        sessionId,
+        sets: summary.sets,
+        totalReps: summary.totalReps,
+        tonnage: summary.tonnage,
+        avgRpe: summary.avgRpe,
+        e1rm: null,
+        inol: null,
+        totalDurationSeconds: null,
+        durationMinutes: null,
+        ...emptyHrFields,
+        plioEffort,
+        setDetails: [],
+      },
+    ];
   });
 }
 
@@ -186,7 +179,15 @@ export async function readMobilityProgress(
       sessionMobilityBlock: { sourceMobilityExerciseId: query.exerciseId },
       session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
     },
-    select: { setIndex: true, repsDone: true, effortRpe: true, sessionId: true, session: { select: { sessionDate: true } } },
+    select: {
+      setIndex: true,
+      repsDone: true,
+      effortRpe: true,
+      romDone: true,
+      weightDoneKg: true,
+      sessionId: true,
+      session: { select: { sessionDate: true } },
+    },
     orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
   });
   const bySession = new Map<string, { sessionDate: Date; sets: typeof rows }>();
@@ -195,20 +196,33 @@ export async function readMobilityProgress(
     entry.sets.push(row);
     bySession.set(row.sessionId, entry);
   }
-  return [...bySession.entries()].map(([sessionId, { sessionDate, sets }]) => ({
-    sessionDate: buildSessionDate(sessionDate),
-    sessionId,
-    sets: sets.length,
-    totalReps: sets.reduce((acc, r) => acc + (r.repsDone ?? 0), 0),
-    tonnage: 0,
-    avgRpe: avgRpeFromSets(sets),
-    e1rm: null,
-    inol: null,
-    totalDurationSeconds: null,
-    durationMinutes: null,
-    ...emptyHrFields,
-    setDetails: [],
-  }));
+  return [...bySession.entries()].flatMap(([sessionId, { sessionDate, sets }]) => {
+    const summary = summarizeMobilitySets(
+      sets.map((set) => ({
+        effortRpe: toRpeNumber(set.effortRpe),
+        repsDone: set.repsDone,
+        romDone: set.romDone,
+        weightDoneKg: set.weightDoneKg !== null ? Number(set.weightDoneKg) : null,
+      })),
+    );
+    if (summary.sets === 0) return [];
+    return [
+      {
+        sessionDate: buildSessionDate(sessionDate),
+        sessionId,
+        sets: summary.sets,
+        totalReps: summary.totalReps,
+        tonnage: 0,
+        avgRpe: summary.avgRpe,
+        e1rm: null,
+        inol: null,
+        totalDurationSeconds: null,
+        durationMinutes: null,
+        ...emptyHrFields,
+        setDetails: [],
+      },
+    ];
+  });
 }
 
 export async function readIsometricProgress(
@@ -237,35 +251,32 @@ export async function readIsometricProgress(
     entry.sets.push(row);
     bySession.set(row.sessionId, entry);
   }
-  return [...bySession.entries()].map(([sessionId, { sessionDate, sets }]) => {
-    const totalDurationSeconds = sets.reduce((acc, r) => acc + (r.durationSecondsDone ?? 0), 0);
-    const avgRpe = avgRpeFromSets(sets);
-    let tonnage = 0;
-    for (const r of sets) {
-      const w = r.weightDoneKg !== null ? Number(r.weightDoneKg) : 0;
-      const mins = (r.durationSecondsDone ?? 0) / 60;
-      tonnage += w * mins;
-    }
-    tonnage = Math.round(tonnage * 100) / 100;
-    const plioEffort =
-      avgRpe !== null && totalDurationSeconds > 0
-        ? Math.round((totalDurationSeconds / 60) * (avgRpe / 10) * 100) / 100
-        : null;
-    return {
-      sessionDate: buildSessionDate(sessionDate),
-      sessionId,
-      sets: sets.length,
-      totalReps: 0,
-      tonnage,
-      avgRpe,
-      e1rm: null,
-      inol: null,
-      totalDurationSeconds,
-      durationMinutes: null,
-      ...emptyHrFields,
-      plioEffort,
-      setDetails: [],
-    };
+  return [...bySession.entries()].flatMap(([sessionId, { sessionDate, sets }]) => {
+    const summary = summarizeIsometricSets(
+      sets.map((set) => ({
+        durationSecondsDone: set.durationSecondsDone,
+        effortRpe: toRpeNumber(set.effortRpe),
+        weightDoneKg: set.weightDoneKg !== null ? Number(set.weightDoneKg) : null,
+      })),
+    );
+    if (summary.sets === 0) return [];
+    return [
+      {
+        sessionDate: buildSessionDate(sessionDate),
+        sessionId,
+        sets: summary.sets,
+        totalReps: 0,
+        tonnage: summary.tonnage,
+        avgRpe: summary.avgRpe,
+        e1rm: null,
+        inol: null,
+        totalDurationSeconds: summary.totalDurationSeconds,
+        durationMinutes: null,
+        ...emptyHrFields,
+        plioEffort: summary.plioEffort,
+        setDetails: [],
+      },
+    ];
   });
 }
 
@@ -289,28 +300,33 @@ export async function readSportProgress(
     },
     orderBy: [{ session: { sessionDate: 'asc' } }],
   });
-  return rows.map((row) => {
-    const dm = row.durationMinutesDone ?? 0;
-    const avgHeartRate = row.avgHeartRate;
+  return rows.flatMap((row) => {
+    const effortRpe = toRpeNumber(row.effortRpe);
+    if (!sportLogHasData({ avgHeartRate: row.avgHeartRate, durationMinutesDone: row.durationMinutesDone, effortRpe })) {
+      return [];
+    }
+    const dm = isRecordedNumber(row.durationMinutesDone) ? row.durationMinutesDone : null;
+    const avgHeartRate = isRecordedNumber(row.avgHeartRate) ? row.avgHeartRate : null;
     const fcReservePercent = computeFcReservePercent(avgHeartRate, heartProfile.fcMax, heartProfile.fcRest);
-    const totalReps = dm > 0 ? Math.round(dm * 8) : 0;
-    return {
-      sessionDate: buildSessionDate(row.session.sessionDate),
-      sessionId: row.sessionId,
-      sets: 1,
-      totalReps,
-      tonnage: 0,
-      avgRpe: toRpeNumber(row.effortRpe),
-      e1rm: null,
-      inol: null,
-      totalDurationSeconds: row.durationMinutesDone !== null ? row.durationMinutesDone * 60 : null,
-      durationMinutes: row.durationMinutesDone,
-      avgHeartRate,
-      avgPaceMinKm: null,
-      fcReservePercent,
-      plioEffort: null,
-      setDetails: [],
-    };
+    return [
+      {
+        sessionDate: buildSessionDate(row.session.sessionDate),
+        sessionId: row.sessionId,
+        sets: 1,
+        totalReps: dm !== null ? Math.round(dm * 8) : 0,
+        tonnage: 0,
+        avgRpe: isRecordedNumber(effortRpe) ? effortRpe : null,
+        e1rm: null,
+        inol: null,
+        totalDurationSeconds: dm !== null ? dm * 60 : null,
+        durationMinutes: dm,
+        avgHeartRate,
+        avgPaceMinKm: null,
+        fcReservePercent,
+        plioEffort: null,
+        setDetails: [],
+      },
+    ];
   });
 }
 
@@ -326,32 +342,32 @@ export async function readPerformedIds(
 ): Promise<[string[], string[], string[], string[], string[], string[]]> {
   const [sItems, cItems, pItems, mItems, iItems, spItems] = await Promise.all([
     prisma.sessionStrengthItem.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourceExerciseId: { not: null } },
+      where: strengthPerformedWhere(sessionWhere),
       select: { sourceExerciseId: true },
       distinct: ['sourceExerciseId'],
     }),
     prisma.sessionCardioBlock.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourceCardioMethodId: { not: null } },
+      where: cardioPerformedWhere(sessionWhere),
       select: { sourceCardioMethodId: true },
       distinct: ['sourceCardioMethodId'],
     }),
     prisma.sessionPlioBlock.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourcePlioExerciseId: { not: null } },
+      where: plioPerformedWhere(sessionWhere),
       select: { sourcePlioExerciseId: true },
       distinct: ['sourcePlioExerciseId'],
     }),
     prisma.sessionMobilityBlock.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourceMobilityExerciseId: { not: null } },
+      where: mobilityPerformedWhere(sessionWhere),
       select: { sourceMobilityExerciseId: true },
       distinct: ['sourceMobilityExerciseId'],
     }),
     prisma.sessionIsometricBlock.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourceIsometricExerciseId: { not: null } },
+      where: isometricPerformedWhere(sessionWhere),
       select: { sourceIsometricExerciseId: true },
       distinct: ['sourceIsometricExerciseId'],
     }),
     prisma.sessionSportBlock.findMany({
-      where: { archivedAt: null, session: sessionWhere, sourceSportId: { not: null } },
+      where: sportPerformedWhere(sessionWhere),
       select: { sourceSportId: true },
       distinct: ['sourceSportId'],
     }),

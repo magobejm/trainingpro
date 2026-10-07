@@ -232,11 +232,11 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return row ? mapSessionWithGroups(this.prisma, row) : null;
   }
 
-  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog> {
+  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
     return this.cardioRepository.logInterval(context, input);
   }
 
-  async logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<SessionPlioSetLog> {
+  async logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<null | SessionPlioSetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const block = await this.prisma.sessionPlioBlock.findFirst({
@@ -246,10 +246,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!block) throw new NotFoundException('Plio block not found');
     const row = await upsertPlioSetLog(this.prisma, input, block.id);
     void context;
-    return mapPlioSetLog(row);
+    return row ? mapPlioSetLog(row) : null;
   }
 
-  async logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<SessionMobilitySetLog> {
+  async logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const block = await this.prisma.sessionMobilityBlock.findFirst({
@@ -259,10 +259,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!block) throw new NotFoundException('Mobility block not found');
     const row = await upsertMobilitySetLog(this.prisma, input, block.id);
     void context;
-    return mapMobilitySetLog(row);
+    return row ? mapMobilitySetLog(row) : null;
   }
 
-  async logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<SessionIsometricSetLog> {
+  async logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const block = await this.prisma.sessionIsometricBlock.findFirst({
@@ -272,10 +272,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!block) throw new NotFoundException('Isometric block not found');
     const row = await upsertIsometricSetLog(this.prisma, input, block.id);
     void context;
-    return mapIsometricSetLog(row);
+    return row ? mapIsometricSetLog(row) : null;
   }
 
-  async logSport(context: AuthContext, input: LogSportInput): Promise<SessionSportLog> {
+  async logSport(context: AuthContext, input: LogSportInput): Promise<null | SessionSportLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const block = await this.prisma.sessionSportBlock.findFirst({
@@ -285,10 +285,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!block) throw new NotFoundException('Sport block not found');
     const row = await upsertSportLog(this.prisma, input, block.id);
     void context;
-    return mapSportLog(row);
+    return row ? mapSportLog(row) : null;
   }
 
-  async logSportSet(context: AuthContext, input: LogSportSetInput): Promise<SessionSportSetLog> {
+  async logSportSet(context: AuthContext, input: LogSportSetInput): Promise<null | SessionSportSetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const block = await this.prisma.sessionSportBlock.findFirst({
@@ -298,10 +298,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!block) throw new NotFoundException('Sport block not found');
     const row = await upsertSportSetLog(this.prisma, input, block.id);
     void context;
-    return mapSportSetLog(row);
+    return row ? mapSportSetLog(row) : null;
   }
 
-  async logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog> {
+  async logSet(context: AuthContext, input: LogSetInput): Promise<null | SessionSetLog> {
     const session = await this.readSessionForMutation(input.sessionId);
     assertSessionMutable(session.status);
     const item = await this.readSessionItem(input.sessionId, input.sessionItemId);
@@ -310,7 +310,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     }
     const row = await upsertSetLog(this.prisma, input, item.id);
     void context;
-    return mapSetLog(row);
+    return row ? mapSetLog(row) : null;
   }
 
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance> {

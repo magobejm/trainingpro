@@ -101,7 +101,7 @@ describe('progress metrics', () => {
 
   test('computes srpe from session effort and real duration', () => {
     expect(computeSessionSrpe(8, 1800)).toBe(240);
-    expect(computeSessionSrpe(null, 1800)).toBe(0);
-    expect(computeSessionSrpe(8, null)).toBe(0);
+    expect(computeSessionSrpe(null, 1800)).toBeNull();
+    expect(computeSessionSrpe(8, null)).toBeNull();
   });
 });

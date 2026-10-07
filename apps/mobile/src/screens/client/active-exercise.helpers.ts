@@ -233,18 +233,82 @@ function lockedOrDraftText(
   return trimmed || null;
 }
 
-export function buildLogPayload(
-  item: SessionItem,
-  setIndex: number,
-  values: SetRowState,
-):
+type LogPayload =
   | LogIntervalMutationInput
   | LogIsometricSetMutationInput
   | LogMobilitySetMutationInput
   | LogPlioSetMutationInput
   | LogSetMutationInput
-  | LogSportMutationInput
-  | null {
+  | LogSportMutationInput;
+
+const IDENTITY_KEYS = new Set([
+  'intervalIndex',
+  'sessionCardioBlockId',
+  'sessionIsometricBlockId',
+  'sessionItemId',
+  'sessionMobilityBlockId',
+  'sessionPlioBlockId',
+  'sessionSportBlockId',
+  'setIndex',
+]);
+
+function blankDraft(): SetRowState {
+  return {
+    distance: '',
+    duration: '',
+    fcMaxPct: '',
+    fcReservePct: '',
+    heartRate: '',
+    reps: '',
+    rest: '',
+    rir: '',
+    rpe: '',
+    rom: '',
+    weight: '',
+  };
+}
+
+function logPayloadHasData(payload: LogPayload): boolean {
+  return Object.entries(payload).some(([key, value]) => {
+    if (IDENTITY_KEYS.has(key) || key === 'restSecondsDone') return false;
+    if (typeof value === 'number') return value > 0;
+    if (typeof value === 'string') return value.trim().length > 0;
+    return false;
+  });
+}
+
+export function buildLogPayload(item: SessionItem, setIndex: number, values: SetRowState): LogPayload | null {
+  const payload = buildRawLogPayload(item, setIndex, values);
+  if (!payload || !logPayloadHasData(payload)) return null;
+  return payload;
+}
+
+export function buildClearPayload(item: SessionItem, setIndex: number): LogPayload | null {
+  return buildRawLogPayload(item, setIndex, blankDraft());
+}
+
+export function resolveSetSave(payload: LogPayload | null, alreadyLogged: boolean): 'delete' | 'save' | 'skip' {
+  if (payload) return 'save';
+  return alreadyLogged ? 'delete' : 'skip';
+}
+
+export function setWasLogged(item: SessionItem, setIndex: number): boolean {
+  switch (item.type) {
+    case 'strength':
+    case 'plio':
+    case 'mobility':
+    case 'isometric':
+      return item.logs.some((entry) => entry.setIndex === setIndex);
+    case 'cardio':
+      return item.intervalLogs.some((entry) => entry.intervalIndex === setIndex);
+    case 'sport':
+      return (item.setLogs ?? []).some((entry) => entry.setIndex === setIndex);
+    default:
+      return false;
+  }
+}
+
+function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowState): LogPayload | null {
   switch (item.type) {
     case 'strength':
       return {

@@ -1,4 +1,5 @@
 import {
+  buildClearPayload,
   buildLogPayload,
   draftHasValues,
   formatSessionRepRange,
@@ -7,6 +8,8 @@ import {
   readActualValue,
   readSessionYoutubeUrl,
   readTargetValue,
+  resolveSetSave,
+  setWasLogged,
   type SetRowState,
 } from '../active-exercise.helpers';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
@@ -351,5 +354,30 @@ describe('getSetCount and readActualValue for sport', () => {
     } as unknown as SessionItem;
     expect(readActualValue(plio, 1, 'duration')).toBe('15');
     expect(readActualValue(mobility, 1, 'weight')).toBe('8.5');
+  });
+});
+
+describe('empty sets', () => {
+  const item = { type: 'strength', id: 'item-1', lockedFields: [], logs: [] } as unknown as SessionItem;
+
+  it('does not build a save payload for an empty or zero-only set', () => {
+    expect(buildLogPayload(item, 3, emptyDraft())).toBeNull();
+    expect(buildLogPayload(item, 3, emptyDraft({ reps: '0', weight: '0' }))).toBeNull();
+  });
+
+  it('deletes a previously saved set that is cleared and skips one that was never saved', () => {
+    expect(resolveSetSave(null, false)).toBe('skip');
+    expect(resolveSetSave(null, true)).toBe('delete');
+    expect(resolveSetSave({ sessionItemId: 'item-1', setIndex: 1 }, false)).toBe('save');
+    expect(setWasLogged({ ...item, logs: [{ setIndex: 1 }] } as unknown as SessionItem, 1)).toBe(true);
+    expect(setWasLogged(item, 1)).toBe(false);
+    expect(buildClearPayload(item, 3)).toEqual({
+      effortRir: null,
+      effortRpe: null,
+      repsDone: null,
+      sessionItemId: 'item-1',
+      setIndex: 3,
+      weightDoneKg: null,
+    });
   });
 });

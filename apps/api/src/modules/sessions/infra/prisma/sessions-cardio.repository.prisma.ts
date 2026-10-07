@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Role, SessionStatus, TemplateKind } from '@prisma/client';
 import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { cardioIntervalHasData } from '../../../../common/performed-set';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
@@ -66,7 +67,7 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(row);
   }
 
-  async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog> {
+  async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
     const session = await this.readCardioSessionForMutation(input.sessionId);
     assertCardioSessionMutable(session.status);
     const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId);
@@ -75,7 +76,7 @@ export class SessionsCardioRepositoryPrisma {
     }
     const row = await this.upsertIntervalLog(input, block.id);
     void context;
-    return mapCardioIntervalLog(row);
+    return row ? mapCardioIntervalLog(row) : null;
   }
 
   async startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance> {
@@ -213,7 +214,13 @@ export class SessionsCardioRepositoryPrisma {
     });
   }
 
-  private upsertIntervalLog(input: LogIntervalInput, sessionCardioBlockId: string) {
+  private async upsertIntervalLog(input: LogIntervalInput, sessionCardioBlockId: string) {
+    if (!cardioIntervalHasData(input)) {
+      await this.prisma.intervalLog.deleteMany({
+        where: { intervalIndex: input.intervalIndex, sessionCardioBlockId },
+      });
+      return null;
+    }
     return this.prisma.intervalLog.upsert({
       where: {
         sessionCardioBlockId_intervalIndex: {

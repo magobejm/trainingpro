@@ -17,8 +17,8 @@ import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
 import { showToast } from '../../shell/client/feedback';
 import {
+  buildClearPayload,
   buildLogPayload,
-  draftHasValues,
   formatSessionRepRange,
   getRestSeconds,
   getSetColumns,
@@ -28,6 +28,8 @@ import {
   readActualValue,
   readSessionYoutubeUrl,
   readTargetValue,
+  resolveSetSave,
+  setWasLogged,
   type SetColumn,
   type SetFieldKey,
 } from './active-exercise.helpers';
@@ -126,13 +128,16 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     const values = draftValues[setIndex];
     if (!values) return Promise.resolve();
     const payload = buildLogPayload(props.item, setIndex, values);
-    if (!payload) return Promise.resolve();
-    if ('sessionItemId' in payload) return Promise.resolve(props.onLogSet(payload));
-    if ('sessionPlioBlockId' in payload) return Promise.resolve(props.onLogPlioSet(payload));
-    if ('sessionMobilityBlockId' in payload) return Promise.resolve(props.onLogMobilitySet(payload));
-    if ('sessionIsometricBlockId' in payload) return Promise.resolve(props.onLogIsometricSet(payload));
-    if ('sessionCardioBlockId' in payload) return Promise.resolve(props.onLogInterval(payload));
-    if ('sessionSportBlockId' in payload) return Promise.resolve(props.onLogSport(payload));
+    const action = resolveSetSave(payload, setWasLogged(props.item, setIndex));
+    if (action === 'skip') return Promise.resolve();
+    const body = action === 'delete' ? buildClearPayload(props.item, setIndex) : payload;
+    if (!body) return Promise.resolve();
+    if ('sessionItemId' in body) return Promise.resolve(props.onLogSet(body));
+    if ('sessionPlioBlockId' in body) return Promise.resolve(props.onLogPlioSet(body));
+    if ('sessionMobilityBlockId' in body) return Promise.resolve(props.onLogMobilitySet(body));
+    if ('sessionIsometricBlockId' in body) return Promise.resolve(props.onLogIsometricSet(body));
+    if ('sessionCardioBlockId' in body) return Promise.resolve(props.onLogInterval(body));
+    if ('sessionSportBlockId' in body) return Promise.resolve(props.onLogSport(body));
     return Promise.resolve();
   };
 
@@ -146,7 +151,6 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     try {
       const pending: Array<Promise<void>> = [];
       for (let setIndex = 1; setIndex <= setCount; setIndex += 1) {
-        if (!draftHasValues(draftValues[setIndex])) continue;
         pending.push(saveSet(setIndex));
       }
       await Promise.all(pending);

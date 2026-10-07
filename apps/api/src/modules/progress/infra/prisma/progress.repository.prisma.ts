@@ -3,6 +3,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
+import { isRecordedNumber, sportLoadFromLog } from '../../../../common/performed-set';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   ExercisePrQuery,
@@ -180,8 +181,8 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       bySession.set(row.sessionId, entry);
     }
 
-    return [...bySession.entries()].map(([sessionId, { sessionDate, sets }]) =>
-      aggregateExerciseSets(
+    return [...bySession.entries()].flatMap(([sessionId, { sessionDate, sets }]) => {
+      const point = aggregateExerciseSets(
         sessionId,
         sessionDate,
         sets.map((s) => ({
@@ -190,8 +191,9 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
           weightDoneKg: s.weightDoneKg !== null ? Number(s.weightDoneKg) : null,
           effortRpe: toRpeNumber(s.effortRpe),
         })),
-      ),
-    );
+      );
+      return point.sets > 0 ? [point] : [];
+    });
   }
 
   async readPerformedExercises(context: AuthContext, query: PerformedExercisesQuery): Promise<PerformedExercisesResult> {
@@ -509,13 +511,13 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
           for (const log of item.logs) {
             const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
             const r = log.repsDone;
-            if (w !== null && r !== null) {
+            if (isRecordedNumber(w) && isRecordedNumber(r)) {
               totalTonnage += w * r;
               totalInol += r / 25;
               inolCount++;
             }
             const effortRpe = toRpeNumber(log.effortRpe);
-            if (effortRpe !== null) {
+            if (isRecordedNumber(effortRpe)) {
               totalRpe += effortRpe;
               rpeCount++;
             }
@@ -687,13 +689,13 @@ function aggregateStrengthSetLogs(logs: SessionProgressRow['logs']): {
   for (const log of logs) {
     const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
     const r = log.repsDone;
-    if (w !== null && r !== null) {
+    if (isRecordedNumber(w) && isRecordedNumber(r)) {
       totalTonnage += w * r;
       totalInol += r / 25;
       inolCount++;
     }
     const effortRpe = toRpeNumber(log.effortRpe);
-    if (effortRpe !== null) {
+    if (isRecordedNumber(effortRpe)) {
       totalRpe += effortRpe;
       rpeCount++;
     }
@@ -715,7 +717,10 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
   avgHr: number | null;
   intervalDurationSeconds: number;
 } {
-  const intervalDurationSeconds = session.intervalLogs.reduce((sum, l) => sum + (l.durationSecondsDone ?? 0), 0);
+  const intervalDurationSeconds = session.intervalLogs.reduce(
+    (sum, log) => sum + (isRecordedNumber(log.durationSecondsDone) ? log.durationSecondsDone : 0),
+    0,
+  );
   const durationMinutes = intervalDurationSeconds > 0 ? intervalDurationSeconds / 60 : null;
   const hrRows = session.intervalLogs.filter((l) => l.avgHeartRate !== null);
   const avgHr = hrRows.length > 0 ? Math.round(hrRows.reduce((s, l) => s + (l.avgHeartRate ?? 0), 0) / hrRows.length) : null;
@@ -872,11 +877,11 @@ function mapCategorySessionPlio(session: SessionProgressRow): SessionProgressPoi
   let rpeSum = 0;
   let rpeN = 0;
   for (const log of session.plioLogs) {
-    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
-    const r = log.repsDone ?? 0;
-    ton += w * r;
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    const r = log.repsDone;
+    if (isRecordedNumber(w) && isRecordedNumber(r)) ton += w * r;
     const effortRpe = toRpeNumber(log.effortRpe);
-    if (effortRpe !== null) {
+    if (isRecordedNumber(effortRpe)) {
       rpeSum += effortRpe;
       rpeN++;
     }
@@ -902,11 +907,11 @@ function mapCategorySessionIsometric(session: SessionProgressRow): SessionProgre
   let rpeSum = 0;
   let rpeN = 0;
   for (const log of session.isometricLogs) {
-    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : 0;
-    const sec = log.durationSecondsDone ?? 0;
-    ton += w * (sec / 60);
+    const w = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
+    const sec = log.durationSecondsDone;
+    if (isRecordedNumber(w) && isRecordedNumber(sec)) ton += w * (sec / 60);
     const effortRpe = toRpeNumber(log.effortRpe);
-    if (effortRpe !== null) {
+    if (isRecordedNumber(effortRpe)) {
       rpeSum += effortRpe;
       rpeN++;
     }
@@ -953,16 +958,18 @@ function mapCategorySessionSport(session: SessionProgressRow): SessionProgressPo
   let hrWeighted = 0;
   let durWeighted = 0;
   for (const log of session.sportLogs) {
-    const dm = log.durationMinutesDone ?? 0;
-    const rpe = toRpeNumber(log.effortRpe) ?? 0;
-    abstractTonnage += dm * Math.max(1, rpe);
-    inolAcc += (dm * rpe) / 10;
+    const dm = log.durationMinutesDone;
     const effortRpe = toRpeNumber(log.effortRpe);
-    if (effortRpe !== null) {
+    const load = sportLoadFromLog(dm, effortRpe);
+    if (load) {
+      abstractTonnage += load.tonnage;
+      inolAcc += load.inol;
+    }
+    if (isRecordedNumber(effortRpe)) {
       rpeSum += effortRpe;
       rpeN++;
     }
-    if (log.avgHeartRate !== null && dm > 0) {
+    if (isRecordedNumber(log.avgHeartRate) && isRecordedNumber(dm)) {
       hrWeighted += log.avgHeartRate * dm;
       durWeighted += dm;
     }
@@ -1018,7 +1025,10 @@ function readDurationSeconds(
   if (startedAt && finishedAt && finishedAt > startedAt) {
     return Math.round((finishedAt.getTime() - startedAt.getTime()) / 1000);
   }
-  const intervalDuration = intervalLogs.reduce((sum, row) => sum + (row.durationSecondsDone ?? 0), 0);
+  const intervalDuration = intervalLogs.reduce(
+    (sum, row) => sum + (isRecordedNumber(row.durationSecondsDone) ? row.durationSecondsDone : 0),
+    0,
+  );
   return intervalDuration > 0 ? intervalDuration : null;
 }
 

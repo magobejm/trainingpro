@@ -1,3 +1,5 @@
+import { isRecordedNumber, strengthSetHasData } from '../../../../common/performed-set';
+
 /**
  * Exercise-level metric calculations based on coach documentation.
  *
@@ -72,6 +74,7 @@ type RawSetLog = {
 
 /** Aggregate a list of set logs for a single exercise into session-level metrics. */
 export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setLogs: RawSetLog[]): ExerciseSessionMetrics {
+  const performed = setLogs.filter((log) => strengthSetHasData(log));
   let totalReps = 0;
   let totalTonnage = 0;
   let totalInol = 0;
@@ -80,17 +83,17 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
   let rpeCount = 0;
   let maxE1rm: number | null = null;
 
-  const setDetails: SetMetrics[] = setLogs.map((log) => {
-    const reps = log.repsDone;
-    const weight = log.weightDoneKg;
-    const rpe = log.effortRpe;
+  const setDetails: SetMetrics[] = performed.map((log) => {
+    const reps = isRecordedNumber(log.repsDone) ? log.repsDone : null;
+    const weight = isRecordedNumber(log.weightDoneKg) ? log.weightDoneKg : null;
+    const rpe = isRecordedNumber(log.effortRpe) ? log.effortRpe : null;
 
     const e1rm = reps !== null && weight !== null ? estimateE1rm(weight, reps, rpe) : null;
     const inol = reps !== null && weight !== null && e1rm !== null ? calculateSetInol(weight, reps, e1rm) : null;
     const tonnage = reps !== null && weight !== null ? calculateSetTonnage(weight, reps) : 0;
 
     if (reps !== null) totalReps += reps;
-    totalTonnage += tonnage;
+    if (tonnage > 0) totalTonnage += tonnage;
 
     if (inol !== null) {
       totalInol += inol;
@@ -110,7 +113,7 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
   return {
     sessionDate: sessionDate.toISOString().slice(0, 10),
     sessionId,
-    sets: setLogs.length,
+    sets: performed.length,
     totalReps,
     tonnage: Math.round(totalTonnage * 100) / 100,
     avgRpe: rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null,

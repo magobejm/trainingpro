@@ -36,13 +36,13 @@ export interface SessionsRepositoryPort {
   finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance>;
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null>;
   getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null>;
-  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog>;
-  logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<SessionIsometricSetLog>;
-  logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<SessionMobilitySetLog>;
-  logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<SessionPlioSetLog>;
-  logSet(context: AuthContext, input: LogSetInput): Promise<SessionSetLog>;
-  logSport(context: AuthContext, input: LogSportInput): Promise<SessionSportLog>;
-  logSportSet(context: AuthContext, input: LogSportSetInput): Promise<SessionSportSetLog>;
+  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null>;
+  logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog>;
+  logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog>;
+  logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<null | SessionPlioSetLog>;
+  logSet(context: AuthContext, input: LogSetInput): Promise<null | SessionSetLog>;
+  logSport(context: AuthContext, input: LogSportInput): Promise<null | SessionSportLog>;
+  logSportSet(context: AuthContext, input: LogSportSetInput): Promise<null | SessionSportSetLog>;
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance>;
   startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance>;
 }

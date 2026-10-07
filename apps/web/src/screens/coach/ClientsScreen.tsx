@@ -78,6 +78,7 @@ function buildClientsViewModel(
     clients: refs.clientsQuery.data ?? [],
     clientsError: refs.clientsQuery.error,
     clientsLoading: refs.clientsQuery.isLoading,
+    onRetryClients: () => void refs.clientsQuery.refetch(),
     objectiveOptions: refs.objectiveOptions,
     ...actions,
     onRouteChange,
@@ -226,6 +227,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
           clientsLoading={props.clientsLoading}
           objectiveFilter={props.objectiveFilter}
           onObjectiveFilterChange={props.onObjectiveFilterChange}
+          onRetry={props.onRetryClients}
           onSearchValueChange={props.onSearchValueChange}
           onSelectClient={props.onSelectClient}
           searchValue={props.searchValue}

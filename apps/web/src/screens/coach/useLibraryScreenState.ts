@@ -90,7 +90,9 @@ export function useLibraryScreenState() {
     return result;
   }, [expandedCategory, selectedCategoryFilters, selectedEquipment, search]);
 
-  const { data: exercises, isLoading } = useUnifiedExercisesQuery(filter);
+  const exercisesQuery = useUnifiedExercisesQuery(filter);
+  const exercises = exercisesQuery.data;
+  const isLoading = exercisesQuery.isLoading;
   const hasActiveFilters = Object.values(selectedCategoryFilters).some((s) => s.size > 0) || selectedEquipment.size > 0;
   const defaultCategory =
     expandedCategory === 'muscleGroups'
@@ -196,7 +198,10 @@ export function useLibraryScreenState() {
     itemForDetail,
     setItemForDetail,
     exercises,
+    isListError: exercisesQuery.isError,
     isLoading,
+    listError: exercisesQuery.error,
+    refetchList: () => void exercisesQuery.refetch(),
     hasActiveFilters,
     clearAllFilters,
     toggleCategoryItem,

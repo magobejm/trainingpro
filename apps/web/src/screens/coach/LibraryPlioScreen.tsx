@@ -1,7 +1,8 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DimensionValue, ScrollView, StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { QueryResult } from '../../components/AsyncStatus';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -42,7 +43,7 @@ export function LibraryPlioScreen(): React.JSX.Element {
   const [editingItem, setEditingItem] = useState<PlioExerciseLibraryItem | null>(null);
 
   const plioType = activeFilter === 'all' ? undefined : activeFilter;
-  const { data, isLoading } = useLibraryPlioExercisesQuery({ plioType, query });
+  const { data, error, isError, isLoading, refetch } = useLibraryPlioExercisesQuery({ plioType, query });
   const items = data ?? [];
   const plioTypeCatalog = useLibraryPlioTypesQuery().data ?? [];
   const chips = [
@@ -124,11 +125,15 @@ export function LibraryPlioScreen(): React.JSX.Element {
           <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
         </View>
 
-        {isLoading ? (
-          <ActivityIndicator size="large" style={localStyles.loader} color="#1c74e9" />
-        ) : items.length === 0 ? (
-          <Text style={styles.empty}>{t('coach.library.empty')}</Text>
-        ) : (
+        {QueryResult({
+          emptyTitle: t('coach.library.empty'),
+          error,
+          hasActiveFilter: query.trim().length > 0 || activeFilter !== 'all',
+          isError,
+          isLoading,
+          itemCount: items.length,
+          onRetry: () => void refetch(),
+        }) ?? (
           <View style={gridStyles.grid}>
             {items.map((item) => (
               <View key={item.id} style={gridStyles.gridItem}>
@@ -296,10 +301,6 @@ const topBarStyles = StyleSheet.create({
     borderRadius: 12,
   },
   createBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
-});
-
-const localStyles = StyleSheet.create({
-  loader: { marginTop: 40 },
 });
 
 function toPlioTypeLabel(id: string, fallback: string, t: (key: string) => string): string {

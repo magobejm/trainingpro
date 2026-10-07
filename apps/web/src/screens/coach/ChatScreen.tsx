@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { QueryResult } from '../../components/AsyncStatus';
 import { Banner } from '@trainerpro/ui';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
@@ -24,7 +25,8 @@ function useChatViewModel() {
   const setClientId = (nextId: string) => setClient({ clientId: nextId });
   useRouteClient(clientId);
   useDefaultClient(clientId, clientsQuery.data, setClientId);
-  const threadId = useThreadId(clientId);
+  const threadQuery = useCoachThreadQuery(clientId);
+  const threadId = threadQuery.data?.id ?? '';
   const messagesQuery = useChatMessagesQuery(threadId);
   const clientItems = useMemo(() => toClientCards(clientsQuery.data ?? []), [clientsQuery.data]);
   const composer = useMessageComposer(threadId, t);
@@ -35,6 +37,7 @@ function useChatViewModel() {
     clientsQuery,
     messagesQuery,
     setClientId,
+    threadQuery,
     t,
     threadId,
   };
@@ -50,11 +53,6 @@ function useDefaultClient(
       setClientId(clients[0].id);
     }
   }, [clientId, clients, setClientId]);
-}
-
-function useThreadId(clientId: string): string {
-  const threadQuery = useCoachThreadQuery(clientId);
-  return threadQuery.data?.id ?? '';
 }
 
 function useMessageComposer(threadId: string, t: (key: string) => string) {
@@ -117,15 +115,8 @@ function ChatView(props: ViewModel) {
         retentionTitle={props.t('coach.chat.retention.title')}
         retentionSubtitle={props.t('coach.chat.retention.subtitle')}
       />
-      <ClientSelectionStrip
-        emptyLabel={props.t('coach.clients.empty')}
-        items={props.clientItems}
-        loading={props.clientsQuery.isLoading}
-        onSelect={props.setClientId}
-        selectedId={props.clientId}
-        showArrows
-      />
-      {renderMessagesPanel(props.messagesQuery, props.clientsQuery.isLoading, props.t)}
+      {renderClientStrip(props)}
+      {renderMessagesPanel(props)}
       <ChatComposer {...props} />
     </ScrollView>
   );
@@ -165,20 +156,49 @@ function ChatComposer(props: ViewModel) {
   );
 }
 
-function renderMessagesPanel(
-  messagesQuery: {
-    data?: ReturnType<typeof useChatMessagesQuery>['data'];
-    isLoading: boolean;
-  },
-  clientsLoading: boolean,
-  t: (key: string) => string,
-) {
-  if (clientsLoading || messagesQuery.isLoading) {
-    return <ActivityIndicator />;
+function renderClientStrip(props: ViewModel): React.JSX.Element {
+  const status = QueryResult({
+    emptyTitle: props.t('coach.clients.empty'),
+    error: props.clientsQuery.error,
+    isError: props.clientsQuery.isError,
+    isLoading: props.clientsQuery.isLoading,
+    itemCount: props.clientItems.length,
+    onRetry: () => void props.clientsQuery.refetch(),
+  });
+  if (status) {
+    return status;
   }
-  const messages = messagesQuery.data ?? [];
-  if (messages.length === 0) {
-    return <Text style={styles.empty}>{t('coach.chat.empty')}</Text>;
+  return (
+    <ClientSelectionStrip
+      emptyLabel={props.t('coach.clients.empty')}
+      items={props.clientItems}
+      loading={false}
+      onSelect={props.setClientId}
+      selectedId={props.clientId}
+      showArrows
+    />
+  );
+}
+
+function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
+  if (props.clientsQuery.isLoading || props.clientsQuery.isError || props.clientItems.length === 0) {
+    return null;
+  }
+  const messages = props.messagesQuery.data ?? [];
+  const waitingForThread = props.clientId.length > 0 && props.threadId.length === 0 && !props.threadQuery.isError;
+  const status = QueryResult({
+    emptyTitle: props.t('coach.chat.empty'),
+    error: props.threadQuery.error ?? props.messagesQuery.error,
+    isError: props.threadQuery.isError || props.messagesQuery.isError,
+    isLoading: props.threadQuery.isLoading || props.messagesQuery.isLoading || waitingForThread,
+    itemCount: messages.length,
+    onRetry: () => {
+      void props.threadQuery.refetch();
+      void props.messagesQuery.refetch();
+    },
+  });
+  if (status) {
+    return status;
   }
   return (
     <View style={styles.messages}>

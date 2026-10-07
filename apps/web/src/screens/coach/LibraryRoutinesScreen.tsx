@@ -1,32 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
-import { matchesSearch } from '../../utils/normalize-search';
 import { C, ss } from './LibraryRoutinesScreen.styles';
 import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
-import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
-import {
-  useRoutineTemplatesQuery,
-  useDeleteRoutineTemplateMutation,
-  type RoutineTemplateView,
-} from '../../data/hooks/useRoutineTemplates';
-import {
-  useWarmupTemplatesQuery,
-  useDeleteWarmupTemplateMutation,
-  type WarmupTemplateView,
-} from '../../data/hooks/useWarmupTemplates';
-import { useUnifiedExercisesQuery } from '../../data/hooks/useUnifiedLibraryQuery';
+import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
+import { type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { readFrontEnv } from '../../data/env';
-import { LIST_KEYS, readRouteClientId, writeRouteClientId } from '../../layout/list-context';
-import { useListContext, useRouteClient } from '../../layout/useListContext';
-import { useCalendarContextStore } from '../../store/calendarContext.store';
-import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
-import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
+import { QueryResult } from '../../components/AsyncStatus';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { SaveRoutineModal } from './components/RoutinePlanner/SaveRoutineModal';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
+import { useViewModel, type RoutineLibraryTab } from './LibraryRoutinesScreen.model';
 
-type Tab = 'routines' | 'warmups';
+type Tab = RoutineLibraryTab;
 type Props = { defaultTab?: Tab; onRouteChange: (route: ShellRoute) => void };
 type T = (k: string, opts?: Record<string, unknown>) => string;
 type MediaMap = Record<string, string | null>;
@@ -45,125 +30,6 @@ export function LibraryRoutinesScreen({ defaultTab = 'routines', onRouteChange }
   return <ScreenView vm={vm} />;
 }
 
-/* ── View model ── */
-
-function useViewModel(defaultTab: Tab, onRouteChange: (route: ShellRoute) => void) {
-  const { t } = useTranslation();
-  const { query, setQuery, setTab, tab } = useRoutineLibraryList(defaultTab);
-  const [assignTemplate, setAssignTemplate] = useState<RoutineTemplateView | null>(null);
-  const [pendingDeleteId, setPendingDeleteId] = useState('');
-  const [deleteKind, setDeleteKind] = useState<Tab>('routines');
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const routines = useRoutineTemplatesQuery().data ?? [];
-  const warmups = useWarmupTemplatesQuery().data ?? [];
-  const exercises = useUnifiedExercisesQuery({}).data ?? [];
-  const mediaMap = useMemo<MediaMap>(() => Object.fromEntries(exercises.map((e) => [e.id, e.mediaUrl])), [exercises]);
-  const clientId = useLibraryAssignmentClient();
-  const openForEdit = useRoutinePlannerContextStore((s) => s.openForEdit);
-  const openForView = useRoutinePlannerContextStore((s) => s.openForView);
-  const clearRoutine = useRoutinePlannerContextStore((s) => s.clear);
-  const openBlankRoutine = useRoutinePlannerContextStore((s) => s.openBlankFromLibrary);
-  const setWarmupInitial = useWarmupPlannerContextStore((s) => s.setInitialTemplate);
-  const openBlankWarmup = useWarmupPlannerContextStore((s) => s.openBlankFromLibrary);
-  const assignRoutine = useAssignRoutineMutation();
-  const deleteRoutine = useDeleteRoutineTemplateMutation();
-  const deleteWarmup = useDeleteWarmupTemplateMutation();
-  const filteredRoutines = useFiltered(routines, query);
-  const filteredWarmups = useFiltered(warmups, query);
-  const pendingName = useMemo(() => {
-    const all = [...routines, ...warmups] as Array<{ id: string; name: string }>;
-    return all.find((r) => r.id === pendingDeleteId)?.name ?? '';
-  }, [pendingDeleteId, routines, warmups]);
-  const onConfirmDelete = buildConfirmDelete(
-    pendingDeleteId,
-    deleteKind,
-    deleteRoutine,
-    deleteWarmup,
-    setPendingDeleteId,
-    pendingName,
-    setDeleteError,
-  );
-  return {
-    clientId,
-    filteredRoutines,
-    filteredWarmups,
-    mediaMap,
-    onConfirmDelete,
-    deleteError,
-    setDeleteError,
-    onCreateRoutine: () => {
-      openBlankRoutine();
-      onRouteChange('coach.routine.planner');
-    },
-    onCreateWarmup: () => {
-      openBlankWarmup();
-      onRouteChange('coach.warmup.planner');
-    },
-    assignTemplate,
-    onAssignRoutine: (tpl: RoutineTemplateView) => setAssignTemplate(tpl),
-    onCloseAssign: () => setAssignTemplate(null),
-    onConfirmAssign: (nextClientId: string) =>
-      confirmLibraryAssign(assignRoutine, clearRoutine, nextClientId, assignTemplate?.id ?? '', onRouteChange),
-    onViewRoutine: (tpl: RoutineTemplateView) => {
-      openForView(tpl.id);
-      onRouteChange('coach.routine.planner');
-    },
-    onEditRoutine: (tpl: RoutineTemplateView) => {
-      openForEdit(tpl.id);
-      onRouteChange('coach.routine.planner');
-    },
-    onViewWarmup: (tpl: WarmupTemplateView) => {
-      setWarmupInitial(tpl.id, true);
-      onRouteChange('coach.warmup.planner');
-    },
-    onEditWarmup: (tpl: WarmupTemplateView) => {
-      setWarmupInitial(tpl.id);
-      onRouteChange('coach.warmup.planner');
-    },
-    onDeleteRoutine: (id: string) => {
-      setDeleteError(null);
-      setDeleteKind('routines');
-      setPendingDeleteId(id);
-    },
-    onDeleteWarmup: (id: string) => {
-      setDeleteError(null);
-      setDeleteKind('warmups');
-      setPendingDeleteId(id);
-    },
-    pendingDeleteId,
-    pendingName,
-    query,
-    setQuery,
-    setPendingDeleteId,
-    t,
-    tab,
-    setTab,
-  };
-}
-
-function useRoutineLibraryList(defaultTab: Tab) {
-  const key = defaultTab === 'warmups' ? LIST_KEYS.libraryWarmups : LIST_KEYS.libraryRoutines;
-  const [list, setList] = useListContext(key, { query: '', tab: defaultTab });
-  return {
-    query: list.query,
-    setQuery: (query: string) => setList((prev) => ({ ...prev, query })),
-    setTab: (tab: Tab) => setList((prev) => ({ ...prev, tab })),
-    tab: list.tab,
-  };
-}
-
-function useLibraryAssignmentClient(): string | null {
-  const clientId = useRoutinePlannerContextStore((state) => state.clientId);
-  const prepare = useRoutinePlannerContextStore((state) => state.prepareClientAssignment);
-  useEffect(() => {
-    if (clientId) return;
-    const urlClient = readRouteClientId();
-    if (urlClient) prepare(urlClient, '');
-  }, [clientId, prepare]);
-  useRouteClient(clientId ?? '');
-  return clientId;
-}
-
 type VM = ReturnType<typeof useViewModel>;
 
 /* ── Screen view ── */
@@ -176,21 +42,31 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
       {vm.tab === 'routines' ? (
         <RoutineGrid
           clientId={vm.clientId}
+          hasActiveFilter={vm.query.trim().length > 0}
           items={vm.filteredRoutines}
           mediaMap={vm.mediaMap}
           onAssign={vm.onAssignRoutine}
-          onView={vm.onViewRoutine}
-          onEdit={vm.onEditRoutine}
           onDelete={vm.onDeleteRoutine}
+          onEdit={vm.onEditRoutine}
+          onRetry={() => void vm.routinesQuery.refetch()}
+          onView={vm.onViewRoutine}
+          queryError={vm.routinesQuery.error}
+          queryFailed={vm.routinesQuery.isError}
+          queryLoading={vm.routinesQuery.isLoading}
           t={vm.t}
         />
       ) : (
         <WarmupGrid
+          hasActiveFilter={vm.query.trim().length > 0}
           items={vm.filteredWarmups}
           mediaMap={vm.mediaMap}
-          onView={vm.onViewWarmup}
-          onEdit={vm.onEditWarmup}
           onDelete={vm.onDeleteWarmup}
+          onEdit={vm.onEditWarmup}
+          onRetry={() => void vm.warmupsQuery.refetch()}
+          onView={vm.onViewWarmup}
+          queryError={vm.warmupsQuery.error}
+          queryFailed={vm.warmupsQuery.isError}
+          queryLoading={vm.warmupsQuery.isLoading}
           t={vm.t}
         />
       )}
@@ -271,16 +147,30 @@ function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (v: Tab) => void; t: T }
 
 function RoutineGrid(props: {
   clientId: string | null;
+  hasActiveFilter: boolean;
   items: RoutineTemplateView[];
   mediaMap: MediaMap;
   onAssign: (tpl: RoutineTemplateView) => void;
-  onView: (tpl: RoutineTemplateView) => void;
-  onEdit: (tpl: RoutineTemplateView) => void;
   onDelete: (id: string) => void;
+  onEdit: (tpl: RoutineTemplateView) => void;
+  onRetry: () => void;
+  onView: (tpl: RoutineTemplateView) => void;
+  queryError: unknown;
+  queryFailed: boolean;
+  queryLoading: boolean;
   t: T;
 }) {
-  if (props.items.length === 0) {
-    return <Text style={ss.empty}>{props.t('coach.routineLib.emptyRoutines')}</Text>;
+  const status = QueryResult({
+    emptyTitle: props.t('coach.routineLib.emptyRoutines'),
+    error: props.queryError,
+    hasActiveFilter: props.hasActiveFilter,
+    isError: props.queryFailed,
+    isLoading: props.queryLoading,
+    itemCount: props.items.length,
+    onRetry: props.onRetry,
+  });
+  if (status) {
+    return status;
   }
   return (
     <View style={ss.grid}>
@@ -302,15 +192,29 @@ function RoutineGrid(props: {
 }
 
 function WarmupGrid(props: {
+  hasActiveFilter: boolean;
   items: WarmupTemplateView[];
   mediaMap: MediaMap;
-  onView: (tpl: WarmupTemplateView) => void;
-  onEdit: (tpl: WarmupTemplateView) => void;
   onDelete: (id: string) => void;
+  onEdit: (tpl: WarmupTemplateView) => void;
+  onRetry: () => void;
+  onView: (tpl: WarmupTemplateView) => void;
+  queryError: unknown;
+  queryFailed: boolean;
+  queryLoading: boolean;
   t: T;
 }) {
-  if (props.items.length === 0) {
-    return <Text style={ss.empty}>{props.t('coach.routineLib.emptyWarmups')}</Text>;
+  const status = QueryResult({
+    emptyTitle: props.t('coach.routineLib.emptyWarmups'),
+    error: props.queryError,
+    hasActiveFilter: props.hasActiveFilter,
+    isError: props.queryFailed,
+    isLoading: props.queryLoading,
+    itemCount: props.items.length,
+    onRetry: props.onRetry,
+  });
+  if (status) {
+    return status;
   }
   return (
     <View style={ss.grid}>
@@ -475,60 +379,4 @@ function pickWarmupImage(tpl: WarmupTemplateView, map: MediaMap): string {
 function pressWithoutOpeningCard(event: { stopPropagation?: () => void }, action?: () => void): void {
   event.stopPropagation?.();
   action?.();
-}
-
-function confirmLibraryAssign(
-  assignRoutine: { mutateAsync: (input: { clientId: string; templateId: string }) => Promise<unknown> },
-  clearRoutine: () => void,
-  clientId: string,
-  templateId: string,
-  onRouteChange: (route: ShellRoute) => void,
-): Promise<void> {
-  return assignRoutine.mutateAsync({ clientId, templateId }).then(() => {
-    clearRoutine();
-    useCalendarContextStore.getState().openForClient(clientId);
-    writeRouteClientId(clientId);
-    onRouteChange('coach.calendar');
-  });
-}
-
-function useFiltered<T extends { name: string }>(items: T[], query: string): T[] {
-  return useMemo(() => {
-    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
-    return sorted.filter((i) => matchesSearch(i.name, query));
-  }, [items, query]);
-}
-
-type DeleteMutation = {
-  mutate: (id: string, opts: { onSuccess: () => void; onError: (err: unknown) => void }) => void;
-};
-
-function buildConfirmDelete(
-  pendingDeleteId: string,
-  deleteKind: Tab,
-  deleteRoutine: DeleteMutation,
-  deleteWarmup: DeleteMutation,
-  setPendingDeleteId: (id: string) => void,
-  pendingName: string,
-  setDeleteError: (msg: string | null) => void,
-) {
-  return () => {
-    if (!pendingDeleteId) return;
-    const onSuccess = () => setPendingDeleteId('');
-    const onError = (err: unknown) => {
-      const raw = (err as { message?: string })?.message ?? '';
-      const isAssigned = raw.toLowerCase().includes('assigned');
-      const name = pendingName ? `"${pendingName}"` : 'esta rutina';
-      setDeleteError(
-        isAssigned
-          ? `No se puede eliminar ${name} porque está asignada a uno o más clientes activos. Desasígnala primero.`
-          : `No se pudo eliminar ${name}. ${raw}`,
-      );
-    };
-    if (deleteKind === 'routines') {
-      deleteRoutine.mutate(pendingDeleteId, { onSuccess, onError });
-    } else {
-      deleteWarmup.mutate(pendingDeleteId, { onSuccess, onError });
-    }
-  };
 }

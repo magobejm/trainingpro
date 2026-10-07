@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Text, TextInput, View } from 'react-native';
+import { QueryResult } from '../../../components/AsyncStatus';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
 import { ClientSelectionStrip, type ClientSelectorItem } from './ClientSelectionStrip';
@@ -11,6 +12,7 @@ type Props = {
   clientsLoading: boolean;
   objectiveFilter: string;
   onObjectiveFilterChange: (nextValue: string) => void;
+  onRetry: () => void;
   onSearchValueChange: (nextValue: string) => void;
   onSelectClient: (clientId: string) => void;
   searchValue: string;
@@ -20,8 +22,29 @@ type Props = {
 
 export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
   const vm = useDirectoryModel(props);
-  if (props.clientsError) {
-    return <Text style={styles.empty}>{props.t('coach.clients.error')}</Text>;
+  const status = QueryResult({
+    emptyTitle: props.t('coach.clients.empty'),
+    error: props.clientsError,
+    hasActiveFilter: props.searchValue.trim().length > 0 || props.objectiveFilter !== 'ALL',
+    isError: Boolean(props.clientsError),
+    isLoading: props.clientsLoading,
+    itemCount: vm.items.length,
+    onRetry: props.onRetry,
+  });
+  if (status) {
+    return (
+      <View>
+        <DirectoryHeader
+          objectiveFilter={vm.objectiveFilter}
+          objectives={vm.objectives}
+          onObjectiveFilterChange={vm.setObjectiveFilter}
+          onSearchValueChange={vm.setSearchValue}
+          searchValue={vm.searchValue}
+          t={props.t}
+        />
+        {status}
+      </View>
+    );
   }
   return renderDirectory(props, vm);
 }
@@ -32,9 +55,8 @@ function useDirectoryModel(props: Props) {
     () => buildClientCards(props.clients, props.searchValue, props.objectiveFilter, props.t),
     [props.clients, props.objectiveFilter, props.searchValue, props.t],
   );
-  const emptyLabel = readEmptyLabel(props.clientsLoading, props.t);
   return {
-    emptyLabel,
+    emptyLabel: props.t('coach.clients.empty'),
     items,
     objectiveFilter: props.objectiveFilter,
     objectives,
@@ -123,10 +145,6 @@ function ObjectiveSelect(props: {
       ))}
     </select>
   );
-}
-
-function readEmptyLabel(isLoading: boolean, t: (key: string) => string): string {
-  return isLoading ? t('coach.clients.loading') : t('coach.clients.empty');
 }
 
 function buildClientCards(

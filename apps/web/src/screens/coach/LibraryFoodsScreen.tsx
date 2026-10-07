@@ -5,6 +5,7 @@ import { FilterChips, SearchBar } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
+import { QueryResult } from '../../components/AsyncStatus';
 import { FoodLibraryRow } from './components/FoodLibraryRow';
 import { FoodMicronutrientChips } from './components/FoodMicronutrientChips';
 import { FoodCreateFields } from './components/LibraryCreateFormFields';
@@ -215,8 +216,22 @@ function renderSearchCard(props: ViewModel): React.JSX.Element {
 
 function renderList(props: ViewModel): React.JSX.Element {
   const items = props.listQuery.data ?? [];
-  if (items.length === 0) {
-    return <Text style={styles.empty}>{props.t('coach.library.empty')}</Text>;
+  const filtered =
+    props.query.trim().length > 0 ||
+    props.activeUnitFilter !== 'all' ||
+    props.activeTypeFilter !== 'all' ||
+    props.activeCategoryFilter !== 'all';
+  const status = QueryResult({
+    emptyTitle: props.t('coach.library.empty'),
+    error: props.listQuery.error,
+    hasActiveFilter: filtered,
+    isError: props.listQuery.isError,
+    isLoading: props.listQuery.isLoading,
+    itemCount: items.length,
+    onRetry: () => void props.listQuery.refetch(),
+  });
+  if (status) {
+    return status;
   }
   return (
     <View style={styles.list}>

@@ -93,7 +93,11 @@ function buildCardioViewState(
     editUploading: editForm.uploadImageMutation.isPending,
     expandedId: state.expandedId,
     items: refs.listItems,
+    listError: refs.listError,
+    listFailed: refs.listFailed,
+    listLoading: refs.listLoading,
     methodTypeOptions: refs.catalogItems,
+    onRetryList: refs.onRetryList,
   };
 }
 
@@ -111,7 +115,11 @@ function useCardioResources(state: ReturnType<typeof useCardioState>) {
     createMutation,
     defaultTypeId,
     deleteMutation,
+    listError: listQuery.error,
+    listFailed: listQuery.isError,
     listItems: listQuery.data ?? [],
+    listLoading: listQuery.isLoading,
+    onRetryList: () => void listQuery.refetch(),
     updateMutation,
   };
 }

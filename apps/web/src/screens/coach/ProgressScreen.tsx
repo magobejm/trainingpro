@@ -10,6 +10,7 @@ import { useExercisePrQuery } from '../../data/hooks/useExercisePrQuery';
 import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuery';
 import { useMicrocycleProgressQuery } from '../../data/hooks/useMicrocycleProgressQuery';
 import { useClientRoutineDaysQuery } from '../../data/hooks/useCalendarQuery';
+import { QueryResult } from '../../components/AsyncStatus';
 import { MetricDetailModal } from './progress/MetricDetailModal';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
 import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
@@ -180,8 +181,8 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     return (microcycleQuery.data?.points ?? []) as Record<string, unknown>[];
   }, [mode, exerciseQuery.data, sessionQuery.data, microcycleQuery.data]);
 
-  const isLoading =
-    mode === 'exercise' ? exerciseQuery.isLoading : mode === 'session' ? sessionQuery.isLoading : microcycleQuery.isLoading;
+  const activeProgressQuery = mode === 'exercise' ? exerciseQuery : mode === 'session' ? sessionQuery : microcycleQuery;
+  const isLoading = activeProgressQuery.isLoading;
   const hasSelection =
     mode === 'exercise'
       ? Boolean(selectedExerciseId)
@@ -366,13 +367,18 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
         </div>
       )}
 
-      {/* Empty / loading / charts */}
       {!hasSelection && <EmptyState t={t} />}
-      {hasSelection && isLoading && <Text style={styles.loading}>{t('coach.progress.loading')}</Text>}
-      {hasSelection && !isLoading && chartPoints.length === 0 && (
-        <Text style={styles.noData}>{t('coach.progress.empty')}</Text>
-      )}
-      {hasSelection && !isLoading && chartPoints.length > 0 && (
+      {hasSelection ? (
+        <QueryResult
+          emptyTitle={t('coach.progress.empty')}
+          error={activeProgressQuery.error}
+          isError={activeProgressQuery.isError}
+          isLoading={isLoading}
+          itemCount={chartPoints.length}
+          onRetry={() => void activeProgressQuery.refetch()}
+        />
+      ) : null}
+      {hasSelection && !activeProgressQuery.isError && !isLoading && chartPoints.length > 0 && (
         <div style={chartsGrid}>
           {activeVars.map((v) => (
             <ChartCard

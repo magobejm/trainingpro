@@ -1,6 +1,7 @@
 import React from 'react';
 import { FilterChips, SearchBar } from '@trainerpro/ui';
 import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { QueryResult } from '../../../components/AsyncStatus';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import type { ExerciseCreateFormState } from '../LibraryExercisesScreen.create';
 import { libraryStyles as styles } from '../library-screen.styles';
@@ -27,7 +28,11 @@ type Props = {
   editUploading: boolean;
   expandedId: string;
   items: ExerciseLibraryItem[];
+  listError: unknown;
+  listFailed: boolean;
+  listLoading: boolean;
   muscleGroupOptions: Array<{ id: string; label: string }>;
+  onRetryList: () => void;
   query: string;
   onCloseCreateModal: () => void;
   onCloseEditModal: () => void;
@@ -54,11 +59,7 @@ export function LibraryExercisesView(props: Props): React.JSX.Element {
       <TopBar {...props} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.filtersWrapper}>
-          <FilterChips
-            activeId={props.activeFilter}
-            items={props.chips}
-            onSelect={props.onSelectFilter}
-          />
+          <FilterChips activeId={props.activeFilter} items={props.chips} onSelect={props.onSelectFilter} />
         </View>
         {renderList(props)}
       </ScrollView>
@@ -170,8 +171,17 @@ function EditModal(props: Props): React.JSX.Element {
 }
 
 function renderList(props: Props): React.JSX.Element {
-  if (props.items.length === 0) {
-    return <Text style={styles.empty}>{props.t('coach.library.empty')}</Text>;
+  const status = QueryResult({
+    emptyTitle: props.t('coach.library.empty'),
+    error: props.listError,
+    hasActiveFilter: props.query.trim().length > 0 || props.activeFilter !== 'all',
+    isError: props.listFailed,
+    isLoading: props.listLoading,
+    itemCount: props.items.length,
+    onRetry: props.onRetryList,
+  });
+  if (status) {
+    return status;
   }
   return (
     <View style={gridStyles.grid}>

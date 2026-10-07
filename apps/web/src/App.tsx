@@ -21,6 +21,7 @@ import { LoginScreen } from './screens/auth/LoginScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
 import { SidebarIdentity, TopBar } from './layout/ShellChrome';
 import { UNAUTHORIZED_EVENT } from './data/api-client';
+import { markSessionExpired } from './data/session-end';
 import { useSessionSync } from './data/hooks/useSessionSync';
 import { useMeQuery } from './data/hooks/useMeQuery';
 import { SidebarUserPanel } from './layout/SidebarUserPanel';
@@ -112,6 +113,7 @@ export function App(): React.JSX.Element {
   const clearSession = useAuthStore((state) => state.clearSession);
   useEffect(() => {
     const onUnauthorized = () => {
+      markSessionExpired();
       void clearAuthContext(clearSession, queryClient.clear);
     };
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);

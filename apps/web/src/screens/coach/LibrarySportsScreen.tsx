@@ -1,7 +1,8 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DimensionValue, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { QueryResult } from '../../components/AsyncStatus';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
@@ -48,7 +49,7 @@ export function LibrarySportsScreen(): React.JSX.Element {
   const [form, setForm] = useState<SportCreateFormState>(EMPTY_SPORT_FORM);
   const [editingItem, setEditingItem] = useState<SportLibraryItem | null>(null);
 
-  const { data, isLoading } = useLibrarySportsQuery();
+  const { data, error, isError, isLoading, refetch } = useLibrarySportsQuery();
   // Frontend-side filtering for sports (api doesn't support query yet for sports)
   const items = (data ?? []).filter((item) => matchesSearch(item.name, query));
 
@@ -185,11 +186,15 @@ export function LibrarySportsScreen(): React.JSX.Element {
         visible={Boolean(pendingDeleteId)}
       />
 
-      {isLoading ? (
-        <ActivityIndicator size="large" style={localStyles.loader} color="#1c74e9" />
-      ) : items.length === 0 ? (
-        <Text style={styles.empty}>{t('coach.library.empty')}</Text>
-      ) : (
+      {QueryResult({
+        emptyTitle: t('coach.library.empty'),
+        error,
+        hasActiveFilter: query.trim().length > 0,
+        isError,
+        isLoading,
+        itemCount: items.length,
+        onRetry: () => void refetch(),
+      }) ?? (
         <View style={gridStyles.grid}>
           {items.map((item) => (
             <View key={item.id} style={gridStyles.gridItem}>
@@ -213,12 +218,6 @@ export function LibrarySportsScreen(): React.JSX.Element {
     </ScrollView>
   );
 }
-
-const localStyles = StyleSheet.create({
-  loader: {
-    marginTop: 40,
-  },
-});
 
 const gridStyles = StyleSheet.create({
   grid: {

@@ -1,15 +1,9 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
 import { useLoginMutation } from '../../data/hooks/useAuthMutations';
+import { readSessionExpired } from '../../data/session-end';
 
 const COLORS = {
   error: '#b42318',
@@ -22,6 +16,7 @@ const COLORS = {
   inputBorder: '#d8dee5',
 };
 
+const ALERT_ROLE = 'alert' as const;
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
   keyboardType: 'email-address' as const,
@@ -42,7 +37,8 @@ function useLoginViewModel() {
   };
   const error = mapErrorMessage(loginMutation.error, t('auth.login.error'));
   const isLoading = loginMutation.isPending;
-  return { t, email, password, error, isLoading, onLogin, setEmail, setPassword };
+  const sessionExpired = readSessionExpired();
+  return { t, email, password, error, isLoading, onLogin, sessionExpired, setEmail, setPassword };
 }
 
 function mapErrorMessage(caught: unknown, fallback: string): string | null {
@@ -63,6 +59,11 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
       <View style={styles.card}>
         <Text style={styles.title}>{props.t('auth.login.title')}</Text>
         <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
+        {props.sessionExpired ? (
+          <Text accessibilityRole={ALERT_ROLE} style={styles.sessionExpired}>
+            {props.t('auth.login.sessionExpired')}
+          </Text>
+        ) : null}
         <TextInput
           {...EMAIL_PROPS}
           onChangeText={props.setEmail}
@@ -132,6 +133,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     padding: 20,
+  },
+  sessionExpired: {
+    color: COLORS.error,
+    fontSize: 14,
+    marginBottom: 12,
   },
   subtitle: {
     color: COLORS.muted,

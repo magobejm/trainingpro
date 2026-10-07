@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Pressable, TextInput, ScrollView } from 'react-native';
 import { Dumbbell, Heart, Zap, Wind, Trophy, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { QueryResult } from '../../components/AsyncStatus';
 import { UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
 import { styles } from './UnifiedExerciseLibraryScreen.styles';
 import { resolvePlaceholder } from './components/LibraryMediaViewer';
@@ -13,7 +14,6 @@ import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMulti
 const C_BLUE = '#2563eb';
 const C_GRAY = '#94a3b8';
 const C_SLATE = '#64748b';
-const C_SLATE_L = '#e2e8f0';
 const C_WHITE = '#fff';
 const C_RED = '#ef4444';
 const REMODE_CVR = 'cover' as const;
@@ -273,43 +273,41 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
 }
 
 export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
-  if (st.isLoading) {
-    return (
-      <ScrollView style={styles.mainContent} contentContainerStyle={styles.mainContentInner}>
-        <Text style={styles.loadingText}>{st.t('coach.library.list.loading')}</Text>
-      </ScrollView>
-    );
-  }
+  const status = QueryResult({
+    emptyMessage: st.t('coach.library.list.emptySubtitle'),
+    emptyTitle: st.t('coach.library.list.emptyTitle'),
+    error: st.listError,
+    hasActiveFilter: st.hasActiveFilters || st.search.trim().length > 0,
+    isError: st.isListError,
+    isLoading: st.isLoading,
+    itemCount: st.exercises?.length ?? 0,
+    onRetry: st.refetchList,
+  });
   return (
     <ScrollView style={styles.mainContent} contentContainerStyle={styles.mainContentInner}>
-      <View style={styles.cardGrid}>
-        {(st.exercises ?? []).map((item) => (
-          <ExerciseCard
-            key={`${item.kind}-${item.id}`}
-            item={item}
-            hovered={st.hoveredCard === item.id}
-            setHovered={(h) => st.setHoveredCard(h ? item.id : null)}
-            onDetail={() => {
-              st.setItemForDetail(item);
-              st.setDetailVisible(true);
-            }}
-            onEdit={() => {
-              st.setItemToEdit(item);
-              st.setIsModalVisible(true);
-            }}
-            onDelete={() => {
-              st.setDeleteError(null);
-              st.setPendingDelete({ id: item.id, kind: item.kind });
-            }}
-            deletionDisabled={st.deletingId === item.id}
-          />
-        ))}
-      </View>
-      {st.exercises?.length === 0 && (
-        <View style={styles.emptyState}>
-          <Dumbbell size={48} color={C_SLATE_L} />
-          <Text style={styles.emptyText}>{st.t('coach.library.list.emptyTitle')}</Text>
-          <Text style={styles.emptySubtext}>{st.t('coach.library.list.emptySubtitle')}</Text>
+      {status ?? (
+        <View style={styles.cardGrid}>
+          {(st.exercises ?? []).map((item) => (
+            <ExerciseCard
+              key={`${item.kind}-${item.id}`}
+              item={item}
+              hovered={st.hoveredCard === item.id}
+              setHovered={(h) => st.setHoveredCard(h ? item.id : null)}
+              onDetail={() => {
+                st.setItemForDetail(item);
+                st.setDetailVisible(true);
+              }}
+              onEdit={() => {
+                st.setItemToEdit(item);
+                st.setIsModalVisible(true);
+              }}
+              onDelete={() => {
+                st.setDeleteError(null);
+                st.setPendingDelete({ id: item.id, kind: item.kind });
+              }}
+              deletionDisabled={st.deletingId === item.id}
+            />
+          ))}
         </View>
       )}
     </ScrollView>

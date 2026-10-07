@@ -99,7 +99,11 @@ function buildExerciseViewState(
     editUploading: editForm.uploadImageMutation.isPending,
     expandedId: state.expandedId,
     items: refs.listItems,
+    listError: refs.listError,
+    listFailed: refs.listFailed,
+    listLoading: refs.listLoading,
     muscleGroupOptions: refs.catalogItems,
+    onRetryList: refs.onRetryList,
   };
 }
 function useExerciseResources(state: ReturnType<typeof useExercisesState>) {
@@ -119,7 +123,11 @@ function useExerciseResources(state: ReturnType<typeof useExercisesState>) {
     catalogItems,
     defaultCatalogId,
     deleteMutation,
+    listError: listQuery.error,
+    listFailed: listQuery.isError,
     listItems,
+    listLoading: listQuery.isLoading,
+    onRetryList: () => void listQuery.refetch(),
     updateMutation,
   };
 }

@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { loginWithPassword, type LoginResult } from '../auth-service';
+import { clearSessionExpired } from '../session-end';
 import { useAuthStore } from '../../store/auth.store';
 
 export type LoginInput = {
@@ -13,6 +14,7 @@ export function useLoginMutation(): UseMutationResult<LoginResult, Error, LoginI
   return useMutation({
     mutationFn: runLogin,
     onSuccess: (result) => {
+      clearSessionExpired();
       queryClient.clear();
       setSession(result.accessToken);
     },

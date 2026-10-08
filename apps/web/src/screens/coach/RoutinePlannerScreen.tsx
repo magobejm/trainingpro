@@ -1,7 +1,9 @@
 import React, { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { pickNormalizedPlanTemplateId } from '../../data/normalize-plan-template-id';
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
+import { useClientsQuery, type ClientView } from '../../data/hooks/useClientsQuery';
 import { createEmptyDraft, mapTemplateToDraft } from './RoutinePlanner.helpers';
 import {
   useRoutineObjectivesQuery,
@@ -19,23 +21,40 @@ import { RoutinePlannerLayout } from './components/RoutinePlanner/RoutinePlanner
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
 import { useRoutinePlannerUIState } from './useRoutinePlannerUIState';
+import { useRoutineHandoffPrompt } from './RoutineHandoffDialog';
+import {
+  archiveFutureWorkouts,
+  assignClientRoutine,
+  isSameAssignedRoutine,
+  loadClientCalendarEvents,
+  type HandoffChoice,
+  type RoutineAssignOptions,
+} from './routine-handoff';
+
+type HandoffPorts = {
+  archive: (clientId: string, from: string) => Promise<void>;
+  ask: () => Promise<HandoffChoice>;
+  clients: ClientView[];
+};
 
 type Props = { onRouteChange?: (route: ShellRoute) => void };
 
 export function RoutinePlannerScreen(props: Props): React.JSX.Element {
   const vm = useRoutinePlannerScreenModel(props.onRouteChange);
+  const { handoffDialog, ...layout } = vm;
   return (
     <>
       <UnsavedWorkDialogs
-        onOverwrite={() => void vm.retrySave()}
+        onOverwrite={() => void layout.retrySave()}
         onReload={() => {
-          vm.work.release();
+          layout.work.release();
           window.location.reload();
         }}
-        t={vm.t}
-        work={vm.work}
+        t={layout.t}
+        work={layout.work}
       />
-      <RoutinePlannerLayout {...vm} />
+      <RoutinePlannerLayout {...layout} />
+      {handoffDialog}
     </>
   );
 }
@@ -128,6 +147,11 @@ function usePlannerSaveModel(
 ) {
   const updateClientMutation = useUpdateClientMutation(clientId ?? '');
   const assignMutation = useAssignRoutineMutation();
+  const queryClient = useQueryClient();
+  const clients = useClientsQuery().data ?? [];
+  const handoff = useRoutineHandoffPrompt(t);
+  const archive = (targetId: string, from: string) => archiveFutureWorkouts(queryClient, targetId, from);
+  const ports: HandoffPorts = { archive, ask: handoff.ask, clients };
   const { deleteMutation, isSaving, onSave, onSaveCore, retrySave } = useRoutineSaveHandler(
     clearInitialTemplate,
     clientId,
@@ -137,10 +161,31 @@ function usePlannerSaveModel(
     uiState,
     updateClientMutation,
     work,
+    ports,
   );
-  const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t, onRouteChange, work);
-  const onAssignOnly = buildAssignOnly(assignMutation, uiState, draftState, onRouteChange);
-  return { deleteMutation, isSaving, onSave, onSaveAndAssign, onAssignOnly, retrySave, updateClientMutation, viewMode };
+  const onSaveAndAssign = buildSaveAndAssign(
+    onSaveCore,
+    assignMutation,
+    draftState,
+    uiState,
+    t,
+    onRouteChange,
+    work,
+    archive,
+  );
+  const onAssignOnly = buildAssignOnly(assignMutation, uiState, draftState, onRouteChange, archive);
+  return {
+    deleteMutation,
+    handoffDialog: handoff.dialog,
+    handoffPorts: ports,
+    isSaving,
+    onSave,
+    onSaveAndAssign,
+    onAssignOnly,
+    retrySave,
+    updateClientMutation,
+    viewMode,
+  };
 }
 
 function buildAssignOnly(
@@ -148,11 +193,13 @@ function buildAssignOnly(
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
   draftState: ReturnType<typeof useRoutinePlannerDraft>,
   onRouteChange: undefined | ((route: ShellRoute) => void),
+  archive: HandoffPorts['archive'],
 ) {
-  return async (clientId: string) => {
+  return async (clientId: string, options?: RoutineAssignOptions) => {
     const templateId = pickNormalizedPlanTemplateId(uiState.editingId, draftState.draft.sourcePlanTemplateId);
     if (!templateId) return;
     await assignMutation.mutateAsync({ clientId, templateId });
+    if (options?.clearFutureFrom) await archive(clientId, options.clearFutureFrom);
     uiState.setSaveSuccess(true);
     setTimeout(() => uiState.setSaveSuccess(false), 3000);
     goToAssignedClientCalendar(clientId, onRouteChange);
@@ -167,10 +214,12 @@ function buildSaveAndAssign(
   t: (k: string) => string,
   onRouteChange: undefined | ((route: ShellRoute) => void),
   work: ReturnType<typeof useUnsavedWork<ReturnType<typeof useRoutinePlannerDraft>['draft']>>,
+  archive: HandoffPorts['archive'],
 ) {
-  return async (name: string, assignClientId: string) => {
+  return async (name: string, assignClientId: string, options?: RoutineAssignOptions) => {
     const templateId = await onSaveCore(name);
     await assignMutation.mutateAsync({ clientId: assignClientId, templateId });
+    if (options?.clearFutureFrom) await archive(assignClientId, options.clearFutureFrom);
     const empty = createEmptyDraft(t);
     work.release(empty);
     uiState.setSaveSuccess(true);
@@ -189,9 +238,11 @@ function buildLayoutModel(params: {
   objectiveOptions: Array<{ id: string; label: string }>;
   isSaving: boolean;
   onSave: ReturnType<typeof useRoutineSaveHandler>['onSave'];
-  onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
+  onSaveAndAssign: (name: string, clientId: string, options?: RoutineAssignOptions) => Promise<void>;
   work: ReturnType<typeof useUnsavedWork<ReturnType<typeof useRoutinePlannerDraft>['draft']>>;
-  onAssignOnly: (clientId: string) => Promise<void>;
+  onAssignOnly: (clientId: string, options?: RoutineAssignOptions) => Promise<void>;
+  handoffDialog: React.JSX.Element;
+  handoffPorts: HandoffPorts;
   plannerContext: ReturnType<typeof usePlannerContextState>;
   t: (key: string) => string;
   templates: RoutineTemplateView[];
@@ -206,6 +257,7 @@ function buildLayoutModel(params: {
     deleteMutation: params.deleteMutation,
     draftState: params.draftState,
     objectiveOptions: params.objectiveOptions,
+    handoffDialog: params.handoffDialog,
     onAssignTemplate: buildAssignTemplateHandler(params),
     onAssignOnly: params.onAssignOnly,
     onBack: params.plannerContext.clientId
@@ -235,6 +287,7 @@ function buildLayoutModel(params: {
 }
 
 function buildAssignTemplateHandler(params: {
+  handoffPorts: HandoffPorts;
   onRouteChange: undefined | ((route: ShellRoute) => void);
   plannerContext: ReturnType<typeof usePlannerContextState>;
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>;
@@ -244,6 +297,7 @@ function buildAssignTemplateHandler(params: {
     params.plannerContext.clientId,
     params.onRouteChange,
     params.updateClientMutation,
+    params.handoffPorts,
   );
 }
 
@@ -256,6 +310,7 @@ function useRoutineSaveHandler(
   uiState: ReturnType<typeof useRoutinePlannerUIState>,
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>,
   work: ReturnType<typeof useUnsavedWork<ReturnType<typeof useRoutinePlannerDraft>['draft']>>,
+  ports: HandoffPorts,
 ) {
   return useRoutinePlannerMutations(
     draftState.draft,
@@ -265,7 +320,7 @@ function useRoutineSaveHandler(
     draftState.setActiveDayIdx,
     uiState.setSaveSuccess,
     t,
-    buildAfterSaveHandler(clearInitialTemplate, clientId, onRouteChange, updateClientMutation),
+    buildAfterSaveHandler(clearInitialTemplate, clientId, onRouteChange, updateClientMutation, ports),
     'coach.routine.dayPrefix',
     work,
   );
@@ -324,16 +379,16 @@ function buildAfterSaveHandler(
   clientId: null | string,
   onRouteChange: undefined | ((route: ShellRoute) => void),
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>,
+  ports: HandoffPorts,
 ) {
   return async (templateId: string) => {
-    if (clientId) {
-      await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
-      clearInitialTemplate();
-      goToAssignedClientCalendar(clientId, onRouteChange);
-    } else {
-      // Always go back to the routine library after saving (new or edit)
+    if (!clientId) {
       onRouteChange?.('coach.library.routines');
+      return;
     }
+    await assignWithHandoff(clientId, templateId, onRouteChange, clearInitialTemplate, ports, () =>
+      updateClientMutation.mutateAsync({ trainingPlanId: templateId }),
+    );
   };
 }
 
@@ -342,15 +397,36 @@ function resolveAssignHandler(
   clientId: null | string,
   onRouteChange: undefined | ((route: ShellRoute) => void),
   updateClientMutation: ReturnType<typeof useUpdateClientMutation>,
+  ports: HandoffPorts,
 ): undefined | ((templateId: string) => Promise<void>) {
-  if (!clientId) {
-    return undefined;
-  }
-  return async (templateId: string) => {
-    await updateClientMutation.mutateAsync({ trainingPlanId: templateId });
-    clearInitialTemplate();
-    goToAssignedClientCalendar(clientId, onRouteChange);
-  };
+  if (!clientId) return undefined;
+  return (templateId: string) =>
+    assignWithHandoff(clientId, templateId, onRouteChange, clearInitialTemplate, ports, () =>
+      updateClientMutation.mutateAsync({ trainingPlanId: templateId }),
+    );
+}
+
+function assignWithHandoff(
+  clientId: string,
+  templateId: string,
+  onRouteChange: undefined | ((route: ShellRoute) => void),
+  clearInitialTemplate: () => void,
+  ports: HandoffPorts,
+  assign: () => Promise<unknown>,
+): Promise<void> {
+  const client = ports.clients.find((item) => item.id === clientId);
+  return assignClientRoutine({
+    archive: (from) => ports.archive(clientId, from),
+    ask: ports.ask,
+    assign: () => assign().then(() => undefined),
+    hasOtherRoutine: Boolean(client?.trainingPlanId || client?.trainingPlan),
+    loadPending: (from, to) => loadClientCalendarEvents(clientId, from, to),
+    openCalendar: () => {
+      clearInitialTemplate();
+      goToAssignedClientCalendar(clientId, onRouteChange);
+    },
+    sameRoutine: isSameAssignedRoutine(client?.trainingPlanId, client?.trainingPlan?.id, templateId),
+  });
 }
 
 function goToAssignedClientCalendar(clientId: string, onRouteChange: undefined | ((route: ShellRoute) => void)) {

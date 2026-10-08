@@ -2,8 +2,15 @@
 import React, { useEffect, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
-import { pickNormalizedPlanTemplateId } from '../../../../data/normalize-plan-template-id';
 import { matchesSearch } from '../../../../utils/normalize-search';
+import { useRoutineHandoffPrompt } from '../../RoutineHandoffDialog';
+import {
+  chooseRoutineHandoff,
+  isSameAssignedRoutine,
+  loadClientCalendarEvents,
+  localCalendarDay,
+  type RoutineAssignOptions,
+} from '../../routine-handoff';
 
 const MODAL_ANIM = 'fade' as const;
 const SCROLL_KEYBOARD_TAPS = 'handled' as const;
@@ -21,17 +28,10 @@ interface SaveRoutineModalProps {
   isGlobal?: boolean;
   onClose: () => void;
   onSave: (name: string) => Promise<void>;
-  onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
-  onAssignOnly?: (clientId: string) => Promise<void>;
+  onSaveAndAssign: (name: string, clientId: string, options?: RoutineAssignOptions) => Promise<void>;
+  onAssignOnly?: (clientId: string, options?: RoutineAssignOptions) => Promise<void>;
   templateId?: string | null;
   t: (k: string, opts?: Record<string, unknown>) => string;
-}
-
-interface ConflictState {
-  name: string;
-  clientId: string;
-  clientName: string;
-  existingRoutineName: string;
 }
 
 function ClientRow({ client, isSelected, onPress }: { client: ClientView; isSelected: boolean; onPress: () => void }) {
@@ -55,42 +55,9 @@ function ClientRow({ client, isSelected, onPress }: { client: ClientView; isSele
 
 const CHECK_ICON = '✓';
 
-function ConflictWarning({
-  conflict,
-  onConfirm,
-  onCancel,
-  t,
-}: {
-  conflict: ConflictState;
-  onConfirm: () => void;
-  onCancel: () => void;
-  t: SaveRoutineModalProps['t'];
-}) {
-  return (
-    <View style={styles.conflictBox}>
-      <Text style={styles.conflictText}>
-        {t('coach.routine.saveModal.conflictMessage', {
-          client: conflict.clientName,
-          routine: conflict.existingRoutineName,
-        })}
-      </Text>
-      <View style={styles.conflictBtns}>
-        <Pressable onPress={onCancel} style={styles.btnSecondary}>
-          <Text style={styles.btnSecondaryText}>{t('common.cancel')}</Text>
-        </Pressable>
-        <Pressable onPress={onConfirm} style={styles.btnPrimary}>
-          <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.confirm')}</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
-
-function isSameAssignedRoutine(client: ClientView | undefined, templateId: string | null | undefined): boolean {
+function clientHasSameRoutine(client: ClientView | undefined, templateId: string | null | undefined): boolean {
   if (!client || !templateId) return false;
-  const current = pickNormalizedPlanTemplateId(client.trainingPlan?.id, client.trainingPlanId);
-  const next = pickNormalizedPlanTemplateId(templateId);
-  return Boolean(current && next && current === next);
+  return isSameAssignedRoutine(client.trainingPlanId, client.trainingPlan?.id, templateId);
 }
 
 function noop() {}
@@ -103,9 +70,9 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const [search, setSearch] = useState('');
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string | null>(null);
-  const [conflict, setConflict] = useState<ConflictState | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const handoff = useRoutineHandoffPrompt(t);
 
   useEffect(() => {
     if (visible) {
@@ -113,7 +80,6 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       setSearch('');
       setSelectedClientId(null);
       setSelectedObjectiveId(null);
-      setConflict(null);
       setSaveError(null);
       setIsSaving(false);
     }
@@ -142,25 +108,29 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   }
 
   const selectedClient = clients.find((client) => client.id === selectedClientId);
-  const alreadyAssigned = isSameAssignedRoutine(selectedClient, templateId);
+  const alreadyAssigned = clientHasSameRoutine(selectedClient, templateId);
+
+  async function resolveHandoff(clientId: string): Promise<RoutineAssignOptions | null> {
+    const client = clients.find((item) => item.id === clientId);
+    const outcome = await chooseRoutineHandoff({
+      ask: handoff.ask,
+      hasOtherRoutine: Boolean(client?.trainingPlanId || client?.trainingPlan),
+      loadPending: (from, to) => loadClientCalendarEvents(clientId, from, to),
+      sameRoutine: clientHasSameRoutine(client, templateId),
+      today: localCalendarDay(),
+    });
+    if (outcome === 'cancel' || outcome === 'same') return null;
+    return outcome === 'replace' ? { clearFutureFrom: localCalendarDay() } : {};
+  }
 
   async function handleSaveAndAssign() {
     if (!selectedClientId || alreadyAssigned) return;
-    const client = clients.find((c) => c.id === selectedClientId);
-    if (!client) return;
-    if (client.trainingPlan) {
-      setConflict({
-        name,
-        clientId: selectedClientId,
-        clientName: `${client.firstName} ${client.lastName}`,
-        existingRoutineName: client.trainingPlan.name,
-      });
-      return;
-    }
+    const options = await resolveHandoff(selectedClientId);
+    if (!options) return;
     setSaveError(null);
     setIsSaving(true);
     try {
-      await onSaveAndAssign(name, selectedClientId);
+      await onSaveAndAssign(name, selectedClientId, options);
       onClose();
     } catch (err) {
       if (isVersionConflict(err)) return;
@@ -171,19 +141,19 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
     }
   }
 
-  async function handleConflictConfirm() {
-    if (!conflict) return;
+  async function handleAssignOnly() {
+    if (!selectedClientId || !onAssignOnly || alreadyAssigned) return;
+    const options = await resolveHandoff(selectedClientId);
+    if (!options) return;
     setSaveError(null);
     setIsSaving(true);
     try {
-      await onSaveAndAssign(conflict.name, conflict.clientId);
-      setConflict(null);
+      await onAssignOnly(selectedClientId, options);
       onClose();
     } catch (err) {
       if (isVersionConflict(err)) return;
       const raw = (err as { message?: string })?.message ?? '';
       setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
-      setConflict(null);
     } finally {
       setIsSaving(false);
     }
@@ -264,14 +234,6 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
                 />
               ))}
             </View>
-            {conflict && (
-              <ConflictWarning
-                conflict={conflict}
-                onCancel={() => setConflict(null)}
-                onConfirm={handleConflictConfirm}
-                t={t}
-              />
-            )}
           </ScrollView>
 
           {/* ── Sticky footer ── */}
@@ -282,45 +244,41 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
               </Text>
             </View>
           ) : null}
-          {!conflict &&
-            (isGlobal ? (
-              <View style={styles.footer}>
-                <Pressable
-                  disabled={!selectedClientId || isSaving || alreadyAssigned}
-                  onPress={async () => {
-                    if (!selectedClientId || !onAssignOnly || alreadyAssigned) return;
-                    await onAssignOnly(selectedClientId);
-                    onClose();
-                  }}
-                  style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
-                >
-                  <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <View style={styles.footer}>
-                <Pressable
-                  disabled={isSaving}
-                  onPress={handleSaveOnly}
-                  style={[styles.btnSecondary, isSaving && styles.btnDisabled]}
-                >
-                  <Text style={styles.btnSecondaryText}>
-                    {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveOnly')}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  disabled={!selectedClientId || isSaving || alreadyAssigned}
-                  onPress={handleSaveAndAssign}
-                  style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
-                >
-                  <Text style={styles.btnPrimaryText}>
-                    {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}
-                  </Text>
-                </Pressable>
-              </View>
-            ))}
+          {isGlobal ? (
+            <View style={styles.footer}>
+              <Pressable
+                disabled={!selectedClientId || isSaving || alreadyAssigned}
+                onPress={() => void handleAssignOnly()}
+                style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
+              >
+                <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.footer}>
+              <Pressable
+                disabled={isSaving}
+                onPress={handleSaveOnly}
+                style={[styles.btnSecondary, isSaving && styles.btnDisabled]}
+              >
+                <Text style={styles.btnSecondaryText}>
+                  {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveOnly')}
+                </Text>
+              </Pressable>
+              <Pressable
+                disabled={!selectedClientId || isSaving || alreadyAssigned}
+                onPress={handleSaveAndAssign}
+                style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
+              >
+                <Text style={styles.btnPrimaryText}>
+                  {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}
+                </Text>
+              </Pressable>
+            </View>
+          )}
         </Pressable>
       </Pressable>
+      {handoff.dialog}
     </Modal>
   );
 }
@@ -442,9 +400,6 @@ const styles = StyleSheet.create({
   },
   btnSecondaryText: { color: '#475569', fontSize: 13 },
   btnDisabled: { backgroundColor: '#94a3b8' },
-  conflictBox: { gap: 12, backgroundColor: '#fef9c3', borderRadius: 8, padding: 12 },
-  conflictText: { fontSize: 13, color: '#92400e', lineHeight: 20 },
-  conflictBtns: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   errorBanner: {
     backgroundColor: '#fee2e2',
     borderTopWidth: 1,

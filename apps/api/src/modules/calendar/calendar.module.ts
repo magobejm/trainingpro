@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { ClearFutureWorkoutsUseCase } from './application/use-cases/clear-future-workouts.usecase';
 import { CreateCalendarEventUseCase } from './application/use-cases/create-calendar-event.usecase';
 import { DeleteCalendarEventUseCase } from './application/use-cases/delete-calendar-event.usecase';
 import { ListCalendarEventsUseCase } from './application/use-cases/list-calendar-events.usecase';
@@ -12,6 +13,7 @@ import { CalendarController } from './presentation/controllers/calendar.controll
   imports: [AuthModule],
   controllers: [CalendarController],
   providers: [
+    ClearFutureWorkoutsUseCase,
     CreateCalendarEventUseCase,
     DeleteCalendarEventUseCase,
     ListCalendarEventsUseCase,

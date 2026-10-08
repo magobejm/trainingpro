@@ -4,10 +4,12 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { ClearFutureWorkoutsUseCase } from '../../application/use-cases/clear-future-workouts.usecase';
 import { CreateCalendarEventUseCase } from '../../application/use-cases/create-calendar-event.usecase';
 import { DeleteCalendarEventUseCase } from '../../application/use-cases/delete-calendar-event.usecase';
 import { ListCalendarEventsUseCase } from '../../application/use-cases/list-calendar-events.usecase';
 import { UpdateCalendarEventUseCase } from '../../application/use-cases/update-calendar-event.usecase';
+import { ClearFutureWorkoutsDto } from '../dto/clear-future-workouts.dto';
 import { CreateCalendarEventDto } from '../dto/create-calendar-event.dto';
 import { EventIdParamDto } from '../dto/event-id-param.dto';
 import { ListCalendarEventsQueryDto } from '../dto/list-calendar-events-query.dto';
@@ -18,11 +20,17 @@ import { UpdateCalendarEventDto } from '../dto/update-calendar-event.dto';
 @Roles('coach')
 export class CalendarController {
   constructor(
+    private readonly clearFutureWorkoutsUseCase: ClearFutureWorkoutsUseCase,
     private readonly createCalendarEventUseCase: CreateCalendarEventUseCase,
     private readonly deleteCalendarEventUseCase: DeleteCalendarEventUseCase,
     private readonly listCalendarEventsUseCase: ListCalendarEventsUseCase,
     private readonly updateCalendarEventUseCase: UpdateCalendarEventUseCase,
   ) {}
+
+  @Post('clear-future-workouts')
+  async clearFuture(@Body() body: ClearFutureWorkoutsDto, @Req() request: HttpAuthRequest) {
+    return this.clearFutureWorkoutsUseCase.execute(readAuthContext(request), body);
+  }
 
   @Post()
   async create(@Body() body: CreateCalendarEventDto, @Req() request: HttpAuthRequest) {

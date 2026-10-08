@@ -55,10 +55,10 @@ interface LayoutProps {
     lastAddedBlockId: string | null;
   };
   onSave: (name: string) => Promise<void>;
-  onSaveAndAssign: (name: string, clientId: string) => Promise<void>;
+  onSaveAndAssign: (name: string, clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
   saveDisabled?: boolean;
   statusNode?: React.ReactNode;
-  onAssignOnly?: (clientId: string) => Promise<void>;
+  onAssignOnly?: (clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
   templates: RoutineTemplateView[];
   deleteMutation: {
     isPending: boolean;

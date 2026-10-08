@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
 import {
@@ -18,6 +19,7 @@ import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
 import { matchesSearch } from '../../utils/normalize-search';
+import { archiveFutureWorkouts, type RoutineAssignOptions } from './routine-handoff';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 
 export type RoutineLibraryTab = 'routines' | 'warmups';
@@ -41,6 +43,7 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   const setWarmupInitial = useWarmupPlannerContextStore((s) => s.setInitialTemplate);
   const openBlankWarmup = useWarmupPlannerContextStore((s) => s.openBlankFromLibrary);
   const assignRoutine = useAssignRoutineMutation();
+  const queryClient = useQueryClient();
   const deleteRoutine = useDeleteRoutineTemplateMutation();
   const deleteWarmup = useDeleteWarmupTemplateMutation();
   const filteredRoutines = useFiltered(routines, query);
@@ -67,8 +70,7 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
     mediaMap: catalogs.mediaMap,
     onAssignRoutine: (tpl: RoutineTemplateView) => setAssignTemplate(tpl),
     onCloseAssign: () => setAssignTemplate(null),
-    onConfirmAssign: (nextClientId: string) =>
-      confirmLibraryAssign(assignRoutine, clearRoutine, nextClientId, assignTemplate?.id ?? '', onRouteChange),
+    onConfirmAssign: bindConfirmAssign(assignRoutine, clearRoutine, assignTemplate?.id ?? '', onRouteChange, queryClient),
     onConfirmDelete,
     onCreateRoutine: () => {
       openBlankRoutine();
@@ -159,14 +161,28 @@ function useFiltered<T extends { name: string }>(items: T[], query: string): T[]
   }, [items, query]);
 }
 
+function bindConfirmAssign(
+  assignRoutine: { mutateAsync: (input: { clientId: string; templateId: string }) => Promise<unknown> },
+  clearRoutine: () => void,
+  templateId: string,
+  onRouteChange: (route: ShellRoute) => void,
+  queryClient: ReturnType<typeof useQueryClient>,
+) {
+  return (nextClientId: string, options?: RoutineAssignOptions) =>
+    confirmLibraryAssign(assignRoutine, clearRoutine, nextClientId, templateId, onRouteChange, queryClient, options);
+}
+
 function confirmLibraryAssign(
   assignRoutine: { mutateAsync: (input: { clientId: string; templateId: string }) => Promise<unknown> },
   clearRoutine: () => void,
   clientId: string,
   templateId: string,
   onRouteChange: (route: ShellRoute) => void,
+  queryClient: ReturnType<typeof useQueryClient>,
+  options?: RoutineAssignOptions,
 ): Promise<void> {
-  return assignRoutine.mutateAsync({ clientId, templateId }).then(() => {
+  return assignRoutine.mutateAsync({ clientId, templateId }).then(async () => {
+    if (options?.clearFutureFrom) await archiveFutureWorkouts(queryClient, clientId, options.clearFutureFrom);
     clearRoutine();
     useCalendarContextStore.getState().openForClient(clientId);
     writeRouteClientId(clientId);

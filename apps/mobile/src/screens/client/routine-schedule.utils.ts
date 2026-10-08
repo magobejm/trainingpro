@@ -160,6 +160,33 @@ export function isSelectedPlanDayScheduledForToday(
   return todayPlanDayId === selectedPlanDayId;
 }
 
+export function scheduledTitleForToday(schedule: RoutineWeekSchedule | null): string | null {
+  if (!schedule || schedule.mode !== 'calendar' || !schedule.today) return null;
+  return schedule.today.title;
+}
+
+export type DayStartGate = 'blocked' | 'confirm' | 'resume' | 'start';
+
+export function resolveDayStartGate(input: {
+  calendarLoading: boolean;
+  selectedPlanDayId: string;
+  schedule: RoutineWeekSchedule | null;
+  todaySessionPlanDayId: string | null;
+  todaySessionStatus: string | null;
+}): DayStartGate {
+  if (input.todaySessionStatus === 'COMPLETED' || input.calendarLoading) return 'blocked';
+
+  const scheduledToday = isSelectedPlanDayScheduledForToday(input.selectedPlanDayId, input.schedule);
+  const inProgress = input.todaySessionStatus === 'IN_PROGRESS';
+  const sameOpenSession = inProgress && input.todaySessionPlanDayId === input.selectedPlanDayId;
+  if (sameOpenSession && scheduledToday) return 'resume';
+  if (!scheduledToday) return 'confirm';
+  if (inProgress && input.todaySessionPlanDayId && input.todaySessionPlanDayId !== input.selectedPlanDayId) {
+    return 'confirm';
+  }
+  return 'start';
+}
+
 /** @deprecated Use resolveRoutineWeekSchedule */
 export function resolvePlanDayForDate(
   planDays: ClientRoutineDay[],

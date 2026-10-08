@@ -5,7 +5,9 @@ import {
   formatScheduledDateLabel,
   getWeekDateRange,
   isSelectedPlanDayScheduledForToday,
+  resolveDayStartGate,
   resolveRoutineWeekSchedule,
+  scheduledTitleForToday,
   scheduledWorkoutToRoutineDay,
 } from '../routine-schedule.utils';
 
@@ -217,5 +219,94 @@ describe('routine-schedule.utils renamed days', () => {
 
   it('requires confirmation when the schedule is missing', () => {
     expect(isSelectedPlanDayScheduledForToday('day-1', null)).toBe(false);
+  });
+
+  it('names the workout scheduled for today', () => {
+    const schedule = resolveRoutineWeekSchedule(
+      planDays,
+      [calendarEvent({ date: '2026-09-01', id: 'today', planDayId: 'day-1' })],
+      new Date(2026, 8, 1),
+    );
+    expect(scheduledTitleForToday(schedule)).toBe('Day 1 - Lower Body');
+    expect(scheduledTitleForToday(resolveRoutineWeekSchedule(planDays, [], new Date(2026, 8, 1)))).toBeNull();
+  });
+});
+
+describe('resolveDayStartGate', () => {
+  const todayEvent: ClientCalendarEvent = {
+    color: null,
+    content: null,
+    date: '2026-09-01',
+    id: 'today',
+    planDayId: 'day-1',
+    planDayTitle: 'Pata',
+    time: null,
+    title: 'Pata',
+    type: 'workout',
+  };
+  const calendarSchedule = resolveRoutineWeekSchedule(
+    [
+      {
+        dayIndex: 1,
+        exercises: [],
+        id: 'day-1',
+        notes: null,
+        title: 'Pata',
+      },
+      {
+        dayIndex: 2,
+        exercises: [],
+        id: 'day-2',
+        notes: null,
+        title: 'Día 2',
+      },
+    ],
+    [todayEvent],
+    new Date(2026, 8, 1),
+  );
+
+  it('asks before starting or continuing a day that is not scheduled today', () => {
+    expect(
+      resolveDayStartGate({
+        calendarLoading: false,
+        selectedPlanDayId: 'day-2',
+        schedule: calendarSchedule,
+        todaySessionPlanDayId: 'day-2',
+        todaySessionStatus: 'IN_PROGRESS',
+      }),
+    ).toBe('confirm');
+    expect(
+      resolveDayStartGate({
+        calendarLoading: false,
+        selectedPlanDayId: 'day-2',
+        schedule: null,
+        todaySessionPlanDayId: null,
+        todaySessionStatus: null,
+      }),
+    ).toBe('confirm');
+  });
+
+  it('resumes only when the open session is the day scheduled for today', () => {
+    expect(
+      resolveDayStartGate({
+        calendarLoading: false,
+        selectedPlanDayId: 'day-1',
+        schedule: calendarSchedule,
+        todaySessionPlanDayId: 'day-1',
+        todaySessionStatus: 'IN_PROGRESS',
+      }),
+    ).toBe('resume');
+  });
+
+  it('starts without asking when the selected day is the one scheduled for today', () => {
+    expect(
+      resolveDayStartGate({
+        calendarLoading: false,
+        selectedPlanDayId: 'day-1',
+        schedule: calendarSchedule,
+        todaySessionPlanDayId: null,
+        todaySessionStatus: null,
+      }),
+    ).toBe('start');
   });
 });

@@ -33,7 +33,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
   const focusLabel = useMemo(() => {
     if (!schedule) return '—';
     if (schedule.mode === 'assigned') {
-      return schedule.days[0]?.title ?? '—';
+      return t('mobile.client.routine.restDay');
     }
     if (schedule.today) return schedule.today.title;
     if (schedule.isRestDay) return t('mobile.client.routine.restDay');

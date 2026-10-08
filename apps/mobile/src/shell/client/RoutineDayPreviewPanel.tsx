@@ -12,8 +12,9 @@ import { RoutineDayScreen } from '../../screens/client/RoutineDayScreen';
 import {
   formatLocalDate,
   getWeekDateRange,
-  isSelectedPlanDayScheduledForToday,
+  resolveDayStartGate,
   resolveRoutineWeekSchedule,
+  scheduledTitleForToday,
 } from '../../screens/client/routine-schedule.utils';
 import { ConfirmModal } from '../../theme/ConfirmModal';
 import { s } from './client-shell.styles';
@@ -44,9 +45,16 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     return resolveRoutineWeekSchedule(routineQuery.data.planDays, calendarQuery.data?.data ?? [], today);
   }, [calendarQuery.data?.data, routineQuery.data, today]);
 
-  const needsDayChangeConfirm = useMemo(
-    () => !calendarQuery.isLoading && !isSelectedPlanDayScheduledForToday(resolvedDay.id, schedule),
-    [calendarQuery.isLoading, resolvedDay.id, schedule],
+  const startGate = useMemo(
+    () =>
+      resolveDayStartGate({
+        calendarLoading: calendarQuery.isLoading,
+        selectedPlanDayId: resolvedDay.id,
+        schedule,
+        todaySessionPlanDayId: sessionsQuery.data?.[0]?.planDayId ?? null,
+        todaySessionStatus: sessionsQuery.data?.[0]?.status ?? null,
+      }),
+    [calendarQuery.isLoading, resolvedDay.id, schedule, sessionsQuery.data],
   );
 
   const todaySession = sessionsQuery.data?.[0] ?? null;
@@ -86,33 +94,17 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   );
 
   const handleStart = useCallback(() => {
-    if (isCompleted || calendarQuery.isLoading) return;
-
-    if (isInProgress && todaySession) {
-      if (todaySession.planDayId && todaySession.planDayId !== resolvedDay.id) {
-        setDayChangeOpen(true);
-        return;
-      }
+    if (startGate === 'blocked') return;
+    if (startGate === 'resume' && todaySession) {
       props.onOpenSession(todaySession.id);
       return;
     }
-
-    if (needsDayChangeConfirm) {
+    if (startGate === 'confirm') {
       setDayChangeOpen(true);
       return;
     }
-
     runEnsureSession(false);
-  }, [
-    calendarQuery.isLoading,
-    isCompleted,
-    isInProgress,
-    needsDayChangeConfirm,
-    props.onOpenSession,
-    resolvedDay.id,
-    runEnsureSession,
-    todaySession,
-  ]);
+  }, [props.onOpenSession, runEnsureSession, startGate, todaySession]);
 
   const handleConfirmDayChange = useCallback(() => {
     setDayChangeOpen(false);
@@ -146,7 +138,10 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
       <ConfirmModal
         cancelLabel={t('mobile.client.dayChange.cancel')}
         confirmLabel={t('mobile.client.dayChange.confirm')}
-        message={t('mobile.client.dayChange.message')}
+        message={t('mobile.client.dayChange.message', {
+          scheduled: scheduledTitleForToday(schedule) ?? t('mobile.client.routine.restDay'),
+          selected: resolvedDay.title,
+        })}
         question={t('mobile.client.dayChange.question')}
         title={t('mobile.client.dayChange.title')}
         visible={dayChangeOpen}

@@ -1,10 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 
 export type ClientCalendarEvent = {
   id: string;
-  type: 'note' | 'reminder' | 'workout';
+  type: 'call' | 'client_note' | 'note' | 'reminder' | 'workout';
   date: string;
   title: string | null;
   content: string | null;
@@ -61,6 +61,35 @@ export function useClientCalendarSummaryQuery(dateFrom: string, dateTo: string) 
     enabled: Boolean(auth),
     queryFn: () => fetchCalendarSummary(auth, dateFrom, dateTo),
     queryKey: ['clients', 'me', 'calendar-summary', dateFrom, dateTo],
+  });
+}
+
+export function useSaveClientDayNoteMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { content: string; date: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).put(`/clients/me/calendar/notes/${input.date}`, { content: input.content });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+    },
+  });
+}
+
+export function useCreateCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { date: string; time: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post('/calls/proposals', input);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+    },
   });
 }
 

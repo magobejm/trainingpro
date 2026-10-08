@@ -1,8 +1,12 @@
 import React from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChatMessage } from '../../../data/hooks/useChat';
+import { CallProposalCard } from './CallProposalCard';
 
 export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.Element {
+  if (props.message.callProposal && !props.message.text) {
+    return <CallProposalCard proposal={props.message.callProposal} />;
+  }
   const isCoach = props.message.senderRole === 'COACH';
   return (
     <View style={[styles.bubble, isCoach ? styles.bubbleCoach : styles.bubbleClient]}>

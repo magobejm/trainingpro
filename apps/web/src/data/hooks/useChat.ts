@@ -13,8 +13,18 @@ type ChatAttachment = {
   storagePath: string;
 };
 
+export type ChatCallProposal = {
+  date: string;
+  id: string;
+  initiatedBy: 'COACH' | 'CLIENT';
+  lastProposedBy: 'COACH' | 'CLIENT';
+  proposedTime: string;
+  status: 'accepted' | 'cancelled' | 'pending';
+};
+
 export type ChatMessage = {
   attachments: ChatAttachment[];
+  callProposal?: ChatCallProposal | null;
   createdAt: string;
   expiresAt: string;
   id: string;
@@ -123,6 +133,47 @@ function isUploadedChatFile(value: unknown): value is {
     typeof record.storagePath === 'string' &&
     record.storagePath.length > 0
   );
+}
+
+function invalidateChatAndCalendar(queryClient: ReturnType<typeof useQueryClient>, auth: ReturnType<typeof useAuth>) {
+  void queryClient.invalidateQueries({ queryKey: ['chat-messages', auth?.activeRole] });
+  void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+}
+
+export function useCreateCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { clientId?: string; date: string; time: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post<{ id: string; threadId: string }>('/calls/proposals', input);
+    },
+    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+  });
+}
+
+export function useAcceptCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (proposalId: string) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post(`/calls/proposals/${proposalId}/accept`, {});
+    },
+    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+  });
+}
+
+export function useCounterCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { proposalId: string; time: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post(`/calls/proposals/${input.proposalId}/counter`, { time: input.time });
+    },
+    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+  });
 }
 
 export function useUploadPolicyMutation() {

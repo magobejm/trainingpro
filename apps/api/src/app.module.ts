@@ -18,6 +18,7 @@ import { UsersModule } from './modules/users/users.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
+import { CallsModule } from './modules/calls/calls.module';
 import { NotesModule } from './modules/notes/notes.module';
 import { NutritionModule } from './modules/nutrition/nutrition.module';
 import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.module';
@@ -43,6 +44,7 @@ import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.mod
     AiEvaluatorModule,
     NotesModule,
     CalendarModule,
+    CallsModule,
     NutritionModule,
     PhysicalTestsModule,
   ],

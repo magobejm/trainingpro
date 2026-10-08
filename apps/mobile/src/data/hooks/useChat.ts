@@ -12,8 +12,18 @@ type ChatAttachment = {
   storagePath: string;
 };
 
+export type ChatCallProposal = {
+  date: string;
+  id: string;
+  initiatedBy: 'COACH' | 'CLIENT';
+  lastProposedBy: 'COACH' | 'CLIENT';
+  proposedTime: string;
+  status: 'accepted' | 'cancelled' | 'pending';
+};
+
 export type ChatMessage = {
   attachments: ChatAttachment[];
+  callProposal?: ChatCallProposal | null;
   createdAt: string;
   expiresAt: string;
   id: string;
@@ -73,6 +83,35 @@ export function useSendChatMessageMutation(threadId: string) {
       const queryKey = ['chat-messages', auth?.activeRole, threadId];
       void queryClient.invalidateQueries({ queryKey });
     },
+  });
+}
+
+function refreshChat(queryClient: ReturnType<typeof useQueryClient>, auth: ReturnType<typeof useAuth>) {
+  void queryClient.invalidateQueries({ queryKey: ['chat-messages', auth?.activeRole] });
+  void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+}
+
+export function useAcceptCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (proposalId: string) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post(`/calls/proposals/${proposalId}/accept`, {});
+    },
+    onSuccess: () => refreshChat(queryClient, auth),
+  });
+}
+
+export function useCounterCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { proposalId: string; time: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post(`/calls/proposals/${input.proposalId}/counter`, { time: input.time });
+    },
+    onSuccess: () => refreshChat(queryClient, auth),
   });
 }
 

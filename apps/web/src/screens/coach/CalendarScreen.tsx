@@ -10,6 +10,7 @@ import {
   useDeleteCalendarEventMutation,
   useClientRoutineDaysQuery,
 } from '../../data/hooks/useCalendarQuery';
+import { useCreateCallProposalMutation } from '../../data/hooks/useChat';
 import type { ClientView } from '../../data/hooks/useClientsQuery';
 import type { CalendarEventData, RoutineDayCard } from './calendar-screen.types';
 import { DEFAULT_COLOR } from './calendar-screen.types';
@@ -56,6 +57,7 @@ function useCalendarLogic() {
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id, viewMode === 'coachOnly');
   const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId);
   const createEvent = useCreateCalendarEventMutation();
+  const proposeCall = useCreateCallProposalMutation();
   const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
   const routineDays: RoutineDayCard[] = useMemo(
@@ -87,7 +89,7 @@ function useCalendarLogic() {
   const handleClearClipboard = useCallback(() => setClipboard(null), []);
   const handleDrop = createDropHandler(createEvent, selectedClient?.id);
   const handleSaveNote = createNoteSaveHandler(createEvent, modal, selectedClient?.id, setModal);
-  const handleSaveReminder = createReminderSaveHandler(createEvent, modal, selectedClient?.id, setModal);
+  const handleSaveReminder = createReminderSaveHandler(proposeCall, modal, selectedClient?.id, setModal);
   const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
   const handleUpdateReminder = createReminderUpdateHandler(updateEvent, modal, setModal);
   const handleEditEvent = createEditEventHandler(setModal);

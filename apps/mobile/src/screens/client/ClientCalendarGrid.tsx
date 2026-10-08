@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { DayData, GridCell } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
+import { CALL_COLOR, CLIENT_NOTE_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
 
 const BG_COMPLETED = LIGHT.emerald;
 const BG_PLANNED = LIGHT.accent;
@@ -54,13 +55,25 @@ type DayCellProps = {
 };
 
 export function DayCell({ cell, data, isToday, onPress }: DayCellProps): React.JSX.Element {
-  const cellBg = data?.hasCompleted ? BG_COMPLETED : data?.hasPlanned ? BG_PLANNED : 'transparent';
+  const fallback = data?.hasCompleted ? BG_COMPLETED : data?.hasPlanned ? BG_PLANNED : 'transparent';
+  const cellBg = data?.workoutColor ?? fallback;
+  const markers = [
+    data?.coachNotes.length ? COACH_NOTE_COLOR : null,
+    data?.call || data?.hasMeeting ? CALL_COLOR : null,
+    data?.clientNote ? CLIENT_NOTE_COLOR : null,
+  ].filter((color): color is string => Boolean(color));
   return (
     <Pressable onPress={() => onPress(cell.dateStr)} style={[styles.cell, { backgroundColor: cellBg }]}>
       <Text style={[styles.cellText, !cell.isCurrentMonth && styles.cellDim, isToday && styles.cellToday]}>
         {String(cell.date.getDate())}
       </Text>
-      {data?.hasMeeting ? <View style={styles.meetingDot} /> : null}
+      {markers.length > 0 ? (
+        <View style={styles.markerRow}>
+          {markers.map((color) => (
+            <View key={color} style={[styles.marker, { backgroundColor: color }]} />
+          ))}
+        </View>
+      ) : null}
     </Pressable>
   );
 }
@@ -103,6 +116,8 @@ const styles = StyleSheet.create({
   cellText: { color: TEXT_MAIN, fontSize: 14, fontWeight: '500' },
   cellToday: { fontWeight: '700', textDecorationLine: 'underline' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
+  marker: { borderRadius: 3, height: 6, width: 6 },
+  markerRow: { flexDirection: 'row', gap: 2, position: 'absolute', right: 3, top: 3 },
   meetingDot: {
     backgroundColor: LIGHT.amber,
     borderRadius: 3,

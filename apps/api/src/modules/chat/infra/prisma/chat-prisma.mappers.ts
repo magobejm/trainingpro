@@ -1,5 +1,10 @@
-import type { ChatAttachment, ChatMessage, ChatThread } from '@prisma/client';
-import type { ChatAttachmentView, ChatMessageView, ChatThreadView } from '../../domain/chat.repository.port';
+import type { CallProposal, ChatAttachment, ChatMessage, ChatThread } from '@prisma/client';
+import type {
+  ChatAttachmentView,
+  ChatCallProposalView,
+  ChatMessageView,
+  ChatThreadView,
+} from '../../domain/chat.repository.port';
 
 export function mapChatThread(row: ChatThread): ChatThreadView {
   return {
@@ -12,11 +17,12 @@ export function mapChatThread(row: ChatThread): ChatThreadView {
 }
 
 export function mapChatMessage(
-  row: ChatMessage & { attachments: ChatAttachment[] },
+  row: ChatMessage & { attachments: ChatAttachment[]; callProposal?: CallProposal | null },
   signPrivateUrl: (path: string) => string,
 ): ChatMessageView {
   return {
     attachments: row.attachments.map((attachment) => mapChatAttachment(attachment, signPrivateUrl)),
+    callProposal: row.callProposal ? mapCallProposal(row.callProposal) : null,
     createdAt: row.createdAt,
     expiresAt: row.expiresAt,
     id: row.id,
@@ -24,6 +30,17 @@ export function mapChatMessage(
     senderSubject: row.senderSubject,
     text: row.text,
     threadId: row.threadId,
+  };
+}
+
+function mapCallProposal(row: CallProposal): ChatCallProposalView {
+  return {
+    date: row.date.toISOString().slice(0, 10),
+    id: row.id,
+    initiatedBy: row.initiatedBy,
+    lastProposedBy: row.lastProposedBy,
+    proposedTime: row.proposedTime,
+    status: row.status,
   };
 }
 

@@ -121,7 +121,7 @@ export class CalendarRepositoryPrisma implements ICalendarRepository {
       coachMembershipId: row.coachMembershipId,
       clientId: row.clientId,
       clientName: row.client ? `${row.client.firstName} ${row.client.lastName}` : undefined,
-      type: row.type as 'note' | 'reminder' | 'workout',
+      type: row.type as 'call' | 'note' | 'reminder' | 'workout',
       date: row.date,
       title: row.title,
       content: row.content,

@@ -15,6 +15,7 @@ import { ListClientLibraryMobilityUseCase } from './application/use-cases/list-c
 import { ListClientLibraryPlioUseCase } from './application/use-cases/list-client-library-plio.usecase';
 import { ListClientLibrarySportsUseCase } from './application/use-cases/list-client-library-sports.usecase';
 import { ListClientCalendarUseCase } from './application/use-cases/list-client-calendar.usecase';
+import { SaveClientDayNoteUseCase } from './application/use-cases/save-client-day-note.usecase';
 import { ListClientSessionsUseCase } from './application/use-cases/list-client-sessions.usecase';
 import { ListClientWellnessUseCase } from './application/use-cases/list-client-wellness.usecase';
 import { ClientAuthProvisionerService } from './application/services/client-auth-provisioner.service';
@@ -59,6 +60,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientLibraryPlioUseCase,
     ListClientLibrarySportsUseCase,
     ListClientCalendarUseCase,
+    SaveClientDayNoteUseCase,
     ListClientSessionsUseCase,
     ListClientWellnessUseCase,
     ClientAuthProvisionerService,

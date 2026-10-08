@@ -4,6 +4,7 @@ import { View } from 'react-native';
 import { ClipboardPaste, Copy } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
+import { callStatusLabelKey, fixedColorFor } from './calendar-fixed-colors';
 import type { CalendarCell } from './calendar-screen.utils';
 import { getWeeks } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
@@ -289,8 +290,14 @@ export function CalendarGrid({
 
 function EventChip({ event, muted = false }: { event: CalendarEventData; muted?: boolean }): React.JSX.Element {
   const { i18n, t } = useTranslation();
-  const colorObj = (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
-  const label = event.title ?? event.planDayTitle ?? (event.type === 'reminder' ? event.content : null) ?? '—';
+  const colorObj = fixedColorFor(event.type) ?? (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
+  const statusKey = callStatusLabelKey(event.callStatus);
+  const label =
+    (statusKey ? t(statusKey) : null) ??
+    event.title ??
+    event.planDayTitle ??
+    (event.type === 'reminder' ? event.content : null) ??
+    '—';
   const displayText = event.time ? [event.time, label].join(' ') : label;
   const statusLines = workoutStatusLines(event, t, i18n.language);
 
@@ -307,7 +314,7 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
       style={{
         backgroundColor: colorObj.bg,
         color: colorObj.text,
-        border: `1px solid ${colorObj.border}`,
+        border: `${event.callStatus === 'pending' ? '1px dashed' : '1px solid'} ${colorObj.border}`,
         borderRadius: 4,
         padding: '2px 6px',
         fontSize: 13,

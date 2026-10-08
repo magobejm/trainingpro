@@ -6,9 +6,12 @@ import '../../i18n';
 import {
   useChatMessagesQuery,
   useClientThreadQuery,
+  useAcceptCallProposalMutation,
+  useCounterCallProposalMutation,
   useSendChatMessageMutation,
   type ChatMessage,
 } from '../../data/hooks/useChat';
+import { CALL_COLOR, CALL_REQUEST_COLOR, callTimeOptions } from '../client/calendar-fixed-colors';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { LIGHT } from '../../theme/light';
 
@@ -175,6 +178,9 @@ function renderMessages(messages: ChatMessage[], t: (key: string) => string) {
 }
 
 function MessageBubble(props: { message: ChatMessage }) {
+  if (props.message.callProposal && !props.message.text) {
+    return <CallProposalCard proposal={props.message.callProposal} />;
+  }
   const isClient = props.message.senderRole === 'CLIENT';
   return (
     <View style={[styles.bubble, isClient ? styles.bubbleClient : styles.bubbleCoach]}>
@@ -185,6 +191,63 @@ function MessageBubble(props: { message: ChatMessage }) {
     </View>
   );
 }
+
+function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callProposal']> }): React.JSX.Element {
+  const { t } = useTranslation();
+  const proposal = props.proposal;
+  const tone = proposal.initiatedBy === 'CLIENT' ? CALL_REQUEST_COLOR : CALL_COLOR;
+  const canRespond = proposal.status === 'pending' && proposal.lastProposedBy !== 'CLIENT';
+  const accepted = proposal.status === 'accepted';
+  const [countering, setCountering] = useState(false);
+  const [time, setTime] = useState(proposal.proposedTime);
+  const accept = useAcceptCallProposalMutation();
+  const counter = useCounterCallProposalMutation();
+  return (
+    <View style={[styles.callCard, { backgroundColor: tone }]}>
+      <Text style={styles.callTitle}>
+        {t(accepted ? 'client.chat.call.confirmedTitle' : 'client.chat.call.requestTitle')}
+      </Text>
+      <Text style={styles.callText}>{t('client.chat.call.date', { date: proposal.date })}</Text>
+      <Text style={styles.callText}>
+        {t(accepted ? 'client.chat.call.confirmedTime' : 'client.chat.call.proposedTime', { time: proposal.proposedTime })}
+      </Text>
+      <Text style={styles.callText}>
+        {t('client.chat.call.lastProposedBy', {
+          who: t(proposal.lastProposedBy === 'COACH' ? 'client.chat.call.coach' : 'client.chat.call.client'),
+        })}
+      </Text>
+      {canRespond ? <CallButton label={t('client.chat.call.accept')} onPress={() => accept.mutate(proposal.id)} /> : null}
+      {canRespond && !countering ? (
+        <CallButton label={t('client.chat.call.counter')} onPress={() => setCountering(true)} />
+      ) : null}
+      {countering ? (
+        <View>
+          <select onChange={(event) => setTime(event.target.value)} style={callSelectStyle} value={time}>
+            {callTimeOptions().map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+          <CallButton
+            label={t('client.chat.call.sendCounter')}
+            onPress={() => counter.mutate({ proposalId: proposal.id, time }, { onSuccess: () => setCountering(false) })}
+          />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+function CallButton(props: { label: string; onPress: () => void }): React.JSX.Element {
+  return (
+    <Pressable onPress={props.onPress} style={styles.callButton}>
+      <Text style={styles.callButtonText}>{props.label}</Text>
+    </Pressable>
+  );
+}
+
+const callSelectStyle = { borderRadius: 8, marginTop: 8, padding: 6 } as const;
 
 function AttachmentItem(props: { attachment: ChatMessage['attachments'][number] }): React.JSX.Element {
   const url = props.attachment.publicUrl;
@@ -210,7 +273,14 @@ function openAttachment(url: string): void {
   void Linking.openURL(url);
 }
 
+const CALL_TEXT = '#f8fafc';
+
 const styles = StyleSheet.create({
+  callButton: { backgroundColor: '#ffffff22', borderRadius: 10, marginTop: 8, paddingVertical: 8 },
+  callButtonText: { color: CALL_TEXT, fontSize: 12, fontWeight: '700', textAlign: 'center' },
+  callCard: { alignSelf: 'stretch', borderRadius: 14, marginVertical: 4, padding: 12 },
+  callText: { color: CALL_TEXT, fontSize: 12, marginTop: 2 },
+  callTitle: { color: CALL_TEXT, fontSize: 13, fontWeight: '700' },
   page: {
     backgroundColor: LIGHT.bgSoft,
     gap: 10,

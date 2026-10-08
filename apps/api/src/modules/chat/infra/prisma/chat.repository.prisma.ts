@@ -24,7 +24,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
       where: { threadId },
       orderBy: { createdAt: 'asc' },
       take: CHAT_PAGE_SIZE,
-      include: { attachments: true },
+      include: { attachments: true, callProposal: true },
     });
     return rows.map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
   }
@@ -72,7 +72,7 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
         text: input.text?.trim() || null,
         threadId: input.threadId,
       },
-      include: { attachments: true },
+      include: { attachments: true, callProposal: true },
     });
     await this.prisma.chatThread.update({
       where: { id: input.threadId },

@@ -1,4 +1,6 @@
-export type CalendarEventType = 'note' | 'reminder' | 'workout';
+export type CalendarEventType = 'call' | 'note' | 'reminder' | 'workout';
+
+export type CallStatus = 'accepted' | 'pending' | 'unconfirmed';
 
 export type CalendarEventData = {
   id: string;
@@ -6,6 +8,7 @@ export type CalendarEventData = {
   clientId: string | null;
   clientName?: string;
   type: CalendarEventType;
+  callStatus?: CallStatus;
   date: Date;
   title: string | null;
   content: string | null;

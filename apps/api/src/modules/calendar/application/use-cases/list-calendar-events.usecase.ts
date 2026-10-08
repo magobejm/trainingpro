@@ -7,6 +7,7 @@ import {
   type ICalendarRepository,
   type ListCalendarEventsQuery,
 } from '../../domain/calendar.repository.port';
+import { pendingProposalAsEvent, withCallStatus } from '../../domain/call-status';
 
 @Injectable()
 export class ListCalendarEventsUseCase {
@@ -23,12 +24,46 @@ export class ListCalendarEventsUseCase {
     const membership = await this.readCoachMembership(context.subject);
     const events = await this.calendarRepository.list(membership.id, query);
     const completed = await this.loadCompletedDays(membership.id, query);
+    const pending = await this.loadPendingProposals(membership.id, query);
     return {
-      data: events.map((event) => ({
-        ...event,
-        isCompleted: event.type === 'workout' && completed.has(this.dayKey(event.clientId, event.date)),
-      })),
+      data: [
+        ...events.map((event) => ({
+          ...withCallStatus(event),
+          isCompleted: event.type === 'workout' && completed.has(this.dayKey(event.clientId, event.date)),
+        })),
+        ...pending,
+      ],
     };
+  }
+
+  private async loadPendingProposals(coachMembershipId: string, query: ListCalendarEventsQuery) {
+    const rows = await this.prisma.callProposal.findMany({
+      where: {
+        coachMembershipId,
+        date: { gte: query.dateFrom, lte: query.dateTo },
+        status: 'pending',
+        ...(query.clientId ? { clientId: query.clientId } : {}),
+      },
+      select: {
+        client: { select: { firstName: true, lastName: true } },
+        clientId: true,
+        coachMembershipId: true,
+        date: true,
+        id: true,
+        proposedTime: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+    return rows.map((row) =>
+      pendingProposalAsEvent({
+        clientId: row.clientId,
+        clientName: `${row.client.firstName} ${row.client.lastName}`,
+        coachMembershipId: row.coachMembershipId,
+        date: row.date,
+        id: row.id,
+        proposedTime: row.proposedTime,
+      }),
+    );
   }
 
   private async loadCompletedDays(coachMembershipId: string, query: ListCalendarEventsQuery): Promise<Set<string>> {

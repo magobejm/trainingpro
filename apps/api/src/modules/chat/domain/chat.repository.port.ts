@@ -29,8 +29,18 @@ export type ChatAttachmentView = {
   storagePath: string;
 };
 
+export type ChatCallProposalView = {
+  date: string;
+  id: string;
+  initiatedBy: 'COACH' | 'CLIENT';
+  lastProposedBy: 'COACH' | 'CLIENT';
+  proposedTime: string;
+  status: 'accepted' | 'cancelled' | 'pending';
+};
+
 export type ChatMessageView = {
   attachments: ChatAttachmentView[];
+  callProposal: ChatCallProposalView | null;
   createdAt: Date;
   expiresAt: Date;
   id: string;

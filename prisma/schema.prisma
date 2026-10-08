@@ -74,6 +74,12 @@ enum ChatMessageSender {
   CLIENT
 }
 
+enum CallProposalStatus {
+  pending
+  accepted
+  cancelled
+}
+
 enum ChatAttachmentKind {
   IMAGE
   AUDIO
@@ -164,6 +170,7 @@ model OrganizationMember {
   notificationEventLogs    NotificationEventLog[]
   coachNotes               CoachNote[]               @relation("coach_notes")
   calendarEvents           CalendarEvent[]           @relation("coach_calendar_events")
+  callProposals            CallProposal[]            @relation("coach_call_proposals")
   meals                    Meal[]                    @relation("coach_meals")
   nutritionPlans           NutritionPlan[]           @relation("coach_nutrition_plans")
 
@@ -226,6 +233,8 @@ model Client {
   incidents             Incident[]
   weeklyReports         WeeklyReport[]
   chatThreads           ChatThread[]              @relation("client_chat_threads")
+  dayNotes              ClientDayNote[]
+  callProposals         CallProposal[]            @relation("client_call_proposals")
   notificationEventLogs NotificationEventLog[]
   coachNotes                CoachNote[]                @relation("client_notes")
   calendarEvents            CalendarEvent[]            @relation("client_calendar_events")
@@ -1733,6 +1742,7 @@ model ChatThread {
   coachMembership   OrganizationMember @relation("coach_chat_threads", fields: [coachMembershipId], references: [id], onDelete: Restrict)
   client            Client             @relation("client_chat_threads", fields: [clientId], references: [id], onDelete: Restrict)
   messages          ChatMessage[]
+  callProposals     CallProposal[]
 
   @@unique([coachMembershipId, clientId], map: "uq_chat_thread_coach_client")
   @@index([clientId, updatedAt], map: "idx_chat_thread_client_updated")
@@ -1748,9 +1758,11 @@ model ChatMessage {
   text          String?           @db.VarChar(2000)
   expiresAt     DateTime          @map("expires_at") @db.Timestamptz(6)
   createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
-  thread        ChatThread        @relation(fields: [threadId], references: [id], onDelete: Cascade)
-  attachments   ChatAttachment[]
+  callProposalId String?          @map("call_proposal_id") @db.Uuid
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  thread         ChatThread       @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  attachments    ChatAttachment[]
+  callProposal   CallProposal?    @relation(fields: [callProposalId], references: [id], onDelete: SetNull)
 
   @@index([threadId, createdAt], map: "idx_chat_message_thread_created")
   @@index([expiresAt], map: "idx_chat_message_expires")
@@ -1846,10 +1858,48 @@ model CalendarEvent {
   coachMembership   OrganizationMember @relation("coach_calendar_events", fields: [coachMembershipId], references: [id], onDelete: Cascade)
   client            Client?            @relation("client_calendar_events", fields: [clientId], references: [id], onDelete: Cascade)
   planDay           PlanDay?           @relation(fields: [planDayId], references: [id], onDelete: SetNull)
+  callProposal      CallProposal?      @relation("call_proposal_event")
 
   @@index([coachMembershipId, date], map: "idx_calendar_event_coach_date")
   @@index([clientId, date], map: "idx_calendar_event_client_date")
   @@map("calendar_event")
+}
+
+model ClientDayNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  clientId  String   @map("client_id") @db.Uuid
+  date      DateTime @db.Date
+  content   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date], map: "uq_client_day_note_client_date")
+  @@map("client_day_note")
+}
+
+model CallProposal {
+  id                String             @id @default(uuid()) @db.Uuid
+  threadId          String             @map("thread_id") @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  clientId          String             @map("client_id") @db.Uuid
+  date              DateTime           @db.Date
+  proposedTime      String             @map("proposed_time") @db.VarChar(5)
+  status            CallProposalStatus @default(pending)
+  initiatedBy       ChatMessageSender  @map("initiated_by")
+  lastProposedBy    ChatMessageSender  @map("last_proposed_by")
+  calendarEventId   String?            @unique @map("calendar_event_id") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  thread            ChatThread         @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  coachMembership   OrganizationMember @relation("coach_call_proposals", fields: [coachMembershipId], references: [id], onDelete: Cascade)
+  client            Client             @relation("client_call_proposals", fields: [clientId], references: [id], onDelete: Cascade)
+  calendarEvent     CalendarEvent?     @relation("call_proposal_event", fields: [calendarEventId], references: [id], onDelete: SetNull)
+  messages          ChatMessage[]
+
+  @@index([coachMembershipId, date], map: "idx_call_proposal_coach_date")
+  @@index([clientId, date], map: "idx_call_proposal_client_date")
+  @@map("call_proposal")
 }
 
 model Meal {

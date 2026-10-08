@@ -11,6 +11,10 @@ export type DayData = {
   originDate: string | null;
   planDayTitle: string | null;
   shift: WorkoutShift | null;
+  workoutColor: string | null;
+  coachNotes: string[];
+  call: { time: string } | null;
+  clientNote: string | null;
 };
 
 export type GridCell = {
@@ -20,7 +24,9 @@ export type GridCell = {
 };
 
 export function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${d.getFullYear()}-${month}-${day}`;
 }
 
 export function buildMonthGrid(month: Date): GridCell[] {
@@ -54,6 +60,10 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
       originDate: null,
       planDayTitle: null,
       shift: null,
+      workoutColor: null,
+      coachNotes: [],
+      call: null,
+      clientNote: null,
     };
 
   for (const s of sessions) {
@@ -78,6 +88,10 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
         d.shift = shift;
       }
     }
+    if (e.type === 'workout' && e.color) d.workoutColor = e.color;
+    if (e.type === 'note' && e.content) d.coachNotes.push(e.content);
+    if (e.type === 'call' && e.time) d.call = { time: e.time };
+    if (e.type === 'client_note' && e.content) d.clientNote = e.content;
     if (e.type === 'reminder') d.hasMeeting = true;
     map.set(dateStr, d);
   }

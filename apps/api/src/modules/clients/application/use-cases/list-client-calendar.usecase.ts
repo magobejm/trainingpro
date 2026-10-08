@@ -5,6 +5,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 export type ClientCalendarEvent = {
   id: string;
   type: string;
+  callStatus?: 'accepted';
   date: Date;
   title: string | null;
   content: string | null;
@@ -48,21 +49,49 @@ export class ListClientCalendarUseCase {
       orderBy: [{ date: 'asc' }, { createdAt: 'desc' }],
     });
     const completed = await this.loadCompletedDays(client.id, input);
+    const notes = await this.loadClientNotes(client.id, input);
     return {
-      data: rows.map((r) => ({
-        id: r.id,
-        type: r.type,
-        date: r.date,
-        title: r.title,
-        content: r.content,
-        time: r.time,
-        color: r.color,
-        isCompleted: r.type === 'workout' && completed.has(r.date.toISOString().slice(0, 10)),
-        originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
-        planDayId: r.planDayId,
-        planDayTitle: r.planDay?.title,
-      })),
+      data: [
+        ...rows.map((r) => ({
+          id: r.id,
+          type: r.type,
+          ...(r.type === 'call' ? { callStatus: 'accepted' as const } : {}),
+          date: r.date,
+          title: r.title,
+          content: r.content,
+          time: r.time,
+          color: r.color,
+          isCompleted: r.type === 'workout' && completed.has(r.date.toISOString().slice(0, 10)),
+          originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
+          planDayId: r.planDayId,
+          planDayTitle: r.planDay?.title,
+        })),
+        ...notes,
+      ],
     };
+  }
+
+  /** Notas privadas del cliente: solo salen en su propio calendario. */
+  private async loadClientNotes(clientId: string, input: ListClientCalendarInput): Promise<ClientCalendarEvent[]> {
+    const rows = await this.prisma.clientDayNote.findMany({
+      where: { clientId, date: { gte: input.dateFrom, lte: input.dateTo } },
+      select: { content: true, date: true, id: true },
+      orderBy: { date: 'asc' },
+    });
+    return rows.map((row) => ({
+      callStatus: undefined,
+      color: null,
+      content: row.content,
+      date: row.date,
+      id: row.id,
+      isCompleted: false,
+      originDate: null,
+      planDayId: null,
+      planDayTitle: undefined,
+      time: null,
+      title: null,
+      type: 'client_note',
+    }));
   }
 
   private async loadCompletedDays(clientId: string, input: ListClientCalendarInput): Promise<Set<string>> {

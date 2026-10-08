@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Check, Plus, StickyNote, X } from 'lucide-react';
-import { CALENDAR_COLORS } from './calendar-screen.types';
+import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
 
 const MODAL_ANIMATION = 'fade' as const;
 const COLOR_WHITE = '#ffffff' as const;
@@ -82,34 +82,6 @@ function ModalSaveButton({ onPress, isSaving, label, bgColor, savingBgColor }: S
   );
 }
 
-type ColorPickerProps = { selectedColor: string; onSelect: (c: string) => void; t: TFunc };
-
-function ColorPicker({ selectedColor, onSelect, t }: ColorPickerProps): React.JSX.Element {
-  return (
-    <View>
-      <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.textMuted, marginBottom: 8 }}>
-        {t('coach.calendar.colorPicker.label')}
-      </Text>
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        {CALENDAR_COLORS.map((c) => (
-          <Pressable
-            key={c.bg}
-            onPress={() => onSelect(c.bg)}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
-              backgroundColor: c.bg,
-              borderWidth: selectedColor === c.bg ? 2 : 1,
-              borderColor: selectedColor === c.bg ? colors.text : c.border,
-            }}
-          />
-        ))}
-      </View>
-    </View>
-  );
-}
-
 // ── AddNoteModal ──────────────────────────────────────────────────────────────
 
 type AddNoteModalProps = {
@@ -133,10 +105,9 @@ export function AddNoteModal({
   isSaving,
   t,
 }: AddNoteModalProps): React.JSX.Element {
-  const defaultColor = (CALENDAR_COLORS[0] as (typeof CALENDAR_COLORS)[number]).bg;
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [content, setContent] = useState(initialValues?.content ?? '');
-  const [color, setColor] = useState(initialValues?.color ?? defaultColor);
+  const color = COACH_NOTE_COLOR.bg;
 
   return (
     <Modal transparent animationType={MODAL_ANIMATION} onRequestClose={onClose}>
@@ -200,7 +171,6 @@ export function AddNoteModal({
                 textAlignVertical: 'top',
               }}
             />
-            <ColorPicker selectedColor={color} onSelect={setColor} t={t} />
             <ModalSaveButton
               onPress={() => onSave({ title, content, color })}
               isSaving={isSaving}
@@ -238,10 +208,9 @@ export function AddReminderModal({
   isSaving,
   t,
 }: AddReminderModalProps): React.JSX.Element {
-  const defaultColor = (CALENDAR_COLORS[1] as (typeof CALENDAR_COLORS)[number]).bg;
   const [content, setContent] = useState(initialValues?.content ?? '');
   const [time, setTime] = useState(initialValues?.time ?? '09:00');
-  const [color, setColor] = useState(initialValues?.color ?? defaultColor);
+  const color = CALL_COLOR.bg;
 
   return (
     <Modal transparent animationType={MODAL_ANIMATION} onRequestClose={onClose}>
@@ -309,7 +278,9 @@ export function AddReminderModal({
                 textAlignVertical: 'top',
               }}
             />
-            <ColorPicker selectedColor={color} onSelect={setColor} t={t} />
+            <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
+              {t('coach.calendar.call.proposalHint')}
+            </Text>
             <ModalSaveButton
               onPress={() => onSave({ content, time, color })}
               isSaving={isSaving}

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -16,8 +16,10 @@ import { GetClientRoutineUseCase } from '../../application/use-cases/get-client-
 import { ListClientCalendarUseCase } from '../../application/use-cases/list-client-calendar.usecase';
 import { ListClientSessionsUseCase } from '../../application/use-cases/list-client-sessions.usecase';
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
+import { SaveClientDayNoteUseCase } from '../../application/use-cases/save-client-day-note.usecase';
 import type { ClientRoutine } from '../../domain/client-routine';
 import { ClientCalendarQueryDto } from '../dto/client-calendar-query.dto';
+import { ClientDayNoteParamDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
 import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dto';
 import { mapClientOutput } from './clients.controller.mappers';
 
@@ -35,6 +37,7 @@ export class ClientSelfController {
     private readonly listClientCalendarUseCase: ListClientCalendarUseCase,
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
+    private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
     @Inject(FILE_STORAGE)
     private readonly storage: FileStoragePort,
     private readonly mediaUrls: PrivateMediaUrlSigner,
@@ -79,6 +82,15 @@ export class ClientSelfController {
     const context = readAuthContext(request);
     const { dateFrom, dateTo } = ClientCalendarQueryDto.schema.parse(query);
     return this.listClientCalendarUseCase.execute(context, { dateFrom: new Date(dateFrom), dateTo: new Date(dateTo) });
+  }
+
+  @Put('me/calendar/notes/:date')
+  async saveMyDayNote(
+    @Param() params: ClientDayNoteParamDto,
+    @Body() body: SaveClientDayNoteDto,
+    @Req() request: HttpAuthRequest,
+  ) {
+    return this.saveClientDayNoteUseCase.execute(readAuthContext(request), params.date, body.content);
   }
 
   @Get('me/sessions')

@@ -13,7 +13,7 @@ function useAuth() {
 }
 
 export type CreateCalendarEventInput = {
-  type: 'note' | 'reminder' | 'workout';
+  type: 'call' | 'note' | 'reminder' | 'workout';
   date: string;
   title?: string;
   content?: string;

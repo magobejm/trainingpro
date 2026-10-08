@@ -84,23 +84,21 @@ export function createNoteSaveHandler(
   };
 }
 
+export type CallProposalSender = {
+  mutate: (input: { clientId?: string; date: string; time: string }, options: { onSuccess: () => void }) => void;
+};
+
+/** Agendar una llamada no crea el evento: manda la propuesta al chat del cliente. */
 export function createReminderSaveHandler(
-  createEvent: ReturnType<typeof useCreateCalendarEventMutation>,
+  proposeCall: CallProposalSender,
   modal: ModalState,
   selectedClientId: string | undefined,
   setModal: React.Dispatch<React.SetStateAction<ModalState>>,
 ) {
   return (data: { content: string; time: string; color: string }) => {
-    if (modal.type !== 'addReminder') return;
-    createEvent.mutate(
-      {
-        type: 'reminder',
-        date: modal.dateStr,
-        content: data.content || undefined,
-        time: data.time || undefined,
-        color: data.color,
-        clientId: selectedClientId,
-      },
+    if (modal.type !== 'addReminder' || !selectedClientId) return;
+    proposeCall.mutate(
+      { clientId: selectedClientId, date: modal.dateStr, time: data.time },
       { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
     );
   };

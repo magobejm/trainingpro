@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { formatWorkoutElapsed } from './workout-elapsed';
 import { LIGHT } from '../../theme/light';
 
 type WorkoutClockProps = {
@@ -9,13 +10,9 @@ type WorkoutClockProps = {
 };
 
 const DOT_ANIM_DURATION = 800;
-const PAD = '0';
 
 function formatElapsed(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, PAD)}:${String(seconds).padStart(2, PAD)}`;
+  return formatWorkoutElapsed(ms / 1000);
 }
 
 export function WorkoutClock({ startedAt, onFinish }: WorkoutClockProps) {

@@ -243,7 +243,7 @@ export class SessionsCardioRepositoryPrisma {
         distanceDoneMeters: input.distanceDoneMeters ?? null,
         durationSecondsDone: input.durationSecondsDone ?? null,
         effortRpe: input.effortRpe ?? null,
-        restSecondsDone: input.restSecondsDone ?? null,
+        ...(input.restSecondsDone === undefined ? {} : { restSecondsDone: input.restSecondsDone }),
       },
     });
   }

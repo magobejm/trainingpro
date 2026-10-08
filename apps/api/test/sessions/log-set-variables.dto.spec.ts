@@ -11,7 +11,7 @@ const SESSION_ITEM_ID = '22222222-2222-4222-8222-222222222222';
 describe('log set variable DTOs', () => {
   it('accepts half-step RPE and integer RIR, and rejects the rest', () => {
     const base = { repsDone: 8, sessionItemId: SESSION_ITEM_ID, setIndex: 1, weightDoneKg: 40 };
-    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7.5, effortRir: 2 }).success).toBe(true);
+    expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7.5, effortRir: 2, restSecondsDone: 45 }).success).toBe(true);
     expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7 }).success).toBe(true);
     expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 7.3 }).success).toBe(false);
     expect(LogSetDto.schema.safeParse({ ...base, effortRpe: 10.5 }).success).toBe(false);

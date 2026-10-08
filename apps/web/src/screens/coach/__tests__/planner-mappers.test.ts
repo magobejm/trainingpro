@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canUnlockSetVariable, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
-import { createBlock } from '../RoutinePlanner.helpers';
+import { buildRoutinePayload, createBlock, createEmptyDraft } from '../RoutinePlanner.helpers';
 import { mapTemplateBlock } from '../RoutinePlanner.template-mapper';
 import { parseSets } from '../components/RoutinePlanner/warmup-exercise-list.helpers';
 
@@ -20,6 +20,22 @@ describe('mapTemplateBlock sport locks', () => {
   it('applies default sport locks when the template has none', () => {
     const block = mapTemplateBlock('sport', { displayName: 'Fútbol', sortOrder: 0 }, createBlock);
     expect(block.lockedFields).toEqual(SPORT_DEFAULT_LOCKED_VARIABLES);
+  });
+});
+
+describe('buildRoutinePayload exercise rest', () => {
+  it('fills the exercise rest from the first series', () => {
+    const draft = createEmptyDraft((key) => key);
+    draft.days[0]?.blocks.push({
+      displayName: 'Remo',
+      id: 'b1',
+      restSeconds: 60,
+      sets: [{ restSeconds: 120, setIndex: 0 }],
+      type: 'strength',
+    });
+    const day = buildRoutinePayload(draft).days[0];
+    expect(day?.exercises[0]?.restSeconds).toBe(120);
+    expect(day?.exercises[0]?.sets[0]?.restSeconds).toBe(120);
   });
 });
 

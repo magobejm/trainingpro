@@ -22,6 +22,7 @@ export type SetLog = {
   effortRir: null | number;
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   sessionItemId: string;
   setIndex: number;
   weightDoneKg: null | number;
@@ -54,6 +55,7 @@ export type PlioSetLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   sessionPlioBlockId: string;
   setIndex: number;
   weightDoneKg: null | number;
@@ -80,6 +82,7 @@ export type PlioSessionItem = {
 export type MobilitySetLog = {
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
@@ -107,6 +110,7 @@ export type MobilitySessionItem = {
 export type IsometricSetLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
+  restSecondsDone: null | number;
   sessionIsometricBlockId: string;
   setIndex: number;
   weightDoneKg: null | number;
@@ -212,6 +216,7 @@ export type LogPlioSetMutationInput = {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   sessionPlioBlockId: string;
   setIndex: number;
   weightDoneKg?: null | number;
@@ -220,6 +225,7 @@ export type LogPlioSetMutationInput = {
 export type LogMobilitySetMutationInput = {
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   romDone?: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
@@ -229,6 +235,7 @@ export type LogMobilitySetMutationInput = {
 export type LogIsometricSetMutationInput = {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
+  restSecondsDone?: null | number;
   sessionIsometricBlockId: string;
   setIndex: number;
   weightDoneKg?: null | number;
@@ -285,6 +292,7 @@ export type LogSetMutationInput = {
   effortRir?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   sessionItemId: string;
   setIndex: number;
   weightDoneKg?: null | number;

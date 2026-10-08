@@ -33,6 +33,7 @@ export type LogSetInput = {
   effortRir?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   sessionId: string;
   sessionItemId: string;
   setIndex: number;
@@ -43,6 +44,7 @@ export type LogPlioSetInput = {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   sessionId: string;
   sessionPlioBlockId: string;
   setIndex: number;
@@ -52,6 +54,7 @@ export type LogPlioSetInput = {
 export type LogMobilitySetInput = {
   effortRpe?: null | number;
   repsDone?: null | number;
+  restSecondsDone?: null | number;
   romDone?: null | string;
   sessionId: string;
   sessionMobilityBlockId: string;
@@ -62,6 +65,7 @@ export type LogMobilitySetInput = {
 export type LogIsometricSetInput = {
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
+  restSecondsDone?: null | number;
   sessionId: string;
   sessionIsometricBlockId: string;
   setIndex: number;

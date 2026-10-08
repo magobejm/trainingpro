@@ -2,7 +2,9 @@ import {
   buildClearPayload,
   buildLogPayload,
   draftHasValues,
+  elapsedRestSeconds,
   formatSessionRepRange,
+  getRestSeconds,
   getSetColumns,
   getSetCount,
   readActualValue,
@@ -17,24 +19,17 @@ import type { SessionItem } from '../../../data/hooks/useTodaySession';
 describe('getSetColumns', () => {
   it('returns strength columns in priority order', () => {
     const item = { type: 'strength', lockedFields: [] } as unknown as SessionItem;
-    expect(getSetColumns(item).map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'rir', 'rest']);
+    expect(getSetColumns(item).map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'rir']);
   });
 
   it('shows six default sport columns and hides the locked extras', () => {
     const item = { type: 'sport', plannedSets: [] } as unknown as SessionItem;
-    expect(getSetColumns(item).map((column) => column.key)).toEqual([
-      'reps',
-      'weight',
-      'rpe',
-      'fcMaxPct',
-      'duration',
-      'rest',
-    ]);
+    expect(getSetColumns(item).map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'fcMaxPct', 'duration']);
   });
 
   it('hides locked strength columns', () => {
     const item = { type: 'strength', lockedFields: ['weightKg', 'rir'] } as unknown as SessionItem;
-    expect(getSetColumns(item).map((column) => column.key)).toEqual(['reps', 'rpe', 'rest']);
+    expect(getSetColumns(item).map((column) => column.key)).toEqual(['reps', 'rpe']);
   });
 
   it('orders cardio, isometric, plio and mobility columns by priority', () => {
@@ -43,10 +38,32 @@ describe('getSetColumns', () => {
     const plio = getSetColumns({ type: 'plio', lockedFields: [] } as unknown as SessionItem);
     const mobility = getSetColumns({ type: 'mobility', lockedFields: [] } as unknown as SessionItem);
 
-    expect(cardio.map((column) => column.key)).toEqual(['rpe', 'fcMaxPct', 'duration', 'heartRate', 'fcReservePct', 'rest']);
-    expect(isometric.map((column) => column.key)).toEqual(['weight', 'rpe', 'duration', 'rest']);
-    expect(plio.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'duration', 'rest']);
-    expect(mobility.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'rom', 'rest']);
+    expect(cardio.map((column) => column.key)).toEqual(['rpe', 'fcMaxPct', 'duration', 'heartRate', 'fcReservePct']);
+    expect(isometric.map((column) => column.key)).toEqual(['weight', 'rpe', 'duration']);
+    expect(plio.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'duration']);
+    expect(mobility.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'rom']);
+  });
+});
+
+describe('getRestSeconds', () => {
+  it('uses the rest planned for that set and falls back to the exercise', () => {
+    const item = {
+      type: 'strength',
+      lockedFields: [],
+      plannedSets: [
+        { restSeconds: 120, setIndex: 0 },
+        { restSeconds: null, setIndex: 1 },
+      ],
+      restSeconds: 60,
+    } as unknown as SessionItem;
+    expect(getRestSeconds(item, 1)).toBe(120);
+    expect(getRestSeconds(item, 2)).toBe(60);
+  });
+
+  it('counts the seconds that actually elapsed on the timer', () => {
+    const endAt = 1_000_000;
+    expect(elapsedRestSeconds(endAt, 60, endAt - 15_000)).toBe(45);
+    expect(elapsedRestSeconds(endAt, 60, endAt)).toBe(60);
   });
 });
 
@@ -241,19 +258,20 @@ describe('buildLogPayload for all exercise types', () => {
     });
   });
 
-  it('sends cardio duration, rest and rpe without distance', () => {
+  it('sends cardio duration and rpe, and stores the timer rest separately', () => {
     const item = { type: 'cardio', id: 'cardio-1', lockedFields: [] } as unknown as SessionItem;
     const payload = buildLogPayload(
       item,
       1,
       emptyDraft({ duration: '120', heartRate: '145', rest: '30', rpe: '6', distance: '1000' }),
+      47,
     );
     expect(payload).toEqual({
       avgHeartRate: 145,
       durationSecondsDone: 120,
       effortRpe: 6,
       intervalIndex: 1,
-      restSecondsDone: 30,
+      restSecondsDone: 47,
       sessionCardioBlockId: 'cardio-1',
     });
     expect(payload).not.toHaveProperty('distanceDoneMeters');
@@ -286,7 +304,6 @@ describe('buildLogPayload for all exercise types', () => {
       hrMaxPctDone: 85,
       hrReservePctDone: 70,
       repsDone: 12,
-      restSecondsDone: 45,
       romDone: 'parcial',
       sessionSportBlockId: 'sport-1',
       setIndex: 2,

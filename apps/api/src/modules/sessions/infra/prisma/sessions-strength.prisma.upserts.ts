@@ -29,6 +29,7 @@ export async function upsertSetLog(prisma: PrismaService, input: LogSetInput, se
       effortRir: input.effortRir ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
       sessionId: input.sessionId,
       sessionItemId,
       setIndex: input.setIndex,
@@ -38,6 +39,7 @@ export async function upsertSetLog(prisma: PrismaService, input: LogSetInput, se
       effortRir: input.effortRir ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      ...recordedRest(input.restSecondsDone),
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
@@ -54,6 +56,7 @@ export async function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetI
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
       sessionId: input.sessionId,
       sessionPlioBlockId,
       setIndex: input.setIndex,
@@ -63,6 +66,7 @@ export async function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetI
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      ...recordedRest(input.restSecondsDone),
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
@@ -82,6 +86,7 @@ export async function upsertMobilitySetLog(
     create: {
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
       romDone: input.romDone ?? null,
       sessionId: input.sessionId,
       sessionMobilityBlockId,
@@ -91,6 +96,7 @@ export async function upsertMobilitySetLog(
     update: {
       effortRpe: input.effortRpe ?? null,
       repsDone: input.repsDone ?? null,
+      ...recordedRest(input.restSecondsDone),
       romDone: input.romDone ?? null,
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
@@ -111,6 +117,7 @@ export async function upsertIsometricSetLog(
     create: {
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
+      restSecondsDone: input.restSecondsDone ?? null,
       sessionId: input.sessionId,
       sessionIsometricBlockId,
       setIndex: input.setIndex,
@@ -119,6 +126,7 @@ export async function upsertIsometricSetLog(
     update: {
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
+      ...recordedRest(input.restSecondsDone),
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
@@ -176,11 +184,16 @@ export async function upsertSportSetLog(prisma: PrismaService, input: LogSportSe
       hrMaxPctDone: input.hrMaxPctDone ?? null,
       hrReservePctDone: input.hrReservePctDone ?? null,
       repsDone: input.repsDone ?? null,
-      restSecondsDone: input.restSecondsDone ?? null,
+      ...recordedRest(input.restSecondsDone),
       romDone: input.romDone ?? null,
       weightDoneKg: toDecimal(input.weightDoneKg),
     },
   });
+}
+
+function recordedRest(value: null | number | undefined): { restSecondsDone?: null | number } {
+  if (value === undefined) return {};
+  return { restSecondsDone: value };
 }
 
 const PLAN_BLOCK_SETS_INCLUDE = {

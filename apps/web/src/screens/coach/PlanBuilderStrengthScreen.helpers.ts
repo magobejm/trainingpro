@@ -8,12 +8,7 @@ export function appendRange(item: BuilderExercise, id: string): BuilderExercise 
   return { ...item, perSetRanges: [...item.perSetRanges, { maxKg: '', minKg: '' }] };
 }
 
-export function replaceRange(
-  item: BuilderExercise,
-  id: string,
-  index: number,
-  range: SetRange,
-): BuilderExercise {
+export function replaceRange(item: BuilderExercise, id: string, index: number, range: SetRange): BuilderExercise {
   if (item.id !== id) {
     return item;
   }
@@ -79,7 +74,6 @@ function buildExercisePayload(item: BuilderExercise, index: number) {
     fieldModes: [
       { fieldKey: 'repsMax', mode: item.globalModes.repsMax },
       { fieldKey: 'repsMin', mode: item.globalModes.repsMin },
-      { fieldKey: 'restSeconds', mode: item.globalModes.restSeconds },
       { fieldKey: 'setsPlanned', mode: item.globalModes.setsPlanned },
       { fieldKey: 'targetRir', mode: item.globalModes.targetRir },
       { fieldKey: 'targetRpe', mode: item.globalModes.targetRpe },
@@ -90,7 +84,7 @@ function buildExercisePayload(item: BuilderExercise, index: number) {
     })),
     repsMax: toNumber(item.globalValues.repsMax),
     repsMin: toNumber(item.globalValues.repsMin),
-    restSeconds: toNumber(item.globalValues.restSeconds),
+    restSeconds: null,
     setsPlanned: toNumber(item.globalValues.setsPlanned),
     sortOrder: index,
     targetRir: toNumber(item.globalValues.targetRir),
@@ -136,9 +130,7 @@ export function mapTemplateToBuilder(template: unknown): BuilderExercise[] {
   return day.exercises.map(mapExerciseToBuilder);
 }
 
-type InputExercise = NonNullable<
-  NonNullable<TemplateInputDto['days']>[number]['exercises']
->[number];
+type InputExercise = NonNullable<NonNullable<TemplateInputDto['days']>[number]['exercises']>[number];
 
 function parseGlobalModes(ex: InputExercise): BuilderExercise['globalModes'] {
   const getMode = (key: string): FieldModeValue => {

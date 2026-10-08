@@ -57,7 +57,6 @@ function mapCardioBlocks(day: RoutineDayInput, t: Translate) {
     meta: [
       fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
       fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
     ],
     sortOrder: b.sortOrder ?? 0,
   }));
@@ -69,7 +68,6 @@ function mapPlioBlocks(day: RoutineDayInput, t: Translate) {
     meta: [
       fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
       fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
     ],
     sortOrder: b.sortOrder ?? 0,
   }));
@@ -81,7 +79,6 @@ function mapMobilityBlocks(day: RoutineDayInput, t: Translate) {
     meta: [
       fieldLabel(t('coach.routine.block.rounds'), b.roundsPlanned),
       fieldLabel(t('coach.routine.block.work'), b.workSeconds),
-      fieldLabel(t('coach.routine.block.rest'), b.restSeconds),
     ],
     sortOrder: b.sortOrder ?? 0,
   }));

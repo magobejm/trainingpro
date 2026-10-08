@@ -18,6 +18,7 @@ export type SessionSetLog = {
   effortRir: null | number;
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   setIndex: number;
   sessionItemId: string;
   weightDoneKg: null | number;
@@ -64,6 +65,7 @@ export type SessionPlioSetLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   sessionPlioBlockId: string;
   setIndex: number;
   weightDoneKg: null | number;
@@ -72,6 +74,7 @@ export type SessionPlioSetLog = {
 export type SessionMobilitySetLog = {
   effortRpe: null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
@@ -81,6 +84,7 @@ export type SessionMobilitySetLog = {
 export type SessionIsometricSetLog = {
   durationSecondsDone: null | number;
   effortRpe: null | number;
+  restSecondsDone: null | number;
   sessionIsometricBlockId: string;
   setIndex: number;
   weightDoneKg: null | number;

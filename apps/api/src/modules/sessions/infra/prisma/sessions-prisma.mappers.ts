@@ -445,6 +445,7 @@ export function mapSetLog(row: {
   effortRir: null | number;
   effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   sessionItemId: string;
   setIndex: number;
   weightDoneKg: Prisma.Decimal | null;
@@ -453,6 +454,7 @@ export function mapSetLog(row: {
     effortRir: row.effortRir,
     effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
+    restSecondsDone: row.restSecondsDone,
     sessionItemId: row.sessionItemId,
     setIndex: row.setIndex,
     weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
@@ -463,6 +465,7 @@ export function mapPlioSetLog(row: {
   durationSecondsDone: null | number;
   effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   sessionPlioBlockId: string;
   setIndex: number;
   weightDoneKg: Prisma.Decimal | null;
@@ -471,6 +474,7 @@ export function mapPlioSetLog(row: {
     durationSecondsDone: row.durationSecondsDone,
     effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
+    restSecondsDone: row.restSecondsDone,
     sessionPlioBlockId: row.sessionPlioBlockId,
     setIndex: row.setIndex,
     weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
@@ -480,6 +484,7 @@ export function mapPlioSetLog(row: {
 export function mapMobilitySetLog(row: {
   effortRpe: Prisma.Decimal | null | number;
   repsDone: null | number;
+  restSecondsDone: null | number;
   romDone: null | string;
   sessionMobilityBlockId: string;
   setIndex: number;
@@ -488,6 +493,7 @@ export function mapMobilitySetLog(row: {
   return {
     effortRpe: toRpeNumber(row.effortRpe),
     repsDone: row.repsDone,
+    restSecondsDone: row.restSecondsDone,
     romDone: row.romDone,
     sessionMobilityBlockId: row.sessionMobilityBlockId,
     setIndex: row.setIndex,
@@ -498,6 +504,7 @@ export function mapMobilitySetLog(row: {
 export function mapIsometricSetLog(row: {
   durationSecondsDone: null | number;
   effortRpe: Prisma.Decimal | null | number;
+  restSecondsDone: null | number;
   sessionIsometricBlockId: string;
   setIndex: number;
   weightDoneKg: Prisma.Decimal | null;
@@ -505,6 +512,7 @@ export function mapIsometricSetLog(row: {
   return {
     durationSecondsDone: row.durationSecondsDone,
     effortRpe: toRpeNumber(row.effortRpe),
+    restSecondsDone: row.restSecondsDone,
     sessionIsometricBlockId: row.sessionIsometricBlockId,
     setIndex: row.setIndex,
     weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,

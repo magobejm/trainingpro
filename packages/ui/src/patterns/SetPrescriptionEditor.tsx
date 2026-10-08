@@ -25,7 +25,6 @@ type Props = {
   labels: {
     repsMax: string;
     repsMin: string;
-    restSeconds: string;
     setsPlanned: string;
     targetRir: string;
     targetRpe: string;
@@ -107,13 +106,6 @@ function GlobalSetRow1(props: Props) {
 function GlobalSetRow2(props: Props) {
   return (
     <View style={styles.row}>
-      <ModeField
-        label={props.labels.restSeconds}
-        mode={props.globalModes.restSeconds}
-        onChangeMode={(mode) => props.onChangeGlobalMode('restSeconds', mode)}
-        onChangeValue={(value) => props.onChangeGlobalValue('restSeconds', value)}
-        value={props.globalValues.restSeconds}
-      />
       <ModeField
         label={props.labels.targetRpe}
         mode={props.globalModes.targetRpe}

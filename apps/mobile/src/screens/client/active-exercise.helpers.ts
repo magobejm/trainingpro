@@ -63,7 +63,9 @@ export function formatSessionRepRange(item: SessionItem): null | string {
 
 export function getSetColumns(item: SessionItem): SetColumn[] {
   const columns = getBaseSetColumns(item);
-  return filterActiveSetColumns(columns, resolveLockedFields(item.type, item.lockedFields));
+  return filterActiveSetColumns(columns, resolveLockedFields(item.type, item.lockedFields)).filter(
+    (column) => column.key !== 'rest',
+  );
 }
 
 const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
@@ -190,12 +192,33 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
   }
 }
 
-export function getRestSeconds(item: SessionItem): number {
+export function getRestSeconds(item: SessionItem, setIndex: number): number {
   if (isRestFieldLocked(resolveLockedFields(item.type, item.lockedFields))) return 0;
-  if (item.type === 'strength' || item.type === 'isometric') return item.restSeconds ?? 0;
-  if (item.type === 'cardio' || item.type === 'plio' || item.type === 'mobility') return item.restSeconds;
-  if (item.type === 'sport') return item.plannedSets[0]?.restSeconds ?? 0;
+  const planned = resolvePlannedSet(item.plannedSets, setIndex)?.restSeconds;
+  if (planned != null && planned > 0) return planned;
+  if ('restSeconds' in item && item.restSeconds != null && item.restSeconds > 0) return item.restSeconds;
   return 0;
+}
+
+export function elapsedRestSeconds(endAt: number, totalSeconds: number, now = Date.now()): number {
+  const remaining = Math.max(0, Math.ceil((endAt - now) / 1000));
+  return Math.max(0, totalSeconds - remaining);
+}
+
+export function restWasRecorded(item: SessionItem, setIndex: number): boolean {
+  switch (item.type) {
+    case 'strength':
+    case 'plio':
+    case 'mobility':
+    case 'isometric':
+      return item.logs.some((entry) => entry.setIndex === setIndex && entry.restSecondsDone != null);
+    case 'cardio':
+      return item.intervalLogs.some((entry) => entry.intervalIndex === setIndex && entry.restSecondsDone != null);
+    case 'sport':
+      return (item.setLogs ?? []).some((entry) => entry.setIndex === setIndex && entry.restSecondsDone != null);
+    default:
+      return false;
+  }
 }
 
 function parseNumber(value: string): null | number {
@@ -277,10 +300,16 @@ function logPayloadHasData(payload: LogPayload): boolean {
   });
 }
 
-export function buildLogPayload(item: SessionItem, setIndex: number, values: SetRowState): LogPayload | null {
+export function buildLogPayload(
+  item: SessionItem,
+  setIndex: number,
+  values: SetRowState,
+  restSecondsDone?: number,
+): LogPayload | null {
   const payload = buildRawLogPayload(item, setIndex, values);
   if (!payload || !logPayloadHasData(payload)) return null;
-  return payload;
+  if (restSecondsDone == null) return payload;
+  return { ...payload, restSecondsDone };
 }
 
 export function buildClearPayload(item: SessionItem, setIndex: number): LogPayload | null {
@@ -351,7 +380,6 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         intervalIndex: setIndex,
-        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
         sessionCardioBlockId: item.id,
       };
     case 'sport':
@@ -363,7 +391,6 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
         hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
         hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
         repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
-        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
         romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
         sessionSportBlockId: item.id,
         setIndex,

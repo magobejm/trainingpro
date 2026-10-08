@@ -12,6 +12,7 @@ describe('session set-log mappers', () => {
         durationSecondsDone: 15,
         effortRpe: 7,
         repsDone: 8,
+        restSecondsDone: 20,
         sessionPlioBlockId: 'plio-1',
         setIndex: 1,
         weightDoneKg: new Prisma.Decimal(20),
@@ -20,6 +21,7 @@ describe('session set-log mappers', () => {
       durationSecondsDone: 15,
       effortRpe: 7,
       repsDone: 8,
+      restSecondsDone: 20,
       sessionPlioBlockId: 'plio-1',
       setIndex: 1,
       weightDoneKg: 20,
@@ -31,6 +33,7 @@ describe('session set-log mappers', () => {
       mapMobilitySetLog({
         effortRpe: 6,
         repsDone: 10,
+        restSecondsDone: null,
         romDone: 'completo',
         sessionMobilityBlockId: 'mob-1',
         setIndex: 2,
@@ -39,6 +42,7 @@ describe('session set-log mappers', () => {
     ).toEqual({
       effortRpe: 6,
       repsDone: 10,
+      restSecondsDone: null,
       romDone: 'completo',
       sessionMobilityBlockId: 'mob-1',
       setIndex: 2,

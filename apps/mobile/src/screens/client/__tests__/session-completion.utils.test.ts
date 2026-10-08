@@ -10,7 +10,17 @@ describe('session-completion.utils', () => {
     groupType: null,
     id: 's1',
     displayName: 'Press',
-    logs: [{ effortRir: 2, effortRpe: 8, repsDone: 8, sessionItemId: 's1', setIndex: 1, weightDoneKg: 60 }],
+    logs: [
+      {
+        effortRir: 2,
+        effortRpe: 8,
+        repsDone: 8,
+        restSecondsDone: null,
+        sessionItemId: 's1',
+        setIndex: 1,
+        weightDoneKg: 60,
+      },
+    ],
     notes: null,
     plannedSets: [],
     repsMax: 8,

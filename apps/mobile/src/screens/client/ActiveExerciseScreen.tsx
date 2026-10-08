@@ -1,5 +1,5 @@
 /* eslint-disable max-lines, max-lines-per-function -- unified active exercise matrix with inline set editors and modals. */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,7 @@ import { showToast } from '../../shell/client/feedback';
 import {
   buildClearPayload,
   buildLogPayload,
+  elapsedRestSeconds,
   formatSessionRepRange,
   getRestSeconds,
   getSetColumns,
@@ -29,6 +30,7 @@ import {
   readSessionYoutubeUrl,
   readTargetValue,
   resolveSetSave,
+  restWasRecorded,
   setWasLogged,
   type SetColumn,
   type SetFieldKey,
@@ -94,6 +96,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [romState, setRomState] = useState<RomState>(null);
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
   const [finishing, setFinishing] = useState(false);
+  const recordedRestRef = useRef<Record<number, number>>({});
 
   const groupIndex = props.exerciseGroup.findIndex((entry) => entry.id === props.item.id);
   const setCount = getSetCount(props.item);
@@ -124,10 +127,11 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
     setShowVideo(false);
   }, [props.item.id]);
 
-  const saveSet = (setIndex: number): Promise<void> => {
+  const saveSet = (setIndex: number, restOverride?: number): Promise<void> => {
     const values = draftValues[setIndex];
     if (!values) return Promise.resolve();
-    const payload = buildLogPayload(props.item, setIndex, values);
+    const restSecondsDone = restOverride ?? recordedRestRef.current[setIndex];
+    const payload = buildLogPayload(props.item, setIndex, values, restSecondsDone);
     const action = resolveSetSave(payload, setWasLogged(props.item, setIndex));
     if (action === 'skip') return Promise.resolve();
     const body = action === 'delete' ? buildClearPayload(props.item, setIndex) : payload;
@@ -143,6 +147,19 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
 
   const handleSaveSet = (setIndex: number) => {
     void saveSet(setIndex);
+  };
+
+  const handleRestComplete = () => {
+    const rest = props.restState;
+    if (rest) {
+      const setIndex = Number(rest.setKey.split(':').at(-1));
+      const elapsed = elapsedRestSeconds(rest.endAt, rest.seconds);
+      if (Number.isInteger(setIndex) && setIndex > 0) {
+        recordedRestRef.current = { ...recordedRestRef.current, [setIndex]: elapsed };
+        if (setWasLogged(props.item, setIndex)) void saveSet(setIndex, elapsed);
+      }
+    }
+    props.onRestFinish();
   };
 
   const handleFinishExercise = async () => {
@@ -234,8 +251,8 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           {Array.from({ length: setCount }, (_, index) => {
             const setIndex = index + 1;
             const setKey = `${props.item.id}:${setIndex}`;
-            const restDone = props.completedRestKeys.includes(setKey);
-            const restSeconds = getRestSeconds(props.item);
+            const restDone = props.completedRestKeys.includes(setKey) || restWasRecorded(props.item, setIndex);
+            const restSeconds = getRestSeconds(props.item, setIndex);
             const isActiveRest = props.restState?.setKey === setKey;
             const restLocked = props.restState != null && props.restState.setKey !== setKey;
             return (
@@ -252,7 +269,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                       endAt={isActiveRest ? props.restState!.endAt : null}
                       restSeconds={restSeconds}
                       onExpand={props.onExpandRest}
-                      onFinish={props.onRestFinish}
+                      onFinish={handleRestComplete}
                       onStart={() => props.onStartRest(setKey, restSeconds)}
                     />
                   ) : null}
@@ -348,7 +365,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
             totalSeconds={props.restState.seconds}
             visible
             onHide={props.onCollapseRest}
-            onFinish={props.onRestFinish}
+            onFinish={handleRestComplete}
           />
         ) : null}
       </View>

@@ -145,6 +145,13 @@ function mapStrengthSet(s: DraftSet) {
   };
 }
 
+function exerciseRestSeconds(block: DraftBlock, fallback: number): number {
+  const fromSeries = block.sets?.[0]?.restSeconds;
+  if (typeof fromSeries === 'number') return fromSeries;
+  if (typeof block.restSeconds === 'number') return block.restSeconds;
+  return fallback;
+}
+
 function parseStrengthValues(b: DraftBlock) {
   const range = parseRange(b.repsRange, b.repsPlanned ?? 10);
   const perSeriesWeights = parseCsvNumbers(b.weightPerSeriesKg);
@@ -154,7 +161,7 @@ function parseStrengthValues(b: DraftBlock) {
     perSetWeightRanges: rangeList.length > 1 ? rangeList : [],
     repsMax: range.max,
     repsMin: range.min,
-    restSeconds: b.restSeconds ?? 60,
+    restSeconds: exerciseRestSeconds(b, 60),
     setsPlanned: b.setsPlanned ?? 3,
     targetRir: b.targetRir ?? null,
     targetRpe: b.targetRpe ?? null,
@@ -197,7 +204,7 @@ function mapCardioSet(s: DraftSet) {
 
 function parseCardioValues(b: DraftBlock) {
   return {
-    restSeconds: b.restSeconds ?? 30,
+    restSeconds: exerciseRestSeconds(b, 30),
     roundsPlanned: b.roundsPlanned ?? 3,
     targetDistanceMeters: null,
     targetRpe: b.targetRpe ?? null,
@@ -236,7 +243,7 @@ function mapPlioSet(s: DraftSet) {
 
 function parsePlioValues(b: DraftBlock) {
   return {
-    restSeconds: b.restSeconds ?? 30,
+    restSeconds: exerciseRestSeconds(b, 30),
     roundsPlanned: b.roundsPlanned ?? 3,
     targetRpe: b.targetRpe ?? null,
     workSeconds: b.workSeconds ?? 30,
@@ -277,7 +284,7 @@ function mapMobilitySet(s: DraftSet) {
 
 function parseMobilityValues(b: DraftBlock) {
   return {
-    restSeconds: b.restSeconds ?? 30,
+    restSeconds: exerciseRestSeconds(b, 30),
     roundsPlanned: b.roundsPlanned ?? 3,
     targetRpe: b.targetRpe ?? null,
     workSeconds: b.workSeconds ?? 30,
@@ -323,7 +330,7 @@ function mapIsometric(block: DraftBlock, sortOrder: number) {
     isometricExerciseLibraryId: block.libraryId ?? null,
     lockedFields: resolveLockedFields(block.type, block.lockedFields),
     notes: block.notes ?? '',
-    restSeconds: block.restSeconds ?? 0,
+    restSeconds: exerciseRestSeconds(block, 0),
     sets: (block.sets ?? []).map(mapIsometricSet),
     setsPlanned: block.setsPlanned ?? null,
     sortOrder,

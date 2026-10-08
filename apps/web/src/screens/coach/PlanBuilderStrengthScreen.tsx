@@ -188,7 +188,6 @@ function getLabels(t: ViewModel['t']) {
   return {
     repsMax: t('coach.builder.global.repsMax', 'Reps máx'),
     repsMin: t('coach.builder.global.repsMin', 'Reps mín'),
-    restSeconds: t('coach.builder.global.rest', 'Descanso (s)'),
     setsPlanned: t('coach.builder.global.sets', 'Series'),
     targetRir: t('coach.builder.global.rir', 'RIR'),
     targetRpe: t('coach.builder.global.rpe', 'RPE'),

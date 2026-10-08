@@ -52,6 +52,7 @@ export function mapSession(
       effortRir: L.effortRir,
       effortRpe: toRpeNumber(L.effortRpe),
       repsDone: L.repsDone,
+      restSecondsDone: L.restSecondsDone,
       sessionItemId: L.sessionItemId,
       setIndex: L.setIndex,
       weightDoneKg: L.weightDoneKg ? Number(L.weightDoneKg) : null,
@@ -83,6 +84,7 @@ export function mapSession(
         durationSecondsDone: l.durationSecondsDone,
         effortRpe: toRpeNumber(l.effortRpe),
         repsDone: l.repsDone,
+        restSecondsDone: l.restSecondsDone,
         sessionPlioBlockId: l.sessionPlioBlockId,
         setIndex: l.setIndex,
         weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,
@@ -109,6 +111,7 @@ export function mapSession(
       (l): SessionMobilitySetLog => ({
         effortRpe: toRpeNumber(l.effortRpe),
         repsDone: l.repsDone,
+        restSecondsDone: l.restSecondsDone,
         romDone: l.romDone,
         sessionMobilityBlockId: l.sessionMobilityBlockId,
         setIndex: l.setIndex,
@@ -136,6 +139,7 @@ export function mapSession(
       (l): SessionIsometricSetLog => ({
         durationSecondsDone: l.durationSecondsDone,
         effortRpe: toRpeNumber(l.effortRpe),
+        restSecondsDone: l.restSecondsDone,
         sessionIsometricBlockId: l.sessionIsometricBlockId,
         setIndex: l.setIndex,
         weightDoneKg: l.weightDoneKg ? Number(l.weightDoneKg) : null,

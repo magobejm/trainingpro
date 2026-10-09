@@ -3,6 +3,8 @@ logs
 .worktrees
 docs/*
 !docs/AGENTS_CHECKLIST.md
+!docs/qa/
+!docs/qa/tp-22-apk-android.md
 /plans/
 .claude/*
 tmp/*

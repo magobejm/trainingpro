@@ -23,6 +23,7 @@ import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
+import { useHardwareBack } from './use-hardware-back';
 type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
 
 type ShellState = {
@@ -224,6 +225,7 @@ function dispatchMoreMenu(
 export function ClientShell(): React.JSX.Element {
   const { t } = useTranslation();
   const st = useShellState();
+  useHardwareBack(st);
   const showBottomNav = st.overlay === null;
 
   return (

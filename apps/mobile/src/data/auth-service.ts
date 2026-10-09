@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { useAuthStore } from '../store/auth.store';
 import { getSupabaseClient } from './supabase-client';
 
@@ -15,6 +16,7 @@ export async function loginWithPassword(email: string, password: string): Promis
 }
 
 export async function logout(): Promise<void> {
+  await unregisterCurrentPushToken();
   refreshedAccessToken = null;
   const { error } = await getSupabaseClient().auth.signOut({ scope: 'local' });
   if (error) {
@@ -42,6 +44,25 @@ function refreshOnce(): Promise<boolean> {
     refreshTask = null;
   });
   return refreshTask;
+}
+
+async function unregisterCurrentPushToken(): Promise<void> {
+  if (Platform.OS === 'web') {
+    return;
+  }
+  const auth = useAuthStore.getState();
+  if (!auth.accessToken || (auth.activeRole !== 'coach' && auth.activeRole !== 'client')) {
+    return;
+  }
+  try {
+    const mod = await import('./push-registration');
+    await Promise.race([
+      mod.unregisterPushToken({ accessToken: auth.accessToken, activeRole: auth.activeRole }),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
+  } catch {
+    return;
+  }
 }
 
 async function refreshAndRemember(): Promise<boolean> {

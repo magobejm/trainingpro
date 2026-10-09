@@ -36,8 +36,9 @@ export function createApiClient(config: ApiClientOptions) {
   const baseUrl = resolveBaseUrl(config.baseUrl);
   const send = <T>(request: RequestOptions): Promise<T> => executeRequest<T>(baseUrl, config, request);
   return {
-    delete: <T>(path: string, headers?: Record<string, string>): Promise<T> =>
+    delete: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
       send<T>({
+        body,
         headers,
         method: 'DELETE',
         path,

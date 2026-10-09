@@ -1,17 +1,8 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  NotificationTopic as PrismaNotificationTopic,
-  Role,
-} from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { NotificationTopic as PrismaNotificationTopic, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import {
-  DEFAULT_PREFERENCE_TOPICS,
-} from '../../domain/notifications.constants';
+import { DEFAULT_PREFERENCE_TOPICS } from '../../domain/notifications.constants';
 import type {
   NotificationTopic,
   NotificationsRepositoryPort,
@@ -37,6 +28,7 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
     await this.prisma.notificationDeviceToken.upsert({
       where: { token: input.token },
       create: {
+        clientId: owner.clientId,
         isActive: true,
         lastSeenAt: new Date(),
         membershipId: owner.membershipId,
@@ -46,6 +38,7 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
         token: input.token,
       },
       update: {
+        clientId: owner.clientId,
         isActive: true,
         lastSeenAt: new Date(),
         membershipId: owner.membershipId,
@@ -78,6 +71,18 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
       update: { enabled },
     });
     return mapPreferenceRow(row);
+  }
+
+  async deactivateDeviceToken(context: AuthContext, token: string): Promise<void> {
+    const owner = await this.resolveDeviceTokenOwner(context);
+    const row = await this.prisma.notificationDeviceToken.findUnique({ where: { token } });
+    if (!row || !ownsToken(owner, row)) {
+      return;
+    }
+    await this.prisma.notificationDeviceToken.update({
+      data: { isActive: false },
+      where: { id: row.id },
+    });
   }
 
   async emitSessionCompletedEvent(sessionId: string): Promise<void> {
@@ -250,7 +255,8 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
   }
 
   private async resolveDeviceTokenOwner(context: AuthContext): Promise<{
-    membershipId: null | string;
+    clientId: string | null;
+    membershipId: string | null;
     organizationId: string;
     role: Role;
   }> {
@@ -277,6 +283,7 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
       throw new NotFoundException('Coach membership not found');
     }
     return {
+      clientId: null,
       membershipId: membership.id,
       organizationId: membership.organizationId,
       role: Role.COACH,
@@ -286,12 +293,17 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
   private async readClientOwner(email: string | undefined) {
     const client = await this.prisma.client.findFirst({
       where: { archivedAt: null, email: email ?? '' },
-      select: { organizationId: true },
+      select: { id: true, organizationId: true },
     });
     if (!client) {
       throw new NotFoundException('Client profile not found');
     }
-    return { membershipId: null, organizationId: client.organizationId, role: Role.CLIENT };
+    return {
+      clientId: client.id,
+      membershipId: null,
+      organizationId: client.organizationId,
+      role: Role.CLIENT,
+    };
   }
 
   private async readLastCompletedSessionDate(clientId: string): Promise<Date | null> {
@@ -302,4 +314,14 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
     });
     return row?.sessionDate ?? null;
   }
+}
+
+function ownsToken(
+  owner: { clientId: string | null; membershipId: string | null; role: Role },
+  row: { clientId: string | null; membershipId: string | null },
+): boolean {
+  if (owner.role === Role.COACH) {
+    return row.membershipId === owner.membershipId;
+  }
+  return owner.clientId !== null && row.clientId === owner.clientId;
 }

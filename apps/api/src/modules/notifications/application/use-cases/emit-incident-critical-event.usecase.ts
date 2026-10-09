@@ -1,17 +1,18 @@
 import { Inject, Injectable } from '@nestjs/common';
-import {
-  NOTIFICATIONS_REPOSITORY,
-  type NotificationsRepositoryPort,
-} from '../../domain/notifications.repository.port';
+import { dispatchNotificationsQuietly } from '../dispatch-notifications-quietly';
+import { NOTIFICATIONS_REPOSITORY, type NotificationsRepositoryPort } from '../../domain/notifications.repository.port';
+import { DispatchNotificationsUseCase } from './dispatch-notifications.usecase';
 
 @Injectable()
 export class EmitIncidentCriticalEventUseCase {
   constructor(
     @Inject(NOTIFICATIONS_REPOSITORY)
     private readonly repository: NotificationsRepositoryPort,
+    private readonly dispatch: DispatchNotificationsUseCase,
   ) {}
 
-  execute(incidentId: string): Promise<void> {
-    return this.repository.emitIncidentCriticalEvent(incidentId);
+  async execute(incidentId: string): Promise<void> {
+    await this.repository.emitIncidentCriticalEvent(incidentId);
+    await dispatchNotificationsQuietly(this.dispatch);
   }
 }

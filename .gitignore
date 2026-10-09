@@ -5,6 +5,7 @@ docs/*
 !docs/AGENTS_CHECKLIST.md
 !docs/qa/
 !docs/qa/tp-22-apk-android.md
+!docs/qa/tp-07-notificaciones.md
 /plans/
 .claude/*
 tmp/*

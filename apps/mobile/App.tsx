@@ -6,6 +6,7 @@ import './src/i18n';
 import { useLogout } from './src/data/hooks/useAuthMutations';
 import { useMeQuery } from './src/data/hooks/useMeQuery';
 import { createQueryClient } from './src/data/query-client';
+import { usePushRegistration } from './src/data/use-push-registration';
 import { startSessionSync } from './src/data/session-sync';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RoleSelectScreen } from './src/screens/auth/RoleSelectScreen';
@@ -56,6 +57,7 @@ function MobileRoot(): React.JSX.Element {
   const roles = useAuthStore((state) => state.availableRoles);
   const status = useAuthStore((state) => state.status);
   useMeQuery();
+  usePushRegistration();
   if (status === 'restoring') {
     return <LoadingBody />;
   }

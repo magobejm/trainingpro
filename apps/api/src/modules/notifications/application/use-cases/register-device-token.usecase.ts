@@ -13,7 +13,8 @@ export class RegisterDeviceTokenUseCase {
     private readonly repository: NotificationsRepositoryPort,
   ) {}
 
-  execute(context: AuthContext, input: RegisterDeviceTokenInput): Promise<void> {
-    return this.repository.registerDeviceToken(context, input);
+  async execute(context: AuthContext, input: RegisterDeviceTokenInput): Promise<{ status: 'ok' }> {
+    await this.repository.registerDeviceToken(context, input);
+    return { status: 'ok' };
   }
 }

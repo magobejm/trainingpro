@@ -28,6 +28,6 @@
       "url": "https://u.expo.dev/e32025fc-78da-4dfc-89d8-60149b6e193d"
     },
     "ios": {},
-    "plugins": ["expo-secure-store", "expo-document-picker"]
+    "plugins": ["expo-secure-store", "expo-document-picker", "expo-notifications"]
   }
 }

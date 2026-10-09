@@ -30,13 +30,11 @@ export type NotificationEventInput = {
 };
 
 export interface NotificationsRepositoryPort {
+  deactivateDeviceToken(context: AuthContext, token: string): Promise<void>;
   emitIncidentCriticalEvent(incidentId: string): Promise<void>;
   emitSessionCompletedEvent(sessionId: string): Promise<void>;
   listPreferencesForCoach(context: AuthContext): Promise<NotificationPreferenceView[]>;
-  registerDeviceToken(
-    context: AuthContext,
-    input: RegisterDeviceTokenInput,
-  ): Promise<void>;
+  registerDeviceToken(context: AuthContext, input: RegisterDeviceTokenInput): Promise<void>;
   runBatchJobs(now: Date): Promise<{ createdEvents: number }>;
   setPreferenceForCoach(
     context: AuthContext,

@@ -1,4 +1,5 @@
 import { Controller, Post, UseGuards } from '@nestjs/common';
+import { DispatchNotificationsUseCase } from '../../../notifications/application/use-cases/dispatch-notifications.usecase';
 import { RunNotificationBatchJobsUseCase } from '../../../notifications/application/use-cases/run-notification-batch-jobs.usecase';
 import { PurgeExpiredChatDataUseCase } from '../../application/use-cases/purge-expired-chat-data.usecase';
 import { CronSecretGuard } from '../guards/cron-secret.guard';
@@ -6,6 +7,7 @@ import { CronSecretGuard } from '../guards/cron-secret.guard';
 @Controller('maintenance')
 export class MaintenanceController {
   constructor(
+    private readonly dispatchNotificationsUseCase: DispatchNotificationsUseCase,
     private readonly purgeExpiredChatDataUseCase: PurgeExpiredChatDataUseCase,
     private readonly runNotificationBatchJobsUseCase: RunNotificationBatchJobsUseCase,
   ) {}
@@ -15,6 +17,7 @@ export class MaintenanceController {
   async dispatch() {
     const chatPurge = await this.purgeExpiredChatDataUseCase.execute();
     const notificationJobs = await this.runNotificationBatchJobsUseCase.execute();
-    return { chatPurge, notificationJobs, status: 'accepted' };
+    const notificationDelivery = await this.dispatchNotificationsUseCase.execute();
+    return { chatPurge, notificationDelivery, notificationJobs, status: 'accepted' };
   }
 }

@@ -309,8 +309,8 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
 
   return (
     <div
-      draggable
-      onDragStart={handleDragStart}
+      draggable={event.type !== 'physical_test'}
+      onDragStart={event.type === 'physical_test' ? undefined : handleDragStart}
       style={{
         backgroundColor: colorObj.bg,
         color: colorObj.text,
@@ -321,7 +321,7 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
         fontWeight: 500,
         overflow: 'hidden',
         maxWidth: '100%',
-        cursor: 'grab',
+        cursor: event.type === 'physical_test' ? 'default' : 'grab',
         opacity: muted ? 0.5 : 1,
       }}
     >

@@ -241,6 +241,7 @@ model Client {
   nutritionPlans            NutritionPlan[]            @relation("client_nutrition_plans")
   clientPhysicalTests       ClientPhysicalTest[]
   clientPhysicalTestResults ClientPhysicalTestResult[]
+  physicalTestSchedules     ClientPhysicalTestSchedule[]
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")
@@ -2007,6 +2008,7 @@ model PhysicalTest {
   updatedAt         DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
   clientAssignments ClientPhysicalTest[]
   results           ClientPhysicalTestResult[]
+  schedules         ClientPhysicalTestSchedule[]
 
   @@index([category, sortOrder], map: "idx_physical_test_category_sort")
   @@map("physical_test")
@@ -2038,10 +2040,29 @@ model ClientPhysicalTestResult {
   classificationColor    String?             @map("classification_color") @db.VarChar(120)
   measuredAt             DateTime            @default(now()) @map("measured_at") @db.Timestamptz(6)
   recordedByMembershipId String?             @map("recorded_by_membership_id") @db.Uuid
-  client                 Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  physicalTest           PhysicalTest        @relation(fields: [physicalTestId], references: [id], onDelete: Cascade)
-  clientPhysicalTest     ClientPhysicalTest? @relation(fields: [clientPhysicalTestId], references: [id], onDelete: SetNull)
+  client                 Client                       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  physicalTest           PhysicalTest                 @relation(fields: [physicalTestId], references: [id], onDelete: Cascade)
+  clientPhysicalTest     ClientPhysicalTest?          @relation(fields: [clientPhysicalTestId], references: [id], onDelete: SetNull)
+  schedule               ClientPhysicalTestSchedule?
 
   @@index([clientId, physicalTestId, measuredAt], map: "idx_client_physical_test_result_lookup")
   @@map("client_physical_test_result")
+}
+
+model ClientPhysicalTestSchedule {
+  id                    String                    @id @default(uuid()) @db.Uuid
+  clientId              String                    @map("client_id") @db.Uuid
+  physicalTestId        String                    @map("physical_test_id") @db.Uuid
+  scheduledDate         DateTime                  @map("scheduled_date") @db.Date
+  resultId              String?                   @unique @map("result_id") @db.Uuid
+  createdByMembershipId String?                   @map("created_by_membership_id") @db.Uuid
+  archivedAt            DateTime?                 @map("archived_at") @db.Timestamptz(6)
+  createdAt             DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client                Client                    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  physicalTest          PhysicalTest              @relation(fields: [physicalTestId], references: [id], onDelete: Cascade)
+  result                ClientPhysicalTestResult? @relation(fields: [resultId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, scheduledDate], map: "idx_client_physical_test_schedule_client_date")
+  @@map("client_physical_test_schedule")
 }

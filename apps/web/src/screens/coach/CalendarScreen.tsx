@@ -11,6 +11,7 @@ import {
   useClientRoutineDaysQuery,
 } from '../../data/hooks/useCalendarQuery';
 import { useCreateCallProposalMutation } from '../../data/hooks/useChat';
+import { useArchivePhysicalTestScheduleMutation } from '../../data/hooks/usePhysicalTests';
 import type { ClientView } from '../../data/hooks/useClientsQuery';
 import type { CalendarEventData, RoutineDayCard } from './calendar-screen.types';
 import { DEFAULT_COLOR } from './calendar-screen.types';
@@ -60,6 +61,7 @@ function useCalendarLogic() {
   const proposeCall = useCreateCallProposalMutation();
   const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
+  const archiveSchedule = useArchivePhysicalTestScheduleMutation();
   const routineDays: RoutineDayCard[] = useMemo(
     () => (routineDaysQuery.data ?? []).map((d) => ({ ...d, color: routineDayColors[d.id] ?? d.color })),
     [routineDaysQuery.data, routineDayColors],
@@ -77,7 +79,14 @@ function useCalendarLogic() {
     [setMonth, setYear],
   );
   const handleDayClick = (dateStr: string) => setModal({ type: 'day', dateStr });
-  const handleDeleteEvent = (eventId: string) => deleteEvent.mutate(eventId);
+  const handleDeleteEvent = (eventId: string) => {
+    const event = events.find((item) => item.id === eventId);
+    if (event?.type === 'physical_test' && event.clientId) {
+      archiveSchedule.mutate({ clientId: event.clientId, scheduleId: event.scheduleId ?? event.id });
+      return;
+    }
+    deleteEvent.mutate(eventId);
+  };
   const handleMoveEvent = (eventId: string, d: string) => updateEvent.mutate({ eventId, input: { date: d } });
   const handleMoveWeek = createWeekMoveHandler(updateEvent, events);
   const { handleCopyWeek, handleCopyDay, handlePasteWeek, handlePasteDay } = createCopyPasteHandlers(

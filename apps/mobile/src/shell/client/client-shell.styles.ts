@@ -448,6 +448,7 @@ export const s = StyleSheet.create({
   },
   todayCardDate: { color: LIGHT.textOnNavyMuted, fontSize: 12, fontWeight: '500' },
   todayCardFocus: { color: LIGHT.textOnNavy, fontSize: 18, fontWeight: '800', lineHeight: 22 },
+  todayCardIcon: { color: LIGHT.textOnNavyMuted, fontSize: 18 },
   todayCardHeader: { alignItems: 'flex-start', flexDirection: 'row', justifyContent: 'space-between' },
   workoutTimer: {
     alignItems: 'center',

@@ -6,6 +6,7 @@ describe('fixedColorFor', () => {
     expect(fixedColorFor('note')?.bg).toBe('#172554');
     expect(fixedColorFor('call')?.bg).toBe('#065f46');
     expect(fixedColorFor('reminder')?.bg).toBe('#065f46');
+    expect(fixedColorFor('physical_test')?.bg).toBe('#312e81');
     expect(fixedColorFor('workout')).toBeNull();
   });
 });

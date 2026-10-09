@@ -12,6 +12,8 @@ import {
   type PhysicalTestView,
 } from '../../data/hooks/usePhysicalTests';
 import { useClientByIdQuery } from '../../data/hooks/useClientsQuery';
+import { buildCompletedRows, CompletedTestList } from './ClientTestsCompleted';
+import { ScheduleTestModal } from './ClientTestsScheduleModal';
 import { TestRouteModal } from './TestRouteModal';
 import { TestTablesModal } from './TestTablesModal';
 
@@ -46,6 +48,7 @@ function useClientTestsViewModel(props: Props) {
   const [category, setCategory] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [modals, setModals] = useState<ModalState>({ route: null, tables: null });
+  const [scheduling, setScheduling] = useState<PhysicalTestView | null>(null);
   const [lastResult, setLastResult] = useState<PhysicalTestResultView | null>(null);
 
   const assignedIds = useMemo(
@@ -62,11 +65,6 @@ function useClientTestsViewModel(props: Props) {
     return filterTests(catalogQuery.data ?? [], search, category);
   }, [catalogQuery.data, category, search]);
 
-  const completedItems = useMemo(() => {
-    const completed = (assignmentsQuery.data ?? []).filter((item) => item.latestResult);
-    return completed.map((item) => item.physicalTest).filter((test) => matchesFilters(test, search, category));
-  }, [assignmentsQuery.data, category, search]);
-
   const client = clientQuery.data;
   const clientGender: 'F' | 'M' | null = client?.sex === 'female' ? 'F' : client?.sex === 'male' ? 'M' : null;
   const clientAge = resolveAge(client?.birthDate);
@@ -74,21 +72,24 @@ function useClientTestsViewModel(props: Props) {
   return {
     assignMutation,
     assignedIds,
+    assignments: assignmentsQuery.data ?? [],
     catalogItems,
     categories,
     category,
     clientAge,
     clientGender,
+    clientId: props.clientId,
     clientName: props.clientName,
-    completedItems,
     expandedId,
     isLoading: catalogQuery.isLoading || assignmentsQuery.isLoading,
     lastResult,
     modals,
     onBack: props.onBack,
     recordMutation,
+    scheduling,
     search,
     setCategory,
+    setScheduling,
     setExpandedId,
     setLastResult,
     setModals,
@@ -103,7 +104,11 @@ function useClientTestsViewModel(props: Props) {
 type ViewModel = ReturnType<typeof useClientTestsViewModel>;
 
 function ClientTestsView(props: ViewModel): React.JSX.Element {
-  const items = props.viewMode === 'catalog' ? props.catalogItems : props.completedItems;
+  const items = props.catalogItems;
+  const completedRows = buildCompletedRows(props.assignments, props.search, props.category);
+  const datesByTest = new Map(
+    props.assignments.map((item) => [item.physicalTestId, item.schedules.map((schedule) => schedule.scheduledDate)]),
+  );
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.header}>
@@ -143,25 +148,31 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
       </ScrollView>
 
       {props.isLoading ? <Text style={styles.empty}>{props.t('coach.tests.loading')}</Text> : null}
-      {!props.isLoading && items.length === 0 ? <Text style={styles.empty}>{props.t('coach.tests.empty')}</Text> : null}
+      {!props.isLoading && props.viewMode === 'catalog' && items.length === 0 ? (
+        <Text style={styles.empty}>{props.t('coach.tests.empty')}</Text>
+      ) : null}
 
-      {items.map((test) => (
-        <TestCard
-          assigned={props.assignedIds.has(test.id)}
-          expanded={props.expandedId === test.id}
-          key={test.id}
-          onAssign={() => void props.assignMutation.mutateAsync(test.id)}
-          onUnassign={() => void props.unassignMutation.mutateAsync(test.id)}
-          onOpenRoute={() => {
-            props.setLastResult(null);
-            props.setModals((prev) => ({ ...prev, route: test }));
-          }}
-          onOpenTables={() => props.setModals((prev) => ({ ...prev, tables: test }))}
-          onToggle={() => props.setExpandedId(props.expandedId === test.id ? null : test.id)}
-          t={props.t}
-          test={test}
-        />
-      ))}
+      {props.viewMode === 'completed' ? <CompletedTestList rows={completedRows} t={props.t} /> : null}
+      {props.viewMode === 'catalog'
+        ? items.map((test) => (
+            <TestCard
+              assigned={props.assignedIds.has(test.id)}
+              expanded={props.expandedId === test.id}
+              key={test.id}
+              onAssign={() => props.setScheduling(test)}
+              scheduledDates={datesByTest.get(test.id) ?? []}
+              onUnassign={() => void props.unassignMutation.mutateAsync(test.id)}
+              onOpenRoute={() => {
+                props.setLastResult(null);
+                props.setModals((prev) => ({ ...prev, route: test }));
+              }}
+              onOpenTables={() => props.setModals((prev) => ({ ...prev, tables: test }))}
+              onToggle={() => props.setExpandedId(props.expandedId === test.id ? null : test.id)}
+              t={props.t}
+              test={test}
+            />
+          ))
+        : null}
 
       <TestTablesModal
         onClose={() => props.setModals((prev) => ({ ...prev, tables: null }))}
@@ -186,8 +197,25 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
         test={props.modals.route}
         visible={Boolean(props.modals.route)}
       />
+      <ScheduleTestModal
+        clientId={props.clientId}
+        onClose={() => props.setScheduling(null)}
+        t={props.t}
+        test={props.scheduling}
+      />
     </ScrollView>
   );
+}
+
+function formatScheduledDates(dates: string[]): string {
+  return [...dates]
+    .map((value) => value.slice(0, 10))
+    .sort()
+    .map((value) => {
+      const [year, month, day] = value.split('-');
+      return year && month && day ? `${day}/${month}/${year}` : value;
+    })
+    .join(', ');
 }
 
 function TestCard(props: {
@@ -198,6 +226,7 @@ function TestCard(props: {
   onOpenTables: () => void;
   onToggle: () => void;
   onUnassign: () => void;
+  scheduledDates: string[];
   t: ViewModel['t'];
   test: PhysicalTestView;
 }): React.JSX.Element {
@@ -207,6 +236,11 @@ function TestCard(props: {
         <View style={styles.cardTitleBlock}>
           <Text style={styles.cardTitle}>{props.test.name}</Text>
           <Text style={styles.cardMeta}>{`${props.test.category} · ${props.test.level}`}</Text>
+          {props.scheduledDates.length > 0 ? (
+            <Text style={styles.cardMeta}>
+              {props.t('coach.tests.schedule.dates', { dates: formatScheduledDates(props.scheduledDates) })}
+            </Text>
+          ) : null}
         </View>
         <Text style={styles.chevron}>{props.expanded ? '▾' : '▸'}</Text>
       </Pressable>

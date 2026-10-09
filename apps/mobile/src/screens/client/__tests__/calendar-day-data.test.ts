@@ -1,4 +1,4 @@
-import { buildMonthGrid, mergeDayData } from '../client-calendar.helpers';
+import { buildMonthGrid, dayChips, mergeDayData, type DayData } from '../client-calendar.helpers';
 import { callTimeOptions } from '../calendar-fixed-colors';
 import type { ClientCalendarEvent } from '../../../data/hooks/useClientCalendar';
 
@@ -46,6 +46,44 @@ describe('buildMonthGrid', () => {
     const october = buildMonthGrid(new Date(2026, 9, 1));
     const day21 = october.find((cell) => cell.date.getDate() === 21 && cell.isCurrentMonth);
     expect(day21?.dateStr).toBe('2026-10-21');
+  });
+});
+
+describe('dayChips', () => {
+  const base: DayData = {
+    call: null,
+    clientNote: null,
+    coachNotes: [],
+    hasCompleted: false,
+    hasMeeting: false,
+    hasPlanned: false,
+    mood: null,
+    originDate: null,
+    physicalTest: null,
+    planDayId: null,
+    planDayTitle: null,
+    sessionId: null,
+    sessionStatus: null,
+    shift: null,
+    workoutColor: null,
+  };
+
+  it('stacks a test, the workout, a call and notes, and skips what is missing', () => {
+    expect(
+      dayChips({
+        ...base,
+        call: { time: '18:00' },
+        coachNotes: ['Hidratación'],
+        hasPlanned: true,
+        physicalTest: { done: false, name: 'Cooper', scheduleId: 's1' },
+        planDayTitle: 'Pull',
+      }).map((chip) => chip.kind),
+    ).toEqual(['test', 'workout', 'call', 'notes']);
+  });
+
+  it('shows a rest day when there is no workout', () => {
+    expect(dayChips({ ...base, clientNote: 'Bien' }).map((chip) => chip.kind)).toEqual(['rest', 'notes']);
+    expect(dayChips(undefined).map((chip) => chip.kind)).toEqual(['rest']);
   });
 });
 

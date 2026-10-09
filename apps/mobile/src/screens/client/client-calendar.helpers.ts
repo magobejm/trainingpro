@@ -15,6 +15,15 @@ export type DayData = {
   coachNotes: string[];
   call: { time: string } | null;
   clientNote: string | null;
+  planDayId: string | null;
+  physicalTest: { done: boolean; name: string; scheduleId: string } | null;
+};
+
+export type DayChipKind = 'call' | 'notes' | 'rest' | 'test' | 'workout';
+
+export type DayChip = {
+  kind: DayChipKind;
+  text: string;
 };
 
 export type GridCell = {
@@ -64,6 +73,8 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
       coachNotes: [],
       call: null,
       clientNote: null,
+      planDayId: null,
+      physicalTest: null,
     };
 
   for (const s of sessions) {
@@ -74,6 +85,7 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
     d.hasPlanned = !s.isCompleted;
     d.mood = s.postMood;
     d.planDayTitle = s.planDayTitle;
+    d.planDayId = s.planDayId;
     map.set(s.sessionDate, d);
   }
 
@@ -89,6 +101,10 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
       }
     }
     if (e.type === 'workout' && e.color) d.workoutColor = e.color;
+    if (e.planDayId) d.planDayId = e.planDayId;
+    if (e.type === 'physical_test') {
+      d.physicalTest = { done: Boolean(e.isCompleted), name: e.title ?? '', scheduleId: e.scheduleId ?? e.id };
+    }
     if (e.type === 'note' && e.content) d.coachNotes.push(e.content);
     if (e.type === 'call' && e.time) d.call = { time: e.time };
     if (e.type === 'client_note' && e.content) d.clientNote = e.content;
@@ -97,6 +113,20 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
   }
 
   return map;
+}
+
+/** Orden fijo: test, entreno o descanso, llamada y notas. Lo que no existe no sale. */
+export function dayChips(data: DayData | undefined): DayChip[] {
+  const chips: DayChip[] = [];
+  if (data?.physicalTest) chips.push({ kind: 'test', text: data.physicalTest.name });
+  if (data && (data.hasPlanned || data.hasCompleted || data.planDayTitle)) {
+    chips.push({ kind: 'workout', text: data.planDayTitle ?? '' });
+  } else {
+    chips.push({ kind: 'rest', text: '' });
+  }
+  if (data?.call || data?.hasMeeting) chips.push({ kind: 'call', text: data.call?.time ?? '' });
+  if ((data?.coachNotes.length ?? 0) > 0 || data?.clientNote) chips.push({ kind: 'notes', text: '' });
+  return chips;
 }
 
 export const MOOD_EMOJI: Record<number, string> = {

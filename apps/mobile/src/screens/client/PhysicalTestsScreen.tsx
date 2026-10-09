@@ -1,17 +1,16 @@
 /* eslint-disable max-lines */
 import React, { useMemo, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import {
   useClientPhysicalTestsQuery,
-  useRecordPhysicalTestResultMutation,
   type ClientPhysicalTestAssignment,
   type PhysicalTestResultView,
   type RecordPhysicalTestInput,
 } from '../../data/hooks/usePhysicalTests';
-import { useClientMeQuery } from '../../data/hooks/useClientMeQuery';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
+import { PhysicalTestResultForm } from './physical-test-result-form';
 import { LIGHT } from '../../theme/light';
 import { SCREEN, SESSION } from '../../theme/sessionStyles';
 
@@ -21,8 +20,6 @@ type Tab = 'catalog' | 'history';
 const SPINNER_COLOR = LIGHT.accent;
 const SPINNER_SIZE = 'large' as const;
 const MODAL_ANIMATION = 'slide' as const;
-const KEYBOARD_DECIMAL_PAD = 'decimal-pad' as const;
-const KEYBOARD_NUMBER_PAD = 'number-pad' as const;
 
 type CategoryGroup = {
   category: string;
@@ -34,6 +31,10 @@ export function PhysicalTestsScreen({ onClose }: Props): React.JSX.Element {
   const query = useClientPhysicalTestsQuery();
   const [tab, setTab] = useState<Tab>('catalog');
   const [selected, setSelected] = useState<ClientPhysicalTestAssignment | null>(null);
+  const [historyItem, setHistoryItem] = useState<{
+    assignment: ClientPhysicalTestAssignment;
+    result: PhysicalTestResultView;
+  } | null>(null);
   const [recording, setRecording] = useState<ClientPhysicalTestAssignment | null>(null);
 
   const grouped = useMemo(() => groupByCategory(query.data ?? []), [query.data]);
@@ -54,7 +55,7 @@ export function PhysicalTestsScreen({ onClose }: Props): React.JSX.Element {
       ) : tab === 'catalog' ? (
         <CatalogTab groups={grouped} onSelect={setSelected} t={t} />
       ) : (
-        <HistoryTab items={history} t={t} />
+        <HistoryTab items={history} onSelect={setHistoryItem} t={t} />
       )}
       <DetailModal
         assignment={selected}
@@ -68,6 +69,7 @@ export function PhysicalTestsScreen({ onClose }: Props): React.JSX.Element {
         t={t}
       />
       <RecordModal assignment={recording} onClose={() => setRecording(null)} t={t} />
+      <HistoryDetail item={historyItem} onClose={() => setHistoryItem(null)} t={t} />
     </View>
   );
 }
@@ -133,7 +135,6 @@ function CatalogTab({
               {assignment.latestResult ? (
                 <View style={styles.resultRow}>
                   <Text style={styles.resultScore}>{assignment.latestResult.rawScore}</Text>
-                  <Text style={styles.resultClass}>{assignment.latestResult.classification}</Text>
                 </View>
               ) : (
                 <Text style={styles.noResult}>{t('client.physicalTests.noResult')}</Text>
@@ -148,9 +149,11 @@ function CatalogTab({
 
 function HistoryTab({
   items,
+  onSelect,
   t,
 }: {
   items: Array<{ assignment: ClientPhysicalTestAssignment; result: PhysicalTestResultView }>;
+  onSelect: (item: { assignment: ClientPhysicalTestAssignment; result: PhysicalTestResultView }) => void;
   t: (key: string) => string;
 }): React.JSX.Element {
   if (items.length === 0) {
@@ -163,16 +166,15 @@ function HistoryTab({
   return (
     <ScrollView contentContainerStyle={styles.list} showsVerticalScrollIndicator={false}>
       {items.map(({ assignment, result }) => (
-        <View key={result.id} style={styles.historyCard}>
+        <Pressable key={result.id} onPress={() => onSelect({ assignment, result })} style={styles.historyCard}>
           <View style={styles.historyTop}>
             <Text style={styles.historyName}>{assignment.physicalTest.name}</Text>
             <Text style={styles.historyDate}>{formatDate(result.measuredAt)}</Text>
           </View>
           <View style={styles.resultRow}>
             <Text style={styles.resultScore}>{result.rawScore}</Text>
-            <Text style={styles.resultClass}>{result.classification}</Text>
           </View>
-        </View>
+        </Pressable>
       ))}
     </ScrollView>
   );
@@ -208,12 +210,43 @@ function DetailModal({
             <View style={styles.latestCard}>
               <Text style={styles.latestTitle}>{t('client.physicalTests.latestResult')}</Text>
               <Text style={styles.resultScore}>{assignment.latestResult.rawScore}</Text>
-              <Text style={styles.resultClass}>{assignment.latestResult.classification}</Text>
+              <Text style={styles.infoText}>{formatRecordedInputs(assignment.latestResult.inputsJson)}</Text>
             </View>
           ) : null}
           <Pressable onPress={onRecord} style={styles.primaryBtn}>
             <Text style={styles.primaryBtnText}>{t('client.physicalTests.recordResult')}</Text>
           </Pressable>
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+function HistoryDetail(props: {
+  item: { assignment: ClientPhysicalTestAssignment; result: PhysicalTestResultView } | null;
+  onClose: () => void;
+  t: (key: string) => string;
+}): React.JSX.Element {
+  if (!props.item) return <></>;
+  const test = props.item.assignment.physicalTest;
+  return (
+    <Modal visible animationType={MODAL_ANIMATION} onRequestClose={props.onClose}>
+      <View style={styles.modalRoot}>
+        <View style={styles.modalHeader}>
+          <Pressable onPress={props.onClose} style={SESSION.backBtn}>
+            <Text style={SESSION.backArrow}>{'←'}</Text>
+          </Pressable>
+          <Text style={styles.modalTitle}>{test.name}</Text>
+        </View>
+        <ScrollView contentContainerStyle={styles.modalContent}>
+          <InfoBlock label={props.t('client.physicalTests.objective')} text={test.objective} />
+          <InfoBlock label={props.t('client.physicalTests.whatToDo')} text={test.whatToDo} />
+          <InfoBlock label={props.t('client.physicalTests.whatToMeasure')} text={test.whatToMeasure} />
+          <View style={styles.latestCard}>
+            <Text style={styles.latestTitle}>{props.t('client.physicalTests.recordedData')}</Text>
+            <Text style={styles.resultScore}>{props.item.result.rawScore}</Text>
+            <Text style={styles.infoText}>{formatRecordedInputs(props.item.result.inputsJson)}</Text>
+          </View>
         </ScrollView>
       </View>
     </Modal>
@@ -229,7 +262,6 @@ function InfoBlock({ label, text }: { label: string; text: string }): React.JSX.
   );
 }
 
-// eslint-disable-next-line max-lines-per-function
 function RecordModal({
   assignment,
   onClose,
@@ -239,67 +271,7 @@ function RecordModal({
   onClose: () => void;
   t: (key: string) => string;
 }): React.JSX.Element {
-  const clientQuery = useClientMeQuery();
-  const mutation = useRecordPhysicalTestResultMutation();
-  const [gender, setGender] = useState<'F' | 'M'>('M');
-  const [age, setAge] = useState('');
-  const [weight, setWeight] = useState('');
-  const [timeMin, setTimeMin] = useState('');
-  const [timeSec, setTimeSec] = useState('');
-  const [hr, setHr] = useState('');
-  const [distance, setDistance] = useState('');
-  const [reps, setReps] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (!assignment) return;
-    const client = clientQuery.data;
-    if (client?.sex === 'female' || client?.sex === 'F') setGender('F');
-    else if (client?.sex === 'male' || client?.sex === 'M') setGender('M');
-    if (client?.weightKg) setWeight(String(client.weightKg));
-    if (client?.birthDate) {
-      const birth = new Date(client.birthDate);
-      const now = new Date();
-      let years = now.getFullYear() - birth.getFullYear();
-      const monthDiff = now.getMonth() - birth.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) years -= 1;
-      if (years > 0) setAge(String(years));
-    }
-    setTimeMin('');
-    setTimeSec('');
-    setHr('');
-    setDistance('');
-    setReps('');
-    setError(null);
-  }, [assignment, clientQuery.data]);
-
   if (!assignment) return <></>;
-
-  const handleSubmit = async () => {
-    const parsedAge = Number(age);
-    if (!Number.isInteger(parsedAge) || parsedAge < 5) {
-      setError(t('client.physicalTests.form.ageRequired'));
-      return;
-    }
-    const input: RecordPhysicalTestInput = {
-      age: parsedAge,
-      gender,
-      ...(weight ? { weight: Number(weight) } : {}),
-      ...(timeMin ? { timeMin: Number(timeMin) } : {}),
-      ...(timeSec ? { timeSec: Number(timeSec) } : {}),
-      ...(hr ? { hr: Number(hr) } : {}),
-      ...(distance ? { distance: Number(distance) } : {}),
-      ...(reps ? { reps: Number(reps) } : {}),
-    };
-    try {
-      setError(null);
-      await mutation.mutateAsync({ testId: assignment.physicalTestId, input });
-      onClose();
-    } catch {
-      setError(t('client.physicalTests.form.submitError'));
-    }
-  };
-
   return (
     <Modal visible animationType={MODAL_ANIMATION} onRequestClose={onClose}>
       <View style={styles.modalRoot}>
@@ -311,99 +283,15 @@ function RecordModal({
         </View>
         <ScrollView contentContainerStyle={styles.modalContent}>
           <Text style={styles.formHint}>{assignment.physicalTest.whatToMeasure}</Text>
-          <Text style={styles.fieldLabel}>{t('client.physicalTests.form.gender')}</Text>
-          <View style={styles.genderRow}>
-            <Pressable onPress={() => setGender('M')} style={[styles.genderBtn, gender === 'M' && styles.genderBtnActive]}>
-              <Text style={[styles.genderText, gender === 'M' && styles.genderTextActive]}>
-                {t('client.physicalTests.form.male')}
-              </Text>
-            </Pressable>
-            <Pressable onPress={() => setGender('F')} style={[styles.genderBtn, gender === 'F' && styles.genderBtnActive]}>
-              <Text style={[styles.genderText, gender === 'F' && styles.genderTextActive]}>
-                {t('client.physicalTests.form.female')}
-              </Text>
-            </Pressable>
-          </View>
-          <FormField
-            label={t('client.physicalTests.form.age')}
-            value={age}
-            onChange={setAge}
-            keyboardType={KEYBOARD_NUMBER_PAD}
+          <PhysicalTestResultForm
+            onSaved={() => onClose()}
+            showTitle={false}
+            testId={assignment.physicalTestId}
+            testName={assignment.physicalTest.name}
           />
-          <FormField
-            label={t('client.physicalTests.form.weight')}
-            value={weight}
-            onChange={setWeight}
-            keyboardType={KEYBOARD_DECIMAL_PAD}
-          />
-          <View style={styles.timeRow}>
-            <FormField
-              label={t('client.physicalTests.form.timeMin')}
-              value={timeMin}
-              onChange={setTimeMin}
-              keyboardType={KEYBOARD_NUMBER_PAD}
-              flex
-            />
-            <FormField
-              label={t('client.physicalTests.form.timeSec')}
-              value={timeSec}
-              onChange={setTimeSec}
-              keyboardType={KEYBOARD_NUMBER_PAD}
-              flex
-            />
-          </View>
-          <FormField
-            label={t('client.physicalTests.form.hr')}
-            value={hr}
-            onChange={setHr}
-            keyboardType={KEYBOARD_NUMBER_PAD}
-          />
-          <FormField
-            label={t('client.physicalTests.form.distance')}
-            value={distance}
-            onChange={setDistance}
-            keyboardType={KEYBOARD_DECIMAL_PAD}
-          />
-          <FormField
-            label={t('client.physicalTests.form.reps')}
-            value={reps}
-            onChange={setReps}
-            keyboardType={KEYBOARD_NUMBER_PAD}
-          />
-          {error ? <Text style={styles.error}>{error}</Text> : null}
-          <Pressable
-            disabled={mutation.isPending}
-            onPress={() => void handleSubmit()}
-            style={[styles.primaryBtn, mutation.isPending && { opacity: 0.7 }]}
-          >
-            <Text style={styles.primaryBtnText}>
-              {mutation.isPending ? t('client.physicalTests.form.saving') : t('client.physicalTests.form.submit')}
-            </Text>
-          </Pressable>
         </ScrollView>
       </View>
     </Modal>
-  );
-}
-
-function FormField({
-  label,
-  value,
-  onChange,
-  keyboardType,
-  flex,
-}: {
-  flex?: boolean;
-  keyboardType?: 'decimal-pad' | 'number-pad';
-  label: string;
-  onChange: (value: string) => void;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View style={[styles.fieldWrap, flex && { flex: 1 }]}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <TextInput keyboardType={keyboardType} onChangeText={onChange} style={styles.input} value={value} />
-    </View>
   );
 }
 
@@ -439,6 +327,12 @@ function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString();
 }
 
+function formatRecordedInputs(inputs: RecordPhysicalTestInput): string {
+  return Object.entries(inputs)
+    .map(([key, value]) => `${key}: ${String(value)}`)
+    .join(' · ');
+}
+
 const styles = StyleSheet.create({
   categoryLabel: {
     color: LIGHT.accentDark,
@@ -453,22 +347,7 @@ const styles = StyleSheet.create({
   container: SCREEN.root,
   empty: { color: LIGHT.textMuted, fontSize: 14, textAlign: 'center' },
   error: { color: LIGHT.error, fontSize: 13, marginBottom: 8, textAlign: 'center' },
-  fieldLabel: { color: LIGHT.textMuted, fontSize: 12, fontWeight: '700', marginBottom: 6 },
-  fieldWrap: { marginBottom: 12 },
   formHint: { color: LIGHT.textMuted, fontSize: 13, lineHeight: 18, marginBottom: 16 },
-  genderBtn: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.bgCard,
-    borderColor: LIGHT.border,
-    borderRadius: LIGHT.radiusMd,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: 12,
-  },
-  genderBtnActive: { backgroundColor: LIGHT.accent, borderColor: LIGHT.accent },
-  genderRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  genderText: { color: LIGHT.textMuted, fontSize: 14, fontWeight: '700' },
-  genderTextActive: { color: LIGHT.textOnNavy },
   historyCard: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,
@@ -491,17 +370,6 @@ const styles = StyleSheet.create({
   },
   infoLabel: { color: LIGHT.accentDark, fontSize: 12, fontWeight: '800', textTransform: 'uppercase' },
   infoText: { color: LIGHT.textStrong, fontSize: 14, lineHeight: 20 },
-  input: {
-    backgroundColor: LIGHT.bgCard,
-    borderColor: LIGHT.border,
-    borderRadius: LIGHT.radiusMd,
-    borderWidth: 1,
-    color: LIGHT.textStrong,
-    fontSize: 16,
-    fontWeight: '600',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
   latestCard: {
     backgroundColor: LIGHT.accentSoft,
     borderColor: LIGHT.borderStrong,
@@ -571,5 +439,4 @@ const styles = StyleSheet.create({
   },
   testCardTop: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   testName: { color: LIGHT.textStrong, flex: 1, fontSize: 15, fontWeight: '700' },
-  timeRow: { flexDirection: 'row', gap: 8 },
 });

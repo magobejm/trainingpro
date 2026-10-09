@@ -15,6 +15,7 @@ type HomeHubProps = {
   onOpenProfile: () => void;
   onOpenProgress: () => void;
   onOpenRoutine: () => void;
+  onOpenToday: () => void;
 };
 
 export function HomeHub(props: HomeHubProps): React.JSX.Element {
@@ -55,15 +56,15 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
             </View>
           </View>
         </Pressable>
-        <View style={s.todayCard}>
+        <Pressable accessibilityLabel={t('mobile.client.routine.today')} onPress={props.onOpenToday} style={s.todayCard}>
           <View style={s.todayCardHeader}>
             <View>
               <Text style={s.todayCardDate}>{dateLabel}</Text>
               <Text style={s.todayCardFocus}>{focusLabel}</Text>
             </View>
-            <Text style={{ color: LIGHT.textOnNavyMuted, fontSize: 18 }}>{'📅'}</Text>
+            <Text style={s.todayCardIcon}>{'📅'}</Text>
           </View>
-        </View>
+        </Pressable>
       </View>
       <View style={s.homeContent}>
         <ActionCard

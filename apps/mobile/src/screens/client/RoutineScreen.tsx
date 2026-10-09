@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useClientCalendarEventsQuery, useClientCalendarSessionsQuery } from '../../data/hooks/useClientCalendar';
+import { usePhysicalTestSchedulesQuery, type ClientPhysicalTestSchedule } from '../../data/hooks/usePhysicalTests';
 import { useClientRoutineQuery, type ClientRoutine, type ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { s } from '../../shell/client/client-shell.styles';
@@ -18,10 +19,11 @@ import {
 
 type RoutineScreenProps = {
   onClose: () => void;
+  onOpenTest: (scheduleId: string) => void;
   onSelectDay: (day: ClientRoutineDay) => void;
 };
 
-export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): React.JSX.Element {
+export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const { data: routine, isLoading } = useClientRoutineQuery();
   const today = useMemo(() => new Date(), []);
@@ -29,6 +31,8 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
   const weekRange = useMemo(() => getWeekDateRange(today), [today]);
   const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
+  const schedulesQuery = usePhysicalTestSchedulesQuery(todayStr, todayStr);
+  const todayTest = schedulesQuery.data?.[0] ?? null;
 
   const schedule = useMemo(() => {
     if (!routine) return null;
@@ -75,16 +79,20 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
         {schedule?.mode === 'calendar' ? (
           <CalendarScheduleSections
             completedPlanDayIds={completedPlanDayIds}
+            onOpenTest={onOpenTest}
             onSelectDay={onSelectDay}
             schedule={schedule}
             t={t}
+            todayTest={todayTest}
           />
         ) : (
           <AssignedRoutineSection
             completedPlanDayIds={completedPlanDayIds}
             days={schedule?.days ?? routine.planDays}
+            onOpenTest={onOpenTest}
             onSelectDay={onSelectDay}
             t={t}
+            todayTest={todayTest}
           />
         )}
         <ClientNeatSection neats={routine.neats} />
@@ -95,9 +103,11 @@ export function RoutineScreen({ onClose, onSelectDay }: RoutineScreenProps): Rea
 
 function CalendarScheduleSections(props: {
   completedPlanDayIds: Set<string>;
+  onOpenTest: (scheduleId: string) => void;
   onSelectDay: (day: ClientRoutineDay) => void;
   schedule: Extract<ReturnType<typeof resolveRoutineWeekSchedule>, { mode: 'calendar' }>;
   t: (key: string) => string;
+  todayTest: ClientPhysicalTestSchedule | null;
 }): React.JSX.Element {
   const { schedule, t } = props;
 
@@ -105,6 +115,9 @@ function CalendarScheduleSections(props: {
     <>
       <View style={styles.todaySection}>
         <Text style={s.routineSectionLabel}>{t('mobile.client.routine.today')}</Text>
+        {props.todayTest ? (
+          <TodayTestCard onPress={() => props.onOpenTest(props.todayTest!.id)} schedule={props.todayTest} t={t} />
+        ) : null}
         {schedule.today ? (
           <ScheduledWorkoutCard
             isActive
@@ -144,11 +157,16 @@ function CalendarScheduleSections(props: {
 function AssignedRoutineSection(props: {
   completedPlanDayIds: Set<string>;
   days: ClientRoutineDay[];
+  onOpenTest: (scheduleId: string) => void;
   onSelectDay: (day: ClientRoutineDay) => void;
   t: (key: string) => string;
+  todayTest: ClientPhysicalTestSchedule | null;
 }): React.JSX.Element {
   return (
     <>
+      {props.todayTest ? (
+        <TodayTestCard onPress={() => props.onOpenTest(props.todayTest!.id)} schedule={props.todayTest} t={props.t} />
+      ) : null}
       <Text style={s.routineSectionLabel}>{props.t('mobile.client.routine.assignedDays')}</Text>
       <View style={styles.otherDays}>
         {props.days.map((day) => (
@@ -161,6 +179,26 @@ function AssignedRoutineSection(props: {
         ))}
       </View>
     </>
+  );
+}
+
+function TodayTestCard(props: {
+  onPress: () => void;
+  schedule: ClientPhysicalTestSchedule;
+  t: (key: string) => string;
+}): React.JSX.Element {
+  const test = props.schedule.physicalTest;
+  return (
+    <Pressable onPress={props.onPress} style={styles.testCard}>
+      <Text style={styles.testMeta}>{`${test.category} · ${test.level}`}</Text>
+      <Text style={styles.testName}>{test.name}</Text>
+      <Text numberOfLines={2} style={styles.testObjective}>
+        {test.objective}
+      </Text>
+      <Text style={styles.testAction}>
+        {props.schedule.result ? props.t('client.physicalTests.viewData') : props.t('client.physicalTests.openTest')}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -275,6 +313,11 @@ const styles = StyleSheet.create({
     gap: 16,
     marginTop: 8,
   },
+  testAction: { color: '#c7d2fe', fontSize: 13, fontWeight: '800', marginTop: 8 },
+  testCard: { backgroundColor: '#312e81', borderRadius: 16, gap: 4, marginBottom: 12, padding: 16 },
+  testMeta: { color: '#a5b4fc', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  testName: { color: '#fff', fontSize: 18, fontWeight: '800' },
+  testObjective: { color: '#c7d2fe', fontSize: 13, lineHeight: 18 },
   dayRight: {
     alignItems: 'center',
     flexDirection: 'row',

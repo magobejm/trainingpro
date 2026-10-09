@@ -14,6 +14,7 @@ export class RecordPhysicalTestResultDto {
     workload: z.number().min(0).optional(),
     eyesClosed: z.boolean().optional(),
     level: z.enum(['Recreacional', 'Avanzado']).optional(),
+    scheduleId: z.string().uuid().optional(),
   });
 
   gender!: 'F' | 'M';
@@ -28,4 +29,5 @@ export class RecordPhysicalTestResultDto {
   workload?: number;
   eyesClosed?: boolean;
   level?: 'Avanzado' | 'Recreacional';
+  scheduleId?: string;
 }

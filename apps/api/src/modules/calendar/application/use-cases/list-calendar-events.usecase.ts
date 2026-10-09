@@ -2,8 +2,10 @@ import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 import {
   CALENDAR_REPOSITORY,
+  type CalendarEventEntity,
   type ICalendarRepository,
   type ListCalendarEventsQuery,
 } from '../../domain/calendar.repository.port';
@@ -15,6 +17,7 @@ export class ListCalendarEventsUseCase {
     @Inject(CALENDAR_REPOSITORY)
     private readonly calendarRepository: ICalendarRepository,
     private readonly prisma: PrismaService,
+    private readonly physicalTests: PhysicalTestsRepository,
   ) {}
 
   async execute(context: AuthContext, query: ListCalendarEventsQuery) {
@@ -25,6 +28,7 @@ export class ListCalendarEventsUseCase {
     const events = await this.calendarRepository.list(membership.id, query);
     const completed = await this.loadCompletedDays(membership.id, query);
     const pending = await this.loadPendingProposals(membership.id, query);
+    const tests = query.coachOnly ? [] : await this.loadPhysicalTests(membership.id, query);
     return {
       data: [
         ...events.map((event) => ({
@@ -32,8 +36,39 @@ export class ListCalendarEventsUseCase {
           isCompleted: event.type === 'workout' && completed.has(this.dayKey(event.clientId, event.date)),
         })),
         ...pending,
+        ...tests,
       ],
     };
+  }
+
+  private async loadPhysicalTests(
+    coachMembershipId: string,
+    query: ListCalendarEventsQuery,
+  ): Promise<CalendarEventEntity[]> {
+    const rows = await this.physicalTests.listScheduleCalendarRows({
+      clientId: query.clientId,
+      coachMembershipId,
+      dateFrom: query.dateFrom,
+      dateTo: query.dateTo,
+    });
+    return rows.map((row) => ({
+      clientId: row.clientId,
+      clientName: row.clientName,
+      coachMembershipId: row.coachMembershipId,
+      color: null,
+      content: null,
+      createdAt: row.createdAt,
+      date: row.scheduledDate,
+      id: row.id,
+      isCompleted: row.done,
+      originDate: null,
+      planDayId: null,
+      scheduleId: row.id,
+      time: null,
+      title: row.testName,
+      type: 'physical_test',
+      updatedAt: row.updatedAt,
+    }));
   }
 
   private async loadPendingProposals(coachMembershipId: string, query: ListCalendarEventsQuery) {

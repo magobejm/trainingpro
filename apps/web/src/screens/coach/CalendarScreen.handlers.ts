@@ -155,7 +155,7 @@ export function createWeekMoveHandler(
       const src = sourceDates[i];
       const tgt = targetDates[i];
       if (!src || !tgt || src === tgt) continue;
-      for (const ev of events.filter((e) => toIso(e.date) === src)) {
+      for (const ev of events.filter((e) => toIso(e.date) === src && isMovableCalendarEvent(e))) {
         updateEvent.mutate({ eventId: ev.id, input: { date: tgt } });
       }
     }
@@ -169,10 +169,18 @@ export function createCopyPasteHandlers(
   events: CalendarEventData[],
 ) {
   function handleCopyWeek(dates: string[]) {
-    setClipboard({ type: 'week', sourceDates: dates, events: events.filter((ev) => dates.includes(toIso(ev.date))) });
+    setClipboard({
+      type: 'week',
+      sourceDates: dates,
+      events: events.filter((ev) => dates.includes(toIso(ev.date)) && isMovableCalendarEvent(ev)),
+    });
   }
   function handleCopyDay(dateStr: string) {
-    setClipboard({ type: 'day', sourceDate: dateStr, events: events.filter((ev) => toIso(ev.date) === dateStr) });
+    setClipboard({
+      type: 'day',
+      sourceDate: dateStr,
+      events: events.filter((ev) => toIso(ev.date) === dateStr && isMovableCalendarEvent(ev)),
+    });
   }
   function handlePasteWeek(targetDates: string[]) {
     if (!clipboard || clipboard.type !== 'week') return;
@@ -180,7 +188,7 @@ export function createCopyPasteHandlers(
       const src = clipboard.sourceDates[i];
       const tgt = targetDates[i];
       if (!src || !tgt) continue;
-      for (const ev of clipboard.events.filter((e) => toIso(e.date) === src)) {
+      for (const ev of clipboard.events.filter(isMovableCalendarEvent).filter((e) => toIso(e.date) === src)) {
         createEvent.mutate({
           type: ev.type,
           date: tgt,
@@ -196,7 +204,7 @@ export function createCopyPasteHandlers(
   }
   function handlePasteDay(targetDateStr: string) {
     if (!clipboard || clipboard.type !== 'day') return;
-    for (const ev of clipboard.events) {
+    for (const ev of clipboard.events.filter(isMovableCalendarEvent)) {
       createEvent.mutate({
         type: ev.type,
         date: targetDateStr,
@@ -210,4 +218,10 @@ export function createCopyPasteHandlers(
     }
   }
   return { handleCopyWeek, handleCopyDay, handlePasteWeek, handlePasteDay };
+}
+
+function isMovableCalendarEvent(
+  event: CalendarEventData,
+): event is CalendarEventData & { type: 'call' | 'note' | 'reminder' | 'workout' } {
+  return event.type !== 'physical_test';
 }

@@ -241,7 +241,7 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
         ))}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
-        {event.type !== 'workout' && onEdit != null && (
+        {event.type !== 'workout' && event.type !== 'physical_test' && onEdit != null && (
           <Pressable
             onPress={onEdit}
             style={{

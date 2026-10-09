@@ -1,3 +1,4 @@
+import { physicalTestFields, type PhysicalTestFieldKey } from '@trainerpro/shared';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { PhysicalTestResultView, PhysicalTestView, TestInputs } from '../../data/hooks/usePhysicalTests';
@@ -17,19 +18,7 @@ type Props = {
   visible: boolean;
 };
 
-type FieldKey =
-  | 'age'
-  | 'distance'
-  | 'eyesClosed'
-  | 'gender'
-  | 'hr'
-  | 'level'
-  | 'palier'
-  | 'reps'
-  | 'timeMin'
-  | 'timeSec'
-  | 'weight'
-  | 'workload';
+type FieldKey = PhysicalTestFieldKey;
 
 type FieldState = {
   age: string;
@@ -47,7 +36,7 @@ type FieldState = {
 };
 
 export function TestRouteModal(props: Props): React.JSX.Element {
-  const fields = useMemo(() => resolveFields(props.test?.name ?? ''), [props.test?.name]);
+  const fields = useMemo(() => physicalTestFields(props.test?.name ?? ''), [props.test?.name]);
   const [state, setState] = useState<FieldState>(() => createInitialState(props));
   useEffect(() => {
     if (props.visible) setState(createInitialState(props));
@@ -106,38 +95,6 @@ function createInitialState(props: Pick<Props, 'clientAge' | 'clientGender'>): F
     weight: '',
     workload: '',
   };
-}
-
-function resolveFields(testName: string): FieldKey[] {
-  const base: FieldKey[] = ['gender', 'age'];
-  switch (testName) {
-    case 'Test de Caminata de Rockport (1 milla)':
-      return [...base, 'weight', 'timeMin', 'timeSec', 'hr'];
-    case 'Test de Cooper (12 Minutos)':
-    case 'Test de Sit and Reach':
-    case 'Salto Horizontal a Pies Juntos (Broad Jump)':
-    case 'Salto Vertical de Sargent / CMJ':
-    case 'Test de Rascarse la Espalda (Back Scratch Test)':
-    case 'Lanzamiento de Balón Medicinal Sentado':
-      return [...base, 'distance'];
-    case 'Test de Flexiones (Push-Up Test)':
-    case 'Test de Sentarse y Levantarse en 30 s (30-s Chair Stand)':
-    case 'Test de Dominadas Estrictas (Pull-Ups)':
-      return [...base, 'reps'];
-    case 'Test de Resistencia de Plancha Isométrica (Plank Test)':
-    case 'Test de Apoyo Unipodal (Flamingo / SLS)':
-      return [...base, 'timeMin', 'timeSec', 'eyesClosed'];
-    case 'Test del Escalón de 3 Minutos del YMCA':
-      return [...base, 'hr'];
-    case 'Test de Course-Navette (20 m Shuttle Run)':
-      return [...base, 'palier'];
-    case 'Test Pro Agility 5-10-5 (20-Yard Shuttle)':
-      return [...base, 'timeSec', 'level'];
-    case 'Test Submáximo en Cicloergómetro (YMCA)':
-      return [...base, 'weight', 'workload'];
-    default:
-      return base;
-  }
 }
 
 function renderField(

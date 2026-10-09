@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 
 export type ClientCalendarEvent = {
   id: string;
@@ -15,6 +16,7 @@ export type ClientCalendarEvent = {
   originDate: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
+  scheduleId?: string;
 };
 
 type ListClientCalendarInput = {
@@ -24,7 +26,10 @@ type ListClientCalendarInput = {
 
 @Injectable()
 export class ListClientCalendarUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly physicalTests: PhysicalTestsRepository,
+  ) {}
 
   async execute(context: AuthContext, input: ListClientCalendarInput): Promise<{ data: ClientCalendarEvent[] }> {
     const client = await this.resolveClient(context);
@@ -50,8 +55,27 @@ export class ListClientCalendarUseCase {
     });
     const completed = await this.loadCompletedDays(client.id, input);
     const notes = await this.loadClientNotes(client.id, input);
+    const tests = await this.physicalTests.listScheduleCalendarRows({
+      clientId: client.id,
+      dateFrom: input.dateFrom,
+      dateTo: input.dateTo,
+    });
     return {
       data: [
+        ...tests.map((test) => ({
+          color: null,
+          content: null,
+          date: test.scheduledDate,
+          id: test.id,
+          isCompleted: test.done,
+          originDate: null,
+          planDayId: null,
+          planDayTitle: undefined,
+          scheduleId: test.id,
+          time: null,
+          title: test.testName,
+          type: 'physical_test',
+        })),
         ...rows.map((r) => ({
           id: r.id,
           type: r.type,

@@ -13,6 +13,7 @@ export type OverlayId =
   | 'progress'
   | 'routine'
   | 'routineDay'
+  | 'scheduledTest'
   | 'session'
   | null;
 

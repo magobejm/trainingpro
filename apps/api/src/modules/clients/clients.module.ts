@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { FilesModule } from '../files/files.module';
+import { PhysicalTestsModule } from '../physical-tests/physical-tests.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { ClientCalendarPlanDaySwapService } from './application/services/client-calendar-plan-day-swap.service';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
@@ -45,7 +46,7 @@ import { ClientsController } from './presentation/controllers/clients.controller
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
-  imports: [AuthModule, ChatModule, FilesModule, forwardRef(() => SessionsModule)],
+  imports: [AuthModule, ChatModule, FilesModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
   exports: [ClientAccessPolicy],
   controllers: [ClientLibraryController, ClientSelfController, ClientsController],
   providers: [

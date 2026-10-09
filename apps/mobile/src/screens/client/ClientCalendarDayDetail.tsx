@@ -20,14 +20,25 @@ type DayDetailModalProps = {
   data: DayData | undefined;
   dateStr: string;
   onClose: () => void;
+  onOpenPlanDay?: (planDayId: string) => void;
   onOpenSession: (sessionId: string) => void;
+  onOpenTest?: (scheduleId: string) => void;
+  exerciseCount?: number | null;
 };
 
 const MODAL_ANIM = 'fade' as const;
 const PLACEHOLDER_NOTE = '#fde68a';
 const TEXT_LIGHT = '#f8fafc';
 
-export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDetailModalProps): React.JSX.Element {
+export function DayDetailModal({
+  data,
+  dateStr,
+  exerciseCount,
+  onClose,
+  onOpenPlanDay,
+  onOpenSession,
+  onOpenTest,
+}: DayDetailModalProps): React.JSX.Element {
   const { i18n, t } = useTranslation();
   const date = new Date(dateStr);
   const dateLabel = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', weekday: 'long' });
@@ -40,7 +51,37 @@ export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDet
       <View style={styles.card}>
         <ScrollView>
           <Text style={styles.dateLabel}>{dateLabel}</Text>
-          <TrainingSection data={data} moodEmoji={moodEmoji} title={trainingTitle} t={t} language={i18n.language} />
+          <View style={styles.titleRow}>
+            <Text style={styles.dayTitle}>{trainingTitle ?? t('client.calendar.detail.rest')}</Text>
+            <Text style={styles.badge}>
+              {trainingTitle ? t('client.calendar.chip.workout') : t('client.calendar.chip.rest')}
+            </Text>
+          </View>
+          {data?.physicalTest ? (
+            <Pressable onPress={() => onOpenTest?.(data.physicalTest!.scheduleId)} style={styles.summaryCard}>
+              <Text style={styles.summaryTitle}>{data.physicalTest.name}</Text>
+              <Text style={styles.summaryHint}>{t('client.calendar.chip.test')}</Text>
+            </Pressable>
+          ) : null}
+          {trainingTitle ? (
+            <Pressable
+              disabled={!data?.planDayId}
+              onPress={() => {
+                if (data?.planDayId) onOpenPlanDay?.(data.planDayId);
+              }}
+              style={styles.summaryCard}
+            >
+              <Text style={styles.summaryTitle}>
+                {t('client.calendar.detail.exerciseCount', { count: exerciseCount ?? 0, title: trainingTitle })}
+              </Text>
+              <Text style={styles.summaryHint}>
+                {data?.planDayId ? t('client.calendar.detail.openWorkout') : t('client.calendar.detail.sessionSummary')}
+              </Text>
+            </Pressable>
+          ) : (
+            <Text style={styles.sectionValue}>{t('client.calendar.detail.restHint')}</Text>
+          )}
+          <TrainingSection data={data} language={i18n.language} moodEmoji={moodEmoji} t={t} />
           <CoachNotes notes={data?.coachNotes ?? []} />
           {data?.call ? <CallBlock time={data.call.time} /> : null}
           <ClientNoteEditor dateStr={dateStr} initial={data?.clientNote ?? ''} />
@@ -51,8 +92,8 @@ export function DayDetailModal({ data, dateStr, onClose, onOpenSession }: DayDet
             </Pressable>
           ) : null}
         </ScrollView>
-        <Pressable onPress={onClose} style={styles.closeBtn}>
-          <Text style={styles.closeBtnText}>{'✕'}</Text>
+        <Pressable onPress={onClose} style={styles.btnPrimary}>
+          <Text style={styles.btnPrimaryText}>{t('client.calendar.detail.close')}</Text>
         </Pressable>
       </View>
     </Modal>
@@ -64,13 +105,11 @@ function TrainingSection(props: {
   language: string;
   moodEmoji: string | null;
   t: (key: string, options?: Record<string, unknown>) => string;
-  title: string | null;
 }): React.JSX.Element {
   const { data, t } = props;
+  if (!props.moodEmoji && !data?.hasCompleted) return <></>;
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{t('client.calendar.detail.training')}</Text>
-      <Text style={styles.sectionValue}>{props.title ?? t('client.calendar.detail.rest')}</Text>
       {props.moodEmoji ? <Text style={styles.mood}>{props.moodEmoji}</Text> : null}
       {data?.hasCompleted ? <Text style={styles.shift}>{t('client.calendar.workout.done')}</Text> : null}
       {data?.hasCompleted && data.shift && data.originDate ? (
@@ -107,7 +146,7 @@ function CallBlock(props: { time: string }): React.JSX.Element {
   );
 }
 
-function ClientNoteEditor(props: { dateStr: string; initial: string }): React.JSX.Element {
+export function ClientNoteEditor(props: { dateStr: string; initial: string }): React.JSX.Element {
   const { t } = useTranslation();
   const [content, setContent] = useState(props.initial);
   const [saved, setSaved] = useState(false);
@@ -134,7 +173,7 @@ function ClientNoteEditor(props: { dateStr: string; initial: string }): React.JS
   );
 }
 
-function CallRequest(props: { dateStr: string }): React.JSX.Element {
+export function CallRequest(props: { dateStr: string }): React.JSX.Element {
   const { t } = useTranslation();
   const [time, setTime] = useState('17:15');
   const [sent, setSent] = useState(false);
@@ -208,7 +247,29 @@ const styles = StyleSheet.create({
   chipText: { color: TEXT_LIGHT, fontSize: 12 },
   closeBtn: { alignItems: 'center', marginTop: 12 },
   closeBtnText: { color: LIGHT.textMuted, fontSize: 16 },
-  dateLabel: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '600', marginBottom: 12, textTransform: 'capitalize' },
+  badge: {
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusFull,
+    color: LIGHT.accentDark,
+    fontSize: 11,
+    fontWeight: '700',
+    overflow: 'hidden',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  dateLabel: { color: LIGHT.accent, fontSize: 12, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase' },
+  dayTitle: { color: LIGHT.textStrong, flex: 1, fontSize: 28, fontWeight: '800' },
+  summaryCard: {
+    backgroundColor: LIGHT.bgSoft,
+    borderColor: LIGHT.border,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 8,
+    padding: 12,
+  },
+  summaryHint: { color: LIGHT.textMuted, fontSize: 12, marginTop: 2 },
+  summaryTitle: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700' },
+  titleRow: { alignItems: 'center', flexDirection: 'row', gap: 8 },
   mood: { fontSize: 24, marginTop: 4 },
   noteInput: { color: TEXT_LIGHT, fontSize: 13, minHeight: 60 },
   section: { marginBottom: 8 },

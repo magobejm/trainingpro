@@ -4,7 +4,7 @@ import { createApiClient } from '../api-client';
 
 export type ClientCalendarEvent = {
   id: string;
-  type: 'call' | 'client_note' | 'note' | 'reminder' | 'workout';
+  type: 'call' | 'client_note' | 'note' | 'physical_test' | 'reminder' | 'workout';
   date: string;
   title: string | null;
   content: string | null;
@@ -14,6 +14,7 @@ export type ClientCalendarEvent = {
   originDate?: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
+  scheduleId?: string;
 };
 
 export type ClientSessionSummary = {

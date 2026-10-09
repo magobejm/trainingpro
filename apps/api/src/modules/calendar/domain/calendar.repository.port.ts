@@ -1,6 +1,6 @@
 export const CALENDAR_REPOSITORY = Symbol('CALENDAR_REPOSITORY');
 
-export type CalendarEventType = 'call' | 'note' | 'reminder' | 'workout';
+export type CalendarEventType = 'call' | 'note' | 'physical_test' | 'reminder' | 'workout';
 
 export type CallStatus = 'accepted' | 'pending' | 'unconfirmed';
 
@@ -20,6 +20,7 @@ export type CalendarEventEntity = {
   planDayId: string | null;
   isCompleted?: boolean;
   planDayTitle?: string;
+  scheduleId?: string;
   createdAt: Date;
   updatedAt: Date;
 };

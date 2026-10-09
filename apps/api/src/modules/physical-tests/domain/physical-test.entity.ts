@@ -28,6 +28,13 @@ export type PhysicalTestResultView = {
   measuredAt: string;
 };
 
+export type PhysicalTestScheduleSummary = {
+  done: boolean;
+  id: string;
+  resultId: string | null;
+  scheduledDate: string;
+};
+
 export type ClientPhysicalTestAssignmentView = {
   id: string;
   clientId: string;
@@ -35,6 +42,36 @@ export type ClientPhysicalTestAssignmentView = {
   assignedAt: string;
   physicalTest: PhysicalTestView;
   latestResult: PhysicalTestResultView | null;
+  results: PhysicalTestResultView[];
+  schedules: PhysicalTestScheduleSummary[];
+};
+
+export type ClientPhysicalTestScheduleView = {
+  id: string;
+  scheduledDate: string;
+  physicalTest: Omit<PhysicalTestView, 'normTables'>;
+  result: PhysicalTestResultView | null;
+};
+
+export type CoachPhysicalTestScheduleView = {
+  id: string;
+  physicalTestId: string;
+  physicalTestName: string;
+  scheduledDate: string;
+  done: boolean;
+  result: PhysicalTestResultView | null;
+};
+
+export type PhysicalTestCalendarRow = {
+  clientId: string;
+  clientName: string;
+  coachMembershipId: string;
+  createdAt: Date;
+  done: boolean;
+  id: string;
+  scheduledDate: Date;
+  testName: string;
+  updatedAt: Date;
 };
 
 export type ClientPhysicalTestWithHistoryView = ClientPhysicalTestAssignmentView & {
@@ -47,4 +84,5 @@ export type RecordPhysicalTestResultInput = {
   inputs: TestInputs;
   evaluation: TestResult;
   recordedByMembershipId?: string;
+  scheduleId?: string;
 };

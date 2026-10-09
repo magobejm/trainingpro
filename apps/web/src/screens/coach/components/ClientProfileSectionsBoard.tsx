@@ -17,6 +17,7 @@ import { ClientProfileArchivedDrawer } from './ClientProfileSectionsBoard.Archiv
 import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.Header';
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
+import { useClientPhysicalTestsQuery, type ClientPhysicalTestAssignmentView } from '../../../data/hooks/usePhysicalTests';
 import { buildDefaultWellnessRange } from '../client-mood.helpers';
 
 type Props = {
@@ -41,6 +42,7 @@ type BoardUiState = {
 
 type BoardViewModel = {
   items: ClientManagementSectionView[];
+  assignments: ClientPhysicalTestAssignmentView[];
   wellness: ClientWellnessResponse | undefined;
   onArchive: (id: SectionId) => Promise<void>;
   onCloseArchived: () => void;
@@ -57,6 +59,7 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
   const vm = useBoardViewModel(props.clientId);
   const lists = useMemo(() => buildSectionLists(vm.items), [vm.items]);
   const moodSubtitle = resolveMoodSubtitle(vm.wellness, props.t);
+  const testsSubtitle = resolveNextTestSubtitle(vm.assignments, props.t);
   return (
     <View style={styles.board}>
       <ClientProfileSectionsBoardHeader
@@ -67,7 +70,7 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
       />
       <View style={styles.mainList}>
         {lists.activeSections.map((item, index) =>
-          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle),
+          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle, testsSubtitle),
         )}
       </View>
       <ClientProfileArchivedDrawer
@@ -87,7 +90,9 @@ function useBoardViewModel(clientId: string): BoardViewModel {
   const mutation = useUpdateClientManagementSectionsMutation(clientId);
   const range = useMemo(() => buildDefaultWellnessRange(), []);
   const wellness = useClientWellnessQuery(clientId, range.dateFrom, range.dateTo).data;
+  const assignments = useClientPhysicalTestsQuery(clientId).data ?? [];
   return {
+    assignments,
     items,
     wellness,
     onArchive: (id) => saveItems(mutation, archiveSection(items, id), ui.setOpenMenuId),
@@ -115,6 +120,7 @@ function renderRow(
   props: Props,
   vm: BoardViewModel,
   moodSubtitle?: string,
+  testsSubtitle?: string,
 ): React.JSX.Element {
   return (
     <ClientProfileSectionRow
@@ -122,6 +128,7 @@ function renderRow(
       hasTrainingPlan={props.hasTrainingPlan}
       item={item}
       moodSubtitle={moodSubtitle}
+      testsSubtitle={testsSubtitle}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
       onOpenMood={props.onOpenMood}
@@ -138,6 +145,31 @@ function renderRow(
       trainingPlanName={props.trainingPlanName}
     />
   );
+}
+
+function resolveNextTestSubtitle(assignments: ClientPhysicalTestAssignmentView[], t: Props['t']): string | undefined {
+  const today = localDateKey(new Date());
+  const upcoming = assignments.flatMap((assignment) =>
+    assignment.schedules
+      .filter((schedule) => !schedule.done && schedule.scheduledDate >= today)
+      .map((schedule) => ({ date: schedule.scheduledDate, name: assignment.physicalTest.name })),
+  );
+  upcoming.sort((left, right) => left.date.localeCompare(right.date));
+  const next = upcoming[0];
+  if (!next) return undefined;
+  return t('coach.clientProfile.details.tests.next', { date: formatScheduleDate(next.date), name: next.name });
+}
+
+function localDateKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function formatScheduleDate(value: string): string {
+  const [year, month, day] = value.slice(0, 10).split('-');
+  if (!year || !month || !day) return value;
+  return `${day}/${month}/${year}`;
 }
 
 function resolveMoodSubtitle(wellness: ClientWellnessResponse | undefined, t: Props['t']): string | undefined {

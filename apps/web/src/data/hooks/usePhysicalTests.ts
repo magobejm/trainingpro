@@ -45,6 +45,13 @@ export type PhysicalTestResultView = {
   measuredAt: string;
 };
 
+export type PhysicalTestScheduleSummary = {
+  done: boolean;
+  id: string;
+  resultId: string | null;
+  scheduledDate: string;
+};
+
 export type ClientPhysicalTestAssignmentView = {
   id: string;
   clientId: string;
@@ -52,6 +59,8 @@ export type ClientPhysicalTestAssignmentView = {
   assignedAt: string;
   physicalTest: PhysicalTestView;
   latestResult: PhysicalTestResultView | null;
+  results: PhysicalTestResultView[];
+  schedules: PhysicalTestScheduleSummary[];
 };
 
 export function usePhysicalTestsCatalogQuery(): UseQueryResult<PhysicalTestView[], Error> {
@@ -79,6 +88,30 @@ export function useAssignPhysicalTestMutation(clientId: string) {
     mutationFn: (testId: string) => assignTest(auth, clientId, testId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['physical-tests', 'client', clientId] });
+    },
+  });
+}
+
+export function useSchedulePhysicalTestMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { date: string; physicalTestId: string; replace?: boolean }) => scheduleTest(auth, clientId, input),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['physical-tests', 'client', clientId] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+    },
+  });
+}
+
+export function useArchivePhysicalTestScheduleMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { clientId: string; scheduleId: string }) => archiveSchedule(auth, input.clientId, input.scheduleId),
+    onSuccess: (_data, input) => {
+      void queryClient.invalidateQueries({ queryKey: ['physical-tests', 'client', input.clientId] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
     },
   });
 }
@@ -132,6 +165,20 @@ async function assignTest(
 ): Promise<ClientPhysicalTestAssignmentView> {
   if (!auth) throw new Error('Missing authenticated context');
   return createApiClient(auth).post<ClientPhysicalTestAssignmentView>(`/clients/${clientId}/physical-tests/${testId}`, {});
+}
+
+async function scheduleTest(
+  auth: ReturnType<typeof useAuth>,
+  clientId: string,
+  input: { date: string; physicalTestId: string; replace?: boolean },
+): Promise<void> {
+  if (!auth) throw new Error('Missing authenticated context');
+  await createApiClient(auth).post(`/clients/${clientId}/physical-test-schedules`, input);
+}
+
+async function archiveSchedule(auth: ReturnType<typeof useAuth>, clientId: string, scheduleId: string): Promise<void> {
+  if (!auth) throw new Error('Missing authenticated context');
+  await createApiClient(auth).delete(`/clients/${clientId}/physical-test-schedules/${scheduleId}`);
 }
 
 async function unassignTest(auth: ReturnType<typeof useAuth>, clientId: string, testId: string): Promise<void> {

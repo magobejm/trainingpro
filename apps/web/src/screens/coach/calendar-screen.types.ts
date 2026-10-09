@@ -1,4 +1,4 @@
-export type CalendarEventType = 'call' | 'note' | 'reminder' | 'workout';
+export type CalendarEventType = 'call' | 'note' | 'physical_test' | 'reminder' | 'workout';
 
 export type CallStatus = 'accepted' | 'pending' | 'unconfirmed';
 
@@ -18,6 +18,7 @@ export type CalendarEventData = {
   originDate?: string | null;
   planDayId: string | null;
   planDayTitle?: string;
+  scheduleId?: string;
   createdAt: Date;
   updatedAt: Date;
 };

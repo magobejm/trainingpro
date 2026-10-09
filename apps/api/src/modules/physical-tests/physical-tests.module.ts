@@ -8,8 +8,9 @@ import { PhysicalTestsController } from './presentation/controllers/physical-tes
 
 @Module({
   imports: [AuthModule],
-  controllers: [PhysicalTestsController, ClientPhysicalTestsController],
+  // Client routes (`clients/me/...`) must register before the coach `:clientId` routes.
+  controllers: [ClientPhysicalTestsController, PhysicalTestsController],
   providers: [PhysicalTestsSeedService, PhysicalTestsRepository, PhysicalTestsService],
-  exports: [PhysicalTestsService],
+  exports: [PhysicalTestsRepository, PhysicalTestsService],
 })
 export class PhysicalTestsModule {}

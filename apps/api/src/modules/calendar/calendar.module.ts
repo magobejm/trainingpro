@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { PhysicalTestsModule } from '../physical-tests/physical-tests.module';
 import { ClearFutureWorkoutsUseCase } from './application/use-cases/clear-future-workouts.usecase';
 import { CreateCalendarEventUseCase } from './application/use-cases/create-calendar-event.usecase';
 import { DeleteCalendarEventUseCase } from './application/use-cases/delete-calendar-event.usecase';
@@ -10,7 +11,7 @@ import { CalendarRepositoryPrisma } from './infra/prisma/calendar.repository.pri
 import { CalendarController } from './presentation/controllers/calendar.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, PhysicalTestsModule],
   controllers: [CalendarController],
   providers: [
     ClearFutureWorkoutsUseCase,

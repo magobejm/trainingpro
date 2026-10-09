@@ -25,7 +25,7 @@ type KpiStripProps = {
 
 export function KpiStrip({ data }: KpiStripProps): React.JSX.Element {
   const { t } = useTranslation();
-  const motivation = data.avgMotivation !== null ? data.avgMotivation.toFixed(1) : '—';
+  const motivation = typeof data.avgMotivation === 'number' ? data.avgMotivation.toFixed(1) : '—';
   return (
     <View style={styles.container}>
       <KpiItem label={t('client.calendar.kpi.completed')} value={String(data.completedDays)} />

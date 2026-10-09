@@ -14,6 +14,7 @@ import { PhysicalTestsScreen } from '../../screens/client/PhysicalTestsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
 import { RoutineScreen } from '../../screens/client/RoutineScreen';
+import { ScheduledTestScreen } from '../../screens/client/ScheduledTestScreen';
 import { RoutineDayPreviewPanel } from './RoutineDayPreviewPanel';
 import { BottomNav, type TabId } from '../../theme/primitives';
 import { SPRING, type MoreMenuId, type OverlayId, type ProgressMode } from './client-shell.constants';
@@ -31,12 +32,14 @@ type ShellState = {
   overlay: OverlayId;
   progressMode: ProgressMode;
   selectedDay: ClientRoutineDay | null;
+  selectedScheduleId: string | null;
   slideX: Animated.Value;
   closeOverlay: () => void;
   finishSessionToList: () => void;
   openChatWithDraft: (message: string) => void;
   openDay: (day: ClientRoutineDay) => void;
   openOverlay: (id: OverlayId) => void;
+  openScheduledTest: (scheduleId: string) => void;
   openProgress: (mode: ProgressMode) => void;
   openSession: (sessionId: string) => void;
   setActiveTab: (tab: TabId) => void;
@@ -51,6 +54,7 @@ function useShellState(): ShellState {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [overlay, setOverlay] = useState<OverlayId>(null);
   const [selectedDay, setSelectedDay] = useState<ClientRoutineDay | null>(null);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [progressMode, setProgressMode] = useState<ProgressMode>('progress');
   const [chatDraft, setChatDraft] = useState<string | undefined>();
@@ -66,6 +70,7 @@ function useShellState(): ShellState {
       setOverlay(null);
       setProgressMode('progress');
       setSelectedDay(null);
+      setSelectedScheduleId(null);
       setActiveSessionId(null);
       listOriginRef.current = null;
     });
@@ -99,6 +104,15 @@ function useShellState(): ShellState {
     }
     if (current === 'routineDay') {
       setSelectedDay(null);
+      if (listOriginRef.current) {
+        setOverlay(listOriginRef.current);
+        return;
+      }
+      animateHome();
+      return;
+    }
+    if (current === 'scheduledTest') {
+      setSelectedScheduleId(null);
       if (listOriginRef.current) {
         setOverlay(listOriginRef.current);
         return;
@@ -140,6 +154,18 @@ function useShellState(): ShellState {
     [slideX],
   );
 
+  const openScheduledTest = useCallback(
+    (scheduleId: string) => {
+      if (isListOverlay(overlayRef.current)) {
+        listOriginRef.current = overlayRef.current;
+      }
+      setSelectedScheduleId(scheduleId);
+      setOverlay('scheduledTest');
+      Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
+    },
+    [slideX],
+  );
+
   const openSession = useCallback(
     (sessionId: string) => {
       if (isListOverlay(overlayRef.current)) {
@@ -171,10 +197,12 @@ function useShellState(): ShellState {
     openDay,
     openOverlay,
     openProgress,
+    openScheduledTest,
     openSession,
     overlay,
     progressMode,
     selectedDay,
+    selectedScheduleId,
     setActiveTab,
     slideX,
   };
@@ -207,6 +235,7 @@ export function ClientShell(): React.JSX.Element {
           onOpenProfile={() => st.openOverlay('profile')}
           onOpenProgress={() => st.openProgress('progress')}
           onOpenRoutine={() => st.openOverlay('routine')}
+          onOpenToday={() => st.openOverlay('calendar')}
         />
       )}
       {st.activeTab === 'chat' && <ChatScreen embedded initialMessage={st.chatDraft} />}
@@ -233,7 +262,7 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'routine' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <RoutineScreen onClose={st.closeOverlay} onSelectDay={st.openDay} />
+          <RoutineScreen onClose={st.closeOverlay} onOpenTest={st.openScheduledTest} onSelectDay={st.openDay} />
         </Animated.View>
       )}
       {st.overlay === 'routineDay' && st.selectedDay !== null && (
@@ -272,7 +301,12 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'calendar' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <ClientCalendarScreen onClose={st.closeOverlay} onOpenSession={st.openSession} />
+          <ClientCalendarScreen
+            onClose={st.closeOverlay}
+            onOpenPlanDay={st.openDay}
+            onOpenSession={st.openSession}
+            onOpenTest={st.openScheduledTest}
+          />
         </Animated.View>
       )}
       {st.overlay === 'planning' && (
@@ -288,6 +322,15 @@ export function ClientShell(): React.JSX.Element {
       {st.overlay === 'nutrition' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <NutritionPlanScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
+      {st.overlay === 'scheduledTest' && st.selectedScheduleId !== null && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <ScheduledTestScreen
+            onClose={st.closeOverlay}
+            onOpenHistory={() => st.openOverlay('physicalTests')}
+            scheduleId={st.selectedScheduleId}
+          />
         </Animated.View>
       )}
       {st.overlay === 'physicalTests' && (

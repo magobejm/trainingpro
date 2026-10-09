@@ -5,7 +5,7 @@ import { Banner } from '@trainerpro/ui';
 import '../../i18n';
 import {
   useChatMessagesQuery,
-  useClientThreadQuery,
+  useThreadQuery,
   useAcceptCallProposalMutation,
   useCounterCallProposalMutation,
   useSendChatMessageMutation,
@@ -16,25 +16,26 @@ import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/Att
 import { LIGHT } from '../../theme/light';
 
 type ChatScreenProps = {
+  clientId?: string;
   embedded?: boolean;
   initialMessage?: string;
 };
 
 export function ChatScreen(props: ChatScreenProps): React.JSX.Element {
-  const vm = useChatViewModel(props.initialMessage);
+  const vm = useChatViewModel(props.initialMessage, props.clientId);
   return <ChatView embedded={props.embedded} {...vm} />;
 }
 
-function useChatViewModel(initialMessage?: string) {
+function useChatViewModel(initialMessage?: string, clientId?: string) {
   const { t } = useTranslation();
-  const threadId = useThreadId();
+  const threadId = useThreadId(clientId);
   const messagesQuery = useChatMessagesQuery(threadId);
   const composer = useMessageComposer(threadId, t, initialMessage);
   return { ...composer, messagesQuery, t, threadId };
 }
 
-function useThreadId(): string {
-  const threadQuery = useClientThreadQuery();
+function useThreadId(clientId?: string): string {
+  const threadQuery = useThreadQuery(clientId);
   return threadQuery.data?.id ?? '';
 }
 

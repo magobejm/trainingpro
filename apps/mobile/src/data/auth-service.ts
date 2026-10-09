@@ -56,10 +56,7 @@ async function unregisterCurrentPushToken(): Promise<void> {
   }
   try {
     const mod = await import('./push-registration');
-    await Promise.race([
-      mod.unregisterPushToken({ accessToken: auth.accessToken, activeRole: auth.activeRole }),
-      new Promise((resolve) => setTimeout(resolve, 2000)),
-    ]);
+    await mod.unregisterPushToken({ accessToken: auth.accessToken, activeRole: auth.activeRole });
   } catch {
     return;
   }

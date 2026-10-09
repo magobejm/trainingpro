@@ -12,10 +12,12 @@ export type DispatchSummary = {
 
 export type ClaimedDelivery = {
   attempts: number;
+  clientId: string | null;
   deliveryId: string;
   deviceTokenId: string;
   eventId: string;
   payload: Record<string, unknown> | null;
+  recipientUserId: string | null;
   token: string;
   topic: string;
 };

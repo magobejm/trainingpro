@@ -10,6 +10,7 @@ export interface IncidentsRepositoryPort {
   addTag(context: AuthContext, incidentId: string, tag: string): Promise<IncidentView>;
   archiveIncident(context: AuthContext, incidentId: string): Promise<void>;
   createIncident(context: AuthContext, input: CreateIncidentInput): Promise<IncidentView>;
+  getIncident(context: AuthContext, incidentId: string): Promise<IncidentView>;
   listActions(context: AuthContext, incidentId: string): Promise<IncidentActionView[]>;
   listIncidents(context: AuthContext, query: IncidentListQuery): Promise<IncidentView[]>;
   markReviewed(context: AuthContext, incidentId: string): Promise<IncidentView>;

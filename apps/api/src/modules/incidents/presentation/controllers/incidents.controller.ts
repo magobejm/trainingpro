@@ -7,6 +7,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { AddAdjustmentDraftUseCase } from '../../application/use-cases/add-adjustment-draft.usecase';
 import { ArchiveIncidentUseCase } from '../../application/use-cases/archive-incident.usecase';
 import { CreateIncidentUseCase } from '../../application/use-cases/create-incident.usecase';
+import { GetIncidentUseCase } from '../../application/use-cases/get-incident.usecase';
 import { ListIncidentsUseCase } from '../../application/use-cases/list-incidents.usecase';
 import { MarkIncidentReviewedUseCase } from '../../application/use-cases/mark-incident-reviewed.usecase';
 import { RespondIncidentUseCase } from '../../application/use-cases/respond-incident.usecase';
@@ -26,6 +27,7 @@ export class IncidentsController {
     private readonly addAdjustmentDraftUseCase: AddAdjustmentDraftUseCase,
     private readonly archiveIncidentUseCase: ArchiveIncidentUseCase,
     private readonly createIncidentUseCase: CreateIncidentUseCase,
+    private readonly getIncidentUseCase: GetIncidentUseCase,
     private readonly listIncidentsUseCase: ListIncidentsUseCase,
     private readonly markIncidentReviewedUseCase: MarkIncidentReviewedUseCase,
     private readonly respondIncidentUseCase: RespondIncidentUseCase,
@@ -41,6 +43,11 @@ export class IncidentsController {
   @Get()
   async list(@Query() query: ListIncidentsQueryDto, @Req() request: HttpAuthRequest) {
     return this.listIncidentsUseCase.execute(readAuthContext(request), query);
+  }
+
+  @Get(':incidentId')
+  async getOne(@Param() params: IncidentIdParamDto, @Req() request: HttpAuthRequest) {
+    return this.getIncidentUseCase.execute(readAuthContext(request), params.incidentId);
   }
 
   @Delete(':incidentId')

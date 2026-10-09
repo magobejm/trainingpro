@@ -7,10 +7,12 @@ import type { PushTicket, PushTransport } from '../../src/modules/notifications/
 
 const delivery: ClaimedDelivery = {
   attempts: 0,
+  clientId: 'client-1',
   deliveryId: 'delivery-1',
   deviceTokenId: 'token-1',
   eventId: 'event-1',
   payload: { sessionId: 'session-1' },
+  recipientUserId: 'user-1',
   token: 'ExponentPushToken[abc]',
   topic: 'SESSION_COMPLETED',
 };

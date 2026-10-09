@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
@@ -40,6 +40,22 @@ describe('Incident access', () => {
         .send({ response: 'Baja la carga' })
         .expect(201);
       expect(answered.body.coachResponse).toBe('Baja la carga');
+
+      await http
+        .get(`/incidents/${INCIDENT_ID}`)
+        .set('Authorization', 'Bearer coach-1')
+        .set('x-active-role', 'coach')
+        .expect(200);
+      await http
+        .get(`/incidents/${INCIDENT_ID}`)
+        .set('Authorization', 'Bearer client')
+        .set('x-active-role', 'client')
+        .expect(200);
+      await http
+        .get(`/incidents/${INCIDENT_ID}`)
+        .set('Authorization', 'Bearer coach-2')
+        .set('x-active-role', 'coach')
+        .expect(404);
 
       await http
         .post(`/incidents/${INCIDENT_ID}/respond`)
@@ -89,6 +105,12 @@ function createIncidentRepository() {
     archiveIncident: unused,
     createIncident: async (_context: AuthContext, input: CreateIncidentInput) => {
       stored = buildIncident(input);
+      return stored;
+    },
+    getIncident: async (context: AuthContext, incidentId: string) => {
+      if (!stored || stored.id !== incidentId || (context.subject !== OWNER && context.subject !== 'client-1')) {
+        throw new NotFoundException('Incident not found');
+      }
       return stored;
     },
     listActions: async () => [],

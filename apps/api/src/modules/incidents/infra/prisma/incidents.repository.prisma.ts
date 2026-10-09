@@ -79,6 +79,11 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
     });
   }
 
+  async getIncident(context: AuthContext, incidentId: string): Promise<IncidentView> {
+    const incident = await this.readIncidentForContext(context, incidentId);
+    return mapIncident(incident);
+  }
+
   async createIncident(context: AuthContext, input: CreateIncidentInput): Promise<IncidentView> {
     const client = await this.readClientForContext(context);
     await this.assertSessionLink(client.id, input.sessionId, input.sessionItemId);

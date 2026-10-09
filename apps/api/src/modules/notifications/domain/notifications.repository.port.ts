@@ -16,6 +16,7 @@ export type NotificationPreferenceView = {
 };
 
 export type RegisterDeviceTokenInput = {
+  enabled?: boolean;
   platform: string;
   token: string;
 };

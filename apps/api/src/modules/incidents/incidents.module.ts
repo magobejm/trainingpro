@@ -4,6 +4,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { AddAdjustmentDraftUseCase } from './application/use-cases/add-adjustment-draft.usecase';
 import { ArchiveIncidentUseCase } from './application/use-cases/archive-incident.usecase';
 import { CreateIncidentUseCase } from './application/use-cases/create-incident.usecase';
+import { GetIncidentUseCase } from './application/use-cases/get-incident.usecase';
 import { ListIncidentsUseCase } from './application/use-cases/list-incidents.usecase';
 import { MarkIncidentReviewedUseCase } from './application/use-cases/mark-incident-reviewed.usecase';
 import { RespondIncidentUseCase } from './application/use-cases/respond-incident.usecase';
@@ -19,6 +20,7 @@ import { IncidentsController } from './presentation/controllers/incidents.contro
     AddAdjustmentDraftUseCase,
     ArchiveIncidentUseCase,
     CreateIncidentUseCase,
+    GetIncidentUseCase,
     ListIncidentsUseCase,
     MarkIncidentReviewedUseCase,
     RespondIncidentUseCase,

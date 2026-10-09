@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import {
   useNotificationPreferencesQuery,
@@ -25,14 +25,14 @@ function useNotificationSettingsModel() {
   const { t } = useTranslation();
   const query = useNotificationPreferencesQuery();
   const mutation = useSetNotificationPreferenceMutation();
-  const update = (topic: NotificationPreference['topic'], enabled: boolean) =>
-    mutation.mutate({ enabled, topic });
+  const update = (topic: NotificationPreference['topic'], enabled: boolean) => mutation.mutate({ enabled, topic });
   return { query, t, update };
 }
 
 type ViewModel = ReturnType<typeof useNotificationSettingsModel>;
 
 function NotificationSettingsView(props: ViewModel) {
+  const denied = useDeniedPushPermission();
   if (props.query.isLoading) {
     return <ActivityIndicator />;
   }
@@ -41,9 +41,37 @@ function NotificationSettingsView(props: ViewModel) {
     <View style={styles.page}>
       <Text style={styles.title}>{props.t('coach.notifications.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.notifications.subtitle')}</Text>
+      {denied ? <PermissionNotice t={props.t} /> : null}
       <View style={styles.list}>{renderRows(TOPIC_KEYS, preferences, props)}</View>
     </View>
   );
+}
+
+function PermissionNotice(props: { t: (key: string) => string }) {
+  return (
+    <View style={styles.notice}>
+      <Text style={styles.noticeText}>{props.t('coach.notifications.permissionDenied')}</Text>
+      <Pressable onPress={() => Linking.openSettings()} style={styles.noticeButton}>
+        <Text style={styles.noticeButtonLabel}>{props.t('coach.notifications.openSettings')}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+function useDeniedPushPermission(): boolean {
+  const [denied, setDenied] = React.useState(false);
+  React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      return;
+    }
+    void import('expo-notifications')
+      .then(async (Notifications) => {
+        const current = await Notifications.getPermissionsAsync();
+        setDenied(!current.granted && current.canAskAgain === false);
+      })
+      .catch(() => undefined);
+  }, []);
+  return denied;
 }
 
 function renderRows(
@@ -56,10 +84,7 @@ function renderRows(
     return (
       <View key={topic} style={styles.row}>
         <Text style={styles.rowLabel}>{labelForTopic(topic, props.t)}</Text>
-        <Pressable
-          onPress={() => props.update(topic, !enabled)}
-          style={[styles.toggle, enabled ? styles.toggleOn : null]}
-        >
+        <Pressable onPress={() => props.update(topic, !enabled)} style={[styles.toggle, enabled ? styles.toggleOn : null]}>
           <Text style={styles.toggleLabel}>{readToggleLabel(enabled, props.t)}</Text>
         </Pressable>
       </View>
@@ -67,10 +92,7 @@ function renderRows(
   });
 }
 
-function labelForTopic(
-  topic: NotificationPreference['topic'],
-  t: (key: string) => string,
-): string {
+function labelForTopic(topic: NotificationPreference['topic'], t: (key: string) => string): string {
   return t(`coach.notifications.topic.${topic.toLowerCase()}`);
 }
 
@@ -92,6 +114,31 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 12,
     padding: 18,
+  },
+  notice: {
+    backgroundColor: '#fff4e5',
+    borderColor: '#f0c36d',
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    padding: 12,
+  },
+  noticeButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#ec4899',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  noticeButtonLabel: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  noticeText: {
+    color: '#6b4a12',
+    fontSize: 13,
+    fontWeight: '700',
   },
   row: {
     alignItems: 'center',

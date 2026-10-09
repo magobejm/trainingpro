@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { NotificationTopic as PrismaNotificationTopic, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { deviceTokenIsActive } from '../../domain/device-token-active';
 import { DEFAULT_PREFERENCE_TOPICS } from '../../domain/notifications.constants';
 import type {
   NotificationTopic,
@@ -29,7 +30,7 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
       where: { token: input.token },
       create: {
         clientId: owner.clientId,
-        isActive: true,
+        isActive: deviceTokenIsActive(input.enabled),
         lastSeenAt: new Date(),
         membershipId: owner.membershipId,
         organizationId: owner.organizationId,
@@ -39,7 +40,7 @@ export class NotificationsRepositoryPrisma implements NotificationsRepositoryPor
       },
       update: {
         clientId: owner.clientId,
-        isActive: true,
+        isActive: deviceTokenIsActive(input.enabled),
         lastSeenAt: new Date(),
         membershipId: owner.membershipId,
         organizationId: owner.organizationId,

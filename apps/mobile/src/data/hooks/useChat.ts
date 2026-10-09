@@ -52,11 +52,16 @@ type SendChatInput = {
 };
 
 export function useClientThreadQuery() {
+  return useThreadQuery();
+}
+
+export function useThreadQuery(clientId?: string) {
   const auth = useAuth();
+  const path = clientId ? `/chat/thread?clientId=${encodeURIComponent(clientId)}` : '/chat/thread';
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => createApiClient(auth!).get<{ id: string }>('/chat/thread'),
-    queryKey: ['chat-thread', auth?.activeRole],
+    queryFn: () => createApiClient(auth!).get<{ id: string }>(path),
+    queryKey: ['chat-thread', auth?.activeRole, clientId ?? 'self'],
   });
 }
 

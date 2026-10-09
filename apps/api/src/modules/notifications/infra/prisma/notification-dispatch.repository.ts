@@ -26,11 +26,20 @@ export class NotificationDispatchRepositoryPrisma implements NotificationDispatc
   async claimDueDeliveries(now: Date, limit: number): Promise<ClaimedDelivery[]> {
     await this.reclaimStaleSending(now);
     const due = await this.prisma.notificationDelivery.findMany({
-      include: { deviceToken: true, event: true },
+      include: {
+        deviceToken: {
+          include: {
+            client: { select: { email: true } },
+            membership: { select: { user: { select: { supabaseUid: true } } } },
+          },
+        },
+        event: true,
+      },
       orderBy: { nextAttemptAt: 'asc' },
       take: limit,
       where: { nextAttemptAt: { lte: now }, status: 'PENDING' },
     });
+    const recipients = await loadRecipientUsers(this.prisma, due);
     const claimed: ClaimedDelivery[] = [];
     for (const row of due) {
       const updated = await this.prisma.notificationDelivery.updateMany({
@@ -38,7 +47,7 @@ export class NotificationDispatchRepositoryPrisma implements NotificationDispatc
         where: { id: row.id, status: 'PENDING' },
       });
       if (updated.count === 1) {
-        claimed.push(toClaimed(row));
+        claimed.push(toClaimed(row, recipients.get(row.deviceTokenId) ?? null));
       }
     }
     return claimed;
@@ -164,22 +173,66 @@ export class NotificationDispatchRepositoryPrisma implements NotificationDispatc
   }
 }
 
-function toClaimed(row: {
-  attempts: number;
-  deviceToken: { id: string; token: string };
-  deviceTokenId: string;
-  event: { id: string; payloadJson: Prisma.JsonValue | null; topic: string };
-  id: string;
-}): ClaimedDelivery {
+function toClaimed(
+  row: {
+    attempts: number;
+    deviceToken: { id: string; token: string };
+    deviceTokenId: string;
+    event: { clientId: string | null; id: string; payloadJson: Prisma.JsonValue | null; topic: string };
+    id: string;
+  },
+  recipientUserId: string | null,
+): ClaimedDelivery {
   return {
     attempts: row.attempts,
+    clientId: row.event.clientId,
     deliveryId: row.id,
     deviceTokenId: row.deviceTokenId,
     eventId: row.event.id,
     payload: readPayload(row.event.payloadJson),
+    recipientUserId,
     token: row.deviceToken.token,
     topic: row.event.topic,
   };
+}
+
+async function loadRecipientUsers(
+  prisma: PrismaService,
+  rows: Array<{
+    deviceToken: {
+      client: { email: string } | null;
+      id: string;
+      membership: { user: { supabaseUid: string } } | null;
+    };
+    deviceTokenId: string;
+  }>,
+): Promise<Map<string, string>> {
+  const recipients = new Map<string, string>();
+  const emails = new Set<string>();
+  for (const row of rows) {
+    const supabaseUid = row.deviceToken.membership?.user.supabaseUid;
+    if (supabaseUid) {
+      recipients.set(row.deviceTokenId, supabaseUid);
+    } else if (row.deviceToken.client?.email) {
+      emails.add(row.deviceToken.client.email);
+    }
+  }
+  if (emails.size === 0) {
+    return recipients;
+  }
+  const users = await prisma.user.findMany({
+    select: { email: true, supabaseUid: true },
+    where: { email: { in: [...emails] } },
+  });
+  const byEmail = new Map(users.map((user) => [user.email, user.supabaseUid]));
+  for (const row of rows) {
+    const email = row.deviceToken.client?.email;
+    const supabaseUid = email ? byEmail.get(email) : undefined;
+    if (!recipients.has(row.deviceTokenId) && supabaseUid) {
+      recipients.set(row.deviceTokenId, supabaseUid);
+    }
+  }
+  return recipients;
 }
 
 function toRecipientEvent(event: {

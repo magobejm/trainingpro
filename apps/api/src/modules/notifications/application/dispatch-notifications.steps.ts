@@ -53,8 +53,10 @@ export async function confirmReceipts(
 async function sendOrNetwork(transport: PushTransport, claimed: ClaimedDelivery[]): Promise<PushTicket[]> {
   const messages = claimed.map((row) =>
     buildPushMessage({
+      clientId: row.clientId,
       eventId: row.eventId,
       payload: row.payload,
+      recipientUserId: row.recipientUserId,
       token: row.token,
       topic: row.topic,
     }),

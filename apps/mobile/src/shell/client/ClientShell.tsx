@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
@@ -24,6 +24,7 @@ import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
 import { useHardwareBack } from './use-hardware-back';
+import { useNotificationTargetStore } from '../../store/notification-target.store';
 type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
 
 type ShellState = {
@@ -209,6 +210,18 @@ function useShellState(): ShellState {
   };
 }
 
+function useClientNotification(openSession: (sessionId: string) => void): void {
+  const target = useNotificationTargetStore((state) => state.target);
+  const clear = useNotificationTargetStore((state) => state.clear);
+  useEffect(() => {
+    if (target?.kind !== 'client-session') {
+      return;
+    }
+    openSession(target.sessionId);
+    clear();
+  }, [clear, openSession, target]);
+}
+
 function dispatchMoreMenu(
   id: MoreMenuId,
   openOverlay: (id: OverlayId) => void,
@@ -226,6 +239,7 @@ export function ClientShell(): React.JSX.Element {
   const { t } = useTranslation();
   const st = useShellState();
   useHardwareBack(st);
+  useClientNotification(st.openSession);
   const showBottomNav = st.overlay === null;
 
   return (

@@ -257,6 +257,7 @@ model Client {
   @@index([objectiveId], map: "idx_client_objective")
   @@index([trainingPlanId], map: "idx_client_training_plan")
   @@index([email], map: "idx_client_email")
+  // Active email uniqueness is the partial index uq_client_org_active_email in migration 0028.
   @@map("client")
 }
 

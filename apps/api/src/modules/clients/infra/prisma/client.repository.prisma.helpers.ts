@@ -1,13 +1,13 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { buildCreateAuditFields } from '../../../../common/audit/audit-fields';
+import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import {
-  ensureClientCapacity,
+  claimClientSeat,
   ensureClientMembership,
   ensureEmailNotUsedByPrivilegedMembership,
   ensureUniqueClientEmail,
-  incrementClientCount,
   tryRestoreArchivedClient,
   type CoachMembership,
 } from './client.repository.prisma.ops';
@@ -26,16 +26,21 @@ export async function createClientRecord(
   include: Prisma.ClientInclude,
 ) {
   const { clientSupabaseUid, objectiveId, ...clientData } = normalizedInput;
-  return prisma.$transaction(async (tx) => {
-    await ensureCreatePreconditions(tx, membership, clientData.email, clientSupabaseUid);
-    const payload: ClientDataPayload = {
-      ...clientData,
-      objectiveId: await resolveObjectiveId(tx, objectiveId),
-    };
-    const client = await createOrRestoreClient(tx, membership, payload, audit, updatedBy, include);
-    await incrementClientCount(tx, membership.organizationId);
-    return client;
-  });
+  try {
+    return await prisma.$transaction(async (tx) => {
+      await ensureCreatePreconditions(tx, membership, clientData.email, clientSupabaseUid);
+      const payload: ClientDataPayload = {
+        ...clientData,
+        objectiveId: await resolveObjectiveId(tx, objectiveId),
+      };
+      return createOrRestoreClient(tx, membership, payload, audit, updatedBy, include);
+    });
+  } catch (error) {
+    if (isUniqueViolation(error)) {
+      throw new ConflictException('Client email already exists');
+    }
+    throw error;
+  }
 }
 
 async function ensureCreatePreconditions(
@@ -44,7 +49,7 @@ async function ensureCreatePreconditions(
   email: string,
   clientSupabaseUid?: string,
 ): Promise<void> {
-  await ensureClientCapacity(tx, membership.organizationId);
+  await claimClientSeat(tx, membership.organizationId);
   await ensureEmailNotUsedByPrivilegedMembership(tx, membership.organizationId, email);
   await ensureUniqueClientEmail(tx, membership.organizationId, email);
   await ensureClientMembership(tx, membership.organizationId, { clientSupabaseUid, email });
@@ -58,12 +63,7 @@ async function createOrRestoreClient(
   updatedBy: string,
   include: Prisma.ClientInclude,
 ) {
-  const restored = await tryRestoreArchivedClient(
-    tx,
-    membership.organizationId,
-    clientData,
-    updatedBy,
-  );
+  const restored = await tryRestoreArchivedClient(tx, membership.organizationId, clientData, updatedBy);
   if (restored) {
     await seedMissingClientManagementSections(tx, restored.id);
     return restored;

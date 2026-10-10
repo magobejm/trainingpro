@@ -2,6 +2,7 @@
 import { randomUUID } from 'crypto';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertExpectedTemplateVersion } from '../template-save.policy';
+import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -33,6 +34,27 @@ export class WarmupTemplatesService {
     const existingId = await this.findByClientSaveId(membership.id, input.clientSaveId);
     if (existingId) return this.getOne(context, existingId);
     const templateId = randomUUID();
+    try {
+      await this.insertWarmupTemplate(templateId, membership, context, input);
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      const savedId = await this.findByClientSaveId(membership.id, input.clientSaveId);
+      if (!savedId) throw error;
+      return this.getOne(context, savedId);
+    }
+    if (!templateId) {
+      throw new NotFoundException('Warmup template could not be created');
+    }
+    await this.replaceItems(templateId, input.items, input.groups);
+    return this.getOne(context, templateId);
+  }
+
+  private async insertWarmupTemplate(
+    templateId: string,
+    membership: { id: string; organizationId: string },
+    context: AuthContext,
+    input: Input,
+  ): Promise<void> {
     await this.prisma.$executeRawUnsafe(
       `INSERT INTO warmup_template (
         id, scope, organization_id, coach_membership_id, name, template_version,
@@ -45,11 +67,6 @@ export class WarmupTemplatesService {
       context.subject,
       input.clientSaveId ?? null,
     );
-    if (!templateId) {
-      throw new NotFoundException('Warmup template could not be created');
-    }
-    await this.replaceItems(templateId, input.items, input.groups);
-    return this.getOne(context, templateId);
   }
 
   async list(context: AuthContext, options?: { summary?: boolean }) {
@@ -118,13 +135,20 @@ export class WarmupTemplatesService {
   async update(context: AuthContext, templateId: string, input: Input) {
     await this.assertMutableTemplate(context, templateId);
     await this.assertCurrentVersion(templateId, input.expectedTemplateVersion);
-    await this.prisma.$executeRawUnsafe(
+    const updated = await this.prisma.$executeRawUnsafe(
       `UPDATE warmup_template
        SET name = $1, template_version = template_version + 1, updated_at = now()
-       WHERE id = $2::uuid`,
+       WHERE id = $2::uuid
+         AND archived_at IS NULL
+         AND ($3::int IS NULL OR template_version = $3::int)`,
       input.name.trim(),
       templateId,
+      input.expectedTemplateVersion ?? null,
     );
+    if (updated === 0) {
+      await this.assertCurrentVersion(templateId, input.expectedTemplateVersion);
+      throw new NotFoundException('Warmup template not found');
+    }
     await this.replaceItems(templateId, input.items, input.groups);
     return this.getOne(context, templateId);
   }

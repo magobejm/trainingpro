@@ -18,7 +18,8 @@ import { mapRoutineDayCreate } from '../plans-routine.prisma.create-helpers';
 import type { RoutineDayInput, RoutineTemplateWriteInput } from '../../../domain/routine-template.input';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
-import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
+import { isUniqueViolation } from '../../../../../common/prisma/unique-violation';
+import { advanceTemplateVersion } from '../../../application/template-version';
 
 type RoutineMetadataRow = {
   expected_completion_days: null | number;
@@ -43,18 +44,26 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     const m = await this.resolveCoachMembership(ctx);
     const reused = await this.findRoutineSavedEarlier(ctx, m.id, input.clientSaveId);
     if (reused) return reused;
-    const row = await this.prisma.planTemplate.create({
-      data: {
-        ...buildCreateAuditFields(ctx),
-        clientSaveId: input.clientSaveId,
-        coachMembershipId: m.id,
-        days: { create: input.days.map(mapRoutineDayCreate) },
-        kind: TemplateKind.ROUTINE,
-        name: input.name.trim(),
-        organizationId: m.organizationId,
-      },
-      include: routineTemplateInclude(),
-    });
+    let row;
+    try {
+      row = await this.prisma.planTemplate.create({
+        data: {
+          ...buildCreateAuditFields(ctx),
+          clientSaveId: input.clientSaveId,
+          coachMembershipId: m.id,
+          days: { create: input.days.map(mapRoutineDayCreate) },
+          kind: TemplateKind.ROUTINE,
+          name: input.name.trim(),
+          organizationId: m.organizationId,
+        },
+        include: routineTemplateInclude(),
+      });
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      const existing = await this.findRoutineSavedEarlier(ctx, m.id, input.clientSaveId);
+      if (!existing) throw error;
+      return existing;
+    }
     await this.persistRoutineMetadata(this.prisma, row.id, input);
     await this.persistDayGroups(this.prisma, row.id, input.days);
     const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
@@ -117,7 +126,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Routine template not found');
-      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
+      await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
 
       const oldDays = await tx.planDay.findMany({
         where: { templateId: cur.id },
@@ -132,7 +141,6 @@ export class PlansRoutineRepository extends PlansBaseRepository {
           ...buildUpdateAuditFields(ctx),
           days: { create: input.days.map(mapRoutineDayCreate) },
           name: input.name.trim(),
-          templateVersion: cur.templateVersion + 1,
         },
         select: { id: true },
       });

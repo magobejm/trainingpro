@@ -1,6 +1,6 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Role, SessionStatus } from '@prisma/client';
-import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
+import { buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
@@ -29,16 +29,13 @@ import type {
   StartSessionInput,
 } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { finishIfOpen } from './session-concurrency';
+import { persistEnsuredSession } from './session-ensure';
 import {
   assertSessionMutable,
   mapIsometricSetLog,
   mapMobilitySetLog,
   mapPlioSetLog,
-  mapSessionIsometricCreate,
-  mapSessionItemCreate,
-  mapSessionMobilityCreate,
-  mapSessionPlioCreate,
-  mapSessionSportCreate,
   mapSetLog,
   mapSportLog,
   mapSportSetLog,
@@ -104,59 +101,9 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     input: EnsureSessionInput,
     membership: CoachMembership,
   ): Promise<SessionInstance> {
-    const existing = await this.prisma.sessionInstance.findFirst({
-      where: {
-        archivedAt: null,
-        clientId: input.clientId,
-        sessionDate: input.sessionDate,
-      },
-      include: sessionInclude(),
-    });
-    if (existing) {
-      const canReplacePendingDay =
-        input.planDayId &&
-        existing.planDayId !== input.planDayId &&
-        existing.status === SessionStatus.PENDING &&
-        !existing.startedAt;
-
-      if (canReplacePendingDay) {
-        await this.prisma.sessionInstance.update({
-          where: { id: existing.id },
-          data: {
-            ...buildUpdateAuditFields(context),
-            archivedAt: new Date(),
-          },
-        });
-      } else {
-        return mapSessionWithGroups(this.prisma, existing);
-      }
-    }
-    const template = await this.readTemplateSnapshot(input.templateId, membership.id, input.planDayId);
-    const row = await this.prisma.sessionInstance.create({
-      data: {
-        ...buildCreateAuditFields(context),
-        clientId: input.clientId,
-        coachMembershipId: membership.id,
-        organizationId: membership.organizationId,
-        sessionDate: input.sessionDate,
-        sourceTemplateId: template.id,
-        sourceTemplateVersion: template.templateVersion,
-        planDayId: template.planDaySnapshot.planDayId,
-        planDayIndex: template.planDaySnapshot.planDayIndex,
-        planDayTitle: template.planDaySnapshot.planDayTitle,
-        status: SessionStatus.PENDING,
-        items: template.items.length > 0 ? { create: template.items.map(mapSessionItemCreate) } : undefined,
-        plioBlocks: template.plioBlocks ? { create: template.plioBlocks.map(mapSessionPlioCreate) } : undefined,
-        mobilityBlocks: template.mobilityBlocks
-          ? { create: template.mobilityBlocks.map(mapSessionMobilityCreate) }
-          : undefined,
-        isometricBlocks: template.isometricBlocks
-          ? { create: template.isometricBlocks.map(mapSessionIsometricCreate) }
-          : undefined,
-        sportBlocks: template.sportBlocks ? { create: template.sportBlocks.map(mapSessionSportCreate) } : undefined,
-      },
-      include: sessionInclude(),
-    });
+    const row = await persistEnsuredSession(this.prisma, context, input, membership, () =>
+      this.readTemplateSnapshot(input.templateId, membership.id, input.planDayId),
+    );
     return mapSessionWithGroups(this.prisma, row);
   }
 
@@ -199,24 +146,30 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
 
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {
     const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const updated = await this.prisma.sessionInstance.update({
-      where: { id: session.id },
-      data: {
-        ...buildUpdateAuditFields(context),
-        finishComment: normalizeText(input.comment),
-        finishedAt: new Date(),
-        isCompleted: true,
-        isIncomplete: input.isIncomplete,
-        postFatigue: input.postFatigue ?? null,
-        postMood: input.postMood ?? null,
-        postPain: input.postPain ?? null,
-        sessionRpe: input.sessionRpe ?? null,
-        status: SessionStatus.COMPLETED,
+    const row = await finishIfOpen(
+      session,
+      input,
+      async () => {
+        const updated = await this.prisma.sessionInstance.updateMany({
+          where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
+          data: {
+            ...buildUpdateAuditFields(context),
+            finishComment: normalizeText(input.comment),
+            finishedAt: new Date(),
+            isCompleted: true,
+            isIncomplete: input.isIncomplete,
+            postFatigue: input.postFatigue ?? null,
+            postMood: input.postMood ?? null,
+            postPain: input.postPain ?? null,
+            sessionRpe: input.sessionRpe ?? null,
+            status: SessionStatus.COMPLETED,
+          },
+        });
+        return updated.count;
       },
-      include: sessionInclude(),
-    });
-    return mapSessionWithGroups(this.prisma, updated);
+      () => this.readSessionForMutation(input.sessionId),
+    );
+    return mapSessionWithGroups(this.prisma, row);
   }
 
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
@@ -322,8 +275,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (session.startedAt || session.status === SessionStatus.COMPLETED) {
       return mapSessionWithGroups(this.prisma, session);
     }
-    const updated = await this.prisma.sessionInstance.update({
-      where: { id: session.id },
+    const claimed = await this.prisma.sessionInstance.updateMany({
+      where: { id: session.id, startedAt: null },
       data: {
         ...buildUpdateAuditFields(context),
         preFatigue: input.preFatigue ?? null,
@@ -333,9 +286,13 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         startedAt: new Date(),
         status: SessionStatus.IN_PROGRESS,
       },
-      include: sessionInclude(),
     });
-    return mapSessionWithGroups(this.prisma, updated);
+    const current =
+      claimed.count > 0
+        ? await this.prisma.sessionInstance.findFirst({ where: { id: session.id }, include: sessionInclude() })
+        : await this.readSessionForMutation(input.sessionId);
+    if (!current) throw new NotFoundException('Session not found');
+    return mapSessionWithGroups(this.prisma, current);
   }
 
   private async canCoachAccessSession(context: AuthContext, sessionId: string) {

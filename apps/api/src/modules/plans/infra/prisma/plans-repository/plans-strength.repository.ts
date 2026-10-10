@@ -8,7 +8,8 @@ import { PlanTemplateWriteInput } from '../../../domain/plan-template.input';
 import { mapDayCreate, mapTemplate, templateInclude } from '../plans-strength.prisma.helpers';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
-import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
+import { isUniqueViolation } from '../../../../../common/prisma/unique-violation';
+import { advanceTemplateVersion } from '../../../application/template-version';
 
 @Injectable()
 export class PlansStrengthRepository extends PlansBaseRepository {
@@ -20,14 +21,30 @@ export class PlansStrengthRepository extends PlansBaseRepository {
     const m = await this.resolveCoachMembership(ctx);
     const reused = await this.findSavedEarlier(ctx, m.id, input.clientSaveId, TemplateKind.STRENGTH);
     if (reused) return reused;
+    try {
+      return await this.insertStrengthTemplate(ctx, m.id, m.organizationId, input);
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      const existing = await this.findSavedEarlier(ctx, m.id, input.clientSaveId, TemplateKind.STRENGTH);
+      if (!existing) throw error;
+      return existing;
+    }
+  }
+
+  private async insertStrengthTemplate(
+    ctx: AuthContext,
+    coachMembershipId: string,
+    organizationId: string,
+    input: PlanTemplateWriteInput,
+  ): Promise<PlanTemplate> {
     const row = await this.prisma.planTemplate.create({
       data: {
         ...buildCreateAuditFields(ctx),
         clientSaveId: input.clientSaveId,
-        coachMembershipId: m.id,
+        coachMembershipId,
         kind: TemplateKind.STRENGTH,
         name: input.name.trim(),
-        organizationId: m.organizationId,
+        organizationId,
         days: { create: input.days.map(mapDayCreate) },
       },
       include: templateInclude(),
@@ -76,14 +93,13 @@ export class PlansStrengthRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Plan template not found');
-      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
+      await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
       await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
         data: {
           ...buildUpdateAuditFields(ctx),
           name: input.name.trim(),
-          templateVersion: cur.templateVersion + 1,
           days: { create: input.days.map(mapDayCreate) },
         },
         include: templateInclude(),

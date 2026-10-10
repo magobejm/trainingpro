@@ -8,7 +8,8 @@ import { PlanCardioTemplateWriteInput } from '../../../domain/plan-cardio.input'
 import { cardioTemplateInclude, mapCardioDayCreate, mapCardioTemplate } from '../plans-cardio.prisma.helpers';
 import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
-import { assertExpectedTemplateVersion } from '../../../application/template-save.policy';
+import { isUniqueViolation } from '../../../../../common/prisma/unique-violation';
+import { advanceTemplateVersion } from '../../../application/template-version';
 
 @Injectable()
 export class PlansCardioRepository extends PlansBaseRepository {
@@ -20,15 +21,31 @@ export class PlansCardioRepository extends PlansBaseRepository {
     const membership = await this.resolveCoachMembership(ctx);
     const reused = await this.findSavedEarlier(ctx, membership.id, input.clientSaveId, TemplateKind.CARDIO);
     if (reused) return reused;
+    try {
+      return await this.insertCardioTemplate(ctx, membership.id, membership.organizationId, input);
+    } catch (error) {
+      if (!isUniqueViolation(error)) throw error;
+      const existing = await this.findSavedEarlier(ctx, membership.id, input.clientSaveId, TemplateKind.CARDIO);
+      if (!existing) throw error;
+      return existing;
+    }
+  }
+
+  private async insertCardioTemplate(
+    ctx: AuthContext,
+    coachMembershipId: string,
+    organizationId: string,
+    input: PlanCardioTemplateWriteInput,
+  ): Promise<PlanCardioTemplate> {
     const row = await this.prisma.planTemplate.create({
       data: {
         ...buildCreateAuditFields(ctx),
         clientSaveId: input.clientSaveId,
-        coachMembershipId: membership.id,
+        coachMembershipId,
         days: { create: input.days.map(mapCardioDayCreate) },
         kind: TemplateKind.CARDIO,
         name: input.name.trim(),
-        organizationId: membership.organizationId,
+        organizationId,
       },
       include: cardioTemplateInclude(),
     });
@@ -81,7 +98,7 @@ export class PlansCardioRepository extends PlansBaseRepository {
         select: { id: true, templateVersion: true },
       });
       if (!cur) throw new NotFoundException('Cardio template not found');
-      assertExpectedTemplateVersion(input.expectedTemplateVersion, cur.templateVersion);
+      await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
       await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
@@ -89,7 +106,6 @@ export class PlansCardioRepository extends PlansBaseRepository {
           ...buildUpdateAuditFields(ctx),
           days: { create: input.days.map(mapCardioDayCreate) },
           name: input.name.trim(),
-          templateVersion: cur.templateVersion + 1,
         },
         include: cardioTemplateInclude(),
       });

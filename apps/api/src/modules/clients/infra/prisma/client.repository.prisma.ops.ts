@@ -16,37 +16,64 @@ type PrismaClientWithObjective = Prisma.ClientGetPayload<{
   };
 }>;
 
-export async function decrementClientCount(
-  tx: Prisma.TransactionClient,
-  organizationId: string,
-): Promise<void> {
+export async function claimClientSeat(tx: Prisma.TransactionClient, organizationId: string): Promise<void> {
   const subscription = await tx.organizationSubscription.findUnique({
     where: { organizationId },
-    select: { activeClientCount: true, id: true },
-  });
-  if (!subscription) {
-    return;
-  }
-  const activeClientCount = Math.max(0, subscription.activeClientCount - 1);
-  await tx.organizationSubscription.update({
-    where: { id: subscription.id },
-    data: { activeClientCount },
-  });
-}
-
-export async function ensureClientCapacity(
-  tx: Prisma.TransactionClient,
-  organizationId: string,
-): Promise<void> {
-  const subscription = await tx.organizationSubscription.findUnique({
-    where: { organizationId },
-    select: { activeClientCount: true, clientLimit: true },
+    select: { id: true },
   });
   if (!subscription) {
     throw new ConflictException('Organization subscription not configured');
   }
-  if (subscription.activeClientCount >= subscription.clientLimit) {
+  const claimed = await tx.$executeRaw`
+    UPDATE organization_subscription
+    SET active_client_count = active_client_count + 1,
+        updated_at = NOW()
+    WHERE organization_id = ${organizationId}::uuid
+      AND active_client_count < client_limit
+  `;
+  if (claimed === 0) {
     throw new ConflictException('Client limit reached for organization');
+  }
+}
+
+export async function releaseClientSeat(tx: Prisma.TransactionClient, organizationId: string): Promise<void> {
+  await tx.$executeRaw`
+    UPDATE organization_subscription
+    SET active_client_count = GREATEST(active_client_count - 1, 0),
+        updated_at = NOW()
+    WHERE organization_id = ${organizationId}::uuid
+  `;
+}
+
+export async function archiveClientAndReleaseSeat(
+  tx: Prisma.TransactionClient,
+  clientId: string,
+  organizationId: string,
+  data: Prisma.ClientUpdateManyMutationInput,
+): Promise<void> {
+  const archived = await tx.client.updateMany({
+    where: { archivedAt: null, id: clientId },
+    data,
+  });
+  if (archived.count === 0) return;
+  await releaseClientSeat(tx, organizationId);
+}
+
+export async function claimTrainingPlanAssignment(
+  tx: Prisma.TransactionClient,
+  clientId: string,
+  trainingPlanId: null | string,
+): Promise<void> {
+  const current = await tx.client.findFirst({
+    where: { id: clientId },
+    select: { trainingPlanId: true },
+  });
+  const claimed = await tx.client.updateMany({
+    where: { id: clientId, trainingPlanId: current?.trainingPlanId ?? null },
+    data: { trainingPlanId },
+  });
+  if (claimed.count === 0) {
+    throw new ConflictException('Training plan assignment changed');
   }
 }
 
@@ -75,11 +102,7 @@ export async function tryRestoreArchivedClient(
   return restoreClient(tx, archived.id, clientData, updatedBy);
 }
 
-function findArchivedClientByEmail(
-  tx: Prisma.TransactionClient,
-  organizationId: string,
-  email: string,
-) {
+function findArchivedClientByEmail(tx: Prisma.TransactionClient, organizationId: string, email: string) {
   return tx.client.findFirst({
     where: { archivedAt: { not: null }, email, organizationId },
     orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
@@ -87,12 +110,7 @@ function findArchivedClientByEmail(
   });
 }
 
-function restoreClient(
-  tx: Prisma.TransactionClient,
-  id: string,
-  data: ClientDataPayload,
-  updatedBy: string,
-) {
+function restoreClient(tx: Prisma.TransactionClient, id: string, data: ClientDataPayload, updatedBy: string) {
   const { objectiveId, trainingPlanId, ...rest } = data;
   return tx.client.update({
     where: { id },
@@ -145,16 +163,6 @@ export async function ensureEmailNotUsedByPrivilegedMembership(
   }
 }
 
-export async function incrementClientCount(
-  tx: Prisma.TransactionClient,
-  organizationId: string,
-): Promise<void> {
-  await tx.organizationSubscription.update({
-    where: { organizationId },
-    data: { activeClientCount: { increment: 1 } },
-  });
-}
-
 export async function readActiveClient(
   tx: Prisma.TransactionClient,
   membership: CoachMembership,
@@ -193,11 +201,7 @@ export async function resolveCoachMembership(
   return membership;
 }
 
-async function resolveClientUser(
-  tx: Prisma.TransactionClient,
-  supabaseUid: string,
-  email: string,
-): Promise<{ id: string }> {
+async function resolveClientUser(tx: Prisma.TransactionClient, supabaseUid: string, email: string): Promise<{ id: string }> {
   const bySubject = await readUserBySubject(tx, supabaseUid);
   const byEmail = await readUserByEmail(tx, email);
   if (bySubject && byEmail && bySubject.id !== byEmail.id) {
@@ -212,11 +216,7 @@ async function resolveClientUser(
   return createClientUser(tx, email, supabaseUid);
 }
 
-async function upsertClientMembership(
-  tx: Prisma.TransactionClient,
-  organizationId: string,
-  userId: string,
-): Promise<void> {
+async function upsertClientMembership(tx: Prisma.TransactionClient, organizationId: string, userId: string): Promise<void> {
   await tx.organizationMember.upsert({
     where: {
       organizationId_userId_role: {
@@ -256,11 +256,7 @@ function reconcileConflictingUsers(
   });
 }
 
-function updateSubjectUser(
-  tx: Prisma.TransactionClient,
-  userId: string,
-  email: string,
-): Promise<{ id: string }> {
+function updateSubjectUser(tx: Prisma.TransactionClient, userId: string, email: string): Promise<{ id: string }> {
   return tx.user.update({
     where: { id: userId },
     data: { email, isActive: true },
@@ -268,11 +264,7 @@ function updateSubjectUser(
   });
 }
 
-function updateEmailUser(
-  tx: Prisma.TransactionClient,
-  userId: string,
-  supabaseUid: string,
-): Promise<{ id: string }> {
+function updateEmailUser(tx: Prisma.TransactionClient, userId: string, supabaseUid: string): Promise<{ id: string }> {
   return tx.user.update({
     where: { id: userId },
     data: { isActive: true, supabaseUid },
@@ -280,11 +272,7 @@ function updateEmailUser(
   });
 }
 
-function createClientUser(
-  tx: Prisma.TransactionClient,
-  email: string,
-  supabaseUid: string,
-): Promise<{ id: string }> {
+function createClientUser(tx: Prisma.TransactionClient, email: string, supabaseUid: string): Promise<{ id: string }> {
   return tx.user.create({
     data: { email, supabaseUid },
     select: { id: true },

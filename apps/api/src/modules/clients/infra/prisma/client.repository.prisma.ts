@@ -35,7 +35,12 @@ import {
 } from '../../../../common/plan/client-routine-set.mapper';
 import { readLockedFields } from '../../../../common/plan/read-locked-fields';
 import { stripMetaNotes } from '../../../../common/notes/parse-meta-notes';
-import { decrementClientCount, readActiveClient, resolveCoachMembership } from './client.repository.prisma.ops';
+import {
+  archiveClientAndReleaseSeat,
+  claimTrainingPlanAssignment,
+  readActiveClient,
+  resolveCoachMembership,
+} from './client.repository.prisma.ops';
 
 const CLIENT_WITH_RELATIONS_INCLUDE = {
   objectiveRef: true,
@@ -53,11 +58,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     const membership = await resolveCoachMembership(context, this.prisma);
     await this.prisma.$transaction(async (tx) => {
       const client = await readActiveClient(tx, membership, clientId);
-      await tx.client.update({
-        where: { id: client.id },
-        data: buildArchiveAuditFields(context),
-      });
-      await decrementClientCount(tx, membership.organizationId);
+      await archiveClientAndReleaseSeat(tx, client.id, membership.organizationId, buildArchiveAuditFields(context));
     });
   }
 
@@ -194,6 +195,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
         assertAssignableTrainingPlan(plan, membership.id);
       }
       const payload = normalizeUpdateInput(input);
+      if (input.trainingPlanId !== undefined) {
+        await claimTrainingPlanAssignment(tx, client.id, input.trainingPlanId);
+        delete (payload as { trainingPlanId?: null | string }).trainingPlanId;
+      }
       if (input.objectiveId !== undefined) {
         payload.objectiveRef = {
           connect: { id: await resolveObjectiveId(tx, input.objectiveId) },

@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ZodValidationPipe } from './common/zod-validation.pipe';
 import { PublicAssetUrlInterceptor } from './common/assets/public-asset-url.interceptor';
+import { corsOriginCallback } from './common/cors/allowed-origins';
 import { blockPrivateUploadPaths } from './modules/files/presentation/block-private-uploads';
 
 loadEnvFiles();
@@ -14,7 +15,7 @@ async function bootstrap(): Promise<void> {
   app.enableCors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Active-Role', 'X-Timezone-Offset'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    origin: isAllowedCorsOrigin,
+    origin: corsOriginCallback,
   });
   app.use('/assets/avatars', express.static(resolveAvatarAssetsPath()));
   app.use('/assets/placeholders', express.static(resolvePlaceholderAssetsPath()));
@@ -93,48 +94,6 @@ function envCandidates(): string[] {
     resolve(process.cwd(), '../prisma/.env'),
     resolve(process.cwd(), '../../prisma/.env'),
   ];
-}
-
-const STATIC_CORS_ORIGINS = new Set([
-  'http://localhost:5173',
-  'http://127.0.0.1:5173',
-  'http://localhost:19006',
-  'http://127.0.0.1:19006',
-]);
-
-// Hosting domains allowed by pattern. Covers Firebase Hosting (admin web) and
-// EAS Hosting (mobile-as-web), including EAS preview deployments which use a
-// `<slug>--<hash>.expo.app` form. Using a matcher instead of a static list keeps
-// us off the comma-delimited `CORS_ORIGINS` env var, which the Cloud Run deploy
-// action mangles when a value contains commas.
-const CORS_ORIGIN_PATTERNS = [
-  /^https:\/\/[a-z0-9-]+\.web\.app$/i,
-  /^https:\/\/[a-z0-9-]+\.firebaseapp\.com$/i,
-  /^https:\/\/trainer-pro-mobile(--[a-z0-9]+)?\.expo\.app$/i,
-];
-
-function envCorsOrigins(): string[] {
-  const raw = process.env.CORS_ORIGINS;
-  if (!raw) {
-    return [];
-  }
-  return raw
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0);
-}
-
-function isAllowedCorsOrigin(origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void): void {
-  // No Origin header → same-origin / non-browser request (curl, server-to-server).
-  if (!origin) {
-    callback(null, true);
-    return;
-  }
-  const allowed =
-    STATIC_CORS_ORIGINS.has(origin) ||
-    envCorsOrigins().includes(origin) ||
-    CORS_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
-  callback(allowed ? null : new Error(`Origin not allowed by CORS: ${origin}`), allowed);
 }
 
 function readPort(): number {

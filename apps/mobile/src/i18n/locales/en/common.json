@@ -256,6 +256,7 @@
   "mobile.client.session.saveSet": "Save set",
   "mobile.client.session.setSaved": "Set saved",
   "mobile.client.session.saveSetError": "Could not save set",
+  "mobile.client.session.errorRef": "Reference: {{id}}",
   "mobile.client.session.previousDays": "Previous days",
   "mobile.client.session.finishExercise": "Finish exercise",
   "mobile.client.session.repRange": "Reps:",

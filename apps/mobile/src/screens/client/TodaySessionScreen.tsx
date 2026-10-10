@@ -198,8 +198,16 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
 
   const handleMutationError = useCallback(
     (error: unknown) => {
-      const message = error instanceof ApiClientError ? error.message : t('mobile.client.session.saveSetError');
-      showError(message);
+      if (!(error instanceof ApiClientError)) {
+        showError(t('mobile.client.session.saveSetError'));
+        return;
+      }
+      if (!error.requestId) {
+        showError(error.message);
+        return;
+      }
+      const reference = t('mobile.client.session.errorRef', { id: error.requestId });
+      showError(`${error.message}\n${reference}`);
     },
     [t],
   );

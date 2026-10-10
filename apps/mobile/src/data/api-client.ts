@@ -14,11 +14,18 @@ type RequestOptions = {
 };
 
 export class ApiClientError extends Error {
+  readonly requestId?: string;
+  readonly responseText: string;
+
   constructor(
     message: string,
     public readonly status: number,
+    requestId?: string,
+    responseText?: string,
   ) {
     super(message);
+    this.requestId = requestId;
+    this.responseText = responseText ?? message;
   }
 }
 
@@ -60,10 +67,8 @@ async function executeRequest<T>(baseUrl: string, config: ApiClientOptions, requ
     headers,
     method: request.method,
   });
-  await throwIfUnauthorized(response);
   if (!response.ok) {
-    const payload = await safeReadText(response);
-    throw new ApiClientError(payload || 'Unexpected API error', response.status);
+    throw await rejectResponse(response, request.method, request.path, headers['X-Request-Id']);
   }
   return (await response.json()) as T;
 }
@@ -78,29 +83,55 @@ function resolveBaseUrl(baseUrl?: string): string {
   return process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 }
 
-async function throwIfUnauthorized(response: Response): Promise<void> {
+async function rejectResponse(
+  response: Response,
+  method: string,
+  path: string,
+  sentRequestId: string | undefined,
+): Promise<ApiClientError> {
+  const payload = await safeReadText(response);
+  const requestId = response.headers.get('x-request-id') || sentRequestId;
+  const message = readPublicMessage(payload, fallbackMessage(response.status));
+  logClientFailure({ method, path, requestId, status: response.status });
   if (response.status === 401) {
-    throw new UnauthorizedApiError(await readErrorMessage(response, 'Unauthorized'), 401);
+    return new UnauthorizedApiError(message, 401, requestId, payload);
   }
   if (response.status === 403) {
-    throw new ForbiddenApiError(await readErrorMessage(response, 'Forbidden'), 403);
+    return new ForbiddenApiError(message, 403, requestId, payload);
   }
+  return new ApiClientError(message, response.status, requestId, payload);
 }
 
-async function readErrorMessage(response: Response, fallback: string): Promise<string> {
-  const payload = await safeReadText(response);
-  if (!payload) {
-    return fallback;
-  }
+function fallbackMessage(status: number): string {
+  if (status === 401) return 'Unauthorized';
+  if (status === 403) return 'Forbidden';
+  return 'Unexpected API error';
+}
+
+function readPublicMessage(payload: string, fallback: string): string {
+  if (!payload) return fallback;
   try {
     const parsed = JSON.parse(payload) as { message?: unknown };
-    if (typeof parsed.message === 'string' && parsed.message.trim()) {
-      return parsed.message;
+    if (typeof parsed.message === 'string' && parsed.message.trim()) return parsed.message;
+    if (Array.isArray(parsed.message)) {
+      const text = parsed.message.filter((item) => typeof item === 'string').join('; ');
+      if (text) return text;
     }
   } catch {
     return payload;
   }
-  return payload;
+  return fallback;
+}
+
+function logClientFailure(event: { method: string; path: string; requestId?: string; status: number }): void {
+  console.warn(
+    JSON.stringify({
+      method: event.method,
+      path: event.path,
+      requestId: event.requestId,
+      status: event.status,
+    }),
+  );
 }
 
 export function deviceTimezoneOffsetMinutes(): number {
@@ -110,6 +141,7 @@ export function deviceTimezoneOffsetMinutes(): number {
 function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
+    'X-Request-Id': createRequestId(),
     'X-Timezone-Offset': String(deviceTimezoneOffsetMinutes()),
     ...(extra ?? {}),
   };
@@ -132,4 +164,20 @@ async function safeReadText(response: Response): Promise<string> {
 
 function serializeBody(body?: unknown): string | undefined {
   return body === undefined ? undefined : JSON.stringify(body);
+}
+
+function createRequestId(): string {
+  const randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto);
+  if (randomUUID) {
+    return randomUUID();
+  }
+  return fallbackRequestId();
+}
+
+function fallbackRequestId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = char === 'x' ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
 }

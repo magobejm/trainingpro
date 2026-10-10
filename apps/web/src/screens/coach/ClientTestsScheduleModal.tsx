@@ -106,7 +106,7 @@ function MonthPicker(props: {
 function readScheduleConflict(error: unknown): { code: string; testName?: string } | null {
   if (!(error instanceof ApiClientError) || error.status !== 409) return null;
   try {
-    const body = JSON.parse(error.message) as { code?: string; testName?: string };
+    const body = JSON.parse(error.responseText) as { code?: string; testName?: string };
     return body.code ? { code: body.code, testName: body.testName } : null;
   } catch {
     return null;

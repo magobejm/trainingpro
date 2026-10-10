@@ -256,6 +256,7 @@
   "mobile.client.session.saveSet": "Guardar serie",
   "mobile.client.session.setSaved": "Serie guardada",
   "mobile.client.session.saveSetError": "No se pudo guardar la serie",
+  "mobile.client.session.errorRef": "Referencia: {{id}}",
   "mobile.client.session.previousDays": "Días anteriores",
   "mobile.client.session.finishExercise": "Terminar ejercicio",
   "mobile.client.session.repRange": "Repeticiones:",

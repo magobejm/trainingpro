@@ -15,11 +15,18 @@ type RequestOptions = {
 };
 
 export class ApiClientError extends Error {
+  readonly requestId?: string;
+  readonly responseText: string;
+
   constructor(
     message: string,
     public readonly status: number,
+    requestId?: string,
+    responseText?: string,
   ) {
     super(message);
+    this.requestId = requestId;
+    this.responseText = responseText ?? message;
   }
 }
 
@@ -57,10 +64,8 @@ async function executeRequest<T>(baseUrl: string, config: ApiClientOptions, requ
     headers,
     method: request.method,
   });
-  await throwIfUnauthorized(response);
   if (!response.ok) {
-    const payload = await safeReadText(response);
-    throw new ApiClientError(payload || 'Unexpected API error', response.status);
+    throw await rejectResponse(response, request.method, request.path, headers['X-Request-Id']);
   }
   if (response.status === 204) {
     return undefined as unknown as T;
@@ -95,14 +100,56 @@ function readProcessEnv(): Record<string, string | undefined> {
   return scope.process?.env ?? {};
 }
 
-async function throwIfUnauthorized(response: Response): Promise<void> {
+async function rejectResponse(
+  response: Response,
+  method: string,
+  path: string,
+  sentRequestId: string | undefined,
+): Promise<ApiClientError> {
+  const payload = await safeReadText(response);
+  const requestId = response.headers.get('x-request-id') || sentRequestId;
+  const message = readPublicMessage(payload, fallbackMessage(response.status));
+  logClientFailure({ method, path, requestId, status: response.status });
   if (response.status === 401) {
     emitUnauthorizedEvent();
-    throw new UnauthorizedApiError('Unauthorized', 401);
+    return new UnauthorizedApiError(message, 401, requestId, payload);
   }
   if (response.status === 403) {
-    throw new ForbiddenApiError('Forbidden', 403);
+    return new ForbiddenApiError(message, 403, requestId, payload);
   }
+  return new ApiClientError(message, response.status, requestId, payload);
+}
+
+function fallbackMessage(status: number): string {
+  if (status === 401) return 'Unauthorized';
+  if (status === 403) return 'Forbidden';
+  return 'Unexpected API error';
+}
+
+function readPublicMessage(payload: string, fallback: string): string {
+  if (!payload) return fallback;
+  try {
+    const parsed = JSON.parse(payload) as { message?: unknown };
+    if (typeof parsed.message === 'string' && parsed.message.trim()) return parsed.message;
+    if (Array.isArray(parsed.message)) {
+      const text = parsed.message.filter((item) => typeof item === 'string').join('; ');
+      if (text) return text;
+    }
+  } catch {
+    return payload;
+  }
+  return fallback;
+}
+
+function logClientFailure(event: { method: string; path: string; requestId?: string; status: number }): void {
+  console.warn(
+    JSON.stringify({
+      method: event.method,
+      path: event.path,
+      requestId: event.requestId,
+      status: event.status,
+    }),
+  );
 }
 
 function emitUnauthorizedEvent(): void {
@@ -116,6 +163,7 @@ function emitUnauthorizedEvent(): void {
 function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<string, string>): Record<string, string> {
   const headers: Record<string, string> = {
     'X-Active-Role': config.activeRole,
+    'X-Request-Id': createRequestId(),
     ...(extra ?? {}),
   };
   const accessToken = resolveAccessToken(config);
@@ -126,6 +174,22 @@ function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<s
     headers['Content-Type'] = 'application/json';
   }
   return headers;
+}
+
+function createRequestId(): string {
+  const randomUUID = globalThis.crypto?.randomUUID?.bind(globalThis.crypto);
+  if (randomUUID) {
+    return randomUUID();
+  }
+  return fallbackRequestId();
+}
+
+function fallbackRequestId(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
+    const random = Math.floor(Math.random() * 16);
+    const value = char === 'x' ? random : (random & 0x3) | 0x8;
+    return value.toString(16);
+  });
 }
 
 function resolveAccessToken(config: ApiClientOptions): string | undefined {

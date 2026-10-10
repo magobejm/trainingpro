@@ -1,4 +1,8 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { HttpErrorFilter } from './common/logging/http-error.filter';
+import { RequestIdMiddleware } from './common/logging/request-id.middleware';
+import { RequestLoggingInterceptor } from './common/logging/request-logging.interceptor';
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
@@ -49,5 +53,13 @@ import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.mod
     PhysicalTestsModule,
   ],
   controllers: [HealthController],
+  providers: [
+    { provide: APP_FILTER, useClass: HttpErrorFilter },
+    { provide: APP_INTERCEPTOR, useClass: RequestLoggingInterceptor },
+  ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(RequestIdMiddleware).forRoutes('{*path}');
+  }
+}

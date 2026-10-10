@@ -37,7 +37,7 @@ export async function saveTemplate<T extends Created>(
     return saved;
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 409) {
-      session.reportConflict(readConflictVersion(error.status, error.message));
+      session.reportConflict(readConflictVersion(error.status, error.responseText));
     }
     throw error;
   } finally {

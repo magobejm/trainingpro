@@ -1,15 +1,17 @@
 /* eslint-disable max-lines-per-function */
-import type { SessionItem } from '../../../data/hooks/useTodaySession';
+import type { SportSessionItem, StrengthSessionItem } from '../../../data/hooks/useTodaySession';
 import { formatRestLabel, isListedExerciseDone, isSessionItemComplete } from '../session-completion.utils';
 
 describe('session-completion.utils', () => {
-  const strengthComplete: SessionItem = {
+  const strengthComplete: StrengthSessionItem = {
     type: 'strength',
     coachInstructions: null,
     groupId: null,
     groupType: null,
     id: 's1',
     displayName: 'Press',
+    lockedFields: [],
+    youtubeUrl: null,
     logs: [
       {
         effortRir: 2,
@@ -84,13 +86,15 @@ describe('session-completion.utils', () => {
   });
 
   it('counts sport completion from per-set logs', () => {
-    const sport: SessionItem = {
+    const sport: SportSessionItem = {
       type: 'sport',
       coachInstructions: null,
       groupId: null,
       groupType: null,
       id: 'sp1',
       displayName: 'Fútbol',
+      lockedFields: [],
+      youtubeUrl: null,
       durationMinutes: 20,
       log: null,
       notes: null,

@@ -7,6 +7,7 @@ RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api/package.json ./apps/api/package.json
 COPY packages/config/package.json ./packages/config/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
 RUN pnpm install --frozen-lockfile=false
 
 FROM node:${NODE_VERSION} AS build
@@ -18,6 +19,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/api ./apps/api
 COPY apps/storage ./apps/storage
 COPY packages/config ./packages/config
+COPY packages/shared ./packages/shared
 COPY prisma ./prisma
 RUN pnpm --filter @trainerpro/api db:generate \
   && pnpm --filter @trainerpro/api build
@@ -30,6 +32,7 @@ COPY --from=build /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build /app/apps/storage ./apps/storage
+COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/prisma ./prisma
 WORKDIR /app/apps/api
 EXPOSE 8080

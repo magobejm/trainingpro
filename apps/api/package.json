@@ -10,6 +10,7 @@
     "@nestjs/mapped-types": "^2.1.0",
     "@nestjs/platform-express": "^11.1.13",
     "@prisma/client": "6.19.2",
+    "@trainerpro/shared": "workspace:*",
     "class-validator": "^0.14.3",
     "expo-server-sdk": "^7.2.0",
     "express": "^5.1.0",
@@ -44,6 +45,7 @@
     "db:seed:dev": "pnpm exec tsx prisma/seeds/seed-dev-data.ts",
     "lint": "pnpm exec eslint src --ext .ts",
     "test": "pnpm exec jest --config jest.config.cjs --runInBand",
+    "test:contracts": "pnpm exec jest --config jest.config.cjs --runInBand test/contracts",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
     "build": "pnpm exec tsc -p tsconfig.build.json"
   }

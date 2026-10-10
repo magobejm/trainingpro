@@ -80,7 +80,7 @@ export class PlansController {
   }
 }
 
-function mapTemplateOutput(template: {
+export function mapTemplateOutput(template: {
   createdAt: Date;
   days: unknown[];
   id: string;

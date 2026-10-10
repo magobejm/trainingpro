@@ -1,215 +1,42 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type {
+  CardioSessionItem,
+  IntervalLog,
+  IsometricSessionItem,
+  IsometricSetLog,
+  MobilitySessionItem,
+  MobilitySetLog,
+  PlannedSet,
+  PlioSessionItem,
+  PlioSetLog,
+  SessionItem,
+  SessionView,
+  SetLog,
+  SportLog,
+  SportSessionItem,
+  SportSetLog,
+  StrengthSessionItem,
+} from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-export type PlannedSet = {
-  advancedTechnique: null | string;
-  durationSeconds?: null | number;
-  fcMaxPct?: null | number;
-  fcReservePct?: null | number;
-  heartRate?: null | number;
-  note: null | string;
-  reps?: null | number;
-  restSeconds?: null | number;
-  rir?: null | number;
-  rom?: null | string;
-  rpe?: null | number;
-  setIndex: number;
-  weightKg?: null | number;
-};
-
-export type SetLog = {
-  effortRir: null | number;
-  effortRpe: null | number;
-  repsDone: null | number;
-  restSecondsDone: null | number;
-  sessionItemId: string;
-  setIndex: number;
-  weightDoneKg: null | number;
-};
-
-export type StrengthSessionItem = {
-  type: 'strength';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  lockedFields?: string[];
-  logs: SetLog[];
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  repsMax: null | number;
-  repsMin: null | number;
-  restSeconds: null | number;
-  setsPlanned: null | number;
-  sortOrder: number;
-  sourceExerciseId: null | string;
-  targetRir: null | number;
-  targetRpe: null | number;
-  weightRangeMaxKg: null | number;
-  weightRangeMinKg: null | number;
-};
-
-export type PlioSetLog = {
-  durationSecondsDone: null | number;
-  effortRpe: null | number;
-  repsDone: null | number;
-  restSecondsDone: null | number;
-  sessionPlioBlockId: string;
-  setIndex: number;
-  weightDoneKg: null | number;
-};
-
-export type PlioSessionItem = {
-  type: 'plio';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  lockedFields?: string[];
-  logs: PlioSetLog[];
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  restSeconds: number;
-  roundsPlanned: number;
-  sortOrder: number;
-  targetRpe: null | number;
-  workSeconds: number;
-};
-
-export type MobilitySetLog = {
-  effortRpe: null | number;
-  repsDone: null | number;
-  restSecondsDone: null | number;
-  romDone: null | string;
-  sessionMobilityBlockId: string;
-  setIndex: number;
-  weightDoneKg: null | number;
-};
-
-export type MobilitySessionItem = {
-  type: 'mobility';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  lockedFields?: string[];
-  logs: MobilitySetLog[];
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  restSeconds: number;
-  roundsPlanned: number;
-  sortOrder: number;
-  targetRpe: null | number;
-  workSeconds: number;
-};
-
-export type IsometricSetLog = {
-  durationSecondsDone: null | number;
-  effortRpe: null | number;
-  restSecondsDone: null | number;
-  sessionIsometricBlockId: string;
-  setIndex: number;
-  weightDoneKg: null | number;
-};
-
-export type IsometricSessionItem = {
-  type: 'isometric';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  lockedFields?: string[];
-  logs: IsometricSetLog[];
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  restSeconds: null | number;
-  setsPlanned: null | number;
-  sortOrder: number;
-  targetRpe: null | number;
-};
-
-export type SportLog = {
-  avgHeartRate: null | number;
-  durationMinutesDone: null | number;
-  effortRpe: null | number;
-  sessionSportBlockId: string;
-};
-
-export type SportSetLog = {
-  durationSecondsDone: null | number;
-  effortRir: null | number;
-  effortRpe: null | number;
-  heartRateDone: null | number;
-  hrMaxPctDone: null | number;
-  hrReservePctDone: null | number;
-  repsDone: null | number;
-  restSecondsDone: null | number;
-  romDone: null | string;
-  sessionSportBlockId: string;
-  setIndex: number;
-  weightDoneKg: null | number;
-};
-
-export type SportSessionItem = {
-  type: 'sport';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  durationMinutes: number;
-  lockedFields?: string[];
-  log: SportLog | null;
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  setLogs: SportSetLog[];
-  sortOrder: number;
-  targetRpe: null | number;
-};
-
-export type IntervalLog = {
-  avgHeartRate: null | number;
-  distanceDoneMeters: null | number;
-  durationSecondsDone: null | number;
-  effortRpe: null | number;
-  intervalIndex: number;
-  restSecondsDone: null | number;
-  sessionCardioBlockId: string;
-};
-
-export type CardioSessionItem = {
-  type: 'cardio';
-  coachInstructions: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  displayName: string;
-  intervalLogs: IntervalLog[];
-  lockedFields?: string[];
-  notes: null | string;
-  plannedSets: PlannedSet[];
-  restSeconds: number;
-  roundsPlanned: number;
-  sortOrder: number;
-  targetDistanceMeters: null | number;
-  targetRpe: null | number;
-  workSeconds: number;
-};
-
-export type SessionItem = (
-  | CardioSessionItem
-  | IsometricSessionItem
-  | MobilitySessionItem
-  | PlioSessionItem
-  | SportSessionItem
-  | StrengthSessionItem
-) & {
-  youtubeUrl?: null | string;
+export type {
+  CardioSessionItem,
+  IntervalLog,
+  IsometricSessionItem,
+  IsometricSetLog,
+  MobilitySessionItem,
+  MobilitySetLog,
+  PlannedSet,
+  PlioSessionItem,
+  PlioSetLog,
+  SessionItem,
+  SessionView,
+  SetLog,
+  SportLog,
+  SportSessionItem,
+  SportSetLog,
+  StrengthSessionItem,
 };
 
 export type LogPlioSetMutationInput = {
@@ -263,21 +90,6 @@ export type LogIntervalMutationInput = {
   intervalIndex: number;
   restSecondsDone?: null | number;
   sessionCardioBlockId: string;
-};
-
-export type SessionView = {
-  id: string;
-  items: SessionItem[];
-  postFatigue: null | number;
-  postMood: null | number;
-  postPain: null | number;
-  preFatigue: null | number;
-  preMotivation: null | number;
-  preRecovery: null | number;
-  sessionRpe: null | number;
-  startedAt: null | string;
-  startMode: 'INTERACTIVE' | 'TIMER' | null;
-  status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
 };
 
 export type ExerciseHistoryEntry = {

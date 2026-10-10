@@ -1,65 +1,12 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import type { ClientListResponse, ClientObjective, ClientView } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-// Signed private media URLs expire after an hour. Remount refetches immediately;
-// this interval refreshes a screen that stays open.
 const PRIVATE_MEDIA_REFRESH_MS = 30 * 60 * 1000;
 
-export type ClientView = {
-  allergies: null | string;
-  avatarUrl: null | string;
-  birthDate: null | string;
-  coachMembershipId: string;
-  considerations: null | string;
-  createdAt: string;
-  email: string;
-  fcMax: null | number;
-  fcRest: null | number;
-  firstName: string;
-  fitnessLevel: null | string;
-  heightCm: null | number;
-  hipCm: null | number;
-  id: string;
-  injuries: null | string;
-  lastName: string;
-  notes: null | string;
-  objective: null | string;
-  objectiveId: string;
-  organizationId: string;
-  phone: null | string;
-  secondaryObjectives: string[];
-  sex: null | string;
-  updatedAt: string;
-  waistCm: null | number;
-  weightKg: null | number;
-  trainingPlanId: string | null;
-  trainingPlan?: { id: string; name: string };
-  objectiveOptions?: ClientObjectiveView[];
-  progressPhotos: ClientProgressPhotoView[];
-};
-
-export type ClientProgressPhotoView = {
-  archived: boolean;
-  clientId: string;
-  createdAt: string;
-  id: string;
-  imagePath?: string;
-  imageUrl: string;
-  updatedAt: string;
-};
-
-type ListClientsResponse = {
-  items: ClientView[];
-};
-
-export type ClientObjectiveView = {
-  code: string;
-  id: string;
-  isDefault: boolean;
-  label: string;
-  sortOrder: number;
-};
+export type { ClientView };
+export type ClientObjectiveView = ClientObjective;
 
 type ListClientObjectivesResponse = {
   items: ClientObjectiveView[];
@@ -114,7 +61,7 @@ async function fetchClients(auth: ReturnType<typeof useAuth>): Promise<ClientVie
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const response = await createApiClient(auth).get<ListClientsResponse>('/clients');
+  const response = await createApiClient(auth).get<ClientListResponse>('/clients');
   return response.items;
 }
 

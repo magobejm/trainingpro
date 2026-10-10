@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { StrengthPlanListItem } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -34,14 +35,7 @@ export type UpsertTemplateInput = {
   name: string;
 };
 
-export type PlanTemplateView = {
-  coachMembershipId: null | string;
-  days: TemplateDayInput[];
-  id: string;
-  name: string;
-  scope: 'COACH' | 'GLOBAL';
-  templateVersion: number;
-};
+export type PlanTemplateView = StrengthPlanListItem;
 
 type ListTemplatesResponse = {
   items: PlanTemplateView[];

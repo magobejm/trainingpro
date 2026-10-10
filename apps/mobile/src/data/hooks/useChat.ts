@@ -1,37 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ChatCallProposal, ChatMessage } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-type ChatAttachment = {
-  fileName: string;
-  id: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
-  mimeType: string;
-  publicUrl: null | string;
-  sizeBytes: number;
-  storagePath: string;
-};
-
-export type ChatCallProposal = {
-  date: string;
-  id: string;
-  initiatedBy: 'COACH' | 'CLIENT';
-  lastProposedBy: 'COACH' | 'CLIENT';
-  proposedTime: string;
-  status: 'accepted' | 'cancelled' | 'pending';
-};
-
-export type ChatMessage = {
-  attachments: ChatAttachment[];
-  callProposal?: ChatCallProposal | null;
-  createdAt: string;
-  expiresAt: string;
-  id: string;
-  senderRole: 'COACH' | 'CLIENT';
-  senderSubject: string;
-  text: null | string;
-  threadId: string;
-};
+export type { ChatCallProposal, ChatMessage };
 
 type UploadPolicy = {
   kind: 'AUDIO' | 'IMAGE' | 'PDF';

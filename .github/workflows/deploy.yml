@@ -18,9 +18,26 @@ env:
   FIREBASE_SITE: ${{ vars.FIREBASE_SITE }}
 
 jobs:
+  contracts:
+    name: HTTP contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile=false
+      - run: pnpm --filter @trainerpro/api db:generate
+      - name: Fetch main contract baseline
+        run: git fetch origin main --depth=1
+      - run: pnpm --filter @trainerpro/api test:contracts
+
   deploy-db:
     name: Apply Prisma migrations to Supabase
     runs-on: ubuntu-latest
+    needs: contracts
     permissions:
       contents: read
       id-token: write

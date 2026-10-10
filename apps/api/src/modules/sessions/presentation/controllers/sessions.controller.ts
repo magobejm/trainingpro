@@ -188,7 +188,7 @@ export class SessionsController {
   }
 }
 
-function mapSession(session: { finishedAt: Date | null; sessionDate: Date; startedAt: Date | null }) {
+export function mapSession(session: { finishedAt: Date | null; sessionDate: Date; startedAt: Date | null }) {
   return {
     ...session,
     finishedAt: session.finishedAt ? session.finishedAt.toISOString() : null,

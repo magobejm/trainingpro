@@ -103,7 +103,7 @@ export function SeriesTable({
   const phDash = t('coach.routine.seriesTable.placeholderDash');
 
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
+    <ScrollView horizontal style={{ marginTop: 8 }}>
       <View style={{ minWidth: tableWidth }}>
         <SeriesHeaderRow
           lockedFields={lockedFields}

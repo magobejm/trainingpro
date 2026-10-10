@@ -58,9 +58,14 @@ module.exports = {
             message: 'Use i18n keys, no literal strings in JSX text.',
           },
           {
-            selector:
-              "JSXAttribute[value.type='Literal']:not([name.name='testID']):not([name.name='accessibilityLabel']):not([name.name='aria-label'])",
-            message: 'Use i18n keys for string props (except testID/accessibilityLabel/aria-label).',
+            selector: [
+              "JSXAttribute[value.type='Literal']",
+              ":not([name.name='testID'])",
+              ":not([name.name='accessibilityLabel'])",
+              ":not([name.name='aria-label'])",
+              ":not([name.name='accessibilityRole'])",
+            ].join(''),
+            message: 'Use i18n keys for string props (except testID, labels, and accessibilityRole).',
           },
         ],
       },

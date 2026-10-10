@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
@@ -114,7 +114,7 @@ function RoutineMainSection(
         onViewWarmupTemplate={props.onViewWarmupTemplate}
       />
       {!isReadOnly && (
-        <Pressable onPress={draftState.addDay} style={s.addDayBtn}>
+        <Pressable accessibilityRole="button" onPress={draftState.addDay} style={s.addDayBtn}>
           <Text style={s.addDayText}>{`+ ${t(labels.addContainerKey)}`}</Text>
         </Pressable>
       )}
@@ -154,13 +154,16 @@ function RoutineFooterSection(props: LayoutProps) {
   const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
-      <Pressable
-        disabled={props.saveDisabled}
-        onPress={() => uiState.setShowSaveModal(true)}
-        style={[s.saveBtn, props.saveDisabled ? { opacity: 0.5 } : null]}
-      >
-        <Text style={s.saveBtnText}>{showAssign ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
-      </Pressable>
+      <View style={s.saveBar}>
+        <Pressable
+          accessibilityRole="button"
+          disabled={props.saveDisabled}
+          onPress={() => uiState.setShowSaveModal(true)}
+          style={[s.saveBtn, props.saveDisabled ? { opacity: 0.5 } : null]}
+        >
+          <Text style={s.saveBtnText}>{showAssign ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
+        </Pressable>
+      </View>
       <SaveRoutineModal
         initialName={draftState.draft.name}
         isGlobal={showAssign}
@@ -237,28 +240,31 @@ export function RoutinePlannerLayout(props: LayoutProps) {
   const viewingTemplate = viewingWarmup ? (warmupTemplates.find((t) => t.id === viewingWarmup.templateId) ?? null) : null;
 
   return (
-    <ScrollView contentContainerStyle={s.page}>
-      <RoutineLayoutSections
-        onOpenPicker={onOpenPicker}
-        onOpenWarmupTemplatePicker={onOpenWarmupTemplatePicker}
-        onRemoveWarmupTemplate={onRemoveWarmupTemplate}
-        onViewWarmupTemplate={onViewWarmupTemplate}
-        props={props}
-      />
-      <RoutinePlannerModals
-        onPickerSelect={onPickerSelect}
-        onSelectWarmupTemplate={onSelectWarmupTemplate}
-        t={props.t}
-        uiState={uiState}
-        warmupTemplates={warmupTemplates}
-      />
-      <WarmupTemplateDetailModal
-        template={viewingTemplate}
-        onClose={() => setViewingWarmup(null)}
-        t={props.t}
-        visible={viewingWarmup !== null}
-      />
-    </ScrollView>
+    <View style={s.plannerColumn}>
+      <ScrollView contentContainerStyle={s.page} style={s.plannerScroll}>
+        <RoutineLayoutSections
+          onOpenPicker={onOpenPicker}
+          onOpenWarmupTemplatePicker={onOpenWarmupTemplatePicker}
+          onRemoveWarmupTemplate={onRemoveWarmupTemplate}
+          onViewWarmupTemplate={onViewWarmupTemplate}
+          props={props}
+        />
+        <RoutinePlannerModals
+          onPickerSelect={onPickerSelect}
+          onSelectWarmupTemplate={onSelectWarmupTemplate}
+          t={props.t}
+          uiState={uiState}
+          warmupTemplates={warmupTemplates}
+        />
+        <WarmupTemplateDetailModal
+          template={viewingTemplate}
+          onClose={() => setViewingWarmup(null)}
+          t={props.t}
+          visible={viewingWarmup !== null}
+        />
+      </ScrollView>
+      <RoutineFooterSection {...props} />
+    </View>
   );
 }
 
@@ -320,7 +326,6 @@ function RoutineLayoutSections(props: {
         onChange={(neats) => draftState.setDraft((prev) => ({ ...prev, neats }))}
         t={t}
       />
-      <RoutineFooterSection {...props.props} />
     </>
   );
 }

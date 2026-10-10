@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useDialogFocus } from '../../../layout/useDialogFocus';
 import { CreateClientAvatarPicker } from './CreateClientAvatarPicker';
 
 const EMAIL_PROPS = {
@@ -33,15 +34,12 @@ type Props = {
 };
 
 export function CreateClientModal(props: Props): React.JSX.Element {
+  const cardRef = useRef<View>(null);
+  useDialogFocus(props.visible, cardRef);
   return (
-    <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onClose}
-      transparent
-      visible={props.visible}
-    >
+    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onClose} transparent visible={props.visible}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View ref={cardRef} style={styles.card}>
           <ModalHeader t={props.t} />
           <ModalFields {...props} />
           <ModalActions {...props} />
@@ -79,16 +77,14 @@ function ModalFields(props: Props): React.JSX.Element {
 function TextFields(props: Props): React.JSX.Element {
   return (
     <>
-      <TextInput
+      <LabeledInput
+        label={props.t('coach.clients.form.firstName')}
         onChangeText={props.onFirstNameChange}
-        placeholder={props.t('coach.clients.form.firstName')}
-        style={styles.input}
         value={props.firstName}
       />
-      <TextInput
+      <LabeledInput
+        label={props.t('coach.clients.form.lastName')}
         onChangeText={props.onLastNameChange}
-        placeholder={props.t('coach.clients.form.lastName')}
-        style={styles.input}
         value={props.lastName}
       />
     </>
@@ -98,23 +94,21 @@ function TextFields(props: Props): React.JSX.Element {
 function EmailFields(props: Props): React.JSX.Element {
   return (
     <>
-      <TextInput
+      <LabeledInput
         {...EMAIL_PROPS}
+        error={props.emailMismatch}
+        label={props.t('coach.clients.form.email')}
         onChangeText={props.onEmailChange}
-        placeholder={props.t('coach.clients.form.email')}
-        style={styles.input}
         value={props.email}
       />
-      <TextInput
+      <LabeledInput
         {...EMAIL_PROPS}
+        error={props.emailMismatch}
+        label={props.t('coach.clients.form.confirmEmail')}
         onChangeText={props.onConfirmEmailChange}
-        placeholder={props.t('coach.clients.form.confirmEmail')}
-        style={[styles.input, props.emailMismatch ? styles.inputError : null]}
         value={props.confirmEmail}
       />
-      {props.emailMismatch ? (
-        <Text style={styles.error}>{props.t('coach.clients.form.confirmEmailMismatch')}</Text>
-      ) : null}
+      {props.emailMismatch ? <Text style={styles.error}>{props.t('coach.clients.form.confirmEmailMismatch')}</Text> : null}
     </>
   );
 }
@@ -124,6 +118,7 @@ function ObjectiveField(props: Props): React.JSX.Element {
     <View style={styles.field}>
       <Text style={styles.label}>{props.t('coach.clients.form.objective')}</Text>
       <select
+        aria-label={props.t('coach.clients.form.objective')}
         onChange={(event) => props.onObjectiveChange(event.target.value)}
         style={selectStyle}
         value={props.objectiveId}
@@ -141,10 +136,11 @@ function ObjectiveField(props: Props): React.JSX.Element {
 function ModalActions(props: Props): React.JSX.Element {
   return (
     <View style={styles.actions}>
-      <Pressable onPress={props.onClose} style={styles.cancelButton}>
+      <Pressable accessibilityRole="button" onPress={props.onClose} style={styles.cancelButton}>
         <Text style={styles.cancelLabel}>{props.t('coach.clients.modal.cancel')}</Text>
       </Pressable>
       <Pressable
+        accessibilityRole="button"
         disabled={!props.isFormValid || props.isSubmitting}
         onPress={props.onCreate}
         style={[styles.submitButton, !props.isFormValid ? styles.submitButtonDisabled : null]}
@@ -155,10 +151,31 @@ function ModalActions(props: Props): React.JSX.Element {
   );
 }
 
+function LabeledInput(props: {
+  autoCapitalize?: 'none';
+  error?: boolean;
+  keyboardType?: 'email-address';
+  label: string;
+  onChangeText: (value: string) => void;
+  value: string;
+}): React.JSX.Element {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{props.label}</Text>
+      <TextInput
+        accessibilityLabel={props.label}
+        autoCapitalize={props.autoCapitalize}
+        keyboardType={props.keyboardType}
+        onChangeText={props.onChangeText}
+        style={[styles.input, props.error ? styles.inputError : null]}
+        value={props.value}
+      />
+    </View>
+  );
+}
+
 function submitLabel(props: Props): string {
-  return props.isSubmitting
-    ? props.t('coach.clients.modal.creating')
-    : props.t('coach.clients.form.submit');
+  return props.isSubmitting ? props.t('coach.clients.modal.creating') : props.t('coach.clients.form.submit');
 }
 
 const styles = StyleSheet.create({
@@ -259,7 +276,6 @@ const selectStyle = {
   boxSizing: 'border-box' as const,
   color: '#1b2434',
   minHeight: 40,
-  outline: 'none',
   padding: '8px 12px',
   width: '100%',
 };

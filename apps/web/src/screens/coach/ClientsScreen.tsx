@@ -304,7 +304,7 @@ function renderCta(props: ViewProps): React.JSX.Element {
         <Text style={styles.ctaTitle}>{props.t('coach.clients.cta.title')}</Text>
         <Text style={styles.ctaSubtitle}>{props.t('coach.clients.cta.subtitle')}</Text>
       </View>
-      <Pressable onPress={props.onOpenModal} style={styles.createButton}>
+      <Pressable accessibilityRole="button" onPress={props.onOpenModal} style={styles.createButton}>
         <Text style={styles.createLabel}>{props.t('coach.clients.form.submit')}</Text>
       </Pressable>
     </View>

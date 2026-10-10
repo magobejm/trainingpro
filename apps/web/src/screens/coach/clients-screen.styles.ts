@@ -65,6 +65,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: COLORS.action,
     borderRadius: 12,
+    flexShrink: 0,
     justifyContent: 'center',
     minHeight: 48,
     paddingHorizontal: 36,
@@ -81,6 +82,7 @@ export const styles = StyleSheet.create({
   ctaCard: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 14,
     justifyContent: 'space-between',
   },

@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { useDialogFocus } from '../../../../layout/useDialogFocus';
 import { useLibraryItems, useLockBodyScroll } from './ExercisePickerModal.hooks';
 import { PickerHeader, PickerBody, PickerTypeBar } from './ExercisePickerModal.components';
 import { s } from './ExercisePickerModal.styles';
@@ -74,6 +75,7 @@ export const ExercisePickerModal = (p: PickerProps) => {
       <Modal animationType={ANIM} onRequestClose={p.onCancel} transparent visible={!!p.blockType}>
         <ModalView
           {...p}
+          dialogVisible={!!p.blockType}
           activeType={activeType}
           addedCount={addedCount}
           addedIds={addedIds}
@@ -105,6 +107,7 @@ const Layout = (p: { isNarrow: boolean; children: React.ReactNode }) => (
 
 interface ModalViewProps extends Omit<PickerProps, 'onSelect'> {
   activeType: BlockType;
+  dialogVisible: boolean;
   addedCount: number;
   addedIds: Set<string>;
   allowedTypes: BlockType[];
@@ -119,9 +122,11 @@ interface ModalViewProps extends Omit<PickerProps, 'onSelect'> {
 
 const ModalView = (p: ModalViewProps) => {
   const layout = useModalLayout();
+  const sheetRef = useRef<View>(null);
+  useDialogFocus(p.dialogVisible, sheetRef);
   return (
     <View style={s.overlay}>
-      <View style={s.sheet}>
+      <View ref={sheetRef} style={s.sheet}>
         <PickerHeader t={p.t} />
         <PickerTypeBar activeType={p.activeType} allowedTypes={p.allowedTypes} onChange={p.setActiveType} t={p.t} />
         <TextInput
@@ -216,7 +221,7 @@ function ModalFooter({
   return (
     <View style={s.footer}>
       <Text style={s.footerCount}>{addedCount > 0 ? t('coach.routine.picker.addedCount', { count: addedCount }) : ''}</Text>
-      <Pressable onPress={onDone} style={s.doneBtn}>
+      <Pressable accessibilityRole="button" onPress={onDone} style={s.doneBtn}>
         <Text style={s.doneBtnText}>{t('coach.routine.picker.done')}</Text>
       </Pressable>
     </View>

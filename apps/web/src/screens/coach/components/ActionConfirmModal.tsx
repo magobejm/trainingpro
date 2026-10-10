@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
+import { useDialogFocus } from '../../../layout/useDialogFocus';
 import { styles } from './ActionConfirmModal.styles';
 
 const MODAL_ANIMATION = 'fade' as const;
@@ -17,10 +18,12 @@ type Props = {
 };
 
 export function ActionConfirmModal(props: Props): React.JSX.Element {
+  const cardRef = useRef<View>(null);
+  useDialogFocus(props.visible, cardRef);
   return (
     <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onCancel} transparent visible={props.visible}>
       <View style={styles.overlay}>
-        <View style={styles.card}>
+        <View ref={cardRef} style={styles.card}>
           <Text style={styles.title}>{props.title}</Text>
           <Text style={styles.message}>{props.message}</Text>
           {props.errorMessage ? (
@@ -57,6 +60,7 @@ function ActionButtons(
   return (
     <View style={styles.actions}>
       <Pressable
+        accessibilityRole="button"
         disabled={props.isLoading}
         onPress={props.onCancel}
         style={[styles.cancelButton, props.isLoading && { opacity: 0.5 }]}
@@ -65,6 +69,7 @@ function ActionButtons(
       </Pressable>
       {props.confirmLabel && props.onConfirm ? (
         <Pressable
+          accessibilityRole="button"
           disabled={props.isLoading}
           onPress={props.onConfirm}
           style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}

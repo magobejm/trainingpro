@@ -59,7 +59,7 @@ const CardActions = ({ isAdded, onSelect, onViewDetail, t }: CardActionsProps) =
     <Pressable onPress={onViewDetail} style={s.cardGhostBtn}>
       <Text style={s.cardGhostText}>{t('coach.routine.picker.actions.viewDetails')}</Text>
     </Pressable>
-    <Pressable onPress={onSelect} style={[s.cardPrimaryBtn, isAdded && s.cardPrimaryBtnAdded]}>
+    <Pressable accessibilityRole="button" onPress={onSelect} style={[s.cardPrimaryBtn, isAdded && s.cardPrimaryBtnAdded]}>
       <Text style={[s.cardPrimaryText, isAdded && s.cardPrimaryTextAdded]}>
         {isAdded ? t('coach.routine.picker.added') : t('coach.routine.picker.actions.select')}
       </Text>

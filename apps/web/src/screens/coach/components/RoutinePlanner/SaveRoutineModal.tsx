@@ -1,6 +1,7 @@
 /* eslint-disable max-lines-per-function */
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useDialogFocus } from '../../../../layout/useDialogFocus';
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../../utils/normalize-search';
 import { useRoutineHandoffPrompt } from '../../RoutineHandoffDialog';
@@ -37,7 +38,11 @@ interface SaveRoutineModalProps {
 function ClientRow({ client, isSelected, onPress }: { client: ClientView; isSelected: boolean; onPress: () => void }) {
   const initials = `${client.firstName[0] ?? ''}${client.lastName[0] ?? ''}`.toUpperCase();
   return (
-    <Pressable onPress={onPress} style={[styles.clientRow, isSelected && styles.clientRowSelected]}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={onPress}
+      style={[styles.clientRow, isSelected && styles.clientRowSelected]}
+    >
       <View style={[styles.avatar, isSelected && styles.avatarSelected]}>
         {client.avatarUrl ? (
           <Image source={{ uri: client.avatarUrl }} style={styles.avatarImage} />
@@ -73,6 +78,8 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const handoff = useRoutineHandoffPrompt(t);
+  const dialogRef = useRef<View>(null);
+  useDialogFocus(visible, dialogRef);
 
   useEffect(() => {
     if (visible) {
@@ -162,9 +169,9 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   if (!visible) return null;
 
   return (
-    <Modal animationType={MODAL_ANIM} transparent visible={visible}>
+    <Modal animationType={MODAL_ANIM} onRequestClose={onClose} transparent visible={visible}>
       <Pressable onPress={onClose} style={styles.overlay}>
-        <Pressable onPress={noop} style={styles.modal}>
+        <Pressable onPress={noop} ref={dialogRef} style={styles.modal}>
           {/* ── Scrollable body ── */}
           <ScrollView
             style={styles.body}
@@ -172,7 +179,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
           >
-            <Pressable onPress={onClose} style={styles.backBtn}>
+            <Pressable accessibilityRole="button" onPress={onClose} style={styles.backBtn}>
               <Text style={styles.backIcon}>{BACK_ICON}</Text>
               <Text style={styles.backText}>{t('coach.library.detail.back')}</Text>
             </Pressable>
@@ -247,6 +254,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
           {isGlobal ? (
             <View style={styles.footer}>
               <Pressable
+                accessibilityRole="button"
                 disabled={!selectedClientId || isSaving || alreadyAssigned}
                 onPress={() => void handleAssignOnly()}
                 style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
@@ -257,6 +265,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
           ) : (
             <View style={styles.footer}>
               <Pressable
+                accessibilityRole="button"
                 disabled={isSaving}
                 onPress={handleSaveOnly}
                 style={[styles.btnSecondary, isSaving && styles.btnDisabled]}
@@ -266,6 +275,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
                 </Text>
               </Pressable>
               <Pressable
+                accessibilityRole="button"
                 disabled={!selectedClientId || isSaving || alreadyAssigned}
                 onPress={handleSaveAndAssign}
                 style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}

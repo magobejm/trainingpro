@@ -66,7 +66,7 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
         />
         <View style={s.dayHeaderRight}>
           {!props.readOnly && (
-            <Pressable onPress={props.onAddBlock} style={s.dayAddExerciseBtn}>
+            <Pressable accessibilityRole="button" onPress={props.onAddBlock} style={s.dayAddExerciseBtn}>
               <Text style={s.dayAddExerciseBtnText}>{props.t(vm.addKey)}</Text>
             </Pressable>
           )}

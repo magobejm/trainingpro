@@ -265,6 +265,7 @@ function renderNavButtons(
     const isActive = route === item.id;
     return (
       <Pressable
+        accessibilityRole="button"
         key={item.id}
         onPress={() => onSelect(item.id)}
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

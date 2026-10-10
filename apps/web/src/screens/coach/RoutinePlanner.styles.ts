@@ -2,6 +2,13 @@ import { StyleSheet } from 'react-native';
 
 export const s = StyleSheet.create({
   page: { padding: 24, gap: 16 },
+  plannerColumn: { flex: 1, minHeight: 0 },
+  plannerScroll: { flex: 1 },
+  saveBar: {
+    backgroundColor: '#f8fafc',
+    paddingBottom: 16,
+    paddingHorizontal: 24,
+  },
   title: { fontSize: 22, fontWeight: '700', color: '#1e293b' },
   card: {
     backgroundColor: '#fff',
@@ -221,7 +228,7 @@ export const s = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  templateName: { fontSize: 14, fontWeight: '600', color: '#1e293b' },
+  templateName: { flexShrink: 1, fontSize: 14, fontWeight: '600', color: '#1e293b' },
   templateMeta: { fontSize: 12, color: '#94a3b8' },
   templateBadge: {
     fontSize: 10,
@@ -234,7 +241,7 @@ export const s = StyleSheet.create({
     marginLeft: 8,
   },
   templateBadgeGlobal: { backgroundColor: '#f59e0b' },
-  templateActions: { flexDirection: 'row', gap: 8 },
+  templateActions: { flexDirection: 'row', flexShrink: 0, gap: 8 },
   editBtn: {
     paddingHorizontal: 10,
     paddingVertical: 6,

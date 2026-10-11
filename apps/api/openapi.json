@@ -3083,14 +3083,40 @@
         "responses": {
           "200": {
             "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
           }
         },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
         "summary": "POST /ai-evaluator/analyze",
         "x-controller": "AiEvaluatorController",
         "x-filters": [],
-        "x-guards": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
-        "x-roles": []
+        "x-roles": ["coach"]
       }
     },
     "/calendar": {

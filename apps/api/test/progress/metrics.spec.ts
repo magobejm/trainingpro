@@ -1,4 +1,5 @@
 import { aggregateCardioWeekly } from '../../src/modules/progress/domain/metrics/cardio-weekly.metric';
+import { aggregateExerciseSets } from '../../src/modules/progress/domain/metrics/exercise-metrics';
 import { aggregateStrengthWeekly } from '../../src/modules/progress/domain/metrics/strength-weekly.metric';
 import { computeSessionSrpe } from '../../src/modules/progress/domain/metrics/srpe';
 
@@ -103,5 +104,43 @@ describe('progress metrics', () => {
     expect(computeSessionSrpe(8, 1800)).toBe(240);
     expect(computeSessionSrpe(null, 1800)).toBeNull();
     expect(computeSessionSrpe(8, null)).toBeNull();
+  });
+});
+
+describe('performed weight missing', () => {
+  test('keeps a set with reps and no performed weight out of tonnage and e1rm', () => {
+    const result = aggregateExerciseSets('session-1', new Date('2026-10-07T10:00:00.000Z'), [
+      { effortRpe: null, repsDone: 8, setIndex: 1, weightDoneKg: null },
+    ]);
+
+    expect(result.sets).toBe(1);
+    expect(result.setDetails).toEqual([
+      { e1rm: null, inol: null, reps: 8, rpe: null, setIndex: 1, tonnage: 0, weightKg: null },
+    ]);
+    expect(result.tonnage).toBe(0);
+    expect(result.e1rm).toBeNull();
+    expect(result.totalReps).toBe(8);
+  });
+
+  test('does not invent a max weight when the performed weight is missing', () => {
+    const result = aggregateStrengthWeekly([
+      {
+        muscleGroup: 'chest',
+        repsDone: 8,
+        sessionDate: new Date('2026-02-16T10:00:00.000Z'),
+        weightDoneKg: null,
+      },
+    ]);
+
+    expect(result).toEqual([
+      {
+        maxWeightKg: null,
+        muscleGroup: 'chest',
+        totalReps: 8,
+        totalSets: 1,
+        volumeKg: 0,
+        weekStart: '2026-02-16',
+      },
+    ]);
   });
 });

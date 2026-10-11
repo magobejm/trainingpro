@@ -27,6 +27,7 @@ import { LogSportDto } from '../dto/log-sport.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { SportBlockSetParamsDto } from '../dto/sport-block-set-params.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
+import { readTimezoneOffset as readOffset } from '../read-timezone-offset';
 
 @Controller('sessions')
 @UseGuards(AuthGuard, RolesGuard)
@@ -195,12 +196,4 @@ export function mapSession(session: { finishedAt: Date | null; sessionDate: Date
     sessionDate: session.sessionDate.toISOString().slice(0, 10),
     startedAt: session.startedAt ? session.startedAt.toISOString() : null,
   };
-}
-
-function readOffset(raw: string | undefined): number {
-  if (!raw) {
-    return 0;
-  }
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 0;
 }

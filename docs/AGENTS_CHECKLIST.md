@@ -46,6 +46,9 @@ Límites **reales** aplicados por `.eslintrc.cjs` (salvo exclusiones indicadas):
 - [ ] ¿Auditoría (`created_by`, `updated_by`) desde el contexto autenticado?
 - [ ] ¿Ownership verificado (`assertCoachOwnsClient` o acceso solo a datos propios)?
 - [ ] ¿Sin fallbacks de peso objetivo al calcular volumen (`weight_done` como factor)?
+- [ ] ¿Las escrituras de sesión pasan por `assertCanEdit` y `assertSessionMutable`?
+- [ ] ¿Una sesión iniciada se conserva, sin reescribirla al cambiar el plan?
+- [ ] ¿El progreso usa solo valores realizados y nunca el prescrito? Ver [tp-13-sesiones-y-metricas.md](qa/tp-13-sesiones-y-metricas.md).
 
 ## 4. Git: commit y push
 

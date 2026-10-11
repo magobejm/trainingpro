@@ -13,6 +13,7 @@ import { EnsureCardioSessionDto } from '../dto/ensure-cardio-session.dto';
 import { FinishSessionDto } from '../dto/finish-session.dto';
 import { LogIntervalDto } from '../dto/log-interval.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
+import { readTimezoneOffset as readOffset } from '../read-timezone-offset';
 
 @Controller('sessions/cardio')
 @UseGuards(AuthGuard, RolesGuard)
@@ -86,12 +87,4 @@ function mapSession(session: { finishedAt: Date | null; sessionDate: Date; start
     sessionDate: session.sessionDate.toISOString().slice(0, 10),
     startedAt: session.startedAt ? session.startedAt.toISOString() : null,
   };
-}
-
-function readOffset(raw: string | undefined): number {
-  if (!raw) {
-    return 0;
-  }
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : 0;
 }

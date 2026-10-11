@@ -45,6 +45,9 @@ export async function persistEnsuredSession(
       where: { clientId: input.clientId, sessionDate: input.sessionDate },
       include: sessionInclude(),
     });
+    if (existing && isStartedSession(existing)) {
+      return existing;
+    }
     if (existing && !existing.archivedAt && !shouldReplacePendingSession(existing, input.planDayId)) {
       return existing;
     }
@@ -70,6 +73,10 @@ export async function persistEnsuredSession(
         }),
     );
   });
+}
+
+function isStartedSession(existing: PendingRow): boolean {
+  return existing.status !== SessionStatus.PENDING || existing.startedAt != null;
 }
 
 function shouldRewrite(existing: PendingRow, planDayId?: string): boolean {

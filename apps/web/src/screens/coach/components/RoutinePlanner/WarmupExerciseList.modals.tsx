@@ -18,7 +18,7 @@ export function WarmupBlockDetailModal({
   libraryItem: UnifiedExerciseItem | null;
 }): React.JSX.Element {
   const { t } = useTranslation();
-  const instructions = libraryItem?.coachInstructions?.trim() || libraryItem?.instructions?.trim();
+  const instructions = libraryItem?.coachInstructions?.trim() ?? '';
 
   const bodyMessage = !libraryItem
     ? t('coach.warmupExerciseList.noLibraryExercise')

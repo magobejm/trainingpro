@@ -5,6 +5,7 @@ import { buildLibraryScopeWhere, resolveClientCoachId } from '../client-library.
 import { matchesSearch } from '../../../../common/text/normalize-search';
 
 export type ClientLibraryMobility = {
+  coachInstructions: null | string;
   description: null | string;
   id: string;
   mediaType: null | string;
@@ -24,6 +25,7 @@ export class ListClientLibraryMobilityUseCase {
     const rows = await this.prisma.mobilityExercise.findMany({
       where: { ...buildLibraryScopeWhere(coachId) },
       select: {
+        coachInstructions: true,
         description: true,
         id: true,
         mediaType: true,
@@ -37,6 +39,7 @@ export class ListClientLibraryMobilityUseCase {
     });
     return rows
       .map((r) => ({
+        coachInstructions: r.coachInstructions,
         description: r.description,
         id: r.id,
         mediaType: r.mediaType,

@@ -5,6 +5,7 @@ import { buildLibraryScopeWhere, resolveClientCoachId } from '../client-library.
 import { matchesSearch } from '../../../../common/text/normalize-search';
 
 export type ClientLibraryCardio = {
+  coachInstructions: null | string;
   description: null | string;
   equipment: null | string;
   id: string;
@@ -25,6 +26,7 @@ export class ListClientLibraryCardioUseCase {
     const rows = await this.prisma.cardioMethod.findMany({
       where: { ...buildLibraryScopeWhere(coachId) },
       select: {
+        coachInstructions: true,
         description: true,
         equipment: true,
         id: true,
@@ -39,6 +41,7 @@ export class ListClientLibraryCardioUseCase {
     });
     return rows
       .map((r) => ({
+        coachInstructions: r.coachInstructions,
         description: r.description,
         equipment: r.equipment,
         id: r.id,

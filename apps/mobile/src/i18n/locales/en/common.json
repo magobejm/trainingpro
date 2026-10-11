@@ -626,6 +626,7 @@
   "client.library.fields.equipment": "Equipment",
   "client.library.fields.muscles": "Muscles",
   "client.library.fields.instructions": "Instructions",
+  "client.library.fields.coachInstructions": "Coach instructions",
   "client.library.fields.methodType": "Method",
   "client.library.fields.plioType": "Plio type",
   "client.library.fields.mobilityType": "Mobility type",

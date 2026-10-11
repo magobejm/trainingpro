@@ -24,6 +24,7 @@ export const LIBRARY_TYPE_BADGE: Record<LibraryTabId, { bg: string; text: string
 };
 
 export type LibraryDisplayItem = {
+  coachInstructions?: null | string;
   description?: null | string;
   equipment?: null | string;
   icon?: string;

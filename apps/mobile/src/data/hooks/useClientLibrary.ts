@@ -3,6 +3,7 @@ import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 
 export type ClientLibraryExercise = {
+  coachInstructions: null | string;
   equipment: null | string;
   id: string;
   instructions: null | string;
@@ -15,6 +16,7 @@ export type ClientLibraryExercise = {
 };
 
 export type ClientLibraryCardio = {
+  coachInstructions: null | string;
   description: null | string;
   equipment: null | string;
   id: string;
@@ -27,6 +29,7 @@ export type ClientLibraryCardio = {
 };
 
 export type ClientLibraryPlio = {
+  coachInstructions: null | string;
   description: null | string;
   equipment: null | string;
   id: string;
@@ -40,6 +43,7 @@ export type ClientLibraryPlio = {
 };
 
 export type ClientLibraryMobility = {
+  coachInstructions: null | string;
   description: null | string;
   id: string;
   mediaType: null | string;
@@ -51,6 +55,7 @@ export type ClientLibraryMobility = {
 };
 
 export type ClientLibraryIsometric = {
+  coachInstructions: null | string;
   description: null | string;
   equipment: null | string;
   id: string;
@@ -64,6 +69,7 @@ export type ClientLibraryIsometric = {
 };
 
 export type ClientLibrarySport = {
+  coachInstructions: null | string;
   description: null | string;
   icon: string;
   id: string;

@@ -19,6 +19,7 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
 
   const typeLabel = item?.methodType ?? item?.plioType ?? item?.mobilityType ?? item?.isometricType ?? null;
   const bodyText = item?.instructions ?? item?.description ?? null;
+  const coachText = item?.coachInstructions?.trim() ?? '';
   const videoUrl = item?.youtubeUrl ?? null;
   const hasExtra = Boolean(item?.equipment) || Boolean(item?.muscleGroups?.length);
 
@@ -55,6 +56,13 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
             <View style={styles.section}>
               <Text style={styles.fieldLabel}>{t('client.library.fields.instructions')}</Text>
               <Text style={styles.bodyText}>{bodyText}</Text>
+            </View>
+          ) : null}
+
+          {coachText ? (
+            <View style={styles.section}>
+              <Text style={styles.fieldLabel}>{t('client.library.fields.coachInstructions')}</Text>
+              <Text style={styles.bodyText}>{coachText}</Text>
             </View>
           ) : null}
 

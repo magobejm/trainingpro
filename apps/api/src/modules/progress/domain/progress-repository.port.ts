@@ -82,9 +82,10 @@ export type RecentSessionsQuery = {
 };
 
 export interface ProgressRepositoryPort {
-  readCardioLogs(context: AuthContext, query: ProgressQuery): Promise<CardioLogRow[]>;
-  readSessionSrpeRows(context: AuthContext, query: ProgressQuery): Promise<SessionSrpeRow[]>;
-  readStrengthLogs(context: AuthContext, query: ProgressQuery): Promise<StrengthLogRow[]>;
+  resolveProgressClient(context: AuthContext, clientId?: string): Promise<string>;
+  readCardioLogs(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<CardioLogRow[]>;
+  readSessionSrpeRows(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<SessionSrpeRow[]>;
+  readStrengthLogs(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<StrengthLogRow[]>;
   readExerciseProgress(context: AuthContext, query: ExerciseProgressQuery): Promise<ExerciseProgressPoint[]>;
   readExercisePr(context: AuthContext, query: ExercisePrQuery): Promise<number | null>;
   readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]>;

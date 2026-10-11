@@ -213,9 +213,18 @@ function sessionDetail(): ContractDetail {
 function chatDetail(): ContractDetail {
   return {
     badRequest: true,
-    description: 'Lista los mensajes de un hilo. Filtra por threadId y no pagina.',
+    description: 'Lista los 50 mensajes más recientes de un hilo, en orden ascendente. before pide la página anterior.',
     example: chatMessagesExample,
-    parameters: [parameter('query', 'threadId', true, toJsonSchema(threadIdSchema), 'Filtro del hilo')],
+    parameters: [
+      parameter('query', 'threadId', true, toJsonSchema(threadIdSchema), 'Filtro del hilo'),
+      parameter(
+        'query',
+        'before',
+        false,
+        { format: 'date-time', type: 'string' },
+        'Cursor: mensajes anteriores a esta fecha',
+      ),
+    ],
     schema: 'ChatMessageList',
   };
 }

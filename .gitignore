@@ -4,6 +4,8 @@ logs
 docs/*
 !docs/AGENTS_CHECKLIST.md
 !docs/qa/
+!docs/perf/
+!docs/perf/tp-14-mediciones.md
 !docs/qa/tp-22-apk-android.md
 !docs/qa/tp-07-notificaciones.md
 !docs/qa/tp-26-avisos-nativos.md

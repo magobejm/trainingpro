@@ -46,8 +46,12 @@ import {
 export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
   constructor(private readonly prisma: PrismaService) {}
 
-  async readCardioLogs(context: AuthContext, query: ProgressQuery): Promise<CardioLogRow[]> {
-    const clientId = await this.resolveClientId(context, query.clientId);
+  async resolveProgressClient(context: AuthContext, clientId?: string): Promise<string> {
+    return this.resolveClientId(context, clientId);
+  }
+
+  async readCardioLogs(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<CardioLogRow[]> {
+    const clientId = resolvedClientId ?? (await this.resolveClientId(context, query.clientId));
     const rows = await this.prisma.intervalLog.findMany({
       where: buildDateWhere(clientId, query),
       select: {
@@ -70,8 +74,12 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     }));
   }
 
-  async readSessionSrpeRows(context: AuthContext, query: ProgressQuery): Promise<SessionSrpeRow[]> {
-    const clientId = await this.resolveClientId(context, query.clientId);
+  async readSessionSrpeRows(
+    context: AuthContext,
+    query: ProgressQuery,
+    resolvedClientId?: string,
+  ): Promise<SessionSrpeRow[]> {
+    const clientId = resolvedClientId ?? (await this.resolveClientId(context, query.clientId));
     const sessions = await this.prisma.sessionInstance.findMany({
       where: buildSessionWhere(clientId, query),
       select: {
@@ -89,8 +97,8 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     }));
   }
 
-  async readStrengthLogs(context: AuthContext, query: ProgressQuery): Promise<StrengthLogRow[]> {
-    const clientId = await this.resolveClientId(context, query.clientId);
+  async readStrengthLogs(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<StrengthLogRow[]> {
+    const clientId = resolvedClientId ?? (await this.resolveClientId(context, query.clientId));
     const rows = await this.prisma.setLog.findMany({
       where: buildDateWhere(clientId, query),
       select: {
@@ -132,19 +140,20 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
 
   async readExercisePr(context: AuthContext, query: ExercisePrQuery): Promise<number | null> {
     const clientId = await this.resolveClientId(context, query.clientId);
-    const row = await this.prisma.setLog.findFirst({
-      where: {
-        sessionItem: { sourceExerciseId: query.exerciseId },
-        session: {
-          archivedAt: null,
-          clientId,
-          isCompleted: true,
-        },
-      },
-      select: { weightDoneKg: true },
-      orderBy: { weightDoneKg: 'desc' },
-    });
-    return row?.weightDoneKg !== null && row?.weightDoneKg !== undefined ? Number(row.weightDoneKg) : null;
+    const rows = await this.prisma.$queryRaw<Array<{ weight: number | null }>>`
+      SELECT l.weight_done_kg::float8 AS weight
+      FROM session_instance s
+      JOIN session_strength_item i ON i.session_id = s.id
+      JOIN set_log l ON l.session_item_id = i.id
+      WHERE s.client_id = ${clientId}::uuid
+        AND s.archived_at IS NULL
+        AND s.is_completed = true
+        AND i.source_exercise_id = ${query.exerciseId}::uuid
+      ORDER BY l.weight_done_kg DESC
+      LIMIT 1
+    `;
+    const weight = rows[0]?.weight;
+    return weight === null || weight === undefined ? null : Number(weight);
   }
 
   private async readStrengthExerciseProgress(
@@ -389,32 +398,35 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
   }
 
   private async readRecordsBrokenBySession(clientId: string, query: MicrocycleProgressQuery): Promise<Map<string, number>> {
-    const beforeRangeLogs = await this.prisma.setLog.findMany({
-      where: {
-        session: {
-          archivedAt: null,
-          clientId,
-          isCompleted: true,
-          sessionDate: { lt: query.from },
-        },
-      },
-      select: {
-        repsDone: true,
-        weightDoneKg: true,
-        effortRpe: true,
-        sessionItem: { select: { sourceExerciseId: true } },
-      },
-    });
+    const priorRows = await this.prisma.$queryRaw<Array<{ best_e1rm: number; exercise_id: string }>>`
+      SELECT i.source_exercise_id AS exercise_id,
+             MAX(
+               CASE
+                 WHEN l.weight_done_kg > 0 AND l.reps_done > 0
+                  AND (1.0278 - 0.0278 * (
+                    l.reps_done + CASE WHEN l.effort_rpe IS NULL THEN 0 ELSE GREATEST(0, 10 - l.effort_rpe) END
+                  )) > 0
+                 THEN ROUND((
+                   l.weight_done_kg / (1.0278 - 0.0278 * (
+                     l.reps_done + CASE WHEN l.effort_rpe IS NULL THEN 0 ELSE GREATEST(0, 10 - l.effort_rpe) END
+                   ))
+                 )::numeric, 2)
+                 ELSE NULL
+               END
+             )::float8 AS best_e1rm
+      FROM set_log l
+      JOIN session_strength_item i ON i.id = l.session_item_id
+      JOIN session_instance s ON s.id = l.session_id
+      WHERE s.client_id = ${clientId}::uuid
+        AND s.archived_at IS NULL
+        AND s.is_completed = true
+        AND s.session_date < ${query.from}::date
+        AND i.source_exercise_id IS NOT NULL
+      GROUP BY i.source_exercise_id
+    `;
     const priorBestByExercise = new Map<string, number>();
-    for (const log of beforeRangeLogs) {
-      const exerciseId = log.sessionItem?.sourceExerciseId;
-      const reps = log.repsDone;
-      const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
-      if (!exerciseId || reps === null || weight === null) continue;
-      const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
-      if (e1rm === null) continue;
-      const prev = priorBestByExercise.get(exerciseId) ?? Number.NEGATIVE_INFINITY;
-      if (e1rm > prev) priorBestByExercise.set(exerciseId, e1rm);
+    for (const row of priorRows) {
+      if (row.best_e1rm !== null) priorBestByExercise.set(row.exercise_id, Number(row.best_e1rm));
     }
 
     const where: Prisma.SetLogWhereInput = {

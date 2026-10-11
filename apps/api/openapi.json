@@ -3563,7 +3563,7 @@
     },
     "/chat/messages": {
       "get": {
-        "description": "Lista los mensajes de un hilo. Filtra por threadId y no pagina.",
+        "description": "Lista los 50 mensajes más recientes de un hilo, en orden ascendente. before pide la página anterior.",
         "operationId": "listChatMessages",
         "parameters": [
           {
@@ -3574,6 +3574,16 @@
             "schema": {
               "format": "uuid",
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Cursor: mensajes anteriores a esta fecha",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "date-time",
               "type": "string"
             }
           }
@@ -3600,7 +3610,7 @@
                 }
               }
             },
-            "description": "Lista los mensajes de un hilo. Filtra por threadId y no pagina."
+            "description": "Lista los 50 mensajes más recientes de un hilo, en orden ascendente. before pide la página anterior."
           },
           "400": {
             "content": {
@@ -3641,7 +3651,7 @@
         ],
         "summary": "GET /chat/messages",
         "x-controller": "ChatController",
-        "x-filters": ["threadId"],
+        "x-filters": ["before", "threadId"],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]

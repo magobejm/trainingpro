@@ -1051,6 +1051,7 @@
   "coach.progress.range.8w": "8 semanas",
   "coach.progress.range.12w": "12 semanas",
   "coach.progress.range.custom": "Personalizado",
+  "coach.progress.range.tooLong": "El rango no puede superar 400 días",
   "coach.progress.range.from": "Desde",
   "coach.progress.range.to": "Hasta",
   "coach.incidents.title": "Bandeja de incidencias",

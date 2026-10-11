@@ -1,9 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import {
-  type ProgressRepositoryPort,
-  PROGRESS_REPOSITORY,
-} from '../../domain/progress-repository.port';
+import { type ProgressRepositoryPort, PROGRESS_REPOSITORY } from '../../domain/progress-repository.port';
 import { aggregateCardioWeekly } from '../../domain/metrics/cardio-weekly.metric';
 import { aggregateSrpeWeekly } from '../../domain/metrics/srpe';
 import { aggregateStrengthWeekly } from '../../domain/metrics/strength-weekly.metric';
@@ -22,10 +19,11 @@ export class GetProgressOverviewUseCase {
   ) {}
 
   async execute(context: AuthContext, input: Input) {
+    const clientId = await this.repository.resolveProgressClient(context, input.clientId);
     const [strengthRows, cardioRows, srpeRows] = await Promise.all([
-      this.repository.readStrengthLogs(context, input),
-      this.repository.readCardioLogs(context, input),
-      this.repository.readSessionSrpeRows(context, input),
+      this.repository.readStrengthLogs(context, input, clientId),
+      this.repository.readCardioLogs(context, input, clientId),
+      this.repository.readSessionSrpeRows(context, input, clientId),
     ]);
     return {
       cardioWeekly: aggregateCardioWeekly(cardioRows),

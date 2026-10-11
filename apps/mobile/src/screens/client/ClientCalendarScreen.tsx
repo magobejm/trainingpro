@@ -12,7 +12,6 @@ import { DayDetailModal } from './ClientCalendarDayDetail';
 import { MonthGrid, MonthHeader } from './ClientCalendarGrid';
 import { CalendarWeekView } from './ClientCalendarWeekView';
 import { buildMonthGrid, mergeDayData, toDateStr, type DayData } from './client-calendar.helpers';
-import { getWeekDateRange } from './routine-schedule.utils';
 import { LIGHT } from '../../theme/light';
 import { SCREEN } from '../../theme/sessionStyles';
 
@@ -31,26 +30,18 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
   const [popupDate, setPopupDate] = useState<string | null>(null);
   const routineQuery = useClientRoutineQuery();
 
-  const weekRange = useMemo(() => getWeekDateRange(selectedDate), [selectedDate]);
-  const monthStart = useMemo(() => toDateStr(currentMonth), [currentMonth]);
-  const monthEnd = useMemo(
-    () => toDateStr(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0)),
-    [currentMonth],
-  );
+  const visibleMonth = showMonth ? currentMonth : startOfMonth(selectedDate);
+  const grid = useMemo(() => monthGridRange(visibleMonth), [visibleMonth]);
   const selectedMonthStart = toDateStr(startOfMonth(selectedDate));
   const selectedMonthEnd = toDateStr(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0));
 
-  const weekEvents = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
-  const monthEvents = useClientCalendarEventsQuery(monthStart, monthEnd);
-  const weekSessions = useClientCalendarSessionsQuery(weekRange.from, weekRange.to);
-  const monthSessions = useClientCalendarSessionsQuery(monthStart, monthEnd);
+  const monthEvents = useClientCalendarEventsQuery(grid.from, grid.to);
+  const monthSessions = useClientCalendarSessionsQuery(grid.from, grid.to);
   const summaryQuery = useClientCalendarSummaryQuery(selectedMonthStart, selectedMonthEnd);
 
   const dayData = useMemo(() => {
-    const events = [...(weekEvents.data?.data ?? []), ...(monthEvents.data?.data ?? [])];
-    const sessions = [...(weekSessions.data ?? []), ...(monthSessions.data ?? [])];
-    return mergeDayData(events, sessions);
-  }, [monthEvents.data, monthSessions.data, weekEvents.data, weekSessions.data]);
+    return mergeDayData(monthEvents.data?.data ?? [], monthSessions.data ?? []);
+  }, [monthEvents.data, monthSessions.data]);
 
   const todayStr = useMemo(() => toDateStr(new Date()), []);
   const monthName = t(`client.calendar.month.${String(currentMonth.getMonth() + 1)}`);
@@ -176,6 +167,14 @@ function weekDates(date: Date): Date[] {
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function monthGridRange(month: Date): { from: string; to: string } {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const mondayOffset = (first.getDay() + 6) % 7;
+  const start = new Date(first.getFullYear(), first.getMonth(), first.getDate() - mondayOffset);
+  const end = new Date(start.getFullYear(), start.getMonth(), start.getDate() + 41);
+  return { from: toDateStr(start), to: toDateStr(end) };
 }
 
 function shiftMonth(month: Date, delta: number): Date {

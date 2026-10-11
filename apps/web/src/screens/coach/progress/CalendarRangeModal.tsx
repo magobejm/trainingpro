@@ -18,10 +18,10 @@ export function CalendarRangeModal({ visible, range, onConfirm, onClose }: Props
   if (!visible) return null;
 
   function handleConfirm() {
-    if (from && to && from <= to) {
-      onConfirm({ from, to });
-      onClose();
-    }
+    if (!from || !to || from > to) return;
+    if (inclusiveDays(from, to) > 400) return;
+    onConfirm({ from, to });
+    onClose();
   }
 
   return (
@@ -36,6 +36,9 @@ export function CalendarRangeModal({ visible, range, onConfirm, onClose }: Props
           <label style={labelStyle}>{t('coach.progress.range.to')}</label>
           <input type={dateType} value={to} onChange={(e) => setTo(e.target.value)} min={from} style={inputStyle} />
         </div>
+        {from && to && from <= to && inclusiveDays(from, to) > 400 ? (
+          <p style={hintStyle}>{t('coach.progress.range.tooLong')}</p>
+        ) : null}
         <div style={buttons}>
           <button style={cancelBtn} onClick={onClose}>
             {t('common.cancel')}
@@ -69,6 +72,14 @@ const modal: React.CSSProperties = {
   gap: 20,
   boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
 };
+
+function inclusiveDays(from: string, to: string): number {
+  const start = Date.parse(`${from}T00:00:00.000Z`);
+  const end = Date.parse(`${to}T00:00:00.000Z`);
+  return Math.floor((end - start) / 86_400_000) + 1;
+}
+
+const hintStyle: React.CSSProperties = { margin: 0, color: '#b91c1c', fontSize: 13 };
 
 const titleStyle: React.CSSProperties = {
   margin: 0,

@@ -820,6 +820,7 @@
   "coach.progress.range.8w": "8 weeks",
   "coach.progress.range.12w": "12 weeks",
   "coach.progress.range.custom": "Custom",
+  "coach.progress.range.tooLong": "The range cannot exceed 400 days",
   "coach.progress.range.from": "From",
   "coach.progress.range.to": "To",
   "coach.incidents.title": "Incidents inbox",

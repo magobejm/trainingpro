@@ -45,12 +45,12 @@ type ListTemplatesResponse = {
   items: CardioTemplateView[];
 };
 
-export function useCardioTemplatesQuery() {
+export function useCardioTemplatesQuery(options?: { summary?: boolean }) {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth),
-    queryFn: () => listTemplates(auth),
-    queryKey: ['cardio-templates', auth?.accessToken, auth?.activeRole],
+    queryFn: () => listTemplates(auth, options),
+    queryKey: ['cardio-templates', auth?.accessToken, auth?.activeRole, options?.summary],
   });
 }
 
@@ -102,10 +102,16 @@ async function updateTemplate(auth: ReturnType<typeof useAuth>, templateId: stri
   return createApiClient(auth).patch<CardioTemplateView>(`/plans/templates/cardio/${templateId}`, input);
 }
 
-async function listTemplates(auth: ReturnType<typeof useAuth>): Promise<CardioTemplateView[]> {
+async function listTemplates(
+  auth: ReturnType<typeof useAuth>,
+  options?: { summary?: boolean },
+): Promise<CardioTemplateView[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const response = await createApiClient(auth).get<ListTemplatesResponse>('/plans/templates/cardio');
+  const response = await createApiClient(auth).get<ListTemplatesResponse>(
+    '/plans/templates/cardio',
+    options?.summary ? { summary: 'true' } : undefined,
+  );
   return response.items;
 }

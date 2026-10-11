@@ -62,6 +62,7 @@ export type ChatRepositoryPort = {
   listMessagesByThread(
     context: import('../../../common/auth-context/auth-context').AuthContext,
     threadId: string,
+    before?: Date,
   ): Promise<ChatMessageView[]>;
   resolveThread(
     context: import('../../../common/auth-context/auth-context').AuthContext,

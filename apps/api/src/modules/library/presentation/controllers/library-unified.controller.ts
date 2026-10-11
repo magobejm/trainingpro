@@ -18,8 +18,8 @@ export class LibraryUnifiedController {
   }
 
   @Get('exercises/all')
-  async listAllExercises(@Query() filters: Record<string, string>) {
-    return this.service.listAllExercises(filters);
+  async listAllExercises(@Query() filters: Record<string, string>, @Req() req: HttpAuthRequest) {
+    return this.service.listAllExercises(readAuthContext(req).subject, filters);
   }
 
   @Post('exercises/unified')

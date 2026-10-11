@@ -18,7 +18,7 @@ import { ListClientSessionsUseCase } from '../../application/use-cases/list-clie
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { SaveClientDayNoteUseCase } from '../../application/use-cases/save-client-day-note.usecase';
 import type { ClientRoutine } from '../../domain/client-routine';
-import { ClientCalendarQueryDto } from '../dto/client-calendar-query.dto';
+import { ClientCalendarQueryDto, ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientDayNoteParamDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
 import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dto';
 import { mapClientOutput } from './clients.controller.mappers';
@@ -115,9 +115,9 @@ export class ClientSelfController {
   }
 
   @Get('me/wellness')
-  async getMyWellness(@Query() query: ClientCalendarQueryDto, @Req() request: HttpAuthRequest) {
+  async getMyWellness(@Query() query: ClientWellnessQueryDto, @Req() request: HttpAuthRequest) {
     const context = readAuthContext(request);
-    const { dateFrom, dateTo } = ClientCalendarQueryDto.schema.parse(query);
+    const { dateFrom, dateTo } = ClientWellnessQueryDto.schema.parse(query);
     return this.listClientWellnessUseCase.execute(context, {
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),

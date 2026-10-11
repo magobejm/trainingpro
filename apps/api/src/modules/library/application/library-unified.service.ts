@@ -1,7 +1,8 @@
-﻿import { Injectable, BadRequestException } from '@nestjs/common';
-import { LibraryItemScope } from '@prisma/client';
+﻿import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { LibraryItemScope, Role } from '@prisma/client';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { matchesSearch } from '../../../common/text/normalize-search';
+import { coachOrGlobal } from '../domain/library-scope';
 import { LibrarySeedService } from './library-seed.service';
 
 export type UnifiedCategory = 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport' | 'isometric';
@@ -70,7 +71,8 @@ export class LibraryUnifiedService {
     };
   }
 
-  async listAllExercises(filters: Record<string, string>) {
+  async listAllExercises(subject: string, filters: Record<string, string>) {
+    const coachMembershipId = await this.readCoachMembershipId(subject);
     const toArr = (v?: string) =>
       v
         ? v
@@ -86,27 +88,47 @@ export class LibraryUnifiedService {
       eq = toArr(filters.equipmentIds);
     const results: Row[] = [];
     const cat = filters.baseCategory;
-    if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, mg, eq);
-    if (!cat || cat === 'cardioMethodTypes') await this.fetchCardio(results, ct, eq);
-    if (!cat || cat === 'plioTypes') await this.fetchPlio(results, pt, eq);
-    if (!cat || cat === 'mobilityTypes') await this.fetchMobility(results, mt);
-    if (!cat || cat === 'isometricTypes') await this.fetchIsometric(results, toArr(filters.isometricTypeIds));
-    if (!cat || cat === 'sportTypes') await this.fetchSports(results, st);
+    if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, mg, eq, coachMembershipId);
+    if (!cat || cat === 'cardioMethodTypes') await this.fetchCardio(results, ct, eq, coachMembershipId);
+    if (!cat || cat === 'plioTypes') await this.fetchPlio(results, pt, eq, coachMembershipId);
+    if (!cat || cat === 'mobilityTypes') await this.fetchMobility(results, mt, coachMembershipId);
+    if (!cat || cat === 'isometricTypes')
+      await this.fetchIsometric(results, toArr(filters.isometricTypeIds), coachMembershipId);
+    if (!cat || cat === 'sportTypes') await this.fetchSports(results, st, coachMembershipId);
     return { items: results.filter((r) => matchesSearch(r.name, filters.search)) };
   }
 
-  private async fetchExercises(res: Row[], mg: IdList, eq: IdList) {
+  private async readCoachMembershipId(subject: string): Promise<string> {
+    const membership = await this.prisma.organizationMember.findFirst({
+      where: { archivedAt: null, isActive: true, role: Role.COACH, user: { supabaseUid: subject } },
+      select: { id: true },
+    });
+    if (!membership) throw new ForbiddenException('Coach membership not found');
+    return membership.id;
+  }
+
+  private async fetchExercises(res: Row[], mg: IdList, eq: IdList, coachMembershipId: string) {
     const data = await this.prisma.exercise.findMany({
       where: {
-        archivedAt: null,
+        ...coachOrGlobal(coachMembershipId),
         ...(mg && { muscleGroups: { some: { muscleGroupId: { in: mg } } } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
-      include: {
-        muscleGroups: { include: { muscleGroup: true } },
-        equipmentRef: true,
-        movementPatternRef: true,
-        anatomicalPlaneRef: true,
+      select: {
+        anatomicalPlaneId: true,
+        anatomicalPlaneRef: { select: { id: true, label: true } },
+        coachInstructions: true,
+        equipmentId: true,
+        equipmentRef: { select: { id: true, label: true } },
+        id: true,
+        instructions: true,
+        mediaUrl: true,
+        movementPatternId: true,
+        movementPatternRef: { select: { id: true, label: true } },
+        muscleGroups: { select: { muscleGroupId: true, muscleGroup: { select: { label: true } } } },
+        name: true,
+        scope: true,
+        youtubeUrl: true,
       },
       orderBy: { name: 'asc' },
     });
@@ -132,10 +154,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchCardio(res: Row[], ct: IdList, eq: IdList) {
+  private async fetchCardio(res: Row[], ct: IdList, eq: IdList, coachMembershipId: string) {
     const data = await this.prisma.cardioMethod.findMany({
       where: {
-        archivedAt: null,
+        ...coachOrGlobal(coachMembershipId),
         ...(ct && { methodTypeId: { in: ct } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -170,10 +192,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchPlio(res: Row[], pt: IdList, eq: IdList) {
+  private async fetchPlio(res: Row[], pt: IdList, eq: IdList, coachMembershipId: string) {
     const data = await this.prisma.plioExercise.findMany({
       where: {
-        archivedAt: null,
+        ...coachOrGlobal(coachMembershipId),
         ...(pt && { plioTypeId: { in: pt } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -203,9 +225,9 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchMobility(res: Row[], mt: IdList) {
+  private async fetchMobility(res: Row[], mt: IdList, coachMembershipId: string) {
     const data = await this.prisma.mobilityExercise.findMany({
-      where: { archivedAt: null, ...(mt && { mobilityTypeId: { in: mt } }) },
+      where: { ...coachOrGlobal(coachMembershipId), ...(mt && { mobilityTypeId: { in: mt } }) },
       include: { mobilityTypeRefRel: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
@@ -235,10 +257,10 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchIsometric(res: Row[], it: IdList) {
+  private async fetchIsometric(res: Row[], it: IdList, coachMembershipId: string) {
     const data = await this.prisma.isometricExercise.findMany({
       where: {
-        archivedAt: null,
+        ...coachOrGlobal(coachMembershipId),
         ...(it && { isometricTypeId: { in: it } }),
       },
       include: { isometricTypeRef: true, equipmentRef: true, movementPatternRef: true, anatomicalPlaneRef: true },
@@ -267,9 +289,9 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchSports(res: Row[], st: IdList) {
+  private async fetchSports(res: Row[], st: IdList, coachMembershipId: string) {
     const data = await this.prisma.sport.findMany({
-      where: { archivedAt: null, ...(st && { sportTypeId: { in: st } }) },
+      where: { ...coachOrGlobal(coachMembershipId), ...(st && { sportTypeId: { in: st } }) },
       include: { sportTypeRef: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });

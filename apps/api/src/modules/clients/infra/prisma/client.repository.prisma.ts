@@ -42,6 +42,11 @@ import {
   resolveCoachMembership,
 } from './client.repository.prisma.ops';
 
+const CLIENT_LIST_INCLUDE = {
+  objectiveRef: true,
+  trainingPlan: { select: { id: true, name: true } },
+} as const;
+
 const CLIENT_WITH_RELATIONS_INCLUDE = {
   objectiveRef: true,
   progressPhotos: {
@@ -149,14 +154,14 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async listClientsByCoach(context: AuthContext): Promise<Client[]> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const clients = await this.prisma.client.findMany({
-      include: CLIENT_WITH_RELATIONS_INCLUDE,
+      include: CLIENT_LIST_INCLUDE,
       where: {
         archivedAt: null,
         coachMembershipId: membership.id,
       },
       orderBy: { createdAt: 'desc' },
     });
-    return clients.map(mapClient);
+    return clients.map((row) => mapClient({ ...row, progressPhotos: [] }));
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

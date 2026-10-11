@@ -39,7 +39,7 @@ import { SetClientProgressPhotoArchivedUseCase } from '../../application/use-cas
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
 import { UploadClientAvatarUseCase } from '../../application/use-cases/upload-client-avatar.usecase';
 import { UploadClientProgressPhotoUseCase } from '../../application/use-cases/upload-client-progress-photo.usecase';
-import { ClientCalendarQueryDto } from '../dto/client-calendar-query.dto';
+import { ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientProgressPhotoIdParamDto } from '../dto/client-progress-photo-id-param.dto';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
 import { CreateClientProgressPhotoDto } from '../dto/create-client-progress-photo.dto';
@@ -140,11 +140,11 @@ export class ClientsController {
   @UseGuards(ClientOwnershipGuard)
   async getWellness(
     @Param() params: ClientIdParamDto,
-    @Query() query: ClientCalendarQueryDto,
+    @Query() query: ClientWellnessQueryDto,
     @Req() request: HttpAuthRequest,
   ) {
     const auth = readAuthContext(request);
-    const { dateFrom, dateTo } = ClientCalendarQueryDto.schema.parse(query);
+    const { dateFrom, dateTo } = ClientWellnessQueryDto.schema.parse(query);
     return this.listClientWellnessUseCase.execute(auth, {
       clientId: params.clientId,
       dateFrom: new Date(dateFrom),

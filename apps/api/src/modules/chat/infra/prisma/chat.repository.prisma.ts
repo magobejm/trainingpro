@@ -2,6 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { ascendingByCreatedAt } from '../../domain/chat-message-page';
 import { CHAT_PAGE_SIZE } from '../../domain/chat.constants';
 import type { ChatRepositoryPort, ResolveChatThreadInput, SendChatMessageInput } from '../../domain/chat.repository.port';
 import { ChatMessagePolicy } from '../../domain/policies/chat-message.policy';
@@ -18,15 +19,15 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
     private readonly threadAccess: ChatThreadAccessService,
   ) {}
 
-  async listMessagesByThread(context: AuthContext, threadId: string) {
+  async listMessagesByThread(context: AuthContext, threadId: string, before?: Date) {
     await this.threadAccess.assertAccess(context, threadId);
     const rows = await this.prisma.chatMessage.findMany({
-      where: { threadId },
-      orderBy: { createdAt: 'asc' },
+      where: { threadId, ...(before ? { createdAt: { lt: before } } : {}) },
+      orderBy: { createdAt: 'desc' },
       take: CHAT_PAGE_SIZE,
       include: { attachments: true, callProposal: true },
     });
-    return rows.map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
+    return ascendingByCreatedAt(rows).map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
   }
 
   async resolveThread(context: AuthContext, input: ResolveChatThreadInput) {

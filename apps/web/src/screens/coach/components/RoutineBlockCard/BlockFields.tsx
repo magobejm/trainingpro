@@ -10,6 +10,7 @@ import { blockTypeShowsRepRange } from '../../exercise-rep-range';
 import { canUnlockSetVariable, resolveLockedFields } from '@trainerpro/shared';
 import { RoutineNumberField } from '../RoutineNumberField';
 import { ActionConfirmModal } from '../ActionConfirmModal';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface BlockFieldsProps {
   block: DraftBlock;
@@ -295,61 +296,61 @@ function TextField(props: {
 }
 
 const sp = {
-  wrap: { gap: 4 },
-  label: { fontSize: 11, fontWeight: '500' as const, color: '#64748b' },
+  wrap: { gap: space.xs },
+  label: { fontSize: fontSize.xs, fontWeight: '500' as const, color: colors.textMuted },
   controls: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
     overflow: 'hidden' as const,
   },
   btn: {
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    backgroundColor: '#f8fafc',
+    paddingHorizontal: space.sm,
+    paddingVertical: space.sm,
+    backgroundColor: colors.surfaceMuted,
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
   },
-  btnText: { fontSize: 16, color: '#475569', lineHeight: 18 },
+  btnText: { fontSize: fontSize.md, color: colors.textMuted, lineHeight: 18 },
   input: {
     width: 36,
     textAlign: 'center' as const,
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600' as const,
-    color: '#1e293b',
-    paddingVertical: 6,
-    backgroundColor: '#fff',
+    color: colors.text,
+    paddingVertical: space.sm,
+    backgroundColor: colors.surface,
   },
 };
 
 const bf = {
-  container: { gap: 12 },
+  container: { gap: space.md },
   tableHeader: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 8,
-    marginTop: 4,
+    gap: space.sm,
+    marginTop: space.xs,
   },
   tableTitle: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
-    color: '#64748b',
+    color: colors.textMuted,
     textTransform: 'uppercase' as const,
     letterSpacing: 0.6,
   },
   advancedBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    backgroundColor: '#f8fafc',
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
   },
-  advancedBtnActive: { backgroundColor: '#fef9c3', borderColor: '#fbbf24' },
-  advancedBtnText: { fontSize: 11, fontWeight: '600' as const, color: '#64748b' },
-  advancedBtnTextActive: { color: '#92400e' },
+  advancedBtnActive: { backgroundColor: colors.warningSoft, borderColor: colors.warning },
+  advancedBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: colors.textMuted },
+  advancedBtnTextActive: { color: colors.warning },
 };
 
 const txtStyles = {

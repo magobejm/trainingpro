@@ -11,6 +11,7 @@ import {
 } from '../../data/hooks/useCoachMutations';
 import { useArchivedCoachesQuery, useCoachesQuery, type CoachView } from '../../data/hooks/useCoachesQuery';
 import { COLORS, styles } from './CoachesScreen.styles';
+import { MONO_FONT_PROPS } from '../../layout/font-props';
 
 type Tab = 'active' | 'archived';
 
@@ -360,7 +361,9 @@ function ResultBanner(props: {
         {userCreated && temporaryPassword ? (
           <>
             <Text style={styles.resultText}>{props.t('admin.coaches.createModal.successWithPassword')}</Text>
-            <Text style={styles.resultPassword}>{temporaryPassword}</Text>
+            <Text {...MONO_FONT_PROPS} style={styles.resultPassword}>
+              {temporaryPassword}
+            </Text>
             <Pressable onPress={() => props.onCopyPassword(temporaryPassword)} style={styles.copyButton}>
               <Text style={styles.copyButtonLabel}>
                 {props.passwordCopied

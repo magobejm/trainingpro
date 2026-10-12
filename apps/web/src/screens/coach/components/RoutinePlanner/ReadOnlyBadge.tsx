@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface ReadOnlyBadgeProps {
   t: (k: string) => string;
@@ -15,14 +16,14 @@ export function ReadOnlyBadge({ t }: ReadOnlyBadgeProps) {
 
 const styles = StyleSheet.create({
   readOnlyBadge: {
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
-    marginBottom: 16,
-    padding: 12,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    marginBottom: space.lg,
+    padding: space.md,
   },
   readOnlyText: {
-    color: '#64748b',
-    fontSize: 13,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     fontWeight: '500',
     textAlign: 'center',
   },

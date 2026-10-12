@@ -7,6 +7,7 @@ import {
   useSetNotificationPreferenceMutation,
   type NotificationPreference,
 } from '../../data/hooks/useNotificationPreferences';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const TOPIC_KEYS: Array<NotificationPreference['topic']> = [
   'SESSION_COMPLETED',
@@ -25,8 +26,7 @@ function useNotificationSettingsModel() {
   const { t } = useTranslation();
   const query = useNotificationPreferencesQuery();
   const mutation = useSetNotificationPreferenceMutation();
-  const update = (topic: NotificationPreference['topic'], enabled: boolean) =>
-    mutation.mutate({ enabled, topic });
+  const update = (topic: NotificationPreference['topic'], enabled: boolean) => mutation.mutate({ enabled, topic });
   return { query, t, update };
 }
 
@@ -56,10 +56,7 @@ function renderRows(
     return (
       <View key={topic} style={styles.row}>
         <Text style={styles.rowLabel}>{labelForTopic(topic, props.t)}</Text>
-        <Pressable
-          onPress={() => props.update(topic, !enabled)}
-          style={[styles.toggle, enabled ? styles.toggleOn : null]}
-        >
+        <Pressable onPress={() => props.update(topic, !enabled)} style={[styles.toggle, enabled ? styles.toggleOn : null]}>
           <Text style={styles.toggleLabel}>{readToggleLabel(enabled, props.t)}</Text>
         </Pressable>
       </View>
@@ -67,10 +64,7 @@ function renderRows(
   });
 }
 
-function labelForTopic(
-  topic: NotificationPreference['topic'],
-  t: (key: string) => string,
-): string {
+function labelForTopic(topic: NotificationPreference['topic'], t: (key: string) => string): string {
   return t(`coach.notifications.topic.${topic.toLowerCase()}`);
 }
 
@@ -80,18 +74,18 @@ function readToggleLabel(enabled: boolean, t: (key: string) => string): string {
 
 const styles = StyleSheet.create({
   list: {
-    backgroundColor: '#ffffff',
-    borderColor: '#dbe3ef',
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    gap: 8,
-    padding: 12,
+    gap: space.sm,
+    padding: space.md,
   },
   page: {
-    backgroundColor: '#eef3f9',
+    backgroundColor: colors.background,
     flex: 1,
-    gap: 12,
-    padding: 18,
+    gap: space.md,
+    padding: space.lg,
   },
   row: {
     alignItems: 'center',
@@ -99,35 +93,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   rowLabel: {
-    color: '#1a2a43',
+    color: colors.text,
     flex: 1,
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    paddingRight: 12,
+    paddingRight: space.md,
   },
   subtitle: {
-    color: '#5d6f85',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   title: {
-    color: '#0f2036',
-    fontSize: 26,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
   },
   toggle: {
     alignItems: 'center',
-    backgroundColor: '#d8e0ec',
+    backgroundColor: colors.border,
     borderRadius: 999,
     minWidth: 88,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   toggleLabel: {
-    color: '#10233c',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
     fontWeight: '800',
   },
   toggleOn: {
-    backgroundColor: '#6dd59f',
+    backgroundColor: colors.success,
   },
 });

@@ -13,15 +13,16 @@ import {
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  input: '#f3f7fd',
-  muted: '#627285',
-  text: '#0e1a2f',
-  white: '#ffffff',
+  action: colors.primary,
+  bg: colors.background,
+  card: colors.surface,
+  input: colors.background,
+  muted: colors.textMuted,
+  text: colors.text,
+  white: colors.surface,
 };
 
 export function IncidentsScreen(): React.JSX.Element {
@@ -220,69 +221,69 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: COLORS.action,
-    borderRadius: 10,
+    borderRadius: radius.md,
     minHeight: 34,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   buttonLabel: {
     color: COLORS.white,
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
-    gap: 8,
-    padding: 12,
+    borderRadius: radius.lg,
+    gap: space.sm,
+    padding: space.md,
   },
   description: {
     color: COLORS.text,
-    fontSize: 13,
+    fontSize: fontSize.sm,
   },
   incidentTitle: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   info: {
     color: COLORS.muted,
-    fontSize: 13,
+    fontSize: fontSize.sm,
   },
   input: {
     backgroundColor: COLORS.input,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   inputs: {
-    gap: 6,
+    gap: space.sm,
   },
   meta: {
     color: COLORS.muted,
-    fontSize: 12,
+    fontSize: fontSize.xs,
   },
   page: {
     backgroundColor: COLORS.bg,
-    gap: 12,
+    gap: space.md,
     minHeight: '100%',
-    padding: 20,
+    padding: space.xl,
   },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 6,
+    gap: space.sm,
   },
   stack: {
-    gap: 10,
+    gap: space.md,
   },
   subtitle: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   title: {
     color: COLORS.text,
-    fontSize: 26,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
   },
 });

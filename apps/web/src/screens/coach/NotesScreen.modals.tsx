@@ -3,15 +3,16 @@ import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Check, Pencil } from 'lucide-react';
 import type { NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 const ICON_CLOSE = '✕' as const;
 const MODAL_ANIMATION = 'fade' as const;
-const COLOR_WHITE = '#ffffff' as const;
+const COLOR_WHITE = tk.surface;
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -48,13 +49,15 @@ function EditNoteModalHeader(props: { onClose: () => void; t: TFunc }): React.JS
   return (
     <View style={modalHeaderStyle}>
       <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-        <View style={{ marginRight: 10 }}>
+        <View style={{ marginRight: space.md }}>
           <Pencil color={colors.primary} size={22} strokeWidth={2} />
         </View>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text }}>{props.t('coach.notes.edit.title')}</Text>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text }}>
+          {props.t('coach.notes.edit.title')}
+        </Text>
       </View>
       <Pressable onPress={props.onClose} hitSlop={8}>
-        <Text style={{ fontSize: 20, color: colors.textMuted }}>{ICON_CLOSE}</Text>
+        <Text style={{ fontSize: fontSize.xl, color: colors.textMuted }}>{ICON_CLOSE}</Text>
       </Pressable>
     </View>
   );
@@ -67,7 +70,7 @@ function EditNoteModalBody(props: {
   t: TFunc;
 }): React.JSX.Element {
   return (
-    <View style={{ padding: 24 }}>
+    <View style={{ padding: space.xl }}>
       <EditNoteMetaBadge editingNote={props.editingNote} t={props.t} />
       <TextInput value={props.editContent} onChangeText={props.setEditContent} multiline style={editorInputStyle} />
     </View>
@@ -86,7 +89,9 @@ function EditNoteMetaBadge(props: { editingNote: NoteData | null; t: TFunc }): R
           {readEditBadgeLabel(note, props.t)}
         </Text>
       </View>
-      <Text style={{ fontSize: 12, color: colors.textMuted, marginLeft: 8 }}>{formatNoteDate(note.createdAt, props.t)}</Text>
+      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginLeft: space.sm }}>
+        {formatNoteDate(note.createdAt, props.t)}
+      </Text>
     </View>
   );
 }
@@ -107,7 +112,7 @@ function EditNoteModalFooter(props: { onClose: () => void; onSave: () => void; t
         <Text style={{ fontWeight: 'bold', color: colors.text }}>{props.t('common.cancel')}</Text>
       </Pressable>
       <Pressable onPress={props.onSave} style={saveButtonStyle}>
-        <View style={{ marginRight: 8 }}>
+        <View style={{ marginRight: space.sm }}>
           <Check color={COLOR_WHITE} size={18} strokeWidth={2.5} />
         </View>
         <Text style={{ color: COLOR_WHITE, fontWeight: 'bold' }}>{props.t('coach.notes.edit.finish')}</Text>
@@ -128,10 +133,10 @@ export function DeleteConfirmModal(props: DeleteConfirmModalProps): React.JSX.El
     <Modal animationType={MODAL_ANIMATION} visible={!!props.note} transparent>
       <View style={modalOverlayStyle}>
         <View style={deleteModalCardStyle}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text, marginBottom: 16 }}>
+          <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text, marginBottom: space.lg }}>
             {props.t('coach.notes.delete.title')}
           </Text>
-          <Text style={{ fontSize: 14, color: colors.textMuted, marginBottom: 24 }}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: space.xl }}>
             {props.t('coach.notes.delete.confirm')}
           </Text>
           <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
@@ -153,7 +158,7 @@ const modalOverlayStyle = {
   backgroundColor: 'rgba(0,0,0,0.5)',
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
-  padding: 24,
+  padding: space.xl,
 };
 
 const modalCardStyle = {
@@ -165,71 +170,71 @@ const modalCardStyle = {
 };
 
 const modalHeaderStyle = {
-  padding: 24,
+  padding: space.xl,
   borderBottomWidth: 1,
-  borderColor: '#e2e8f0',
+  borderColor: tk.border,
   flexDirection: 'row' as const,
   justifyContent: 'space-between' as const,
   alignItems: 'center' as const,
 };
 
 const editorInputStyle = {
-  backgroundColor: '#f8fafc',
+  backgroundColor: tk.surfaceMuted,
   borderWidth: 1,
-  borderColor: '#bfdbfe',
-  borderRadius: 12,
-  padding: 16,
+  borderColor: tk.primaryBorder,
+  borderRadius: radius.lg,
+  padding: space.lg,
   minHeight: 250,
-  fontSize: 16,
+  fontSize: fontSize.md,
 };
 
 const noteBadgeRowStyle = {
   flexDirection: 'row' as const,
   justifyContent: 'space-between' as const,
   alignItems: 'center' as const,
-  marginBottom: 16,
+  marginBottom: space.lg,
 };
 
 function noteBadgeStyle(type: NoteData['type']) {
   return {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
-    backgroundColor: type === 'general' ? '#eff6ff' : '#dcfce7',
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: type === 'general' ? tk.primarySoft : tk.successSoft,
     maxWidth: '65%' as unknown as number,
   };
 }
 
 function noteBadgeTextStyle(type: NoteData['type']) {
   return {
-    fontSize: 10,
+    fontSize: fontSize.xs,
     fontWeight: 'bold' as const,
-    color: type === 'general' ? '#2563eb' : '#16a34a',
+    color: type === 'general' ? tk.primary : tk.success,
   };
 }
 
 const modalFooterStyle = {
-  padding: 24,
+  padding: space.xl,
   borderTopWidth: 1,
-  borderColor: '#e2e8f0',
-  backgroundColor: '#fafafa',
+  borderColor: tk.border,
+  backgroundColor: tk.surfaceMuted,
   flexDirection: 'row' as const,
   justifyContent: 'flex-end' as const,
   alignItems: 'center' as const,
 };
 
 const cancelButtonStyle = {
-  paddingHorizontal: 20,
-  paddingVertical: 12,
-  borderRadius: 12,
-  marginRight: 8,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
+  marginRight: space.sm,
 };
 
 const saveButtonStyle = {
   backgroundColor: colors.primary,
-  paddingHorizontal: 20,
-  paddingVertical: 12,
-  borderRadius: 12,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
   flexDirection: 'row' as const,
   alignItems: 'center' as const,
 };
@@ -239,19 +244,19 @@ const deleteModalCardStyle = {
   borderRadius: 24,
   width: '100%' as const,
   maxWidth: 400,
-  padding: 24,
+  padding: space.xl,
 };
 
 const deleteCancelButtonStyle = {
-  paddingHorizontal: 24,
-  paddingVertical: 12,
-  borderRadius: 12,
-  marginRight: 12,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
+  marginRight: space.md,
 };
 
 const deleteConfirmButtonStyle = {
-  backgroundColor: '#ef4444',
-  paddingHorizontal: 24,
-  paddingVertical: 12,
-  borderRadius: 12,
+  backgroundColor: tk.danger,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
 };

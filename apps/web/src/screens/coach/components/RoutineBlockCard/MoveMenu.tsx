@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface MoveMenuProps {
   daysCount: number;
@@ -17,11 +18,7 @@ export function MoveMenu({ daysCount, dayIdx, dayLabels, onMoveToDay, t }: MoveM
       {Array.from({ length: daysCount }).map(
         (_, i) =>
           i !== dayIdx && (
-            <Pressable
-              key={i}
-              onPress={() => onMoveToDay(i)}
-              style={[s.moveBtn, { backgroundColor: '#3b82f6' }]}
-            >
+            <Pressable key={i} onPress={() => onMoveToDay(i)} style={[s.moveBtn, { backgroundColor: colors.primary }]}>
               <Text numberOfLines={1} style={[s.moveBtnText, styles.dayLabel]}>
                 {dayLabels?.[i] ?? String(i + 1)}
               </Text>
@@ -34,18 +31,18 @@ export function MoveMenu({ daysCount, dayIdx, dayLabels, onMoveToDay, t }: MoveM
 
 const styles = StyleSheet.create({
   container: {
-    padding: 4,
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    padding: space.xs,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
   },
   label: {
-    fontSize: 10,
-    color: '#64748b',
-    marginRight: 4,
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
+    marginRight: space.xs,
   },
   dayLabel: {
-    color: '#fff',
-    fontSize: 10,
+    color: colors.surface,
+    fontSize: fontSize.xs,
     fontWeight: '600',
     maxWidth: 110,
   },

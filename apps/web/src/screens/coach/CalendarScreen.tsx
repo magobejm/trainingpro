@@ -35,8 +35,9 @@ import {
   createCopyPasteHandlers,
 } from './CalendarScreen.handlers';
 import { useCalendarListContext } from './useCalendarListContext';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const COLOR_PRIMARY = '#3b82f6' as const;
+const COLOR_PRIMARY = colors.primary;
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -154,19 +155,21 @@ function CalendarTopBar({ selectedClient, t }: TopBarProps): React.JSX.Element {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 20,
+        padding: space.xl,
         backgroundColor: 'white',
         borderBottomWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: colors.border,
         flexShrink: 0,
       }}
     >
-      <View style={{ marginRight: 10, backgroundColor: '#eff6ff', padding: 8, borderRadius: 12 }}>
+      <View
+        style={{ marginRight: space.md, backgroundColor: colors.primarySoft, padding: space.sm, borderRadius: radius.lg }}
+      >
         <CalendarDays color={COLOR_PRIMARY} size={20} />
       </View>
       <View>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#0f172a' }}>{title}</Text>
-        <Text style={{ fontSize: 13, color: '#64748b' }}>{t('coach.calendar.subtitle')}</Text>
+        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: colors.text }}>{title}</Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{t('coach.calendar.subtitle')}</Text>
       </View>
     </View>
   );
@@ -203,7 +206,7 @@ function CalendarModalsRenderer({
   onUpdateReminder,
   t,
 }: CalendarModalsProps): React.JSX.Element {
-  const defaultColor = DEFAULT_COLOR?.bg ?? '#dbeafe';
+  const defaultColor = DEFAULT_COLOR?.bg ?? colors.primaryBorder;
   return (
     <>
       {modal.type === 'day' && (
@@ -316,7 +319,7 @@ export function CalendarScreen(): React.JSX.Element {
   const clientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined;
 
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: '#f8fafc', minHeight: 0, overflow: 'hidden' }}>
+    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.surfaceMuted, minHeight: 0, overflow: 'hidden' }}>
       <CalendarSidebar
         clients={clients}
         objectives={objectives}

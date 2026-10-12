@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { FoodLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { ConsiderationBadges } from '../nutrition/ConsiderationBadges';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   expanded: boolean;
@@ -123,34 +124,34 @@ function DetailLine(props: { label: string; value: string }): React.JSX.Element 
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: '#e8f0fb',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 30,
-    paddingHorizontal: 10,
+    paddingHorizontal: space.md,
   },
   buttonLabel: {
-    color: '#334e70',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   detail: {
-    backgroundColor: '#f6f9ff',
-    borderColor: '#dce6f3',
-    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     borderWidth: 1,
-    gap: 6,
-    marginTop: 10,
-    padding: 10,
+    gap: space.sm,
+    marginTop: space.md,
+    padding: space.md,
   },
   detailLabel: {
-    color: '#334e70',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   detailValue: {
-    color: '#1a2536',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
   },
   header: {
     alignItems: 'center',
@@ -158,20 +159,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   meta: {
-    color: '#627285',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
   },
   row: {
-    borderBottomColor: '#e2e8f2',
+    borderBottomColor: colors.border,
     borderBottomWidth: 1,
-    paddingBottom: 10,
+    paddingBottom: space.md,
   },
   title: {
-    color: '#0e1a2f',
-    fontSize: 15,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   titleBox: {
-    gap: 4,
+    gap: space.xs,
   },
 });

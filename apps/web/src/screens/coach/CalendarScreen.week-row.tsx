@@ -3,6 +3,7 @@ import { ClipboardPaste, Copy, GripVertical } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import type { CalendarCell } from './calendar-screen.utils';
 import { CalendarDayCell } from './CalendarScreen.grid';
+import { colors as tk, space } from '@trainerpro/ui';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -11,8 +12,8 @@ export type CalendarClipboard =
   | { type: 'day'; sourceDate: string; events: CalendarEventData[] };
 
 const colors = {
-  primary: '#3b82f6',
-  textMuted: '#64748b',
+  primary: tk.primary,
+  textMuted: tk.textMuted,
 };
 
 function WeekGripHandle({
@@ -46,11 +47,11 @@ function WeekGripHandle({
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 4,
+        gap: space.xs,
         cursor: 'grab',
         flexShrink: 0,
-        backgroundColor: isWeekDragOver ? '#eff6ff' : '#fafafa',
-        borderRight: '1px solid #e2e8f0',
+        backgroundColor: isWeekDragOver ? tk.primarySoft : tk.surfaceMuted,
+        borderRight: `1px solid ${tk.border}`,
       }}
     >
       <GripVertical size={12} color={colors.textMuted} />
@@ -146,7 +147,7 @@ export function WeekRow({
       onDrop={handleWeekDrop}
       style={{
         display: 'flex',
-        outline: isWeekDragOver ? '2px solid #3b82f6' : '2px solid transparent',
+        outline: isWeekDragOver ? `2px solid ${tk.primary}` : '2px solid transparent',
         outlineOffset: '-2px',
         transition: 'outline 0.1s',
       }}

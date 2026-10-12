@@ -1,3 +1,4 @@
+import { colors } from '@trainerpro/ui';
 export const ICON_DETAIL = '🔍';
 export const ICON_COLLAPSE = '▲';
 export const ICON_EXPAND = '▼';
@@ -18,11 +19,11 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
 };
 
 export const BLOCK_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  cardio: { bg: '#dbeafe', text: '#2563eb' },
+  cardio: { bg: colors.primaryBorder, text: colors.primary },
   isometric: { bg: '#fce7f3', text: '#be185d' },
-  mobility: { bg: '#ecfccb', text: '#16a34a' },
-  plio: { bg: '#fef3c7', text: '#d97706' },
-  sport: { bg: '#f1f5f9', text: '#64748b' },
+  mobility: { bg: '#ecfccb', text: colors.success },
+  plio: { bg: colors.warningSoft, text: colors.warning },
+  sport: { bg: colors.background, text: colors.textMuted },
   strength: { bg: '#f3e8ff', text: '#9333ea' },
 };
 

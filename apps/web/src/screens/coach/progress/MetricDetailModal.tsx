@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { VariableDef } from './progress-screen.types';
 import type { ExerciseProgressPoint } from '../../../data/hooks/useExerciseProgressQuery';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -27,7 +28,7 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
   const chartType = 'monotone';
   const detailGradId = 'detailGrad';
   const chartFill = `url(#${detailGradId})`;
-  const gridColor = '#f0f4f8';
+  const gridColor = colors.background;
   const detailTitle = t('coach.progress.modal.detailTitleWithMetric').replace('{metric}', t(variable?.labelKey ?? ''));
   const setRepsSeparator = t('coach.progress.modal.setRepsSeparator');
   const dotSeparator = t('coach.progress.modal.dotSeparator');
@@ -96,8 +97,8 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray={lineDash} stroke={gridColor} />
-                <XAxis dataKey={dateKey} tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey={dateKey} tick={{ fontSize: fontSize.xs }} />
+                <YAxis tick={{ fontSize: fontSize.xs }} />
                 <Tooltip
                   formatter={(v) => [`${Math.round((Number(v) || 0) * 10) / 10} ${variable.unit}`, t(variable.labelKey)]}
                 />
@@ -137,7 +138,9 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
           {/* Set breakdown */}
           <div style={setsPanel}>
             <p style={sectionLabel}>{t('coach.progress.modal.sets.title')}</p>
-            {sets.length === 0 && <p style={{ color: '#94a3b8', fontSize: 13 }}>{t('coach.progress.modal.noData')}</p>}
+            {sets.length === 0 && (
+              <p style={{ color: colors.textMuted, fontSize: fontSize.sm }}>{t('coach.progress.modal.noData')}</p>
+            )}
             {sets.map((set) => (
               <div key={set.setIndex} style={setRow}>
                 <span style={setNum}>{t('coach.progress.modal.setLabel').replace('{index}', String(set.setIndex))}</span>
@@ -184,10 +187,10 @@ const overlay: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  padding: 24,
+  padding: space.xl,
 };
 const modal: React.CSSProperties = {
-  background: '#fff',
+  background: colors.surface,
   borderRadius: 28,
   width: '100%',
   maxWidth: 960,
@@ -195,8 +198,8 @@ const modal: React.CSSProperties = {
   overflowY: 'auto',
   display: 'flex',
   flexDirection: 'column',
-  gap: 24,
-  padding: 32,
+  gap: space.xl,
+  padding: space.xxl,
   boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
 };
 const header: React.CSSProperties = {
@@ -204,101 +207,101 @@ const header: React.CSSProperties = {
   alignItems: 'flex-start',
   justifyContent: 'space-between',
 };
-const modalTitle: React.CSSProperties = { margin: 0, fontSize: 22, fontWeight: 900, color: '#0f1b2f' };
-const modalSubtitle: React.CSSProperties = { margin: 0, fontSize: 13, color: '#5d6f85', fontWeight: 600 };
+const modalTitle: React.CSSProperties = { margin: 0, fontSize: fontSize.xl, fontWeight: 900, color: colors.text };
+const modalSubtitle: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted, fontWeight: 600 };
 const closeBtn: React.CSSProperties = {
   padding: '8px 12px',
-  borderRadius: 12,
+  borderRadius: radius.lg,
   border: 'none',
-  background: '#f1f5f9',
-  color: '#5d6f85',
+  background: colors.background,
+  color: colors.textMuted,
   cursor: 'pointer',
-  fontSize: 16,
+  fontSize: fontSize.md,
   fontWeight: 700,
 };
 const kpiRow: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 16,
+  gap: space.lg,
 };
 const kpiTile: React.CSSProperties = {
-  background: '#f8fafc',
+  background: colors.surfaceMuted,
   borderRadius: 16,
   padding: '18px 20px',
-  border: '1px solid #e8edf3',
+  border: `1px solid ${colors.background}`,
 };
 const kpiLabel: React.CSSProperties = {
   margin: 0,
-  fontSize: 11,
+  fontSize: fontSize.xs,
   fontWeight: 800,
-  color: '#94a3b8',
+  color: colors.textMuted,
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
-const kpiValue: React.CSSProperties = { margin: '6px 0 0', fontSize: 24, fontWeight: 900, color: '#0f1b2f' };
+const kpiValue: React.CSSProperties = { margin: '6px 0 0', fontSize: fontSize.xl, fontWeight: 900, color: colors.text };
 const chartContainer: React.CSSProperties = {
-  background: '#f8fafc',
+  background: colors.surfaceMuted,
   borderRadius: 20,
   padding: '20px 16px',
-  border: '1px solid #e8edf3',
+  border: `1px solid ${colors.background}`,
 };
 const sectionLabel: React.CSSProperties = {
   margin: '0 0 12px',
-  fontSize: 13,
+  fontSize: fontSize.sm,
   fontWeight: 800,
-  color: '#0f1b2f',
+  color: colors.text,
   textTransform: 'uppercase',
   letterSpacing: 0.5,
 };
 const twoPanel: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: '1fr 1.5fr',
-  gap: 20,
+  gap: space.xl,
 };
 const sessionsList: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
+  gap: space.sm,
 };
 const sessionItem: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '10px 14px',
-  borderRadius: 12,
-  border: '1.5px solid #e8edf3',
-  background: '#fff',
+  borderRadius: radius.lg,
+  border: `1.5px solid ${colors.background}`,
+  background: colors.surface,
   cursor: 'pointer',
   transition: 'all 0.15s',
 };
 const sessionItemActive: React.CSSProperties = {
-  border: '1.5px solid #3b82f6',
-  background: '#eff6ff',
+  border: `1.5px solid ${colors.primary}`,
+  background: colors.primarySoft,
 };
-const sessionDate: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: '#0f1b2f' };
-const sessionValue: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: '#3b82f6' };
+const sessionDate: React.CSSProperties = { fontSize: fontSize.sm, fontWeight: 700, color: colors.text };
+const sessionValue: React.CSSProperties = { fontSize: fontSize.sm, fontWeight: 700, color: colors.primary };
 const setsPanel: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
+  gap: space.sm,
 };
 const setRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 12,
+  gap: space.md,
   padding: '10px 14px',
-  borderRadius: 12,
-  background: '#f8fafc',
-  border: '1px solid #e8edf3',
+  borderRadius: radius.lg,
+  background: colors.surfaceMuted,
+  border: `1px solid ${colors.background}`,
 };
-const setNum: React.CSSProperties = { fontSize: 12, fontWeight: 800, color: '#5d6f85', minWidth: 56 };
-const setDetail: React.CSSProperties = { fontSize: 13, fontWeight: 700, color: '#0f1b2f', flex: 1 };
-const setMeta: React.CSSProperties = { fontSize: 11, fontWeight: 700, color: '#3b82f6' };
+const setNum: React.CSSProperties = { fontSize: fontSize.xs, fontWeight: 800, color: colors.textMuted, minWidth: 56 };
+const setDetail: React.CSSProperties = { fontSize: fontSize.sm, fontWeight: 700, color: colors.text, flex: 1 };
+const setMeta: React.CSSProperties = { fontSize: fontSize.xs, fontWeight: 700, color: colors.primary };
 const insightBox: React.CSSProperties = {
-  marginTop: 12,
+  marginTop: space.md,
   padding: '14px 16px',
-  borderRadius: 14,
-  background: '#fffbeb',
-  border: '1.5px solid #fde68a',
+  borderRadius: radius.lg,
+  background: colors.warningSoft,
+  border: `1.5px solid ${colors.warningSoft}`,
 };
-const insightText: React.CSSProperties = { margin: 0, fontSize: 13, fontWeight: 600, color: '#92400e' };
+const insightText: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, fontWeight: 600, color: colors.warning };

@@ -6,6 +6,7 @@ import { setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface ColDef {
   key: keyof DraftSet;
@@ -103,7 +104,7 @@ export function SeriesTable({
   const phDash = t('coach.routine.seriesTable.placeholderDash');
 
   return (
-    <ScrollView horizontal style={{ marginTop: 8 }}>
+    <ScrollView horizontal style={{ marginTop: space.sm }}>
       <View style={{ minWidth: tableWidth }}>
         <SeriesHeaderRow
           lockedFields={lockedFields}
@@ -391,12 +392,12 @@ function SelectCell({
         if (!readOnly) onChange(e.target.value);
       },
       style: {
-        fontSize: 12,
+        fontSize: fontSize.xs,
         padding: '5px 4px',
-        border: '1px solid #e2e8f0',
-        borderRadius: 6,
-        backgroundColor: readOnly ? '#f8fafc' : '#fff',
-        color: value ? '#1e293b' : '#94a3b8',
+        border: `1px solid ${colors.border}`,
+        borderRadius: radius.sm,
+        backgroundColor: readOnly ? colors.surfaceMuted : colors.surface,
+        color: value ? colors.text : colors.textMuted,
         width: '100%',
         cursor: readOnly ? 'default' : 'pointer',
         outline: 'none',

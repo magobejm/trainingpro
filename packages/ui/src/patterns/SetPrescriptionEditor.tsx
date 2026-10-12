@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { sanitizeRirInput, sanitizeRpeInput } from './effort-input';
 import type { FieldModeValue } from './FieldModeControl';
+import { colors } from '../theme/tokens';
 
 export type SetRange = {
   maxKg: string;
@@ -40,10 +41,10 @@ type Props = {
 };
 
 const COLORS = {
-  border: '#d8e1ee',
-  danger: '#c1372f',
-  muted: '#5f7288',
-  text: '#11213a',
+  border: colors.border,
+  danger: colors.danger,
+  muted: colors.textMuted,
+  text: colors.text,
 };
 
 export function SetPrescriptionEditor(props: Props): React.JSX.Element {
@@ -257,7 +258,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   inputHidden: {
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surfaceMuted,
     color: COLORS.muted,
   },
   modeInput: {

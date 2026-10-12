@@ -2,21 +2,22 @@ import React, { useState } from 'react';
 import { Modal, Pressable, Text, TextInput, View } from 'react-native';
 import { Check, Plus, StickyNote, X } from 'lucide-react';
 import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIMATION = 'fade' as const;
-const COLOR_WHITE = '#ffffff' as const;
-const COLOR_GREEN = '#15803d' as const;
+const COLOR_WHITE = tk.surface;
+const COLOR_GREEN = tk.success;
 const TIME_INPUT_TYPE = 'time' as const;
-const COLOR_NOTE_SAVING = '#93c5fd' as const;
-const COLOR_REMINDER = '#22c55e' as const;
-const COLOR_REMINDER_SAVING = '#86efac' as const;
+const COLOR_NOTE_SAVING = tk.primaryBorder;
+const COLOR_REMINDER = tk.success;
+const COLOR_REMINDER_SAVING = tk.successSoft;
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  bg: '#f8fafc',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
+  border: tk.border,
+  bg: tk.surfaceMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -32,14 +33,14 @@ export function ModalHeader({ title, icon, onClose }: ModalHeaderProps): React.J
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 20,
+        padding: space.xl,
         borderBottomWidth: 1,
         borderColor: colors.border,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         {icon}
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>{title}</Text>
+        <Text style={{ fontSize: fontSize.md, fontWeight: 'bold', color: colors.text }}>{title}</Text>
       </View>
       <Pressable
         onPress={onClose}
@@ -70,14 +71,14 @@ function ModalSaveButton({ onPress, isSaving, label, bgColor, savingBgColor }: S
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: isSaving ? savingBgColor : bgColor,
-        borderRadius: 14,
-        paddingVertical: 12,
-        marginTop: 16,
-        gap: 8,
+        borderRadius: radius.lg,
+        paddingVertical: space.md,
+        marginTop: space.lg,
+        gap: space.sm,
       }}
     >
       <Check color={COLOR_WHITE} size={16} />
-      <Text style={{ fontSize: 14, fontWeight: 'bold', color: COLOR_WHITE }}>{isSaving ? '...' : label}</Text>
+      <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: COLOR_WHITE }}>{isSaving ? '...' : label}</Text>
     </Pressable>
   );
 }
@@ -124,19 +125,19 @@ export function AddNoteModal({
             icon={<StickyNote color={colors.primary} size={18} />}
             onClose={onClose}
           />
-          <View style={{ padding: 20 }}>
+          <View style={{ padding: space.xl }}>
             {clientName && (
               <View
                 style={{
-                  backgroundColor: '#eff6ff',
-                  borderRadius: 10,
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  marginBottom: 16,
+                  backgroundColor: tk.primarySoft,
+                  borderRadius: radius.md,
+                  paddingVertical: space.sm,
+                  paddingHorizontal: space.md,
+                  marginBottom: space.lg,
                   alignSelf: 'flex-start',
                 }}
               >
-                <Text style={{ fontSize: 12, color: colors.primary, fontWeight: 'bold' }}>{clientName}</Text>
+                <Text style={{ fontSize: fontSize.xs, color: colors.primary, fontWeight: 'bold' }}>{clientName}</Text>
               </View>
             )}
             <TextInput
@@ -146,10 +147,10 @@ export function AddNoteModal({
               style={{
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 12,
-                padding: 12,
-                fontSize: 14,
-                marginBottom: 12,
+                borderRadius: radius.lg,
+                padding: space.md,
+                fontSize: fontSize.sm,
+                marginBottom: space.md,
                 color: colors.text,
               }}
             />
@@ -162,10 +163,10 @@ export function AddNoteModal({
               style={{
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 12,
-                padding: 12,
-                fontSize: 14,
-                marginBottom: 16,
+                borderRadius: radius.lg,
+                padding: space.md,
+                fontSize: fontSize.sm,
+                marginBottom: space.lg,
                 color: colors.text,
                 minHeight: 100,
                 textAlignVertical: 'top',
@@ -227,22 +228,22 @@ export function AddReminderModal({
             icon={<Plus color={COLOR_GREEN} size={18} />}
             onClose={onClose}
           />
-          <View style={{ padding: 20 }}>
+          <View style={{ padding: space.xl }}>
             {clientName && (
               <View
                 style={{
-                  backgroundColor: '#f0fdf4',
-                  borderRadius: 10,
-                  paddingVertical: 6,
-                  paddingHorizontal: 12,
-                  marginBottom: 16,
+                  backgroundColor: tk.successSoft,
+                  borderRadius: radius.md,
+                  paddingVertical: space.sm,
+                  paddingHorizontal: space.md,
+                  marginBottom: space.lg,
                   alignSelf: 'flex-start',
                 }}
               >
-                <Text style={{ fontSize: 12, color: COLOR_GREEN, fontWeight: 'bold' }}>{clientName}</Text>
+                <Text style={{ fontSize: fontSize.xs, color: COLOR_GREEN, fontWeight: 'bold' }}>{clientName}</Text>
               </View>
             )}
-            <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.textMuted, marginBottom: 6 }}>
+            <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.textMuted, marginBottom: space.sm }}>
               {t('coach.calendar.reminder.time')}
             </Text>
             <input
@@ -252,10 +253,10 @@ export function AddReminderModal({
               style={{
                 width: '100%',
                 border: `1px solid ${colors.border}`,
-                borderRadius: 12,
+                borderRadius: radius.lg,
                 padding: '10px 12px',
-                fontSize: 14,
-                marginBottom: 12,
+                fontSize: fontSize.sm,
+                marginBottom: space.md,
                 boxSizing: 'border-box',
                 color: colors.text,
               }}
@@ -269,16 +270,16 @@ export function AddReminderModal({
               style={{
                 borderWidth: 1,
                 borderColor: colors.border,
-                borderRadius: 12,
-                padding: 12,
-                fontSize: 14,
-                marginBottom: 16,
+                borderRadius: radius.lg,
+                padding: space.md,
+                fontSize: fontSize.sm,
+                marginBottom: space.lg,
                 color: colors.text,
                 minHeight: 80,
                 textAlignVertical: 'top',
               }}
             />
-            <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 4 }}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginBottom: space.xs }}>
               {t('coach.calendar.call.proposalHint')}
             </Text>
             <ModalSaveButton

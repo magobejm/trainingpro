@@ -9,6 +9,7 @@ import {
 } from '../../../data/hooks/useNutrition';
 import type { PlanSetupData, StructuredDay, StructuredPlanContent, StructuredWeek } from './nutrition.types';
 import { styles } from './nutrition.styles';
+import { space } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -45,7 +46,7 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
         <View key={week.id} style={styles.card}>
           <Text style={styles.cardTitle}>{week.label}</Text>
           {week.days.map((day, dayIndex) => (
-            <View key={day.id} style={{ marginTop: 10 }}>
+            <View key={day.id} style={{ marginTop: space.md }}>
               <TextInput
                 onChangeText={(value) => renameDay(content, setContent, weekIndex, dayIndex, value)}
                 style={styles.field}

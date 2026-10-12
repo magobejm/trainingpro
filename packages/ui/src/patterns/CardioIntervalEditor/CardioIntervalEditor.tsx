@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { sanitizeRpeInput } from '../effort-input';
 import type { FieldModeValue } from '../FieldModeControl';
+import { colors } from '../../theme/tokens';
 
 export type CardioIntervalDraft = {
   displayName: string;
@@ -31,10 +32,10 @@ type Props = {
 };
 
 const COLORS = {
-  border: '#d8e1ee',
-  danger: '#c1372f',
-  muted: '#5f7288',
-  text: '#11213a',
+  border: colors.border,
+  danger: colors.danger,
+  muted: colors.textMuted,
+  text: colors.text,
 };
 
 export function CardioIntervalEditor(props: Props): React.JSX.Element {
@@ -272,7 +273,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   inputContainer: { position: 'relative', justifyContent: 'center' },
-  inputHidden: { backgroundColor: '#f8fafc', color: COLORS.muted },
+  inputHidden: { backgroundColor: colors.surfaceMuted, color: COLORS.muted },
   label: { color: COLORS.muted, fontSize: 12 },
   modeInput: { paddingRight: 60 },
   remove: { color: COLORS.danger, fontSize: 12, fontWeight: '700' },

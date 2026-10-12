@@ -9,6 +9,7 @@ import { GroupContainer } from './RoutineDayCard/GroupContainer';
 import { RoutineBlockCard } from './RoutineBlockCard';
 import type { PlannerLabels } from './RoutinePlanner/planner-labels';
 import { useGroupManagement } from '../hooks/useGroupManagement';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface RoutineDayCardProps {
   day: DraftDay;
@@ -182,38 +183,48 @@ const gbs = {
   bar: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: '#f8fafc',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    backgroundColor: colors.surfaceMuted,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: colors.background,
   },
-  activeBar: { backgroundColor: '#eff6ff' },
+  activeBar: { backgroundColor: colors.primarySoft },
   circuitBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#93c5fd',
-    backgroundColor: '#dbeafe',
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primaryBorder,
   },
-  circuitBtnText: { fontSize: 11, fontWeight: '600' as const, color: '#1d4ed8' },
+  circuitBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: colors.primaryHover },
   supersetBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: '#c4b5fd',
     backgroundColor: '#ede9fe',
   },
-  supersetBtnText: { fontSize: 11, fontWeight: '600' as const, color: '#7c3aed' },
-  hint: { fontSize: 12, color: '#475569' },
+  supersetBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: '#7c3aed' },
+  hint: { fontSize: fontSize.xs, color: colors.textMuted },
   spacer: { flex: 1 },
-  cancelBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: '#f1f5f9' },
-  cancelBtnText: { fontSize: 11, color: '#64748b' },
-  confirmBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 6, backgroundColor: '#3b82f6' },
-  confirmBtnText: { fontSize: 11, fontWeight: '700' as const, color: '#fff' },
+  cancelBtn: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+  },
+  cancelBtnText: { fontSize: fontSize.xs, color: colors.textMuted },
+  confirmBtn: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primary,
+  },
+  confirmBtnText: { fontSize: fontSize.xs, fontWeight: '700' as const, color: colors.surface },
 };
 
 interface DayBlocksContentProps {
@@ -294,7 +305,7 @@ function DayBlocksContent(props: DayBlocksContentProps) {
           display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          borderRadius: 10,
+          borderRadius: radius.md,
         }}
       >
         {isInGroupMode && !isGrouped && (
@@ -334,9 +345,9 @@ function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: (
         bottom: 0,
         zIndex: 10,
         backgroundColor: selected ? 'rgba(59,130,246,0.12)' : 'rgba(0,0,0,0.02)',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: selected ? 2 : 1,
-        borderColor: selected ? '#3b82f6' : '#93c5fd',
+        borderColor: selected ? colors.primary : colors.primaryBorder,
         borderStyle: selected ? 'solid' : 'dashed',
       }}
     />

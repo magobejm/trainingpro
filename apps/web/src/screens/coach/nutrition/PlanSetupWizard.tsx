@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { buildPlanSetupData } from './nutrition-tdee.utils';
 import type { ActivityLevel, NutritionPlanType, PlanSetupData, TdeeFormula } from './nutrition.types';
 import { styles } from './nutrition.styles';
+import { space } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -60,7 +61,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.wizard.generic')}</Text>
       <Text style={styles.fieldLabel}>{t('coach.nutrition.plans.name')}</Text>
       <TextInput onChangeText={setName} style={styles.field} value={name} />
-      <View style={{ flexDirection: 'row', gap: 8 }}>
+      <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Chip active={sex === 'male'} label={t('coach.nutrition.wizard.male')} onPress={() => setSex('male')} />
         <Chip active={sex === 'female'} label={t('coach.nutrition.wizard.female')} onPress={() => setSex('female')} />
       </View>

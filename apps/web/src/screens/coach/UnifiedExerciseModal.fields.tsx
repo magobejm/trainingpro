@@ -4,24 +4,18 @@ import { FormSelect } from './components/UnifiedExerciseFormSelect';
 import { MuscleMultiSelect } from './components/MuscleMultiSelect';
 import { styles } from './UnifiedExerciseModal.styles';
 import { EquipmentProps, CatFieldsProps, DescProps, BioProps } from './UnifiedExerciseModal.components';
+import { space } from '@trainerpro/ui';
 
 export function EquipmentSection({ equipmentId, options, onChange, onFocus, t, style }: EquipmentProps) {
   return (
     <View style={[styles.cardContainer, style]}>
       <View style={styles.fieldSection}>
         <Text style={styles.label}>{t('coach.library.fields.equipmentLabel')}</Text>
-        <FormSelect
-          options={options}
-          value={equipmentId}
-          onSelect={onChange}
-          onFocus={onFocus}
-        />
+        <FormSelect options={options} value={equipmentId} onSelect={onChange} onFocus={onFocus} />
       </View>
     </View>
   );
 }
-
-
 
 function StrengthFields({ props }: { props: CatFieldsProps }) {
   return (
@@ -127,7 +121,7 @@ export function DescriptionSection({ instructions, coachInstructions, onChange, 
   return (
     <View style={[styles.cardContainer, style]}>
       <View style={styles.row}>
-        <View style={[{ flex: 1, marginRight: 12 }]}>
+        <View style={[{ flex: 1, marginRight: space.md }]}>
           <Text style={styles.label}>{t('coach.library.fields.descriptionLabel')}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -139,7 +133,7 @@ export function DescriptionSection({ instructions, coachInstructions, onChange, 
             onFocus={onFocus}
           />
         </View>
-        <View style={[{ flex: 1, marginLeft: 12 }]}>
+        <View style={[{ flex: 1, marginLeft: space.md }]}>
           <Text style={styles.label}>{t('coach.library.fields.coachInstructionsLabel')}</Text>
           <TextInput
             style={[styles.input, styles.textArea]}
@@ -163,12 +157,12 @@ export function BiomechanicsSection({
   onChange,
   onFocus,
   t,
-  style
+  style,
 }: BioProps) {
   return (
     <View style={[styles.cardContainer, styles.biomechBlock, style]}>
       <View style={styles.row}>
-        <View style={[{ flex: 1, marginRight: 12 }]}>
+        <View style={[{ flex: 1, marginRight: space.md }]}>
           <Text style={styles.label}>{t('coach.library.fields.movementPatternLabel')}</Text>
           <FormSelect
             options={mappedCatalogs.movementPatterns || []}
@@ -177,7 +171,7 @@ export function BiomechanicsSection({
             onFocus={onFocus}
           />
         </View>
-        <View style={[{ flex: 1, marginLeft: 12 }]}>
+        <View style={[{ flex: 1, marginLeft: space.md }]}>
           <Text style={styles.label}>{t('coach.library.fields.anatomicalPlaneLabel')}</Text>
           <FormSelect
             options={mappedCatalogs.anatomicalPlanes || []}

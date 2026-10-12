@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import { useDialogFocus } from '../../../layout/useDialogFocus';
 import { styles } from './ActionConfirmModal.styles';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIMATION = 'fade' as const;
 
@@ -40,16 +41,16 @@ export function ActionConfirmModal(props: Props): React.JSX.Element {
 
 const errorStyles = {
   banner: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.dangerSoft,
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 12,
+    borderColor: colors.dangerSoft,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginTop: space.md,
   },
   bannerText: {
-    color: '#991b1b',
-    fontSize: 13,
+    color: colors.danger,
+    fontSize: fontSize.sm,
     lineHeight: 18,
   },
 };

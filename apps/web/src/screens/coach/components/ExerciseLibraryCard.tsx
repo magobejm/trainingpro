@@ -3,6 +3,7 @@ import { Image, Pressable, StyleSheet, Text, View, DimensionValue } from 'react-
 import { readFrontEnv } from '../../../data/env';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { resolvePlaceholder } from './LibraryMediaViewer';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   deleting: boolean;
@@ -89,10 +90,10 @@ export function ExerciseLibraryCard(props: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     overflow: 'hidden',
     width: '100%' as DimensionValue,
     flexDirection: 'column',
@@ -100,7 +101,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%' as DimensionValue,
     height: 200,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surfaceInverse,
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
@@ -118,56 +119,56 @@ const styles = StyleSheet.create({
     height: '100%' as DimensionValue,
   },
   content: {
-    padding: 20,
-    gap: 12,
+    padding: space.xl,
+    gap: space.md,
   },
   title: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.text,
   },
   tagsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
     flexWrap: 'wrap',
   },
   tagPrimary: {
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: colors.primaryBorder,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
   tagPrimaryText: {
-    color: '#2563eb',
-    fontSize: 12,
+    color: colors.primary,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   tagSecondary: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: colors.background,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
   tagSecondaryText: {
-    color: '#64748b',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 12,
-    marginTop: 8,
+    gap: space.md,
+    marginTop: space.sm,
   },
   actionBtn: {
-    backgroundColor: '#f1f5f9',
-    padding: 8,
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    padding: space.sm,
+    borderRadius: radius.md,
   },
   actionDelete: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.dangerSoft,
   },
   actionIcon: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
 });

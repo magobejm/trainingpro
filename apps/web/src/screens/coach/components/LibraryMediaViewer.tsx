@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View, type ImageProps, DimensionValue } from 'react-native';
 import { getYouTubeThumbnailUrl, toYouTubeEmbedUrl } from '../library-media.helpers';
 import { readFrontEnv } from '../../../data/env';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   imageUrl: null | string;
@@ -124,7 +125,7 @@ function YouTubePreview(props: {
       {props.thumbnailUrl ? (
         <Image resizeMode={THUMBNAIL_RESIZE_MODE} source={{ uri: props.thumbnailUrl }} style={thumbStyle} />
       ) : (
-        <View style={[thumbStyle, { backgroundColor: '#000' }]} />
+        <View style={[thumbStyle, { backgroundColor: colors.text }]} />
       )}
       <View style={styles.playOverlay}>
         <View style={styles.playButton}>
@@ -168,11 +169,11 @@ const IFRAME_STYLE_FULL: React.CSSProperties = {
 
 const styles = StyleSheet.create({
   empty: {
-    color: '#1a2536',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
   },
   image: {
-    borderRadius: 8,
+    borderRadius: radius.md,
     height: 140,
     width: 220,
   },
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   imageFrame: {
-    borderRadius: 8,
+    borderRadius: radius.md,
     height: 140,
     justifyContent: 'center',
     overflow: 'hidden',
@@ -209,9 +210,9 @@ const styles = StyleSheet.create({
     width: 80,
   },
   playIcon: {
-    color: '#fff',
-    fontSize: 32,
-    marginLeft: 4, // Center adjustment for play icon
+    color: colors.surface,
+    fontSize: fontSize.xxxl,
+    marginLeft: space.xs, // Center adjustment for play icon
   },
   playOverlay: {
     ...StyleSheet.absoluteFillObject,
@@ -219,7 +220,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   thumbnail: {
-    borderRadius: 8,
+    borderRadius: radius.md,
     height: 140,
     width: 220,
   },
@@ -228,12 +229,12 @@ const styles = StyleSheet.create({
     height: '100%' as DimensionValue,
   },
   videoLink: {
-    color: '#1c74e9',
-    fontSize: 12,
+    color: colors.primary,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   videoPreview: {
-    borderRadius: 8,
+    borderRadius: radius.md,
     height: 140,
     overflow: 'hidden',
     position: 'relative',
@@ -246,7 +247,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   videoWrap: {
-    gap: 6,
+    gap: space.sm,
   },
   videoWrapFull: {
     width: '100%' as DimensionValue,
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
   wrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: space.md,
   },
   wrapFull: {
     width: '100%' as DimensionValue,

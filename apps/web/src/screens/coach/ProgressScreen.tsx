@@ -33,6 +33,7 @@ import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 import type { MicrocycleProgressPoint } from '../../data/hooks/useMicrocycleProgressQuery';
 import type { SessionProgressPoint } from '../../data/hooks/useSessionProgressQuery';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -498,7 +499,7 @@ function VariablePill({
     <button
       style={{
         ...pill,
-        ...(active ? { background: variable.color, borderColor: variable.color, color: '#fff' } : {}),
+        ...(active ? { background: variable.color, borderColor: variable.color, color: colors.surface } : {}),
       }}
       onClick={onToggle}
     >
@@ -530,7 +531,7 @@ function ChartCard({
   const valueKey = 'value';
   const chartType = 'monotone';
   const fillUrl = `url(#grad-${variable.id})`;
-  const gridColor = '#f0f4f8';
+  const gridColor = colors.background;
   const chartData = data.map((pt) => ({
     date: String(pt[xKey] ?? '').slice(5),
     value: pt[variable.dataKey] ?? 0,
@@ -554,8 +555,8 @@ function ChartCard({
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray={gridDash} stroke={gridColor} />
-            <XAxis dataKey={dateKey} tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
+            <XAxis dataKey={dateKey} tick={{ fontSize: fontSize.xs }} />
+            <YAxis tick={{ fontSize: fontSize.xs }} />
             <Tooltip
               formatter={(v) => [`${Math.round((Number(v) || 0) * 10) / 10} ${variable.unit}`, t(variable.labelKey)]}
             />
@@ -709,83 +710,93 @@ function buildKpis(input: {
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const C = { bg: '#eef4fb', text: '#0f1b2f', muted: '#5d6f85', card: '#fff', border: '#e8edf3' };
+const C = {
+  bg: colors.background,
+  text: colors.text,
+  muted: colors.textMuted,
+  card: colors.surface,
+  border: colors.background,
+};
 
 const styles = StyleSheet.create({
-  page: { backgroundColor: C.bg, padding: 20, gap: 14, minHeight: '100%' },
+  page: { backgroundColor: C.bg, padding: space.xl, gap: space.lg, minHeight: '100%' },
   backButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#64748b',
-    borderRadius: 10,
-    marginBottom: 12,
+    backgroundColor: colors.textMuted,
+    borderRadius: radius.md,
+    marginBottom: space.md,
     minHeight: 40,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
     justifyContent: 'center',
   },
-  backButtonText: { color: '#ffffff', fontSize: 14, fontWeight: '800', letterSpacing: 0.2 },
+  backButtonText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '800', letterSpacing: 0.2 },
   breadcrumb: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  breadcrumbClient: { color: C.muted, fontSize: 14, fontWeight: '700' },
-  breadcrumbSep: { color: C.muted, fontSize: 14, marginHorizontal: 4 },
-  breadcrumbTitle: { color: C.text, fontSize: 14, fontWeight: '900' },
-  subtitle: { color: C.muted, fontSize: 13, width: '100%' },
-  microcycleMeta: { color: C.muted, fontSize: 13, fontWeight: '700', width: '100%' },
-  topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignItems: 'center' },
-  variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  loading: { color: C.muted, fontSize: 14, textAlign: 'center', paddingVertical: 20 },
-  noData: { color: C.muted, fontSize: 14, textAlign: 'center', paddingVertical: 20 },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: 12 },
+  breadcrumbClient: { color: C.muted, fontSize: fontSize.sm, fontWeight: '700' },
+  breadcrumbSep: { color: C.muted, fontSize: fontSize.sm, marginHorizontal: space.xs },
+  breadcrumbTitle: { color: C.text, fontSize: fontSize.sm, fontWeight: '900' },
+  subtitle: { color: C.muted, fontSize: fontSize.sm, width: '100%' },
+  microcycleMeta: { color: C.muted, fontSize: fontSize.sm, fontWeight: '700', width: '100%' },
+  topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, alignItems: 'center' },
+  variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  loading: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
+  noData: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
+  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: space.md },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { color: C.text, fontSize: 20, fontWeight: '900', textAlign: 'center' },
-  emptySubtitle: { color: C.muted, fontSize: 14, textAlign: 'center', maxWidth: 400 },
+  emptyTitle: { color: C.text, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
+  emptySubtitle: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', maxWidth: 400 },
 });
 
 // CSS-in-JS for non-RN elements
-const modeRow: React.CSSProperties = { display: 'flex', gap: 8, flexWrap: 'wrap' };
+const modeRow: React.CSSProperties = { display: 'flex', gap: space.sm, flexWrap: 'wrap' };
 const modeBtn: React.CSSProperties = {
   padding: '8px 16px',
-  borderRadius: 10,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surface,
   color: C.muted,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 13,
+  fontSize: fontSize.sm,
 };
-const modeBtnActive: React.CSSProperties = { background: C.text, color: '#fff', borderColor: C.text };
+const modeBtnActive: React.CSSProperties = { background: C.text, color: colors.surface, borderColor: C.text };
 
-const rangeRow: React.CSSProperties = { display: 'flex', gap: 6, flexWrap: 'wrap' };
+const rangeRow: React.CSSProperties = { display: 'flex', gap: space.sm, flexWrap: 'wrap' };
 const rangeBtn: React.CSSProperties = {
   padding: '7px 13px',
-  borderRadius: 8,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surface,
   color: C.muted,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 12,
+  fontSize: fontSize.xs,
 };
-const rangeBtnActive: React.CSSProperties = { background: '#3b82f6', color: '#fff', borderColor: '#3b82f6' };
+const rangeBtnActive: React.CSSProperties = {
+  background: colors.primary,
+  color: colors.surface,
+  borderColor: colors.primary,
+};
 
 const pill: React.CSSProperties = {
   padding: '7px 14px',
   borderRadius: 20,
-  border: '1.5px solid #dce3eb',
-  background: '#f0f4f8',
+  border: `1.5px solid ${colors.border}`,
+  background: colors.background,
   color: C.muted,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 12,
+  fontSize: fontSize.xs,
 };
 
 const kpiGrid: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
-  gap: 14,
+  gap: space.lg,
   width: '100%',
 };
 const kpiCard: React.CSSProperties = {
-  background: '#fff',
+  background: colors.surface,
   borderRadius: 16,
   padding: '18px 20px',
   border: `1px solid ${C.border}`,
@@ -793,22 +804,22 @@ const kpiCard: React.CSSProperties = {
 };
 const kpiLabelStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 11,
+  fontSize: fontSize.xs,
   fontWeight: 800,
-  color: '#94a3b8',
+  color: colors.textMuted,
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
-const kpiValueStyle: React.CSSProperties = { margin: '6px 0 0', fontSize: 24, fontWeight: 900, color: C.text };
+const kpiValueStyle: React.CSSProperties = { margin: '6px 0 0', fontSize: fontSize.xl, fontWeight: 900, color: C.text };
 
 const chartsGrid: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-  gap: 16,
+  gap: space.lg,
   width: '100%',
 };
 const chartCard: React.CSSProperties = {
-  background: '#fff',
+  background: colors.surface,
   borderRadius: 20,
   padding: '20px 16px',
   border: `1px solid ${C.border}`,
@@ -818,27 +829,27 @@ const chartCardHeader: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  marginBottom: 12,
+  marginBottom: space.md,
 };
-const chartCardTitle: React.CSSProperties = { margin: 0, fontWeight: 800, fontSize: 14, color: C.text };
+const chartCardTitle: React.CSSProperties = { margin: 0, fontWeight: 800, fontSize: fontSize.sm, color: C.text };
 const expandBtn: React.CSSProperties = {
   padding: '4px 10px',
-  borderRadius: 8,
+  borderRadius: radius.md,
   border: 'none',
-  background: '#eff6ff',
-  color: '#3b82f6',
+  background: colors.primarySoft,
+  color: colors.primary,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 11,
+  fontSize: fontSize.xs,
 };
 
-const insightWrap: React.CSSProperties = { width: '100%', display: 'flex', flexDirection: 'column', gap: 12 };
-const insightTitle: React.CSSProperties = { margin: 0, fontSize: 14, fontWeight: 800, color: C.text };
-const insightCards: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 10 };
+const insightWrap: React.CSSProperties = { width: '100%', display: 'flex', flexDirection: 'column', gap: space.md };
+const insightTitle: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, fontWeight: 800, color: C.text };
+const insightCards: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.md };
 const insightCard: React.CSSProperties = {
-  background: '#fff',
-  borderRadius: 14,
+  background: colors.surface,
+  borderRadius: radius.lg,
   padding: '14px 18px',
   border: `1px solid ${C.border}`,
 };
-const insightText: React.CSSProperties = { margin: 0, fontSize: 13, fontWeight: 600, color: C.muted };
+const insightText: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, fontWeight: 600, color: C.muted };

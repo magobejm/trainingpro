@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { SelectOption, MODAL_THEME } from './UnifiedExerciseModal.types';
 import { UnifiedExerciseFormState } from './hooks/useUnifiedExerciseForm';
 import { styles } from './UnifiedExerciseModal.styles';
+import { colors } from '@trainerpro/ui';
 
 type TFn = (key: string) => string;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,8 +93,8 @@ export interface ErrorBannerProps {
   t: TFn;
 }
 
-const ICON_COLOR_DANGER = '#991b1b';
-const ICON_COLOR_WHITE = '#fff';
+const ICON_COLOR_DANGER = colors.danger;
+const ICON_COLOR_WHITE = colors.surface;
 
 export function CustomButton({
   title,
@@ -252,7 +253,7 @@ function MediaVideoSection({
   handleChange,
   youtubeId,
   videoPlaying = false,
-  setVideoPlaying = () => { },
+  setVideoPlaying = () => {},
   closeMuscles,
   t,
 }: Omit<MediaProps, 'fileInputRef' | 'handleFileChange'>) {
@@ -282,15 +283,9 @@ export function MediaSection(props: MediaProps) {
   return (
     <>
       {!onlyVideo && props.fileInputRef && props.handleFileChange && (
-        <MediaImageSection
-          {...props}
-          fileInputRef={props.fileInputRef!}
-          handleFileChange={props.handleFileChange!}
-        />
+        <MediaImageSection {...props} fileInputRef={props.fileInputRef!} handleFileChange={props.handleFileChange!} />
       )}
-      {!onlyImage && (
-        <MediaVideoSection {...props} />
-      )}
+      {!onlyImage && <MediaVideoSection {...props} />}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ClientPhysicalTestAssignmentView, TestInputs } from '../../data/hooks/usePhysicalTests';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export type CompletedTestRow = {
   classification: string;
@@ -64,14 +65,14 @@ export function CompletedTestList(props: { rows: CompletedTestRow[]; t: Translat
 
 function classificationTint(classification: string): string {
   const value = classification.toLowerCase();
-  if (value.includes('pobre') || value.includes('debajo')) return '#b91c1c';
+  if (value.includes('pobre') || value.includes('debajo')) return colors.danger;
   if (value.includes('regular')) return '#c2410c';
-  if (value.includes('medio') || value.includes('media') || value.includes('normal')) return '#a16207';
+  if (value.includes('medio') || value.includes('media') || value.includes('normal')) return colors.warning;
   if (value.includes('excelente') || value.includes('superior') || value.includes('élite') || value.includes('elite')) {
-    return '#047857';
+    return colors.success;
   }
-  if (value.includes('bueno') || value.includes('encima')) return '#1d4ed8';
-  return '#0e1a2f';
+  if (value.includes('bueno') || value.includes('encima')) return colors.primaryHover;
+  return colors.text;
 }
 
 function formatInputs(inputs: TestInputs): string {
@@ -82,12 +83,19 @@ function formatInputs(inputs: TestInputs): string {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderColor: '#dbe4f0', borderRadius: 14, borderWidth: 1, gap: 4, padding: 14 },
-  classification: { fontSize: 14, fontWeight: '800' },
-  empty: { color: '#627285', fontSize: 14, paddingVertical: 12 },
-  inputs: { color: '#334155', fontSize: 12 },
-  list: { gap: 10 },
-  meta: { color: '#627285', fontSize: 12 },
-  name: { color: '#0e1a2f', fontSize: 16, fontWeight: '700' },
-  score: { color: '#0e1a2f', fontSize: 14, fontWeight: '600' },
+  card: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: space.xs,
+    padding: space.lg,
+  },
+  classification: { fontSize: fontSize.sm, fontWeight: '800' },
+  empty: { color: colors.textMuted, fontSize: fontSize.sm, paddingVertical: space.md },
+  inputs: { color: colors.text, fontSize: fontSize.xs },
+  list: { gap: space.md },
+  meta: { color: colors.textMuted, fontSize: fontSize.xs },
+  name: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  score: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
 });

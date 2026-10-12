@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TextInput } from 'react-native';
-import { sanitizeRirInput, sanitizeRpeInput } from '@trainerpro/ui';
+import { colors, sanitizeRirInput, sanitizeRpeInput } from '@trainerpro/ui';
 import { st } from './SeriesTable.styles';
 import {
   formatStoredNumber,
@@ -11,7 +11,7 @@ import {
 } from './seriesTableNumeric.utils';
 import type { DraftSet } from '../../RoutinePlanner.types';
 
-const PLACEHOLDER_MUTED = '#cbd5e1';
+const PLACEHOLDER_MUTED = colors.borderStrong;
 const KB_NUMERIC = 'numeric' as const;
 
 interface SeriesTableNumericCellProps {

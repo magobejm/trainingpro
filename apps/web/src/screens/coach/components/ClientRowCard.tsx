@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   avatarUrl: null | string;
@@ -105,7 +106,7 @@ function readInitials(name: string): string {
 const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
-    backgroundColor: '#eaf2ff',
+    backgroundColor: colors.primarySoft,
     borderRadius: 19,
     height: 78,
     justifyContent: 'center',
@@ -118,8 +119,8 @@ const styles = StyleSheet.create({
     width: 78,
   },
   avatarLabel: {
-    color: '#225fdb',
-    fontSize: 20,
+    color: colors.primary,
+    fontSize: fontSize.xl,
     fontWeight: '800',
   },
   avatarRing: {
@@ -132,43 +133,43 @@ const styles = StyleSheet.create({
   },
   metricCell: {
     flex: 1,
-    gap: 4,
+    gap: space.xs,
     minWidth: 72,
   },
   metricsRow: {
-    borderTopColor: '#ecf1f8',
+    borderTopColor: colors.background,
     borderTopWidth: 1,
     flexDirection: 'row',
-    gap: 12,
-    marginTop: 12,
-    paddingTop: 10,
+    gap: space.md,
+    marginTop: space.md,
+    paddingTop: space.md,
     width: '100%',
   },
   metricTitle: {
-    color: '#9aa9be',
-    fontSize: 9,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   metricValue: {
-    color: '#334155',
-    fontSize: 14,
+    color: colors.text,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   objectiveBadge: {
     alignItems: 'center',
-    backgroundColor: '#eef4ff',
-    borderRadius: 8,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
     justifyContent: 'center',
-    marginTop: 4,
+    marginTop: space.xs,
     minHeight: 28,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
   },
   objectiveLabel: {
-    color: '#3b82f6',
-    fontSize: 10,
+    color: colors.primary,
+    fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.7,
     textAlign: 'center',
@@ -176,14 +177,14 @@ const styles = StyleSheet.create({
   },
   row: {
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderColor: '#e9eef6',
+    backgroundColor: colors.surface,
+    borderColor: colors.background,
     borderRadius: 22,
     borderWidth: 1,
     minHeight: 320,
     minWidth: 290,
-    padding: 22,
-    shadowColor: '#0f172a',
+    padding: space.xl,
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,
@@ -199,20 +200,20 @@ const styles = StyleSheet.create({
     transform: [{ translateY: -6 }],
   },
   rowSelected: {
-    backgroundColor: '#f8fbff',
-    borderColor: '#1c74e9',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
     borderWidth: 2,
   },
   rowTitle: {
-    color: '#111418',
-    fontSize: 20,
+    color: colors.text,
+    fontSize: fontSize.xl,
     fontWeight: '800',
     lineHeight: 26,
     textAlign: 'center',
   },
   statusDot: {
-    borderColor: '#ffffff',
-    borderRadius: 9,
+    borderColor: colors.surface,
+    borderRadius: radius.md,
     borderWidth: 2,
     bottom: -2,
     height: 16,
@@ -221,14 +222,14 @@ const styles = StyleSheet.create({
     width: 16,
   },
   statusDotSuccess: {
-    backgroundColor: '#22c55e',
+    backgroundColor: colors.success,
   },
   statusDotWarning: {
-    backgroundColor: '#f59e0b',
+    backgroundColor: colors.warning,
   },
   textWrap: {
-    gap: 8,
-    marginTop: 16,
+    gap: space.sm,
+    marginTop: space.lg,
     minHeight: 86,
     width: '100%',
   },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
+import { colors } from '../theme/tokens';
 
 type Props = {
   onChangeText: (text: string) => void;
@@ -8,9 +9,9 @@ type Props = {
 };
 
 const COLORS = {
-  border: '#d9e2ee',
-  input: '#0d1c34',
-  shell: '#ffffff',
+  border: colors.border,
+  input: colors.text,
+  shell: colors.surface,
 };
 
 export function SearchBar(props: Props): React.JSX.Element {

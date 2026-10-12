@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../theme/tokens';
 
 export type SummaryStripItem = {
   id: string;
@@ -12,10 +13,10 @@ type Props = {
 };
 
 const COLORS = {
-  border: '#d5deea',
-  card: '#ffffff',
-  label: '#62748a',
-  value: '#0f1b2f',
+  border: colors.border,
+  card: colors.surface,
+  label: colors.textMuted,
+  value: colors.text,
 };
 
 export function SummaryStrip(props: Props): React.JSX.Element {

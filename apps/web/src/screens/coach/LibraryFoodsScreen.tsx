@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { FilterChips, SearchBar } from '@trainerpro/ui';
+import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
@@ -28,10 +28,10 @@ import { LIST_KEYS } from '../../layout/list-context';
 import { useListContext } from '../../layout/useListContext';
 
 const COLORS = {
-  bg: '#edf3fb',
-  card: '#ffffff',
-  muted: '#627285',
-  text: '#0e1a2f',
+  bg: colors.background,
+  card: colors.surface,
+  muted: colors.textMuted,
+  text: colors.text,
 };
 
 export function LibraryFoodsScreen(): React.JSX.Element {
@@ -267,38 +267,38 @@ function mapFilterChips(ids: readonly string[], keyPrefix: string, t: (key: stri
 const styles = StyleSheet.create({
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
-    gap: 12,
-    padding: 14,
+    borderRadius: radius.lg,
+    gap: space.md,
+    padding: space.lg,
     width: '100%',
   },
   empty: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   error: {
-    color: '#b42318',
-    fontSize: 12,
+    color: colors.danger,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   list: {
-    gap: 10,
+    gap: space.md,
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.bg,
-    gap: 12,
+    gap: space.md,
     minHeight: '100%',
-    padding: 24,
+    padding: space.xl,
   },
   subtitle: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     width: '100%',
   },
   title: {
     color: COLORS.text,
-    fontSize: 26,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     width: '100%',
   },

@@ -8,7 +8,7 @@ import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
 import { SportBaseFields } from './components/LibraryCreateFormFields';
-import { SearchBar } from '@trainerpro/ui';
+import { SearchBar, space } from '@trainerpro/ui';
 import {
   useCreateSportMutation,
   useDeleteSportMutation,
@@ -224,7 +224,7 @@ const gridStyles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -10,
-    marginTop: 10,
+    marginTop: space.md,
     width: '100%' as DimensionValue,
   },
   gridItem: {
@@ -232,7 +232,7 @@ const gridStyles = StyleSheet.create({
     flexGrow: 1,
     maxWidth: 400,
     minWidth: 280,
-    padding: 10,
+    padding: space.md,
     width: '100%' as DimensionValue,
   },
 });

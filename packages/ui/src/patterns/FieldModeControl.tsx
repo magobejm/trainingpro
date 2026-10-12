@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/tokens';
 
 export type FieldModeValue = 'CLIENT_INPUT' | 'COACH_INPUT' | 'HIDDEN';
 
@@ -15,10 +16,10 @@ type Props = {
 };
 
 const COLORS = {
-  activeBg: '#225fdb',
-  activeText: '#ffffff',
-  border: '#d8e1ee',
-  text: '#11213a',
+  activeBg: colors.primary,
+  activeText: colors.onPrimary,
+  border: colors.border,
+  text: colors.text,
 };
 
 export function FieldModeControl(props: Props): React.JSX.Element {

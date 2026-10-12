@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Image, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   avatars: string[];
@@ -80,11 +81,7 @@ function Arrow(props: { isLeft: boolean; onPress: () => void }): React.JSX.Eleme
   );
 }
 
-function scrollBy(
-  ref: React.RefObject<ScrollView | null>,
-  offsetRef: React.RefObject<number>,
-  delta: number,
-): void {
+function scrollBy(ref: React.RefObject<ScrollView | null>, offsetRef: React.RefObject<number>, delta: number): void {
   const nextX = Math.max(0, offsetRef.current + delta);
   ref.current?.scrollTo({ animated: true, x: nextX });
 }
@@ -114,8 +111,8 @@ function createPanResponder(
 const styles = StyleSheet.create({
   arrowButton: {
     alignItems: 'center',
-    backgroundColor: '#f6f8fb',
-    borderColor: '#d7dfe9',
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
     height: 32,
@@ -123,24 +120,24 @@ const styles = StyleSheet.create({
     width: 32,
   },
   arrowLabel: {
-    color: '#637088',
-    fontSize: 16,
+    color: colors.textMuted,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   arrowWrap: {
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
   },
   avatarCard: {
-    borderColor: '#dbe3f0',
-    borderRadius: 12,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
     height: 74,
     overflow: 'hidden',
     width: 74,
   },
   avatarCardSelected: {
-    borderColor: '#1c74e9',
+    borderColor: colors.primary,
     borderWidth: 2,
   },
   avatarImage: {
@@ -149,9 +146,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   checkDot: {
-    backgroundColor: '#1c74e9',
-    borderColor: '#ffffff',
-    borderRadius: 7,
+    backgroundColor: colors.primary,
+    borderColor: colors.surface,
+    borderRadius: radius.sm,
     borderWidth: 2,
     height: 14,
     position: 'absolute',
@@ -163,27 +160,27 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   field: {
-    gap: 4,
+    gap: space.xs,
     marginTop: 2,
   },
   headerRow: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginBottom: 8,
+    marginBottom: space.sm,
   },
   hint: {
-    color: '#77859a',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
   },
   label: {
-    color: '#5e7088',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
-    paddingVertical: 4,
+    gap: space.md,
+    paddingVertical: space.xs,
   },
 });

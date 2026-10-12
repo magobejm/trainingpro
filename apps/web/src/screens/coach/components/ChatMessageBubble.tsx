@@ -2,6 +2,7 @@ import React from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChatMessage } from '../../../data/hooks/useChat';
 import { CallProposalCard } from './CallProposalCard';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.Element {
   if (props.message.callProposal && !props.message.text) {
@@ -44,40 +45,40 @@ function openAttachment(url: string): void {
 
 const styles = StyleSheet.create({
   attachmentImage: {
-    borderRadius: 8,
+    borderRadius: radius.md,
     height: 140,
-    marginTop: 6,
+    marginTop: space.sm,
     width: 180,
   },
   attachmentItem: {
-    color: '#475f85',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   attachmentLink: {
-    color: '#1c74e9',
-    fontSize: 12,
+    color: colors.primary,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     textDecorationLine: 'underline',
   },
   bubble: {
     borderRadius: 16,
     maxWidth: '78%',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   bubbleClient: {
     alignSelf: 'flex-start',
-    backgroundColor: '#ffffff',
-    borderColor: '#dce5f2',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
   },
   bubbleCoach: {
     alignSelf: 'flex-end',
-    backgroundColor: '#dbe8ff',
+    backgroundColor: colors.primaryBorder,
   },
   bubbleText: {
-    color: '#111d30',
-    fontSize: 13,
+    color: colors.text,
+    fontSize: fontSize.sm,
   },
 });

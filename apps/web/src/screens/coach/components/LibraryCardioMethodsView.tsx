@@ -1,5 +1,5 @@
 import React from 'react';
-import { FilterChips, SearchBar } from '@trainerpro/ui';
+import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { CardioMethodLibraryItem } from '../../../data/hooks/useLibraryQuery';
@@ -109,35 +109,35 @@ const topBarStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 24,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: space.xxxl,
+    paddingVertical: space.xl,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
     width: '100%',
   },
   title: {
-    fontSize: 24,
+    fontSize: fontSize.xl,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.text,
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: space.lg,
   },
   searchWrapper: {
     width: 320,
   },
   createBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+    borderRadius: radius.lg,
   },
   createBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
 });
@@ -214,7 +214,7 @@ const gridStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    gap: space.xl,
     width: '100%' as DimensionValue,
   },
   gridItem: {

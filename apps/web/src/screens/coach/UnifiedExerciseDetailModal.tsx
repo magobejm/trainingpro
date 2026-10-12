@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { UnifiedExerciseItem } from '../../data/hooks/useUnifiedLibraryQuery';
 import { resolvePlaceholder } from './components/LibraryMediaViewer';
 import { detailModalStyles as s, theme } from './UnifiedExerciseDetailModal.styles';
+import { colors } from '@trainerpro/ui';
 
 const MEDIA_RESIZE_MODE = 'contain' as const;
 const MODAL_ANIM = 'fade' as const;
 const YT_REGEX = new RegExp(
   '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/watch\\?v=|' +
-  'youtu\\.be\\/|youtube\\.com\\/embed\\/|youtube\\.com\\/shorts\\/)([^& \\n<?]+)',
+    'youtu\\.be\\/|youtube\\.com\\/embed\\/|youtube\\.com\\/shorts\\/)([^& \\n<?]+)',
 );
 
 export interface ItemWithExtras extends UnifiedExerciseItem {
@@ -71,7 +72,7 @@ function HeroMedia({
         <View style={s.playOverlay} pointerEvents="box-none">
           <Pressable style={s.playBtn} onPress={() => setPlayingYT(true)}>
             {/* eslint-disable-next-line no-restricted-syntax */}
-            <Play size={16} fill="#fff" color="#fff" />
+            <Play size={16} fill={colors.surface} color={colors.surface} />
             <Text style={s.playBtnText}>{t('coach.library.actions.playTutorial')}</Text>
           </Pressable>
         </View>
@@ -133,7 +134,7 @@ function EquipmentSection({ t, label }: { t: (k: string) => string; label: strin
       <View style={s.equipmentCard}>
         <View style={s.equipmentIconBox}>
           {/* eslint-disable-next-line no-restricted-syntax */}
-          <Dumbbell size={20} color={'#3b82f6'} />
+          <Dumbbell size={20} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={s.equipmentName}>{label}</Text>
@@ -190,24 +191,20 @@ function ContentSection({ item, t }: { item: ItemWithExtras; t: (k: string) => s
       <View style={s.descCard}>
         <View style={s.descHeader}>
           {/* eslint-disable-next-line no-restricted-syntax */}
-          <FileText size={20} color="#3b82f6" />
+          <FileText size={20} color={colors.primary} />
           <Text style={s.descTitle}>{t('coach.library.detail.technicalDesc')}</Text>
         </View>
-        <Text style={s.descriptionText}>
-          {item.instructions || t('coach.library.detail.noDescription')}
-        </Text>
+        <Text style={s.descriptionText}>{item.instructions || t('coach.library.detail.noDescription')}</Text>
       </View>
 
       {/* Columna Derecha: Indicaciones */}
       <View style={s.descCard}>
         <View style={s.descHeader}>
           {/* eslint-disable-next-line no-restricted-syntax */}
-          <Info size={20} color="#3b82f6" />
+          <Info size={20} color={colors.primary} />
           <Text style={s.descTitle}>{t('coach.library.detail.coachInstructions')}</Text>
         </View>
-        <Text style={s.descriptionText}>
-          {item.coachInstructions || t('coach.library.detail.noCoachInstructions')}
-        </Text>
+        <Text style={s.descriptionText}>{item.coachInstructions || t('coach.library.detail.noCoachInstructions')}</Text>
       </View>
     </View>
   );

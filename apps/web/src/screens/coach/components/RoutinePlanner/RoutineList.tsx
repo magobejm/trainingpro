@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
-import { SearchBar } from '@trainerpro/ui';
+import { SearchBar, space } from '@trainerpro/ui';
 import { matchesSearch } from '../../../../utils/normalize-search';
 import { s } from '../../RoutinePlanner.styles';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
@@ -53,7 +53,7 @@ function RoutineListView(
 ) {
   const listContent = renderListContent(props);
   return (
-    <View style={[s.card, { marginTop: 24 }]}>
+    <View style={[s.card, { marginTop: space.xl }]}>
       <Text style={s.label}>{props.t('coach.routine.list.title')}</Text>
       <SearchBar
         onChangeText={props.setQuery}

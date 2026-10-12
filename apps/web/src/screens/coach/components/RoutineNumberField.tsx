@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const KEYBOARD_NUMERIC = 'numeric' as const;
 
@@ -10,12 +11,7 @@ interface RoutineNumberFieldProps {
   readOnly?: boolean;
 }
 
-export function RoutineNumberField({
-  label,
-  onChange,
-  value,
-  readOnly = false,
-}: RoutineNumberFieldProps) {
+export function RoutineNumberField({ label, onChange, value, readOnly = false }: RoutineNumberFieldProps) {
   return (
     <View style={s.numberField}>
       <Text style={s.numberLabel}>{label}</Text>
@@ -34,20 +30,20 @@ export function RoutineNumberField({
 }
 
 const s = StyleSheet.create({
-  numberField: { gap: 4, minWidth: 80 },
-  numberLabel: { fontSize: 11, fontWeight: '500', color: '#64748b' },
+  numberField: { gap: space.xs, minWidth: 80 },
+  numberLabel: { fontSize: fontSize.xs, fontWeight: '500', color: colors.textMuted },
   numberInput: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    padding: 6,
-    fontSize: 13,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: space.sm,
+    fontSize: fontSize.sm,
     width: 80,
     textAlign: 'center',
-    color: '#1e293b',
+    color: colors.text,
   },
   readOnlyInput: {
-    backgroundColor: '#f8fafc',
-    color: '#64748b',
+    backgroundColor: colors.surfaceMuted,
+    color: colors.textMuted,
   },
 });

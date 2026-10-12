@@ -4,6 +4,7 @@ import { CardImage } from './LibraryItemCard/CardImage';
 import { CardFooter } from './LibraryItemCard/CardFooter';
 import { readFrontEnv } from '../../../data/env';
 import { resolvePlaceholder } from './LibraryMediaViewer';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   deleting?: boolean;
@@ -78,49 +79,49 @@ function Tags(props: { equipment?: null | string; subtitle?: null | string }): R
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     overflow: 'hidden',
     width: '100%' as DimensionValue,
     flexDirection: 'column',
   },
   deletingCard: { opacity: 0.5 },
   content: {
-    padding: 20,
-    gap: 12,
+    padding: space.xl,
+    gap: space.md,
   },
   name: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.text,
   },
   tagsRow: {
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
     flexWrap: 'wrap',
   },
   tagPrimary: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    backgroundColor: colors.background,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
   tagPrimaryText: {
-    color: '#64748b',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   tagSecondary: {
     backgroundColor: '#f3e8ff',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
   tagSecondaryText: {
     color: '#9333ea',
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
 });

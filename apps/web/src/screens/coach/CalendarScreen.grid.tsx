@@ -11,16 +11,17 @@ import type { CalendarClipboard } from './CalendarScreen.week-row';
 import { WeekRow } from './CalendarScreen.week-row';
 import { CalendarMonthHeader, CalendarDayNames } from './CalendarScreen.month-header';
 import { workoutStatusLines } from './calendar-workout-label';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  bg: '#f8fafc',
-  today: '#eff6ff',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
+  border: tk.border,
+  bg: tk.surfaceMuted,
+  today: tk.primarySoft,
 };
 
 type GridProps = {
@@ -136,8 +137,8 @@ export function CalendarDayCell({
   }
 
   const { isCurrentMonth } = cell;
-  const bgColor = !isCurrentMonth ? colors.bg : isDragOver ? '#dbeafe' : isToday ? colors.today : 'white';
-  const dayColor = !isCurrentMonth ? '#b0bec5' : isToday ? 'white' : colors.text;
+  const bgColor = !isCurrentMonth ? colors.bg : isDragOver ? tk.primaryBorder : isToday ? colors.today : 'white';
+  const dayColor = !isCurrentMonth ? tk.borderStrong : isToday ? 'white' : colors.text;
   return (
     <div
       onDragOver={handleDragOver}
@@ -147,8 +148,8 @@ export function CalendarDayCell({
       onMouseLeave={() => setIsCellHover(false)}
       onClick={onDayClick}
       style={{
-        borderRight: '1px solid #e2e8f0',
-        borderBottom: '1px solid #e2e8f0',
+        borderRight: `1px solid ${tk.border}`,
+        borderBottom: `1px solid ${tk.border}`,
         minHeight: 110,
         padding: '6px 4px',
         backgroundColor: bgColor,
@@ -157,12 +158,12 @@ export function CalendarDayCell({
         transition: 'background-color 0.1s',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: space.xs, marginBottom: 2 }}>
         <div
           style={{
             width: 26,
             height: 26,
-            borderRadius: 13,
+            borderRadius: radius.lg,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -170,7 +171,9 @@ export function CalendarDayCell({
             flexShrink: 0,
           }}
         >
-          <span style={{ fontSize: 12, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}>
+          <span
+            style={{ fontSize: fontSize.xs, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}
+          >
             {cell.day}
           </span>
         </div>
@@ -188,7 +191,7 @@ export function CalendarDayCell({
           <EventChip key={ev.id} event={ev} muted={!isCurrentMonth} />
         ))}
         {overflowCount > 0 && (
-          <span style={{ fontSize: 10, color: colors.textMuted, paddingLeft: 4 }}>
+          <span style={{ fontSize: fontSize.xs, color: colors.textMuted, paddingLeft: space.xs }}>
             {t('coach.calendar.grid.more', { count: overflowCount })}
           </span>
         )}
@@ -315,9 +318,9 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
         backgroundColor: colorObj.bg,
         color: colorObj.text,
         border: `${event.callStatus === 'pending' ? '1px dashed' : '1px solid'} ${colorObj.border}`,
-        borderRadius: 4,
+        borderRadius: radius.sm,
         padding: '2px 6px',
-        fontSize: 13,
+        fontSize: fontSize.sm,
         fontWeight: 500,
         overflow: 'hidden',
         maxWidth: '100%',
@@ -327,7 +330,7 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
     >
       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</div>
       {statusLines.map((line) => (
-        <div key={line} style={{ fontSize: 10, fontWeight: 600, whiteSpace: 'normal' }}>
+        <div key={line} style={{ fontSize: fontSize.xs, fontWeight: 600, whiteSpace: 'normal' }}>
           {line}
         </div>
       ))}

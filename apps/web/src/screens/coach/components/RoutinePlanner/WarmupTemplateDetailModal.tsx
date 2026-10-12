@@ -5,6 +5,7 @@ const MODAL_ANIMATION = 'fade' as const;
 const ICON_CLOSE = '✕';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { WarmupExerciseList } from './WarmupExerciseList';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   template: null | WarmupTemplateView;
@@ -45,11 +46,11 @@ const st = {
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     flex: 1,
     justifyContent: 'center' as const,
-    padding: 24,
+    padding: space.xl,
   },
   sheet: {
-    backgroundColor: '#fff',
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     maxHeight: '85vh' as unknown as number,
     maxWidth: 620,
     width: '100%' as const,
@@ -59,25 +60,25 @@ const st = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'space-between' as const,
-    padding: 16,
+    padding: space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: colors.background,
   },
   title: {
-    color: '#0f172a',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '700' as const,
     flex: 1,
   },
   closeBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    backgroundColor: '#f1f5f9',
-    marginLeft: 8,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+    marginLeft: space.sm,
   },
-  closeBtnText: { fontSize: 12, color: '#475569' },
+  closeBtnText: { fontSize: fontSize.xs, color: colors.textMuted },
   body: { maxHeight: '75vh' as unknown as number },
-  loading: { padding: 24, alignItems: 'center' as const },
-  loadingText: { fontSize: 14, color: '#94a3b8' },
+  loading: { padding: space.xl, alignItems: 'center' as const },
+  loadingText: { fontSize: fontSize.sm, color: colors.textMuted },
 };

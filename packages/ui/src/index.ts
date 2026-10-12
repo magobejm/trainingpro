@@ -10,3 +10,17 @@ export { ExercisePicker, type ExerciseOption } from './patterns/ExercisePicker';
 export { CardioIntervalEditor, type CardioIntervalDraft } from './patterns/CardioIntervalEditor';
 export { BarsChart, type BarsChartPoint } from './components/Charts';
 export { SummaryStrip, type SummaryStripItem } from './components/Charts';
+export {
+  colors,
+  fontFamily,
+  fontSize,
+  lightTheme,
+  radius,
+  shadow,
+  space,
+  themes,
+  type ColorToken,
+  type Theme,
+  type ThemeName,
+} from './theme/tokens';
+export { ThemeProvider, useTheme } from './theme/ThemeProvider';

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet, Text, View, DimensionValue, ScrollView } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIMATION = 'fade' as const;
 
@@ -24,12 +25,7 @@ export function LibraryCreateModal(props: Props): React.JSX.Element {
   const isTwoColumn = Boolean(props.mediaContent && props.formContent);
 
   return (
-    <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onClose}
-      transparent
-      visible={props.visible}
-    >
+    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onClose} transparent visible={props.visible}>
       <View style={styles.overlay}>
         <View style={[styles.card, !isTwoColumn && styles.cardSingleColumn]}>
           {isTwoColumn ? (
@@ -43,9 +39,7 @@ export function LibraryCreateModal(props: Props): React.JSX.Element {
 
               {/* Right Panel: Form */}
               <View style={styles.rightPanel}>
-                <ScrollView contentContainerStyle={styles.formContainer}>
-                  {props.formContent}
-                </ScrollView>
+                <ScrollView contentContainerStyle={styles.formContainer}>{props.formContent}</ScrollView>
 
                 {props.errorContent}
 
@@ -54,9 +48,7 @@ export function LibraryCreateModal(props: Props): React.JSX.Element {
                     <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
                   </Pressable>
                   <Pressable onPress={props.onSubmit} style={styles.submitButton}>
-                    <Text style={styles.submitLabel}>
-                      {props.isSubmitting ? props.submittingLabel : props.submitLabel}
-                    </Text>
+                    <Text style={styles.submitLabel}>{props.isSubmitting ? props.submittingLabel : props.submitLabel}</Text>
                   </Pressable>
                 </View>
               </View>
@@ -73,9 +65,7 @@ export function LibraryCreateModal(props: Props): React.JSX.Element {
                   <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
                 </Pressable>
                 <Pressable onPress={props.onSubmit} style={styles.submitButton}>
-                  <Text style={styles.submitLabel}>
-                    {props.isSubmitting ? props.submittingLabel : props.submitLabel}
-                  </Text>
+                  <Text style={styles.submitLabel}>{props.isSubmitting ? props.submittingLabel : props.submitLabel}</Text>
                 </Pressable>
               </View>
             </View>
@@ -92,17 +82,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30, 41, 59, 0.85)',
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: space.xl,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     flexDirection: 'row',
     maxWidth: 1000,
     width: '100%' as DimensionValue,
     maxHeight: '90%' as DimensionValue,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
@@ -114,67 +104,67 @@ const styles = StyleSheet.create({
   },
   leftPanel: {
     width: '50%' as DimensionValue,
-    backgroundColor: '#f8fafc',
-    padding: 40,
-    gap: 24,
+    backgroundColor: colors.surfaceMuted,
+    padding: space.xxxl,
+    gap: space.xl,
   },
   rightPanel: {
     width: '50%' as DimensionValue,
-    padding: 40,
-    gap: 24,
+    padding: space.xxxl,
+    gap: space.xl,
     justifyContent: 'space-between',
   },
   singleColumnPanel: {
-    padding: 32,
-    gap: 24,
+    padding: space.xxl,
+    gap: space.xl,
   },
   title: {
-    color: '#1e293b',
-    fontSize: 24,
+    color: colors.text,
+    fontSize: fontSize.xl,
     fontWeight: '700',
   },
   subtitle: {
-    color: '#64748b',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     marginTop: -16,
   },
   mediaContainer: {
     flex: 1,
-    gap: 16,
+    gap: space.lg,
   },
   formContainer: {
-    gap: 16,
+    gap: space.lg,
   },
   actions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: space.md,
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: space.sm,
   },
   cancelButton: {
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 12,
+    backgroundColor: colors.background,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     minHeight: 48,
-    paddingHorizontal: 24,
+    paddingHorizontal: space.xl,
   },
   cancelLabel: {
-    color: '#475569',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   submitButton: {
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     minHeight: 48,
-    paddingHorizontal: 24,
+    paddingHorizontal: space.xl,
   },
   submitLabel: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
 });

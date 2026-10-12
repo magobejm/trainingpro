@@ -4,9 +4,10 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { classifyQueryStatus, type QueryStatus, type QueryStatusInput } from '../data/classify-query-status';
 import { FAILURE_KINDS, readCopy } from './async-status.copy';
 import { requestSignIn } from '../data/session-end';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const BUTTON_ROLE = 'button' as const;
-const SPINNER_COLOR = '#1c74e9';
+const SPINNER_COLOR = colors.primary;
 
 type AsyncStatusProps = {
   emptyMessage?: string;
@@ -75,31 +76,31 @@ function StatusAction(props: { kind: QueryStatus; label: string; onRetry?: () =>
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#1c74e9',
-    borderRadius: 10,
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    marginTop: space.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
   buttonText: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   message: {
-    color: '#64748b',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     textAlign: 'center',
   },
   panel: {
     alignItems: 'center',
-    gap: 8,
+    gap: space.sm,
     justifyContent: 'center',
-    padding: 32,
+    padding: space.xxl,
   },
   title: {
-    color: '#1e293b',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '700',
     textAlign: 'center',
   },

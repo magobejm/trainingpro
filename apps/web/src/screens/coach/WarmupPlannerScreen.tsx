@@ -22,6 +22,7 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { saveTemplate } from '../../layout/template-save';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 
@@ -204,9 +205,9 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
   );
 }
 
-const headerStyles = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 16, marginBottom: 4 };
-const backBtnStyle = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, padding: 4 };
-const backBtnTextStyle = { fontSize: 14, color: '#64748b' as const };
+const headerStyles = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.lg, marginBottom: space.xs };
+const backBtnStyle = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, padding: space.xs };
+const backBtnTextStyle = { fontSize: fontSize.sm, color: colors.textMuted };
 
 function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
   return (
@@ -219,7 +220,7 @@ function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
           }}
           style={backBtnStyle}
         >
-          <ArrowLeft color={'#64748b'} size={18} />
+          <ArrowLeft color={colors.textMuted} size={18} />
           <Text style={backBtnTextStyle}>{vm.t('coach.warmupPlanner.back')}</Text>
         </Pressable>
       ) : null}
@@ -327,7 +328,7 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
             });
           }
         }}
-        style={{ position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', borderRadius: 10 }}
+        style={{ position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', borderRadius: radius.md }}
       >
         {isInGroupMode && !isGrouped && (
           <SelectionOverlay selected={isSelected} onPress={() => vm.toggleBlockSelection(block.id)} />
@@ -387,9 +388,9 @@ function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: (
         bottom: 0,
         zIndex: 10,
         backgroundColor: selected ? 'rgba(59,130,246,0.12)' : 'rgba(0,0,0,0.02)',
-        borderRadius: 10,
+        borderRadius: radius.md,
         borderWidth: selected ? 2 : 1,
-        borderColor: selected ? '#3b82f6' : '#93c5fd',
+        borderColor: selected ? colors.primary : colors.primaryBorder,
         borderStyle: selected ? 'solid' : 'dashed',
       }}
     />
@@ -439,27 +440,37 @@ const gbs = {
   bar: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: '#f8fafc',
+    gap: space.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    backgroundColor: colors.surfaceMuted,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
+    borderTopColor: colors.background,
   },
-  activeBar: { backgroundColor: '#eff6ff' },
+  activeBar: { backgroundColor: colors.primarySoft },
   circuitBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: '#93c5fd',
-    backgroundColor: '#dbeafe',
+    borderColor: colors.primaryBorder,
+    backgroundColor: colors.primaryBorder,
   },
-  circuitBtnText: { fontSize: 11, fontWeight: '600' as const, color: '#1d4ed8' },
-  hint: { fontSize: 12, color: '#475569' },
+  circuitBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: colors.primaryHover },
+  hint: { fontSize: fontSize.xs, color: colors.textMuted },
   spacer: { flex: 1 },
-  cancelBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6, backgroundColor: '#f1f5f9' },
-  cancelBtnText: { fontSize: 11, color: '#64748b' },
-  confirmBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 6, backgroundColor: '#3b82f6' },
-  confirmBtnText: { fontSize: 11, fontWeight: '700' as const, color: '#fff' },
+  cancelBtn: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.background,
+  },
+  cancelBtnText: { fontSize: fontSize.xs, color: colors.textMuted },
+  confirmBtn: {
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.primary,
+  },
+  confirmBtnText: { fontSize: fontSize.xs, fontWeight: '700' as const, color: colors.surface },
 };

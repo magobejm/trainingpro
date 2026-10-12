@@ -3,6 +3,7 @@ import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'r
 import { useRoutineTemplatesQuery } from '../../../data/hooks/useRoutineTemplates';
 import { usePlanTemplatesQuery } from '../../../data/hooks/usePlanTemplates';
 import { matchesSearch } from '../../../utils/normalize-search';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -131,57 +132,57 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: space.xl,
   },
   card: {
-    backgroundColor: '#FFF',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     width: '100%',
     maxHeight: '80%',
-    padding: 20,
+    padding: space.xl,
   },
   title: {
-    fontSize: 20,
+    fontSize: fontSize.xl,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: space.lg,
   },
   input: {
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    padding: space.md,
+    marginBottom: space.lg,
   },
   list: {
-    marginVertical: 8,
+    marginVertical: space.sm,
   },
   item: {
-    paddingVertical: 12,
+    paddingVertical: space.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: colors.background,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
   },
   itemSubtitle: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: fontSize.xs,
+    color: colors.textMuted,
     marginTop: 2,
   },
   loading: {
     textAlign: 'center',
-    padding: 20,
-    color: '#666',
+    padding: space.xl,
+    color: colors.textMuted,
   },
   closeButton: {
-    marginTop: 16,
-    paddingVertical: 12,
+    marginTop: space.lg,
+    paddingVertical: space.md,
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
   },
   closeLabel: {
     fontWeight: 'bold',
-    color: '#000',
+    color: colors.text,
   },
 });

@@ -1,8 +1,9 @@
 import React from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const PLACEHOLDER_COLOR = '#94a3b8';
+const PLACEHOLDER_COLOR = colors.textMuted;
 const ICON_WARMUP = '🔥';
 const ICON_REMOVE = '✕';
 const ICON_OPEN = '∨';
@@ -46,7 +47,7 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Pressable
           onPress={props.onToggleCollapse}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, cursor: 'pointer' } as never}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, cursor: 'pointer' } as never}
         >
           <View style={s.dayNumberBadge}>
             <Text style={s.dayNumberBadgeText}>{vm.badge}</Text>
@@ -159,51 +160,51 @@ const wts = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     flexWrap: 'wrap' as const,
-    paddingHorizontal: 14,
-    paddingBottom: 6,
-    gap: 6,
+    paddingHorizontal: space.lg,
+    paddingBottom: space.sm,
+    gap: space.sm,
   },
   tag: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    backgroundColor: '#fef3c7',
-    borderRadius: 8,
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#fbbf24',
-    paddingLeft: 8,
+    borderColor: colors.warning,
+    paddingLeft: space.sm,
     maxWidth: 280,
   },
   tagLabel: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 4,
-    paddingVertical: 4,
-    paddingRight: 4,
+    gap: space.xs,
+    paddingVertical: space.xs,
+    paddingRight: space.xs,
   },
-  tagIcon: { fontSize: 12 },
+  tagIcon: { fontSize: fontSize.xs },
   tagText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600' as const,
-    color: '#92400e',
+    color: colors.warning,
     maxWidth: 200,
   },
   tagRemove: {
-    paddingHorizontal: 6,
-    paddingVertical: 4,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
     borderLeftWidth: 1,
-    borderLeftColor: '#fbbf24',
+    borderLeftColor: colors.warning,
   },
-  tagRemoveText: { fontSize: 10, color: '#92400e' },
+  tagRemoveText: { fontSize: fontSize.xs, color: colors.warning },
   addBtn: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     borderStyle: 'dashed' as const,
-    backgroundColor: '#fefce8',
+    backgroundColor: colors.warningSoft,
   },
-  addBtnText: { fontSize: 11, color: '#92400e' },
+  addBtnText: { fontSize: fontSize.xs, color: colors.warning },
 };

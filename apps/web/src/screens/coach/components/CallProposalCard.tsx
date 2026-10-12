@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next';
 import type { ChatCallProposal } from '../../../data/hooks/useChat';
 import { useAcceptCallProposalMutation, useCounterCallProposalMutation } from '../../../data/hooks/useChat';
 import { CALL_CARD_TONES, callCardActions, callCardTone, callTimeOptions } from '../call-proposal-card.logic';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const TEXT_LIGHT = '#f8fafc';
+const TEXT_LIGHT = colors.surfaceMuted;
 
 export function CallProposalCard(props: { proposal: ChatCallProposal }): React.JSX.Element {
   const { t } = useTranslation();
@@ -19,22 +20,30 @@ export function CallProposalCard(props: { proposal: ChatCallProposal }): React.J
   const counter = useCounterCallProposalMutation();
 
   return (
-    <View style={{ backgroundColor: tone.bg, borderColor: tone.border, borderRadius: 14, borderWidth: 1, padding: 12 }}>
+    <View
+      style={{
+        backgroundColor: tone.bg,
+        borderColor: tone.border,
+        borderRadius: radius.lg,
+        borderWidth: 1,
+        padding: space.md,
+      }}
+    >
       <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: TEXT_LIGHT, fontSize: 13, fontWeight: 'bold' }}>
+        <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.sm, fontWeight: 'bold' }}>
           {t(accepted ? 'coach.chat.call.confirmedTitle' : 'coach.chat.call.requestTitle')}
         </Text>
-        <Text style={{ color: TEXT_LIGHT, fontSize: 11, fontWeight: 'bold' }}>
+        <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, fontWeight: 'bold' }}>
           {t(accepted ? 'coach.chat.call.scheduledBadge' : 'coach.chat.call.pendingBadge')}
         </Text>
       </View>
-      <Text style={{ color: TEXT_LIGHT, fontSize: 12, marginTop: 6 }}>
+      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, marginTop: space.sm }}>
         {t('coach.chat.call.date', { date: proposal.date })}
       </Text>
-      <Text style={{ color: TEXT_LIGHT, fontSize: 12 }}>
+      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs }}>
         {t(accepted ? 'coach.chat.call.confirmedTime' : 'coach.chat.call.proposedTime', { time: proposal.proposedTime })}
       </Text>
-      <Text style={{ color: TEXT_LIGHT, fontSize: 11, marginTop: 4 }}>
+      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, marginTop: space.xs }}>
         {t('coach.chat.call.lastProposedBy', {
           who: t(proposal.lastProposedBy === 'COACH' ? 'coach.chat.call.coach' : 'coach.chat.call.client'),
         })}
@@ -61,9 +70,11 @@ function CardButton(props: { label: string; onPress: () => void }): React.JSX.El
   return (
     <Pressable
       onPress={props.onPress}
-      style={{ backgroundColor: '#ffffff22', borderRadius: 10, marginTop: 8, paddingVertical: 8 }}
+      style={{ backgroundColor: '#ffffff22', borderRadius: radius.md, marginTop: space.sm, paddingVertical: space.sm }}
     >
-      <Text style={{ color: TEXT_LIGHT, fontSize: 12, fontWeight: 'bold', textAlign: 'center' }}>{props.label}</Text>
+      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, fontWeight: 'bold', textAlign: 'center' }}>
+        {props.label}
+      </Text>
     </Pressable>
   );
 }
@@ -76,11 +87,11 @@ function CounterForm(props: {
 }): React.JSX.Element {
   const { t } = useTranslation();
   return (
-    <View style={{ marginTop: 8 }}>
-      <Text style={{ color: TEXT_LIGHT, fontSize: 12 }}>{t('coach.chat.call.counterLabel')}</Text>
+    <View style={{ marginTop: space.sm }}>
+      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs }}>{t('coach.chat.call.counterLabel')}</Text>
       <select
         onChange={(event) => props.onTime(event.target.value)}
-        style={{ borderRadius: 8, marginTop: 4, padding: 6 }}
+        style={{ borderRadius: radius.md, marginTop: space.xs, padding: space.sm }}
         value={props.time}
       >
         {callTimeOptions().map((option) => (

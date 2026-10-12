@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Modal, Pressable, Text, View } from 'react-native';
 import type { HandoffChoice } from './routine-handoff';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIMATION = 'fade' as const;
 
@@ -76,29 +77,39 @@ const styles = {
     backgroundColor: 'rgba(15, 23, 42, 0.45)',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    padding: 24,
+    padding: space.xl,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    gap: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    gap: space.md,
     maxWidth: 440,
-    padding: 18,
+    padding: space.lg,
     width: '100%' as const,
   },
-  title: { color: '#0f172a', fontSize: 18, fontWeight: '700' as const },
-  message: { color: '#334155', fontSize: 14, lineHeight: 20 },
-  continueButton: { backgroundColor: '#3b82f6', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  continueLabel: { color: '#ffffff', fontSize: 14, fontWeight: '700' as const, textAlign: 'center' as const },
-  replaceButton: { backgroundColor: '#b45309', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  replaceLabel: { color: '#ffffff', fontSize: 14, fontWeight: '700' as const, textAlign: 'center' as const },
-  cancelButton: {
-    backgroundColor: '#ffffff',
-    borderColor: '#cfdced',
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+  title: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' as const },
+  message: { color: colors.text, fontSize: fontSize.sm, lineHeight: 20 },
+  continueButton: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
-  cancelLabel: { color: '#334e70', fontSize: 14, fontWeight: '700' as const, textAlign: 'center' as const },
+  continueLabel: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
+  replaceButton: {
+    backgroundColor: colors.warning,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  replaceLabel: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
+  cancelButton: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  cancelLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
 };

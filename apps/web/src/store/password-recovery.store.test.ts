@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { readRecoveryFromLocation, usePasswordRecoveryStore } from './password-recovery.store';
+import { readRecoveryFromLocation, stateFromRecovery, usePasswordRecoveryStore } from './password-recovery.store';
 
 function fakeScope(hash: string) {
   const replaceState = vi.fn();
@@ -50,5 +50,24 @@ describe('usePasswordRecoveryStore', () => {
     usePasswordRecoveryStore.setState({ accessToken: null, passwordUpdated: false, phase: 'invalid' });
     usePasswordRecoveryStore.getState().dismiss();
     expect(usePasswordRecoveryStore.getState()).toMatchObject({ passwordUpdated: false, phase: 'none' });
+  });
+});
+
+describe('stateFromRecovery', () => {
+  it('keeps the tokens of a valid link', () => {
+    expect(stateFromRecovery({ accessToken: 'a', refreshToken: 'r', status: 'ready' })).toEqual({
+      accessToken: 'a',
+      passwordUpdated: false,
+      phase: 'ready',
+      refreshToken: 'r',
+    });
+  });
+
+  it('has no tokens for an invalid link', () => {
+    expect(stateFromRecovery({ status: 'invalid' })).toMatchObject({
+      accessToken: null,
+      phase: 'invalid',
+      refreshToken: null,
+    });
   });
 });

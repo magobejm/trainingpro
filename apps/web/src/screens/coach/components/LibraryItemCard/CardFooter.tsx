@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Pressable, Text } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const ICON_EDIT = '✏️';
 const ICON_DELETE = '🗑️';
@@ -34,24 +35,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginTop: 8,
+    marginTop: space.sm,
   },
   adminActions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: space.md,
   },
   iconButton: {
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
     height: 32,
     justifyContent: 'center',
     width: 32,
   },
   deleteButton: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: colors.dangerSoft,
   },
   iconText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
 });

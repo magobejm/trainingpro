@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../theme/tokens';
 
 type Props = {
   subtitle?: string;
@@ -7,10 +8,10 @@ type Props = {
 };
 
 const COLORS = {
-  bg: '#f5f8ff',
-  border: '#cad8f7',
-  subtitle: '#4d6287',
-  title: '#163a74',
+  bg: colors.primarySoft,
+  border: colors.primaryBorder,
+  subtitle: colors.textMuted,
+  title: colors.text,
 };
 
 export function Banner(props: Props): React.JSX.Element {

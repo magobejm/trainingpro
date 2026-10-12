@@ -3,6 +3,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Clock } from 'lucide-react';
 import type { ClientData, NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 export {
   DeleteConfirmModal,
   EditNoteModal,
@@ -12,12 +13,12 @@ export {
 
 const ICON_CLOSE = '✕' as const;
 const DATE_INPUT_TYPE = 'date' as const;
-const COLOR_WHITE = '#ffffff' as const;
+const COLOR_WHITE = tk.surface;
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -36,38 +37,45 @@ function HistoryNoteRow({ note, onEdit, onDelete, t }: HistoryNoteRowProps): Rea
       ? t('coach.notes.history.myNotes')
       : t('coach.notes.type.client', { name: note.clientName?.toUpperCase() });
   return (
-    <View style={{ marginBottom: 24 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+    <View style={{ marginBottom: space.xl }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: space.sm }}>
         <View
           style={{
-            paddingHorizontal: 8,
-            paddingVertical: 4,
-            borderRadius: 6,
-            backgroundColor: note.type === 'general' ? '#eff6ff' : '#dcfce7',
+            paddingHorizontal: space.sm,
+            paddingVertical: space.xs,
+            borderRadius: radius.sm,
+            backgroundColor: note.type === 'general' ? tk.primarySoft : tk.successSoft,
           }}
         >
-          <Text style={{ fontSize: 10, fontWeight: 'bold', color: note.type === 'general' ? '#2563eb' : '#16a34a' }}>
+          <Text
+            style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: note.type === 'general' ? tk.primary : tk.success }}
+          >
             {badgeLabel}
           </Text>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Text style={{ fontSize: 12, color: colors.textMuted, marginRight: 12 }}>{fmt(note.createdAt)}</Text>
+          <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginRight: space.md }}>
+            {fmt(note.createdAt)}
+          </Text>
           <Pressable onPress={() => onDelete(note)}>
-            <Text style={{ fontSize: 12, color: '#ef4444' }}>{ICON_CLOSE}</Text>
+            <Text style={{ fontSize: fontSize.xs, color: tk.danger }}>{ICON_CLOSE}</Text>
           </Pressable>
         </View>
       </View>
       <Pressable onPress={() => onEdit(note)}>
         <View>
-          <Text style={{ fontSize: 14, fontWeight: 'bold', color: colors.text, marginBottom: 4 }} numberOfLines={1}>
+          <Text
+            style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.text, marginBottom: space.xs }}
+            numberOfLines={1}
+          >
             {note.content.split('\n')[0]}
           </Text>
-          <Text style={{ fontSize: 13, color: colors.textMuted }} numberOfLines={2}>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }} numberOfLines={2}>
             {note.content.split('\n').slice(1).join('\n') || note.content}
           </Text>
         </View>
       </Pressable>
-      <View style={{ height: 1, backgroundColor: '#e2e8f0', marginTop: 16 }} />
+      <View style={{ height: 1, backgroundColor: tk.border, marginTop: space.lg }} />
     </View>
   );
 }
@@ -90,12 +98,14 @@ function HistorySidebarFilters(props: HistorySidebarFiltersProps): React.JSX.Ele
     t: props.t,
   };
   return (
-    <View style={{ padding: 24, borderBottomWidth: 1, borderColor: '#e2e8f0', flexShrink: 0 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-        <View style={{ marginRight: 8 }}>
+    <View style={{ padding: space.xl, borderBottomWidth: 1, borderColor: tk.border, flexShrink: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.lg }}>
+        <View style={{ marginRight: space.sm }}>
           <Clock color={colors.textMuted} size={20} />
         </View>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text }}>{vm.t('coach.notes.history.recent')}</Text>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text }}>
+          {vm.t('coach.notes.history.recent')}
+        </Text>
       </View>
       <HistoryDateFilters props={props} />
       <HistoryTypeFilters props={props} />
@@ -122,8 +132,10 @@ function HistoryDateFilters(props: { props: HistorySidebarFiltersProps }): React
 
 function DateFilterInput(props: { label: string; onChange: (v: string) => void; value: string }): React.JSX.Element {
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.textMuted, marginBottom: 8 }}>{props.label}</Text>
+    <View style={{ marginBottom: space.lg }}>
+      <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colors.textMuted, marginBottom: space.sm }}>
+        {props.label}
+      </Text>
       <input
         type={DATE_INPUT_TYPE}
         value={props.value}
@@ -139,7 +151,7 @@ function HistoryTypeFilters(props: { props: HistorySidebarFiltersProps }): React
   const chips = readHistoryChips(props.props);
   return (
     <View>
-      <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.textMuted, marginBottom: 8 }}>
+      <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colors.textMuted, marginBottom: space.sm }}>
         {t('coach.notes.history.filter.title')}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
@@ -206,13 +218,16 @@ export type HistorySidebarProps = {
   t: TFunc;
 };
 
+// eslint-disable-next-line max-lines-per-function
 export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
   const { displayedNotes, showAllHistory, t } = props;
 
   const historyList =
     displayedNotes.length === 0 ? (
-      <View style={{ padding: 32, alignItems: 'center' }}>
-        <Text style={{ fontSize: 14, color: colors.textMuted, textAlign: 'center' }}>{t('coach.notes.history.empty')}</Text>
+      <View style={{ padding: space.xxl, alignItems: 'center' }}>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center' }}>
+          {t('coach.notes.history.empty')}
+        </Text>
       </View>
     ) : (
       displayedNotes.map((note: NoteData) => (
@@ -229,7 +244,7 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
         maxHeight: '100%' as unknown as number,
         backgroundColor: 'white',
         borderLeftWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: tk.border,
         flexDirection: 'column',
         overflow: 'hidden',
       }}
@@ -253,8 +268,8 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
               flexBasis: 0,
               minHeight: 0,
               overflowY: 'auto',
-              padding: 24,
-              paddingBottom: 8,
+              padding: space.xl,
+              paddingBottom: space.sm,
               WebkitOverflowScrolling: 'touch',
             } as React.CSSProperties
           }
@@ -264,7 +279,7 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
       ) : (
         <ScrollView
           style={{ flexGrow: 1, flexShrink: 1, flexBasis: 0, minHeight: 0 }}
-          contentContainerStyle={{ padding: 24, paddingBottom: 8 }}
+          contentContainerStyle={{ padding: space.xl, paddingBottom: space.sm }}
         >
           {historyList}
         </ScrollView>
@@ -272,12 +287,12 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
       <View
         style={{
           flexShrink: 0,
-          padding: 16,
-          paddingTop: 12,
+          padding: space.lg,
+          paddingTop: space.md,
           borderTopWidth: 1,
-          borderColor: '#e2e8f0',
-          backgroundColor: '#ffffff',
-          shadowColor: '#000',
+          borderColor: tk.border,
+          backgroundColor: tk.surface,
+          shadowColor: tk.text,
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.06,
           shadowRadius: 8,
@@ -291,15 +306,15 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
             props.setShowAllHistory(!showAllHistory);
           }}
           style={{
-            backgroundColor: '#f8fafc',
-            paddingHorizontal: 16,
-            paddingVertical: 12,
-            borderRadius: 10,
+            backgroundColor: tk.surfaceMuted,
+            paddingHorizontal: space.lg,
+            paddingVertical: space.md,
+            borderRadius: radius.md,
             borderWidth: 1,
-            borderColor: '#e2e8f0',
+            borderColor: tk.border,
           }}
         >
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary, textAlign: 'center' }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary, textAlign: 'center' }}>
             {showAllHistory ? t('coach.notes.history.lastMonth') : t('coach.notes.history.viewAll')}
           </Text>
         </Pressable>
@@ -309,11 +324,11 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
 }
 
 const dateInputStyle: React.CSSProperties = {
-  backgroundColor: '#f8fafc',
-  border: '1px solid #e2e8f0',
-  borderRadius: 8,
-  padding: 10,
-  fontSize: 13,
+  backgroundColor: tk.surfaceMuted,
+  border: `1px solid ${tk.border}`,
+  borderRadius: radius.md,
+  padding: space.md,
+  fontSize: fontSize.sm,
   width: '100%',
   fontFamily: 'inherit',
   cursor: 'pointer',
@@ -321,17 +336,17 @@ const dateInputStyle: React.CSSProperties = {
 
 function historyChipStyle(active: boolean) {
   return {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    backgroundColor: active ? colors.primary : '#f1f5f9',
-    margin: 4,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.sm,
+    backgroundColor: active ? colors.primary : tk.background,
+    margin: space.xs,
   };
 }
 
 function historyChipTextStyle(active: boolean) {
   return {
-    fontSize: 11,
+    fontSize: fontSize.xs,
     fontWeight: 'bold' as const,
     color: active ? COLOR_WHITE : colors.textMuted,
   };

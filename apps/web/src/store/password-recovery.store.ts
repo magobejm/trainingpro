@@ -31,8 +31,9 @@ export function readRecoveryFromLocation(scope: LocationScope): RecoveryHash {
   return parsed;
 }
 
-function initialState(): Pick<RecoveryState, 'accessToken' | 'passwordUpdated' | 'phase' | 'refreshToken'> {
-  const parsed = readRecoveryFromLocation(globalThis as LocationScope);
+export function stateFromRecovery(
+  parsed: RecoveryHash,
+): Pick<RecoveryState, 'accessToken' | 'passwordUpdated' | 'phase' | 'refreshToken'> {
   return {
     accessToken: parsed.status === 'ready' ? parsed.accessToken : null,
     passwordUpdated: false,
@@ -41,8 +42,21 @@ function initialState(): Pick<RecoveryState, 'accessToken' | 'passwordUpdated' |
   };
 }
 
+function initialState(): Pick<RecoveryState, 'accessToken' | 'passwordUpdated' | 'phase' | 'refreshToken'> {
+  return stateFromRecovery(readRecoveryFromLocation(globalThis as LocationScope));
+}
+
 export const usePasswordRecoveryStore = create<RecoveryState>()((set) => ({
   ...initialState(),
   dismiss: () => set({ accessToken: null, phase: 'none', refreshToken: null }),
   finish: () => set({ accessToken: null, passwordUpdated: true, phase: 'none', refreshToken: null }),
 }));
+
+// Si el enlace se abre en una pestaña donde la app ya está cargada solo cambia el fragmento (#), sin recarga.
+const browser = globalThis as { addEventListener?: (type: string, listener: () => void) => void };
+browser.addEventListener?.('hashchange', () => {
+  const parsed = readRecoveryFromLocation(globalThis as LocationScope);
+  if (parsed.status !== 'none') {
+    usePasswordRecoveryStore.setState(stateFromRecovery(parsed));
+  }
+});

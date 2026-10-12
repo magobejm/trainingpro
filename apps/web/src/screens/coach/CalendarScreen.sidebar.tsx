@@ -5,15 +5,16 @@ import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 const EMPTY_FILTER = '';
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  bg: '#f8fafc',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
+  border: tk.border,
+  bg: tk.surfaceMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -59,12 +60,14 @@ function SidebarHeader({
   t,
 }: SidebarHeaderProps): React.JSX.Element {
   return (
-    <View style={{ padding: 20, borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-        <View style={{ marginRight: 8, backgroundColor: '#eff6ff', padding: 6, borderRadius: 10 }}>
+    <View style={{ padding: space.xl, borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.md }}>
+        <View style={{ marginRight: space.sm, backgroundColor: tk.primarySoft, padding: space.sm, borderRadius: radius.md }}>
           <Users color={colors.primary} size={18} />
         </View>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: colors.text }}>{t('coach.calendar.sidebar.clients')}</Text>
+        <Text style={{ fontSize: fontSize.md, fontWeight: 'bold', color: colors.text }}>
+          {t('coach.calendar.sidebar.clients')}
+        </Text>
       </View>
       <View
         style={{
@@ -73,9 +76,9 @@ function SidebarHeader({
           backgroundColor: colors.bg,
           borderWidth: 1,
           borderColor: colors.border,
-          borderRadius: 10,
-          paddingHorizontal: 10,
-          marginBottom: 8,
+          borderRadius: radius.md,
+          paddingHorizontal: space.md,
+          marginBottom: space.sm,
         }}
       >
         <Search color={colors.textMuted} size={15} />
@@ -83,7 +86,7 @@ function SidebarHeader({
           value={search}
           onChangeText={onSearchChange}
           placeholder={t('coach.calendar.sidebar.search')}
-          style={{ flex: 1, padding: 8, fontSize: 13, color: colors.text }}
+          style={{ flex: 1, padding: space.sm, fontSize: fontSize.sm, color: colors.text }}
         />
       </View>
       <select
@@ -93,9 +96,9 @@ function SidebarHeader({
           width: '100%',
           backgroundColor: colors.bg,
           border: `1px solid ${colors.border}`,
-          borderRadius: 10,
+          borderRadius: radius.md,
           padding: '8px 10px',
-          fontSize: 13,
+          fontSize: fontSize.sm,
           color: colors.textMuted,
           cursor: 'pointer',
         }}
@@ -114,16 +117,16 @@ function SidebarHeader({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            marginTop: 10,
+            marginTop: space.md,
             backgroundColor: colors.bg,
-            borderRadius: 10,
-            paddingVertical: 8,
+            borderRadius: radius.md,
+            paddingVertical: space.sm,
             borderWidth: 1,
             borderColor: colors.border,
           }}
         >
           <ChevronLeft color={colors.textMuted} size={14} />
-          <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.textMuted, marginLeft: 4 }}>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.textMuted, marginLeft: space.xs }}>
             {t('coach.calendar.sidebar.back')}
           </Text>
         </Pressable>
@@ -156,17 +159,17 @@ function SidebarClientRow({
   t,
 }: SidebarClientRowProps): React.JSX.Element {
   return (
-    <View style={{ marginBottom: 4 }}>
+    <View style={{ marginBottom: space.xs }}>
       <Pressable
         onPress={() => onSelectClient(isSelected ? null : client)}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
-          padding: 10,
-          borderRadius: 14,
+          padding: space.md,
+          borderRadius: radius.lg,
           borderWidth: 1,
           borderColor: isSelected ? colors.primary : 'transparent',
-          backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+          backgroundColor: isSelected ? tk.primarySoft : 'transparent',
         }}
       >
         <View
@@ -174,9 +177,9 @@ function SidebarClientRow({
             width: 36,
             height: 36,
             borderRadius: 18,
-            backgroundColor: '#e2e8f0',
+            backgroundColor: tk.border,
             overflow: 'hidden',
-            marginRight: 10,
+            marginRight: space.md,
             justifyContent: 'center',
             alignItems: 'center',
             flexShrink: 0,
@@ -189,7 +192,7 @@ function SidebarClientRow({
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
             />
           ) : (
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: colors.textMuted }}>
+            <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colors.textMuted }}>
               {client.firstName.charAt(0)}
               {client.lastName.charAt(0)}
             </Text>
@@ -197,27 +200,27 @@ function SidebarClientRow({
         </View>
         <View style={{ flex: 1, minWidth: 0 }}>
           <Text
-            style={{ fontSize: 13, fontWeight: 'bold', color: isSelected ? colors.primary : colors.text }}
+            style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: isSelected ? colors.primary : colors.text }}
             numberOfLines={1}
           >
             {client.firstName} {client.lastName}
           </Text>
           {objective && (
-            <Text style={{ fontSize: 11, color: colors.textMuted }} numberOfLines={1}>
+            <Text style={{ fontSize: fontSize.xs, color: colors.textMuted }} numberOfLines={1}>
               {objective.label}
             </Text>
           )}
         </View>
       </Pressable>
       {isSelected && routineDays.length > 0 && (
-        <View style={{ paddingLeft: 4, paddingRight: 4, marginTop: 8 }}>
+        <View style={{ paddingLeft: space.xs, paddingRight: space.xs, marginTop: space.sm }}>
           <Text
             style={{
-              fontSize: 10,
+              fontSize: fontSize.xs,
               fontWeight: 'bold',
               color: colors.textMuted,
               letterSpacing: 0.5,
-              marginBottom: 6,
+              marginBottom: space.sm,
               textTransform: 'uppercase',
             }}
           >
@@ -251,12 +254,12 @@ function CoachViewItem({ isActive, label, onPress }: CoachViewItemProps): React.
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 10,
-        borderRadius: 14,
+        padding: space.md,
+        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: isActive ? colors.primary : 'transparent',
-        backgroundColor: isActive ? '#eff6ff' : 'transparent',
-        marginBottom: 8,
+        backgroundColor: isActive ? tk.primarySoft : 'transparent',
+        marginBottom: space.sm,
       }}
     >
       <View
@@ -264,8 +267,8 @@ function CoachViewItem({ isActive, label, onPress }: CoachViewItemProps): React.
           width: 36,
           height: 36,
           borderRadius: 18,
-          backgroundColor: isActive ? '#dbeafe' : '#e2e8f0',
-          marginRight: 10,
+          backgroundColor: isActive ? tk.primaryBorder : tk.border,
+          marginRight: space.md,
           justifyContent: 'center',
           alignItems: 'center',
           flexShrink: 0,
@@ -273,7 +276,9 @@ function CoachViewItem({ isActive, label, onPress }: CoachViewItemProps): React.
       >
         <Dumbbell size={16} color={isActive ? colors.primary : colors.textMuted} />
       </View>
-      <Text style={{ fontSize: 13, fontWeight: 'bold', color: isActive ? colors.primary : colors.text }}>{label}</Text>
+      <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: isActive ? colors.primary : colors.text }}>
+        {label}
+      </Text>
     </Pressable>
   );
 }
@@ -327,7 +332,7 @@ export function CalendarSidebar({
         onAllView={onAllView}
         t={t}
       />
-      <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ padding: 12 }}>
+      <ScrollView style={{ flex: 1, minHeight: 0 }} contentContainerStyle={{ padding: space.md }}>
         <CoachViewItem
           isActive={isCoachOnly}
           label={t('coach.calendar.sidebar.coachView')}
@@ -348,8 +353,8 @@ export function CalendarSidebar({
           />
         ))}
         {filtered.length === 0 && (
-          <View style={{ padding: 20, alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, color: colors.textMuted }}>{t('coach.calendar.sidebar.noClients')}</Text>
+          <View style={{ padding: space.xl, alignItems: 'center' }}>
+            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{t('coach.calendar.sidebar.noClients')}</Text>
           </View>
         )}
       </ScrollView>
@@ -388,18 +393,18 @@ function RoutineDayItem({
       style={{
         position: 'relative',
         padding: '10px 12px',
-        borderRadius: 10,
+        borderRadius: radius.md,
         border: `1px solid ${colorObj.border}`,
         backgroundColor: colorObj.bg,
-        marginBottom: 6,
+        marginBottom: space.sm,
         cursor: 'grab',
         userSelect: 'none',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
-          <p style={{ fontSize: 12, fontWeight: 'bold', color: colorObj.text, margin: 0 }}>{day.title}</p>
-          <p style={{ fontSize: 11, color: colorObj.text, opacity: 0.7, margin: '2px 0 0' }}>
+          <p style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colorObj.text, margin: 0 }}>{day.title}</p>
+          <p style={{ fontSize: fontSize.xs, color: colorObj.text, opacity: 0.7, margin: '2px 0 0' }}>
             {day.exerciseCount} {t('coach.calendar.sidebar.exercises')}
           </p>
         </div>
@@ -411,7 +416,7 @@ function RoutineDayItem({
           style={{
             width: 16,
             height: 16,
-            borderRadius: 8,
+            borderRadius: radius.md,
             border: '2px solid white',
             backgroundColor: colorObj.bg,
             cursor: 'pointer',
@@ -427,13 +432,13 @@ function RoutineDayItem({
             right: 0,
             top: 32,
             backgroundColor: 'white',
-            borderRadius: 10,
-            padding: 8,
+            borderRadius: radius.md,
+            padding: space.sm,
             boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            border: '1px solid #e2e8f0',
+            border: `1px solid ${tk.border}`,
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 1fr)',
-            gap: 6,
+            gap: space.sm,
             zIndex: 50,
           }}
           onClick={(e: React.MouseEvent) => e.stopPropagation()}
@@ -445,9 +450,9 @@ function RoutineDayItem({
               style={{
                 width: 22,
                 height: 22,
-                borderRadius: 11,
+                borderRadius: radius.md,
                 backgroundColor: c.bg,
-                border: day.color === c.bg ? '2px solid #0f172a' : '2px solid white',
+                border: day.color === c.bg ? `2px solid ${tk.text}` : '2px solid white',
                 cursor: 'pointer',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
               }}

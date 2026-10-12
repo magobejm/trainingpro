@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ADVANCED_TECHNIQUE_IDS, normalizeAdvancedTechniqueId, type AdvancedTechniqueId } from './advanced-technique.i18n';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIM = 'fade' as const;
 const ICON_CLOSE = '✕';
@@ -63,7 +64,7 @@ export function AdvancedSeriesModal({
               </ScrollView>
             ) : null}
 
-            <View style={[st.content, viewOnly && { paddingLeft: 20 }]}>
+            <View style={[st.content, viewOnly && { paddingLeft: space.xl }]}>
               <Text style={st.contentTitle}>{t(nameKey)}</Text>
               <ScrollView style={st.descScroll}>
                 <Text style={st.descText}>{t(descKey)}</Text>
@@ -106,16 +107,16 @@ const st = {
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center' as const,
     justifyContent: 'center' as const,
-    padding: 20,
+    padding: space.xl,
   },
   dialog: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
     width: '100%' as const,
     maxWidth: 700,
     maxHeight: '85%' as const,
     overflow: 'hidden' as const,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOpacity: 0.2,
     shadowRadius: 16,
     elevation: 10,
@@ -126,14 +127,14 @@ const st = {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
     justifyContent: 'space-between' as const,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.lg,
     borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    borderBottomColor: colors.background,
   },
-  title: { fontSize: 16, fontWeight: '700' as const, color: '#1e293b' },
-  closeBtn: { padding: 4 },
-  closeIcon: { fontSize: 18, color: '#94a3b8' },
+  title: { fontSize: fontSize.md, fontWeight: '700' as const, color: colors.text },
+  closeBtn: { padding: space.xs },
+  closeIcon: { fontSize: fontSize.lg, color: colors.textMuted },
   body: {
     flexDirection: 'row' as const,
     flex: 1,
@@ -142,60 +143,60 @@ const st = {
   sidebar: {
     width: 180,
     flexShrink: 0,
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surfaceMuted,
     borderRightWidth: 1,
-    borderRightColor: '#f1f5f9',
-    paddingVertical: 8,
+    borderRightColor: colors.background,
+    paddingVertical: space.sm,
   },
   sidebarItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 6,
-    marginHorizontal: 4,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    borderRadius: radius.sm,
+    marginHorizontal: space.xs,
     marginVertical: 2,
   },
-  sidebarItemActive: { backgroundColor: '#dbeafe' },
-  sidebarItemText: { fontSize: 13, fontWeight: '500' as const, color: '#64748b' },
-  sidebarItemTextActive: { color: '#1d4ed8', fontWeight: '700' as const },
+  sidebarItemActive: { backgroundColor: colors.primaryBorder },
+  sidebarItemText: { fontSize: fontSize.sm, fontWeight: '500' as const, color: colors.textMuted },
+  sidebarItemTextActive: { color: colors.primaryHover, fontWeight: '700' as const },
   content: {
     flex: 1,
-    padding: 20,
-    gap: 12,
+    padding: space.xl,
+    gap: space.md,
   },
-  contentTitle: { fontSize: 17, fontWeight: '700' as const, color: '#1e293b' },
+  contentTitle: { fontSize: fontSize.lg, fontWeight: '700' as const, color: colors.text },
   descScroll: {
     flex: 1,
-    backgroundColor: '#eff6ff',
-    borderRadius: 10,
-    padding: 16,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
+    padding: space.lg,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: colors.primaryBorder,
   },
-  descText: { fontSize: 13, color: '#334155', lineHeight: 20 },
+  descText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 20 },
   footer: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.lg,
     borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
-    backgroundColor: '#fafafa',
-    gap: 12,
+    borderTopColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
+    gap: space.md,
   },
   removeBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#fca5a5',
-    backgroundColor: '#fee2e2',
+    borderColor: colors.dangerSoft,
+    backgroundColor: colors.dangerSoft,
   },
-  removeBtnText: { fontSize: 13, color: '#dc2626', fontWeight: '500' as const },
+  removeBtnText: { fontSize: fontSize.sm, color: colors.danger, fontWeight: '500' as const },
   applyBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#3b82f6',
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.primary,
   },
-  applyBtnText: { fontSize: 13, color: '#fff', fontWeight: '600' as const },
+  applyBtnText: { fontSize: fontSize.sm, color: colors.surface, fontWeight: '600' as const },
 };

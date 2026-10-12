@@ -4,15 +4,16 @@ import { Pressable, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { MONTH_NAMES_ES, DAY_NAMES_ES } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
 const colors = {
-  primary: '#3b82f6',
-  text: '#0f172a',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  bg: '#f8fafc',
+  primary: tk.primary,
+  text: tk.text,
+  textMuted: tk.textMuted,
+  border: tk.border,
+  bg: tk.surfaceMuted,
 };
 
 function ClipboardBadge({
@@ -32,12 +33,12 @@ function ClipboardBadge({
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#eff6ff',
-        border: '1px solid #bfdbfe',
-        borderRadius: 8,
+        gap: space.sm,
+        backgroundColor: tk.primarySoft,
+        border: `1px solid ${tk.primaryBorder}`,
+        borderRadius: radius.md,
         padding: '4px 10px',
-        fontSize: 12,
+        fontSize: fontSize.xs,
         color: colors.primary,
         fontWeight: 500,
       }}
@@ -81,34 +82,34 @@ function MonthPicker({
           zIndex: 1000,
           backgroundColor: 'white',
           border: `1px solid ${colors.border}`,
-          borderRadius: 10,
+          borderRadius: radius.md,
           boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          padding: 16,
+          padding: space.lg,
           minWidth: 240,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md }}>
           <button
             onClick={(e) => {
               e.stopPropagation();
               setPickerYear((y) => y - 1);
             }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: fontSize.lg }}
           >
             {'‹'}
           </button>
-          <span style={{ fontWeight: 'bold', fontSize: 15, color: colors.text }}>{pickerYear}</span>
+          <span style={{ fontWeight: 'bold', fontSize: fontSize.md, color: colors.text }}>{pickerYear}</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               setPickerYear((y) => y + 1);
             }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: 18 }}
+            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: fontSize.lg }}
           >
             {'›'}
           </button>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: space.sm }}>
           {MONTH_NAMES_ES.map((name, i) => {
             const isSelected = pickerYear === currentYear && i === currentMonth;
             return (
@@ -121,9 +122,9 @@ function MonthPicker({
                 }}
                 style={{
                   border: 'none',
-                  borderRadius: 6,
+                  borderRadius: radius.sm,
                   padding: '7px 4px',
-                  fontSize: 12,
+                  fontSize: fontSize.xs,
                   cursor: 'pointer',
                   fontWeight: isSelected ? 'bold' : 'normal',
                   backgroundColor: isSelected ? colors.primary : 'transparent',
@@ -180,14 +181,14 @@ export function CalendarMonthHeader({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 20,
+        padding: space.xl,
         borderBottomWidth: 1,
         borderColor: colors.border,
         flexShrink: 0,
       }}
     >
       <div ref={titleRef} onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: colors.text }}>
+        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: colors.text }}>
           {MONTH_NAMES_ES[month]} {year}
         </Text>
       </div>
@@ -201,7 +202,7 @@ export function CalendarMonthHeader({
           onClose={() => setShowPicker(false)}
         />
       )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <ClipboardBadge clipboard={clipboard} onClear={onClearClipboard} t={t} />
         <Pressable
           onPress={onPrevMonth}
@@ -243,8 +244,8 @@ export function CalendarDayNames(): React.JSX.Element {
     <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
       <View style={{ width: 20, flexShrink: 0 }} />
       {DAY_NAMES_ES.map((dayName) => (
-        <View key={dayName} style={{ flex: 1, paddingVertical: 10, alignItems: 'center' }}>
-          <Text style={{ fontSize: 11, fontWeight: 'bold', color: colors.textMuted, letterSpacing: 0.5 }}>
+        <View key={dayName} style={{ flex: 1, paddingVertical: space.md, alignItems: 'center' }}>
+          <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colors.textMuted, letterSpacing: 0.5 }}>
             {dayName.slice(0, 3)}
           </Text>
         </View>

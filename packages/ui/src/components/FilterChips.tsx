@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/tokens';
 
 export type FilterChipItem = {
   id: string;
@@ -13,11 +14,11 @@ type Props = {
 };
 
 const COLORS = {
-  activeBg: '#225fdb',
-  activeText: '#ffffff',
-  chipBg: '#ffffff',
-  chipBorder: '#d9e2ee',
-  text: '#10203a',
+  activeBg: colors.primary,
+  activeText: colors.onPrimary,
+  chipBg: colors.surface,
+  chipBorder: colors.border,
+  text: colors.text,
 };
 
 export function FilterChips(props: Props): React.JSX.Element {

@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { View } from 'react-native';
+import { ThemeProvider } from '@trainerpro/ui';
 import { App } from './App';
 import { createQueryClient } from './data/query-client';
 
@@ -10,9 +11,11 @@ const queryClient = createQueryClient();
 function Root(): React.JSX.Element {
   return (
     <QueryClientProvider client={queryClient}>
-      <View style={{ flex: 1, height: '100%', minHeight: 0, width: '100%' }}>
-        <App />
-      </View>
+      <ThemeProvider>
+        <View style={{ flex: 1, height: '100%', minHeight: 0, width: '100%' }}>
+          <App />
+        </View>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

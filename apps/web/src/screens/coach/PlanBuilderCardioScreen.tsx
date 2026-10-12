@@ -1,7 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { CardioIntervalEditor, ExercisePicker, type CardioIntervalDraft } from '@trainerpro/ui';
+import {
+  type CardioIntervalDraft,
+  CardioIntervalEditor,
+  colors,
+  ExercisePicker,
+  fontSize,
+  radius,
+  space,
+} from '@trainerpro/ui';
 import '../../i18n';
 import { useLibraryCardioMethodsQuery } from '../../data/hooks/useLibraryQuery';
 import { useCreateCardioTemplateMutation, useUpdateCardioTemplateMutation } from '../../data/hooks/useCardioTemplates';
@@ -22,13 +30,13 @@ type CardioDraft = CardioIntervalDraft & {
 };
 
 const COLORS = {
-  action: '#225fdb',
-  bg: '#edf3fb',
-  card: '#ffffff',
-  input: '#f3f7fd',
-  muted: '#627285',
-  text: '#0e1a2f',
-  white: '#ffffff',
+  action: colors.primary,
+  bg: colors.background,
+  card: colors.surface,
+  input: colors.background,
+  muted: colors.textMuted,
+  text: colors.text,
+  white: colors.surface,
 };
 
 export function PlanBuilderCardioScreen(): React.JSX.Element {
@@ -261,44 +269,44 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: COLORS.action,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     minHeight: 44,
-    paddingHorizontal: 20,
+    paddingHorizontal: space.xl,
   },
   buttonLabel: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
-    gap: 10,
-    padding: 14,
+    borderRadius: radius.lg,
+    gap: space.md,
+    padding: space.lg,
     width: '100%',
   },
   input: {
     backgroundColor: COLORS.input,
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
   },
   label: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.bg,
-    gap: 12,
+    gap: space.md,
     minHeight: '100%',
-    padding: 24,
+    padding: space.xl,
   },
   title: {
     color: COLORS.text,
-    fontSize: 26,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     width: '100%',
   },

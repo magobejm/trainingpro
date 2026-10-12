@@ -1,15 +1,16 @@
 import { StyleSheet } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  accent: '#3b82f6',
-  bg: '#f8fafc',
-  nav: '#0f172a',
-  navBorder: '#1e293b',
-  shell: '#f8fafc',
-  textMuted: '#94a3b8',
-  textActive: '#e2e8f0',
-  textDefault: '#e2e8f0',
-  white: '#ffffff',
+  accent: colors.primary,
+  bg: colors.surfaceMuted,
+  nav: colors.text,
+  navBorder: colors.text,
+  shell: colors.surfaceMuted,
+  textMuted: colors.textMuted,
+  textActive: colors.border,
+  textDefault: colors.border,
+  white: colors.surface,
 };
 
 export const styles = StyleSheet.create({
@@ -25,24 +26,24 @@ export const styles = StyleSheet.create({
   },
   logoutButton: {
     alignItems: 'center',
-    backgroundColor: '#1e293b',
-    borderColor: '#334155',
+    backgroundColor: colors.surfaceInverse,
+    borderColor: colors.borderStrong,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 42,
-    marginTop: 16,
+    marginTop: space.lg,
   },
   logoutLabel: {
-    color: '#fda4af',
-    fontSize: 13,
+    color: colors.dangerSoft,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   navButton: {
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginBottom: 4,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    marginBottom: space.xs,
     position: 'relative',
     overflow: 'hidden',
     // @ts-expect-error web-only
@@ -57,14 +58,14 @@ export const styles = StyleSheet.create({
   },
   navButtonGradient: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 12,
-    backgroundImage: 'linear-gradient(to right, #2563eb, #ec4899)',
+    borderRadius: radius.lg,
+    backgroundImage: `linear-gradient(to right, ${colors.primary}, ${colors.primaryHover})`,
     backgroundRepeat: 'no-repeat',
     transitionDuration: '300ms',
     transitionProperty: 'background-size',
   },
   navIconBadge: {
-    marginRight: 12,
+    marginRight: space.md,
     zIndex: 10,
     transitionDuration: '200ms',
     transitionProperty: 'transform',
@@ -74,17 +75,17 @@ export const styles = StyleSheet.create({
   },
   navLabel: {
     color: COLORS.textMuted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '600',
     zIndex: 10,
     transitionDuration: '300ms',
     transitionProperty: 'color',
   },
   navLabelHovered: {
-    color: '#ffffff',
+    color: colors.surface,
   },
   navLabelActive: {
-    color: '#60a5fa', // blue-400
+    color: colors.onPrimary, // blue-400
     fontWeight: '700',
   },
   activeIndicator: {
@@ -94,15 +95,16 @@ export const styles = StyleSheet.create({
     marginTop: -12, // half of height 24 to center vertically
     height: 24,
     width: 4,
-    backgroundColor: '#ec4899', // pink-500 from prototype
+    backgroundColor: colors.primaryBorder,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
     zIndex: 20,
   },
   navList: {
     flex: 1,
-    gap: 8,
-    marginTop: 24,
+    overflowY: 'auto',
+    gap: space.sm,
+    marginTop: space.xl,
   },
   navRow: {
     alignItems: 'center',
@@ -119,6 +121,6 @@ export const styles = StyleSheet.create({
     borderColor: COLORS.navBorder,
     borderRightWidth: 1,
     width: 290,
-    padding: 20,
+    padding: space.xl,
   },
 });

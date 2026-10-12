@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { ExercisePicker, SetPrescriptionEditor } from '@trainerpro/ui';
+import { ExercisePicker, SetPrescriptionEditor, space } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { usePlanBuilderViewModel } from './PlanBuilderStrengthScreen.state';
@@ -111,7 +111,7 @@ function BuilderPickerCard({ props }: { props: ViewModel }) {
 
 function BuilderTemplateList(props: ViewModel): React.JSX.Element {
   return (
-    <View style={[styles.card, { marginTop: 24 }]}>
+    <View style={[styles.card, { marginTop: space.xl }]}>
       <Text style={styles.label}>{props.t('coach.builder.list.title')}</Text>
       {props.templates.length === 0 ? (
         <Text style={styles.empty}>{props.t('coach.builder.list.empty')}</Text>

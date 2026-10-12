@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { menuStyle, menuStyleTop, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
+import { colors } from '@trainerpro/ui';
 
 type Props = {
   hasTrainingPlan: boolean;
@@ -73,7 +74,7 @@ function RowMain(props: {
     <>
       <Text style={styles.dragHandle}>{'⋮⋮'}</Text>
       <View style={[styles.iconShell, { backgroundColor: props.item.badgeColor }]}>
-        {props.item.icon({ color: props.item.iconColor || '#64748b', size: 18 })}
+        {props.item.icon({ color: props.item.iconColor || colors.textMuted, size: 18 })}
       </View>
       <Pressable
         onPress={() =>

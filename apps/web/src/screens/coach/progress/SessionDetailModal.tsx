@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { setVariablesForType } from '@trainerpro/shared';
 import { useSessionDetailQuery } from '../../../data/hooks/useSessionDetailQuery';
 import { comparePlannedAndLogged, type ComparedCell } from './session-compare.helpers';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   onClose: () => void;
@@ -77,25 +78,25 @@ function ComparedValueCell(props: { cell: ComparedCell }): React.JSX.Element {
 
 const styles = StyleSheet.create({
   backdrop: { backgroundColor: 'rgba(15,23,42,0.4)', bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
-  block: { marginBottom: 16 },
-  blockTitle: { fontSize: 16, fontWeight: '800', marginBottom: 8 },
-  cell: { flex: 1, fontSize: 12 },
-  close: { fontSize: 18, fontWeight: '700' },
-  differs: { color: '#b45309', fontWeight: '700' },
-  headCell: { color: '#64748b', flex: 1, fontSize: 11, fontWeight: '700' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 },
-  muted: { color: '#64748b', marginBottom: 12 },
+  block: { marginBottom: space.lg },
+  blockTitle: { fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
+  cell: { flex: 1, fontSize: fontSize.xs },
+  close: { fontSize: fontSize.lg, fontWeight: '700' },
+  differs: { color: colors.warning, fontWeight: '700' },
+  headCell: { color: colors.textMuted, flex: 1, fontSize: fontSize.xs, fontWeight: '700' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.md },
+  muted: { color: colors.textMuted, marginBottom: space.md },
   sheet: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     left: 24,
     maxHeight: '80%',
-    padding: 16,
+    padding: space.lg,
     position: 'absolute',
     right: 24,
     top: 48,
   },
-  tableHead: { flexDirection: 'row', gap: 8, marginBottom: 4 },
-  tableRow: { flexDirection: 'row', gap: 8, marginBottom: 4 },
-  title: { fontSize: 18, fontWeight: '800' },
+  tableHead: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },
+  tableRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },
+  title: { fontSize: fontSize.lg, fontWeight: '800' },
 });

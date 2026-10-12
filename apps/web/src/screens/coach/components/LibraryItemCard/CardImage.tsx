@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, Image, Text, DimensionValue } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface CardImageProps {
   name: string;
@@ -40,7 +41,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%' as DimensionValue,
     height: 200,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surfaceInverse,
     position: 'relative',
     overflow: 'hidden',
     justifyContent: 'center',
@@ -64,13 +65,13 @@ const styles = StyleSheet.create({
   },
   categoryBadge: {
     backgroundColor: 'rgba(30, 41, 59, 0.7)',
-    borderRadius: 6,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
   },
   badgeText: {
-    color: '#ffffff',
-    fontSize: 10,
+    color: colors.surface,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
 });

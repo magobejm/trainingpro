@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export type NutritionConsideration = {
   code: string;
@@ -47,36 +48,36 @@ function toneStyle(tone: NutritionConsideration['tone']) {
 
 const styles = StyleSheet.create({
   bad: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#fecaca',
+    backgroundColor: colors.dangerSoft,
+    borderColor: colors.dangerSoft,
   },
   badge: {
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   good: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#a7f3d0',
+    backgroundColor: colors.successSoft,
+    borderColor: colors.successSoft,
   },
   neutral: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#cbd5e1',
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.borderStrong,
   },
   text: {
-    color: '#1e293b',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
     lineHeight: 16,
   },
   title: {
-    color: '#334e70',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     marginBottom: 2,
   },
   wrap: {
-    gap: 8,
-    marginTop: 10,
+    gap: space.sm,
+    marginTop: space.md,
   },
 });

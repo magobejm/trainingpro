@@ -17,13 +17,14 @@ import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const theme = {
   colors: {
-    background: '#f8fafc',
-    primary: '#3b82f6',
-    text: '#0f172a',
-    textMuted: '#64748b',
+    background: colors.surfaceMuted,
+    primary: colors.primary,
+    text: colors.text,
+    textMuted: colors.textMuted,
   },
 };
 
@@ -36,12 +37,14 @@ type GeneralNoteSectionProps = {
 
 function GeneralNoteSection({ value, onChange, onSave, t }: GeneralNoteSectionProps): React.JSX.Element {
   return (
-    <View style={{ marginBottom: 40 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-        <View style={{ marginRight: 8 }}>
+    <View style={{ marginBottom: space.xxxl }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.lg }}>
+        <View style={{ marginRight: space.sm }}>
           <Lock color={theme.colors.textMuted} size={20} />
         </View>
-        <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.text }}>{t('coach.notes.private.title')}</Text>
+        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: theme.colors.text }}>
+          {t('coach.notes.private.title')}
+        </Text>
       </View>
       <View style={generalCardStyle}>
         <TextInput
@@ -49,7 +52,7 @@ function GeneralNoteSection({ value, onChange, onSave, t }: GeneralNoteSectionPr
           onChangeText={onChange}
           placeholder={t('coach.notes.private.placeholder')}
           multiline
-          style={{ padding: 24, minHeight: 200, fontSize: 16, color: theme.colors.text }}
+          style={{ padding: space.xl, minHeight: 200, fontSize: fontSize.md, color: theme.colors.text }}
         />
         <View style={generalFooterStyle}>
           <Pressable onPress={onSave} style={primaryButtonStyle}>
@@ -66,13 +69,13 @@ export function NotesScreen(): React.JSX.Element {
   const { t } = vm;
   return (
     <View style={screenRootStyle}>
-      <ScrollView style={{ flex: 1, minHeight: 0, padding: 40 }} contentContainerStyle={{ flexGrow: 1 }}>
+      <ScrollView style={{ flex: 1, minHeight: 0, padding: space.xxxl }} contentContainerStyle={{ flexGrow: 1 }}>
         <View style={{ maxWidth: 1200, marginHorizontal: 'auto' }}>
-          <View style={{ marginBottom: 40 }}>
-            <Text style={{ fontSize: 32, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 }}>
+          <View style={{ marginBottom: space.xxxl }}>
+            <Text style={{ fontSize: fontSize.xxxl, fontWeight: 'bold', color: theme.colors.text, marginBottom: space.sm }}>
               {t('coach.notes.title')}
             </Text>
-            <Text style={{ fontSize: 16, color: theme.colors.textMuted }}>{t('coach.notes.subtitle')}</Text>
+            <Text style={{ fontSize: fontSize.md, color: theme.colors.textMuted }}>{t('coach.notes.subtitle')}</Text>
           </View>
           <GeneralNoteSection
             onChange={vm.setGeneralNoteText}
@@ -329,21 +332,21 @@ const generalCardStyle = {
   backgroundColor: 'white',
   borderRadius: 16,
   borderWidth: 1,
-  borderColor: '#e2e8f0',
+  borderColor: colors.border,
   overflow: 'hidden' as const,
 };
 
 const generalFooterStyle = {
-  padding: 16,
+  padding: space.lg,
   borderTopWidth: 1,
-  borderColor: '#e2e8f0',
+  borderColor: colors.border,
   flexDirection: 'row' as const,
   justifyContent: 'flex-end' as const,
 };
 
 const primaryButtonStyle = {
   backgroundColor: theme.colors.primary,
-  paddingHorizontal: 24,
-  paddingVertical: 12,
-  borderRadius: 12,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
 };

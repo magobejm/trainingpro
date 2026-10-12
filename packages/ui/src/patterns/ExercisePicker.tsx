@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/tokens';
 
 export type ExerciseOption = {
   id: string;
@@ -15,11 +16,11 @@ type Props = {
 };
 
 const COLORS = {
-  border: '#d8e1ee',
-  text: '#11213a',
-  muted: '#5f7288',
-  action: '#225fdb',
-  white: '#ffffff',
+  border: colors.border,
+  text: colors.text,
+  muted: colors.textMuted,
+  action: colors.primary,
+  white: colors.onPrimary,
 };
 
 export function ExercisePicker(props: Props): React.JSX.Element {

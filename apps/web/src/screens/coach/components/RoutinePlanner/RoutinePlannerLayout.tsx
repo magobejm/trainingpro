@@ -13,6 +13,7 @@ import { createWarmupTemplateSelector, removeWarmupTemplateFromDay } from './Rou
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
 import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 interface LayoutProps {
   clientContextId?: null | string;
@@ -279,15 +280,21 @@ function RoutinePlannerBackHeader({
 }) {
   return (
     <Pressable onPress={onBack} style={plannerBackStyles.row}>
-      <ArrowLeft color={'#64748b'} size={18} />
+      <ArrowLeft color={colors.textMuted} size={18} />
       <Text style={plannerBackStyles.text}>{t(backLabelKey)}</Text>
     </Pressable>
   );
 }
 
 const plannerBackStyles = {
-  row: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, padding: 4, marginBottom: 8 },
-  text: { fontSize: 14, color: '#64748b' as const },
+  row: {
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    gap: space.sm,
+    padding: space.xs,
+    marginBottom: space.sm,
+  },
+  text: { fontSize: fontSize.sm, color: colors.textMuted },
 };
 
 function RoutineLayoutSections(props: {

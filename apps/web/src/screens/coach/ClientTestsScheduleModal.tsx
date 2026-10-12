@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ApiClientError } from '../../data/api-client';
 import { useSchedulePhysicalTestMutation, type PhysicalTestView } from '../../data/hooks/usePhysicalTests';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   clientId: string;
@@ -140,22 +141,39 @@ function formatDate(date: Date): string {
 }
 
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', gap: 8, justifyContent: 'flex-end', marginTop: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 16, maxWidth: 420, padding: 16, width: '100%' },
+  actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end', marginTop: space.md },
+  card: { backgroundColor: colors.surface, borderRadius: 16, maxWidth: 420, padding: space.lg, width: '100%' },
   day: { alignItems: 'center', width: '14.28%' },
-  daySelected: { backgroundColor: '#225fdb', borderRadius: 12, color: '#fff', overflow: 'hidden' },
-  dayText: { color: '#0e1a2f', fontSize: 13, paddingVertical: 6, textAlign: 'center', width: 28 },
+  daySelected: { backgroundColor: colors.primary, borderRadius: radius.lg, color: colors.surface, overflow: 'hidden' },
+  dayText: { color: colors.text, fontSize: fontSize.sm, paddingVertical: space.sm, textAlign: 'center', width: 28 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  monthLabel: { color: '#0e1a2f', fontSize: 15, fontWeight: '700', textTransform: 'capitalize' },
-  monthRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  nav: { color: '#225fdb', fontSize: 22, paddingHorizontal: 8 },
-  notice: { color: '#9a3412', fontSize: 13, marginTop: 8 },
-  overlay: { alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.45)', flex: 1, justifyContent: 'center', padding: 16 },
-  primary: { backgroundColor: '#225fdb', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10 },
-  primaryLabel: { color: '#fff', fontWeight: '700' },
-  secondary: { borderColor: '#dbe4f0', borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10 },
-  secondaryLabel: { color: '#334155', fontWeight: '600' },
-  subtitle: { color: '#627285', marginBottom: 8 },
-  title: { color: '#0e1a2f', fontSize: 18, fontWeight: '700' },
-  weekday: { color: '#94a3b8', fontSize: 11, fontWeight: '700', textAlign: 'center', width: '14.28%' },
+  monthLabel: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', textTransform: 'capitalize' },
+  monthRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.sm },
+  nav: { color: colors.primary, fontSize: fontSize.xl, paddingHorizontal: space.sm },
+  notice: { color: colors.danger, fontSize: fontSize.sm, marginTop: space.sm },
+  overlay: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(15,23,42,0.45)',
+    flex: 1,
+    justifyContent: 'center',
+    padding: space.lg,
+  },
+  primary: {
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  primaryLabel: { color: colors.surface, fontWeight: '700' },
+  secondary: {
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+  },
+  secondaryLabel: { color: colors.text, fontWeight: '600' },
+  subtitle: { color: colors.textMuted, marginBottom: space.sm },
+  title: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
+  weekday: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700', textAlign: 'center', width: '14.28%' },
 });

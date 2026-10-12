@@ -6,6 +6,7 @@ import { CheckpointsModal } from './nutrition/CheckpointsModal';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
 import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
 import { styles } from './nutrition/nutrition.styles';
+import { space } from '@trainerpro/ui';
 
 type Props = {
   clientId: string;
@@ -162,7 +163,7 @@ function StructuredPlanReadOnly(props: {
         <View key={week.id} style={styles.card}>
           <Text style={styles.cardTitle}>{week.label}</Text>
           {week.days.map((day) => (
-            <View key={day.id} style={{ marginTop: 8 }}>
+            <View key={day.id} style={{ marginTop: space.sm }}>
               <Text style={styles.cardMuted}>{day.label}</Text>
               {day.meals.map((meal) => (
                 <Text key={meal.id} style={styles.cardTitle}>

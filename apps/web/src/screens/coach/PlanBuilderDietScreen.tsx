@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 export function PlanBuilderDietScreen(): React.JSX.Element {
   const { t } = useTranslation();
@@ -17,18 +18,18 @@ const styles = StyleSheet.create({
   page: {
     alignItems: 'center',
     flex: 1,
-    gap: 10,
+    gap: space.md,
     justifyContent: 'center',
-    padding: 24,
+    padding: space.xl,
   },
   subtitle: {
-    color: '#627285',
-    fontSize: 16,
+    color: colors.textMuted,
+    fontSize: fontSize.md,
     textAlign: 'center',
   },
   title: {
-    color: '#0e1a2f',
-    fontSize: 28,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     textAlign: 'center',
   },

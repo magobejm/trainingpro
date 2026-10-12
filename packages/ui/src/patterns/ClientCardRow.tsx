@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors } from '../theme/tokens';
 
 export type ClientCardItem = {
   id: string;
@@ -15,12 +16,12 @@ type Props = {
 };
 
 const COLORS = {
-  action: '#225fdb',
-  border: '#d9e2ee',
-  card: '#ffffff',
-  subtitle: '#617187',
-  text: '#101d32',
-  white: '#ffffff',
+  action: colors.primary,
+  border: colors.border,
+  card: colors.surface,
+  subtitle: colors.textMuted,
+  text: colors.text,
+  white: colors.onPrimary,
 };
 
 export function ClientCardRow(props: Props): React.JSX.Element {

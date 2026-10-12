@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
-import { FilterChips, SearchBar } from '@trainerpro/ui';
+import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
@@ -283,23 +283,23 @@ const topBarStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 24,
-    backgroundColor: '#ffffff',
+    paddingHorizontal: space.xxxl,
+    paddingVertical: space.xl,
+    backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: colors.border,
     width: '100%',
   },
-  title: { fontSize: 24, fontWeight: '700', color: '#1e293b' },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   searchWrapper: { width: 320 },
   createBtn: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+    borderRadius: radius.lg,
   },
-  createBtnText: { color: '#ffffff', fontSize: 14, fontWeight: '700' },
+  createBtnText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' },
 });
 
 function toIsometricTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
@@ -313,7 +313,7 @@ const gridStyles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 24,
+    gap: space.xl,
     width: '100%' as DimensionValue,
   },
   gridItem: { width: 340 },

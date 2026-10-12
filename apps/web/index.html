@@ -5,12 +5,27 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <meta content="notranslate" name="google" />
     <title>FitCoach Web</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
     <style>
       html,
       body,
       #root {
         height: 100%;
         margin: 0;
+      }
+      body {
+        font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      /* react-native-web fija "font: 14px System" en cada Text/TextInput; esto aplica Inter a toda la app.
+         Los textos que necesiten otra tipografía (p. ej. monoespaciada) llevan data-font="mono". */
+      #root :where(div, span, input, textarea, button, select, a):not([data-font='mono']) {
+        font-family: inherit;
       }
     </style>
   </head>

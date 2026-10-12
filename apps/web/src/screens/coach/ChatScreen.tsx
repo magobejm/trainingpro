@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
-import { Banner } from '@trainerpro/ui';
+import { Banner, colors, fontSize, radius, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
@@ -228,73 +228,73 @@ function toClientCards(
 
 const styles = StyleSheet.create({
   draft: {
-    color: '#2d4b80',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   empty: {
-    color: '#5d6f85',
-    fontSize: 13,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   error: {
-    color: '#b32323',
-    fontSize: 12,
+    color: colors.danger,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   inputPanel: {
-    backgroundColor: '#ffffff',
-    borderColor: '#dbe3ef',
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    gap: 8,
-    padding: 12,
+    gap: space.sm,
+    padding: space.md,
     width: '100%',
   },
   messages: {
-    backgroundColor: '#f7f9fc',
-    borderColor: '#dbe3ef',
-    borderRadius: 14,
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    gap: 9,
+    gap: space.sm,
     minHeight: 260,
-    padding: 12,
+    padding: space.md,
     width: '100%',
   },
   page: {
-    backgroundColor: '#eef3f9',
-    gap: 12,
+    backgroundColor: colors.background,
+    gap: space.md,
     minHeight: '100%',
-    padding: 18,
+    padding: space.lg,
   },
   sendButton: {
     alignItems: 'center',
-    backgroundColor: '#1c74e9',
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 42,
   },
   sendLabel: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#5d6f85',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   textInput: {
-    borderColor: '#d8e1ee',
-    borderRadius: 10,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     borderWidth: 1,
-    color: '#12263f',
+    color: colors.text,
     minHeight: 72,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
     textAlignVertical: 'top',
   },
   title: {
-    color: '#0f2036',
-    fontSize: 28,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
   },
 });

@@ -3,6 +3,7 @@ import { Pressable, View, Text } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
 import { BlockActions } from './BlockActions';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface BlockHeaderProps {
   type: BlockType;
@@ -28,23 +29,23 @@ interface BlockHeaderProps {
 }
 
 const tagColors: Record<BlockType, { bg: string; text: string }> = {
-  cardio: { bg: '#dbeafe', text: '#2563eb' },
+  cardio: { bg: colors.primaryBorder, text: colors.primary },
   isometric: { bg: '#fce7f3', text: '#be185d' },
-  plio: { bg: '#fef3c7', text: '#d97706' },
-  sport: { bg: '#f1f5f9', text: '#64748b' },
+  plio: { bg: colors.warningSoft, text: colors.warning },
+  sport: { bg: colors.background, text: colors.textMuted },
   strength: { bg: '#f3e8ff', text: '#9333ea' },
-  mobility: { bg: '#ecfccb', text: '#16a34a' },
+  mobility: { bg: '#ecfccb', text: colors.success },
 };
 const DRAG_HANDLE_ICON = '⠿';
 
 export function BlockHeader(props: BlockHeaderProps) {
-  const tagColor = tagColors[props.type] || { bg: '#f1f5f9', text: '#64748b' };
+  const tagColor = tagColors[props.type] || { bg: colors.background, text: colors.textMuted };
   return (
     <View style={s.blockHeader}>
       {/* eslint-disable-next-line no-restricted-syntax */}
       <Pressable
         onPress={props.onToggleCollapse}
-        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: 12, cursor: 'pointer' } as never}
+        style={{ flexDirection: 'row', alignItems: 'center', flex: 1, gap: space.md, cursor: 'pointer' } as never}
       >
         <Text style={s.dragHandle}>{DRAG_HANDLE_ICON}</Text>
         <Text numberOfLines={1} style={s.blockName}>
@@ -88,15 +89,15 @@ function WarmupImportedTag(props: { imported?: boolean; t: (k: string) => string
 
 const styles = {
   tag: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 6,
-    marginRight: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    backgroundColor: colors.warningSoft,
+    borderRadius: radius.sm,
+    marginRight: space.sm,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
   },
   tagText: {
-    color: '#92400e',
-    fontSize: 10,
+    color: colors.warning,
+    fontSize: fontSize.xs,
     fontWeight: '700' as const,
     textTransform: 'uppercase' as const,
   },

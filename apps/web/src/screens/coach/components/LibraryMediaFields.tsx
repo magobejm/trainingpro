@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View, DimensionValue } from 'react-native';
 import { resolvePlaceholder } from './LibraryMediaViewer';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   imageUrl: string;
@@ -99,7 +100,7 @@ function YouTubeInput({
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 20,
+    gap: space.xl,
     width: '100%' as DimensionValue,
   },
   previewContainer: {
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 16,
     overflow: 'hidden',
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surfaceInverse,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
@@ -130,52 +131,52 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239, 68, 68, 0.9)',
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   removeBtnText: {
-    color: '#ffffff',
-    fontSize: 14,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   actionsRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: space.md,
   },
   uploadButton: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderColor: '#cbd5e1',
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     minHeight: 48,
-    paddingHorizontal: 16,
+    paddingHorizontal: space.lg,
   },
   uploadButtonLabel: {
-    color: '#475569',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   inputGroup: {
-    gap: 8,
+    gap: space.sm,
   },
   label: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    color: '#475569',
+    color: colors.textMuted,
   },
   input: {
-    backgroundColor: '#ffffff',
-    borderColor: '#e2e8f0',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 14,
-    color: '#1e293b',
+    borderRadius: radius.lg,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    fontSize: fontSize.sm,
+    color: colors.text,
   },
 });

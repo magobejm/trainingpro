@@ -5,6 +5,7 @@ import '../../i18n';
 import { postChatUpload } from '../../data/hooks/useChat';
 import { useAuthStore } from '../../store/auth.store';
 import { acceptChatFile, CHAT_ATTACHMENT_ACCEPT } from './chat-attachment.utils';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export type AttachmentDraft = {
   fileName: string;
@@ -109,22 +110,22 @@ function pickWebFile(): Promise<File | null> {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: '#1c74e9',
-    borderRadius: 10,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 40,
   },
   buttonLabel: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   label: {
-    color: '#4a607f',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   root: {
-    gap: 8,
+    gap: space.sm,
   },
 });

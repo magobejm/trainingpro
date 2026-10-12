@@ -2,6 +2,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import { ActionConfirmModal } from '../screens/coach/components/ActionConfirmModal';
 import type { useUnsavedWork } from './useUnsavedWork';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 export type UnsavedDialogState = {
   conflictOpen: boolean;
@@ -76,4 +77,4 @@ export function UnsavedWorkDialogs(props: Props): React.JSX.Element {
   );
 }
 
-const statusStyle = { color: '#9a6700', fontSize: 13, fontWeight: '600' as const, marginBottom: 8 };
+const statusStyle = { color: colors.warning, fontSize: fontSize.sm, fontWeight: '600' as const, marginBottom: space.sm };

@@ -3,15 +3,16 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
 import { useOrgSubscriptionOccupancyQuery, useUpdateOrgClientLimitMutation } from '../../data/hooks/useOrgSubscription';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  action: '#1d5fd4',
-  border: '#dbe5f2',
-  card: '#ffffff',
-  danger: '#b42318',
-  page: '#eef3fa',
-  text: '#132238',
-  textMuted: '#64748b',
+  action: colors.primary,
+  border: colors.border,
+  card: colors.surface,
+  danger: colors.danger,
+  page: colors.background,
+  text: colors.text,
+  textMuted: colors.textMuted,
 };
 
 const LIMIT_INPUT_PROPS = {
@@ -124,7 +125,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: COLORS.action,
-    borderRadius: 10,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 42,
   },
@@ -133,7 +134,7 @@ const styles = StyleSheet.create({
   },
   buttonLabel: {
     color: COLORS.card,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   card: {
@@ -142,79 +143,79 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     maxWidth: 760,
-    padding: 22,
+    padding: space.xl,
     width: '100%',
   },
   centered: {
-    gap: 12,
+    gap: space.md,
     justifyContent: 'center',
   },
   error: {
     color: COLORS.danger,
-    fontSize: 15,
+    fontSize: fontSize.md,
     fontWeight: '600',
     textAlign: 'center',
   },
   errorInline: {
     color: COLORS.danger,
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    marginBottom: 10,
+    marginBottom: space.md,
   },
   input: {
     borderColor: COLORS.border,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
-    marginBottom: 14,
-    marginTop: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginBottom: space.lg,
+    marginTop: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
   },
   inputLabel: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    marginTop: 14,
+    marginTop: space.lg,
   },
   metricCard: {
     backgroundColor: COLORS.page,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     flex: 1,
-    padding: 14,
+    padding: space.lg,
   },
   metricLabel: {
     color: COLORS.textMuted,
-    fontSize: 13,
-    marginBottom: 6,
+    fontSize: fontSize.sm,
+    marginBottom: space.sm,
   },
   metricRow: {
     flexDirection: 'row',
-    gap: 10,
-    marginTop: 14,
+    gap: space.md,
+    marginTop: space.lg,
   },
   metricValue: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: fontSize.xl,
     fontWeight: '800',
   },
   muted: {
     color: COLORS.textMuted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.page,
     flex: 1,
-    padding: 24,
+    padding: space.xl,
   },
   subtitle: {
     color: COLORS.textMuted,
-    fontSize: 14,
-    marginTop: 4,
+    fontSize: fontSize.sm,
+    marginTop: space.xs,
   },
   title: {
     color: COLORS.text,
-    fontSize: 24,
+    fontSize: fontSize.xl,
     fontWeight: '800',
   },
 });

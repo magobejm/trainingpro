@@ -1,12 +1,13 @@
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const avatarStyles = {
   avatarWrap: {
     alignItems: 'center',
-    backgroundColor: '#0f172a',
-    borderColor: '#dbe7f5',
+    backgroundColor: colors.surfaceInverse,
+    borderColor: colors.border,
     borderRadius: 44,
     borderWidth: 1,
     overflow: 'hidden',
-    padding: 4,
+    padding: space.xs,
     position: 'relative',
   },
   avatarOverlay: {
@@ -21,8 +22,8 @@ export const avatarStyles = {
     zIndex: 3,
   },
   avatarOverlayPlus: {
-    color: '#ffffff',
-    fontSize: 36,
+    color: colors.surface,
+    fontSize: fontSize.xxxl,
     fontWeight: '700',
     lineHeight: 38,
   },
@@ -34,19 +35,19 @@ export const avatarStyles = {
   avatarCarousel: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: space.sm,
   },
   avatarOption: {
-    borderColor: '#dbe7f5',
-    borderRadius: 12,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
     padding: 2,
   },
   avatarOptionActive: {
-    borderColor: '#1c74e9',
+    borderColor: colors.primary,
   },
   avatarOptionImage: {
-    borderRadius: 10,
+    borderRadius: radius.md,
     height: 44,
     width: 44,
   },

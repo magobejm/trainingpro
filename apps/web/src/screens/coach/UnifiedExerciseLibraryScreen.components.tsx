@@ -10,12 +10,13 @@ import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnifiedExerciseModal } from './UnifiedExerciseModal';
 import { UnifiedExerciseDetailModal } from './UnifiedExerciseDetailModal';
 import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMultiSelect';
+import { colors } from '@trainerpro/ui';
 
-const C_BLUE = '#2563eb';
-const C_GRAY = '#94a3b8';
-const C_SLATE = '#64748b';
-const C_WHITE = '#fff';
-const C_RED = '#ef4444';
+const C_BLUE = colors.primary;
+const C_GRAY = colors.textMuted;
+const C_SLATE = colors.textMuted;
+const C_WHITE = colors.surface;
+const C_RED = colors.danger;
 const REMODE_CVR = 'cover' as const;
 const REMODE_CNT = 'contain' as const;
 

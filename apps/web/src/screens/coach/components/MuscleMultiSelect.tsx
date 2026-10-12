@@ -2,9 +2,10 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ViewStyle } from 'react-native';
 import { X, Check, ChevronRight } from 'lucide-react';
 import { SelectOption, MODAL_THEME } from '../UnifiedExerciseModal.types';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const TAPS_HANDLED = 'handled' as const;
-const BLUE_COLOR = '#1d4ed8';
+const BLUE_COLOR = colors.primaryHover;
 
 interface MuscleMultiSelectProps {
   options: SelectOption[];
@@ -131,8 +132,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    padding: 10,
-    paddingVertical: 12,
+    padding: space.md,
+    paddingVertical: space.md,
     minHeight: 44,
     borderWidth: 1,
     borderColor: MODAL_THEME.colors.border,
@@ -146,30 +147,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   multiSelectPlaceholder: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     color: MODAL_THEME.colors.textSecondary,
     paddingVertical: 2,
   },
   tag: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 4,
-    paddingLeft: 8,
-    paddingRight: 4,
+    backgroundColor: colors.primaryBorder,
+    borderRadius: radius.sm,
+    paddingLeft: space.sm,
+    paddingRight: space.xs,
     paddingVertical: 2,
     borderWidth: 1,
-    borderColor: '#bfdbfe',
+    borderColor: colors.primaryBorder,
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 6,
+    marginRight: space.sm,
     marginVertical: 2,
   },
   tagText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
-    color: '#1d4ed8',
+    color: colors.primaryHover,
   },
   tagRemove: {
-    marginLeft: 4,
+    marginLeft: space.xs,
     padding: 2,
   },
   multiSelectDropdown: {
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 0,
     right: 0,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: MODAL_THEME.colors.border,
     borderBottomLeftRadius: MODAL_THEME.borderRadius.md,
@@ -190,12 +191,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 12,
+    padding: space.md,
     borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    borderBottomColor: colors.background,
   },
   multiSelectItemText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     color: MODAL_THEME.colors.text,
   },
   multiSelectItemActive: {
@@ -203,12 +204,12 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   multiSelectCloseButton: {
-    padding: 12,
+    padding: space.md,
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: colors.surfaceMuted,
   },
   multiSelectCloseText: {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     color: MODAL_THEME.colors.textSecondary,
   },

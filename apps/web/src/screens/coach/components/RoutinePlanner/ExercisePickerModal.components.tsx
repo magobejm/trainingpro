@@ -15,6 +15,7 @@ import { LibraryMediaViewer } from '../LibraryMediaViewer';
 import type { LibraryItem } from './ExercisePickerModal.types';
 import { getFullUrl } from './ExercisePickerModal.utils';
 import { s } from './ExercisePickerModal.styles';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const IMAGE_RESIZE_MODE: ImageProps['resizeMode'] = 'contain';
 
@@ -242,20 +243,20 @@ const tagStyles = StyleSheet.create({
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 8,
+    gap: space.sm,
+    marginBottom: space.sm,
   },
   tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
   primaryTag: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.primaryBorder,
   },
   primaryTagText: {
-    color: '#2563eb',
-    fontSize: 12,
+    color: colors.primary,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   secondaryTag: {
@@ -263,7 +264,7 @@ const tagStyles = StyleSheet.create({
   },
   secondaryTagText: {
     color: '#9333ea',
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
 });

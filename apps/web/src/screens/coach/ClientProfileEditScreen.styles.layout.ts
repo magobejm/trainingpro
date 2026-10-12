@@ -1,33 +1,34 @@
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const layoutStyles = {
   page: {
-    gap: 12,
+    gap: space.md,
   },
   card: {
-    backgroundColor: '#ffffff',
-    borderColor: '#dde6f2',
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 18,
     borderWidth: 1,
-    gap: 10,
-    padding: 16,
+    gap: space.md,
+    padding: space.lg,
   },
   splitRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: space.md,
   },
   mainLayout: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: space.md,
   },
   mainColumn: {
     flex: 1.7,
-    gap: 12,
+    gap: space.md,
     minWidth: 520,
   },
   sideColumn: {
     flex: 1,
-    gap: 12,
+    gap: space.md,
     minWidth: 280,
   },
   splitCard: {
@@ -35,37 +36,37 @@ export const layoutStyles = {
     minWidth: 280,
   },
   title: {
-    color: '#0f172a',
-    fontSize: 26,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
   },
   subtitle: {
-    color: '#64748b',
-    fontSize: 13,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   statsCard: {
-    gap: 8,
+    gap: space.sm,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: space.md,
   },
   topFramesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 8,
+    gap: space.md,
+    marginTop: space.sm,
   },
   frameCard: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#dbe7f5',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    padding: 10,
+    padding: space.md,
   },
   multiMetricsFrame: {
-    gap: 8,
+    gap: space.sm,
     minWidth: 360,
   },
   weightFrame: {
@@ -73,42 +74,42 @@ export const layoutStyles = {
     minWidth: 150,
   },
   ageFrame: {
-    gap: 6,
+    gap: space.sm,
     minWidth: 280,
   },
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 14,
+    gap: space.lg,
   },
   activeSinceText: {
-    color: '#1d4ed8',
-    fontSize: 13,
+    color: colors.primaryHover,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   headerRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 14,
+    gap: space.lg,
   },
   headerText: {
     flex: 1,
     gap: 3,
   },
   avatarColumn: {
-    gap: 8,
+    gap: space.sm,
     width: 260,
   },
   row: {
     alignItems: 'center',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: space.sm,
   },
   label: {
-    color: '#334155',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   blockHeader: {
@@ -119,18 +120,18 @@ export const layoutStyles = {
   blockLabelWrap: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 6,
+    gap: space.sm,
   },
   blockIcon: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   helperText: {
-    color: '#64748b',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
   },
   errorText: {
-    color: '#b91c1c',
-    fontSize: 12,
+    color: colors.danger,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
 } as const;

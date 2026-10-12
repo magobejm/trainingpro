@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Translator = (key: string) => string;
 type StringSetter = (field: string) => (value: string) => void;
@@ -275,31 +276,31 @@ function readSelectLabel(field: string, t: Translator): string {
 
 const styles = StyleSheet.create({
   input: {
-    backgroundColor: '#f3f7fd',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
+    paddingHorizontal: space.md,
+    paddingVertical: space.md,
   },
   inputMultiline: {
     minHeight: 70,
     textAlignVertical: 'top',
   },
   selectLabel: {
-    color: '#334e70',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   selectWrap: {
-    gap: 6,
+    gap: space.sm,
   },
 });
 
 const selectStyle: React.CSSProperties = {
-  border: '1px solid #c8d5ea',
-  borderRadius: 10,
-  fontSize: 14,
+  border: `1px solid ${colors.border}`,
+  borderRadius: radius.md,
+  fontSize: fontSize.sm,
   minHeight: 40,
   outline: 'none',
-  padding: 10,
+  padding: space.md,
   width: '100%',
 };

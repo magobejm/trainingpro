@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { backdropStyle, drawerStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
+import { colors } from '@trainerpro/ui';
 
 type Props = {
   archived: SectionItem[];
@@ -58,7 +59,7 @@ function renderRow(item: SectionItem, props: { onRestore: (id: SectionId) => voi
     <View key={item.id} style={styles.archivedRow}>
       <View style={styles.archivedLeft}>
         <View style={[styles.iconShell, { backgroundColor: item.badgeColor }]}>
-          {item.icon({ color: item.iconColor || '#64748b', size: 18 })}
+          {item.icon({ color: item.iconColor || colors.textMuted, size: 18 })}
         </View>
         <View>
           <Text style={styles.archivedItemTitle}>{props.t(item.titleKey)}</Text>

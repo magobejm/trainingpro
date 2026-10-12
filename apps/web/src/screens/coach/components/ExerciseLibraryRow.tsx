@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { LibraryMediaViewer } from './LibraryMediaViewer';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   deleting: boolean;
@@ -38,9 +39,7 @@ function TitleBlock(props: Pick<Props, 'item' | 't'>): React.JSX.Element {
       <Text style={styles.title}>{props.item.name}</Text>
       <View style={[styles.badge, coachOwned ? styles.mineBadge : null]}>
         <Text style={styles.badgeLabel}>
-          {coachOwned
-            ? props.t('coach.library.exercises.badge.mine')
-            : props.t('coach.library.scope.global')}
+          {coachOwned ? props.t('coach.library.exercises.badge.mine') : props.t('coach.library.scope.global')}
         </Text>
       </View>
     </View>
@@ -90,16 +89,10 @@ function isCoachScope(scope: string): boolean {
   return scope.trim().toLowerCase() === 'coach';
 }
 
-function ExerciseDetail(props: {
-  item: ExerciseLibraryItem;
-  t: (key: string) => string;
-}): React.JSX.Element {
+function ExerciseDetail(props: { item: ExerciseLibraryItem; t: (key: string) => string }): React.JSX.Element {
   return (
     <View style={styles.detailBox}>
-      <DetailLine
-        label={props.t('coach.library.exercises.detail.muscleGroup')}
-        value={props.item.muscleGroup}
-      />
+      <DetailLine label={props.t('coach.library.exercises.detail.muscleGroup')} value={props.item.muscleGroup} />
       <DetailLine
         label={props.t('coach.library.exercises.detail.equipment')}
         value={props.item.equipment ?? props.t('coach.library.exercises.detail.empty')}
@@ -108,15 +101,8 @@ function ExerciseDetail(props: {
         label={props.t('coach.library.exercises.detail.instructions')}
         value={props.item.instructions ?? props.t('coach.library.exercises.detail.empty')}
       />
-      <DetailLine
-        label={props.t('coach.library.exercises.detail.media')}
-        value={undefined}
-      />
-      <LibraryMediaViewer
-        imageUrl={props.item.media.url}
-        t={props.t}
-        youtubeUrl={props.item.youtubeUrl}
-      />
+      <DetailLine label={props.t('coach.library.exercises.detail.media')} value={undefined} />
+      <LibraryMediaViewer imageUrl={props.item.media.url} t={props.t} youtubeUrl={props.item.youtubeUrl} />
     </View>
   );
 }
@@ -133,73 +119,73 @@ function DetailLine(props: { label: string; value?: string }): React.JSX.Element
 const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
   },
   badge: {
-    backgroundColor: '#edf2f7',
+    backgroundColor: colors.background,
     borderRadius: 999,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
   },
   badgeLabel: {
-    color: '#485a73',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   deleteButton: {
     alignItems: 'center',
-    backgroundColor: '#d92d20',
-    borderRadius: 8,
+    backgroundColor: colors.danger,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 30,
-    paddingHorizontal: 10,
+    paddingHorizontal: space.md,
   },
   editButton: {
     alignItems: 'center',
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 30,
-    paddingHorizontal: 10,
+    paddingHorizontal: space.md,
   },
   editLabel: {
-    color: '#ffffff',
-    fontSize: 11,
+    color: colors.surface,
+    fontSize: fontSize.xs,
     fontWeight: '800',
   },
   deleteLabel: {
-    color: '#ffffff',
-    fontSize: 11,
+    color: colors.surface,
+    fontSize: fontSize.xs,
     fontWeight: '800',
   },
   detailBox: {
-    backgroundColor: '#f6f9ff',
-    borderColor: '#dce6f3',
-    borderRadius: 10,
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     borderWidth: 1,
-    gap: 6,
-    marginTop: 10,
-    padding: 10,
+    gap: space.sm,
+    marginTop: space.md,
+    padding: space.md,
   },
   detailButton: {
     alignItems: 'center',
-    backgroundColor: '#e8f0fb',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderRadius: radius.md,
     justifyContent: 'center',
     minHeight: 30,
-    paddingHorizontal: 10,
+    paddingHorizontal: space.md,
   },
   detailLabel: {
-    color: '#334e70',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   detailRow: {
     gap: 2,
   },
   detailValue: {
-    color: '#1a2536',
-    fontSize: 12,
+    color: colors.text,
+    fontSize: fontSize.xs,
   },
   header: {
     alignItems: 'center',
@@ -207,19 +193,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mineBadge: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.primaryBorder,
   },
   row: {
-    borderBottomColor: '#e2e8f2',
+    borderBottomColor: colors.border,
     borderBottomWidth: 1,
-    paddingBottom: 10,
+    paddingBottom: space.md,
   },
   title: {
-    color: '#0e1a2f',
-    fontSize: 15,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   titleBox: {
-    gap: 5,
+    gap: space.xs,
   },
 });

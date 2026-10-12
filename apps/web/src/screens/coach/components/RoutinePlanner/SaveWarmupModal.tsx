@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const MODAL_ANIM = 'fade' as const;
-const PLACEHOLDER_COLOR = '#94a3b8';
+const PLACEHOLDER_COLOR = colors.textMuted;
 
 interface SaveWarmupModalProps {
   initialName: string;
@@ -63,62 +64,62 @@ const ss = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
-    padding: 24,
+    padding: space.xl,
     width: 420,
-    gap: 16,
+    gap: space.lg,
   },
   title: {
-    fontSize: 18,
+    fontSize: fontSize.lg,
     fontWeight: '700',
-    color: '#0f172a',
+    color: colors.text,
   },
   label: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    color: '#475569',
+    color: colors.textMuted,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0f172a',
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    fontSize: fontSize.sm,
+    color: colors.text,
     outlineStyle: 'none',
   } as object,
   actions: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 10,
-    marginTop: 4,
+    gap: space.md,
+    marginTop: space.xs,
   },
   cancelBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
   },
   cancelBtnText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    color: '#64748b',
+    color: colors.textMuted,
   },
   saveBtn: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: '#16a34a',
+    paddingHorizontal: space.xl,
+    paddingVertical: space.md,
+    borderRadius: radius.md,
+    backgroundColor: colors.success,
   },
   saveBtnDisabled: {
-    backgroundColor: '#86efac',
+    backgroundColor: colors.successSoft,
   },
   saveBtnText: {
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '700',
-    color: '#ffffff',
+    color: colors.surface,
   },
 });

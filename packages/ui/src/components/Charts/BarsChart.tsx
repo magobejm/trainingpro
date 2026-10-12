@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors } from '../../theme/tokens';
 
 export type BarsChartPoint = {
   id: string;
@@ -15,11 +16,11 @@ type Props = {
 };
 
 const COLORS = {
-  axis: '#d5deea',
-  bar: '#2a7fff',
-  card: '#ffffff',
-  label: '#55667c',
-  text: '#0f1b2f',
+  axis: colors.border,
+  bar: colors.primary,
+  card: colors.surface,
+  label: colors.textMuted,
+  text: colors.text,
 };
 
 export function BarsChart(props: Props): React.JSX.Element {
@@ -47,9 +48,7 @@ function ChartBody(props: Props & { maxHeight: number }) {
         {props.bars.map((item) => (
           <View key={item.id} style={styles.barItem}>
             <Text style={styles.value}>{formatValue(item.value)}</Text>
-            <View
-              style={[styles.bar, { height: readBarHeight(item.value, maxValue, props.maxHeight) }]}
-            />
+            <View style={[styles.bar, { height: readBarHeight(item.value, maxValue, props.maxHeight) }]} />
             <Text style={styles.label}>{item.label}</Text>
           </View>
         ))}

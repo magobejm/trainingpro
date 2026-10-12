@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MICRONUTRIENT_KEYS, parseMicronutrients, toggleMicronutrient } from '../foods.helpers';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   selected: string;
@@ -35,33 +36,33 @@ export function FoodMicronutrientChips(props: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   chip: {
-    backgroundColor: '#e8f0fe',
+    backgroundColor: colors.primarySoft,
     borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   chipActive: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: colors.primary,
   },
   chipLabel: {
-    color: '#334e70',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: '#ffffff',
+    color: colors.surface,
   },
   label: {
-    color: '#334e70',
-    fontSize: 12,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
   },
   row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: space.sm,
   },
   wrap: {
-    gap: 8,
+    gap: space.sm,
   },
 });

@@ -5,6 +5,7 @@ import { useClientRoutineDaysQuery } from '../../../data/hooks/useCalendarQuery'
 import type { SessionProgressCategory } from '../../../data/types/session-progress';
 import type { PerformedSessionDay } from '../../../data/hooks/usePerformedSessionDaysQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   clientId: string | null;
@@ -302,16 +303,16 @@ export function ProgressRoutineFilter({
   );
 }
 
-const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' };
-const secondaryBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 8 };
-const secondaryLabel: React.CSSProperties = { margin: 0, fontSize: 12, fontWeight: 800, color: '#64748b' };
-const muted: React.CSSProperties = { margin: 0, fontSize: 13, color: '#94a3b8' };
+const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.md, width: '100%' };
+const secondaryBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.sm };
+const secondaryLabel: React.CSSProperties = { margin: 0, fontSize: fontSize.xs, fontWeight: 800, color: colors.textMuted };
+const muted: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted };
 const searchInput: React.CSSProperties = {
   padding: '10px 14px',
-  borderRadius: 12,
-  border: '1.5px solid #dce3eb',
-  fontSize: 14,
-  color: '#0f1b2f',
+  borderRadius: radius.lg,
+  border: `1.5px solid ${colors.border}`,
+  fontSize: fontSize.sm,
+  color: colors.text,
   outline: 'none',
   width: '100%',
   boxSizing: 'border-box',
@@ -321,8 +322,8 @@ const dropdownContainer: React.CSSProperties = {
   top: 'calc(100% + 4px)',
   left: 0,
   right: 0,
-  background: '#fff',
-  border: '1.5px solid #dce3eb',
+  background: colors.surface,
+  border: `1.5px solid ${colors.border}`,
   borderRadius: 16,
   boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
   zIndex: 50,
@@ -337,25 +338,34 @@ const dropdownItem: React.CSSProperties = {
   padding: '9px 14px',
   border: 'none',
   background: 'transparent',
-  color: '#334155',
+  color: colors.text,
   fontWeight: 600,
-  fontSize: 13,
+  fontSize: fontSize.sm,
   cursor: 'pointer',
-  borderRadius: 10,
+  borderRadius: radius.md,
   textAlign: 'left',
 };
-const dropdownItemActive: React.CSSProperties = { background: '#eff6ff', color: '#3b82f6' };
-const dropdownEmpty: React.CSSProperties = { margin: '12px', fontSize: 13, color: '#94a3b8', textAlign: 'center' };
-const chipList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
+const dropdownItemActive: React.CSSProperties = { background: colors.primarySoft, color: colors.primary };
+const dropdownEmpty: React.CSSProperties = {
+  margin: '12px',
+  fontSize: fontSize.sm,
+  color: colors.textMuted,
+  textAlign: 'center',
+};
+const chipList: React.CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: space.sm };
 const chip: React.CSSProperties = {
   padding: '8px 14px',
-  borderRadius: 10,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
-  color: '#5d6f85',
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surface,
+  color: colors.textMuted,
   fontWeight: 600,
   cursor: 'pointer',
-  fontSize: 13,
+  fontSize: fontSize.sm,
 };
-const chipActive: React.CSSProperties = { background: '#0f1b2f', color: '#fff', borderColor: '#0f1b2f' };
-const noClientMsg: React.CSSProperties = { margin: 0, fontSize: 13, color: '#94a3b8' };
+const chipActive: React.CSSProperties = {
+  background: colors.surfaceInverse,
+  color: colors.surface,
+  borderColor: colors.text,
+};
+const noClientMsg: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted };

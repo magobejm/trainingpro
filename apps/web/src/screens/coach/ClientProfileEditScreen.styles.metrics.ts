@@ -1,19 +1,20 @@
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const metricStyles = {
   metricCard: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#dbe7f5',
-    borderRadius: 12,
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
-    gap: 8,
+    gap: space.sm,
     minWidth: 160,
-    padding: 10,
+    padding: space.md,
   },
   compactMetricRow: {
-    gap: 4,
+    gap: space.xs,
   },
   compactRowPair: {
     flexDirection: 'row',
-    gap: 10,
+    gap: space.md,
   },
   compactMetricLabelWrap: {
     alignItems: 'center',
@@ -28,8 +29,8 @@ export const metricStyles = {
     minHeight: 32,
   },
   compactMetricValue: {
-    color: '#0f172a',
-    fontSize: 16,
+    color: colors.text,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   metricHeader: {
@@ -38,53 +39,53 @@ export const metricStyles = {
     justifyContent: 'space-between',
   },
   metricLabel: {
-    color: '#64748b',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
   metricValue: {
-    color: '#0f172a',
-    fontSize: 19,
+    color: colors.text,
+    fontSize: fontSize.lg,
     fontWeight: '800',
   },
   metricValueLarge: {
-    fontSize: 32,
+    fontSize: fontSize.xxxl,
     lineHeight: 34,
   },
   metricBigValue: {
-    color: '#0f172a',
-    fontSize: 30,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     lineHeight: 32,
   },
   metricDateValue: {
-    color: '#334155',
-    fontSize: 14,
+    color: colors.text,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
   metricInput: {
     minHeight: 34,
   },
   metricInputLarge: {
-    fontSize: 19,
+    fontSize: fontSize.lg,
     fontWeight: '700',
     minHeight: 40,
   },
   pencilButton: {
     alignItems: 'center',
-    backgroundColor: '#f1f5f9',
-    borderColor: '#dbe7f5',
-    borderRadius: 8,
+    backgroundColor: colors.background,
+    borderColor: colors.border,
+    borderRadius: radius.md,
     borderWidth: 1,
     height: 28,
     justifyContent: 'center',
     width: 28,
   },
   pencilLabel: {
-    color: '#475569',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     fontWeight: '700',
   },
 } as const;

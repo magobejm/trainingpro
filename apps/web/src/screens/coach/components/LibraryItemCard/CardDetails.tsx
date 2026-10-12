@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text } from 'react-native';
 import { LibraryMediaViewer } from '../LibraryMediaViewer';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface CardDetailsProps {
   expanded: boolean;
@@ -41,9 +42,7 @@ function DetailRows(props: {
       {props.detailRows.map((row) => (
         <View key={row.labelKey} style={styles.detailRow}>
           <Text style={styles.detailLabel}>{props.t(row.labelKey)}</Text>
-          <Text style={styles.detailValue}>
-            {row.value || props.t('coach.library.exercises.detail.empty')}
-          </Text>
+          <Text style={styles.detailValue}>{row.value || props.t('coach.library.exercises.detail.empty')}</Text>
         </View>
       ))}
     </>
@@ -68,23 +67,23 @@ function DescriptionRow(props: {
 
 const styles = StyleSheet.create({
   detailBox: {
-    backgroundColor: '#f8fafc',
-    borderRadius: 12,
-    gap: 12,
-    marginTop: 16,
-    padding: 12,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radius.lg,
+    gap: space.md,
+    marginTop: space.lg,
+    padding: space.md,
   },
   detailRow: {
-    gap: 4,
+    gap: space.xs,
   },
   detailLabel: {
-    color: '#64748b',
-    fontSize: 11,
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   detailValue: {
-    color: '#1e293b',
-    fontSize: 13,
+    color: colors.text,
+    fontSize: fontSize.sm,
   },
 });

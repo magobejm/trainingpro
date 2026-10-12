@@ -6,16 +6,17 @@ import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/use
 import { readSessionExpired } from '../../data/session-end';
 import { usePasswordRecoveryStore } from '../../store/password-recovery.store';
 import { isValidEmail, readResetNotice } from './login-form.logic';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  error: '#b42318',
-  page: '#f6f7f8',
-  primary: '#1c74e9',
-  text: '#111418',
-  white: '#ffffff',
-  muted: '#667085',
-  inputBg: '#f4f6f8',
-  inputBorder: '#d8dee5',
+  error: colors.danger,
+  page: colors.surfaceMuted,
+  primary: colors.primary,
+  text: colors.text,
+  white: colors.surface,
+  muted: colors.textMuted,
+  inputBg: colors.background,
+  inputBorder: colors.border,
 };
 
 const ALERT_ROLE = 'alert' as const;
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: COLORS.primary,
-    borderRadius: 12,
+    borderRadius: radius.lg,
     height: 48,
     justifyContent: 'center',
   },
@@ -164,69 +165,69 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: COLORS.white,
-    fontSize: 15,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   card: {
     backgroundColor: COLORS.white,
     borderRadius: 16,
-    padding: 20,
+    padding: space.xl,
     width: 420,
   },
   error: {
     color: COLORS.error,
-    fontSize: 13,
-    marginBottom: 8,
+    fontSize: fontSize.sm,
+    marginBottom: space.sm,
   },
   forgotLabel: {
     color: COLORS.primary,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   forgotLink: {
     alignItems: 'center',
-    marginTop: 14,
+    marginTop: space.lg,
   },
   loadingRow: {
     alignItems: 'center',
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
   },
   notice: {
     color: COLORS.muted,
-    fontSize: 13,
-    marginBottom: 8,
+    fontSize: fontSize.sm,
+    marginBottom: space.sm,
   },
   input: {
     backgroundColor: COLORS.inputBg,
     borderColor: COLORS.inputBorder,
-    borderRadius: 10,
+    borderRadius: radius.md,
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    marginBottom: space.md,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.md,
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.page,
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: space.xl,
   },
   sessionExpired: {
     color: COLORS.error,
-    fontSize: 14,
-    marginBottom: 12,
+    fontSize: fontSize.sm,
+    marginBottom: space.md,
   },
   subtitle: {
     color: COLORS.muted,
-    fontSize: 14,
-    marginBottom: 18,
+    fontSize: fontSize.sm,
+    marginBottom: space.lg,
   },
   title: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: fontSize.xl,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: space.sm,
   },
 });

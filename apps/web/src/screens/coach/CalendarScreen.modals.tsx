@@ -5,20 +5,21 @@ import { FileText, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { formatCalendarDate, getColorForHex } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
+import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 export { AddNoteModal, AddReminderModal } from './CalendarScreen.modals.forms';
 
 const MODAL_ANIMATION = 'fade' as const;
-const COLOR_GREEN = '#15803d' as const;
+const COLOR_GREEN = tk.success;
 const TIME_ICON = '⏰ ' as const;
 
 const colors = {
-  primary: '#3b82f6',
-  danger: '#ef4444',
-  text: '#0f172a',
-  textMuted: '#64748b',
-  border: '#e2e8f0',
-  bg: '#f8fafc',
+  primary: tk.primary,
+  danger: tk.danger,
+  text: tk.text,
+  textMuted: tk.textMuted,
+  border: tk.border,
+  bg: tk.surfaceMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -46,14 +47,14 @@ function DayDetailHeader({ dateStr, eventCount, onClose, t }: DayDetailHeaderPro
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 20,
+        padding: space.xl,
         borderBottomWidth: 1,
         borderColor: colors.border,
       }}
     >
       <View>
-        <Text style={{ fontSize: 18, fontWeight: 'bold', color: colors.text }}>{formatCalendarDate(date)}</Text>
-        <Text style={{ fontSize: 13, color: colors.textMuted }}>
+        <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text }}>{formatCalendarDate(date)}</Text>
+        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
           {eventCount} {t('coach.calendar.day.events')}
         </Text>
       </View>
@@ -83,11 +84,13 @@ type DayEventListProps = {
 
 function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventListProps): React.JSX.Element {
   return (
-    <ScrollView style={{ flexGrow: 1, flexShrink: 1 }} contentContainerStyle={{ padding: 16 }}>
+    <ScrollView style={{ flexGrow: 1, flexShrink: 1 }} contentContainerStyle={{ padding: space.lg }}>
       {dayEvents.length === 0 && (
-        <View style={{ alignItems: 'center', padding: 24 }}>
+        <View style={{ alignItems: 'center', padding: space.xl }}>
           <FileText color={colors.border} size={32} />
-          <Text style={{ fontSize: 14, color: colors.textMuted, marginTop: 8 }}>{t('coach.calendar.empty')}</Text>
+          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: space.sm }}>
+            {t('coach.calendar.empty')}
+          </Text>
         </View>
       )}
       {dayEvents.map((ev) => (
@@ -134,8 +137,8 @@ export function DayDetailModal({
           <View
             style={{
               flexDirection: 'row',
-              padding: 16,
-              gap: 8,
+              padding: space.lg,
+              gap: space.sm,
               borderBottomWidth: 1,
               borderColor: colors.border,
               flexShrink: 0,
@@ -148,14 +151,14 @@ export function DayDetailModal({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#eff6ff',
-                borderRadius: 12,
-                paddingVertical: 10,
-                gap: 6,
+                backgroundColor: tk.primarySoft,
+                borderRadius: radius.lg,
+                paddingVertical: space.md,
+                gap: space.sm,
               }}
             >
               <StickyNote color={colors.primary} size={15} />
-              <Text style={{ fontSize: 13, fontWeight: 'bold', color: colors.primary }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary }}>
                 {t('coach.calendar.day.addNote')}
               </Text>
             </Pressable>
@@ -166,14 +169,14 @@ export function DayDetailModal({
                 flexDirection: 'row',
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: '#f0fdf4',
-                borderRadius: 12,
-                paddingVertical: 10,
-                gap: 6,
+                backgroundColor: tk.successSoft,
+                borderRadius: radius.lg,
+                paddingVertical: space.md,
+                gap: space.sm,
               }}
             >
               <Plus color={COLOR_GREEN} size={15} />
-              <Text style={{ fontSize: 13, fontWeight: 'bold', color: COLOR_GREEN }}>
+              <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: COLOR_GREEN }}>
                 {t('coach.calendar.day.addReminder')}
               </Text>
             </Pressable>
@@ -198,19 +201,19 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
       style={{
         flexDirection: 'row',
         alignItems: 'flex-start',
-        padding: 12,
-        borderRadius: 12,
+        padding: space.md,
+        borderRadius: radius.lg,
         borderWidth: 1,
         borderColor: colorObj.border,
         backgroundColor: colorObj.bg,
-        marginBottom: 8,
+        marginBottom: space.sm,
       }}
     >
       <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xs }}>
           <Text
             style={{
-              fontSize: 10,
+              fontSize: fontSize.xs,
               fontWeight: 'bold',
               color: colorObj.text,
               textTransform: 'uppercase',
@@ -219,35 +222,39 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
           >
             {typeLabel}
           </Text>
-          {event.clientName && <Text style={{ fontSize: 10, color: colorObj.text, opacity: 0.7 }}>{event.clientName}</Text>}
+          {event.clientName && (
+            <Text style={{ fontSize: fontSize.xs, color: colorObj.text, opacity: 0.7 }}>{event.clientName}</Text>
+          )}
           {event.time && (
-            <Text style={{ fontSize: 10, color: colorObj.text, opacity: 0.7 }}>
+            <Text style={{ fontSize: fontSize.xs, color: colorObj.text, opacity: 0.7 }}>
               {TIME_ICON}
               {event.time}
             </Text>
           )}
         </View>
-        {event.title && <Text style={{ fontSize: 14, fontWeight: 'bold', color: colorObj.text }}>{event.title}</Text>}
+        {event.title && (
+          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colorObj.text }}>{event.title}</Text>
+        )}
         {event.planDayTitle && !event.title && (
-          <Text style={{ fontSize: 14, fontWeight: 'bold', color: colorObj.text }}>{event.planDayTitle}</Text>
+          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colorObj.text }}>{event.planDayTitle}</Text>
         )}
         {event.content && (
-          <Text style={{ fontSize: 13, color: colorObj.text, opacity: 0.8, marginTop: 2 }}>{event.content}</Text>
+          <Text style={{ fontSize: fontSize.sm, color: colorObj.text, opacity: 0.8, marginTop: 2 }}>{event.content}</Text>
         )}
         {statusLines.map((line) => (
-          <Text key={line} style={{ fontSize: 12, color: colorObj.text, fontWeight: '600', marginTop: 2 }}>
+          <Text key={line} style={{ fontSize: fontSize.xs, color: colorObj.text, fontWeight: '600', marginTop: 2 }}>
             {line}
           </Text>
         ))}
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 8 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, marginLeft: space.sm }}>
         {event.type !== 'workout' && event.type !== 'physical_test' && onEdit != null && (
           <Pressable
             onPress={onEdit}
             style={{
               width: 28,
               height: 28,
-              borderRadius: 14,
+              borderRadius: radius.lg,
               backgroundColor: 'rgba(59,130,246,0.1)',
               justifyContent: 'center',
               alignItems: 'center',
@@ -261,7 +268,7 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
           style={{
             width: 28,
             height: 28,
-            borderRadius: 14,
+            borderRadius: radius.lg,
             backgroundColor: 'rgba(239,68,68,0.1)',
             justifyContent: 'center',
             alignItems: 'center',

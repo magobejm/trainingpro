@@ -19,6 +19,7 @@ import {
 } from './UnifiedExerciseModal.fields';
 import { useExerciseModalSave } from './hooks/useExerciseModalSave';
 import { useExerciseModalData } from './hooks/useExerciseModalData';
+import { space } from '@trainerpro/ui';
 
 const ANIM_FADE = 'fade' as const;
 const TAPS_HANDLED = 'handled' as const;
@@ -138,7 +139,7 @@ function FormRow1({ st }: { st: ReturnType<typeof useModalState> }) {
             />
           </View>
           <View style={[styles.row, { zIndex: 90 }]}>
-            <View style={[{ flex: 1, marginRight: 12, zIndex: 100 }]}>
+            <View style={[{ flex: 1, marginRight: space.md, zIndex: 100 }]}>
               <Text style={styles.label}>{t('coach.library.fields.categoryLabel')}</Text>
               <FormSelect
                 options={md.categories}
@@ -148,7 +149,7 @@ function FormRow1({ st }: { st: ReturnType<typeof useModalState> }) {
                 onFocus={st.closeMuscles}
               />
             </View>
-            <View style={[{ flex: 1, marginLeft: 12, zIndex: 90 }]}>
+            <View style={[{ flex: 1, marginLeft: space.md, zIndex: 90 }]}>
               <CategorySpecificFields
                 formState={formState}
                 mappedCatalogs={md.mappedCatalogs}

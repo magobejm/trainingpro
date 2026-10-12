@@ -5,6 +5,7 @@ import type { DraftState } from '../../RoutinePlanner.types';
 import { RoutinePlannerMetaFields } from './RoutinePlannerMetaFields';
 import { SuccessBanner } from './SuccessBanner';
 import type { PlannerLabels } from './planner-labels';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   draft: DraftState;
@@ -27,19 +28,19 @@ export function RoutinePlannerTopSection(props: Props): React.JSX.Element {
         <View
           style={{
             alignSelf: 'flex-start',
-            backgroundColor: '#eff6ff',
-            borderColor: '#3b82f6',
-            borderRadius: 8,
+            backgroundColor: colors.primarySoft,
+            borderColor: colors.primary,
+            borderRadius: radius.md,
             borderWidth: 1,
-            marginBottom: 12,
-            paddingHorizontal: 14,
-            paddingVertical: 6,
+            marginBottom: space.md,
+            paddingHorizontal: space.lg,
+            paddingVertical: space.sm,
           }}
         >
           <Text
             style={{
-              color: '#1d4ed8',
-              fontSize: 13,
+              color: colors.primaryHover,
+              fontSize: fontSize.sm,
               fontWeight: '700',
               letterSpacing: 0.8,
               textTransform: 'uppercase',

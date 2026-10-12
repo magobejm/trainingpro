@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DateRange } from './progress-screen.types';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -63,13 +64,13 @@ const overlay: React.CSSProperties = {
 };
 
 const modal: React.CSSProperties = {
-  background: '#fff',
+  background: colors.surface,
   borderRadius: 20,
-  padding: 32,
+  padding: space.xxl,
   width: 340,
   display: 'flex',
   flexDirection: 'column',
-  gap: 20,
+  gap: space.xl,
   boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
 };
 
@@ -79,62 +80,62 @@ function inclusiveDays(from: string, to: string): number {
   return Math.floor((end - start) / 86_400_000) + 1;
 }
 
-const hintStyle: React.CSSProperties = { margin: 0, color: '#b91c1c', fontSize: 13 };
+const hintStyle: React.CSSProperties = { margin: 0, color: colors.danger, fontSize: fontSize.sm };
 
 const titleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: 18,
+  fontSize: fontSize.lg,
   fontWeight: 800,
-  color: '#0f1b2f',
+  color: colors.text,
 };
 
 const fieldRow: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 6,
+  gap: space.sm,
 };
 
 const labelStyle: React.CSSProperties = {
-  fontSize: 12,
+  fontSize: fontSize.xs,
   fontWeight: 700,
-  color: '#5d6f85',
+  color: colors.textMuted,
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
 
 const inputStyle: React.CSSProperties = {
   padding: '10px 14px',
-  borderRadius: 10,
-  border: '1.5px solid #e2e8f0',
-  fontSize: 14,
-  color: '#0f1b2f',
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  fontSize: fontSize.sm,
+  color: colors.text,
   outline: 'none',
 };
 
 const buttons: React.CSSProperties = {
   display: 'flex',
-  gap: 10,
+  gap: space.md,
   justifyContent: 'flex-end',
 };
 
 const cancelBtn: React.CSSProperties = {
   padding: '10px 18px',
-  borderRadius: 10,
-  border: '1.5px solid #e2e8f0',
-  background: '#f8fafc',
-  color: '#5d6f85',
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surfaceMuted,
+  color: colors.textMuted,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 13,
+  fontSize: fontSize.sm,
 };
 
 const confirmBtn: React.CSSProperties = {
   padding: '10px 18px',
-  borderRadius: 10,
+  borderRadius: radius.md,
   border: 'none',
-  background: '#3b82f6',
-  color: '#fff',
+  background: colors.primary,
+  color: colors.surface,
   fontWeight: 700,
   cursor: 'pointer',
-  fontSize: 13,
+  fontSize: fontSize.sm,
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
+import { colors } from '@trainerpro/ui';
 
 const ALL_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'mobility'];
 
@@ -37,7 +38,7 @@ function renderTypeButtons(
           <Text style={s.blockTypeBtnText}>{t(`coach.routine.blockType.${bt}`)}</Text>
         </Pressable>
       ))}
-      <Pressable onPress={onCancel} style={[s.blockTypeBtn, { backgroundColor: '#64748b' }]}>
+      <Pressable onPress={onCancel} style={[s.blockTypeBtn, { backgroundColor: colors.textMuted }]}>
         <Text style={s.blockTypeBtnText}>{t('common.cancel')}</Text>
       </Pressable>
     </View>

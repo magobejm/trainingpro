@@ -23,6 +23,7 @@ import {
 } from './warmup-exercise-list.helpers';
 import { el } from './warmup-exercise-list.styles';
 import { WarmupBlockDetailModal } from './WarmupExerciseList.modals';
+import { colors } from '@trainerpro/ui';
 
 interface Props {
   items: WarmupTemplateItemInput[];
@@ -90,7 +91,7 @@ function ExerciseRow({
   const [blockDetailOpen, setBlockDetailOpen] = useState(false);
   const libraryId = resolveLibraryId(item);
   const baseCategory = BASE_CATEGORY_MAP[item.blockType] ?? 'muscleGroups';
-  const badgeColor = BLOCK_TYPE_COLORS[item.blockType] ?? { bg: '#f1f5f9', text: '#64748b' };
+  const badgeColor = BLOCK_TYPE_COLORS[item.blockType] ?? { bg: colors.background, text: colors.textMuted };
 
   const { data: results = [] } = useUnifiedExercisesQuery({ baseCategory, search: item.displayName });
   const libraryItem = results.find((r) => r.id === libraryId || r.name === item.displayName) ?? null;

@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useDeleteMealMutation, useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
 import { ConsiderationBadges } from './ConsiderationBadges';
 import { styles } from './nutrition.styles';
+import { colors } from '@trainerpro/ui';
 
 type Props = {
   mealId: string;
@@ -82,9 +83,9 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
       <Pressable
         disabled={deleteMutation.isPending}
         onPress={() => void deleteMeal(props, deleteMutation)}
-        style={[styles.secondaryButton, { backgroundColor: '#fee2e2' }]}
+        style={[styles.secondaryButton, { backgroundColor: colors.dangerSoft }]}
       >
-        <Text style={[styles.secondaryLabel, { color: '#ef4444' }]}>{t('coach.nutrition.delete')}</Text>
+        <Text style={[styles.secondaryLabel, { color: colors.danger }]}>{t('coach.nutrition.delete')}</Text>
       </Pressable>
     </ScrollView>
   );

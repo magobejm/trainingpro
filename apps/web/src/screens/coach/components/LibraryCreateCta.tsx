@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   buttonLabel: string;
@@ -25,40 +26,40 @@ export function LibraryCreateCta(props: Props): React.JSX.Element {
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: '#1c74e9',
-    borderRadius: 12,
+    backgroundColor: colors.primary,
+    borderRadius: radius.lg,
     justifyContent: 'center',
     minHeight: 44,
-    paddingHorizontal: 20,
+    paddingHorizontal: space.xl,
   },
   buttonLabel: {
-    color: '#ffffff',
-    fontSize: 13,
+    color: colors.surface,
+    fontSize: fontSize.sm,
     fontWeight: '800',
   },
   card: {
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderColor: '#dfe8f5',
-    borderRadius: 14,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    padding: 14,
+    padding: space.lg,
     width: '100%',
   },
   subtitle: {
-    color: '#627285',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   textBox: {
     flex: 1,
-    gap: 4,
+    gap: space.xs,
     maxWidth: 640,
   },
   title: {
-    color: '#0e1a2f',
-    fontSize: 24,
+    color: colors.text,
+    fontSize: fontSize.xl,
     fontWeight: '800',
   },
 });

@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, StyleSheet, Text, View, Pressable, ScrollView, DimensionValue } from 'react-native';
 import { LibraryMediaViewer } from './LibraryMediaViewer';
 import { readFrontEnv } from '../../../data/env';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type LibraryItem = {
   id: string;
@@ -135,17 +136,17 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(30, 41, 59, 0.85)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: space.xl,
   },
   modalContainer: {
     width: '100%' as DimensionValue,
     maxWidth: 800,
     maxHeight: '90%' as DimensionValue,
-    backgroundColor: '#ffffff',
+    backgroundColor: colors.surface,
     borderRadius: 24,
     overflow: 'hidden',
     flexDirection: 'column',
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.1,
     shadowRadius: 20,
@@ -154,64 +155,64 @@ const styles = StyleSheet.create({
   mediaArea: {
     width: '100%' as DimensionValue,
     height: 400,
-    backgroundColor: '#0f172a',
+    backgroundColor: colors.surfaceInverse,
   },
   infoArea: {
     flexShrink: 1,
   },
   infoContent: {
-    padding: 32,
-    gap: 20,
+    padding: space.xxl,
+    gap: space.xl,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    gap: 16,
+    gap: space.lg,
   },
   titleGroup: {
     flex: 1,
-    gap: 4,
+    gap: space.xs,
   },
   title: {
-    fontSize: 26,
+    fontSize: fontSize.xxl,
     fontWeight: '700',
-    color: '#1e293b',
+    color: colors.text,
   },
   subtitle: {
-    fontSize: 15,
-    color: '#64748b',
+    fontSize: fontSize.md,
+    color: colors.textMuted,
   },
   closeBtn: {
-    backgroundColor: '#f1f5f9',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.background,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
     borderRadius: 20,
   },
   closeText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600',
-    color: '#475569',
+    color: colors.textMuted,
   },
   tagsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: space.sm,
   },
   tag: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
   },
   tagText: {
-    fontSize: 13,
+    fontSize: fontSize.sm,
     fontWeight: '600',
   },
   primaryTag: {
-    backgroundColor: '#dbeafe',
+    backgroundColor: colors.primaryBorder,
   },
   primaryTagText: {
-    color: '#2563eb',
+    color: colors.primary,
   },
   secondaryTag: {
     backgroundColor: '#f3e8ff',
@@ -220,17 +221,17 @@ const styles = StyleSheet.create({
     color: '#9333ea',
   },
   instructionsContainer: {
-    gap: 8,
-    marginTop: 8,
+    gap: space.sm,
+    marginTop: space.sm,
   },
   instructionsTitle: {
-    fontSize: 16,
+    fontSize: fontSize.md,
     fontWeight: '600',
-    color: '#1e293b',
+    color: colors.text,
   },
   instructionsText: {
-    fontSize: 14,
-    color: '#475569',
+    fontSize: fontSize.sm,
+    color: colors.textMuted,
     lineHeight: 22,
   },
 });

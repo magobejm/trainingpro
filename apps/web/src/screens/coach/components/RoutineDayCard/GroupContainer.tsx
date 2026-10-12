@@ -3,8 +3,9 @@ import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { DraftBlock, DraftExerciseGroup } from '../../RoutinePlanner.types';
 import { RoutineBlockCard } from '../RoutineBlockCard';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const PLACEHOLDER_TEXT_COLOR = '#94a3b8';
+const PLACEHOLDER_TEXT_COLOR = colors.textMuted;
 const ICON_REMOVE_GROUP = '✕';
 
 interface GroupContainerProps {
@@ -26,7 +27,7 @@ interface GroupContainerProps {
 }
 
 const GROUP_STYLE: Record<'CIRCUIT' | 'SUPERSET', { color: string; bgColor: string }> = {
-  CIRCUIT: { color: '#1d4ed8', bgColor: '#dbeafe' },
+  CIRCUIT: { color: colors.primaryHover, bgColor: colors.primaryBorder },
   SUPERSET: { color: '#7c3aed', bgColor: '#ede9fe' },
 };
 
@@ -131,42 +132,47 @@ export function GroupContainer({
 const st = {
   container: {
     borderWidth: 2,
-    borderRadius: 10,
+    borderRadius: radius.md,
     overflow: 'hidden' as const,
-    marginVertical: 4,
+    marginVertical: space.xs,
   },
   header: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: space.sm,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
   },
   label: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingHorizontal: space.md,
+    paddingVertical: space.xs,
+    borderRadius: radius.sm,
   },
-  labelText: { fontSize: 11, fontWeight: '700' as const, color: '#fff', textTransform: 'uppercase' as const },
+  labelText: {
+    fontSize: fontSize.xs,
+    fontWeight: '700' as const,
+    color: colors.surface,
+    textTransform: 'uppercase' as const,
+  },
   noteArea: { flex: 1 },
-  noteTrigger: { paddingVertical: 4 },
-  noteText: { fontSize: 12, color: '#374151' },
-  notePlaceholder: { fontSize: 12, color: '#94a3b8' },
+  noteTrigger: { paddingVertical: space.xs },
+  noteText: { fontSize: fontSize.xs, color: colors.text },
+  notePlaceholder: { fontSize: fontSize.xs, color: colors.textMuted },
   noteInput: {
-    fontSize: 12,
-    color: '#1e293b',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    fontSize: fontSize.xs,
+    color: colors.text,
+    paddingVertical: space.xs,
+    paddingHorizontal: space.sm,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    backgroundColor: '#fff',
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
   },
   removeBtn: {
-    padding: 6,
-    borderRadius: 6,
+    padding: space.sm,
+    borderRadius: radius.sm,
     backgroundColor: 'rgba(255,255,255,0.6)',
   },
-  removeIcon: { fontSize: 12, color: '#dc2626' },
-  blocksContainer: { padding: 8, gap: 8 },
+  removeIcon: { fontSize: fontSize.xs, color: colors.danger },
+  blocksContainer: { padding: space.sm, gap: space.sm },
 };

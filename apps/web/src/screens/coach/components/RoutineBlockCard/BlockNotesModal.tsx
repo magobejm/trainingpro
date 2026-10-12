@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import type { DraftBlock } from '../../RoutinePlanner.types';
 import { useUnifiedExercisesQuery } from '../../../../data/hooks/useUnifiedLibraryQuery';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const NOTES_CATEGORY_MAP: Record<string, string> = {
   strength: 'muscleGroups',
@@ -22,7 +23,7 @@ function useLibraryInstructions(block: DraftBlock): string {
 }
 
 const MODAL_ANIMATION = 'fade' as const;
-const PLACEHOLDER_COLOR = '#94a3b8';
+const PLACEHOLDER_COLOR = colors.textMuted;
 
 interface BlockNotesModalProps {
   block: DraftBlock;
@@ -133,41 +134,47 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modal: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    padding: space.xl,
     width: 420,
     maxWidth: '90%',
-    gap: 12,
+    gap: space.md,
   },
-  headerTitle: { fontSize: 15, fontWeight: '600', color: '#1e293b' },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
+  headerTitle: { fontSize: fontSize.md, fontWeight: '600', color: colors.text },
+  sectionTitle: {
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    color: colors.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+  },
   textInput: {
     minHeight: 120,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    padding: 10,
-    fontSize: 14,
-    color: '#334155',
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: space.md,
+    fontSize: fontSize.sm,
+    color: colors.text,
     textAlignVertical: 'top',
   },
-  readOnlyText: { fontSize: 14, color: '#334155', lineHeight: 22, minHeight: 40 },
-  placeholderText: { color: '#94a3b8' },
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8, marginTop: 4 },
+  readOnlyText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 22, minHeight: 40 },
+  placeholderText: { color: colors.textMuted },
+  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm, marginTop: space.xs },
   btnPrimary: {
-    backgroundColor: '#3b82f6',
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
   },
-  btnPrimaryText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  btnPrimaryText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '600' },
   btnSecondary: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
   },
-  btnSecondaryText: { color: '#475569', fontSize: 13 },
+  btnSecondaryText: { color: colors.textMuted, fontSize: fontSize.sm },
 });

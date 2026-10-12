@@ -37,6 +37,7 @@ import { requestUnsavedLeave } from './layout/unsaved-leave';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useAuthStore } from './store/auth.store';
 import { usePasswordRecoveryStore } from './store/password-recovery.store';
+import { colors } from '@trainerpro/ui';
 
 const CoachesScreen = React.lazy(() =>
   import('./screens/admin/CoachesScreen').then((mod) => ({ default: mod.CoachesScreen })),
@@ -246,7 +247,7 @@ function NavButtonContent({
   hovered: boolean;
   t: (k: string) => string;
 }) {
-  const iconColor = isActive || hovered ? '#ffffff' : '#94a3b8';
+  const iconColor = isActive || hovered ? colors.surface : colors.textMuted;
   const gradientSize = isActive || hovered ? '100% 100%' : '0% 100%';
   const customBadgeStyle = item.badgeColor && !isActive && !hovered ? { backgroundColor: item.badgeColor } : {};
   return (

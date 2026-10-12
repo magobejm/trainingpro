@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useCreateCheckpointMutation, useNutritionCheckpointsQuery } from '../../../data/hooks/useNutrition';
 import type { NutritionPlan } from './nutrition.types';
 import { styles } from './nutrition.styles';
+import { space } from '@trainerpro/ui';
 
 type Props = {
   onClose: () => void;
@@ -51,7 +52,7 @@ export function CheckpointsModal(props: Props): React.JSX.Element | null {
         >
           <Text style={styles.ctaLabel}>{t('coach.nutrition.checkpoints.create')}</Text>
         </Pressable>
-        <ScrollView style={{ marginTop: 12, maxHeight: 280 }}>
+        <ScrollView style={{ marginTop: space.md, maxHeight: 280 }}>
           {checkpointsQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
           {checkpoints.length === 0 && !checkpointsQuery.isLoading ? (
             <Text style={styles.empty}>{t('coach.nutrition.checkpoints.empty')}</Text>

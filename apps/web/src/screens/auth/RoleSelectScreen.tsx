@@ -5,14 +5,15 @@ import '../../i18n';
 import type { ActiveRole } from '../../data/api-client';
 import { useMeQuery } from '../../data/hooks/useMeQuery';
 import { useAuthStore } from '../../store/auth.store';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  accent: '#2864dc',
-  bg: '#f3f6fb',
-  card: '#ffffff',
-  cardBorder: '#dde5f0',
-  muted: '#6a7686',
-  text: '#0e1725',
+  accent: colors.primary,
+  bg: colors.surfaceMuted,
+  card: colors.surface,
+  cardBorder: colors.border,
+  muted: colors.textMuted,
+  text: colors.text,
 };
 
 export function RoleSelectScreen(): React.JSX.Element {
@@ -101,35 +102,35 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
     borderRadius: 16,
     borderWidth: 1,
-    padding: 20,
+    padding: space.xl,
     width: 460,
   },
   empty: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
   },
   list: {
-    gap: 10,
+    gap: space.md,
   },
   page: {
     alignItems: 'center',
     backgroundColor: COLORS.bg,
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: space.xl,
   },
   roleButton: {
     backgroundColor: COLORS.bg,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    borderRadius: radius.lg,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.lg,
   },
   roleButtonActive: {
     backgroundColor: COLORS.accent,
   },
   roleLabel: {
     color: COLORS.text,
-    fontSize: 15,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   roleLabelActive: {
@@ -137,13 +138,13 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     color: COLORS.muted,
-    fontSize: 14,
-    marginBottom: 16,
+    fontSize: fontSize.sm,
+    marginBottom: space.lg,
   },
   title: {
     color: COLORS.text,
-    fontSize: 22,
+    fontSize: fontSize.xl,
     fontWeight: '800',
-    marginBottom: 8,
+    marginBottom: space.sm,
   },
 });

@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   t: (key: string) => string;
@@ -19,22 +20,22 @@ export function EmptyClientSelectionPanel(props: Props): React.JSX.Element {
 
 const styles = StyleSheet.create({
   emptyDescription: {
-    color: '#6e7785',
-    fontSize: 14,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
     lineHeight: 21,
     maxWidth: 480,
     textAlign: 'center',
   },
   emptyIconCore: {
-    backgroundColor: '#dce9ff',
-    borderRadius: 7,
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.sm,
     height: 14,
     width: 14,
   },
   emptyIconShell: {
     alignItems: 'center',
-    backgroundColor: '#eef4ff',
-    borderColor: '#c8d8f8',
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.border,
     borderRadius: 27,
     borderWidth: 1,
     height: 54,
@@ -43,18 +44,18 @@ const styles = StyleSheet.create({
   },
   emptyPanel: {
     alignItems: 'center',
-    borderColor: '#d5deea',
-    borderRadius: 14,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
     borderStyle: 'dashed',
     borderWidth: 1,
-    gap: 10,
+    gap: space.md,
     justifyContent: 'center',
     minHeight: 220,
-    padding: 18,
+    padding: space.lg,
   },
   emptyTitle: {
-    color: '#162132',
-    fontSize: 28,
+    color: colors.text,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     textAlign: 'center',
   },

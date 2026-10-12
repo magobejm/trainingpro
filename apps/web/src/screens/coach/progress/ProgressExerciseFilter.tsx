@@ -10,6 +10,7 @@ import {
 import { usePerformedExercisesQuery } from '../../../data/hooks/usePerformedExercisesQuery';
 import type { ExerciseType, SelectedExercise } from './progress-screen.types';
 import { matchesSearch } from '../../../utils/normalize-search';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Group = {
   type: ExerciseType;
@@ -181,7 +182,7 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
   );
 }
 
-const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' };
+const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.md, width: '100%' };
 const searchIconWrap: React.CSSProperties = {
   position: 'absolute',
   left: 14,
@@ -191,10 +192,10 @@ const searchIconWrap: React.CSSProperties = {
 };
 const searchInput: React.CSSProperties = {
   padding: '10px 14px 10px 40px',
-  borderRadius: 12,
-  border: '1.5px solid #dce3eb',
-  fontSize: 14,
-  color: '#0f1b2f',
+  borderRadius: radius.lg,
+  border: `1.5px solid ${colors.border}`,
+  fontSize: fontSize.sm,
+  color: colors.text,
   outline: 'none',
   width: '100%',
   boxSizing: 'border-box',
@@ -204,8 +205,8 @@ const dropdownContainer: React.CSSProperties = {
   top: 'calc(100% + 4px)',
   left: 0,
   right: 0,
-  background: '#fff',
-  border: '1.5px solid #dce3eb',
+  background: colors.surface,
+  border: `1.5px solid ${colors.border}`,
   borderRadius: 16,
   boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
   zIndex: 50,
@@ -215,9 +216,9 @@ const dropdownContainer: React.CSSProperties = {
 };
 const dropdownGroupLabel: React.CSSProperties = {
   margin: '8px 12px 2px',
-  fontSize: 10,
+  fontSize: fontSize.xs,
   fontWeight: 800,
-  color: '#94a3b8',
+  color: colors.textMuted,
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
@@ -229,31 +230,36 @@ const dropdownItem: React.CSSProperties = {
   padding: '9px 14px',
   border: 'none',
   background: 'transparent',
-  color: '#334155',
+  color: colors.text,
   fontWeight: 600,
-  fontSize: 13,
+  fontSize: fontSize.sm,
   cursor: 'pointer',
-  borderRadius: 10,
+  borderRadius: radius.md,
   textAlign: 'left',
 };
-const dropdownItemActive: React.CSSProperties = { background: '#eff6ff', color: '#3b82f6' };
-const dropdownEmpty: React.CSSProperties = { margin: '12px', fontSize: 13, color: '#94a3b8', textAlign: 'center' };
+const dropdownItemActive: React.CSSProperties = { background: colors.primarySoft, color: colors.primary };
+const dropdownEmpty: React.CSSProperties = {
+  margin: '12px',
+  fontSize: fontSize.sm,
+  color: colors.textMuted,
+  textAlign: 'center',
+};
 const selectedExerciseRow: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 10,
+  gap: space.md,
   padding: '10px 14px',
-  borderRadius: 12,
-  border: '1.5px solid #dce3eb',
-  background: '#fff',
+  borderRadius: radius.lg,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surface,
   maxWidth: '100%',
 };
 const selectedExerciseName: React.CSSProperties = {
   flex: 1,
   minWidth: 0,
-  fontSize: 14,
+  fontSize: fontSize.sm,
   fontWeight: 700,
-  color: '#0f1b2f',
+  color: colors.text,
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
@@ -262,15 +268,15 @@ const selectedClearBtn: React.CSSProperties = {
   flexShrink: 0,
   width: 32,
   height: 32,
-  borderRadius: 8,
-  border: '1.5px solid #dce3eb',
-  background: '#f8fafc',
-  color: '#64748b',
-  fontSize: 16,
+  borderRadius: radius.md,
+  border: `1.5px solid ${colors.border}`,
+  background: colors.surfaceMuted,
+  color: colors.textMuted,
+  fontSize: fontSize.md,
   lineHeight: 1,
   cursor: 'pointer',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
 };
-const noClientMsg: React.CSSProperties = { margin: 0, fontSize: 13, color: '#94a3b8' };
+const noClientMsg: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted };

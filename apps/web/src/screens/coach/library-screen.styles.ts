@@ -1,10 +1,11 @@
 import { StyleSheet, DimensionValue } from 'react-native';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
-  bg: '#F8FAFC',
-  card: '#ffffff',
-  muted: '#64748B',
-  text: '#1E293B',
+  bg: colors.surfaceMuted,
+  card: colors.surface,
+  muted: colors.textMuted,
+  text: colors.text,
 };
 
 export const libraryStyles = StyleSheet.create({
@@ -13,8 +14,8 @@ export const libraryStyles = StyleSheet.create({
     backgroundColor: COLORS.bg,
   },
   scrollContent: {
-    padding: 40,
-    gap: 32,
+    padding: space.xxxl,
+    gap: space.xxl,
   },
   filtersWrapper: {
     flexDirection: 'row',
@@ -22,34 +23,34 @@ export const libraryStyles = StyleSheet.create({
   },
   card: {
     backgroundColor: COLORS.card,
-    borderRadius: 14,
-    gap: 12,
-    padding: 14,
+    borderRadius: radius.lg,
+    gap: space.md,
+    padding: space.lg,
     width: '100%' as DimensionValue,
   },
   empty: {
     color: COLORS.muted,
-    fontSize: 14,
-    padding: 40,
+    fontSize: fontSize.sm,
+    padding: space.xxxl,
     textAlign: 'center',
   },
   error: {
-    color: '#b42318',
-    fontSize: 12,
+    color: colors.danger,
+    fontSize: fontSize.xs,
     fontWeight: '700',
     width: '100%' as DimensionValue,
   },
   list: {
-    gap: 10,
+    gap: space.md,
   },
   subtitle: {
     color: COLORS.muted,
-    fontSize: 14,
+    fontSize: fontSize.sm,
     width: '100%' as DimensionValue,
   },
   title: {
     color: COLORS.text,
-    fontSize: 26,
+    fontSize: fontSize.xxl,
     fontWeight: '800',
     width: '100%' as DimensionValue,
   },

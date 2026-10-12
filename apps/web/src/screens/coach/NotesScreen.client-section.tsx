@@ -2,12 +2,13 @@ import React from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { Users } from 'lucide-react';
 import type { ClientData } from './notes-screen.types';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const theme = {
   colors: {
-    primary: '#3b82f6',
-    text: '#0f172a',
-    textMuted: '#64748b',
+    primary: colors.primary,
+    text: colors.text,
+    textMuted: colors.textMuted,
   },
 };
 
@@ -51,11 +52,11 @@ function useClientNoteSectionModel(props: ClientNoteSectionProps): ClientSection
 
 function ClientSectionHeader(props: { t: (k: string, opts?: Record<string, unknown>) => string }): React.JSX.Element {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-      <View style={{ marginRight: 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.lg }}>
+      <View style={{ marginRight: space.sm }}>
         <Users color={theme.colors.textMuted} size={20} />
       </View>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', color: theme.colors.text }}>
+      <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: theme.colors.text }}>
         {props.t('coach.notes.client.title')}
       </Text>
     </View>
@@ -65,7 +66,7 @@ function ClientSectionHeader(props: { t: (k: string, opts?: Record<string, unkno
 function ClientSelectionPane(props: { vm: ClientSectionViewModel }): React.JSX.Element {
   const vm = props.vm;
   return (
-    <View style={{ flex: 1, paddingHorizontal: 12 }}>
+    <View style={{ flex: 1, paddingHorizontal: space.md }}>
       <TextInput
         value={vm.clientSearch}
         onChangeText={vm.setClientSearch}
@@ -93,8 +94,8 @@ function ClientSelectionPane(props: { vm: ClientSectionViewModel }): React.JSX.E
 function ObjectiveFilterChips(props: { vm: ClientSectionViewModel }): React.JSX.Element {
   const vm = props.vm;
   return (
-    <View style={{ marginBottom: 16 }}>
-      <Text style={{ fontSize: 14, fontWeight: 'bold', color: theme.colors.text, marginBottom: 8 }}>
+    <View style={{ marginBottom: space.lg }}>
+      <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: theme.colors.text, marginBottom: space.sm }}>
         {vm.t('coach.notes.client.filterByObjective')}
       </Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
@@ -133,15 +134,15 @@ function ClientCard(props: {
   return (
     <View style={clientCardStyle(props.isSelected)}>
       <Pressable onPress={() => props.onSelect(props.client)}>
-        <View style={{ flexDirection: 'row', padding: 16, alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', padding: space.lg, alignItems: 'center' }}>
           <AvatarCell client={props.client} />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.text, marginBottom: 4 }}>
+            <Text style={{ fontSize: fontSize.md, fontWeight: 'bold', color: theme.colors.text, marginBottom: space.xs }}>
               {props.client.firstName} {props.client.lastName}
             </Text>
             {props.objective && (
               <View style={clientObjectiveBadgeStyle}>
-                <Text style={{ fontSize: 11, fontWeight: 'bold', color: theme.colors.textMuted }}>
+                <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: theme.colors.textMuted }}>
                   {props.objective.label}
                 </Text>
               </View>
@@ -165,14 +166,18 @@ function AvatarCell(props: { client: ClientData }): React.JSX.Element {
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       ) : (
-        <Text style={{ fontSize: 20 }}>{ICON_USER}</Text>
+        <Text style={{ fontSize: fontSize.xl }}>{ICON_USER}</Text>
       )}
     </View>
   );
 }
 
 function SelectedDot(): React.JSX.Element {
-  return <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: theme.colors.primary, marginLeft: 8 }} />;
+  return (
+    <View
+      style={{ width: 8, height: 8, borderRadius: radius.sm, backgroundColor: theme.colors.primary, marginLeft: space.sm }}
+    />
+  );
 }
 
 function ClientEditorPane(props: { vm: ClientSectionViewModel }): React.JSX.Element {
@@ -185,8 +190,8 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
   const selectedClient = vm.selectedClient!;
   return (
     <View style={clientEditorCardStyle}>
-      <View style={{ padding: 16, borderBottomWidth: 1, borderColor: '#e2e8f0' }}>
-        <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.text }}>
+      <View style={{ padding: space.lg, borderBottomWidth: 1, borderColor: colors.border }}>
+        <Text style={{ fontSize: fontSize.md, fontWeight: 'bold', color: theme.colors.text }}>
           {vm.t('coach.notes.client.newEntry', { name: selectedClient.firstName })}
         </Text>
       </View>
@@ -195,10 +200,16 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
         onChangeText={vm.setClientNoteText}
         placeholder={vm.t('coach.notes.client.placeholder', { name: selectedClient.firstName })}
         multiline
-        style={{ flex: 1, padding: 24, minHeight: 250, fontSize: 16, color: theme.colors.text }}
+        style={{ flex: 1, padding: space.xl, minHeight: 250, fontSize: fontSize.md, color: theme.colors.text }}
       />
       <View
-        style={{ padding: 16, borderTopWidth: 1, borderColor: '#e2e8f0', flexDirection: 'row', justifyContent: 'flex-end' }}
+        style={{
+          padding: space.lg,
+          borderTopWidth: 1,
+          borderColor: colors.border,
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+        }}
       >
         <Pressable onPress={vm.onSave} style={primaryButtonStyle}>
           <Text style={{ color: 'white', fontWeight: 'bold' }}>{vm.t('coach.notes.client.register')}</Text>
@@ -211,7 +222,7 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
 function ClientEmptyState(props: { vm: ClientSectionViewModel }): React.JSX.Element {
   return (
     <View style={clientEmptyStateStyle}>
-      <Text style={{ fontSize: 14, color: theme.colors.textMuted, textAlign: 'center' }}>
+      <Text style={{ fontSize: fontSize.sm, color: theme.colors.textMuted, textAlign: 'center' }}>
         {props.vm.t('coach.notes.client.selectPrompt')}
       </Text>
     </View>
@@ -221,26 +232,26 @@ function ClientEmptyState(props: { vm: ClientSectionViewModel }): React.JSX.Elem
 const clientSearchInputStyle = {
   backgroundColor: 'white',
   borderWidth: 1,
-  borderColor: '#e2e8f0',
-  borderRadius: 12,
-  padding: 16,
-  fontSize: 14,
-  marginBottom: 16,
+  borderColor: colors.border,
+  borderRadius: radius.lg,
+  padding: space.lg,
+  fontSize: fontSize.sm,
+  marginBottom: space.lg,
 };
 
 function objectiveChipStyle(active: boolean) {
   return {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: active ? theme.colors.primary : '#f1f5f9',
-    margin: 4,
+    paddingHorizontal: space.md,
+    paddingVertical: space.sm,
+    borderRadius: radius.md,
+    backgroundColor: active ? theme.colors.primary : colors.background,
+    margin: space.xs,
   };
 }
 
 function objectiveChipLabelStyle(active: boolean) {
   return {
-    fontSize: 12,
+    fontSize: fontSize.xs,
     fontWeight: 'bold' as const,
     color: active ? 'white' : theme.colors.textMuted,
   };
@@ -248,13 +259,13 @@ function objectiveChipLabelStyle(active: boolean) {
 
 function clientCardStyle(selected: boolean) {
   return {
-    backgroundColor: selected ? '#eff6ff' : 'white',
+    backgroundColor: selected ? colors.primarySoft : 'white',
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: selected ? '#3b82f6' : '#e2e8f0',
-    marginBottom: 12,
+    borderColor: selected ? colors.primary : colors.border,
+    marginBottom: space.md,
     overflow: 'hidden' as const,
-    shadowColor: '#000',
+    shadowColor: colors.text,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
@@ -262,10 +273,10 @@ function clientCardStyle(selected: boolean) {
 }
 
 const clientObjectiveBadgeStyle = {
-  paddingHorizontal: 8,
-  paddingVertical: 4,
-  borderRadius: 6,
-  backgroundColor: '#f1f5f9',
+  paddingHorizontal: space.sm,
+  paddingVertical: space.xs,
+  borderRadius: radius.sm,
+  backgroundColor: colors.background,
   alignSelf: 'flex-start' as const,
 };
 
@@ -274,11 +285,11 @@ function avatarWrapStyle(avatarUrl: null | string) {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: avatarUrl ? 'transparent' : '#e2e8f0',
+    backgroundColor: avatarUrl ? 'transparent' : colors.border,
     justifyContent: 'center' as const,
     alignItems: 'center' as const,
     overflow: 'hidden' as const,
-    marginRight: 12,
+    marginRight: space.md,
   };
 }
 
@@ -286,26 +297,26 @@ const clientEditorCardStyle = {
   backgroundColor: 'white',
   borderRadius: 16,
   borderWidth: 1,
-  borderColor: '#e2e8f0',
+  borderColor: colors.border,
   minHeight: 400,
   overflow: 'hidden' as const,
 };
 
 const primaryButtonStyle = {
   backgroundColor: theme.colors.primary,
-  paddingHorizontal: 24,
-  paddingVertical: 12,
-  borderRadius: 12,
+  paddingHorizontal: space.xl,
+  paddingVertical: space.md,
+  borderRadius: radius.lg,
 };
 
 const clientEmptyStateStyle = {
-  backgroundColor: '#f8fafc',
+  backgroundColor: colors.surfaceMuted,
   borderRadius: 16,
   borderWidth: 2,
   borderStyle: 'dashed' as const,
-  borderColor: '#cbd5e1',
+  borderColor: colors.borderStrong,
   minHeight: 400,
   justifyContent: 'center' as const,
   alignItems: 'center' as const,
-  padding: 32,
+  padding: space.xxl,
 };

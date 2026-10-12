@@ -1,6 +1,7 @@
 import React, { useRef } from 'react';
 import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ClientRowCard } from './ClientRowCard';
+import { colors, fontSize, space } from '@trainerpro/ui';
 const DIR_LEFT = 'left' as const;
 const DIR_RIGHT = 'right' as const;
 
@@ -63,13 +64,7 @@ function useHorizontalListModel(onSelect: (id: string) => void) {
   const dragStartRef = useRef(0);
   const dragOffsetRef = useRef(0);
   const blockSelectionRef = useRef(false);
-  const panResponder = createPanResponder(
-    blockSelectionRef,
-    dragOffsetRef,
-    dragStartRef,
-    offsetRef,
-    scrollRef,
-  );
+  const panResponder = createPanResponder(blockSelectionRef, dragOffsetRef, dragStartRef, offsetRef, scrollRef);
   const guardedSelect = (id: string) => {
     if (blockSelectionRef.current) {
       return;
@@ -134,14 +129,8 @@ function ArrowControls(props: {
     <View style={styles.headerRow}>
       <View style={styles.headerContentWrap}>{props.headerContent}</View>
       <View style={styles.arrowWrap}>
-        <Arrow
-          direction={DIR_LEFT}
-          onPress={() => scrollBy(props.scrollRef, props.offsetRef, -320)}
-        />
-        <Arrow
-          direction={DIR_RIGHT}
-          onPress={() => scrollBy(props.scrollRef, props.offsetRef, 320)}
-        />
+        <Arrow direction={DIR_LEFT} onPress={() => scrollBy(props.scrollRef, props.offsetRef, -320)} />
+        <Arrow direction={DIR_RIGHT} onPress={() => scrollBy(props.scrollRef, props.offsetRef, 320)} />
       </View>
     </View>
   );
@@ -156,11 +145,7 @@ function Arrow(props: { direction: 'left' | 'right'; onPress: () => void }): Rea
   );
 }
 
-function scrollBy(
-  ref: React.RefObject<ScrollView | null>,
-  offsetRef: React.RefObject<number>,
-  delta: number,
-): void {
+function scrollBy(ref: React.RefObject<ScrollView | null>, offsetRef: React.RefObject<number>, delta: number): void {
   const nextX = Math.max(0, offsetRef.current + delta);
   ref.current?.scrollTo({ animated: true, x: nextX });
 }
@@ -197,13 +182,13 @@ function createPanResponder(
 
 const styles = StyleSheet.create({
   info: {
-    color: '#5d6f85',
-    fontSize: 13,
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
   },
   arrowButton: {
     alignItems: 'center',
-    backgroundColor: '#f6f8fb',
-    borderColor: '#d7dfe9',
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
     height: 34,
@@ -211,13 +196,13 @@ const styles = StyleSheet.create({
     width: 34,
   },
   arrowLabel: {
-    color: '#637088',
-    fontSize: 16,
+    color: colors.textMuted,
+    fontSize: fontSize.md,
     fontWeight: '700',
   },
   arrowWrap: {
     flexDirection: 'row',
-    gap: 8,
+    gap: space.sm,
   },
   headerContentWrap: {
     flex: 1,
@@ -229,12 +214,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    marginBottom: 8,
+    marginBottom: space.sm,
   },
   row: {
     flexDirection: 'row',
-    gap: 14,
-    paddingVertical: 4,
+    gap: space.lg,
+    paddingVertical: space.xs,
   },
   wrap: {
     width: '100%',

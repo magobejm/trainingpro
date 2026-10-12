@@ -7,10 +7,12 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.sm,
   },
   filtersRow: {
-    alignItems: 'center',
+    alignItems: 'flex-end',
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: space.sm,
+    gap: space.md,
+    flexGrow: 1,
+    flexBasis: 620,
   },
   headerRow: {
     alignItems: 'center',
@@ -20,6 +22,7 @@ export const styles = StyleSheet.create({
     gap: space.sm,
     justifyContent: 'space-between',
     paddingRight: space.sm,
+    marginBottom: space.lg,
   },
   filtersRowStacked: {
     width: '100%',
@@ -33,6 +36,7 @@ export const styles = StyleSheet.create({
     flexBasis: '100%',
     minWidth: 0,
   },
+  sortFilter: { flexBasis: 180, flexGrow: 1, minWidth: 160 },
   searchInput: {
     flexBasis: 200,
     flexGrow: 1,

@@ -1,3 +1,4 @@
+import { useMutationFeedback } from '../../data/hooks/useFeedbackMutation';
 import React, { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
@@ -147,6 +148,8 @@ function usePlannerSaveModel(
 ) {
   const updateClientMutation = useUpdateClientMutation(clientId ?? '');
   const assignMutation = useAssignRoutineMutation();
+  useMutationFeedback(assignMutation);
+  useMutationFeedback(updateClientMutation);
   const queryClient = useQueryClient();
   const clients = useClientsQuery().data ?? [];
   const handoff = useRoutineHandoffPrompt(t);

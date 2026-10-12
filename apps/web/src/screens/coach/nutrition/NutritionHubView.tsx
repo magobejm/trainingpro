@@ -1,10 +1,11 @@
+import { colors } from '@trainerpro/ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { EmptyState, SearchBar } from '@trainerpro/ui';
 import { Apple, ClipboardList } from 'lucide-react';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
-import { COLORS, styles } from './nutrition.styles';
+import { styles } from './nutrition.styles';
 
 type Props = {
   onOpenCreatePlan: () => void;
@@ -28,13 +29,13 @@ export function NutritionHubView(props: Props): React.JSX.Element {
       <View style={styles.actionRow}>
         <Pressable onPress={props.onOpenMeals} style={styles.actionCircle}>
           <View style={styles.iconCircle}>
-            <Apple color={COLORS.accent} size={24} />
+            <Apple color={colors.primary} size={24} />
           </View>
           <Text style={styles.actionCircleLabel}>{t('coach.nutrition.hub.createdMeals')}</Text>
         </Pressable>
         <Pressable onPress={props.onOpenCreatePlan} style={styles.actionCircle}>
           <View style={styles.iconCircle}>
-            <ClipboardList color={COLORS.accent} size={24} />
+            <ClipboardList color={colors.primary} size={24} />
           </View>
           <Text style={styles.actionCircleLabel}>{t('coach.nutrition.hub.createPlan')}</Text>
         </Pressable>

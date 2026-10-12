@@ -1,10 +1,12 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { EmptyState, Select, TextField, useBreakpoint } from '@trainerpro/ui';
+import { ClientCardRow, EmptyState, Select, TextField, useBreakpoint } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
-import { ClientSelectionStrip, type ClientSelectorItem } from './ClientSelectionStrip';
+import type { ClientSelectorItem } from './ClientSelectionStrip';
+import { sortClients, type ClientSort } from '../clients-sort';
+import { useListContext } from '../../../layout/useListContext';
 import { styles } from './ClientsDirectoryPanel.styles';
 
 type Props = {
@@ -48,6 +50,8 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
     return (
       <View>
         <DirectoryHeader
+          order={vm.order}
+          onOrderChange={vm.setOrder}
           objectiveFilter={vm.objectiveFilter}
           objectives={vm.objectives}
           onObjectiveFilterChange={vm.setObjectiveFilter}
@@ -63,12 +67,15 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
 }
 
 function useDirectoryModel(props: Props) {
+  const [order, setOrder] = useListContext<ClientSort>('clients.sort', 'name');
   const objectives = readObjectiveOptions(props.clients, props.t);
   const items = useMemo(
-    () => buildClientCards(props.clients, props.searchValue, props.objectiveFilter, props.t),
-    [props.clients, props.objectiveFilter, props.searchValue, props.t],
+    () => buildClientCards(sortClients(props.clients, order), props.searchValue, props.objectiveFilter, props.t),
+    [props.clients, props.objectiveFilter, props.searchValue, props.t, order],
   );
   return {
+    order,
+    setOrder,
     emptyLabel: props.t('coach.clients.empty'),
     items,
     objectiveFilter: props.objectiveFilter,
@@ -81,28 +88,40 @@ function useDirectoryModel(props: Props) {
 
 function renderDirectory(props: Props, vm: ReturnType<typeof useDirectoryModel>): React.JSX.Element {
   return (
-    <ClientSelectionStrip
-      emptyLabel={vm.emptyLabel}
-      headerContent={
-        <DirectoryHeader
-          objectiveFilter={vm.objectiveFilter}
-          objectives={vm.objectives}
-          onObjectiveFilterChange={vm.setObjectiveFilter}
-          onSearchValueChange={vm.setSearchValue}
-          searchValue={vm.searchValue}
-          t={props.t}
-        />
-      }
-      items={vm.items}
-      loading={props.clientsLoading}
-      onSelect={props.onSelectClient}
-      selectedId={props.selectedClientId}
-      showArrows
-    />
+    <View>
+      <DirectoryHeader
+        order={vm.order}
+        onOrderChange={vm.setOrder}
+        objectiveFilter={vm.objectiveFilter}
+        objectives={vm.objectives}
+        onObjectiveFilterChange={vm.setObjectiveFilter}
+        onSearchValueChange={vm.setSearchValue}
+        searchValue={vm.searchValue}
+        t={props.t}
+      />
+      <ClientCardRow
+        items={vm.items.map((item) => ({
+          id: item.id,
+          title: item.name,
+          subtitle: item.weightLabel ?? '',
+          avatarUrl: item.avatarUrl,
+          objective: item.objective,
+          statusTone: item.statusTone,
+          statusLabel:
+            item.statusTone === 'success'
+              ? props.t('coach.clients.card.planAssigned')
+              : props.t('coach.clients.card.planPending'),
+        }))}
+        onItemPress={props.onSelectClient}
+        selectedId={props.selectedClientId}
+      />
+    </View>
   );
 }
 
 function DirectoryHeader(props: {
+  order: ClientSort;
+  onOrderChange: (order: ClientSort) => void;
   objectiveFilter: string;
   objectives: Array<{ label: string; value: string }>;
   onObjectiveFilterChange: (nextValue: string) => void;
@@ -116,8 +135,19 @@ function DirectoryHeader(props: {
       <Text style={styles.title}>{props.t('coach.clients.section.title')}</Text>
       <View style={[styles.filtersRow, stacked && styles.filtersRowStacked]}>
         <SearchInput onChangeText={props.onSearchValueChange} stacked={stacked} t={props.t} value={props.searchValue} />
+        <Select
+          label={props.t('coach.clients.filters.sort')}
+          containerStyle={stacked ? [styles.sortFilter, styles.stackedField] : styles.sortFilter}
+          value={props.order}
+          onChange={(value) => props.onOrderChange(value as ClientSort)}
+          options={[
+            { value: 'name', label: props.t('coach.clients.filters.sortName') },
+            { value: 'activity', label: props.t('coach.clients.filters.sortActivity') },
+          ]}
+        />
         <ObjectiveSelect
           stacked={stacked}
+          label={props.t('coach.clients.filters.objective')}
           objectiveFilter={props.objectiveFilter}
           objectives={props.objectives}
           onChange={props.onObjectiveFilterChange}
@@ -137,6 +167,7 @@ function SearchInput(props: {
     <TextField
       containerStyle={props.stacked ? [styles.searchInput, styles.stackedField] : styles.searchInput}
       onChangeText={props.onChangeText}
+      label={props.t('coach.clients.filters.search')}
       placeholder={props.t('coach.clients.filters.searchPlaceholder')}
       value={props.value}
     />
@@ -144,6 +175,7 @@ function SearchInput(props: {
 }
 
 function ObjectiveSelect(props: {
+  label: string;
   stacked: boolean;
   objectiveFilter: string;
   objectives: Array<{ label: string; value: string }>;
@@ -151,6 +183,7 @@ function ObjectiveSelect(props: {
 }): React.JSX.Element {
   return (
     <Select
+      label={props.label}
       containerStyle={props.stacked ? [styles.objectiveFilter, styles.stackedField] : styles.objectiveFilter}
       onChange={props.onChange}
       options={props.objectives}
@@ -166,10 +199,7 @@ function buildClientCards(
   t: (key: string) => string,
 ): ClientSelectorItem[] {
   const search = searchValue.trim();
-  return clients
-    .filter((item) => matchesClient(item, search, objectiveFilter))
-    .map((item) => toCard(item, t))
-    .sort((left, right) => left.name.localeCompare(right.name, 'es'));
+  return clients.filter((item) => matchesClient(item, search, objectiveFilter)).map((item) => toCard(item, t));
 }
 
 function matchesClient(client: ClientView, search: string, objectiveFilter: string): boolean {

@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatCallProposal, ChatMessage } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { readFrontEnv } from '../env';
@@ -27,13 +28,15 @@ export function useChatMessagesQuery(threadId: string) {
     enabled: Boolean(auth) && threadId.length > 0,
     queryFn: () => createApiClient(auth!).get<ChatMessage[]>(`/chat/messages?threadId=${threadId}`),
     queryKey: ['chat-messages', auth?.activeRole, threadId],
+    refetchInterval: Boolean(auth) && threadId.length > 0 ? 10_000 : false,
+    refetchIntervalInBackground: false,
   });
 }
 
 export function useSendChatMessageMutation(threadId: string) {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: {
       attachments?: Array<{
         fileName: string;
@@ -115,42 +118,42 @@ function invalidateChatAndCalendar(queryClient: ReturnType<typeof useQueryClient
 export function useCreateCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: { clientId?: string; date: string; time: string }) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post<{ id: string; threadId: string }>('/calls/proposals', input);
     },
-    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+    onSettled: () => invalidateChatAndCalendar(queryClient, auth),
   });
 }
 
 export function useAcceptCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (proposalId: string) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${proposalId}/accept`, {});
     },
-    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+    onSettled: () => invalidateChatAndCalendar(queryClient, auth),
   });
 }
 
 export function useCounterCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: { proposalId: string; time: string }) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${input.proposalId}/counter`, { time: input.time });
     },
-    onSuccess: () => invalidateChatAndCalendar(queryClient, auth),
+    onSettled: () => invalidateChatAndCalendar(queryClient, auth),
   });
 }
 
 export function useUploadPolicyMutation() {
   const auth = useAuth();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: { fileName: string; mimeType: string; sizeBytes: number; threadId: string }) => {
       if (!auth) {
         throw new Error('Missing authenticated context');

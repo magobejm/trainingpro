@@ -1,9 +1,10 @@
+import { colors } from '@trainerpro/ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { LayoutGrid, List } from 'lucide-react';
 import { useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
-import { COLORS, styles } from './nutrition.styles';
+import { styles } from './nutrition.styles';
 import { Button, EmptyState } from '@trainerpro/ui';
 import type { NutritionPlanType } from './nutrition.types';
 
@@ -26,13 +27,13 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
       <View style={styles.actionRow}>
         <Pressable onPress={() => props.onStartWizard('LIBRE')} style={styles.actionCircle}>
           <View style={styles.iconCircle}>
-            <LayoutGrid color={COLORS.accent} size={24} />
+            <LayoutGrid color={colors.primary} size={24} />
           </View>
           <Text style={styles.actionCircleLabel}>{t('coach.nutrition.plans.free')}</Text>
         </Pressable>
         <Pressable onPress={() => props.onStartWizard('ESTRUCTURADO')} style={styles.actionCircle}>
           <View style={styles.iconCircle}>
-            <List color={COLORS.accent} size={24} />
+            <List color={colors.primary} size={24} />
           </View>
           <Text style={styles.actionCircleLabel}>{t('coach.nutrition.plans.structured')}</Text>
         </Pressable>

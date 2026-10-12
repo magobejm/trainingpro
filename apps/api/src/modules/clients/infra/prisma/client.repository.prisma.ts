@@ -1,3 +1,4 @@
+import { readLastClientActivities } from './client-last-activity.prisma';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {
@@ -161,7 +162,14 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       },
       orderBy: { createdAt: 'desc' },
     });
-    return clients.map((row) => mapClient({ ...row, progressPhotos: [] }));
+    const activity = await readLastClientActivities(
+      this.prisma,
+      clients.map((row) => row.id),
+    );
+    return clients.map((row) => ({
+      ...mapClient({ ...row, progressPhotos: [] }),
+      lastActivityAt: activity.get(row.id) ?? null,
+    }));
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

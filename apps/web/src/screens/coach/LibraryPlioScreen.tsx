@@ -1,321 +1,47 @@
-/* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { QueryResult } from '../../components/AsyncStatus';
-import { Button, colors, EmptyState, FilterChips, fontSize, SearchBar, space } from '@trainerpro/ui';
-import { ActionConfirmModal } from './components/ActionConfirmModal';
-import { LibraryCreateModal } from './components/LibraryCreateModal';
-import { LibraryMediaFields } from './components/LibraryMediaFields';
+import React from 'react';
+import { LibraryCategoryScreen, type LibraryCategoryConfig } from './LibraryCategoryScreen';
 import { PlioBaseFields } from './components/LibraryCreateFormFields';
 import {
-  useCreatePlioExerciseMutation,
-  useDeletePlioExerciseMutation,
-  useUpdatePlioExerciseMutation,
-} from '../../data/hooks/useLibrarySpecializedMutations';
-import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
-import {
-  useLibraryPlioTypesQuery,
   useLibraryPlioExercisesQuery,
+  useLibraryPlioTypesQuery,
   type PlioExerciseLibraryItem,
 } from '../../data/hooks/useLibraryQuery';
-import { libraryStyles as styles } from './library-screen.styles';
-import { LibraryItemCard } from './components/LibraryItemCard';
-import { LibraryItemDetailModal } from './components/LibraryItemDetailModal';
+import {
+  useCreatePlioExerciseMutation,
+  useUpdatePlioExerciseMutation,
+  useDeletePlioExerciseMutation,
+} from '../../data/hooks/useLibrarySpecializedMutations';
 import { EMPTY_PLIO_FORM, type PlioCreateFormState } from './LibraryPlioScreen.create';
-import { createFieldSetter } from './libraryCreateForm.utils';
 import { LIST_KEYS } from '../../layout/list-context';
-import { useQueryFilter } from '../../layout/useListContext';
-import { uploadLibraryMediaImage } from './library-media.upload';
-
-export function LibraryPlioScreen(): React.JSX.Element {
-  const { t } = useTranslation();
-  const { activeFilter, query, setActiveFilter, setQuery } = useQueryFilter(LIST_KEYS.libraryPlio);
-  const [expandedId, setExpandedId] = useState('');
-
-  // State for CRUD
-  const [createModalVisible, setCreateModalVisible] = useState(false);
-  const [editModalVisible, setEditModalVisible] = useState(false);
-  const [pendingDeleteId, setPendingDeleteId] = useState('');
-  const [createError, setCreateError] = useState('');
-  const [editError, setEditError] = useState('');
-  const [form, setForm] = useState<PlioCreateFormState>(EMPTY_PLIO_FORM);
-  const [editingItem, setEditingItem] = useState<PlioExerciseLibraryItem | null>(null);
-
-  const plioType = activeFilter === 'all' ? undefined : activeFilter;
-  const { data, error, isError, isLoading, refetch } = useLibraryPlioExercisesQuery({ plioType, query });
-  const items = data ?? [];
-  const plioTypeCatalog = useLibraryPlioTypesQuery().data ?? [];
-  const chips = [
-    { id: 'all', label: t('coach.library.cardio.filters.all') },
-    ...plioTypeCatalog.map((item) => ({
-      id: item.id,
-      label: toPlioTypeLabel(item.id, item.label, t),
-    })),
-  ];
-
-  const expandedItem = items.find((i) => i.id === expandedId) || null;
-
-  const createMutation = useCreatePlioExerciseMutation();
-  const updateMutation = useUpdatePlioExerciseMutation();
-  const deleteMutation = useDeletePlioExerciseMutation();
-  const uploadImageMutation = useUploadLibraryImageMutation();
-
-  const setField = createFieldSetter(setForm);
-
-  const onOpenCreate = () => {
-    setForm(EMPTY_PLIO_FORM);
-    setCreateError('');
-    setCreateModalVisible(true);
-  };
-
-  const onOpenEdit = (item: PlioExerciseLibraryItem) => {
-    setEditingItem(item);
-    setForm({
-      description: item.description ?? '',
-      equipment: item.equipment ?? '',
-      mediaUrl: item.media?.url ?? '',
-      name: item.name,
-      plioType: item.plioType ?? 'undefined',
-      youtubeUrl: item.youtubeUrl ?? '',
-    });
-    setEditError('');
-    setEditModalVisible(true);
-  };
-
-  const onCreate = () => {
-    if (!form.name.trim()) return;
-    createMutation.mutate(form, {
-      onSuccess: () => {
-        setCreateModalVisible(false);
-      },
-      onError: (err) => setCreateError(err.message),
-    });
-  };
-
-  const onSaveEdit = () => {
-    if (!editingItem || !form.name.trim()) return;
-    updateMutation.mutate(
-      { itemId: editingItem.id, payload: form },
-      {
-        onSuccess: () => setEditModalVisible(false),
-        onError: (err) => setEditError(err.message),
-      },
-    );
-  };
-
-  const onConfirmDelete = () => {
-    if (!pendingDeleteId) return;
-    deleteMutation.mutate(pendingDeleteId, {
-      onSuccess: () => setPendingDeleteId(''),
-    });
-  };
-
-  const onUploadImage = (isEdit: boolean) => {
-    const setError = isEdit ? setEditError : setCreateError;
-    uploadLibraryMediaImage(uploadImageMutation, setField('mediaUrl'), setError);
-  };
-
-  return (
-    <View style={styles.page}>
-      <TopBar onOpenCreate={onOpenCreate} query={query} setQuery={setQuery} t={t} />
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.filtersWrapper}>
-          <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
-        </View>
-
-        {(!isLoading && !isError && items.length === 0 && !(query.trim().length > 0 || activeFilter !== 'all') ? (
-          <EmptyState
-            actionLabel={t('coach.library.actions.create')}
-            message={t('coach.library.emptyHint')}
-            onAction={onOpenCreate}
-            title={t('coach.library.empty')}
-          />
-        ) : null) ??
-          QueryResult({
-            emptyTitle: t('coach.library.empty'),
-            error,
-            hasActiveFilter: query.trim().length > 0 || activeFilter !== 'all',
-            isError,
-            isLoading,
-            itemCount: items.length,
-            onRetry: () => void refetch(),
-          }) ?? (
-            <View style={gridStyles.grid}>
-              {items.map((item) => (
-                <View key={item.id} style={gridStyles.gridItem}>
-                  <LibraryItemCard
-                    category="plio"
-                    deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                    equipment={item.equipment}
-                    expanded={expandedId === item.id}
-                    imageUrl={item.media?.url}
-                    name={item.name}
-                    onDelete={() => setPendingDeleteId(item.id)}
-                    onEdit={() => onOpenEdit(item)}
-                    onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
-                    scope={item.scope}
-                    subtitle={
-                      item.plioType ? toPlioTypeLabel(item.plioType, item.plioType, t) : t('coach.library.type.undefined')
-                    }
-                    t={t}
-                  />
-                </View>
-              ))}
-            </View>
-          )}
-      </ScrollView>
-
-      <LibraryCreateModal
-        cancelLabel={t('coach.clients.modal.cancel')}
-        isSubmitting={createMutation.isPending}
-        onClose={() => setCreateModalVisible(false)}
-        onSubmit={onCreate}
-        submitLabel={t('coach.library.actions.create')}
-        submittingLabel={t('coach.library.exercises.modal.creating')}
-        title={t('coach.library.exercises.modal.title')}
-        visible={createModalVisible}
-        formContent={
-          <PlioBaseFields
-            form={form as unknown as Record<string, string>}
-            plioTypeOptions={chips.filter((item) => item.id !== 'all')}
-            setField={setField}
-            t={t}
-          />
-        }
-        mediaContent={
-          <LibraryMediaFields
-            category="plio"
-            imageUrl={form.mediaUrl}
-            isUploading={uploadImageMutation.isPending}
-            onUpload={() => onUploadImage(false)}
-            onRemoveImage={() => setField('mediaUrl')('')}
-            setYoutubeUrl={setField('youtubeUrl')}
-            t={t}
-            youtubeUrl={form.youtubeUrl}
-          />
-        }
-        errorContent={createError ? <Text style={styles.error}>{t(createError)}</Text> : null}
-      />
-
-      <LibraryCreateModal
-        cancelLabel={t('coach.clients.modal.cancel')}
-        isSubmitting={updateMutation.isPending}
-        onClose={() => setEditModalVisible(false)}
-        onSubmit={onSaveEdit}
-        submitLabel={t('coach.library.exercises.editModal.save')}
-        submittingLabel={t('coach.library.exercises.editModal.saving')}
-        title={t('coach.library.exercises.editModal.title')}
-        visible={editModalVisible}
-        formContent={
-          <PlioBaseFields
-            form={form as unknown as Record<string, string>}
-            plioTypeOptions={chips.filter((item) => item.id !== 'all')}
-            setField={setField}
-            t={t}
-          />
-        }
-        mediaContent={
-          <LibraryMediaFields
-            category="plio"
-            imageUrl={form.mediaUrl}
-            isUploading={uploadImageMutation.isPending}
-            onUpload={() => onUploadImage(true)}
-            onRemoveImage={() => setField('mediaUrl')('')}
-            setYoutubeUrl={setField('youtubeUrl')}
-            t={t}
-            youtubeUrl={form.youtubeUrl}
-          />
-        }
-        errorContent={editError ? <Text style={styles.error}>{t(editError)}</Text> : null}
-      />
-
-      <LibraryItemDetailModal
-        item={
-          expandedItem
-            ? {
-                ...expandedItem,
-                description: expandedItem.description || expandedItem.notes,
-                methodType: expandedItem.plioType
-                  ? toPlioTypeLabel(expandedItem.plioType, expandedItem.plioType, t)
-                  : undefined,
-              }
-            : null
-        }
-        onClose={() => setExpandedId('')}
-        t={t}
-        type="plio"
-      />
-
-      <ActionConfirmModal
-        cancelLabel={t('coach.clients.modal.cancel')}
-        confirmLabel={t('coach.library.exercises.actions.delete')}
-        message={t('coach.library.exercises.actions.deleteConfirm')}
-        onCancel={() => setPendingDeleteId('')}
-        onConfirm={onConfirmDelete}
-        title={t('coach.library.confirm.title')}
-        visible={Boolean(pendingDeleteId)}
-      />
-    </View>
-  );
-}
-
-function TopBar({
-  t,
-  query,
-  setQuery,
-  onOpenCreate,
-}: {
-  t: (key: string) => string;
-  query: string;
-  setQuery: (value: string) => void;
-  onOpenCreate: () => void;
-}) {
-  return (
-    <View style={topBarStyles.container}>
-      <Text style={topBarStyles.title}>{t('coach.library.plyometrics.title')}</Text>
-      <View style={topBarStyles.actions}>
-        <View style={topBarStyles.searchWrapper}>
-          <SearchBar onChangeText={setQuery} placeholder={t('coach.library.exercises.searchPlaceholder')} value={query} />
-        </View>
-        <Button label={t('coach.library.actions.create')} onPress={onOpenCreate} />
-      </View>
-    </View>
-  );
-}
-
-const topBarStyles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: space.xxxl,
-    paddingVertical: space.xl,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    width: '100%',
-  },
-  title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
-  searchWrapper: { width: 320 },
-});
-
-function toPlioTypeLabel(id: string, fallback: string, t: (key: string) => string): string {
+const config: LibraryCategoryConfig<PlioExerciseLibraryItem, PlioCreateFormState> = {
+  category: 'plio',
+  titleKey: 'coach.library.plyometrics.title',
+  listKey: LIST_KEYS.libraryPlio,
+  emptyForm: EMPTY_PLIO_FORM,
+  Fields: PlioBaseFields,
+  useItems: ({ query, type }) => useLibraryPlioExercisesQuery({ query, plioType: type }),
+  useCatalog: useLibraryPlioTypesQuery,
+  useCreate: useCreatePlioExerciseMutation,
+  useUpdate: useUpdatePlioExerciseMutation,
+  useDelete: useDeletePlioExerciseMutation,
+  toForm: (item) => ({
+    name: item.name,
+    description: item.description ?? '',
+    equipment: item.equipment ?? '',
+    plioType: item.plioType ?? 'undefined',
+    mediaUrl: item.media?.url ?? '',
+    youtubeUrl: item.youtubeUrl ?? '',
+  }),
+  imageUrl: (item) => item.media?.url,
+  subtitle: (item, t) => typeLabel(item.plioType ?? 'undefined', item.plioType ?? '', t),
+  typeLabel,
+};
+function typeLabel(id: string, fallback: string, t: (key: string) => string): string {
   if (id === 'undefined') return t('coach.library.type.undefined');
-  if (id === 'intensive' || id === 'extensive' || id === 'explosivo' || id === 'relajado') {
-    return t(`coach.library.plio.type.${id}`);
-  }
-  return fallback;
+  const key = 'coach.library.plio.type.' + id;
+  const translated = t(key);
+  return translated !== key ? translated : fallback;
 }
-
-const gridStyles = StyleSheet.create({
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.xl,
-    width: '100%' as DimensionValue,
-  },
-  gridItem: { width: 340 },
-});
+export function LibraryPlioScreen(): React.JSX.Element {
+  return <LibraryCategoryScreen config={config} />;
+}

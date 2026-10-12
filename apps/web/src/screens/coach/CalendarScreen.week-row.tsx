@@ -1,21 +1,29 @@
+import {
+  getLayoutStyle1,
+  getLayoutStyle2,
+  getLayoutStyle3,
+  getLayoutStyle4,
+  getLayoutStyle5,
+} from './CalendarScreen.week-row.layout-styles';
+import { WebBox } from '@trainerpro/ui';
 import React, { useState } from 'react';
 import { ClipboardPaste, Copy, GripVertical } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import type { CalendarCell } from './calendar-screen.utils';
 import { CalendarDayCell } from './CalendarScreen.grid';
-import { colors as tk, space } from '@trainerpro/ui';
-
+import { colors as tk } from '@trainerpro/ui';
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
 export type CalendarClipboard =
-  | { type: 'week'; sourceDates: string[]; events: CalendarEventData[] }
-  | { type: 'day'; sourceDate: string; events: CalendarEventData[] };
-
-const colors = {
-  primary: tk.primary,
-  textMuted: tk.textMuted,
-};
-
+  | {
+      type: 'week';
+      sourceDates: string[];
+      events: CalendarEventData[];
+    }
+  | {
+      type: 'day';
+      sourceDate: string;
+      events: CalendarEventData[];
+    };
 function WeekGripHandle({
   isWeekDragOver,
   canPasteWeek,
@@ -34,55 +42,46 @@ function WeekGripHandle({
   t: TFunc;
 }): React.JSX.Element {
   const [isHover, setIsHover] = useState(false);
+  const layoutStyle1 = getLayoutStyle1(isWeekDragOver ? tk.primarySoft : tk.surfaceMuted);
+  const layoutStyle2 = getLayoutStyle2;
+  const layoutStyle3 = getLayoutStyle3;
   return (
-    <div
+    <WebBox
       draggable
       onDragStart={onDragStart}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
       title={t('coach.calendar.week.dragHandle')}
-      style={{
-        width: 20,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: space.xs,
-        cursor: 'grab',
-        flexShrink: 0,
-        backgroundColor: isWeekDragOver ? tk.primarySoft : tk.surfaceMuted,
-        borderRight: `1px solid ${tk.border}`,
-      }}
+      style={layoutStyle1}
     >
-      <GripVertical size={12} color={colors.textMuted} />
+      <GripVertical size={12} color={tk.textMuted} />
       {isHover && (
-        <div
+        <WebBox
           onClick={(e) => {
             e.stopPropagation();
             onCopyWeek(weekDates);
           }}
           title={t('coach.calendar.clipboard.copyWeek')}
-          style={{ cursor: 'pointer', lineHeight: 0 }}
+          style={layoutStyle2}
         >
-          <Copy size={11} color={colors.primary} />
-        </div>
+          <Copy size={11} color={tk.primary} />
+        </WebBox>
       )}
       {isHover && canPasteWeek && (
-        <div
+        <WebBox
           onClick={(e) => {
             e.stopPropagation();
             onPasteWeek(weekDates);
           }}
           title={t('coach.calendar.clipboard.pasteWeek')}
-          style={{ cursor: 'pointer', lineHeight: 0 }}
+          style={layoutStyle3}
         >
-          <ClipboardPaste size={11} color={colors.primary} />
-        </div>
+          <ClipboardPaste size={11} color={tk.primary} />
+        </WebBox>
       )}
-    </div>
+    </WebBox>
   );
 }
-
 type WeekRowProps = {
   cells: CalendarCell[];
   todayStr: string;
@@ -98,7 +97,6 @@ type WeekRowProps = {
   onPasteDay: (dateStr: string) => void;
   t: TFunc;
 };
-
 export function WeekRow({
   cells,
   todayStr,
@@ -117,7 +115,6 @@ export function WeekRow({
   const [isWeekDragOver, setIsWeekDragOver] = useState(false);
   const weekDates = cells.map((c) => c.dateStr);
   const canPasteWeek = clipboard?.type === 'week';
-
   function handleGripDragStart(e: React.DragEvent<HTMLDivElement>) {
     e.dataTransfer.setData('weekDates', JSON.stringify(weekDates));
     e.dataTransfer.effectAllowed = 'move';
@@ -139,19 +136,10 @@ export function WeekRow({
     e.stopPropagation();
     onMoveWeek(JSON.parse(raw) as string[], weekDates);
   }
-
+  const layoutStyle4 = getLayoutStyle4(isWeekDragOver ? `2px solid ${tk.primary}` : '2px solid transparent');
+  const layoutStyle5 = getLayoutStyle5;
   return (
-    <div
-      onDragOver={handleWeekDragOver}
-      onDragLeave={handleWeekDragLeave}
-      onDrop={handleWeekDrop}
-      style={{
-        display: 'flex',
-        outline: isWeekDragOver ? `2px solid ${tk.primary}` : '2px solid transparent',
-        outlineOffset: '-2px',
-        transition: 'outline 0.1s',
-      }}
-    >
+    <WebBox onDragOver={handleWeekDragOver} onDragLeave={handleWeekDragLeave} onDrop={handleWeekDrop} style={layoutStyle4}>
       <WeekGripHandle
         isWeekDragOver={isWeekDragOver}
         canPasteWeek={canPasteWeek}
@@ -161,7 +149,7 @@ export function WeekRow({
         onPasteWeek={onPasteWeek}
         t={t}
       />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', flex: 1, minWidth: 0 }}>
+      <WebBox style={layoutStyle5}>
         {cells.map((cell, i) => {
           const dayEvents = eventsByDate[cell.dateStr] ?? [];
           return (
@@ -180,7 +168,7 @@ export function WeekRow({
             />
           );
         })}
-      </div>
-    </div>
+      </WebBox>
+    </WebBox>
   );
 }

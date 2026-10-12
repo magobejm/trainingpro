@@ -95,11 +95,11 @@ export function createReminderSaveHandler(
   selectedClientId: string | undefined,
   setModal: React.Dispatch<React.SetStateAction<ModalState>>,
 ) {
-  return (data: { content: string; time: string; color: string }) => {
+  return (data: { date?: string; content: string; time: string; color: string }) => {
     if (modal.type !== 'addReminder' || !selectedClientId) return;
     proposeCall.mutate(
-      { clientId: selectedClientId, date: modal.dateStr, time: data.time },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
+      { clientId: selectedClientId, date: data.date ?? modal.dateStr, time: data.time },
+      { onSuccess: () => setModal({ type: 'day', dateStr: data.date ?? modal.dateStr }) },
     );
   };
 }
@@ -126,14 +126,19 @@ export function createReminderUpdateHandler(
   modal: ModalState,
   setModal: React.Dispatch<React.SetStateAction<ModalState>>,
 ) {
-  return (data: { content: string; time: string; color: string }) => {
+  return (data: { date?: string; content: string; time: string; color: string }) => {
     if (modal.type !== 'editReminder') return;
     updateEvent.mutate(
       {
         eventId: modal.event.id,
-        input: { content: data.content || undefined, time: data.time || undefined, color: data.color },
+        input: {
+          date: data.date ?? modal.dateStr,
+          content: data.content || undefined,
+          time: data.time || undefined,
+          color: data.color,
+        },
       },
-      { onSuccess: () => setModal({ type: 'day', dateStr: modal.dateStr }) },
+      { onSuccess: () => setModal({ type: 'day', dateStr: data.date ?? modal.dateStr }) },
     );
   };
 }
@@ -142,7 +147,7 @@ export function createEditEventHandler(setModal: React.Dispatch<React.SetStateAc
   return (event: CalendarEventData) => {
     const dateStr = toIso(event.date);
     if (event.type === 'note') setModal({ type: 'editNote', event, dateStr });
-    else if (event.type === 'reminder') setModal({ type: 'editReminder', event, dateStr });
+    else if (event.type === 'reminder' || event.type === 'call') setModal({ type: 'editReminder', event, dateStr });
   };
 }
 
@@ -167,6 +172,7 @@ export function createCopyPasteHandlers(
   clipboard: CalendarClipboard | null,
   setClipboard: React.Dispatch<React.SetStateAction<CalendarClipboard | null>>,
   events: CalendarEventData[],
+  proposeCall: ReturnType<typeof import('../../data/hooks/useChat').useCreateCallProposalMutation>,
 ) {
   function handleCopyWeek(dates: string[]) {
     setClipboard({
@@ -189,6 +195,10 @@ export function createCopyPasteHandlers(
       const tgt = targetDates[i];
       if (!src || !tgt) continue;
       for (const ev of clipboard.events.filter(isMovableCalendarEvent).filter((e) => toIso(e.date) === src)) {
+        if (ev.type === 'call') {
+          if (ev.clientId && ev.time) proposeCall.mutate({ clientId: ev.clientId, date: tgt, time: ev.time });
+          continue;
+        }
         createEvent.mutate({
           type: ev.type,
           date: tgt,
@@ -205,6 +215,10 @@ export function createCopyPasteHandlers(
   function handlePasteDay(targetDateStr: string) {
     if (!clipboard || clipboard.type !== 'day') return;
     for (const ev of clipboard.events.filter(isMovableCalendarEvent)) {
+      if (ev.type === 'call') {
+        if (ev.clientId && ev.time) proposeCall.mutate({ clientId: ev.clientId, date: targetDateStr, time: ev.time });
+        continue;
+      }
       createEvent.mutate({
         type: ev.type,
         date: targetDateStr,

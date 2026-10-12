@@ -83,8 +83,9 @@ describe('CreateCallProposalUseCase', () => {
 
 describe('RespondCallProposalUseCase', () => {
   const prisma = {
-    callProposal: { findUnique: jest.fn(), update: jest.fn() },
-    calendarEvent: { create: jest.fn() },
+    callProposal: { findUnique: jest.fn(), update: jest.fn(), updateMany: jest.fn(), create: jest.fn() },
+    $transaction: jest.fn(),
+    calendarEvent: { create: jest.fn(), updateMany: jest.fn() },
     chatMessage: { create: jest.fn() },
     chatThread: { update: jest.fn() },
   };
@@ -102,7 +103,10 @@ describe('RespondCallProposalUseCase', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    prisma.$transaction.mockImplementation(async (fn) => fn(prisma));
     prisma.callProposal.findUnique.mockResolvedValue(pending);
+    prisma.callProposal.updateMany.mockResolvedValue({ count: 1 });
+    prisma.callProposal.create.mockResolvedValue({ id: 'replacement-1' });
     prisma.callProposal.update.mockResolvedValue({});
     prisma.calendarEvent.create.mockResolvedValue({ id: 'event-1' });
     prisma.chatMessage.create.mockResolvedValue({});
@@ -119,7 +123,7 @@ describe('RespondCallProposalUseCase', () => {
       }),
     );
     expect(prisma.callProposal.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { calendarEventId: 'event-1', status: 'accepted' } }),
+      expect.objectContaining({ data: { calendarEventId: 'event-1' } }),
     );
   });
 
@@ -137,12 +141,18 @@ describe('RespondCallProposalUseCase', () => {
     );
   });
 
-  it('counter changes the time and the last proposer', async () => {
+  it('counter cancels the previous proposal and creates a distinct card for the new time', async () => {
     const result = await new RespondCallProposalUseCase(prisma as never).counter(CLIENT_AUTH, 'proposal-1', '18:00');
 
-    expect(result).toEqual({ proposedTime: '18:00', status: 'pending' });
-    expect(prisma.callProposal.update).toHaveBeenCalledWith(
-      expect.objectContaining({ data: { lastProposedBy: 'CLIENT', proposedTime: '18:00' } }),
+    expect(result).toEqual({ id: 'replacement-1', proposedTime: '18:00', status: 'pending' });
+    expect(prisma.callProposal.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 'proposal-1', status: 'pending' }),
+        data: { status: 'cancelled' },
+      }),
+    );
+    expect(prisma.callProposal.create).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ lastProposedBy: 'CLIENT', proposedTime: '18:00' }) }),
     );
     expect(prisma.calendarEvent.create).not.toHaveBeenCalled();
   });

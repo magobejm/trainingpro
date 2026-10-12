@@ -1,3 +1,4 @@
+import { colors } from '@trainerpro/ui';
 export type CalendarEventType = 'call' | 'note' | 'physical_test' | 'reminder' | 'workout';
 
 export type CallStatus = 'accepted' | 'pending' | 'unconfirmed';
@@ -30,13 +31,13 @@ export type CalendarColor = {
 };
 
 export const CALENDAR_COLORS: CalendarColor[] = [
-  { bg: '#dbeafe', text: '#1d4ed8', border: '#bfdbfe' }, // blue
-  { bg: '#dcfce7', text: '#15803d', border: '#bbf7d0' }, // green
-  { bg: '#f3e8ff', text: '#7e22ce', border: '#e9d5ff' }, // purple
-  { bg: '#ffedd5', text: '#c2410c', border: '#fed7aa' }, // orange
-  { bg: '#ffe4e6', text: '#be123c', border: '#fecdd3' }, // rose
-  { bg: '#fef9c3', text: '#a16207', border: '#fef08a' }, // yellow
-  { bg: '#e0e7ff', text: '#4338ca', border: '#c7d2fe' }, // indigo
+  { bg: colors.primarySoft, text: colors.primary, border: colors.primaryBorder },
+  { bg: colors.successSoft, text: colors.success, border: colors.success },
+  { bg: colors.chartPurpleSoft, text: colors.chartPurple, border: colors.chartPurple },
+  { bg: colors.warningSoft, text: colors.warning, border: colors.warning },
+  { bg: colors.dangerSoft, text: colors.danger, border: colors.danger },
+  { bg: colors.chartTealSoft, text: colors.chartTeal, border: colors.chartTeal },
+  { bg: colors.infoSoft, text: colors.info, border: colors.info },
 ];
 
 export const DEFAULT_COLOR = CALENDAR_COLORS[0];

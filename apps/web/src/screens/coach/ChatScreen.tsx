@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
-import { Banner, Button, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Banner, Button, ClientCardRow, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
-import { ClientSelectionStrip } from './components/ClientSelectionStrip';
+import { clientCardItems } from './client-card-items';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
 import { ChatMessageBubble } from './components/ChatMessageBubble';
@@ -28,7 +28,7 @@ function useChatViewModel() {
   const threadQuery = useCoachThreadQuery(clientId);
   const threadId = threadQuery.data?.id ?? '';
   const messagesQuery = useChatMessagesQuery(threadId);
-  const clientItems = useMemo(() => toClientCards(clientsQuery.data ?? []), [clientsQuery.data]);
+  const clientItems = useMemo(() => clientCardItems(clientsQuery.data ?? [], t), [clientsQuery.data, t]);
   const composer = useMessageComposer(threadId, t);
   return {
     ...composer,
@@ -161,16 +161,7 @@ function renderClientStrip(props: ViewModel): React.JSX.Element {
   if (status) {
     return status;
   }
-  return (
-    <ClientSelectionStrip
-      emptyLabel={props.t('coach.clients.empty')}
-      items={props.clientItems}
-      loading={false}
-      onSelect={props.setClientId}
-      selectedId={props.clientId}
-      showArrows
-    />
-  );
+  return <ClientCardRow items={props.clientItems} onItemPress={props.setClientId} selectedId={props.clientId} />;
 }
 
 function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
@@ -200,23 +191,6 @@ function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
       ))}
     </View>
   );
-}
-
-function toClientCards(
-  clients: Array<{
-    avatarUrl: null | string;
-    email: string;
-    firstName: string;
-    id: string;
-    lastName: string;
-  }>,
-) {
-  return clients.map((client) => ({
-    avatarUrl: client.avatarUrl,
-    email: client.email,
-    id: client.id,
-    name: `${client.firstName} ${client.lastName}`.trim(),
-  }));
 }
 
 const styles = StyleSheet.create({

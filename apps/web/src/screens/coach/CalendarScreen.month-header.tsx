@@ -1,141 +1,10 @@
-import React, { useRef, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Badge, Button, IconButton, Modal, colors, fontSize, space } from '@trainerpro/ui';
 import { MONTH_NAMES_ES, DAY_NAMES_ES } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
-import { IconButton, colors as tk, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
-
-type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
-const colors = {
-  primary: tk.primary,
-  text: tk.text,
-  textMuted: tk.textMuted,
-  border: tk.border,
-};
-
-function ClipboardBadge({
-  clipboard,
-  onClear,
-  t,
-}: {
-  clipboard: CalendarClipboard | null;
-  onClear: () => void;
-  t: TFunc;
-}): React.JSX.Element | null {
-  if (!clipboard) return null;
-  const label =
-    clipboard.type === 'week' ? t('coach.calendar.clipboard.weekCopied') : t('coach.calendar.clipboard.dayCopied');
-  return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: space.sm,
-        backgroundColor: tk.primarySoft,
-        border: `1px solid ${tk.primaryBorder}`,
-        borderRadius: radius.md,
-        padding: '4px 10px',
-        fontSize: fontSize.xs,
-        color: colors.primary,
-        fontWeight: 500,
-      }}
-    >
-      <span>{label}</span>
-      <IconButton
-        accessibilityLabel={t('coach.calendar.clipboard.clear')}
-        icon={(color) => <X size={12} color={color} />}
-        onPress={onClear}
-        size={20}
-      />
-    </div>
-  );
-}
-
-function MonthPicker({
-  currentYear,
-  currentMonth,
-  anchorTop,
-  anchorLeft,
-  onGoTo,
-  onClose,
-  t,
-}: {
-  currentYear: number;
-  currentMonth: number;
-  anchorTop: number;
-  anchorLeft: number;
-  onGoTo: (year: number, month: number) => void;
-  onClose: () => void;
-  t: TFunc;
-}): React.JSX.Element {
-  const [pickerYear, setPickerYear] = useState(currentYear);
-  return ReactDOM.createPortal(
-    <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 999 }} />
-      <div
-        style={{
-          position: 'fixed',
-          top: anchorTop,
-          left: anchorLeft,
-          zIndex: 1000,
-          backgroundColor: 'white',
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.md,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          padding: space.lg,
-          minWidth: 240,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md }}>
-          <IconButton
-            accessibilityLabel={t('coach.calendar.header.prevYear')}
-            icon={(color) => <ChevronLeft color={color} size={16} />}
-            onPress={() => setPickerYear((y) => y - 1)}
-            size={32}
-          />
-          <span style={{ fontWeight: 'bold', fontSize: fontSize.md, color: colors.text }}>{pickerYear}</span>
-          <IconButton
-            accessibilityLabel={t('coach.calendar.header.nextYear')}
-            icon={(color) => <ChevronRight color={color} size={16} />}
-            onPress={() => setPickerYear((y) => y + 1)}
-            size={32}
-          />
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: space.sm }}>
-          {MONTH_NAMES_ES.map((name, i) => {
-            const isSelected = pickerYear === currentYear && i === currentMonth;
-            return (
-              <button
-                key={i}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onGoTo(pickerYear, i);
-                  onClose();
-                }}
-                style={{
-                  border: 'none',
-                  borderRadius: radius.sm,
-                  padding: '7px 4px',
-                  fontSize: fontSize.xs,
-                  cursor: 'pointer',
-                  fontWeight: isSelected ? 'bold' : 'normal',
-                  backgroundColor: isSelected ? colors.primary : 'transparent',
-                  color: isSelected ? 'white' : colors.text,
-                }}
-              >
-                {name.slice(0, 3)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </>,
-    document.body,
-  );
-}
-
+type TFunc = (key: string, opts?: Record<string, unknown>) => string;
 export type CalendarMonthHeaderProps = {
   year: number;
   month: number;
@@ -146,90 +15,132 @@ export type CalendarMonthHeaderProps = {
   onClearClipboard: () => void;
   t: TFunc;
 };
-
-export function CalendarMonthHeader({
+function MonthPicker({
   year,
   month,
-  clipboard,
-  onPrevMonth,
-  onNextMonth,
   onGoTo,
-  onClearClipboard,
+  onClose,
   t,
-}: CalendarMonthHeaderProps): React.JSX.Element {
-  const [showPicker, setShowPicker] = useState(false);
-  const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
-  const titleRef = useRef<HTMLDivElement>(null);
-  const compact = useBreakpoint() === 'sm';
-
-  function handleTitleClick() {
-    if (titleRef.current) {
-      const rect = titleRef.current.getBoundingClientRect();
-      setAnchor({ top: rect.bottom + 4, left: rect.left });
-    }
-    setShowPicker((v) => !v);
-  }
-
+}: {
+  year: number;
+  month: number;
+  onGoTo: CalendarMonthHeaderProps['onGoTo'];
+  onClose: () => void;
+  t: TFunc;
+}): React.JSX.Element {
+  const [pickerYear, setPickerYear] = useState(year);
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: space.sm,
-        padding: compact ? space.lg : space.xl,
-        borderBottomWidth: 1,
-        borderColor: colors.border,
-        flexShrink: 0,
-      }}
-    >
-      <div ref={titleRef} onClick={handleTitleClick} style={{ cursor: 'pointer' }}>
-        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: colors.text }}>
-          {MONTH_NAMES_ES[month]} {year}
-        </Text>
-      </div>
-      {showPicker && anchor && (
-        <MonthPicker
-          currentYear={year}
-          currentMonth={month}
-          anchorTop={anchor.top}
-          anchorLeft={anchor.left}
-          onGoTo={onGoTo}
-          onClose={() => setShowPicker(false)}
-          t={t}
-        />
-      )}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
-        <ClipboardBadge clipboard={clipboard} onClear={onClearClipboard} t={t} />
+    <Modal title={String(pickerYear)} closeLabel={t('common.close')} onClose={onClose} size="sm" visible>
+      <View style={styles.yearRow}>
         <IconButton
-          accessibilityLabel={t('coach.calendar.header.prevMonth')}
+          accessibilityLabel={t('coach.calendar.header.prevYear')}
           icon={(color) => <ChevronLeft color={color} size={16} />}
-          onPress={onPrevMonth}
+          onPress={() => setPickerYear((value) => value - 1)}
+        />
+        <Text style={styles.year}>{pickerYear}</Text>
+        <IconButton
+          accessibilityLabel={t('coach.calendar.header.nextYear')}
+          icon={(color) => <ChevronRight color={color} size={16} />}
+          onPress={() => setPickerYear((value) => value + 1)}
+        />
+      </View>
+      <View style={styles.months}>
+        {MONTH_NAMES_ES.map((name, index) => (
+          <Button
+            key={name}
+            label={name.slice(0, 3)}
+            variant={pickerYear === year && index === month ? 'primary' : 'secondary'}
+            size="sm"
+            style={styles.month}
+            onPress={() => {
+              onGoTo(pickerYear, index);
+              onClose();
+            }}
+          />
+        ))}
+      </View>
+    </Modal>
+  );
+}
+export function CalendarMonthHeader(props: CalendarMonthHeaderProps): React.JSX.Element {
+  const [showPicker, setShowPicker] = useState(false);
+  return (
+    <View style={styles.header}>
+      <Button label={MONTH_NAMES_ES[props.month] + ' ' + props.year} onPress={() => setShowPicker(true)} variant="ghost" />
+      {showPicker ? (
+        <MonthPicker
+          year={props.year}
+          month={props.month}
+          onGoTo={props.onGoTo}
+          onClose={() => setShowPicker(false)}
+          t={props.t}
+        />
+      ) : null}
+      <View style={styles.actions}>
+        {props.clipboard ? (
+          <View style={styles.actions}>
+            <Badge
+              label={props.t(
+                props.clipboard.type === 'week'
+                  ? 'coach.calendar.clipboard.weekCopied'
+                  : 'coach.calendar.clipboard.dayCopied',
+              )}
+              tone="primary"
+            />
+            <IconButton
+              accessibilityLabel={props.t('coach.calendar.clipboard.clear')}
+              icon={(color) => <X color={color} size={12} />}
+              onPress={props.onClearClipboard}
+              size={28}
+            />
+          </View>
+        ) : null}
+        <IconButton
+          accessibilityLabel={props.t('coach.calendar.header.prevMonth')}
+          icon={(color) => <ChevronLeft color={color} size={16} />}
+          onPress={props.onPrevMonth}
           size={36}
         />
         <IconButton
-          accessibilityLabel={t('coach.calendar.header.nextMonth')}
+          accessibilityLabel={props.t('coach.calendar.header.nextMonth')}
           icon={(color) => <ChevronRight color={color} size={16} />}
-          onPress={onNextMonth}
+          onPress={props.onNextMonth}
           size={36}
         />
       </View>
     </View>
   );
 }
-
 export function CalendarDayNames(): React.JSX.Element {
   return (
-    <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 }}>
-      <View style={{ width: 20, flexShrink: 0 }} />
-      {DAY_NAMES_ES.map((dayName) => (
-        <View key={dayName} style={{ flex: 1, paddingVertical: space.md, alignItems: 'center' }}>
-          <Text style={{ fontSize: fontSize.xs, fontWeight: 'bold', color: colors.textMuted, letterSpacing: 0.5 }}>
-            {dayName.slice(0, 3)}
-          </Text>
+    <View style={styles.days}>
+      <View style={styles.gripSpace} />
+      {DAY_NAMES_ES.map((day) => (
+        <View key={day} style={styles.day}>
+          <Text style={styles.dayText}>{day.slice(0, 3)}</Text>
         </View>
       ))}
     </View>
   );
 }
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    padding: space.lg,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
+  },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  yearRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md },
+  year: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  months: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  month: { flexBasis: '21%', flexGrow: 1 },
+  days: { flexDirection: 'row', borderBottomWidth: 1, borderColor: colors.border, flexShrink: 0 },
+  gripSpace: { width: 20, flexShrink: 0 },
+  day: { flex: 1, paddingVertical: space.md, alignItems: 'center' },
+  dayText: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
+});

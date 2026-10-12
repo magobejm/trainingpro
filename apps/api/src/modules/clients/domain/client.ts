@@ -16,6 +16,7 @@ export type Client = {
   id: string;
   injuries: null | string;
   lastName: string;
+  lastActivityAt?: Date | null;
   notes: null | string;
   objective: string;
   objectiveId: string;

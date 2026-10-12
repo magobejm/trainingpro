@@ -1,9 +1,10 @@
+import { getLayoutStyle1, getLayoutStyle2 } from './RoutineListItem.layout-styles';
+
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Badge, Button } from '@trainerpro/ui';
 import { s } from '../../RoutinePlanner.styles';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
-
 interface RoutineListItemProps {
   clientContextId?: null | string;
   clientContextName?: null | string;
@@ -13,7 +14,6 @@ interface RoutineListItemProps {
   onDelete: (id: string) => void;
   t: (k: string, options?: Record<string, unknown>) => string;
 }
-
 export function RoutineListItem({
   clientContextId,
   clientContextName,
@@ -23,7 +23,12 @@ export function RoutineListItem({
   onDelete,
   t,
 }: RoutineListItemProps) {
-  const isGlobal = (tpl as { scope?: string }).scope === 'GLOBAL';
+  const isGlobal =
+    (
+      tpl as {
+        scope?: string;
+      }
+    ).scope === 'GLOBAL';
   const isAssigned = Boolean(tpl.isAssigned || (tpl.assignedClientsCount ?? 0) > 0);
   const canAssign = Boolean(clientContextId && onAssignTemplate);
   return (
@@ -43,16 +48,17 @@ export function RoutineListItem({
     </>
   );
 }
-
 function TemplateInfo(props: {
   isAssigned: boolean;
   isGlobal: boolean;
   t: (k: string, options?: Record<string, unknown>) => string;
   tpl: RoutineTemplateView;
 }) {
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
   return (
-    <View style={{ flex: 1, minWidth: 0 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <View style={layoutStyle1}>
+      <View style={layoutStyle2}>
         <Text numberOfLines={2} style={s.templateName}>
           {props.tpl.name}
         </Text>
@@ -63,7 +69,6 @@ function TemplateInfo(props: {
     </View>
   );
 }
-
 function TemplateActions(props: {
   canAssign: boolean;
   clientContextName?: null | string;
@@ -97,7 +102,6 @@ function TemplateActions(props: {
     </View>
   );
 }
-
 function resolveAssignLabel(
   clientContextName: null | string | undefined,
   t: (k: string, options?: Record<string, unknown>) => string,
@@ -107,7 +111,6 @@ function resolveAssignLabel(
   }
   return t('common.assign');
 }
-
 function LoadButton(props: {
   isGlobal: boolean;
   onLoad: (tpl: RoutineTemplateView) => void;

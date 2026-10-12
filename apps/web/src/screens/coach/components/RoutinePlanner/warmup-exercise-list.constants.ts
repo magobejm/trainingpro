@@ -20,11 +20,11 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
 
 export const BLOCK_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
   cardio: { bg: colors.primaryBorder, text: colors.primary },
-  isometric: { bg: '#fce7f3', text: '#be185d' },
-  mobility: { bg: '#ecfccb', text: colors.success },
+  isometric: { bg: colors.chartPinkSoft, text: colors.chartPink },
+  mobility: { bg: colors.successSoft, text: colors.success },
   plio: { bg: colors.warningSoft, text: colors.warning },
   sport: { bg: colors.background, text: colors.textMuted },
-  strength: { bg: '#f3e8ff', text: '#9333ea' },
+  strength: { bg: colors.chartPurpleSoft, text: colors.chartPurple },
 };
 
 export const BASE_CATEGORY_MAP: Record<string, string> = {

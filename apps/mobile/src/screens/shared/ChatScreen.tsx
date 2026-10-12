@@ -200,6 +200,7 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
   const tone = proposal.initiatedBy === 'CLIENT' ? CALL_REQUEST_COLOR : CALL_COLOR;
   const canRespond = proposal.status === 'pending' && proposal.lastProposedBy !== 'CLIENT';
   const accepted = proposal.status === 'accepted';
+  const cancelled = proposal.status === 'cancelled';
   const [countering, setCountering] = useState(false);
   const [time, setTime] = useState(proposal.proposedTime);
   const accept = useAcceptCallProposalMutation();
@@ -207,7 +208,13 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
   return (
     <View style={[styles.callCard, { backgroundColor: tone }]}>
       <Text style={styles.callTitle}>
-        {t(accepted ? 'client.chat.call.confirmedTitle' : 'client.chat.call.requestTitle')}
+        {t(
+          cancelled
+            ? 'client.chat.call.cancelledTitle'
+            : accepted
+              ? 'client.chat.call.confirmedTitle'
+              : 'client.chat.call.requestTitle',
+        )}
       </Text>
       <Text style={styles.callText}>{t('client.chat.call.date', { date: proposal.date })}</Text>
       <Text style={styles.callText}>
@@ -222,7 +229,7 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
       {canRespond && !countering ? (
         <CallButton label={t('client.chat.call.counter')} onPress={() => setCountering(true)} />
       ) : null}
-      {countering ? (
+      {countering && canRespond ? (
         <View>
           <CallTimeSelect onChange={setTime} value={time} />
           <CallButton

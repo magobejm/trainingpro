@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -129,7 +130,7 @@ export function useRoutineTemplatesQuery(options?: { summary?: boolean }) {
 export function useCreateRoutineTemplateMutation() {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: UpsertRoutineInput) => createRoutine(auth, input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['routine-templates'] });
@@ -140,7 +141,7 @@ export function useCreateRoutineTemplateMutation() {
 export function useUpdateRoutineTemplateMutation(templateId: string) {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: UpsertRoutineInput & { templateId?: string }) => {
       const { templateId: override, ...body } = input;
       return updateRoutine(auth, override || templateId, body);
@@ -154,7 +155,7 @@ export function useUpdateRoutineTemplateMutation(templateId: string) {
 export function useDeleteRoutineTemplateMutation() {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (templateId: string) => deleteRoutine(auth, templateId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['routine-templates'] });

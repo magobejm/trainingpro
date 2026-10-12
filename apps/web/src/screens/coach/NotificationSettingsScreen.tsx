@@ -1,13 +1,14 @@
+import { QueryResult } from '../../components/AsyncStatus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import {
   useNotificationPreferencesQuery,
   useSetNotificationPreferenceMutation,
   type NotificationPreference,
 } from '../../data/hooks/useNotificationPreferences';
-import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Card, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
@@ -30,21 +31,26 @@ function useNotificationSettingsModel() {
   const query = useNotificationPreferencesQuery();
   const mutation = useSetNotificationPreferenceMutation();
   const update = (topic: NotificationPreference['topic'], enabled: boolean) => mutation.mutate({ enabled, topic });
-  return { query, t, update };
+  return { query, mutation, t, update };
 }
 
 type ViewModel = ReturnType<typeof useNotificationSettingsModel>;
 
 function NotificationSettingsView(props: ViewModel) {
-  if (props.query.isLoading) {
-    return <ActivityIndicator />;
-  }
+  const status = QueryResult({
+    emptyTitle: props.t('coach.notifications.title'),
+    error: props.query.error,
+    isError: props.query.isError,
+    isLoading: props.query.isLoading,
+    itemCount: TOPIC_KEYS.length,
+    onRetry: () => void props.query.refetch(),
+  });
   const preferences = props.query.data ?? [];
   return (
     <View style={styles.page}>
       <Text style={styles.title}>{props.t('coach.notifications.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.notifications.subtitle')}</Text>
-      <View style={styles.list}>{renderRows(TOPIC_KEYS, preferences, props)}</View>
+      {status ?? <Card style={styles.list}>{renderRows(TOPIC_KEYS, preferences, props)}</Card>}
     </View>
   );
 }
@@ -60,6 +66,8 @@ function renderRows(
       <View key={topic} style={styles.row}>
         <Text style={styles.rowLabel}>{labelForTopic(topic, props.t)}</Text>
         <Button
+          loading={props.mutation.isPending && props.mutation.variables?.topic === topic}
+          disabled={props.mutation.isPending}
           label={readToggleLabel(enabled, props.t)}
           onPress={() => props.update(topic, !enabled)}
           size={SIZE_SM}

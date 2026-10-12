@@ -1,3 +1,4 @@
+import { colors } from '@trainerpro/ui';
 import type { ExerciseProgressPoint } from '../../../data/hooks/useExerciseProgressQuery';
 import type { AnalysisMode } from './progress-screen.types';
 
@@ -14,20 +15,20 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
     const pct = Math.round(tonPct);
     insights.push({
       emoji: '📈',
-      color: '#10b981',
+      color: colors.success,
       text: `Tonelaje con tendencia ascendente: +${pct}% respecto al inicio del período.`,
     });
   } else if (tonPct <= -5) {
     const absPct = Math.abs(Math.round(tonPct));
     insights.push({
       emoji: '📉',
-      color: '#ef4444',
+      color: colors.danger,
       text: `El tonelaje ha bajado un ${absPct}%. Puede indicar fatiga acumulada o reducción de volumen.`,
     });
   } else {
     insights.push({
       emoji: '➡️',
-      color: '#3b82f6',
+      color: colors.primary,
       text: 'El tonelaje se mantiene estable en el período (variación <5%).',
     });
   }
@@ -43,7 +44,7 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
       const b = Math.round(lastE1rm);
       insights.push({
         emoji: '💪',
-        color: '#8b5cf6',
+        color: colors.chartPurple,
         text: `El 1RM estimado ha mejorado un ${r}%: de ${a}kg a ${b}kg.`,
       });
     } else if (e1rmPct < 0) {
@@ -51,7 +52,7 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
       const b = Math.round(lastE1rm);
       insights.push({
         emoji: '⚠️',
-        color: '#f59e0b',
+        color: colors.warning,
         text: `El 1RM estimado ha bajado (${a}kg → ${b}kg). Revisa la fatiga o la técnica.`,
       });
     }
@@ -64,13 +65,13 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
     if (recentRpe > 8.5) {
       insights.push({
         emoji: '💡',
-        color: '#f59e0b',
+        color: colors.warning,
         text: `RPE medio reciente elevado (${rpeLabel}). Considera una semana de descarga.`,
       });
     } else if (recentRpe < 7) {
       insights.push({
         emoji: '💡',
-        color: '#3b82f6',
+        color: colors.primary,
         text: `RPE reciente bajo (${rpeLabel}). Hay margen para progresar en carga o volumen.`,
       });
     }
@@ -90,14 +91,14 @@ function buildSessionInsights(sessionPoints: SessionPoint[]): InsightItem[] {
   if (tonPct >= 5) {
     insights.push({
       emoji: '📈',
-      color: '#10b981',
+      color: colors.success,
       text: `Tonelaje por sesión en aumento: +${Math.round(tonPct)}% respecto al inicio.`,
     });
   } else if (tonPct <= -5) {
     const absPct = Math.abs(Math.round(tonPct));
     insights.push({
       emoji: '📉',
-      color: '#ef4444',
+      color: colors.danger,
       text: `El tonelaje por sesión ha bajado un ${absPct}%.`,
     });
   }
@@ -109,13 +110,13 @@ function buildSessionInsights(sessionPoints: SessionPoint[]): InsightItem[] {
     if (recentRpe > 8.5) {
       insights.push({
         emoji: '💡',
-        color: '#f59e0b',
+        color: colors.warning,
         text: `RPE de sesión elevado en las últimas semanas (${rpeLabel}). Valora reducir la carga.`,
       });
     } else {
       insights.push({
         emoji: '✅',
-        color: '#10b981',
+        color: colors.success,
         text: `RPE de sesión controlado (${rpeLabel}). La intensidad está en rango óptimo.`,
       });
     }
@@ -136,21 +137,21 @@ function buildMicrocycleInsights(microPoints: MicroPoint[]): InsightItem[] {
   const avgSessionsLabel = Math.round(avgSessions * 10) / 10;
   insights.push({
     emoji: '🗓️',
-    color: '#3b82f6',
+    color: colors.primary,
     text: `Promedio de ${avgSessionsLabel} sesiones por semana en el período analizado.`,
   });
 
   if (tonPct >= 5) {
     insights.push({
       emoji: '📈',
-      color: '#10b981',
+      color: colors.success,
       text: `Tonelaje semanal en progresión: +${Math.round(tonPct)}% en las últimas semanas.`,
     });
   } else if (tonPct <= -10) {
     const absPct = Math.abs(Math.round(tonPct));
     insights.push({
       emoji: '📉',
-      color: '#ef4444',
+      color: colors.danger,
       text: `El volumen semanal ha caído un ${absPct}%. Revisa la adherencia o planifica recarga.`,
     });
   }

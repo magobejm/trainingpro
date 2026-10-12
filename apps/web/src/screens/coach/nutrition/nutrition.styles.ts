@@ -1,22 +1,11 @@
 import { StyleSheet } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-export const COLORS = {
-  accent: colors.primary,
-  bg: colors.background,
-  border: colors.border,
-  card: colors.surface,
-  danger: colors.danger,
-  muted: colors.textMuted,
-  success: colors.success,
-  text: colors.text,
-};
-
 export const styles = StyleSheet.create({
   actionCircle: {
     alignItems: 'center',
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
     height: 120,
@@ -25,7 +14,7 @@ export const styles = StyleSheet.create({
     width: 120,
   },
   actionCircleLabel: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.sm,
     fontWeight: '600',
     marginTop: space.sm,
@@ -47,20 +36,20 @@ export const styles = StyleSheet.create({
     marginBottom: space.md,
   },
   card: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     marginBottom: space.md,
     padding: space.lg,
   },
   cardMuted: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
     marginTop: space.xs,
   },
   cardTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: '700',
   },
@@ -73,10 +62,10 @@ export const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   chipActive: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.primary,
   },
   chipLabel: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -84,8 +73,8 @@ export const styles = StyleSheet.create({
     color: colors.surface,
   },
   column: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     marginRight: space.md,
@@ -94,13 +83,13 @@ export const styles = StyleSheet.create({
     padding: space.md,
   },
   columnTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.sm,
     fontWeight: '700',
     marginBottom: space.sm,
   },
   container: {
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.background,
     flex: 1,
     minHeight: '100%',
     padding: space.xl,
@@ -112,7 +101,7 @@ export const styles = StyleSheet.create({
     marginTop: space.md,
   },
   fieldLabel: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     fontWeight: '600',
     marginBottom: space.xs,
@@ -124,12 +113,12 @@ export const styles = StyleSheet.create({
     marginBottom: space.sm,
   },
   headerSubtitle: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
     marginTop: space.xs,
   },
   headerTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xl,
     fontWeight: '800',
   },
@@ -147,8 +136,8 @@ export const styles = StyleSheet.create({
     width: 48,
   },
   listItem: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.md,
     borderWidth: 1,
     marginBottom: space.sm,
@@ -162,7 +151,7 @@ export const styles = StyleSheet.create({
     padding: space.md,
   },
   macroLabel: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -171,21 +160,21 @@ export const styles = StyleSheet.create({
     marginTop: space.md,
   },
   macroValue: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: '700',
     marginTop: space.xs,
   },
   searchCard: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     marginTop: space.lg,
     padding: space.lg,
   },
   sectionTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.md,
     fontWeight: '700',
     marginBottom: space.sm,

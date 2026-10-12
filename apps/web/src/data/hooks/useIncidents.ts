@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -31,21 +32,15 @@ export function useIncidentsQuery(query?: ListQuery) {
 }
 
 export function useReviewIncidentMutation() {
-  return useSimpleIncidentMutation((auth, id) =>
-    createApiClient(auth).post(`/incidents/${id}/review`, {}),
-  );
+  return useSimpleIncidentMutation((auth, id) => createApiClient(auth).post(`/incidents/${id}/review`, {}));
 }
 
 export function useRespondIncidentMutation() {
-  return useSimpleIncidentMutation((auth, id, payload) =>
-    createApiClient(auth).post(`/incidents/${id}/respond`, payload),
-  );
+  return useSimpleIncidentMutation((auth, id, payload) => createApiClient(auth).post(`/incidents/${id}/respond`, payload));
 }
 
 export function useTagIncidentMutation() {
-  return useSimpleIncidentMutation((auth, id, payload) =>
-    createApiClient(auth).post(`/incidents/${id}/tag`, payload),
-  );
+  return useSimpleIncidentMutation((auth, id, payload) => createApiClient(auth).post(`/incidents/${id}/tag`, payload));
 }
 
 export function useAdjustmentDraftMutation() {
@@ -55,15 +50,11 @@ export function useAdjustmentDraftMutation() {
 }
 
 function useSimpleIncidentMutation(
-  executor: (
-    auth: NonNullable<ReturnType<typeof useAuth>>,
-    id: string,
-    payload?: unknown,
-  ) => Promise<unknown>,
+  executor: (auth: NonNullable<ReturnType<typeof useAuth>>, id: string, payload?: unknown) => Promise<unknown>,
 ) {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (args: { id: string; payload?: unknown }) => runMutation(auth, executor, args),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['incidents'] });
@@ -80,10 +71,7 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
-async function readIncidents(
-  auth: ReturnType<typeof useAuth>,
-  query?: ListQuery,
-): Promise<IncidentView[]> {
+async function readIncidents(auth: ReturnType<typeof useAuth>, query?: ListQuery): Promise<IncidentView[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -101,11 +89,7 @@ async function readIncidents(
 
 async function runMutation(
   auth: ReturnType<typeof useAuth>,
-  executor: (
-    auth: NonNullable<ReturnType<typeof useAuth>>,
-    id: string,
-    payload?: unknown,
-  ) => Promise<unknown>,
+  executor: (auth: NonNullable<ReturnType<typeof useAuth>>, id: string, payload?: unknown) => Promise<unknown>,
   args: { id: string; payload?: unknown },
 ) {
   if (!auth) {

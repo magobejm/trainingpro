@@ -1,18 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors, fontFamily, fontSize, radius, space } from '@trainerpro/ui';
 
-export const COLORS = {
-  accent: colors.primary,
-  border: colors.border,
-  card: colors.surface,
-  page: colors.surfaceMuted,
-  success: colors.success,
-  successBg: colors.successSoft,
-  text: colors.text,
-  textMuted: colors.textMuted,
-  warning: colors.danger,
-};
-
 export const styles = StyleSheet.create({
   avatar: {
     alignItems: 'center',
@@ -28,7 +16,7 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
   avatarLabelMuted: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
   },
   avatarMuted: {
     backgroundColor: colors.background,
@@ -43,8 +31,8 @@ export const styles = StyleSheet.create({
     marginTop: space.sm,
   },
   hero: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: space.sm,
@@ -65,13 +53,13 @@ export const styles = StyleSheet.create({
   },
   page: {
     alignItems: 'center',
-    backgroundColor: COLORS.page,
+    backgroundColor: colors.surfaceMuted,
     flexGrow: 1,
     padding: space.xl,
   },
   pill: {
     backgroundColor: colors.background,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderRadius: 999,
     borderWidth: 1,
     flexDirection: 'row',
@@ -80,7 +68,7 @@ export const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   pillLabel: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     fontWeight: '600',
   },
@@ -89,14 +77,14 @@ export const styles = StyleSheet.create({
     gap: space.sm,
   },
   pillValue: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xs,
     fontWeight: '800',
   },
   resultBanner: {
     alignItems: 'center',
-    backgroundColor: COLORS.successBg,
-    borderColor: COLORS.success,
+    backgroundColor: colors.successSoft,
+    borderColor: colors.success,
     borderRadius: radius.lg,
     borderWidth: 1,
     bottom: 24,
@@ -114,20 +102,20 @@ export const styles = StyleSheet.create({
     gap: space.xs,
   },
   resultPassword: {
-    color: COLORS.text,
+    color: colors.text,
     fontFamily: fontFamily.mono,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
   resultText: {
-    color: COLORS.success,
+    color: colors.success,
     fontSize: fontSize.sm,
     fontWeight: '600',
   },
   row: {
     alignItems: 'center',
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
@@ -147,25 +135,25 @@ export const styles = StyleSheet.create({
     gap: space.md,
   },
   rowStatus: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
     marginTop: 2,
   },
   rowTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
   rowTitleMuted: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
   },
   subtitle: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
   },
   tabBar: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
@@ -179,10 +167,10 @@ export const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   tabButtonActive: {
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.primary,
   },
   tabButtonLabel: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -190,7 +178,7 @@ export const styles = StyleSheet.create({
     color: colors.surface,
   },
   title: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xl,
     fontWeight: '800',
   },

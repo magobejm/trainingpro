@@ -1,3 +1,12 @@
+import { useMutationFeedback } from '../../data/hooks/useFeedbackMutation';
+import {
+  getLayoutStyle1,
+  getLayoutStyle2,
+  getLayoutStyle3,
+  getLayoutStyle4,
+  getLayoutStyle5,
+} from './CalendarScreen.layout-styles';
+
 import React, { useCallback, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -35,11 +44,9 @@ import {
   createCopyPasteHandlers,
 } from './CalendarScreen.handlers';
 import { useCalendarListContext } from './useCalendarListContext';
-import { colors, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
-
+import { colors, space, useBreakpoint } from '@trainerpro/ui';
 const COLOR_PRIMARY = colors.primary;
 const CALENDAR_STACKED_MIN_HEIGHT = 720;
-
 const rootStyle = (stacked: boolean) =>
   ({
     flex: 1,
@@ -48,7 +55,6 @@ const rootStyle = (stacked: boolean) =>
     minHeight: 0,
     overflow: stacked ? 'scroll' : 'hidden',
   }) as const;
-
 const mainStyle = (stacked: boolean) =>
   ({
     flex: stacked ? undefined : 1,
@@ -57,9 +63,7 @@ const mainStyle = (stacked: boolean) =>
     minHeight: stacked ? CALENDAR_STACKED_MIN_HEIGHT : 0,
     overflow: 'hidden',
   }) as const;
-
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
 function useCalendarLogic() {
   const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
@@ -82,22 +86,19 @@ function useCalendarLogic() {
   const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
   const archiveSchedule = useArchivePhysicalTestScheduleMutation();
+  useMutationFeedback(archiveSchedule);
   const routineDays: RoutineDayCard[] = useMemo(
     () => (routineDaysQuery.data ?? []).map((d) => ({ ...d, color: routineDayColors[d.id] ?? d.color })),
     [routineDaysQuery.data, routineDayColors],
   );
   const events = eventsQuery.data ?? [];
   const dayEvents = useMemo(() => filterDayEvents(events, modal), [events, modal]);
-
   const handlePrevMonth = () => moveToPrevMonth(month, setMonth, setYear);
   const handleNextMonth = () => moveToNextMonth(month, setMonth, setYear);
-  const handleGoTo = useCallback(
-    (y: number, m: number) => {
-      setYear(y);
-      setMonth(m);
-    },
-    [setMonth, setYear],
-  );
+  const handleGoTo = (year: number, month: number) => {
+    setYear(year);
+    setMonth(month);
+  };
   const handleDayClick = (dateStr: string) => setModal({ type: 'day', dateStr });
   const handleDeleteEvent = (eventId: string) => {
     const event = events.find((item) => item.id === eventId);
@@ -114,6 +115,7 @@ function useCalendarLogic() {
     clipboard,
     setClipboard,
     events,
+    proposeCall,
   );
   const handleClearClipboard = useCallback(() => setClipboard(null), []);
   const handleDrop = createDropHandler(createEvent, selectedClient?.id);
@@ -122,7 +124,6 @@ function useCalendarLogic() {
   const handleUpdateNote = createNoteUpdateHandler(updateEvent, modal, setModal);
   const handleUpdateReminder = createReminderUpdateHandler(updateEvent, modal, setModal);
   const handleEditEvent = createEditEventHandler(setModal);
-
   return {
     year,
     month,
@@ -139,6 +140,7 @@ function useCalendarLogic() {
     clients,
     objectives: objectivesQuery.data ?? [],
     createEvent,
+    proposeCall,
     updateEvent,
     handlePrevMonth,
     handleNextMonth,
@@ -162,38 +164,30 @@ function useCalendarLogic() {
     onRoutineDayColorChange: (dayId: string, color: string) => setRoutineDayColors((prev) => ({ ...prev, [dayId]: color })),
   };
 }
-
-type TopBarProps = { selectedClient: ClientView | null; t: TFunc };
-
+type TopBarProps = {
+  selectedClient: ClientView | null;
+  t: TFunc;
+};
 function CalendarTopBar({ selectedClient, t }: TopBarProps): React.JSX.Element {
   const title = selectedClient
     ? t('coach.calendar.header.client', { name: `${selectedClient.firstName} ${selectedClient.lastName}` })
     : t('coach.calendar.header.coach');
+  const layoutStyle1 = getLayoutStyle1(useBreakpoint() === 'sm' ? space.lg : space.xl);
+  const layoutStyle2 = getLayoutStyle2;
+  const layoutStyle3 = getLayoutStyle3;
+  const layoutStyle4 = getLayoutStyle4;
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: useBreakpoint() === 'sm' ? space.lg : space.xl,
-        backgroundColor: 'white',
-        borderBottomWidth: 1,
-        borderColor: colors.border,
-        flexShrink: 0,
-      }}
-    >
-      <View
-        style={{ marginRight: space.md, backgroundColor: colors.primarySoft, padding: space.sm, borderRadius: radius.lg }}
-      >
+    <View style={layoutStyle1}>
+      <View style={layoutStyle2}>
         <CalendarDays color={COLOR_PRIMARY} size={20} />
       </View>
       <View>
-        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: colors.text }}>{title}</Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{t('coach.calendar.subtitle')}</Text>
+        <Text style={layoutStyle3}>{title}</Text>
+        <Text style={layoutStyle4}>{t('coach.calendar.subtitle')}</Text>
       </View>
     </View>
   );
 }
-
 type CalendarModalsProps = {
   modal: ModalState;
   setModal: React.Dispatch<React.SetStateAction<ModalState>>;
@@ -204,12 +198,11 @@ type CalendarModalsProps = {
   onDeleteEvent: (id: string) => void;
   onEditEvent: (event: CalendarEventData) => void;
   onSaveNote: (data: { title: string; content: string; color: string }) => void;
-  onSaveReminder: (data: { content: string; time: string; color: string }) => void;
+  onSaveReminder: (data: { date?: string; content: string; time: string; color: string }) => void;
   onUpdateNote: (data: { title: string; content: string; color: string }) => void;
-  onUpdateReminder: (data: { content: string; time: string; color: string }) => void;
+  onUpdateReminder: (data: { date?: string; content: string; time: string; color: string }) => void;
   t: TFunc;
 };
-
 function CalendarModalsRenderer({
   modal,
   setModal,
@@ -251,6 +244,7 @@ function CalendarModalsRenderer({
       )}
       {modal.type === 'addReminder' && (
         <AddReminderModal
+          initialDate={modal.dateStr}
           clientName={clientName}
           onClose={() => setModal({ type: 'day', dateStr: modal.dateStr })}
           onSave={onSaveReminder}
@@ -276,6 +270,7 @@ function CalendarModalsRenderer({
       )}
       {modal.type === 'editReminder' && (
         <AddReminderModal
+          initialDate={modal.dateStr}
           clientName={clientName}
           initialValues={{
             content: modal.event.content ?? '',
@@ -293,7 +288,6 @@ function CalendarModalsRenderer({
     </>
   );
 }
-
 export function CalendarScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const {
@@ -312,6 +306,7 @@ export function CalendarScreen(): React.JSX.Element {
     clients,
     objectives,
     createEvent,
+    proposeCall,
     updateEvent,
     handlePrevMonth,
     handleNextMonth,
@@ -334,10 +329,9 @@ export function CalendarScreen(): React.JSX.Element {
     handleEditEvent,
     onRoutineDayColorChange,
   } = useCalendarLogic();
-
   const clientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined;
   const stacked = useBreakpoint() === 'sm';
-
+  const layoutStyle5 = getLayoutStyle5;
   return (
     <View style={rootStyle(stacked)}>
       <CalendarSidebar
@@ -354,7 +348,7 @@ export function CalendarScreen(): React.JSX.Element {
       />
       <View style={mainStyle(stacked)}>
         <CalendarTopBar selectedClient={selectedClient} t={t} />
-        <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <View style={layoutStyle5}>
           <CalendarGrid
             year={year}
             month={month}
@@ -381,7 +375,7 @@ export function CalendarScreen(): React.JSX.Element {
         setModal={setModal}
         dayEvents={dayEvents}
         clientName={clientName}
-        createIsPending={createEvent.isPending}
+        createIsPending={createEvent.isPending || proposeCall.isPending}
         updateIsPending={updateEvent.isPending}
         onDeleteEvent={handleDeleteEvent}
         onEditEvent={handleEditEvent}

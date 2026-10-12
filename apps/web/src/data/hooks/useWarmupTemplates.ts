@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -76,7 +77,7 @@ export function useWarmupTemplatesQuery(options?: { summary?: boolean }) {
 export function useCreateWarmupTemplateMutation() {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: UpsertWarmupTemplateInput) => createTemplate(auth, input),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['warmup-templates'] });
@@ -87,7 +88,7 @@ export function useCreateWarmupTemplateMutation() {
 export function useUpdateWarmupTemplateMutation(templateId: string) {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: UpsertWarmupTemplateInput & { templateId?: string }) => {
       const { templateId: override, ...body } = input;
       return updateTemplate(auth, override || templateId, body);
@@ -101,7 +102,7 @@ export function useUpdateWarmupTemplateMutation(templateId: string) {
 export function useDeleteWarmupTemplateMutation() {
   const auth = useAuth();
   const qc = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (templateId: string) => deleteTemplate(auth, templateId),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['warmup-templates'] });

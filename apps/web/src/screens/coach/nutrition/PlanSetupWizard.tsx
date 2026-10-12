@@ -1,21 +1,20 @@
+import { getLayoutStyle1, getLayoutStyle2, getLayoutStyle3 } from './PlanSetupWizard.layout-styles';
+
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { buildPlanSetupData } from './nutrition-tdee.utils';
 import type { ActivityLevel, NutritionPlanType, PlanSetupData, TdeeFormula } from './nutrition.types';
 import { styles } from './nutrition.styles';
-import { Button, TextField, space } from '@trainerpro/ui';
-
+import { Button, TextField } from '@trainerpro/ui';
 type Props = {
   onBack: () => void;
   onComplete: (input: { name: string; setupData: PlanSetupData; type: NutritionPlanType }) => void;
   planType: NutritionPlanType;
 };
-
 const KEYBOARD_NUMERIC = 'numeric' as const;
 const FORMULAS: TdeeFormula[] = ['mifflin', 'harris', 'katch', 'cunningham', 'oms'];
 const ACTIVITY_LEVELS: ActivityLevel[] = ['sedentary', 'light', 'moderate', 'active', 'very_active'];
-
 // eslint-disable-next-line max-lines-per-function
 export function PlanSetupWizard(props: Props): React.JSX.Element {
   const { t } = useTranslation();
@@ -31,7 +30,6 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
   const [proteinPct, setProteinPct] = useState('30');
   const [carbsPct, setCarbsPct] = useState('40');
   const [fatPct, setFatPct] = useState('30');
-
   const preview = useMemo(
     () =>
       buildPlanSetupData({
@@ -49,7 +47,6 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
       }),
     [activityLevel, age, bodyFatPercent, carbsPct, fatPct, formula, heightCm, proteinPct, sex, targetCalories, weightKg],
   );
-
   const [submitted, setSubmitted] = useState(false);
   const nameError = submitted && name.trim().length === 0 ? t('coach.nutrition.plans.nameRequired') : null;
   const onContinue = (): void => {
@@ -57,7 +54,9 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
     if (name.trim().length === 0) return;
     props.onComplete({ name: name.trim(), setupData: preview, type: props.planType });
   };
-
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
+  const layoutStyle3 = getLayoutStyle3;
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
@@ -71,7 +70,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
         required
         value={name}
       />
-      <View style={{ flexDirection: 'row', gap: space.sm }}>
+      <View style={layoutStyle1}>
         <Chip active={sex === 'male'} label={t('coach.nutrition.wizard.male')} onPress={() => setSex('male')} />
         <Chip active={sex === 'female'} label={t('coach.nutrition.wizard.female')} onPress={() => setSex('female')} />
       </View>
@@ -80,7 +79,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
       <Field label={t('coach.nutrition.wizard.height')} onChange={setHeightCm} value={heightCm} />
       <Field label={t('coach.nutrition.wizard.bodyFat')} onChange={setBodyFatPercent} value={bodyFatPercent} />
       <Text style={styles.fieldLabel}>{t('coach.nutrition.wizard.formula')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View style={layoutStyle2}>
         {FORMULAS.map((item) => (
           <Chip
             key={item}
@@ -91,7 +90,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
         ))}
       </View>
       <Text style={styles.fieldLabel}>{t('coach.nutrition.wizard.activity')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View style={layoutStyle3}>
         {ACTIVITY_LEVELS.map((item) => (
           <Chip
             key={item}
@@ -126,7 +125,6 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
     </ScrollView>
   );
 }
-
 function Chip(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
   return (
     <Pressable onPress={props.onPress} style={[styles.chip, props.active && styles.chipActive]}>
@@ -134,7 +132,6 @@ function Chip(props: { active: boolean; label: string; onPress: () => void }): R
     </Pressable>
   );
 }
-
 function Field(props: {
   label: string;
   onChange: (value: string) => void;

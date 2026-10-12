@@ -1,3 +1,5 @@
+import { getLayoutStyle1 } from './CreateMealScreen.layout-styles';
+
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -6,16 +8,16 @@ import { useCreateMealMutation } from '../../../data/hooks/useNutrition';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
 import { MEAL_CATEGORIES } from './nutrition.types';
 import { styles } from './nutrition.styles';
-
 const KEYBOARD_NUMERIC = 'numeric' as const;
-
 type Props = {
   onBack: () => void;
   onCreated: (mealId: string) => void;
 };
-
-type DraftIngredient = { amountGrams: string; foodId: string; foodName: string };
-
+type DraftIngredient = {
+  amountGrams: string;
+  foodId: string;
+  foodName: string;
+};
 export function CreateMealScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const [name, setName] = useState('');
@@ -35,9 +37,8 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
       toast.success(t('coach.nutrition.meals.created')),
     );
   };
-
   const totals = useMemo(() => sumIngredientMacros(ingredients, foodsQuery.data ?? []), [ingredients, foodsQuery.data]);
-
+  const layoutStyle1 = getLayoutStyle1;
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
@@ -51,7 +52,7 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
         value={name}
       />
       <Text style={styles.fieldLabel}>{t('coach.nutrition.meals.category')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+      <View style={layoutStyle1}>
         {MEAL_CATEGORIES.map((item) => (
           <Pressable
             key={item}
@@ -110,7 +111,6 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
     </ScrollView>
   );
 }
-
 function addIngredient(
   current: DraftIngredient[],
   setIngredients: React.Dispatch<React.SetStateAction<DraftIngredient[]>>,
@@ -120,7 +120,6 @@ function addIngredient(
   if (current.some((item) => item.foodId === foodId)) return;
   setIngredients([...current, { amountGrams: '100', foodId, foodName }]);
 }
-
 function updateAmount(
   current: DraftIngredient[],
   setIngredients: React.Dispatch<React.SetStateAction<DraftIngredient[]>>,
@@ -133,7 +132,6 @@ function updateAmount(
   next[index] = { ...item, amountGrams: value };
   setIngredients(next);
 }
-
 type FoodMacroSnapshot = {
   caloriesKcal: null | number;
   carbsG: null | number;
@@ -141,7 +139,6 @@ type FoodMacroSnapshot = {
   id: string;
   proteinG: null | number;
 };
-
 function sumIngredientMacros(ingredients: DraftIngredient[], foods: FoodMacroSnapshot[]) {
   return ingredients.reduce(
     (acc, item) => {
@@ -158,11 +155,15 @@ function sumIngredientMacros(ingredients: DraftIngredient[], foods: FoodMacroSna
     { calories: 0, carbs: 0, fat: 0, protein: 0 },
   );
 }
-
 async function saveMeal(
   props: Props,
   createMutation: ReturnType<typeof useCreateMealMutation>,
-  draft: { category: string; ingredients: DraftIngredient[]; name: string; notes: string },
+  draft: {
+    category: string;
+    ingredients: DraftIngredient[];
+    name: string;
+    notes: string;
+  },
 ): Promise<void> {
   const result = await createMutation.mutateAsync({
     category: draft.category,

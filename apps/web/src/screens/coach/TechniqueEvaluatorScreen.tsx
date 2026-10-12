@@ -307,14 +307,13 @@ const stylesHtml = {
 
 const styles = StyleSheet.create({
   page: {
-    alignItems: 'center',
+    alignItems: 'stretch',
     backgroundColor: COLORS.bg,
     flexGrow: 1,
     padding: space.xl,
   },
   container: {
     gap: space.md,
-    maxWidth: 980,
     width: '100%',
   },
   hero: {

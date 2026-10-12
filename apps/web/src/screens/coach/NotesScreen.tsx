@@ -1,3 +1,16 @@
+import {
+  getLayoutStyle1,
+  getLayoutStyle2,
+  getLayoutStyle3,
+  getLayoutStyle4,
+  getLayoutStyle5,
+  getLayoutStyle6,
+  getLayoutStyle7,
+  getLayoutStyle8,
+  getLayoutStyle9,
+  getLayoutStyle10,
+} from './NotesScreen.layout-styles';
+
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -17,17 +30,7 @@ import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
-import { Button, TextField, colors, fontSize, space, useBreakpoint, useToast } from '@trainerpro/ui';
-
-const theme = {
-  colors: {
-    background: colors.surfaceMuted,
-    primary: colors.primary,
-    text: colors.text,
-    textMuted: colors.textMuted,
-  },
-};
-
+import { Button, TextField, colors, space, useBreakpoint, useToast } from '@trainerpro/ui';
 type GeneralNoteSectionProps = {
   value: string;
   onChange: (v: string) => void;
@@ -35,20 +38,22 @@ type GeneralNoteSectionProps = {
   onSave: () => void;
   t: (k: string) => string;
 };
-
 function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNoteSectionProps): React.JSX.Element {
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
+  const layoutStyle3 = getLayoutStyle3;
+  const layoutStyle4 = getLayoutStyle4;
+  const layoutStyle5 = getLayoutStyle5;
   return (
-    <View style={{ marginBottom: space.xxxl }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.lg }}>
-        <View style={{ marginRight: space.sm }}>
-          <Lock color={theme.colors.textMuted} size={20} />
+    <View style={layoutStyle1}>
+      <View style={layoutStyle2}>
+        <View style={layoutStyle3}>
+          <Lock color={colors.textMuted} size={20} />
         </View>
-        <Text style={{ fontSize: fontSize.xl, fontWeight: 'bold', color: theme.colors.text }}>
-          {t('coach.notes.private.title')}
-        </Text>
+        <Text style={layoutStyle4}>{t('coach.notes.private.title')}</Text>
       </View>
       <View style={generalCardStyle}>
-        <View style={{ padding: space.lg }}>
+        <View style={layoutStyle5}>
           <TextField
             accessibilityLabel={t('coach.notes.private.title')}
             multiline
@@ -65,28 +70,26 @@ function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNot
     </View>
   );
 }
-
 export function NotesScreen(): React.JSX.Element {
   const vm = useNotesScreenModel();
   const { t } = vm;
   const bp = useBreakpoint();
   const stacked = bp !== 'lg';
+  const layoutStyle6 = getLayoutStyle6(stacked ? 0 : 1);
+  const layoutStyle7 = getLayoutStyle7;
+  const layoutStyle8 = getLayoutStyle8;
+  const layoutStyle9 = getLayoutStyle9;
+  const layoutStyle10 = getLayoutStyle10;
   return (
     <View style={stacked ? stackedRootStyle : screenRootStyle}>
       <ScrollView
-        style={
-          stacked
-            ? { ...stackedContentStyle, padding: bp === 'sm' ? space.lg : space.xl }
-            : { flex: 1, minHeight: 0, padding: space.xxxl }
-        }
-        contentContainerStyle={{ flexGrow: stacked ? 0 : 1 }}
+        style={stacked ? { ...stackedContentStyle, padding: bp === 'sm' ? space.lg : space.xl } : desktopContentStyle}
+        contentContainerStyle={layoutStyle6}
       >
-        <View style={{ maxWidth: 1200, marginHorizontal: 'auto' }}>
-          <View style={{ marginBottom: space.xxxl }}>
-            <Text style={{ fontSize: fontSize.xxxl, fontWeight: 'bold', color: theme.colors.text, marginBottom: space.sm }}>
-              {t('coach.notes.title')}
-            </Text>
-            <Text style={{ fontSize: fontSize.md, color: theme.colors.textMuted }}>{t('coach.notes.subtitle')}</Text>
+        <View style={layoutStyle7}>
+          <View style={layoutStyle8}>
+            <Text style={layoutStyle9}>{t('coach.notes.title')}</Text>
+            <Text style={layoutStyle10}>{t('coach.notes.subtitle')}</Text>
           </View>
           <GeneralNoteSection
             isSaving={vm.isCreating}
@@ -147,7 +150,6 @@ export function NotesScreen(): React.JSX.Element {
     </View>
   );
 }
-
 function useNotesScreenModel() {
   const { t } = useTranslation();
   const toast = useToast();
@@ -157,14 +159,12 @@ function useNotesScreenModel() {
   const [editingNote, setEditingNote] = useState<NoteData | null>(null);
   const [editContent, setEditContent] = useState('');
   const [deleteConfirmNote, setDeleteConfirmNote] = useState<NoteData | null>(null);
-
   const clients = useClientsQuery().data ?? [];
   const objectives = useClientObjectivesQuery().data ?? [];
   const notes = useNotesQuery().data ?? [];
   const createNoteMutation = useCreateNoteMutation();
   const updateNoteMutation = useUpdateNoteMutation();
   const deleteNoteMutation = useDeleteNoteMutation();
-
   const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
   const filteredClients = useMemo(
     () =>
@@ -187,7 +187,6 @@ function useNotesScreenModel() {
       ),
     [filters.dateFrom, filters.dateTo, filters.historyFilter, filters.showAllHistory, notes, selectedClient],
   );
-
   const commands = readNoteCommands({
     clientNoteText,
     createNoteMutation,
@@ -206,7 +205,6 @@ function useNotesScreenModel() {
     toast,
     updateNoteMutation,
   });
-
   return {
     clientNoteText,
     clientSearch: filters.clientSearch,
@@ -243,7 +241,6 @@ function useNotesScreenModel() {
     t,
   };
 }
-
 function readNoteCommands(input: {
   clientNoteText: string;
   createNoteMutation: ReturnType<typeof useCreateNoteMutation>;
@@ -252,7 +249,9 @@ function readNoteCommands(input: {
   editContent: string;
   editingNote: NoteData | null;
   generalNoteText: string;
-  selectedClient: { id: string } | null;
+  selectedClient: {
+    id: string;
+  } | null;
   setClientNoteText: (value: string) => void;
   setDeleteConfirmNote: (note: NoteData | null) => void;
   setEditContent: (value: string) => void;
@@ -321,7 +320,6 @@ function readNoteCommands(input: {
     },
   };
 }
-
 type NotesFilters = {
   clientSearch: string;
   dateFrom: string;
@@ -331,13 +329,11 @@ type NotesFilters = {
   selectedObjective: string;
   showAllHistory: boolean;
 };
-
 function useNotesFilters() {
   const [filters, setFilters] = useListContext(LIST_KEYS.notes, emptyNotesFilters(), reviveNotesFilters);
   useRouteClient(filters.selectedClientId);
   return { filters, setFilters };
 }
-
 function emptyNotesFilters(): NotesFilters {
   return {
     clientSearch: '',
@@ -349,14 +345,12 @@ function emptyNotesFilters(): NotesFilters {
     showAllHistory: false,
   };
 }
-
 function reviveNotesFilters(stored: NotesFilters | null, initial: NotesFilters): NotesFilters {
   const base = stored ?? initial;
   if (base.selectedClientId) return base;
   const urlClient = readRouteClientId();
   return urlClient ? { ...base, selectedClientId: urlClient } : base;
 }
-
 function selectNotesClient(
   client: ClientData | null,
   currentId: string,
@@ -367,32 +361,28 @@ function selectNotesClient(
   if (nextId !== currentId) setClientNoteText('');
   setFilters((prev) => ({ ...prev, selectedClientId: nextId }));
 }
-
 const screenRootStyle = {
   flex: 1,
   flexDirection: 'row' as const,
-  backgroundColor: theme.colors.background,
+  backgroundColor: colors.background,
   minHeight: 0,
   alignSelf: 'stretch' as const,
   overflow: 'hidden' as const,
 };
-
 const stackedRootStyle = {
   ...screenRootStyle,
   flexDirection: 'column' as const,
   overflow: 'scroll' as const,
 };
-
+const desktopContentStyle = { flex: 1, minHeight: 0, padding: space.xl };
 const stackedContentStyle = { flexGrow: 0, flexShrink: 0, padding: space.xl };
-
 const generalCardStyle = {
-  backgroundColor: 'white',
+  backgroundColor: colors.surface,
   borderRadius: 16,
   borderWidth: 1,
   borderColor: colors.border,
   overflow: 'hidden' as const,
 };
-
 const generalFooterStyle = {
   padding: space.lg,
   borderTopWidth: 1,

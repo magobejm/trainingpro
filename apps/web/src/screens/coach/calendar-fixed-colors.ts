@@ -1,10 +1,15 @@
+import { colors } from '@trainerpro/ui';
 import type { CalendarEventType, CallStatus } from './calendar-screen.types';
 
 export type FixedCalendarColor = { bg: string; border: string; text: string };
 
-export const COACH_NOTE_COLOR: FixedCalendarColor = { bg: '#172554', border: '#1e3a8a', text: '#dbeafe' };
-export const CALL_COLOR: FixedCalendarColor = { bg: '#065f46', border: '#064e3b', text: '#d1fae5' };
-export const PHYSICAL_TEST_COLOR: FixedCalendarColor = { bg: '#312e81', border: '#1e1b4b', text: '#e0e7ff' };
+export const COACH_NOTE_COLOR: FixedCalendarColor = { bg: colors.infoSoft, border: colors.info, text: colors.info };
+export const CALL_COLOR: FixedCalendarColor = { bg: colors.successSoft, border: colors.success, text: colors.success };
+export const PHYSICAL_TEST_COLOR: FixedCalendarColor = {
+  bg: colors.primarySoft,
+  border: colors.primaryBorder,
+  text: colors.primary,
+};
 
 const FIXED_BY_TYPE: Partial<Record<CalendarEventType, FixedCalendarColor>> = {
   call: CALL_COLOR,

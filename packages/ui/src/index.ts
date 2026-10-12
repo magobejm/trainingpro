@@ -38,3 +38,9 @@ export { Skeleton, type SkeletonProps } from './primitives/Skeleton';
 export { ToastProvider, useToast, type ToastApi } from './primitives/Toast';
 export { useDialogFocus, restoreFocus, nextFocusable, keepTabInside, focusFirstField } from './primitives/useDialogFocus';
 export { BREAKPOINTS, resolveBreakpoint, useBreakpoint, type Breakpoint } from './theme/breakpoints';
+
+export { WebBox, WebText, DateTimeField } from './primitives/WebLayout';
+
+export { webShadow } from './theme/tokens';
+
+export { legacyCalendarBackgrounds } from './theme/tokens';

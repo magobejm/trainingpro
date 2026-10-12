@@ -1,3 +1,5 @@
+import { getLayoutStyle1 } from './BuildFreePlanScreen.layout-styles';
+
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -11,7 +13,6 @@ import type { FreePlanContent, FreePlanItem, PlanSetupData } from './nutrition.t
 import { FREE_PLAN_COLUMNS } from './nutrition.types';
 import { styles } from './nutrition.styles';
 import { Button, useToast } from '@trainerpro/ui';
-
 type Props = {
   onBack: () => void;
   onSaved: (planId: string) => void;
@@ -19,7 +20,6 @@ type Props = {
   planName: string;
   setupData: PlanSetupData;
 };
-
 export function BuildFreePlanScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const mealsQuery = useNutritionMealsQuery();
@@ -29,18 +29,16 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
   const [content, setContent] = useState<FreePlanContent>(emptyContent());
   const toast = useToast();
   const saving = createMutation.isPending || updateMutation.isPending;
-
   useEffect(() => {
     if (!props.planId) return;
     const plan = plansQuery.data?.find((item) => item.id === props.planId);
     if (plan?.content) setContent(readContent(plan.content));
   }, [plansQuery.data, props.planId]);
-
   const meals = mealsQuery.data ?? [];
-
+  const layoutStyle1 = getLayoutStyle1;
   return (
     <ScrollView contentContainerStyle={styles.container} horizontal>
-      <View style={{ minWidth: 900 }}>
+      <View style={layoutStyle1}>
         <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
         <Text style={styles.headerTitle}>{props.planName}</Text>
         <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildFree.subtitle')}</Text>
@@ -83,7 +81,6 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
     </ScrollView>
   );
 }
-
 function emptyContent(): FreePlanContent {
   return {
     columns: FREE_PLAN_COLUMNS.reduce<Record<string, FreePlanItem[]>>((acc, column) => {
@@ -92,7 +89,6 @@ function emptyContent(): FreePlanContent {
     }, {}),
   };
 }
-
 function readContent(value: unknown): FreePlanContent {
   if (!value || typeof value !== 'object') return emptyContent();
   const raw = value as Partial<FreePlanContent>;
@@ -104,7 +100,6 @@ function readContent(value: unknown): FreePlanContent {
   }
   return base;
 }
-
 function addMeal(
   content: FreePlanContent,
   setContent: React.Dispatch<React.SetStateAction<FreePlanContent>>,
@@ -125,7 +120,6 @@ function addMeal(
     },
   });
 }
-
 async function savePlan(
   props: Props,
   content: FreePlanContent,

@@ -1,3 +1,7 @@
+import { getLayoutStyle1, getLayoutStyle2 } from './WarmupPlannerScreen.layout-styles';
+
+import { WebBox } from '@trainerpro/ui';
+/* eslint-disable max-lines-per-function */
 /* eslint-disable max-lines-per-function */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,12 +26,11 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { saveTemplate } from '../../layout/template-save';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
-import { Button, colors, EmptyState, fontSize, radius, space } from '@trainerpro/ui';
-
+import { Button, colors, EmptyState, fontSize, space } from '@trainerpro/ui';
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
-
-type Props = { onRouteChange: (route: ShellRoute) => void };
-
+type Props = {
+  onRouteChange: (route: ShellRoute) => void;
+};
 export function WarmupPlannerScreen({ onRouteChange }: Props): React.JSX.Element {
   const vm = useViewModel(onRouteChange);
   return (
@@ -45,12 +48,10 @@ export function WarmupPlannerScreen({ onRouteChange }: Props): React.JSX.Element
     </>
   );
 }
-
 /** Converts DraftState (warmup-level) to a DraftDay-compatible shape for useGroupManagement */
 function toDraftDay(draft: DraftState): DraftDay {
   return { blocks: draft.blocks, groups: draft.groups, id: 'warmup', title: '' };
 }
-
 function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const { t } = useTranslation();
   const [draft, setDraft] = useState<DraftState>(EMPTY_DRAFT);
@@ -58,12 +59,10 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [pickerType, setPickerType] = useState<null | BlockType>(null);
   const [showSaveModal, setShowSaveModal] = useState(false);
-
   const { data: list = [], isFetching } = useWarmupTemplatesQuery();
   const createMutation = useCreateWarmupTemplateMutation();
   const updateMutation = useUpdateWarmupTemplateMutation(editingId ?? '');
   const isSaving = createMutation.isPending || updateMutation.isPending;
-
   const {
     groupMode,
     selectedBlockIds,
@@ -74,9 +73,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     removeGroup,
     updateGroupNote,
   } = useGroupManagement();
-
   const orderedBlocks = [...draft.blocks].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-
   const initialTemplateId = useWarmupPlannerContextStore((st) => st.initialTemplateId);
   const viewOnly = useWarmupPlannerContextStore((st) => st.viewOnly);
   const fromLibrary = useWarmupPlannerContextStore((st) => st.fromLibrary);
@@ -90,7 +87,6 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
   const lastSaveName = React.useRef('');
   const adoptRef = React.useRef(work.adopt);
   adoptRef.current = work.adopt;
-
   useEffect(() => {
     if (!initialTemplateId || list.length === 0 || isFetching) return;
     const tpl = list.find((item) => item.id === initialTemplateId);
@@ -103,22 +99,18 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     adoptRef.current(next, tpl.templateVersion);
     clearInitialTemplate();
   }, [initialTemplateId, list, isFetching, clearInitialTemplate, viewOnly]);
-
   const handleConfirmGroup = () => {
     const updated = confirmGroup(toDraftDay(draft));
     setDraft((prev) => ({ ...prev, blocks: updated.blocks, groups: updated.groups ?? [] }));
   };
-
   const handleRemoveGroup = (groupId: string) => {
     const updated = removeGroup(toDraftDay(draft), groupId);
     setDraft((prev) => ({ ...prev, blocks: updated.blocks, groups: updated.groups ?? [] }));
   };
-
   const handleUpdateGroupNote = (groupId: string, note: string) => {
     const updated = updateGroupNote(toDraftDay(draft), groupId, note);
     setDraft((prev) => ({ ...prev, groups: updated.groups ?? [] }));
   };
-
   const onSave = (name: string) => {
     lastSaveName.current = name;
     const payload = { ...toPayload(draft), name };
@@ -135,7 +127,6 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
       })
       .catch(() => undefined);
   };
-
   return {
     draft,
     editingId,
@@ -163,9 +154,7 @@ function useViewModel(onRouteChange: (route: ShellRoute) => void) {
     toggleBlockSelection,
   };
 }
-
 type VM = ReturnType<typeof useViewModel>;
-
 function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={s.page}>
@@ -204,9 +193,7 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
     </ScrollView>
   );
 }
-
 const headerStyles = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.lg, marginBottom: space.xs };
-
 function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <View style={headerStyles}>
@@ -226,7 +213,6 @@ function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
     </View>
   );
 }
-
 function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <View style={s.card}>
@@ -262,16 +248,13 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
     </View>
   );
 }
-
 function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
   const { orderedBlocks, draft, isReadOnly, groupMode, selectedBlockIds } = vm;
   const groups = draft.groups ?? [];
   const groupedBlockIds = new Set(orderedBlocks.filter((b) => b.groupId).map((b) => b.groupId!));
   const renderedGroupIds = new Set<string>();
   const isInGroupMode = !!groupMode;
-
   const elements: React.ReactNode[] = [];
-
   orderedBlocks.forEach((block, index) => {
     if (block.groupId && !renderedGroupIds.has(block.groupId)) {
       const group = groups.find((g) => g.id === block.groupId);
@@ -305,14 +288,12 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
         return;
       }
     }
-
     if (block.groupId) return;
-
     const isSelected = selectedBlockIds.includes(block.id);
     const isGrouped = groupedBlockIds.has(block.id);
-
+    const layoutStyle1 = getLayoutStyle1;
     elements.push(
-      <div
+      <WebBox
         key={block.id}
         draggable={!isReadOnly && !isInGroupMode}
         onDragStart={(e) => {
@@ -336,7 +317,7 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
             });
           }
         }}
-        style={{ position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', borderRadius: radius.md }}
+        style={layoutStyle1}
       >
         {isInGroupMode && !isGrouped && (
           <SelectionOverlay selected={isSelected} onPress={() => vm.toggleBlockSelection(block.id)} />
@@ -376,35 +357,20 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
           }
           readOnly={isReadOnly || isInGroupMode}
         />
-      </div>,
+      </WebBox>,
     );
   });
-
   return <>{elements}</>;
 }
-
 function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: () => void }) {
-  return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      onPress={onPress}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        zIndex: 10,
-        backgroundColor: selected ? 'rgba(59,130,246,0.12)' : 'rgba(0,0,0,0.02)',
-        borderRadius: radius.md,
-        borderWidth: selected ? 2 : 1,
-        borderColor: selected ? colors.primary : colors.primaryBorder,
-        borderStyle: selected ? 'solid' : 'dashed',
-      }}
-    />
+  const layoutStyle2 = getLayoutStyle2(
+    selected ? colors.primarySoft : colors.surfaceMuted,
+    selected ? 2 : 1,
+    selected ? colors.primary : colors.primaryBorder,
+    selected ? 'solid' : 'dashed',
   );
+  return <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={layoutStyle2} />;
 }
-
 interface WarmupGroupModeBarProps {
   groupMode: 'CIRCUIT' | 'SUPERSET' | null;
   selectedCount: number;
@@ -413,7 +379,6 @@ interface WarmupGroupModeBarProps {
   onCancel: () => void;
   onConfirm: () => void;
 }
-
 function WarmupGroupModeBar({ groupMode, selectedCount, t, onStartCircuit, onCancel, onConfirm }: WarmupGroupModeBarProps) {
   if (!groupMode) {
     return (
@@ -439,7 +404,6 @@ function WarmupGroupModeBar({ groupMode, selectedCount, t, onStartCircuit, onCan
     </View>
   );
 }
-
 const gbs = {
   bar: {
     flexDirection: 'row' as const,

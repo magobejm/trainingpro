@@ -1,3 +1,5 @@
+import { useToast } from '@trainerpro/ui';
+import { useTranslation } from 'react-i18next';
 import { useEffect, useState } from 'react';
 import {
   useCreateClientMutation,
@@ -10,6 +12,8 @@ type CreateMutation = ReturnType<typeof useCreateClientMutation>;
 type ResetMutation = ReturnType<typeof useResetClientPasswordMutation>;
 
 type FormState = {
+  onMutationSuccess: () => void;
+  onMutationError: () => void;
   availableAvatars: string[];
   avatarUrl: string;
   confirmEmail: string;
@@ -31,12 +35,19 @@ type FormState = {
   setResult: (value: CreateClientResult | null) => void;
 };
 
-export function useClientCreateForm(
-  createMutation: CreateMutation,
-  objectiveOptions: Array<{ id: string }>,
-) {
+export function useClientCreateForm(createMutation: CreateMutation, objectiveOptions: Array<{ id: string }>) {
   const resetPasswordMutation = useResetClientPasswordMutation();
-  const state = useFormState(objectiveOptions);
+  const toast = useToast();
+  const { t } = useTranslation();
+  const state = {
+    ...useFormState(objectiveOptions),
+    onMutationSuccess: () => {
+      toast.success(t('common.mutationSuccess'));
+    },
+    onMutationError: () => {
+      toast.error(t('common.mutationError'));
+    },
+  };
   const actions = createFormActions(createMutation, resetPasswordMutation, state);
   return {
     ...actions,
@@ -47,7 +58,7 @@ export function useClientCreateForm(
   };
 }
 
-function useFormState(objectiveOptions: Array<{ id: string }>): FormState {
+function useFormState(objectiveOptions: Array<{ id: string }>): Omit<FormState, 'onMutationSuccess' | 'onMutationError'> {
   const emailState = useEmailState();
   const nameState = useNameState();
   const avatarState = useAvatarState();
@@ -104,11 +115,7 @@ function useModalResultState() {
   return { modalVisible, result, setModalVisible, setResult };
 }
 
-function createFormActions(
-  createMutation: CreateMutation,
-  resetMutation: ResetMutation,
-  state: FormState,
-) {
+function createFormActions(createMutation: CreateMutation, resetMutation: ResetMutation, state: FormState) {
   return {
     onClearResult: () => state.setResult(null),
     onCloseModal: () => {
@@ -143,11 +150,7 @@ function resetFormState(state: FormState): void {
   state.setResult(null);
 }
 
-function createClient(
-  createMutation: CreateMutation,
-  state: FormState,
-  onSuccess: () => void,
-): void {
+function createClient(createMutation: CreateMutation, state: FormState, onSuccess: () => void): void {
   if (!hasRequiredFields(state)) {
     return;
   }
@@ -165,7 +168,9 @@ function createClient(
       objectiveId: state.objectiveId || undefined,
     },
     {
+      onError: state.onMutationError,
       onSuccess: (created) => {
+        state.onMutationSuccess();
         state.setResult(created);
         onSuccess();
       },
@@ -178,7 +183,9 @@ function resetClientPassword(resetMutation: ResetMutation, state: FormState): vo
     return;
   }
   resetMutation.mutate(state.result.client.id, {
+    onError: state.onMutationError,
     onSuccess: (payload) => {
+      state.onMutationSuccess();
       state.setResult({
         ...state.result!,
         credentials: {

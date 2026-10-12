@@ -1,4 +1,5 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { normalizePlanTemplateId } from '../normalize-plan-template-id';
 import { useAuthStore } from '../../store/auth.store';
@@ -58,7 +59,7 @@ export function useCalendarEventsQuery(dateFrom: string, dateTo: string, clientI
 export function useCreateCalendarEventMutation() {
   const queryClient = useQueryClient();
   const auth = useAuth();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: async (input: CreateCalendarEventInput) => {
       if (!auth) throw new Error('Not authenticated');
       const api = createApiClient(auth);
@@ -71,7 +72,8 @@ export function useCreateCalendarEventMutation() {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
     },
   });
 }
@@ -79,7 +81,7 @@ export function useCreateCalendarEventMutation() {
 export function useUpdateCalendarEventMutation() {
   const queryClient = useQueryClient();
   const auth = useAuth();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: async ({ eventId, input }: { eventId: string; input: UpdateCalendarEventInput }) => {
       if (!auth) throw new Error('Not authenticated');
       const api = createApiClient(auth);
@@ -92,7 +94,8 @@ export function useUpdateCalendarEventMutation() {
       };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
     },
   });
 }
@@ -100,13 +103,14 @@ export function useUpdateCalendarEventMutation() {
 export function useDeleteCalendarEventMutation() {
   const queryClient = useQueryClient();
   const auth = useAuth();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: async (eventId: string) => {
       if (!auth) throw new Error('Not authenticated');
       await createApiClient(auth).delete(`/calendar/${eventId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
     },
   });
 }

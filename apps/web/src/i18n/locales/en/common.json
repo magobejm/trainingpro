@@ -1456,5 +1456,20 @@
   "app.menu.coach.library.foods": "Foods",
   "app.menu.coach.evaluator": "Evaluator",
   "app.menu.coach.notifications": "Notifications",
-  "app.breadcrumb": "Breadcrumb"
+  "app.breadcrumb": "Breadcrumb",
+  "coach.clients.filters.sort": "Sort by",
+  "coach.clients.filters.sortName": "Name",
+  "coach.clients.filters.sortActivity": "Latest activity",
+  "coach.clients.card.planAssigned": "Plan assigned",
+  "coach.clients.card.planPending": "No plan assigned",
+  "common.mutationSuccess": "Changes saved",
+  "common.mutationError": "Unable to save changes. Please retry.",
+  "coach.calendar.sidebar.changeColor": "Change color",
+  "coach.calendar.sidebar.selectColor": "Select color {{color}}",
+  "coach.clients.filters.search": "Search clients",
+  "coach.clients.filters.objective": "Objective",
+  "coach.chat.call.cancelledTitle": "Call invitation cancelled",
+  "coach.chat.call.cancelledBadge": "Cancelled",
+  "coach.calendar.type.call": "Call",
+  "coach.calendar.call.dateLabel": "Call date"
 }

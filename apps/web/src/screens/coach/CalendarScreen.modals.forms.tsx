@@ -1,22 +1,29 @@
+import {
+  getLayoutStyle1,
+  getLayoutStyle2,
+  getLayoutStyle3,
+  getLayoutStyle4,
+  getLayoutStyle5,
+} from './CalendarScreen.modals.forms.layout-styles';
+
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Check } from 'lucide-react';
 import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
-import { Badge, Button, Field, Modal, TextField, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
-
+import { Badge, Button, DateTimeField, Modal, TextField, colors as tk } from '@trainerpro/ui';
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
 const TONE_PRIMARY = 'primary' as const;
 const TONE_SUCCESS = 'success' as const;
-
-const TIME_INPUT_TYPE = 'time' as const;
-
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
 // ── Shared sub-components ────────────────────────────────────────────────────
-
-type FormFooterProps = { onClose: () => void; onSave: () => void; isSaving: boolean; label: string; t: TFunc };
-
+type FormFooterProps = {
+  onClose: () => void;
+  onSave: () => void;
+  isSaving: boolean;
+  label: string;
+  t: TFunc;
+};
 function FormFooter({ onClose, onSave, isSaving, label, t }: FormFooterProps): React.JSX.Element {
   return (
     <>
@@ -25,12 +32,14 @@ function FormFooter({ onClose, onSave, isSaving, label, t }: FormFooterProps): R
     </>
   );
 }
-
 // ── AddNoteModal ──────────────────────────────────────────────────────────────
-
 type AddNoteModalProps = {
   clientName?: string;
-  initialValues?: { title: string; content: string; color: string };
+  initialValues?: {
+    title: string;
+    content: string;
+    color: string;
+  };
   modalTitle?: string;
   saveLabel?: string;
   onClose: () => void;
@@ -38,7 +47,6 @@ type AddNoteModalProps = {
   isSaving: boolean;
   t: TFunc;
 };
-
 export function AddNoteModal({
   clientName,
   initialValues,
@@ -52,7 +60,8 @@ export function AddNoteModal({
   const [title, setTitle] = useState(initialValues?.title ?? '');
   const [content, setContent] = useState(initialValues?.content ?? '');
   const color = COACH_NOTE_COLOR.bg;
-
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
   return (
     <Modal
       closeLabel={t('common.close')}
@@ -70,9 +79,9 @@ export function AddNoteModal({
       title={modalTitle ?? t('coach.calendar.note.title')}
       visible
     >
-      <View style={{ gap: space.md }}>
+      <View style={layoutStyle1}>
         {clientName ? (
-          <View style={{ alignSelf: 'flex-start' }}>
+          <View style={layoutStyle2}>
             <Badge label={clientName} tone={TONE_PRIMARY} />
           </View>
         ) : null}
@@ -94,21 +103,24 @@ export function AddNoteModal({
     </Modal>
   );
 }
-
 // ── AddReminderModal ──────────────────────────────────────────────────────────
-
 type AddReminderModalProps = {
+  initialDate: string;
   clientName?: string;
-  initialValues?: { content: string; time: string; color: string };
+  initialValues?: {
+    content: string;
+    time: string;
+    color: string;
+  };
   modalTitle?: string;
   saveLabel?: string;
   onClose: () => void;
-  onSave: (data: { content: string; time: string; color: string }) => void;
+  onSave: (data: { date: string; content: string; time: string; color: string }) => void;
   isSaving: boolean;
   t: TFunc;
 };
-
 export function AddReminderModal({
+  initialDate,
   clientName,
   initialValues,
   modalTitle,
@@ -120,8 +132,11 @@ export function AddReminderModal({
 }: AddReminderModalProps): React.JSX.Element {
   const [content, setContent] = useState(initialValues?.content ?? '');
   const [time, setTime] = useState(initialValues?.time ?? '09:00');
+  const [date, setDate] = useState(initialDate);
   const color = CALL_COLOR.bg;
-
+  const layoutStyle3 = getLayoutStyle3;
+  const layoutStyle4 = getLayoutStyle4;
+  const layoutStyle5 = getLayoutStyle5;
   return (
     <Modal
       closeLabel={t('common.close')}
@@ -130,7 +145,7 @@ export function AddReminderModal({
           isSaving={isSaving}
           label={saveLabel ?? t('coach.calendar.reminder.save')}
           onClose={onClose}
-          onSave={() => onSave({ content, time, color })}
+          onSave={() => onSave({ date, content, time, color })}
           t={t}
         />
       }
@@ -139,30 +154,22 @@ export function AddReminderModal({
       title={modalTitle ?? t('coach.calendar.reminder.title')}
       visible
     >
-      <View style={{ gap: space.md }}>
+      <View style={layoutStyle3}>
         {clientName ? (
-          <View style={{ alignSelf: 'flex-start' }}>
+          <View style={layoutStyle4}>
             <Badge label={clientName} tone={TONE_SUCCESS} />
           </View>
         ) : null}
-        <Field label={t('coach.calendar.reminder.time')}>
-          <input
-            aria-label={t('coach.calendar.reminder.time')}
-            type={TIME_INPUT_TYPE}
-            value={time}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)}
-            style={{
-              width: '100%',
-              border: `1px solid ${tk.border}`,
-              borderRadius: radius.md,
-              padding: `${space.sm}px ${space.md}px`,
-              fontSize: fontSize.sm,
-              boxSizing: 'border-box',
-              color: tk.text,
-              minHeight: 40,
-            }}
-          />
-        </Field>
+        <DateTimeField label={t('coach.calendar.call.dateLabel')} type={'date'} value={date} onChange={setDate} />
+        <DateTimeField
+          label={t('coach.calendar.reminder.time')}
+          type={'time'}
+          step={900}
+          min={'08:00'}
+          max={'21:45'}
+          value={time}
+          onChange={setTime}
+        />
         <TextField
           label={t('coach.calendar.reminder.content')}
           multiline
@@ -171,7 +178,7 @@ export function AddReminderModal({
           placeholder={t('coach.calendar.reminder.content')}
           value={content}
         />
-        <Text style={{ fontSize: fontSize.xs, color: tk.textMuted }}>{t('coach.calendar.call.proposalHint')}</Text>
+        <Text style={layoutStyle5}>{t('coach.calendar.call.proposalHint')}</Text>
       </View>
     </Modal>
   );

@@ -1,64 +1,63 @@
 import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChatCallProposal } from '../../../data/hooks/useChat';
 import { useAcceptCallProposalMutation, useCounterCallProposalMutation } from '../../../data/hooks/useChat';
 import { CALL_CARD_TONES, callCardActions, callCardTone, callTimeOptions } from '../call-proposal-card.logic';
-import { Button, colors, fontSize, radius, Select, space } from '@trainerpro/ui';
-
-const TEXT_LIGHT = colors.surfaceMuted;
-
-export function CallProposalCard(props: { proposal: ChatCallProposal }): React.JSX.Element {
+import { Badge, Button, Card, colors, fontSize, Select, space } from '@trainerpro/ui';
+export function CallProposalCard({ proposal }: { proposal: ChatCallProposal }): React.JSX.Element {
   const { t } = useTranslation();
-  const proposal = props.proposal;
   const tone = CALL_CARD_TONES[callCardTone(proposal)];
   const actions = callCardActions(proposal, 'COACH');
   const accepted = proposal.status === 'accepted';
+  const cancelled = proposal.status === 'cancelled';
   const [countering, setCountering] = useState(false);
   const [time, setTime] = useState(proposal.proposedTime);
   const accept = useAcceptCallProposalMutation();
   const counter = useCounterCallProposalMutation();
-
+  const titleKey = cancelled
+    ? 'coach.chat.call.cancelledTitle'
+    : accepted
+      ? 'coach.chat.call.confirmedTitle'
+      : 'coach.chat.call.requestTitle';
+  const badgeKey = cancelled
+    ? 'coach.chat.call.cancelledBadge'
+    : accepted
+      ? 'coach.chat.call.scheduledBadge'
+      : 'coach.chat.call.pendingBadge';
   return (
-    <View
-      style={{
-        backgroundColor: tone.bg,
-        borderColor: tone.border,
-        borderRadius: radius.lg,
-        borderWidth: 1,
-        padding: space.md,
-      }}
+    <Card
+      style={[
+        styles.card,
+        cardColorStyle(cancelled ? colors.surfaceMuted : tone.bg, cancelled ? colors.border : tone.border),
+      ]}
     >
-      <View style={{ alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.sm, fontWeight: 'bold' }}>
-          {t(accepted ? 'coach.chat.call.confirmedTitle' : 'coach.chat.call.requestTitle')}
-        </Text>
-        <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, fontWeight: 'bold' }}>
-          {t(accepted ? 'coach.chat.call.scheduledBadge' : 'coach.chat.call.pendingBadge')}
-        </Text>
+      <View style={styles.heading}>
+        <Text style={styles.title}>{t(titleKey)}</Text>
+        <Badge label={t(badgeKey)} tone={cancelled ? 'neutral' : accepted ? 'success' : 'warning'} />
       </View>
-      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, marginTop: space.sm }}>
-        {t('coach.chat.call.date', { date: proposal.date })}
-      </Text>
-      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs }}>
+      <Text style={styles.text}>{t('coach.chat.call.date', { date: proposal.date })}</Text>
+      <Text style={styles.text}>
         {t(accepted ? 'coach.chat.call.confirmedTime' : 'coach.chat.call.proposedTime', { time: proposal.proposedTime })}
       </Text>
-      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, marginTop: space.xs }}>
+      <Text style={styles.text}>
         {t('coach.chat.call.lastProposedBy', {
           who: t(proposal.lastProposedBy === 'COACH' ? 'coach.chat.call.coach' : 'coach.chat.call.client'),
         })}
       </Text>
       {actions.includes('accept') ? (
-        <CardButton
+        <Button
           label={t('coach.chat.call.accept')}
           loading={accept.isPending}
+          disabled={counter.isPending}
           onPress={() => accept.mutate(proposal.id)}
+          size="sm"
         />
       ) : null}
       {actions.includes('counter') && !countering ? (
-        <CardButton label={t('coach.chat.call.counter')} onPress={() => setCountering(true)} />
+        <Button label={t('coach.chat.call.counter')} onPress={() => setCountering(true)} variant="secondary" size="sm" />
       ) : null}
-      {countering ? (
+      {countering && actions.includes('counter') ? (
         <CounterForm
           onCancel={() => setCountering(false)}
           onSend={() => counter.mutate({ proposalId: proposal.id, time }, { onSuccess: () => setCountering(false) })}
@@ -67,23 +66,9 @@ export function CallProposalCard(props: { proposal: ChatCallProposal }): React.J
           time={time}
         />
       ) : null}
-    </View>
+    </Card>
   );
 }
-
-function CardButton(props: { label: string; loading?: boolean; onPress: () => void }): React.JSX.Element {
-  return (
-    <Button
-      label={props.label}
-      loading={props.loading}
-      onPress={props.onPress}
-      size="sm"
-      style={{ marginTop: space.sm }}
-      variant="secondary"
-    />
-  );
-}
-
 function CounterForm(props: {
   onCancel: () => void;
   onSend: () => void;
@@ -93,17 +78,25 @@ function CounterForm(props: {
 }): React.JSX.Element {
   const { t } = useTranslation();
   return (
-    <View style={{ marginTop: space.sm }}>
-      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs }}>{t('coach.chat.call.counterLabel')}</Text>
+    <View style={styles.counter}>
       <Select
-        containerStyle={{ marginTop: space.xs }}
+        label={t('coach.chat.call.counterLabel')}
         onChange={props.onTime}
         options={callTimeOptions().map((option) => ({ label: option, value: option }))}
-        placeholder={t('coach.chat.call.counterLabel')}
         value={props.time}
       />
-      <CardButton label={t('coach.chat.call.sendCounter')} loading={props.sending} onPress={props.onSend} />
-      <CardButton label={t('coach.chat.call.cancel')} onPress={props.onCancel} />
+      <Button label={t('coach.chat.call.sendCounter')} loading={props.sending} onPress={props.onSend} size="sm" />
+      <Button label={t('coach.chat.call.cancel')} onPress={props.onCancel} size="sm" variant="secondary" />
     </View>
   );
 }
+function cardColorStyle(backgroundColor: string, borderColor: string) {
+  return StyleSheet.create({ tone: { backgroundColor, borderColor } }).tone;
+}
+const styles = StyleSheet.create({
+  card: { gap: space.sm },
+  heading: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: space.sm },
+  title: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
+  text: { color: colors.textMuted, fontSize: fontSize.xs },
+  counter: { gap: space.sm },
+});

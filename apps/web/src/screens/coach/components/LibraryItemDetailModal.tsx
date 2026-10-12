@@ -20,7 +20,7 @@ type Props = {
   item: LibraryItem | null;
   onClose: () => void;
   t: (key: string) => string;
-  type: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility';
+  type: 'strength' | 'cardio' | 'isometric' | 'plio' | 'mobility' | 'sport';
 };
 
 function resolveApiBaseUrl(): string {

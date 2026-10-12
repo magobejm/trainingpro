@@ -1,3 +1,7 @@
+import { getLayoutStyle1, getLayoutStyle2 } from './ProgressExerciseFilter.layout-styles';
+import { WebBox, WebText } from '@trainerpro/ui';
+import { Button } from '@trainerpro/ui';
+import { webShadow } from '@trainerpro/ui';
 import React, { useEffect, useState } from 'react';
 import {
   useLibraryCardioMethodsQuery,
@@ -11,13 +15,14 @@ import { usePerformedExercisesQuery } from '../../../data/hooks/usePerformedExer
 import type { ExerciseType, SelectedExercise } from './progress-screen.types';
 import { matchesSearch } from '../../../utils/normalize-search';
 import { IconButton, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
-
 type Group = {
   type: ExerciseType;
   labelKey: string;
-  items: Array<{ id: string; name: string }>;
+  items: Array<{
+    id: string;
+    name: string;
+  }>;
 };
-
 type Props = {
   clientId: string | null;
   from: string;
@@ -26,24 +31,20 @@ type Props = {
   onSelect: (ex: SelectedExercise | null) => void;
   t: (k: string) => string;
 };
-
 // eslint-disable-next-line max-lines-per-function
 export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect, t }: Props) {
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
   const exercisesQuery = useLibraryExercisesQuery({ query: search });
   const cardioQuery = useLibraryCardioMethodsQuery({ query: search });
   const plioQuery = useLibraryPlioExercisesQuery({ query: search });
   const mobilityQuery = useLibraryMobilityExercisesQuery({ query: search });
   const isometricQuery = useLibraryIsometricExercisesQuery({ query: search });
   const sportsQuery = useLibrarySportsQuery();
-
   const performedQuery = usePerformedExercisesQuery(
     { clientId: clientId ?? undefined, from, to },
     { enabled: Boolean(clientId) },
   );
-
   const performed = performedQuery.data ?? {
     strength: [],
     cardio: [],
@@ -52,7 +53,6 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
     isometric: [],
     sport: [],
   };
-
   const performedIds = {
     strength: new Set(performed.strength.map((e) => e.id)),
     cardio: new Set(performed.cardio.map((e) => e.id)),
@@ -61,15 +61,17 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
     isometric: new Set(performed.isometric.map((e) => e.id)),
     sport: new Set(performed.sport.map((e) => e.id)),
   };
-
   useEffect(() => {
     if (selected) setSearch(selected.name);
   }, [selected]);
-
-  function filterBySearch<T extends { id: string; name: string }>(items: T[]): T[] {
+  function filterBySearch<
+    T extends {
+      id: string;
+      name: string;
+    },
+  >(items: T[]): T[] {
     return items.filter((i) => matchesSearch(i.name, search));
   }
-
   /** Orden: Grupo muscular, Cardio, Pliometría, Isométrico, Movilidad, Deporte */
   const groups: Group[] = [
     {
@@ -103,25 +105,28 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
       items: filterBySearch(sportsQuery.data ?? []).filter((e) => performedIds.sport.has(e.id)),
     },
   ];
-
   const dropdownGroups = groups.filter((g) => g.items.length > 0);
   const hasDropdownResults = dropdownGroups.length > 0;
-
-  function handleSelect(item: { id: string; name: string }, type: ExerciseType) {
+  function handleSelect(
+    item: {
+      id: string;
+      name: string;
+    },
+    type: ExerciseType,
+  ) {
     onSelect({ id: item.id, type, name: item.name });
     setSearch(item.name);
     setDropdownOpen(false);
   }
-
   function handleInputChange(value: string) {
     setSearch(value);
     setDropdownOpen(true);
     if (!value) onSelect(null);
   }
-
+  const layoutStyle1 = getLayoutStyle1;
   return (
-    <div style={filterBlock}>
-      <div style={{ position: 'relative' }}>
+    <WebBox style={filterBlock}>
+      <WebBox style={layoutStyle1}>
         <TextField
           onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
           onChangeText={handleInputChange}
@@ -130,54 +135,53 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
           value={search}
         />
         {dropdownOpen && (
-          <div style={dropdownContainer}>
+          <WebBox style={dropdownContainer}>
             {hasDropdownResults ? (
               dropdownGroups.map((group) => (
-                <div key={group.type}>
-                  <p style={dropdownGroupLabel}>{t(group.labelKey)}</p>
+                <WebBox key={group.type}>
+                  <WebText style={dropdownGroupLabel}>{t(group.labelKey)}</WebText>
                   {group.items.slice(0, 8).map((item) => (
-                    <button
+                    <Button
                       key={item.id}
-                      style={{ ...dropdownItem, ...(selected?.id === item.id ? dropdownItemActive : {}) }}
-                      onMouseDown={(e) => {
-                        e.preventDefault();
+                      onPress={() => {
                         handleSelect(item, group.type);
                       }}
-                    >
-                      {item.name}
-                    </button>
+                      label={item.name}
+                      variant={selected?.id === item.id ? 'primary' : 'secondary'}
+                      size="sm"
+                    />
                   ))}
-                </div>
+                </WebBox>
               ))
             ) : (
-              <p style={dropdownEmpty}>{t('coach.progress.filter.noResultsPeriod')}</p>
+              <WebText style={dropdownEmpty}>{t('coach.progress.filter.noResultsPeriod')}</WebText>
             )}
-          </div>
+          </WebBox>
         )}
-      </div>
+      </WebBox>
 
       {selected ? (
-        <div style={selectedExerciseRow}>
-          <span style={selectedExerciseName}>{selected.name}</span>
+        <WebBox style={selectedExerciseRow}>
+          <WebText style={selectedExerciseName}>{selected.name}</WebText>
           <IconButton
             accessibilityLabel={t('common.close')}
-            icon={(color) => (
-              <span style={{ color, fontSize: fontSize.md, lineHeight: 1 }}>{t('common.modalCloseGlyph')}</span>
-            )}
+            icon={(color) => {
+              const layoutStyle2 = getLayoutStyle2(color);
+              return <WebText style={layoutStyle2}>{t('common.modalCloseGlyph')}</WebText>;
+            }}
             onPress={() => {
               onSelect(null);
               setSearch('');
             }}
             size={32}
           />
-        </div>
+        </WebBox>
       ) : null}
 
-      {!clientId && <p style={noClientMsg}>{t('coach.progress.filter.noClient')}</p>}
-    </div>
+      {!clientId && <WebText style={noClientMsg}>{t('coach.progress.filter.noClient')}</WebText>}
+    </WebBox>
   );
 }
-
 const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.md, width: '100%' };
 const dropdownContainer: React.CSSProperties = {
   position: 'absolute',
@@ -187,7 +191,7 @@ const dropdownContainer: React.CSSProperties = {
   background: colors.surface,
   border: `1.5px solid ${colors.border}`,
   borderRadius: 16,
-  boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+  boxShadow: webShadow.md,
   zIndex: 50,
   padding: '8px 4px',
   maxHeight: 320,
@@ -201,22 +205,7 @@ const dropdownGroupLabel: React.CSSProperties = {
   textTransform: 'uppercase',
   letterSpacing: 1,
 };
-const dropdownItem: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  width: '100%',
-  padding: '9px 14px',
-  border: 'none',
-  background: 'transparent',
-  color: colors.text,
-  fontWeight: 600,
-  fontSize: fontSize.sm,
-  cursor: 'pointer',
-  borderRadius: radius.md,
-  textAlign: 'left',
-};
-const dropdownItemActive: React.CSSProperties = { background: colors.primarySoft, color: colors.primary };
+
 const dropdownEmpty: React.CSSProperties = {
   margin: '12px',
   fontSize: fontSize.sm,

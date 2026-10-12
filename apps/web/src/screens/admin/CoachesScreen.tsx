@@ -45,13 +45,22 @@ function useCoachesViewModel() {
   const activeItems = coachesQuery.data ?? [];
   const archivedItems = archivedQuery.data ?? [];
 
-  const onArchive = (coachMembershipId: string) => archiveMutation.mutate(coachMembershipId);
+  const feedback = {
+    onSuccess: () => {
+      toast.success(t('common.mutationSuccess'));
+    },
+    onError: () => {
+      toast.error(t('common.mutationError'));
+    },
+  };
+  const onArchive = (coachMembershipId: string) => archiveMutation.mutate(coachMembershipId, feedback);
   const onToggle = (coach: CoachView) =>
-    toggleMutation.mutate({ coachMembershipId: coach.coachMembershipId, isActive: coach.isActive });
-  const onRestore = (coachMembershipId: string) => restoreMutation.mutate(coachMembershipId);
+    toggleMutation.mutate({ coachMembershipId: coach.coachMembershipId, isActive: coach.isActive }, feedback);
+  const onRestore = (coachMembershipId: string) => restoreMutation.mutate(coachMembershipId, feedback);
 
   const onSubmitCreate = (email: string) => {
     createMutation.mutate(email, {
+      onError: feedback.onError,
       onSuccess: (result) => {
         setCreateResult(result);
         toast.success(t('admin.coaches.createModal.success'));

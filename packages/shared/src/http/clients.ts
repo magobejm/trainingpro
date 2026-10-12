@@ -40,6 +40,7 @@ export const clientViewSchema = z
     id: z.string(),
     injuries: z.string().nullable(),
     lastName: z.string(),
+    lastActivityAt: z.string().nullable().optional(),
     notes: z.string().nullable(),
     objective: z.string(),
     objectiveId: z.string(),

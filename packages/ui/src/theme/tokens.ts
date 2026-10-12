@@ -34,6 +34,14 @@ export const colors = {
   info: '#0369a1',
   infoSoft: '#e0f2fe',
 
+  // Series de gráficas y categorías: misma identidad en todas las pantallas.
+  chartPurple: '#7c3aed',
+  chartPurpleSoft: '#f3e8ff',
+  chartTeal: '#0f766e',
+  chartTealSoft: '#ccfbf1',
+  chartPink: '#be185d',
+  chartPinkSoft: '#fce7f3',
+
   // Capa que oscurece el fondo bajo modales y diálogos
   overlay: 'rgba(15, 23, 42, 0.55)',
 } as const;
@@ -109,3 +117,18 @@ export const lightTheme: Theme = {
 };
 
 export const themes: Record<ThemeName, Theme> = { light: lightTheme };
+
+export const webShadow = {
+  sm: '0 1px 3px rgba(15, 23, 42, 0.06)',
+  md: '0 4px 16px rgba(15, 23, 42, 0.08)',
+  lg: '0 8px 24px rgba(15, 23, 42, 0.12)',
+} as const;
+
+/** Compatibilidad visual con calendarios guardados antes de la renovación. */
+export const legacyCalendarBackgrounds: Readonly<Record<string, string>> = {
+  '#dbeafe': colors.primarySoft,
+  '#ffedd5': colors.warningSoft,
+  '#ffe4e6': colors.dangerSoft,
+  '#fef9c3': colors.chartTealSoft,
+  '#e0e7ff': colors.infoSoft,
+};

@@ -1,29 +1,36 @@
+import { calendarEventColor } from './calendar-screen.utils';
+import {
+  getLayoutStyle1,
+  getLayoutStyle2,
+  getLayoutStyle3,
+  getLayoutStyle4,
+  getLayoutStyle5,
+  getLayoutStyle6,
+  getLayoutStyle7,
+  getLayoutStyle8,
+  getLayoutStyle9,
+  getLayoutStyle10,
+  getLayoutStyle11,
+  getLayoutStyle12,
+  getLayoutStyle13,
+} from './CalendarScreen.grid.layout-styles';
+
+import { WebBox, WebText } from '@trainerpro/ui';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { ClipboardPaste, Copy } from 'lucide-react';
 import type { CalendarEventData, CalendarDragData } from './calendar-screen.types';
-import { CALENDAR_COLORS } from './calendar-screen.types';
-import { callStatusLabelKey, fixedColorFor } from './calendar-fixed-colors';
+
+import { callStatusLabelKey } from './calendar-fixed-colors';
 import type { CalendarCell } from './calendar-screen.utils';
 import { getWeeks } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
 import { WeekRow } from './CalendarScreen.week-row';
 import { CalendarMonthHeader, CalendarDayNames } from './CalendarScreen.month-header';
 import { workoutStatusLines } from './calendar-workout-label';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
-
+import { colors as tk } from '@trainerpro/ui';
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
-const colors = {
-  primary: tk.primary,
-  text: tk.text,
-  textMuted: tk.textMuted,
-  border: tk.border,
-  bg: tk.surfaceMuted,
-  today: tk.primarySoft,
-};
-
 type GridProps = {
   year: number;
   month: number;
@@ -43,7 +50,6 @@ type GridProps = {
   onClearClipboard: () => void;
   t: TFunc;
 };
-
 function DayCellCopyAction({
   show,
   canPaste,
@@ -60,34 +66,35 @@ function DayCellCopyAction({
   t: TFunc;
 }): React.JSX.Element | null {
   if (!show) return null;
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
   return (
     <>
-      <div
+      <WebBox
         onClick={(e) => {
           e.stopPropagation();
           onCopy(dateStr);
         }}
         title={t('coach.calendar.clipboard.copyDay')}
-        style={{ cursor: 'pointer', lineHeight: 0 }}
+        style={layoutStyle1}
       >
-        <Copy size={11} color={colors.textMuted} />
-      </div>
+        <Copy size={11} color={tk.textMuted} />
+      </WebBox>
       {canPaste && (
-        <div
+        <WebBox
           onClick={(e) => {
             e.stopPropagation();
             onPaste(dateStr);
           }}
           title={t('coach.calendar.clipboard.pasteDay')}
-          style={{ cursor: 'pointer', lineHeight: 0 }}
+          style={layoutStyle2}
         >
-          <ClipboardPaste size={11} color={colors.primary} />
-        </div>
+          <ClipboardPaste size={11} color={tk.primary} />
+        </WebBox>
       )}
     </>
   );
 }
-
 type DayCellProps = {
   cell: CalendarCell;
   isToday: boolean;
@@ -100,7 +107,6 @@ type DayCellProps = {
   onPasteDay: (dateStr: string) => void;
   t: TFunc;
 };
-
 export function CalendarDayCell({
   cell,
   isToday,
@@ -118,7 +124,6 @@ export function CalendarDayCell({
   const visibleEvents = dayEvents.slice(0, 3);
   const overflowCount = dayEvents.length - visibleEvents.length;
   const canPasteDay = clipboard?.type === 'day';
-
   function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
     if (e.dataTransfer.types.includes('weekdates')) {
       e.preventDefault();
@@ -135,48 +140,29 @@ export function CalendarDayCell({
     setIsDragOver(false);
     onDrop?.(e);
   }
-
   const { isCurrentMonth } = cell;
-  const bgColor = !isCurrentMonth ? colors.bg : isDragOver ? tk.primaryBorder : isToday ? colors.today : 'white';
-  const dayColor = !isCurrentMonth ? tk.borderStrong : isToday ? 'white' : colors.text;
+  const bgColor = !isCurrentMonth ? tk.surfaceMuted : isDragOver ? tk.primaryBorder : isToday ? tk.primarySoft : tk.surface;
+  const dayColor = !isCurrentMonth ? tk.borderStrong : isToday ? tk.surface : tk.text;
+  const layoutStyle3 = getLayoutStyle3(bgColor, onDayClick ? 'pointer' : 'default');
+  const layoutStyle4 = getLayoutStyle4;
+  const layoutStyle5 = getLayoutStyle5(isCurrentMonth && isToday ? tk.primary : 'transparent');
+  const layoutStyle6 = getLayoutStyle6(isCurrentMonth && isToday ? 'bold' : 'normal', dayColor);
+  const layoutStyle7 = getLayoutStyle7;
+  const layoutStyle8 = getLayoutStyle8;
   return (
-    <div
+    <WebBox
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onMouseEnter={() => setIsCellHover(true)}
       onMouseLeave={() => setIsCellHover(false)}
       onClick={onDayClick}
-      style={{
-        borderRight: `1px solid ${tk.border}`,
-        borderBottom: `1px solid ${tk.border}`,
-        minHeight: 110,
-        padding: '6px 4px',
-        backgroundColor: bgColor,
-        cursor: onDayClick ? 'pointer' : 'default',
-        position: 'relative',
-        transition: 'background-color 0.1s',
-      }}
+      style={layoutStyle3}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: space.xs, marginBottom: 2 }}>
-        <div
-          style={{
-            width: 26,
-            height: 26,
-            borderRadius: radius.lg,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: isCurrentMonth && isToday ? colors.primary : 'transparent',
-            flexShrink: 0,
-          }}
-        >
-          <span
-            style={{ fontSize: fontSize.xs, fontWeight: isCurrentMonth && isToday ? 'bold' : 'normal', color: dayColor }}
-          >
-            {cell.day}
-          </span>
-        </div>
+      <WebBox style={layoutStyle4}>
+        <WebBox style={layoutStyle5}>
+          <WebText style={layoutStyle6}>{cell.day}</WebText>
+        </WebBox>
         <DayCellCopyAction
           show={isCellHover && isCurrentMonth}
           canPaste={canPasteDay}
@@ -185,21 +171,18 @@ export function CalendarDayCell({
           onPaste={onPasteDay}
           t={t}
         />
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      </WebBox>
+      <WebBox style={layoutStyle7}>
         {visibleEvents.map((ev) => (
           <EventChip key={ev.id} event={ev} muted={!isCurrentMonth} />
         ))}
         {overflowCount > 0 && (
-          <span style={{ fontSize: fontSize.xs, color: colors.textMuted, paddingLeft: space.xs }}>
-            {t('coach.calendar.grid.more', { count: overflowCount })}
-          </span>
+          <WebText style={layoutStyle8}>{t('coach.calendar.grid.more', { count: overflowCount })}</WebText>
         )}
-      </div>
-    </div>
+      </WebBox>
+    </WebBox>
   );
 }
-
 export function CalendarGrid({
   year,
   month,
@@ -222,7 +205,6 @@ export function CalendarGrid({
   const weeks = getWeeks(year, month);
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
   const eventsByDate = events.reduce<Record<string, CalendarEventData[]>>((acc, ev) => {
     const d = ev.date instanceof Date ? ev.date : new Date(ev.date);
     const key = d.toISOString().slice(0, 10);
@@ -230,12 +212,10 @@ export function CalendarGrid({
     acc[key].push(ev);
     return acc;
   }, {});
-
   const handleCellDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   }, []);
-
   const handleCellDrop = useCallback(
     (e: React.DragEvent<HTMLDivElement>, dateStr: string) => {
       e.preventDefault();
@@ -253,9 +233,10 @@ export function CalendarGrid({
     },
     [onDrop, onMoveEvent],
   );
-
+  const layoutStyle9 = getLayoutStyle9;
+  const layoutStyle10 = getLayoutStyle10;
   return (
-    <View style={{ flex: 1, flexDirection: 'column', backgroundColor: 'white', minWidth: 0 }}>
+    <View style={layoutStyle9}>
       <CalendarMonthHeader
         year={year}
         month={month}
@@ -267,7 +248,7 @@ export function CalendarGrid({
         t={t}
       />
       <CalendarDayNames />
-      <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+      <WebBox style={layoutStyle10}>
         {weeks.map((week, weekIdx) => (
           <WeekRow
             key={weekIdx}
@@ -286,14 +267,13 @@ export function CalendarGrid({
             t={t}
           />
         ))}
-      </div>
+      </WebBox>
     </View>
   );
 }
-
 function EventChip({ event, muted = false }: { event: CalendarEventData; muted?: boolean }): React.JSX.Element {
   const { i18n, t } = useTranslation();
-  const colorObj = fixedColorFor(event.type) ?? (CALENDAR_COLORS.find((c) => c.bg === event.color) ?? CALENDAR_COLORS[0])!;
+  const colorObj = calendarEventColor(event);
   const statusKey = callStatusLabelKey(event.callStatus);
   const label =
     (statusKey ? t(statusKey) : null) ??
@@ -303,37 +283,34 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
     '—';
   const displayText = event.time ? [event.time, label].join(' ') : label;
   const statusLines = workoutStatusLines(event, t, i18n.language);
-
   function handleDragStart(e: React.DragEvent<HTMLDivElement>) {
     e.stopPropagation();
     e.dataTransfer.setData('calendarEventId', event.id);
     e.dataTransfer.effectAllowed = 'move';
   }
-
+  const layoutStyle11 = getLayoutStyle11(
+    colorObj.bg,
+    colorObj.text,
+    `${event.callStatus === 'pending' ? '1px dashed' : '1px solid'} ${colorObj.border}`,
+    event.type === 'physical_test' ? 'default' : 'grab',
+    muted ? 0.5 : 1,
+  );
+  const layoutStyle12 = getLayoutStyle12;
   return (
-    <div
+    <WebBox
       draggable={event.type !== 'physical_test'}
       onDragStart={event.type === 'physical_test' ? undefined : handleDragStart}
-      style={{
-        backgroundColor: colorObj.bg,
-        color: colorObj.text,
-        border: `${event.callStatus === 'pending' ? '1px dashed' : '1px solid'} ${colorObj.border}`,
-        borderRadius: radius.sm,
-        padding: '2px 6px',
-        fontSize: fontSize.sm,
-        fontWeight: 500,
-        overflow: 'hidden',
-        maxWidth: '100%',
-        cursor: event.type === 'physical_test' ? 'default' : 'grab',
-        opacity: muted ? 0.5 : 1,
-      }}
+      style={layoutStyle11}
     >
-      <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{displayText}</div>
-      {statusLines.map((line) => (
-        <div key={line} style={{ fontSize: fontSize.xs, fontWeight: 600, whiteSpace: 'normal' }}>
-          {line}
-        </div>
-      ))}
-    </div>
+      <WebBox style={layoutStyle12}>{displayText}</WebBox>
+      {statusLines.map((line) => {
+        const layoutStyle13 = getLayoutStyle13;
+        return (
+          <WebBox key={line} style={layoutStyle13}>
+            {line}
+          </WebBox>
+        );
+      })}
+    </WebBox>
   );
 }

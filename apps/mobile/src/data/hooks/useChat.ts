@@ -43,6 +43,7 @@ export function useChatMessagesQuery(threadId: string) {
     enabled: Boolean(auth) && threadId.length > 0,
     queryFn: () => createApiClient(auth!).get<ChatMessage[]>(`/chat/messages?threadId=${threadId}`),
     queryKey: ['chat-messages', auth?.activeRole, threadId],
+    refetchInterval: Boolean(auth) && threadId.length > 0 ? 10_000 : false,
   });
 }
 
@@ -76,7 +77,7 @@ export function useAcceptCallProposalMutation() {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${proposalId}/accept`, {});
     },
-    onSuccess: () => refreshChat(queryClient, auth),
+    onSettled: () => refreshChat(queryClient, auth),
   });
 }
 
@@ -88,7 +89,7 @@ export function useCounterCallProposalMutation() {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${input.proposalId}/counter`, { time: input.time });
     },
-    onSuccess: () => refreshChat(queryClient, auth),
+    onSettled: () => refreshChat(queryClient, auth),
   });
 }
 

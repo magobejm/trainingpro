@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { DateRange } from './progress-screen.types';
-import { Button, Field, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, DateTimeField, WebBox, Modal, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -17,7 +17,6 @@ export function CalendarRangeModal({ visible, range, onConfirm, onClose }: Props
   const [from, setFrom] = useState(range.from);
   const [to, setTo] = useState(range.to);
   const [submitted, setSubmitted] = useState(false);
-  const dateType = 'date';
 
   if (!visible) return null;
 
@@ -54,28 +53,26 @@ export function CalendarRangeModal({ visible, range, onConfirm, onClose }: Props
       title={t('coach.progress.range.custom')}
       visible={visible}
     >
-      <div style={column}>
-        <Field error={fromError} label={t('coach.progress.range.from')} required>
-          <input
-            aria-label={t('coach.progress.range.from')}
-            type={dateType}
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            max={to}
-            style={inputStyle}
-          />
-        </Field>
-        <Field error={toError} label={t('coach.progress.range.to')} required>
-          <input
-            aria-label={t('coach.progress.range.to')}
-            type={dateType}
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            min={from}
-            style={inputStyle}
-          />
-        </Field>
-      </div>
+      <WebBox style={column}>
+        <DateTimeField
+          label={t('coach.progress.range.from')}
+          error={fromError}
+          required
+          type={'date'}
+          value={from}
+          max={to}
+          onChange={setFrom}
+        />
+        <DateTimeField
+          label={t('coach.progress.range.to')}
+          error={toError}
+          required
+          type={'date'}
+          value={to}
+          min={from}
+          onChange={setTo}
+        />
+      </WebBox>
     </Modal>
   );
 }
@@ -90,16 +87,4 @@ const column: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: space.lg,
-};
-
-const inputStyle: React.CSSProperties = {
-  padding: `${space.sm}px ${space.md}px`,
-  minHeight: 40,
-  boxSizing: 'border-box',
-  width: '100%',
-  borderRadius: radius.md,
-  border: `1px solid ${colors.border}`,
-  fontFamily: 'inherit',
-  fontSize: fontSize.sm,
-  color: colors.text,
 };

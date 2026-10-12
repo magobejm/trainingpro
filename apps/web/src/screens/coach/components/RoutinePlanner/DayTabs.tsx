@@ -1,10 +1,14 @@
+import { WebBox } from '@trainerpro/ui';
+import { getLayoutStyle1 } from './DayTabs.layout-styles';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Button } from '@trainerpro/ui';
 import { s } from '../../RoutinePlanner.styles';
-
 interface DayTabsProps {
-  days: { id: string; title: string }[];
+  days: {
+    id: string;
+    title: string;
+  }[];
   activeIdx: number;
   onSelect: (i: number) => void;
   onAdd: () => void;
@@ -13,7 +17,6 @@ interface DayTabsProps {
   t: (k: string) => string;
   addLabelKey?: string;
 }
-
 export function DayTabs({
   days,
   activeIdx,
@@ -40,34 +43,35 @@ export function DayTabs({
     </View>
   );
 }
-
 function DayTabDropTarget(props: {
   active: boolean;
-  day: { id: string; title: string };
+  day: {
+    id: string;
+    title: string;
+  };
   index: number;
   onMoveBlockToDay?: (fromDayIdx: number, blockIdx: number, toDayIdx: number) => void;
   onSelect: (index: number) => void;
   readOnly: boolean;
 }) {
+  const layoutStyle1 = getLayoutStyle1;
   return (
-    <div
+    <WebBox
       key={props.day.id}
       onDragOver={onDragOverDayTab}
       onDrop={createDropToDay(props.onMoveBlockToDay, props.readOnly, props.index)}
-      style={{ display: 'flex' }}
+      style={layoutStyle1}
     >
       <Pressable onPress={() => props.onSelect(props.index)} style={[s.dayTab, props.active && s.dayTabActive]}>
         <Text style={[s.dayTabText, props.active && s.dayTabTextActive]}>{props.day.title}</Text>
       </Pressable>
-    </div>
+    </WebBox>
   );
 }
-
 function onDragOverDayTab(event: React.DragEvent<HTMLDivElement>) {
   event.preventDefault();
   event.dataTransfer.dropEffect = 'move';
 }
-
 function createDropToDay(onMoveBlockToDay: DayTabsProps['onMoveBlockToDay'], readOnly: boolean, targetDayIdx: number) {
   return (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -77,10 +81,15 @@ function createDropToDay(onMoveBlockToDay: DayTabsProps['onMoveBlockToDay'], rea
     onMoveBlockToDay(source.dayIdx, source.blockIdx, targetDayIdx);
   };
 }
-
-function parseDropSource(raw: string): null | { blockIdx: number; dayIdx: number } {
+function parseDropSource(raw: string): null | {
+  blockIdx: number;
+  dayIdx: number;
+} {
   try {
-    const value = JSON.parse(raw) as { blockIdx?: unknown; dayIdx?: unknown };
+    const value = JSON.parse(raw) as {
+      blockIdx?: unknown;
+      dayIdx?: unknown;
+    };
     if (typeof value.blockIdx !== 'number' || typeof value.dayIdx !== 'number') return null;
     return { blockIdx: value.blockIdx, dayIdx: value.dayIdx };
   } catch {

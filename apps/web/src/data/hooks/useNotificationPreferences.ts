@@ -1,16 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useFeedbackMutation } from './useFeedbackMutation';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type NotificationPreference = {
   coachMembershipId: string;
   enabled: boolean;
-  topic:
-    | 'ADHERENCE_LOW_WEEKLY'
-    | 'CLIENT_INACTIVE_3D'
-    | 'CLIENT_REMINDER'
-    | 'INCIDENT_CRITICAL'
-    | 'SESSION_COMPLETED';
+  topic: 'ADHERENCE_LOW_WEEKLY' | 'CLIENT_INACTIVE_3D' | 'CLIENT_REMINDER' | 'INCIDENT_CRITICAL' | 'SESSION_COMPLETED';
 };
 
 export function useNotificationPreferencesQuery() {
@@ -25,7 +21,7 @@ export function useNotificationPreferencesQuery() {
 export function useSetNotificationPreferenceMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
-  return useMutation({
+  return useFeedbackMutation({
     mutationFn: (input: { enabled: boolean; topic: NotificationPreference['topic'] }) => {
       if (!auth) {
         throw new Error('Missing authenticated context');

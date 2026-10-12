@@ -56,6 +56,7 @@ function mapClientCoreOutput(client: Client, urls?: StoredFileUrls) {
     heightCm: client.heightCm,
     id: client.id,
     lastName: client.lastName,
+    lastActivityAt: client.lastActivityAt ? formatIso(client.lastActivityAt) : null,
     notes: client.notes,
     objective: client.objective,
     objectiveId: client.objectiveId,

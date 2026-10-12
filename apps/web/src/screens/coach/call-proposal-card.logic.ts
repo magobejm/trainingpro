@@ -1,3 +1,4 @@
+import { colors } from '@trainerpro/ui';
 import type { ChatCallProposal } from '../../data/hooks/useChat';
 
 export type CallCardAction = 'accept' | 'counter';
@@ -13,8 +14,8 @@ export function callCardTone(proposal: ChatCallProposal): 'client' | 'coach' {
 }
 
 export const CALL_CARD_TONES = {
-  client: { bg: '#3b0764', border: '#581c87' },
-  coach: { bg: '#065f46', border: '#064e3b' },
+  client: { bg: colors.chartPurpleSoft, border: colors.chartPurple },
+  coach: { bg: colors.successSoft, border: colors.success },
 } as const;
 
 /** Cuartos de hora de 08:00 a 21:45, los mismos que admite la API. */

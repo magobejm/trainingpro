@@ -1,23 +1,17 @@
+import { getLayoutStyle1, getLayoutStyle2 } from './NotesScreen.modals.layout-styles';
+
 import React from 'react';
 import { Text, View } from 'react-native';
 import { Check } from 'lucide-react';
 import type { NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
 import { Button, Modal, TextField, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
-
 const MODAL_SIZE = 'md' as const;
 const MODAL_SIZE_SM = 'sm' as const;
 const VARIANT_SECONDARY = 'secondary' as const;
 const VARIANT_DANGER = 'danger' as const;
 const EDITOR_LINES = 10;
-
-const colors = {
-  text: tk.text,
-  textMuted: tk.textMuted,
-};
-
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
-
 export type EditNoteModalProps = {
   editingNote: NoteData | null;
   editContent: string;
@@ -27,7 +21,6 @@ export type EditNoteModalProps = {
   onSave: () => void;
   t: TFunc;
 };
-
 export function EditNoteModal(props: EditNoteModalProps): React.JSX.Element {
   return (
     <Modal
@@ -47,7 +40,6 @@ export function EditNoteModal(props: EditNoteModalProps): React.JSX.Element {
     </Modal>
   );
 }
-
 function EditNoteModalBody(props: {
   editContent: string;
   editingNote: NoteData | null;
@@ -67,12 +59,12 @@ function EditNoteModalBody(props: {
     </View>
   );
 }
-
 function EditNoteMetaBadge(props: { editingNote: NoteData | null; t: TFunc }): React.JSX.Element | null {
   const note = props.editingNote;
   if (!note) {
     return null;
   }
+  const layoutStyle1 = getLayoutStyle1;
   return (
     <View style={noteBadgeRowStyle}>
       <View style={noteBadgeStyle(note.type)}>
@@ -80,13 +72,10 @@ function EditNoteMetaBadge(props: { editingNote: NoteData | null; t: TFunc }): R
           {readEditBadgeLabel(note, props.t)}
         </Text>
       </View>
-      <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginLeft: space.sm }}>
-        {formatNoteDate(note.createdAt, props.t)}
-      </Text>
+      <Text style={layoutStyle1}>{formatNoteDate(note.createdAt, props.t)}</Text>
     </View>
   );
 }
-
 function readEditBadgeLabel(note: NoteData, t: TFunc): string {
   if (note.type === 'general') {
     return t('coach.notes.history.myNotes');
@@ -95,7 +84,6 @@ function readEditBadgeLabel(note: NoteData, t: TFunc): string {
     name: (note.clientName ?? '').trim().toUpperCase() || t('coach.notes.edit.clientUnknown'),
   });
 }
-
 function EditNoteModalFooter(props: {
   isSaving?: boolean;
   onClose: () => void;
@@ -114,7 +102,6 @@ function EditNoteModalFooter(props: {
     </>
   );
 }
-
 export type DeleteConfirmModalProps = {
   isDeleting?: boolean;
   note: NoteData | null;
@@ -122,8 +109,8 @@ export type DeleteConfirmModalProps = {
   onConfirm: () => void;
   t: (k: string) => string;
 };
-
 export function DeleteConfirmModal(props: DeleteConfirmModalProps): React.JSX.Element {
+  const layoutStyle2 = getLayoutStyle2;
   return (
     <Modal
       closeLabel={props.t('common.close')}
@@ -143,18 +130,16 @@ export function DeleteConfirmModal(props: DeleteConfirmModalProps): React.JSX.El
       title={props.t('coach.notes.delete.title')}
       visible={!!props.note}
     >
-      <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{props.t('coach.notes.delete.confirm')}</Text>
+      <Text style={layoutStyle2}>{props.t('coach.notes.delete.confirm')}</Text>
     </Modal>
   );
 }
-
 const noteBadgeRowStyle = {
   flexDirection: 'row' as const,
   justifyContent: 'space-between' as const,
   alignItems: 'center' as const,
   marginBottom: space.lg,
 };
-
 function noteBadgeStyle(type: NoteData['type']) {
   return {
     paddingHorizontal: space.md,
@@ -164,7 +149,6 @@ function noteBadgeStyle(type: NoteData['type']) {
     maxWidth: '65%' as unknown as number,
   };
 }
-
 function noteBadgeTextStyle(type: NoteData['type']) {
   return {
     fontSize: fontSize.xs,

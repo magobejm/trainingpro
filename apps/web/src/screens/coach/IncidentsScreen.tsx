@@ -1,3 +1,4 @@
+import { QueryResult } from '../../components/AsyncStatus';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -10,23 +11,13 @@ import {
   useReviewIncidentMutation,
   useTagIncidentMutation,
 } from '../../data/hooks/useIncidents';
-import { ClientSelectionStrip } from './components/ClientSelectionStrip';
+import { clientCardItems } from './client-card-items';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
-import { Button, EmptyState, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Card, ClientCardRow, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
-
-const COLORS = {
-  action: colors.primary,
-  bg: colors.background,
-  card: colors.surface,
-  input: colors.background,
-  muted: colors.textMuted,
-  text: colors.text,
-  white: colors.surface,
-};
 
 export function IncidentsScreen(): React.JSX.Element {
   const vm = useIncidentsViewModel();
@@ -45,7 +36,7 @@ function useIncidentsViewModel() {
   const fields = useIncidentActionFields();
   useClearIncidentDraft(clientId, fields);
   const clientItems = useMemo(
-    () => mapClientItems(clientsQuery.data ?? [], t('coach.incidents.allClients')),
+    () => [{ id: '', title: t('coach.incidents.allClients'), subtitle: '' }, ...clientCardItems(clientsQuery.data ?? [], t)],
     [clientsQuery.data, t],
   );
   return {
@@ -53,6 +44,9 @@ function useIncidentsViewModel() {
     clientItems,
     ...fields,
     incidents: incidentsQuery.data ?? [],
+    error: incidentsQuery.error,
+    isError: incidentsQuery.isError,
+    onRetry: () => void incidentsQuery.refetch(),
     isLoading: incidentsQuery.isLoading,
     ...buildActions(actions, fields),
     pending: readPendingIds(actions),
@@ -113,26 +107,22 @@ function IncidentsView(props: ViewModel) {
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{props.t('coach.incidents.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.incidents.subtitle')}</Text>
-      <ClientSelectionStrip
-        emptyLabel={props.t('coach.incidents.allClients')}
-        items={props.clientItems}
-        loading={props.isLoading && props.clientItems.length === 0}
-        onSelect={props.setClientId}
-        selectedId={props.clientId}
-        showArrows
-      />
+      <ClientCardRow items={props.clientItems} onItemPress={props.setClientId} selectedId={props.clientId} />
       <IncidentList {...props} />
     </ScrollView>
   );
 }
 
 function IncidentList(props: ViewModel) {
-  if (props.isLoading) {
-    return <EmptyState title={props.t('coach.incidents.loading')} />;
-  }
-  if (props.incidents.length === 0) {
-    return <EmptyState title={props.t('coach.incidents.empty')} />;
-  }
+  const status = QueryResult({
+    emptyTitle: props.t('coach.incidents.empty'),
+    error: props.error,
+    isError: props.isError,
+    isLoading: props.isLoading,
+    itemCount: props.incidents.length,
+    onRetry: props.onRetry,
+  });
+  if (status) return status;
   return <View style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
 }
 
@@ -149,7 +139,7 @@ function renderIncidentCard(
   },
 ) {
   return (
-    <View key={incident.id} style={styles.card}>
+    <Card key={incident.id} style={styles.card}>
       <Text style={styles.incidentTitle}>{`${incident.severity} · ${incident.status}`}</Text>
       <Text style={styles.meta}>{new Date(incident.createdAt).toLocaleDateString()}</Text>
       <Text style={styles.description}>{incident.description}</Text>
@@ -157,7 +147,7 @@ function renderIncidentCard(
       <Text style={styles.meta}>{incident.coachResponse ?? props.t('coach.incidents.noResponse')}</Text>
       <ActionInputs {...props} />
       <ActionButtons props={props} incidentId={incident.id} />
-    </View>
+    </Card>
   );
 }
 
@@ -213,41 +203,19 @@ function ActionButton(props: { label: string; loading: boolean; onPress: () => v
   );
 }
 
-function mapClientItems(
-  clients: Array<{
-    avatarUrl: null | string;
-    email: string;
-    firstName: string;
-    id: string;
-    lastName: string;
-  }>,
-  allLabel: string,
-) {
-  const allCard: Array<{ avatarUrl: null | string; email: string; id: string; name: string }> = [
-    { avatarUrl: null, email: allLabel, id: '', name: allLabel },
-  ];
-  const items = clients.map((client) => ({
-    avatarUrl: client.avatarUrl,
-    email: client.email,
-    id: client.id,
-    name: `${client.firstName} ${client.lastName}`.trim(),
-  }));
-  return [...allCard, ...items];
-}
-
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: colors.surface,
     borderRadius: radius.lg,
     gap: space.sm,
     padding: space.md,
   },
   description: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.sm,
   },
   incidentTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.sm,
     fontWeight: '800',
   },
@@ -255,11 +223,11 @@ const styles = StyleSheet.create({
     gap: space.sm,
   },
   meta: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.xs,
   },
   page: {
-    backgroundColor: COLORS.bg,
+    backgroundColor: colors.background,
     gap: space.md,
     minHeight: '100%',
     padding: space.xl,
@@ -273,11 +241,11 @@ const styles = StyleSheet.create({
     gap: space.md,
   },
   subtitle: {
-    color: COLORS.muted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
   },
   title: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xxl,
     fontWeight: '800',
   },

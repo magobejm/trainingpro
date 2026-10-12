@@ -1,16 +1,6 @@
 import { StyleSheet } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const COLORS = {
-  action: colors.primary,
-  bg: colors.background,
-  border: colors.border,
-  card: colors.surface,
-  text: colors.text,
-  textMuted: colors.textMuted,
-  white: colors.surface,
-};
-
 export const styles = StyleSheet.create({
   badge: {
     backgroundColor: colors.primarySoft,
@@ -45,7 +35,6 @@ export const styles = StyleSheet.create({
   },
   container: {
     gap: space.md,
-    maxWidth: 1280,
     width: '100%',
   },
   ctaCard: {
@@ -74,12 +63,12 @@ export const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   ctaTitle: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xxl,
     fontWeight: '800',
   },
   empty: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
   },
   formCard: {
@@ -91,8 +80,8 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   hero: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: 16,
     borderWidth: 1,
     gap: space.sm,
@@ -151,10 +140,10 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
   page: {
-    alignItems: 'center',
-    backgroundColor: COLORS.bg,
+    alignItems: 'stretch',
+    backgroundColor: colors.background,
     flexGrow: 1,
-    paddingHorizontal: space.xxl,
+    paddingHorizontal: space.xl,
     paddingVertical: space.xl,
   },
   pageCompact: {
@@ -162,8 +151,8 @@ export const styles = StyleSheet.create({
     paddingVertical: space.lg,
   },
   profileCard: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     minHeight: 240,
@@ -175,11 +164,11 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   subtitle: {
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontSize: fontSize.sm,
   },
   title: {
-    color: COLORS.text,
+    color: colors.text,
     fontSize: fontSize.xxl,
     fontWeight: '800',
   },

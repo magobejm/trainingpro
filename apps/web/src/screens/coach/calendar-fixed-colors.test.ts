@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { colors } from '@trainerpro/ui';
 import { callStatusLabelKey, fixedColorFor } from './calendar-fixed-colors';
 
 describe('fixedColorFor', () => {
-  it('gives notes and calls a fixed dark color and leaves workouts free', () => {
-    expect(fixedColorFor('note')?.bg).toBe('#172554');
-    expect(fixedColorFor('call')?.bg).toBe('#065f46');
-    expect(fixedColorFor('reminder')?.bg).toBe('#065f46');
-    expect(fixedColorFor('physical_test')?.bg).toBe('#312e81');
+  it('gives notes and calls a token color per event type and leaves workouts free', () => {
+    expect(fixedColorFor('note')?.bg).toBe(colors.infoSoft);
+    expect(fixedColorFor('call')?.bg).toBe(colors.successSoft);
+    expect(fixedColorFor('reminder')?.bg).toBe(colors.successSoft);
+    expect(fixedColorFor('physical_test')?.bg).toBe(colors.primarySoft);
     expect(fixedColorFor('workout')).toBeNull();
   });
 });

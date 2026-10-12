@@ -1,3 +1,4 @@
+import { CallsModule } from '../calls/calls.module';
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { PhysicalTestsModule } from '../physical-tests/physical-tests.module';
@@ -11,7 +12,7 @@ import { CalendarRepositoryPrisma } from './infra/prisma/calendar.repository.pri
 import { CalendarController } from './presentation/controllers/calendar.controller';
 
 @Module({
-  imports: [AuthModule, PhysicalTestsModule],
+  imports: [AuthModule, PhysicalTestsModule, CallsModule],
   controllers: [CalendarController],
   providers: [
     ClearFutureWorkoutsUseCase,

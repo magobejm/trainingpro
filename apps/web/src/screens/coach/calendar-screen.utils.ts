@@ -1,3 +1,6 @@
+import { fixedColorFor } from './calendar-fixed-colors';
+import type { CalendarEventData } from './calendar-screen.types';
+import { legacyCalendarBackgrounds } from '@trainerpro/ui';
 import type { CalendarColor } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
 
@@ -49,7 +52,8 @@ export function formatCalendarDate(date: Date): string {
 }
 
 export function getColorForHex(hex: string): CalendarColor {
-  return CALENDAR_COLORS.find((c) => c.bg === hex) ?? (CALENDAR_COLORS[0] as CalendarColor);
+  const background = legacyCalendarBackgrounds[hex] ?? hex;
+  return CALENDAR_COLORS.find((c) => c.bg === background) ?? (CALENDAR_COLORS[0] as CalendarColor);
 }
 
 export const MONTH_NAMES_ES = [
@@ -68,3 +72,8 @@ export const MONTH_NAMES_ES = [
 ];
 
 export const DAY_NAMES_ES = ['LUNES', 'MARTES', 'MIÉRCOLES', 'JUEVES', 'VIERNES', 'SÁBADO', 'DOMINGO'];
+
+/** Único resolver para los chips y el detalle del mismo evento. */
+export function calendarEventColor(event: Pick<CalendarEventData, 'type' | 'color'>): CalendarColor {
+  return fixedColorFor(event.type) ?? getColorForHex(event.color ?? '');
+}

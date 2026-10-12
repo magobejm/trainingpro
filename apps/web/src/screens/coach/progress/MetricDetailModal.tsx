@@ -1,10 +1,11 @@
+import { getLayoutStyle1, getLayoutStyle2 } from './MetricDetailModal.layout-styles';
+import { WebBox, WebText } from '@trainerpro/ui';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { VariableDef } from './progress-screen.types';
 import type { ExerciseProgressPoint } from '../../../data/hooks/useExerciseProgressQuery';
-import { Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
-
+import { Button, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -12,7 +13,6 @@ type Props = {
   exerciseName?: string;
   data: ExerciseProgressPoint[];
 };
-
 // eslint-disable-next-line max-lines-per-function
 export function MetricDetailModal({ visible, onClose, variable, exerciseName, data }: Props): React.JSX.Element | null {
   const { t } = useTranslation();
@@ -32,17 +32,13 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
   const detailTitle = t('coach.progress.modal.detailTitleWithMetric').replace('{metric}', t(variable?.labelKey ?? ''));
   const setRepsSeparator = t('coach.progress.modal.setRepsSeparator');
   const dotSeparator = t('coach.progress.modal.dotSeparator');
-
   if (!visible || !variable) return null;
-
   const chartData = data.map((pt) => ({
     date: pt.sessionDate.slice(5),
     value: (pt as Record<string, unknown>)[variable.dataKey] ?? 0,
   }));
-
   const selectedPoint = data[selectedIdx];
   const sets = selectedPoint?.setDetails ?? [];
-
   const avgVal =
     data.length > 0
       ? data.reduce((s, pt) => {
@@ -59,26 +55,29 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
           }),
         )
       : 0;
-
+  const layoutStyle1 = getLayoutStyle1;
+  const layoutStyle2 = getLayoutStyle2;
   return (
     <Modal closeLabel={t('common.close')} onClose={onClose} size="xl" title={detailTitle} visible={visible}>
-      <div style={modalBody}>
-        <p style={modalSubtitle}>{exerciseName ?? ''}</p>
+      <WebBox style={modalBody}>
+        <WebText style={modalSubtitle}>{exerciseName ?? ''}</WebText>
 
         {/* KPI tiles */}
-        <div style={kpiRow}>
+        <WebBox style={kpiRow}>
           <KpiTile label={t('coach.progress.kpi.sessions')} value={`${data.length}`} />
           <KpiTile
             label={`${t('coach.progress.kpi.avgPrefix')} ${t(variable.labelKey)}`}
             value={`${Math.round(avgVal * 10) / 10} ${variable.unit}`}
           />
           <KpiTile label={t('coach.progress.kpi.max')} value={`${Math.round(maxVal * 10) / 10} ${variable.unit}`} />
-        </div>
+        </WebBox>
 
         {/* Main chart */}
-        <div style={chartContainer}>
-          <p style={sectionLabel}>{t('coach.progress.modal.progressOf').replace('{metric}', t(variable.labelKey))}</p>
-          <div style={{ height: 220 }}>
+        <WebBox style={chartContainer}>
+          <WebText style={sectionLabel}>
+            {t('coach.progress.modal.progressOf').replace('{metric}', t(variable.labelKey))}
+          </WebText>
+          <WebBox style={layoutStyle1}>
             <ResponsiveContainer width={fullSize} height={fullSize}>
               <AreaChart data={chartData}>
                 <defs>
@@ -103,71 +102,71 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
                 />
               </AreaChart>
             </ResponsiveContainer>
-          </div>
-        </div>
+          </WebBox>
+        </WebBox>
 
         {/* Two-panel: sessions list + set breakdown */}
-        <div style={twoPanel}>
+        <WebBox style={twoPanel}>
           {/* Sessions list */}
-          <div style={sessionsList}>
-            <p style={sectionLabel}>{t('coach.progress.modal.sessions.title')}</p>
+          <WebBox style={sessionsList}>
+            <WebText style={sectionLabel}>{t('coach.progress.modal.sessions.title')}</WebText>
             {data.map((pt, idx) => (
-              <button
+              <Button
                 key={pt.sessionId}
-                style={{ ...sessionItem, ...(idx === selectedIdx ? sessionItemActive : {}) }}
-                onClick={() => setSelectedIdx(idx)}
-              >
-                <span style={sessionDate}>{pt.sessionDate}</span>
-                <span style={sessionValue}>
-                  {Math.round((((pt as Record<string, unknown>)[variable.dataKey] as number) ?? 0) * 10) / 10}{' '}
-                  {variable.unit}
-                </span>
-              </button>
+                label={
+                  pt.sessionDate +
+                  ' · ' +
+                  Math.round(Number((pt as Record<string, unknown>)[variable.dataKey] ?? 0) * 10) / 10 +
+                  ' ' +
+                  variable.unit
+                }
+                onPress={() => setSelectedIdx(idx)}
+                variant={idx === selectedIdx ? 'primary' : 'secondary'}
+                size="sm"
+              />
             ))}
-          </div>
+          </WebBox>
 
           {/* Set breakdown */}
-          <div style={setsPanel}>
-            <p style={sectionLabel}>{t('coach.progress.modal.sets.title')}</p>
-            {sets.length === 0 && (
-              <p style={{ color: colors.textMuted, fontSize: fontSize.sm }}>{t('coach.progress.modal.noData')}</p>
-            )}
+          <WebBox style={setsPanel}>
+            <WebText style={sectionLabel}>{t('coach.progress.modal.sets.title')}</WebText>
+            {sets.length === 0 && <WebText style={layoutStyle2}>{t('coach.progress.modal.noData')}</WebText>}
             {sets.map((set) => (
-              <div key={set.setIndex} style={setRow}>
-                <span style={setNum}>{t('coach.progress.modal.setLabel').replace('{index}', String(set.setIndex))}</span>
-                <span style={setDetail}>
+              <WebBox key={set.setIndex} style={setRow}>
+                <WebText style={setNum}>
+                  {t('coach.progress.modal.setLabel').replace('{index}', String(set.setIndex))}
+                </WebText>
+                <WebText style={setDetail}>
                   {set.weightKg !== null ? `${set.weightKg}kg` : t('coach.progress.modal.na')} {setRepsSeparator}{' '}
                   {set.reps ?? t('coach.progress.modal.na')} {t('coach.progress.modal.reps')}
                   {set.rpe !== null ? ` ${dotSeparator} ${t('coach.progress.modal.rpeLabel')} ${set.rpe}` : ''}
-                </span>
+                </WebText>
                 {set.e1rm !== null && (
-                  <span style={setMeta}>
+                  <WebText style={setMeta}>
                     {t('coach.progress.modal.e1rmValue').replace('{value}', String(Math.round(set.e1rm)))}
-                  </span>
+                  </WebText>
                 )}
-              </div>
+              </WebBox>
             ))}
 
             {/* Insight */}
-            <div style={insightBox}>
-              <p style={insightText}>{t('coach.progress.modal.insightText')}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+            <WebBox style={insightBox}>
+              <WebText style={insightText}>{t('coach.progress.modal.insightText')}</WebText>
+            </WebBox>
+          </WebBox>
+        </WebBox>
+      </WebBox>
     </Modal>
   );
 }
-
 function KpiTile({ label, value }: { label: string; value: string }) {
   return (
-    <div style={kpiTile}>
-      <p style={kpiLabel}>{label}</p>
-      <p style={kpiValue}>{value}</p>
-    </div>
+    <WebBox style={kpiTile}>
+      <WebText style={kpiLabel}>{label}</WebText>
+      <WebText style={kpiValue}>{value}</WebText>
+    </WebBox>
   );
 }
-
 // Styles
 const modalBody: React.CSSProperties = {
   display: 'flex',
@@ -177,7 +176,7 @@ const modalBody: React.CSSProperties = {
 const modalSubtitle: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted, fontWeight: 600 };
 const kpiRow: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(140px, 100%), 1fr))',
   gap: space.lg,
 };
 const kpiTile: React.CSSProperties = {
@@ -211,7 +210,7 @@ const sectionLabel: React.CSSProperties = {
 };
 const twoPanel: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr 1.5fr',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))',
   gap: space.xl,
 };
 const sessionsList: React.CSSProperties = {
@@ -219,23 +218,7 @@ const sessionsList: React.CSSProperties = {
   flexDirection: 'column',
   gap: space.sm,
 };
-const sessionItem: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '10px 14px',
-  borderRadius: radius.lg,
-  border: `1.5px solid ${colors.background}`,
-  background: colors.surface,
-  cursor: 'pointer',
-  transition: 'all 0.15s',
-};
-const sessionItemActive: React.CSSProperties = {
-  border: `1.5px solid ${colors.primary}`,
-  background: colors.primarySoft,
-};
-const sessionDate: React.CSSProperties = { fontSize: fontSize.sm, fontWeight: 700, color: colors.text };
-const sessionValue: React.CSSProperties = { fontSize: fontSize.sm, fontWeight: 700, color: colors.primary };
+
 const setsPanel: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',

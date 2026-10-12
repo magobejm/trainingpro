@@ -30,6 +30,7 @@
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
     "build": "pnpm exec tsc -p tsconfig.json --noEmit && pnpm exec vite build",
     "test": "pnpm exec vitest run",
+    "test:flows": "pnpm exec vitest run --config vitest.flows.config.ts",
     "preview": "pnpm exec vite preview --host 0.0.0.0 --port 4173"
   }
 }

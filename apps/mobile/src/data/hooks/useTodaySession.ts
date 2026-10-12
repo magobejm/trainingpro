@@ -17,8 +17,11 @@ import type {
   SportSetLog,
   StrengthSessionItem,
 } from '@trainerpro/shared';
-import { createApiClient } from '../api-client';
+import { ApiClientError, createApiClient } from '../api-client';
+import { readSessionDraft, rememberSession, sessionWritePath } from '../offline/session-draft';
 import { useAuthStore } from '../../store/auth.store';
+
+export { sessionWritePath };
 
 export type {
   CardioSessionItem,
@@ -114,7 +117,7 @@ export function useSessionQuery(sessionId: string) {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth) && sessionId.length > 0,
-    queryFn: () => readSession(auth, sessionId),
+    queryFn: () => readSessionOrDraft(auth, sessionId),
     queryKey: ['session', sessionId, auth?.activeRole, auth?.accessToken],
   });
 }
@@ -308,6 +311,19 @@ async function finishSession(
     throw new Error('Missing authenticated context');
   }
   return createApiClient(auth).post(`/sessions/${sessionId}/finish`, payload);
+}
+
+async function readSessionOrDraft(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<SessionView> {
+  try {
+    const session = await readSession(auth, sessionId);
+    await rememberSession(session);
+    return session;
+  } catch (error) {
+    if (error instanceof ApiClientError) throw error;
+    const draft = await readSessionDraft(sessionId);
+    if (draft?.session) return draft.session;
+    throw error;
+  }
 }
 
 async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<SessionView> {

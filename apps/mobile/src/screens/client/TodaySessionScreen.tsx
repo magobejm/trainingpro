@@ -1,19 +1,10 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { ApiClientError } from '../../data/api-client';
-import {
-  useFinishSessionMutation,
-  useLogIntervalMutation,
-  useLogIsometricSetMutation,
-  useLogMobilitySetMutation,
-  useLogPlioSetMutation,
-  useLogSetMutation,
-  useLogSportMutation,
-  useSessionQuery,
-  useStartSessionMutation,
-} from '../../data/hooks/useTodaySession';
+import { useSessionQuery, sessionWritePath } from '../../data/hooks/useTodaySession';
+import { applyPendingOps } from '../../data/offline/apply-pending';
 import type {
   LogIntervalMutationInput,
   LogIsometricSetMutationInput,
@@ -33,7 +24,8 @@ import { RoutineDayScreen } from './RoutineDayScreen';
 import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
 import { useOptionalCoachNotice } from './MorningCheckinGate';
 import { SessionRpeModal } from './SessionRpeModal';
-import { finishSessionWithRpePayload, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
+import { SessionSyncBanner } from './SessionSyncBanner';
+import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
 import { localDateKey, readTodayCheckin } from './daily-checkin.utils';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
@@ -71,6 +63,7 @@ type TodaySessionBodyProps = {
   onExpandRest: () => void;
   onSelectExercise: (item: SessionItem, group: SessionItem[]) => void;
   onStartRest: (setKey: string, seconds: number) => void;
+  banner: React.ReactNode;
   restState: RestState | null;
   selectedExercise: SessionItem | null;
   session: SessionView;
@@ -89,6 +82,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        {props.banner}
         {props.isPending ? (
           <View style={styles.pendingWrap}>
             <Text style={styles.emptyText}>{props.t('mobile.shell.loading')}</Text>
@@ -154,14 +148,13 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
 export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodaySessionScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const sessionQuery = useSessionQuery(sessionId);
-  const startMutation = useStartSessionMutation(sessionId);
-  const finishMutation = useFinishSessionMutation(sessionId);
-  const logSetMutation = useLogSetMutation(sessionId);
-  const logPlioSetMutation = useLogPlioSetMutation(sessionId);
-  const logMobilitySetMutation = useLogMobilitySetMutation(sessionId);
-  const logIsometricSetMutation = useLogIsometricSetMutation(sessionId);
-  const logSportMutation = useLogSportMutation(sessionId);
-  const logIntervalMutation = useLogIntervalMutation(sessionId);
+  const actions = useOfflineSessionActions(sessionId, sessionQuery.data ?? null, sessionQuery.dataUpdatedAt);
+  const rawSession = sessionQuery.data ?? actions.draft?.session ?? null;
+  const pendingOps = actions.draft?.ops;
+  const session = useMemo(
+    () => (rawSession ? applyPendingOps(rawSession, pendingOps ?? []) : null),
+    [pendingOps, rawSession],
+  );
 
   const [selectedExercise, setSelectedExercise] = useState<SessionItem | null>(null);
   const [exerciseGroup, setExerciseGroup] = useState<SessionItem[]>([]);
@@ -169,8 +162,10 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const [completedRestKeys, setCompletedRestKeys] = useState<string[]>([]);
   const [restState, setRestState] = useState<RestState | null>(null);
   const [rpeVisible, setRpeVisible] = useState(false);
+  const [finishBusy, setFinishBusy] = useState(false);
   const [, tick] = useState(0);
   const startPromptedRef = React.useRef(false);
+  const pendingFinishRpe = React.useRef<number | null>(null);
   const [checkinHydrated, setCheckinHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
   const notifyCoach = useOptionalCoachNotice();
   const userId = useAuthStore((state) => state.userId);
@@ -189,7 +184,6 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     return () => clearInterval(interval);
   }, [sessionQuery.data?.startedAt]);
 
-  const session = sessionQuery.data;
   const isPending = session?.status === 'PENDING';
   const isRunning = session?.status === 'IN_PROGRESS';
   const isCompleted = session?.status === 'COMPLETED';
@@ -213,16 +207,27 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   );
 
   React.useEffect(() => {
-    if (!checkinHydrated || session?.status !== 'PENDING' || startPromptedRef.current) {
+    const source = sessionQuery.data;
+    if (!checkinHydrated || source?.status !== 'PENDING' || startPromptedRef.current) {
       return;
     }
     startPromptedRef.current = true;
     const startPayload = startSessionPayloadFromMorningCheckin(todayScores);
-    void startMutation.mutateAsync(startPayload).catch((error) => {
-      startPromptedRef.current = false;
-      handleMutationError(error);
-    });
-  }, [checkinHydrated, handleMutationError, session?.status, startMutation, todayScores]);
+    void actions
+      .enqueue(source, {
+        body: startPayload,
+        dedupeKey: 'start',
+        kind: 'start',
+        path: sessionWritePath(sessionId, 'start'),
+      })
+      .then((outcome) => {
+        if (outcome === 'pending') showToast(t('mobile.client.sync.savedOffline'));
+      })
+      .catch((error) => {
+        startPromptedRef.current = false;
+        handleMutationError(error);
+      });
+  }, [actions, checkinHydrated, handleMutationError, sessionId, sessionQuery.data, t, todayScores]);
 
   React.useEffect(() => {
     if (!session || !selectedExercise) {
@@ -246,110 +251,48 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     }
   }, [session, exerciseGroup.map((entry) => entry.id).join('|')]);
 
-  const handleLogSet = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogSetMutation>['mutate']>[0]) => {
-      try {
-        await logSetMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logSetMutation, t],
-  );
-
-  const handleLogPlioSet = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogPlioSetMutation>['mutate']>[0]) => {
-      try {
-        await logPlioSetMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logPlioSetMutation, t],
-  );
-
-  const handleLogMobilitySet = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogMobilitySetMutation>['mutate']>[0]) => {
-      try {
-        await logMobilitySetMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logMobilitySetMutation, t],
-  );
-
-  const handleLogIsometricSet = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogIsometricSetMutation>['mutate']>[0]) => {
-      try {
-        await logIsometricSetMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logIsometricSetMutation, t],
-  );
-
-  const handleLogSport = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogSportMutation>['mutate']>[0]) => {
-      try {
-        await logSportMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logSportMutation, t],
-  );
-
-  const handleLogInterval = useCallback(
-    async (input: Parameters<ReturnType<typeof useLogIntervalMutation>['mutate']>[0]) => {
-      try {
-        await logIntervalMutation.mutateAsync(input);
-        showToast(t('mobile.client.session.setSaved'));
-      } catch (error) {
-        handleMutationError(error);
-        throw error;
-      }
-    },
-    [handleMutationError, logIntervalMutation, t],
-  );
-
   const handleFinishDay = useCallback(() => {
-    if (finishMutation.isPending || isCompleted) {
+    if (finishBusy || isCompleted) {
       return;
     }
     setRpeVisible(true);
-  }, [finishMutation.isPending, isCompleted]);
+  }, [finishBusy, isCompleted]);
 
   const handleSaveSessionRpe = useCallback(
     (sessionRpe: number) => {
-      if (finishMutation.isPending) {
-        return;
-      }
-      void finishMutation
-        .mutateAsync(finishSessionWithRpePayload(sessionRpe))
-        .then(async () => {
-          const label = t(`mobile.client.rpe.band.${sessionRpeBand(sessionRpe).key}.label`);
-          await notifyCoach(formatSessionRpeChatNotice(sessionRpe, label));
+      if (finishBusy) return;
+      setFinishBusy(true);
+      void actions
+        .enqueueFinish(sessionRpe)
+        .then(async (outcome) => {
+          if (outcome === 'conflict' || outcome === 'missing') {
+            setRpeVisible(false);
+            return;
+          }
+          if (outcome === 'pending') {
+            pendingFinishRpe.current = sessionRpe;
+            showToast(t('mobile.client.sync.savedOffline'));
+            setRpeVisible(false);
+            return;
+          }
+          await notifyFinishedSession(notifyCoach, onFinishedDay, sessionRpe, t);
           setRpeVisible(false);
-          onFinishedDay();
         })
         .catch((error) => {
           handleMutationError(error);
-        });
+        })
+        .finally(() => setFinishBusy(false));
     },
-    [finishMutation, handleMutationError, notifyCoach, onFinishedDay, t],
+    [actions, finishBusy, handleMutationError, notifyCoach, onFinishedDay, t],
   );
+
+  React.useEffect(() => {
+    if (pendingFinishRpe.current == null) return;
+    if (session?.status !== 'COMPLETED' || actions.pendingCount > 0 || actions.conflicts.length > 0) return;
+    const sessionRpe = pendingFinishRpe.current;
+    pendingFinishRpe.current = null;
+    void notifyFinishedSession(notifyCoach, onFinishedDay, sessionRpe, t);
+  }, [actions.conflicts.length, actions.pendingCount, notifyCoach, onFinishedDay, session?.status, t]);
 
   const handleStartRest = useCallback((setKey: string, seconds: number) => {
     setRestState({
@@ -393,18 +336,30 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   return (
     <>
       <TodaySessionBody
+        banner={
+          <SessionSyncBanner
+            conflicts={actions.conflicts}
+            onDismiss={() => {
+              void actions.dismissConflicts();
+            }}
+            onRetry={() => {
+              void actions.flush();
+            }}
+            pendingCount={actions.pendingCount}
+          />
+        }
         completedRestKeys={completedRestKeys}
         exerciseGroup={exerciseGroup}
         finishedExerciseIds={finishedExerciseIds}
         isCompleted={isCompleted}
         isPending={isPending}
         isRunning={isRunning}
-        onLogInterval={handleLogInterval}
-        onLogIsometricSet={handleLogIsometricSet}
-        onLogMobilitySet={handleLogMobilitySet}
-        onLogPlioSet={handleLogPlioSet}
-        onLogSet={handleLogSet}
-        onLogSport={handleLogSport}
+        onLogInterval={actions.handleLogInterval}
+        onLogIsometricSet={actions.handleLogIsometricSet}
+        onLogMobilitySet={actions.handleLogMobilitySet}
+        onLogPlioSet={actions.handleLogPlioSet}
+        onLogSet={actions.handleLogSet}
+        onLogSport={actions.handleLogSport}
         onClose={onClose}
         onFinishDay={handleFinishDay}
         onCollapseRest={handleCollapseRest}
@@ -426,7 +381,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         workoutElapsed={workoutElapsed}
       />
       <SessionRpeModal
-        isSubmitting={finishMutation.isPending}
+        isSubmitting={finishBusy}
         onClose={() => setRpeVisible(false)}
         onSubmit={handleSaveSessionRpe}
         visible={rpeVisible}

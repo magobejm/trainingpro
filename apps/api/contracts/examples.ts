@@ -37,6 +37,7 @@ export const clientListExample = {
       hipCm: null,
       id: CLIENT_ID,
       injuries: null,
+      lastActivityAt: null,
       lastName: 'García',
       notes: null,
       objective: 'Fuerza',

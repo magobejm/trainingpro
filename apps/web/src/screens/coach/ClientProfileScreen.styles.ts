@@ -114,10 +114,12 @@ export const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     gap: space.lg,
+    minWidth: 0,
   },
   identityText: {
     flex: 1,
     gap: space.xs,
+    minWidth: 0,
   },
   name: {
     color: colors.text,
@@ -144,6 +146,7 @@ export const styles = StyleSheet.create({
     marginTop: space.sm,
   },
   headerTag: {
+    maxWidth: '100%',
     backgroundColor: colors.background, // Light slate/gray typical for such tags
     borderRadius: radius.md,
     paddingHorizontal: space.md,
@@ -157,6 +160,7 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   headerTagSecondary: {
+    maxWidth: '100%',
     backgroundColor: '#fff7ed',
     borderRadius: radius.md,
     paddingHorizontal: space.md,
@@ -185,6 +189,7 @@ export const styles = StyleSheet.create({
   summaryRow: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: space.lg,
     justifyContent: 'space-between',
   },

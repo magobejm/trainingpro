@@ -15,14 +15,15 @@ type Props = {
   visible: boolean;
 };
 
-export function ClientProfileArchivedDrawer(props: Props): React.JSX.Element {
+export function ClientProfileArchivedDrawer(props: Props): React.JSX.Element | null {
+  if (!props.visible) return null;
   return (
     <>
       <div style={drawerStyle(props.visible)}>
         <DrawerHeader onClose={props.onClose} t={props.t} />
         <DrawerBody archived={props.archived} onRestore={props.onRestore} t={props.t} />
       </div>
-      {props.visible ? <div onClick={props.onClose} style={backdropStyle} /> : null}
+      <div onClick={props.onClose} style={backdropStyle} />
     </>
   );
 }

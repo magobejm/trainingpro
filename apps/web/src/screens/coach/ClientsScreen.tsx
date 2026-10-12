@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
-import { Button } from '@trainerpro/ui';
+import { Button, useBreakpoint } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
@@ -17,16 +17,22 @@ import { CreateClientModal } from './components/CreateClientModal';
 import { CreateClientResultBanner } from './components/CreateClientResultBanner';
 import { EmptyClientSelectionPanel } from './components/EmptyClientSelectionPanel';
 import { useClientCreateForm } from './useClientCreateForm';
-import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
-import { useMenuEpoch } from '../../layout/menu-client-context';
-import { useListContext, useRouteClient } from '../../layout/useListContext';
+import { useLocation, useNavigate } from 'react-router';
+import { LIST_KEYS } from '../../layout/list-context';
+import { useListContext } from '../../layout/useListContext';
+import { Breadcrumbs } from '../../layout/Breadcrumbs';
+import { buildClientCrumbs, type ClientCrumbMode } from '../../layout/crumbs';
+import { SHELL_PATHS } from '../../layout/shell-routes';
+import { clientsScreenPath, readClientsLocation, type ScreenMode } from './clients-location';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
-import { useProgressContextStore } from '../../store/progressContext.store';
+
+const MODE_NUTRITION = 'nutrition' as const;
+const MODE_MOOD = 'mood' as const;
+const MODE_TESTS = 'tests' as const;
 
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
 };
-type ScreenMode = 'list' | 'mood' | 'nutrition' | 'profile' | 'profileEdit' | 'tests';
 type SelectedClient = {
   avatarUrl: null | string;
   email: string;
@@ -46,20 +52,13 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const refs = useClientsDataRefs();
   const state = useClientsViewState();
   const consumeClientId = useRoutinePlannerContextStore((state) => state.consumeClientId);
-  const consumeReturnClientId = useProgressContextStore((state) => state.consumeReturnClientId);
   useEffect(() => {
     const clientIdFromPlanner = consumeClientId();
     if (clientIdFromPlanner) {
-      state.setSelectedClientId(clientIdFromPlanner);
-      state.setScreenMode('profile');
+      state.open(clientIdFromPlanner, 'profile', true);
       return;
     }
-    const clientIdFromProgress = consumeReturnClientId();
-    if (clientIdFromProgress) {
-      state.setSelectedClientId(clientIdFromProgress);
-      state.setScreenMode('profile');
-    }
-  }, [consumeClientId, consumeReturnClientId]);
+  }, [consumeClientId]);
   const selectedClientName = resolveSelectedClientName(refs.clientsQuery.data ?? [], state.selectedClientId);
   const selectedClient = resolveSelectedClient(refs.clientsQuery.data ?? [], state.selectedClientId);
   return buildClientsViewModel(refs, selectedClientName, selectedClient, state, onRouteChange, t);
@@ -93,38 +92,20 @@ function buildClientsViewModel(
 
 function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
   return {
-    onBackToList: () => backToList(state),
-    onBackToProfile: () => state.setScreenMode('profile'),
-    onOpenNutrition: () => state.setScreenMode('nutrition'),
-    onOpenMoodScreen: (clientId: string) => {
-      state.setSelectedClientId(clientId);
-      state.setScreenMode('mood');
-    },
-    onOpenTestsScreen: (clientId: string) => {
-      state.setSelectedClientId(clientId);
-      state.setScreenMode('tests');
-    },
-    onClearSelectedClient: () => state.setSelectedClientId(''),
-    onOpenProfileEdit: (clientId: string) => {
-      state.setSelectedClientId(clientId);
-      state.setScreenMode('profileEdit');
-    },
-    onSelectClient: (clientId: string) => selectClient(state, clientId),
+    onBackToList: state.backToList,
+    onBackToProfile: () => state.open(state.selectedClientId, 'profile'),
+    onOpenNutrition: () => state.open(state.selectedClientId, 'nutrition'),
+    onOpenMoodScreen: (clientId: string) => state.open(clientId, 'mood'),
+    onOpenTestsScreen: (clientId: string) => state.open(clientId, 'tests'),
+    // La pantalla ya vive en la dirección: al archivar basta con volver a la lista (onBackToList).
+    onClearSelectedClient: () => undefined,
+    onOpenProfileEdit: (clientId: string) => state.open(clientId, 'profileEdit'),
+    onSelectClient: (clientId: string) => state.open(clientId, 'profile'),
     objectiveFilter: state.objectiveFilter,
     onObjectiveFilterChange: state.setObjectiveFilter,
     onSearchValueChange: state.setSearchValue,
     searchValue: state.searchValue,
   };
-}
-
-function selectClient(state: ReturnType<typeof useClientsViewState>, clientId: string): void {
-  state.setSelectedClientId(clientId);
-  state.setScreenMode('profile');
-}
-
-function backToList(state: ReturnType<typeof useClientsViewState>): void {
-  state.setSelectedClientId('');
-  state.setScreenMode('list');
 }
 
 function useClientsDataRefs() {
@@ -138,41 +119,29 @@ function useClientsDataRefs() {
 
 type ClientsListContext = {
   objectiveFilter: string;
-  screenMode: ScreenMode;
   searchValue: string;
-  selectedClientId: string;
 };
 
+/** Filtros guardados en la sesión; la pantalla y el cliente salen de la dirección del navegador. */
 function useClientsViewState() {
-  const [context, setContext] = useListContext(LIST_KEYS.clients, emptyClientsContext(), reviveClientsContext);
-  const epoch = useMenuEpoch();
-  useEffect(() => {
-    if (epoch === 0) return;
-    setContext((prev) => ({ ...prev, screenMode: 'list', selectedClientId: '' }));
-  }, [epoch, setContext]);
-  useRouteClient(context.screenMode === 'list' ? '' : context.selectedClientId);
+  const [context, setContext] = useListContext(LIST_KEYS.clients, emptyClientsContext());
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { screenMode, selectedClientId } = readClientsLocation(location.pathname);
   return {
+    backToList: () => navigate(SHELL_PATHS['coach.clients']),
     objectiveFilter: context.objectiveFilter,
-    screenMode: context.screenMode,
+    open: (clientId: string, mode: ScreenMode, replace = false) => navigate(clientsScreenPath(clientId, mode), { replace }),
+    screenMode,
     searchValue: context.searchValue,
-    selectedClientId: context.selectedClientId,
+    selectedClientId,
     setObjectiveFilter: (objectiveFilter: string) => setContext((prev) => ({ ...prev, objectiveFilter })),
-    setScreenMode: (screenMode: ScreenMode) => setContext((prev) => ({ ...prev, screenMode })),
     setSearchValue: (searchValue: string) => setContext((prev) => ({ ...prev, searchValue })),
-    setSelectedClientId: (selectedClientId: string) => setContext((prev) => ({ ...prev, selectedClientId })),
   };
 }
 
 function emptyClientsContext(): ClientsListContext {
-  return { objectiveFilter: 'ALL', screenMode: 'list', searchValue: '', selectedClientId: '' };
-}
-
-function reviveClientsContext(stored: ClientsListContext | null, initial: ClientsListContext): ClientsListContext {
-  const base = stored ?? initial;
-  const urlClient = readRouteClientId();
-  if (!urlClient) return base;
-  const screenMode = base.selectedClientId === urlClient && base.screenMode !== 'list' ? base.screenMode : 'profile';
-  return { ...base, screenMode, selectedClientId: urlClient };
+  return { objectiveFilter: 'ALL', searchValue: '' };
 }
 
 function resolveSelectedClientName(
@@ -193,8 +162,9 @@ function resolveSelectedClient(clients: SelectedClient[], selectedClientId: stri
 type ViewProps = ReturnType<typeof useClientsViewModel>;
 
 function ClientsView(props: ViewProps): React.JSX.Element {
+  const compact = useBreakpoint() !== 'lg';
   return (
-    <ScrollView contentContainerStyle={styles.page}>
+    <ScrollView contentContainerStyle={compact ? [styles.page, styles.pageCompact] : styles.page}>
       <View style={styles.container}>
         {renderMainContent(props)}
         <CreateClientDialog props={props} />
@@ -300,9 +270,14 @@ function Header(props: { count: number; t: (key: string) => string }): React.JSX
 }
 
 function renderCta(props: ViewProps): React.JSX.Element {
+  return <CtaCard {...props} />;
+}
+
+function CtaCard(props: ViewProps): React.JSX.Element {
+  const stacked = useBreakpoint() === 'sm';
   return (
-    <View style={styles.ctaCard}>
-      <View style={styles.ctaText}>
+    <View style={[styles.ctaCard, stacked && styles.ctaCardStacked]}>
+      <View style={[styles.ctaText, stacked && styles.ctaTextStacked]}>
         <Text style={styles.ctaTitle}>{props.t('coach.clients.cta.title')}</Text>
         <Text style={styles.ctaSubtitle}>{props.t('coach.clients.cta.subtitle')}</Text>
       </View>
@@ -329,15 +304,9 @@ function renderProfile(props: ViewProps): React.JSX.Element {
 }
 
 function renderNutritionPage(props: ViewProps): React.JSX.Element {
-  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
   return (
     <>
-      <View style={styles.breadcrumbCard}>
-        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
-        <Text style={styles.breadcrumb}>
-          {formatBreadcrumb([props.t('coach.clients.title'), currentLabel, props.t('coach.nutrition.client.title')])}
-        </Text>
-      </View>
+      <CrumbBar mode={MODE_NUTRITION} onBack={props.onBackToProfile} view={props} />
       <View style={styles.profileCard}>
         <ClientNutritionPlanScreen
           clientId={props.selectedClientId}
@@ -350,19 +319,9 @@ function renderNutritionPage(props: ViewProps): React.JSX.Element {
 }
 
 function renderMoodPage(props: ViewProps): React.JSX.Element {
-  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
   return (
     <>
-      <View style={styles.breadcrumbCard}>
-        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
-        <Text style={styles.breadcrumb}>
-          {formatBreadcrumb([
-            props.t('coach.clients.title'),
-            currentLabel,
-            props.t('coach.clientProfile.details.mood.title'),
-          ])}
-        </Text>
-      </View>
+      <CrumbBar mode={MODE_MOOD} onBack={props.onBackToProfile} view={props} />
       <View style={styles.profileCard}>
         <ClientMoodScreen
           clientId={props.selectedClientId}
@@ -375,19 +334,9 @@ function renderMoodPage(props: ViewProps): React.JSX.Element {
 }
 
 function renderTestsPage(props: ViewProps): React.JSX.Element {
-  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
   return (
     <>
-      <View style={styles.breadcrumbCard}>
-        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
-        <Text style={styles.breadcrumb}>
-          {formatBreadcrumb([
-            props.t('coach.clients.title'),
-            currentLabel,
-            props.t('coach.clientProfile.details.tests.title'),
-          ])}
-        </Text>
-      </View>
+      <CrumbBar mode={MODE_TESTS} onBack={props.onBackToProfile} view={props} />
       <View style={styles.profileCard}>
         <ClientTestsScreen
           clientId={props.selectedClientId}
@@ -413,27 +362,32 @@ function renderProfileEdit(props: ViewProps): React.JSX.Element {
 }
 
 function renderProfilePage(props: ViewProps): React.JSX.Element {
-  const currentLabel = props.selectedClientName || props.t('coach.clients.title');
-  const lastCrumb =
-    props.screenMode === 'profileEdit' ? props.t('coach.clientProfile.edit.title') : props.t('coach.clientProfile.title');
+  const editing = props.screenMode === 'profileEdit';
   return (
     <>
-      <View style={styles.breadcrumbCard}>
-        <Button
-          label={props.t('common.back')}
-          onPress={props.screenMode === 'profileEdit' ? props.onBackToProfile : props.onBackToList}
-          size="sm"
-          variant="secondary"
-        />
-        <Text style={styles.breadcrumb}>{formatBreadcrumb([props.t('coach.clients.title'), currentLabel, lastCrumb])}</Text>
-      </View>
-      <View style={styles.profileCard}>
-        {props.screenMode === 'profileEdit' ? renderProfileEdit(props) : renderProfile(props)}
-      </View>
+      <CrumbBar
+        mode={editing ? 'edit' : 'profile'}
+        onBack={editing ? props.onBackToProfile : props.onBackToList}
+        view={props}
+      />
+      <View style={styles.profileCard}>{editing ? renderProfileEdit(props) : renderProfile(props)}</View>
     </>
   );
 }
 
-function formatBreadcrumb(parts: string[]): string {
-  return parts.filter((item) => item.trim().length > 0).join(' / ');
+/** Botón "Volver" y migas de pan (Clientes › Nombre › Pantalla) con enlaces a cada nivel. */
+function CrumbBar(props: { mode: ClientCrumbMode; onBack: () => void; view: ViewProps }): React.JSX.Element {
+  const { t } = props.view;
+  const crumbs = buildClientCrumbs({
+    clientId: props.view.selectedClientId,
+    clientName: props.view.selectedClientName,
+    mode: props.mode,
+    t,
+  });
+  return (
+    <View style={styles.breadcrumbCard}>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" variant="secondary" />
+      <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={crumbs} />
+    </View>
+  );
 }

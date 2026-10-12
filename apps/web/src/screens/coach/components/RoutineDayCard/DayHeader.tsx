@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
-import { Button, IconButton, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 const ICON_WARMUP = '🔥';
 const ICON_REMOVE = '✕';
@@ -36,10 +36,11 @@ interface DayHeaderProps {
 
 export function DayHeader(props: DayHeaderProps): React.JSX.Element {
   const vm = useDayHeaderModel(props);
+  const compact = useBreakpoint() !== 'lg';
 
   return (
     <View>
-      <View style={s.dayCardHeaderRow}>
+      <View style={[s.dayCardHeaderRow, compact && s.dayCardHeaderRowCompact]}>
         <IconButton
           accessibilityLabel={props.t(
             props.isCollapsed ? 'coach.routine.day.a11y.expand' : 'coach.routine.day.a11y.collapse',
@@ -70,7 +71,7 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
           placeholder={props.t(vm.placeholderKey)}
           value={props.title}
         />
-        <View style={s.dayHeaderRight}>
+        <View style={[s.dayHeaderRight, compact && s.dayHeaderRightCompact]}>
           {!props.readOnly && <Button label={props.t(vm.addKey)} onPress={props.onAddBlock} size="sm" />}
           {!props.readOnly && (
             <>

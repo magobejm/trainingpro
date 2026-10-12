@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { MONTH_NAMES_ES, DAY_NAMES_ES } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
-import { IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { IconButton, colors as tk, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -160,6 +160,7 @@ export function CalendarMonthHeader({
   const [showPicker, setShowPicker] = useState(false);
   const [anchor, setAnchor] = useState<{ top: number; left: number } | null>(null);
   const titleRef = useRef<HTMLDivElement>(null);
+  const compact = useBreakpoint() === 'sm';
 
   function handleTitleClick() {
     if (titleRef.current) {
@@ -175,7 +176,9 @@ export function CalendarMonthHeader({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: space.xl,
+        flexWrap: 'wrap',
+        gap: space.sm,
+        padding: compact ? space.lg : space.xl,
         borderBottomWidth: 1,
         borderColor: colors.border,
         flexShrink: 0,

@@ -1,43 +1,33 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import {
-  Dumbbell,
-  Apple,
-  Bell,
-  MessageSquare,
-  GraduationCap,
-  CreditCard,
-  ScanSearch,
-  Users,
-  CalendarDays,
-  CalendarRange,
-  BookOpen,
-  FileText,
-  Flame,
-  TriangleAlert,
-  Utensils,
-} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View, ViewStyle } from 'react-native';
+import { Text, View } from 'react-native';
+import { Navigate } from 'react-router';
+import { useBreakpoint } from '@trainerpro/ui';
 import './i18n';
 import { LoginScreen } from './screens/auth/LoginScreen';
 import { ResetPasswordScreen } from './screens/auth/ResetPasswordScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
-import { SidebarIdentity, TopBar } from './layout/ShellChrome';
+import { TopBar } from './layout/ShellChrome';
 import { UNAUTHORIZED_EVENT } from './data/api-client';
 import { markSessionExpired } from './data/session-end';
 import { useSessionSync } from './data/hooks/useSessionSync';
 import { useMeQuery } from './data/hooks/useMeQuery';
-import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
+import { Drawer } from './layout/Drawer';
 import { applyMenuClientReset } from './layout/menu-client-context';
+import { resolveActiveNavRoute } from './layout/nav-groups';
+import { resolveNavItems } from './layout/nav-items';
 import { resolveRouteTitleKey } from './layout/route-title';
-import { requestUnsavedLeave } from './layout/unsaved-leave';
-import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
+import { ShellSidebar, type ShellSidebarProps } from './layout/ShellSidebar';
+import { approveNextLeave, isUnsavedDirty, requestUnsavedLeave } from './layout/unsaved-leave';
+import type { ShellRoute } from './layout/usePersistentShellRoute';
+import { useCoachMenuBadges } from './layout/useMenuBadges';
+import { useShellRouter } from './layout/useShellRouter';
+import { useUnsavedLeaveBlocker } from './layout/useUnsavedLeaveBlocker';
 import { useAuthStore } from './store/auth.store';
 import { usePasswordRecoveryStore } from './store/password-recovery.store';
-import { colors } from '@trainerpro/ui';
 
 const CoachesScreen = React.lazy(() =>
   import('./screens/admin/CoachesScreen').then((mod) => ({ default: mod.CoachesScreen })),
@@ -140,29 +130,11 @@ export function App(): React.JSX.Element {
   return <Shell activeRole={activeRole} onLogout={() => clearAuthContext(clearSession, queryClient.clear)} />;
 }
 
-function ShellSidebar(props: {
-  activeRole: 'admin' | 'coach';
-  navItems: ShellNavItem[];
-  route: ShellRoute;
-  setRoute: (r: ShellRoute) => void;
-  onLogout: () => void;
-  email: string;
-}) {
-  const { t } = useTranslation();
-  return (
-    <View style={styles.sidebar}>
-      <SidebarIdentity roleLabel={t('app.brand.subtitle')} title={t('app.title')} />
-      <View style={styles.navList}>{renderNavButtons(props.navItems, props.route, props.setRoute, t)}</View>
-      <SidebarUserPanel email={props.email} fallbackName={t('app.user.fallbackName')} t={t} />
-      <Pressable onPress={props.onLogout} style={styles.logoutButton}>
-        <Text style={styles.logoutLabel}>{t('app.nav.logout')}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
 function Shell(props: { activeRole: 'admin' | 'coach'; onLogout: () => Promise<void> }): React.JSX.Element {
   const vm = useShellViewModel(props.activeRole);
+  if (vm.redirectTo) {
+    return <Navigate replace to={vm.redirectTo} />;
+  }
   return <ShellView {...vm} onLogout={props.onLogout} />;
 }
 
@@ -170,123 +142,99 @@ function useShellViewModel(activeRole: 'admin' | 'coach') {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
   const navItems = useMemo(() => resolveNavItems(activeRole), [activeRole]);
-  const [route, setRoute] = usePersistentShellRoute(activeRole, navItems);
-  const onSetRoute = (nextRoute: ShellRoute) => {
-    requestUnsavedLeave(() => setRoute(nextRoute));
-  };
+  const { goTo, parsed, redirectTo } = useShellRouter(activeRole);
+  useUnsavedLeaveBlocker();
+  const breakpoint = useBreakpoint();
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  useEffect(() => {
+    if (breakpoint !== 'sm') setDrawerOpen(false);
+  }, [breakpoint]);
   const onMenuRoute = (nextRoute: ShellRoute) => {
     requestUnsavedLeave(() => {
+      if (isUnsavedDirty()) approveNextLeave();
+      setDrawerOpen(false);
       applyMenuClientReset(nextRoute);
-      setRoute(nextRoute);
+      goTo(nextRoute, { withClient: false });
     });
   };
   return {
     activeRole,
+    breakpoint,
+    drawerOpen,
     email: meQuery.data?.email ?? '',
+    goTo,
     navItems,
     onMenuRoute,
-    onSetRoute,
-    route,
-    setRoute: onSetRoute,
+    redirectTo,
+    route: parsed?.route ?? (activeRole === 'admin' ? 'admin.coaches' : 'coach.clients'),
+    setDrawerOpen,
     t,
   };
 }
 
-function ShellView(props: {
-  activeRole: 'admin' | 'coach';
-  email: string;
-  navItems: ShellNavItem[];
-  onLogout: () => Promise<void>;
-  onMenuRoute: (nextRoute: ShellRoute) => void;
-  onSetRoute: (nextRoute: ShellRoute) => void;
-  route: ShellRoute;
-  setRoute: (route: ShellRoute) => void;
-  t: (key: string) => string;
-}) {
+type ShellViewProps = ReturnType<typeof useShellViewModel> & { onLogout: () => Promise<void> };
+
+function ShellView(props: ShellViewProps): React.JSX.Element {
+  const pane = (variant: ShellSidebarProps['variant']) => (
+    <NavigationPane
+      items={props.navItems}
+      onLogout={() => void props.onLogout()}
+      onSelect={props.onMenuRoute}
+      role={props.activeRole}
+      route={resolveActiveNavRoute(props.route)}
+      t={props.t}
+      email={props.email}
+      variant={variant}
+    />
+  );
   return (
     <View style={styles.page}>
-      <ShellSidebar
-        activeRole={props.activeRole}
-        email={props.email}
-        navItems={props.navItems}
-        onLogout={() => void props.onLogout()}
-        route={props.route}
-        setRoute={props.onMenuRoute}
-      />
+      {props.breakpoint === 'sm' ? null : pane(props.breakpoint === 'md' ? 'compact' : 'full')}
       <ShellContentArea {...props} />
+      {props.breakpoint === 'sm' ? (
+        <Drawer
+          closeLabel={props.t('app.nav.menu.close')}
+          onClose={() => props.setDrawerOpen(false)}
+          visible={props.drawerOpen}
+        >
+          {pane('full')}
+        </Drawer>
+      ) : null}
     </View>
   );
 }
 
-function ShellContentArea(props: {
-  activeRole: 'admin' | 'coach';
-  route: ShellRoute;
-  setRoute: (route: ShellRoute) => void;
-  t: (key: string) => string;
-}) {
+type NavigationPaneProps = Omit<ShellSidebarProps, 'badges'> & { role: 'admin' | 'coach' };
+
+function NavigationPane({ role, ...props }: NavigationPaneProps): React.JSX.Element {
+  return role === 'coach' ? <CoachNavigation {...props} /> : <ShellSidebar {...props} badges={NO_BADGES} />;
+}
+
+function CoachNavigation(props: Omit<ShellSidebarProps, 'badges'>): React.JSX.Element {
+  const badges = useCoachMenuBadges();
+  return <ShellSidebar {...props} badges={badges} />;
+}
+
+const NO_BADGES = {};
+
+function ShellContentArea(props: ShellViewProps): React.JSX.Element {
+  const compact = props.breakpoint === 'sm';
   return (
     <View style={styles.content}>
-      <TopBar roleLabel={props.t(`auth.role.${props.activeRole}`)} title={props.t(resolveRouteTitleKey(props.route))} />
+      <TopBar
+        compact={compact}
+        menuLabel={props.t('app.nav.menu')}
+        onMenuPress={compact ? () => props.setDrawerOpen(true) : undefined}
+        roleLabel={props.t(`auth.role.${props.activeRole}`)}
+        title={props.t(resolveRouteTitleKey(props.route))}
+      />
       <View style={styles.contentBody}>
         <React.Suspense fallback={<Text style={styles.logoutLabel}>{'…'}</Text>}>
-          {resolveRouteScreen(props.route, props.activeRole, props.setRoute)}
+          {resolveRouteScreen(props.route, props.activeRole, props.goTo)}
         </React.Suspense>
       </View>
     </View>
   );
-}
-
-function NavButtonContent({
-  item,
-  isActive,
-  hovered,
-  t,
-}: {
-  item: ShellNavItem;
-  isActive: boolean;
-  hovered: boolean;
-  t: (k: string) => string;
-}) {
-  const iconColor = isActive || hovered ? colors.surface : colors.textMuted;
-  const gradientSize = isActive || hovered ? '100% 100%' : '0% 100%';
-  const customBadgeStyle = item.badgeColor && !isActive && !hovered ? { backgroundColor: item.badgeColor } : {};
-  return (
-    <>
-      <View style={[styles.navButtonGradient, { backgroundSize: gradientSize } as ViewStyle]} />
-      {isActive && <View style={styles.activeIndicator} />}
-      <View style={styles.navRow}>
-        <View style={[styles.navIconBadge, (isActive || hovered) && styles.navIconBadgeActive, customBadgeStyle]}>
-          {item.icon({ color: iconColor, size: 20 })}
-        </View>
-        <Text style={[styles.navLabel, isActive && styles.navLabelActive, hovered && !isActive && styles.navLabelHovered]}>
-          {t(item.labelKey)}
-        </Text>
-      </View>
-    </>
-  );
-}
-
-function renderNavButtons(
-  navItems: ShellNavItem[],
-  route: ShellRoute,
-  onSelect: (route: ShellRoute) => void,
-  t: (key: string) => string,
-) {
-  return navItems.map((item) => {
-    const isActive = route === item.id;
-    return (
-      <Pressable
-        accessibilityRole="button"
-        key={item.id}
-        onPress={() => onSelect(item.id)}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        style={() => [styles.navButton, isActive && styles.navButtonActive] as any}
-      >
-        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-        {({ hovered }: any) => <NavButtonContent item={item} isActive={isActive} hovered={hovered} t={t} />}
-      </Pressable>
-    );
-  });
 }
 
 function resolveRouteScreen(
@@ -352,101 +300,6 @@ async function clearAuthContext(clearSession: () => void, clearQueryCache: () =>
     clearQueryCache();
     clearSession();
   }
-}
-
-function resolveNavItems(role: 'admin' | 'coach'): ShellNavItem[] {
-  if (role === 'admin') return resolveAdminNavItems();
-  return resolveCoachNavItems();
-}
-
-function resolveAdminNavItems(): ShellNavItem[] {
-  return [
-    { icon: (p) => <GraduationCap {...p} />, id: 'admin.coaches', labelKey: 'app.nav.admin.coaches' },
-    { icon: (p) => <CreditCard {...p} />, id: 'admin.subscription', labelKey: 'app.nav.admin.subscription' },
-  ];
-}
-
-function resolveCoachNavItems(): ShellNavItem[] {
-  return [
-    {
-      icon: (p) => <Users {...p} />,
-      id: 'coach.clients',
-      labelKey: 'app.nav.coach.clients',
-      badgeColor: 'rgba(99, 102, 241, 0.1)',
-    },
-    {
-      icon: (p) => <Dumbbell {...p} />,
-      id: 'coach.library.unified',
-      labelKey: 'app.nav.coach.library.unified',
-      badgeColor: 'rgba(37, 99, 235, 0.1)',
-    },
-    {
-      icon: (p) => <Apple {...p} />,
-      id: 'coach.library.foods',
-      labelKey: 'app.nav.coach.library.foods',
-      badgeColor: 'rgba(59, 130, 246, 0.1)',
-    },
-    {
-      icon: (p) => <BookOpen {...p} />,
-      id: 'coach.library.routines',
-      labelKey: 'app.nav.coach.library.routines',
-      badgeColor: 'rgba(249, 115, 22, 0.1)',
-    },
-    {
-      icon: (p) => <CalendarRange {...p} />,
-      id: 'coach.routine.planner',
-      labelKey: 'app.nav.coach.routine.planner',
-      badgeColor: 'rgba(249, 115, 22, 0.1)',
-    },
-    {
-      icon: (p) => <Flame {...p} />,
-      id: 'coach.warmup.planner',
-      labelKey: 'app.nav.coach.warmup.planner',
-      badgeColor: 'rgba(249, 115, 22, 0.1)',
-    },
-    {
-      icon: (p) => <Utensils {...p} />,
-      id: 'coach.nutrition',
-      labelKey: 'app.nav.coach.nutrition',
-      badgeColor: 'rgba(16, 185, 129, 0.1)',
-    },
-    {
-      icon: (p) => <ScanSearch {...p} />,
-      id: 'coach.evaluator',
-      labelKey: 'app.nav.coach.evaluator',
-      badgeColor: 'rgba(59, 130, 246, 0.1)',
-    },
-    {
-      icon: (p) => <TriangleAlert {...p} />,
-      id: 'coach.incidents',
-      labelKey: 'app.nav.coach.incidents',
-      badgeColor: 'rgba(239, 68, 68, 0.1)',
-    },
-    {
-      icon: (p) => <MessageSquare {...p} />,
-      id: 'coach.chat',
-      labelKey: 'app.nav.coach.chat',
-      badgeColor: 'rgba(248, 250, 252, 0.1)',
-    },
-    {
-      icon: (p) => <FileText {...p} />,
-      id: 'coach.notes',
-      labelKey: 'app.nav.coach.notes',
-      badgeColor: 'rgba(99, 102, 241, 0.1)',
-    },
-    {
-      icon: (p) => <CalendarDays {...p} />,
-      id: 'coach.calendar',
-      labelKey: 'app.nav.coach.calendar',
-      badgeColor: 'rgba(16, 185, 129, 0.1)',
-    },
-    {
-      icon: (p) => <Bell {...p} />,
-      id: 'coach.notifications',
-      labelKey: 'app.nav.coach.notifications',
-      badgeColor: 'rgba(239, 68, 68, 0.1)',
-    },
-  ];
 }
 
 function isSupportedRole(

@@ -5,12 +5,13 @@ import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
-import { Button, EmptyState, Select, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, Select, colors as tk, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
 
 const EMPTY_FILTER = '';
+const SIDEBAR_STACKED_HEIGHT = 340;
 
 const colors = {
   primary: tk.primary,
@@ -280,6 +281,7 @@ export function CalendarSidebar({
   const [activeColorPicker, setActiveColorPicker] = useState<string | null>(null);
 
   const isCoachOnly = viewMode === 'coachOnly';
+  const stacked = useBreakpoint() === 'sm';
 
   const filtered = clients.filter((c) => {
     const fullName = `${c.firstName} ${c.lastName}`;
@@ -291,9 +293,11 @@ export function CalendarSidebar({
   return (
     <View
       style={{
-        width: 300,
+        width: stacked ? '100%' : 300,
+        height: stacked ? SIDEBAR_STACKED_HEIGHT : undefined,
         backgroundColor: 'white',
-        borderRightWidth: 1,
+        borderRightWidth: stacked ? 0 : 1,
+        borderBottomWidth: stacked ? 1 : 0,
         borderColor: colors.border,
         flexDirection: 'column',
         alignSelf: 'stretch',

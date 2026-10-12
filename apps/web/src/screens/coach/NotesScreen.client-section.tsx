@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Users } from 'lucide-react';
 import type { ClientData } from './notes-screen.types';
-import { Button, EmptyState, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, TextField, colors, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 const theme = {
   colors: {
@@ -36,10 +36,11 @@ type ClientSectionViewModel = ClientNoteSectionProps & {
 
 export function ClientNoteSection(props: ClientNoteSectionProps): React.JSX.Element {
   const vm = useClientNoteSectionModel(props);
+  const stacked = useBreakpoint() === 'sm';
   return (
     <View>
       <ClientSectionHeader t={props.t} />
-      <View style={{ flexDirection: 'row', marginHorizontal: -12 }}>
+      <View style={{ flexDirection: stacked ? 'column' : 'row', marginHorizontal: -12 }}>
         <ClientSelectionPane vm={vm} />
         <ClientEditorPane vm={vm} />
       </View>

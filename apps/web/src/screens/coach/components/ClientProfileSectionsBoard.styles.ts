@@ -38,10 +38,12 @@ export const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
     justifyContent: 'space-between',
     paddingHorizontal: space.xs,
   },
-  headerTitle: { color: colors.text, fontSize: fontSize.xxxl, fontWeight: '800' },
+  headerTitle: { color: colors.text, fontSize: fontSize.xxxl, fontWeight: '800', flexShrink: 1 },
   iconShell: {
     alignItems: 'center',
     borderRadius: radius.lg,

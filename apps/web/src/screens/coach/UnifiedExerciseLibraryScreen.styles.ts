@@ -3,6 +3,19 @@ import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export const styles = StyleSheet.create({
   body: { flex: 1, flexDirection: 'row' },
+  bodyCompact: { flexDirection: 'column' },
+  cardMd: { width: 'calc(50% - 12px)' as unknown as number },
+  cardSm: { width: '100%' },
+  headerCompact: {
+    paddingHorizontal: space.lg,
+    paddingVertical: space.lg,
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    gap: space.md,
+  },
+  headerRightStacked: { flexWrap: 'wrap' },
+  searchContainerFluid: { flexGrow: 1, flexShrink: 1, minWidth: 140 },
+  sidebarCompact: { width: '100%', borderRightWidth: 0, borderBottomColor: colors.border, borderBottomWidth: 1 },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,

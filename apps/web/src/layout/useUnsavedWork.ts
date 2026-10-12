@@ -128,6 +128,7 @@ function useDraftStorage<T>(storageKey: string, value: T, onRestore: (value: T) 
 
 function useLeaveDialogs<T>(storage: ReturnType<typeof useDraftStorage<T>>, enabled: boolean) {
   const pendingLeave = useRef<null | (() => void)>(null);
+  const pendingCancel = useRef<null | (() => void)>(null);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [conflictVersion, setConflictVersion] = useState<number | null | undefined>(undefined);
 
@@ -140,8 +141,9 @@ function useLeaveDialogs<T>(storage: ReturnType<typeof useDraftStorage<T>>, enab
     };
     window.addEventListener('beforeunload', onUnload);
     registerUnsavedGuard({
-      confirmLeave: (proceed) => {
+      confirmLeave: (proceed, cancel) => {
         pendingLeave.current = proceed;
+        pendingCancel.current = cancel ?? null;
         setLeaveOpen(true);
       },
       isDirty: () => storage.dirtyRef.current,
@@ -159,12 +161,16 @@ function useLeaveDialogs<T>(storage: ReturnType<typeof useDraftStorage<T>>, enab
     leaveOpen,
     reportConflict: (version: number | null) => setConflictVersion(version),
     stay: () => {
+      const cancel = pendingCancel.current;
       pendingLeave.current = null;
+      pendingCancel.current = null;
       setLeaveOpen(false);
+      cancel?.();
     },
     confirmLeave: () => {
       const proceed = pendingLeave.current;
       pendingLeave.current = null;
+      pendingCancel.current = null;
       setLeaveOpen(false);
       proceed?.();
     },

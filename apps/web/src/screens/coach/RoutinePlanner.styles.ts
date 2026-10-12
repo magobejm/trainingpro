@@ -336,6 +336,8 @@ export const s = StyleSheet.create({
     paddingHorizontal: space.lg,
     paddingVertical: space.md,
   },
+  dayCardHeaderRowCompact: { flexWrap: 'wrap' },
+  dayHeaderRightCompact: { flexWrap: 'wrap' },
   dayCardBody: {
     borderTopWidth: 1,
     borderTopColor: colors.background,

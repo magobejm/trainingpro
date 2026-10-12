@@ -1,43 +1,89 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Dumbbell } from 'lucide-react';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { colors, fontSize, IconButton, radius, space } from '@trainerpro/ui';
 
-export function SidebarIdentity(props: { roleLabel: string; title: string }): React.JSX.Element {
+const MENU_GLYPH = '\u2630';
+
+export function SidebarIdentity(props: { compact?: boolean; roleLabel: string; title: string }): React.JSX.Element {
   return (
-    <View style={styles.identityCard}>
+    <View style={[styles.identityCard, props.compact ? styles.identityCompact : null]}>
       <View style={styles.avatarStub}>
         {/* eslint-disable-next-line no-restricted-syntax */}
-        <Dumbbell color={colors.surface} size={24} />
+        <Dumbbell color="#ffffff" size={24} />
       </View>
-      <View style={styles.identityTextWrap}>
-        <Text style={styles.logo}>{props.title}</Text>
-        <Text style={styles.logoSubtitle}>{props.roleLabel}</Text>
-      </View>
+      {props.compact ? null : (
+        <View style={styles.identityTextWrap}>
+          <Text style={styles.logo}>{props.title}</Text>
+          <Text style={styles.logoSubtitle}>{props.roleLabel}</Text>
+        </View>
+      )}
     </View>
   );
 }
 
-export function TopBar(props: { roleLabel: string; title: string }): React.JSX.Element {
+export function TopBar(props: {
+  compact?: boolean;
+  menuLabel?: string;
+  onMenuPress?: () => void;
+  roleLabel: string;
+  title: string;
+}): React.JSX.Element {
   return (
-    <View style={styles.topbar}>
-      <View>
-        <Text style={styles.topbarTitle}>{props.title}</Text>
-        <Text style={styles.topbarSubtitle}>{props.roleLabel}</Text>
-      </View>
-      <View style={styles.topbarRight}>
-        <View style={styles.topbarIconButton} />
-        <View style={styles.topbarIconButton} />
-        <View style={styles.topbarStatus}>
-          <View style={styles.onlineDot} />
-          <Text style={styles.topbarStatusLabel}>{props.roleLabel}</Text>
+    <View style={[styles.topbar, props.compact ? styles.topbarCompact : null]}>
+      <View style={styles.topbarLeft}>
+        {props.onMenuPress ? (
+          <IconButton
+            accessibilityLabel={props.menuLabel ?? props.title}
+            icon={(color) => <Text style={[styles.menuGlyph, { color }]}>{MENU_GLYPH}</Text>}
+            onPress={props.onMenuPress}
+            size={40}
+          />
+        ) : null}
+        <View style={styles.topbarTitleWrap}>
+          <Text numberOfLines={1} style={styles.topbarTitle}>
+            {props.title}
+          </Text>
+          <Text style={styles.topbarSubtitle}>{props.roleLabel}</Text>
         </View>
       </View>
+      {props.compact ? null : (
+        <View style={styles.topbarRight}>
+          <View style={styles.topbarIconButton} />
+          <View style={styles.topbarIconButton} />
+          <View style={styles.topbarStatus}>
+            <View style={styles.onlineDot} />
+            <Text style={styles.topbarStatusLabel}>{props.roleLabel}</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  identityCompact: {
+    justifyContent: 'center',
+  },
+  menuGlyph: {
+    fontSize: fontSize.xl,
+    fontWeight: '700',
+  },
+  topbarCompact: {
+    borderRadius: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+    borderTopWidth: 0,
+  },
+  topbarLeft: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    flexShrink: 1,
+    gap: space.md,
+  },
+  topbarTitleWrap: {
+    flexShrink: 1,
+  },
   avatarStub: {
     alignItems: 'center',
     backgroundColor: colors.primary, // Bright blue from prototype

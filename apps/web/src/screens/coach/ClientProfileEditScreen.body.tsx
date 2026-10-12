@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { Button, Select, TextField } from '@trainerpro/ui';
+import { Button, Select, TextField, useBreakpoint } from '@trainerpro/ui';
 import { styles } from './ClientProfileEditScreen.styles';
 import { ProfileFieldsSection } from './components/EditClientProfileModal.fields';
 import { EditableBlockCard } from './ClientProfileEditScreen.components';
@@ -34,8 +34,9 @@ export function MainLayout(props: { labels: Labels; onArchived?: () => void; t: 
 
 function MainColumn(props: { labels: Labels; t: Translate; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
+  const stacked = useBreakpoint() !== 'lg';
   return (
-    <View style={styles.mainColumn}>
+    <View style={[styles.mainColumn, stacked && styles.stackedColumn]}>
       <ObjectivesCard labels={props.labels} vm={vm} />
       <ProfileCard labels={props.labels} t={props.t} vm={vm} />
       <ProgressPanel labels={props.labels} t={props.t} vm={vm} />
@@ -169,8 +170,9 @@ function onFieldChange(vm: Vm, key: string, value: string): void {
 
 function SideColumn(props: { labels: Labels; onArchived?: () => void; t: Translate; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
+  const stacked = useBreakpoint() !== 'lg';
   return (
-    <View style={styles.sideColumn}>
+    <View style={[styles.sideColumn, stacked && styles.stackedColumn]}>
       <FitnessCard labels={props.labels} t={props.t} vm={vm} />
       <HealthCards labels={props.labels} vm={vm} />
       <AccountCard labels={props.labels} onArchived={props.onArchived} t={props.t} vm={vm} />

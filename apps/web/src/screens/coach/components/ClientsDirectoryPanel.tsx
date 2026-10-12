@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
-import { EmptyState, Select, TextField } from '@trainerpro/ui';
+import { EmptyState, Select, TextField, useBreakpoint } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
@@ -110,12 +110,14 @@ function DirectoryHeader(props: {
   searchValue: string;
   t: (key: string) => string;
 }): React.JSX.Element {
+  const stacked = useBreakpoint() === 'sm';
   return (
     <View style={styles.headerRow}>
       <Text style={styles.title}>{props.t('coach.clients.section.title')}</Text>
-      <View style={styles.filtersRow}>
-        <SearchInput onChangeText={props.onSearchValueChange} t={props.t} value={props.searchValue} />
+      <View style={[styles.filtersRow, stacked && styles.filtersRowStacked]}>
+        <SearchInput onChangeText={props.onSearchValueChange} stacked={stacked} t={props.t} value={props.searchValue} />
         <ObjectiveSelect
+          stacked={stacked}
           objectiveFilter={props.objectiveFilter}
           objectives={props.objectives}
           onChange={props.onObjectiveFilterChange}
@@ -126,13 +128,14 @@ function DirectoryHeader(props: {
 }
 
 function SearchInput(props: {
+  stacked: boolean;
   onChangeText: (nextValue: string) => void;
   t: (key: string) => string;
   value: string;
 }): React.JSX.Element {
   return (
     <TextField
-      containerStyle={styles.searchInput}
+      containerStyle={props.stacked ? [styles.searchInput, styles.stackedField] : styles.searchInput}
       onChangeText={props.onChangeText}
       placeholder={props.t('coach.clients.filters.searchPlaceholder')}
       value={props.value}
@@ -141,13 +144,14 @@ function SearchInput(props: {
 }
 
 function ObjectiveSelect(props: {
+  stacked: boolean;
   objectiveFilter: string;
   objectives: Array<{ label: string; value: string }>;
   onChange: (nextValue: string) => void;
 }): React.JSX.Element {
   return (
     <Select
-      containerStyle={styles.objectiveFilter}
+      containerStyle={props.stacked ? [styles.objectiveFilter, styles.stackedField] : styles.objectiveFilter}
       onChange={props.onChange}
       options={props.objectives}
       value={props.objectiveFilter}

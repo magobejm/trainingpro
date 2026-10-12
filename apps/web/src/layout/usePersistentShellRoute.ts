@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 
 type AdminRoute = 'admin.coaches' | 'admin.subscription';
 type CoachRoute =
@@ -58,61 +58,26 @@ export const SHELL_ROUTES: readonly ShellRoute[] = [
   'coach.notifications',
 ];
 
+export type NavGroupId = 'admin' | 'clients' | 'library' | 'planning' | 'tools';
+
 export type ShellNavItem = {
   icon: (props: { color: string; size: number }) => React.ReactNode;
   id: ShellRoute;
   labelKey: string;
-  badgeColor?: string; // e.g. 'bg-blue-50', 'bg-emerald-50' equivalent in hex
+  badgeColor?: string; // fondo del icono en reposo
+  group: NavGroupId;
+  /** Clave i18n del nombre corto del menú (si falta, labelKey). */
+  menuLabelKey?: string;
 };
 
 const SHELL_ROUTE_STORAGE_KEY = 'trainerpro.shell.route';
-
-export function usePersistentShellRoute(
-  activeRole: 'admin' | 'coach',
-  navItems: ShellNavItem[],
-): [ShellRoute, (route: ShellRoute) => void] {
-  const defaultRoute = useMemo(() => resolveDefaultRoute(activeRole), [activeRole]);
-  const [route, setRoute] = useState<ShellRoute>(() => resolveInitialRoute(navItems, defaultRoute, activeRole));
-  useEffect(() => {
-    setRoute((previous) => ensureAllowedRoute(previous, navItems, defaultRoute, activeRole));
-  }, [activeRole, defaultRoute, navItems]);
-  useEffect(() => {
-    persistRoute(route);
-  }, [route]);
-  return [route, setRoute];
-}
-
-function resolveInitialRoute(navItems: ShellNavItem[], defaultRoute: ShellRoute, activeRole: 'admin' | 'coach'): ShellRoute {
-  const persisted = readPersistedRoute();
-  if (persisted && isRouteAllowed(persisted, navItems, activeRole)) {
-    return persisted;
-  }
-  return navItems[0]?.id ?? defaultRoute;
-}
-
-function ensureAllowedRoute(
-  route: ShellRoute,
-  navItems: ShellNavItem[],
-  defaultRoute: ShellRoute,
-  activeRole: 'admin' | 'coach',
-): ShellRoute {
-  if (isRouteAllowed(route, navItems, activeRole)) {
-    return route;
-  }
-  return navItems[0]?.id ?? defaultRoute;
-}
-
-function resolveDefaultRoute(role: 'admin' | 'coach'): ShellRoute {
-  if (role === 'admin') return 'admin.coaches';
-  return 'coach.clients';
-}
 
 // Las subrutas válidas del rol (Progreso, Calentamientos…) no están en el menú pero sí se pueden restaurar.
 export function isRouteAllowed(route: ShellRoute, navItems: ShellNavItem[], activeRole: 'admin' | 'coach'): boolean {
   return route.startsWith(`${activeRole}.`) || navItems.some((item) => item.id === route);
 }
 
-function readPersistedRoute(): null | ShellRoute {
+export function readPersistedRoute(): null | ShellRoute {
   if (typeof window === 'undefined') {
     return null;
   }
@@ -123,7 +88,7 @@ function readPersistedRoute(): null | ShellRoute {
   return route;
 }
 
-function persistRoute(route: ShellRoute): void {
+export function persistRoute(route: ShellRoute): void {
   if (typeof window === 'undefined') {
     return;
   }

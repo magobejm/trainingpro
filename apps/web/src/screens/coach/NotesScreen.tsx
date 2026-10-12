@@ -17,7 +17,7 @@ import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
-import { Button, TextField, colors, fontSize, space, useToast } from '@trainerpro/ui';
+import { Button, TextField, colors, fontSize, space, useBreakpoint, useToast } from '@trainerpro/ui';
 
 const theme = {
   colors: {
@@ -69,9 +69,18 @@ function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNot
 export function NotesScreen(): React.JSX.Element {
   const vm = useNotesScreenModel();
   const { t } = vm;
+  const bp = useBreakpoint();
+  const stacked = bp !== 'lg';
   return (
-    <View style={screenRootStyle}>
-      <ScrollView style={{ flex: 1, minHeight: 0, padding: space.xxxl }} contentContainerStyle={{ flexGrow: 1 }}>
+    <View style={stacked ? stackedRootStyle : screenRootStyle}>
+      <ScrollView
+        style={
+          stacked
+            ? { ...stackedContentStyle, padding: bp === 'sm' ? space.lg : space.xl }
+            : { flex: 1, minHeight: 0, padding: space.xxxl }
+        }
+        contentContainerStyle={{ flexGrow: stacked ? 0 : 1 }}
+      >
         <View style={{ maxWidth: 1200, marginHorizontal: 'auto' }}>
           <View style={{ marginBottom: space.xxxl }}>
             <Text style={{ fontSize: fontSize.xxxl, fontWeight: 'bold', color: theme.colors.text, marginBottom: space.sm }}>
@@ -104,6 +113,7 @@ export function NotesScreen(): React.JSX.Element {
         </View>
       </ScrollView>
       <HistorySidebar
+        stacked={stacked}
         dateFrom={vm.dateFrom}
         dateTo={vm.dateTo}
         displayedNotes={vm.displayedNotes}
@@ -366,6 +376,14 @@ const screenRootStyle = {
   alignSelf: 'stretch' as const,
   overflow: 'hidden' as const,
 };
+
+const stackedRootStyle = {
+  ...screenRootStyle,
+  flexDirection: 'column' as const,
+  overflow: 'scroll' as const,
+};
+
+const stackedContentStyle = { flexGrow: 0, flexShrink: 0, padding: space.xl };
 
 const generalCardStyle = {
   backgroundColor: 'white',

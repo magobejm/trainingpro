@@ -37,6 +37,7 @@ export const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: space.md,
     paddingHorizontal: space.md,
     paddingVertical: space.md,
@@ -54,6 +55,10 @@ export const styles = StyleSheet.create({
     gap: space.lg,
     justifyContent: 'space-between',
   },
+  ctaCardStacked: {
+    alignItems: 'stretch',
+    flexDirection: 'column',
+  },
   ctaSubtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
@@ -63,6 +68,10 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: space.xs,
     maxWidth: 760,
+  },
+  ctaTextStacked: {
+    flex: 0,
+    maxWidth: '100%',
   },
   ctaTitle: {
     color: COLORS.text,
@@ -147,6 +156,10 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: space.xxl,
     paddingVertical: space.xl,
+  },
+  pageCompact: {
+    paddingHorizontal: space.lg,
+    paddingVertical: space.lg,
   },
   profileCard: {
     backgroundColor: COLORS.card,

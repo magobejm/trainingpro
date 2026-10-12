@@ -208,7 +208,10 @@ function HistoryFilterChip(props: { active: boolean; label: string; onPress: () 
   );
 }
 
+const HISTORY_STACKED_HEIGHT = 560;
+
 export type HistorySidebarProps = {
+  stacked?: boolean;
   displayedNotes: NoteData[];
   historyFilter: 'all' | 'general' | 'client';
   setHistoryFilter: (f: 'all' | 'general' | 'client') => void;
@@ -240,12 +243,15 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
   return (
     <View
       style={{
-        width: 380,
+        width: props.stacked ? '100%' : 380,
+        height: props.stacked ? HISTORY_STACKED_HEIGHT : undefined,
+        flexShrink: 0,
         alignSelf: 'stretch',
         minHeight: 0,
-        maxHeight: '100%' as unknown as number,
+        maxHeight: props.stacked ? undefined : ('100%' as unknown as number),
         backgroundColor: 'white',
-        borderLeftWidth: 1,
+        borderLeftWidth: props.stacked ? 0 : 1,
+        borderTopWidth: props.stacked ? 1 : 0,
         borderColor: tk.border,
         flexDirection: 'column',
         overflow: 'hidden',

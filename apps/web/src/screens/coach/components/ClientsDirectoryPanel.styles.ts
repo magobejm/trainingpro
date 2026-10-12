@@ -21,10 +21,17 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingRight: space.sm,
   },
+  filtersRowStacked: {
+    width: '100%',
+  },
   objectiveFilter: {
     flexBasis: 200,
     flexGrow: 1,
     minWidth: 160,
+  },
+  stackedField: {
+    flexBasis: '100%',
+    minWidth: 0,
   },
   searchInput: {
     flexBasis: 200,

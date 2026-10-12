@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import { Button, IconButton, Modal, TextField, useToast } from '@trainerpro/ui';
 import { useUserSettings } from '../data/hooks/useUserSettings';
 import { styles } from './SidebarUserPanel.styles';
@@ -11,6 +11,8 @@ const SIZE_SMALL = 'sm' as const;
 const TRANSPARENT = { backgroundColor: 'transparent' } as const;
 
 type Props = {
+  /** Solo el avatar (barra lateral de tablet); al pulsarlo se abre el mismo perfil. */
+  compact?: boolean;
   email: string;
   fallbackName: string;
   t: (key: string) => string;
@@ -18,7 +20,7 @@ type Props = {
 
 export function SidebarUserPanel(props: Props): React.JSX.Element {
   const vm = useSidebarUserPanelModel(props.email, props.fallbackName);
-  return <SidebarUserPanelView {...vm} t={props.t} />;
+  return <SidebarUserPanelView {...vm} compact={props.compact} t={props.t} />;
 }
 
 function useSidebarUserPanelModel(email: string, fallbackName: string) {
@@ -48,9 +50,26 @@ function useSidebarUserPanelModel(email: string, fallbackName: string) {
   };
 }
 
-type ViewModel = ReturnType<typeof useSidebarUserPanelModel> & { t: (key: string) => string };
+type ViewModel = ReturnType<typeof useSidebarUserPanelModel> & { compact?: boolean; t: (key: string) => string };
 
 function SidebarUserPanelView(props: ViewModel): React.JSX.Element {
+  if (props.compact) {
+    return (
+      <>
+        <Pressable
+          accessibilityLabel={props.t('app.user.modal.title')}
+          accessibilityRole="button"
+          onPress={props.onOpen}
+          style={styles.compactAvatar}
+        >
+          <View style={styles.avatarWrap}>
+            <Image source={{ uri: props.avatarUrl }} style={styles.avatar} />
+          </View>
+        </Pressable>
+        <EditProfileModal {...props} />
+      </>
+    );
+  }
   return (
     <>
       <View style={styles.card}>

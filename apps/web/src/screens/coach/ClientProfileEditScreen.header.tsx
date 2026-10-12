@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { useBreakpoint } from '@trainerpro/ui';
 import { styles } from './ClientProfileEditScreen.styles';
 import { CompactMetricItem, PencilButton } from './ClientProfileEditScreen.components';
 import type { Labels } from './ClientProfileEditScreen.labels';
@@ -27,10 +28,11 @@ type MetricKey = 'fcMax' | 'fcRest' | 'heightCm' | 'hipCm' | 'waistCm' | 'weight
 export function HeaderCard(props: { labels: Labels; vm: Vm }): React.JSX.Element {
   const avatarUrl = resolveAvatarUrl(props.vm);
   const ageValue = props.vm.data.age === null ? '--' : `${props.vm.data.age}`;
+  const stacked = useBreakpoint() === 'sm';
   return (
     <View style={styles.card}>
-      <View style={styles.headerRow}>
-        <AvatarColumn avatarUrl={avatarUrl} vm={props.vm} />
+      <View style={[styles.headerRow, stacked && styles.headerRowStacked]}>
+        <AvatarColumn avatarUrl={avatarUrl} stacked={stacked} vm={props.vm} />
         <HeaderMetrics ageValue={ageValue} labels={props.labels} vm={props.vm} />
       </View>
     </View>
@@ -41,9 +43,9 @@ function resolveAvatarUrl(vm: Vm): string {
   return vm.state.form.avatarUrl || String(vm.query.data?.avatarUrl ?? '') || vm.data.avatarChoices[0] || '';
 }
 
-function AvatarColumn(props: { avatarUrl: string; vm: Vm }): React.JSX.Element {
+function AvatarColumn(props: { avatarUrl: string; stacked: boolean; vm: Vm }): React.JSX.Element {
   return (
-    <View style={styles.avatarColumn}>
+    <View style={[styles.avatarColumn, props.stacked && styles.avatarColumnStacked]}>
       <AvatarPicker avatarUrl={props.avatarUrl} vm={props.vm} />
       <AvatarRail avatarUrl={props.avatarUrl} vm={props.vm} />
     </View>
@@ -150,8 +152,9 @@ function MetricFrames(props: { labels: Labels; vm: Vm }): React.JSX.Element {
 }
 
 function MainMetricFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
+  const stacked = useBreakpoint() === 'sm';
   return (
-    <View style={[styles.frameCard, styles.multiMetricsFrame]}>
+    <View style={[styles.frameCard, styles.multiMetricsFrame, stacked && styles.stackedFrame]}>
       <MetricField field={'heightCm'} isLarge label={props.labels.height} suffix={'cm'} vm={props.vm} />
       <MetricPair labels={props.labels} suffix={'cm'} vm={props.vm} leftField={'waistCm'} rightField={'hipCm'} />
       <MetricPair labels={props.labels} suffix={'bpm'} vm={props.vm} leftField={'fcMax'} rightField={'fcRest'} />
@@ -160,8 +163,9 @@ function MainMetricFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
 }
 
 function WeightFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
+  const stacked = useBreakpoint() === 'sm';
   return (
-    <View style={[styles.frameCard, styles.weightFrame]}>
+    <View style={[styles.frameCard, styles.weightFrame, stacked && styles.stackedFrame]}>
       <MetricField field={'weightKg'} isLarge label={props.labels.weight} suffix={'kg'} vm={props.vm} />
     </View>
   );
@@ -226,8 +230,9 @@ function toggleMetric(vm: Vm, field: MetricKey): void {
 
 function AgeFrame(props: { ageValue: string; labels: Labels; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
+  const stacked = useBreakpoint() === 'sm';
   return (
-    <View style={[styles.frameCard, styles.ageFrame]}>
+    <View style={[styles.frameCard, styles.ageFrame, stacked && styles.stackedFrame]}>
       <View style={styles.metricHeader}>
         <Text style={styles.metricLabel}>{props.labels.age}</Text>
         <PencilButton onPress={() => vm.state.setEditableBirthDate((prev) => !prev)} />

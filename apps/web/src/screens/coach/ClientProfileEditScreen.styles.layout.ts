@@ -79,6 +79,22 @@ export const layoutStyles = {
   headerText: {
     flex: 1,
     gap: 3,
+    minWidth: 0,
+  },
+  headerRowStacked: {
+    flexDirection: 'column',
+  },
+  avatarColumnStacked: {
+    alignSelf: 'stretch',
+    width: 'auto',
+  },
+  stackedColumn: {
+    flexBasis: '100%',
+    minWidth: 0,
+  },
+  stackedFrame: {
+    flexBasis: '100%',
+    minWidth: 0,
   },
   avatarColumn: {
     gap: space.sm,

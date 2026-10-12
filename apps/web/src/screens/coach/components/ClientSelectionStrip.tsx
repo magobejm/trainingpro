@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ClientRowCard } from './ClientRowCard';
-import { colors, fontSize, space } from '@trainerpro/ui';
+import { colors, fontSize, space, useBreakpoint } from '@trainerpro/ui';
 const DIR_LEFT = 'left' as const;
 const DIR_RIGHT = 'right' as const;
 
@@ -122,6 +122,10 @@ function ArrowControls(props: {
   scrollRef: React.RefObject<ScrollView | null>;
   show?: boolean;
 }): React.JSX.Element {
+  const stacked = useBreakpoint() === 'sm';
+  if (stacked) {
+    return <View style={styles.headerRowStacked}>{props.headerContent}</View>;
+  }
   if (!props.show) {
     return <View style={styles.headerRow}>{props.headerContent}</View>;
   }
@@ -206,6 +210,11 @@ const styles = StyleSheet.create({
   },
   headerContentWrap: {
     flex: 1,
+    minWidth: 0,
+  },
+  headerRowStacked: {
+    marginBottom: space.sm,
+    width: '100%',
   },
   dragArea: {
     width: '100%',

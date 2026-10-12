@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
-import { Button, EmptyState, IconButton } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, useBreakpoint } from '@trainerpro/ui';
 import { C, ss } from './LibraryRoutinesScreen.styles';
 import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
 import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
@@ -102,11 +102,12 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
 }
 
 function ScreenHeader({ vm }: { vm: VM }): React.JSX.Element {
+  const compact = useBreakpoint() !== 'lg';
   return (
-    <View style={ss.header}>
+    <View style={[ss.header, compact && ss.headerCompact]}>
       <Text style={ss.title}>{vm.t('coach.routineLib.title')}</Text>
-      <View style={ss.headerRight}>
-        <View style={ss.searchContainer}>
+      <View style={[ss.headerRight, compact && ss.headerRightCompact]}>
+        <View style={[ss.searchContainer, compact && ss.searchContainerFluid]}>
           <Search color={C.muted} size={16} />
           <TextInput
             onChangeText={vm.setQuery}
@@ -273,6 +274,7 @@ function RoutineCard(props: {
   t: T;
 }) {
   const { tpl, t } = props;
+  const bp = useBreakpoint();
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
@@ -280,7 +282,7 @@ function RoutineCard(props: {
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       onPress={() => props.onView(tpl)}
-      style={ss.card}
+      style={[ss.card, bp === 'md' && ss.cardMd, bp === 'sm' && ss.cardSm]}
     >
       <CardTopBar
         canEdit={canEdit}
@@ -313,6 +315,7 @@ function WarmupCard(props: {
   t: T;
 }) {
   const { tpl, t } = props;
+  const bp = useBreakpoint();
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
@@ -320,7 +323,7 @@ function WarmupCard(props: {
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       onPress={() => props.onView(tpl)}
-      style={ss.card}
+      style={[ss.card, bp === 'md' && ss.cardMd, bp === 'sm' && ss.cardSm]}
     >
       <CardTopBar
         canEdit={canEdit}

@@ -23,6 +23,7 @@ import {
   toastDuration,
   type ToastItem,
 } from '../../../../packages/ui/src/primitives/toast.logic';
+import { resolveBreakpoint } from '../../../../packages/ui/src/theme/breakpoints';
 import { colors } from '../../../../packages/ui/src/theme/tokens';
 
 const h = React.createElement;
@@ -193,5 +194,16 @@ describe('rendered primitives', () => {
     expect(
       renderToStaticMarkup(h(ToastProvider, { children: h('span', null, 'contenido'), dismissLabel: 'Cerrar' })),
     ).toContain('contenido');
+  });
+});
+
+describe('breakpoints', () => {
+  it('uses the agreed thresholds: mobile < 640, tablet < 1024, desktop above', () => {
+    expect(resolveBreakpoint(320)).toBe('sm');
+    expect(resolveBreakpoint(639)).toBe('sm');
+    expect(resolveBreakpoint(640)).toBe('md');
+    expect(resolveBreakpoint(1023)).toBe('md');
+    expect(resolveBreakpoint(1024)).toBe('lg');
+    expect(resolveBreakpoint(1920)).toBe('lg');
   });
 });

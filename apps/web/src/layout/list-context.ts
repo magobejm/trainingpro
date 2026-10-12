@@ -1,3 +1,5 @@
+import { parseShellPath } from './shell-routes';
+
 const LIST_PREFIX = 'trainerpro.list.';
 const CLIENT_PARAM = 'client';
 
@@ -67,13 +69,20 @@ export function searchWithClient(search: string, clientId: string | null): strin
   return next ? `?${next}` : '';
 }
 
+/** Cliente de la dirección actual: el de /coach/clients/:id/... o, si no, el de ?client=. */
+export function clientIdFromPath(pathname: string): string | null {
+  return parseShellPath(pathname)?.clientId ?? null;
+}
+
 export function readRouteClientId(): string | null {
   if (typeof window === 'undefined') return null;
-  return clientIdFromSearch(window.location.search);
+  return clientIdFromPath(window.location.pathname) ?? clientIdFromSearch(window.location.search);
 }
 
 export function writeRouteClientId(clientId: string | null): void {
   if (typeof window === 'undefined') return;
+  // Si la dirección ya lleva al cliente en la ruta, la ruta manda y no se añade ?client=.
+  if (clientIdFromPath(window.location.pathname)) return;
   const next = searchWithClient(window.location.search, clientId);
   if (next === window.location.search) return;
   const url = `${window.location.pathname}${next}${window.location.hash}`;

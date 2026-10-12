@@ -28,7 +28,8 @@ export function useProgressRouteClient(): { clientDisplayName: string | null; cl
   const openForClient = useProgressContextStore((state) => state.openForClient);
   const clients = useClientsQuery().data;
   const urlClient = readRouteClientId();
-  const clientId = storeId ?? urlClient;
+  // La dirección manda: /coach/clients/:id/progress siempre enseña a ese cliente.
+  const clientId = urlClient ?? storeId;
   useEffect(() => {
     if (!clientId) return;
     if (storeId === clientId && storeName) return;

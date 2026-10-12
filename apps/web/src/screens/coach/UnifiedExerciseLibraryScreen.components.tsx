@@ -11,7 +11,7 @@ import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnifiedExerciseModal } from './UnifiedExerciseModal';
 import { UnifiedExerciseDetailModal } from './UnifiedExerciseDetailModal';
 import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMultiSelect';
-import { Button, IconButton, TextField, colors } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors, useBreakpoint } from '@trainerpro/ui';
 
 const C_BLUE = colors.primary;
 const C_WHITE = colors.surface;
@@ -83,15 +83,17 @@ export function LibraryHeader({
   onNew: () => void;
   t: (k: string) => string;
 }) {
+  const bp = useBreakpoint();
+  const stacked = bp === 'sm';
   return (
-    <View style={styles.header}>
+    <View style={[styles.header, stacked && styles.headerCompact]}>
       <View style={styles.headerLeft}>
         <Text style={styles.headerTitle}>{t('coach.library.header.title')}</Text>
         <Text style={styles.headerSubtitle}>{t('coach.library.header.subtitle')}</Text>
       </View>
-      <View style={styles.headerRight}>
+      <View style={[styles.headerRight, stacked && styles.headerRightStacked]}>
         <TextField
-          containerStyle={styles.searchContainer}
+          containerStyle={stacked ? styles.searchContainerFluid : styles.searchContainer}
           onChangeText={setSearch}
           placeholder={t('coach.library.search.placeholder')}
           value={search}
@@ -160,9 +162,10 @@ export function ExerciseCard(props: ExerciseCardProps) {
   const { t } = useTranslation();
   const coachOwned = item.scope?.trim().toLowerCase() === 'coach';
   const imageUrl = item.mediaUrl || resolvePlaceholder(item.kind === 'exercise' ? 'strength' : item.kind);
+  const bp = useBreakpoint();
   return (
     <Pressable
-      style={styles.card}
+      style={[styles.card, bp === 'md' && styles.cardMd, bp === 'sm' && styles.cardSm]}
       onPress={onDetail}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
@@ -188,8 +191,9 @@ export function ExerciseCard(props: ExerciseCardProps) {
 }
 
 export function LibrarySidebar({ st }: { st: LibraryScreenState }) {
+  const compact = useBreakpoint() !== 'lg';
   return (
-    <View style={styles.sidebar}>
+    <View style={[styles.sidebar, compact && styles.sidebarCompact]}>
       <Text style={styles.sidebarTitle}>{st.t('coach.library.sidebar.categoriesTitle')}</Text>
       {CATEGORIES.map((cat) => {
         const isExpanded = st.expandedCategory === cat.key;

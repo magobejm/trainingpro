@@ -1,11 +1,13 @@
 import React from 'react';
 import { View } from 'react-native';
+import { useBreakpoint } from '@trainerpro/ui';
 import { useLibraryScreenState } from './useLibraryScreenState';
 import { styles } from './UnifiedExerciseLibraryScreen.styles';
 import { LibraryHeader, LibrarySidebar, LibraryMainGrid, LibraryModals } from './UnifiedExerciseLibraryScreen.components';
 
 export function UnifiedExerciseLibraryScreen(): React.JSX.Element {
   const st = useLibraryScreenState();
+  const compact = useBreakpoint() !== 'lg';
 
   return (
     <View style={styles.root}>
@@ -18,7 +20,7 @@ export function UnifiedExerciseLibraryScreen(): React.JSX.Element {
           st.setIsModalVisible(true);
         }}
       />
-      <View style={styles.body}>
+      <View style={[styles.body, compact && styles.bodyCompact]}>
         <LibrarySidebar st={st} />
         <LibraryMainGrid st={st} />
       </View>

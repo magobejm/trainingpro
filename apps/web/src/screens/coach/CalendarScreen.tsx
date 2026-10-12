@@ -35,9 +35,28 @@ import {
   createCopyPasteHandlers,
 } from './CalendarScreen.handlers';
 import { useCalendarListContext } from './useCalendarListContext';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { colors, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 const COLOR_PRIMARY = colors.primary;
+const CALENDAR_STACKED_MIN_HEIGHT = 720;
+
+const rootStyle = (stacked: boolean) =>
+  ({
+    flex: 1,
+    flexDirection: stacked ? 'column' : 'row',
+    backgroundColor: colors.surfaceMuted,
+    minHeight: 0,
+    overflow: stacked ? 'scroll' : 'hidden',
+  }) as const;
+
+const mainStyle = (stacked: boolean) =>
+  ({
+    flex: stacked ? undefined : 1,
+    flexDirection: 'column',
+    minWidth: 0,
+    minHeight: stacked ? CALENDAR_STACKED_MIN_HEIGHT : 0,
+    overflow: 'hidden',
+  }) as const;
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -155,7 +174,7 @@ function CalendarTopBar({ selectedClient, t }: TopBarProps): React.JSX.Element {
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        padding: space.xl,
+        padding: useBreakpoint() === 'sm' ? space.lg : space.xl,
         backgroundColor: 'white',
         borderBottomWidth: 1,
         borderColor: colors.border,
@@ -317,9 +336,10 @@ export function CalendarScreen(): React.JSX.Element {
   } = useCalendarLogic();
 
   const clientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined;
+  const stacked = useBreakpoint() === 'sm';
 
   return (
-    <View style={{ flex: 1, flexDirection: 'row', backgroundColor: colors.surfaceMuted, minHeight: 0, overflow: 'hidden' }}>
+    <View style={rootStyle(stacked)}>
       <CalendarSidebar
         clients={clients}
         objectives={objectives}
@@ -332,7 +352,7 @@ export function CalendarScreen(): React.JSX.Element {
         onRoutineDayColorChange={onRoutineDayColorChange}
         t={t}
       />
-      <View style={{ flex: 1, flexDirection: 'column', minWidth: 0, minHeight: 0, overflow: 'hidden' }}>
+      <View style={mainStyle(stacked)}>
         <CalendarTopBar selectedClient={selectedClient} t={t} />
         <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <CalendarGrid

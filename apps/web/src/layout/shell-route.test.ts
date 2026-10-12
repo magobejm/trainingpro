@@ -6,10 +6,10 @@ import { isRouteAllowed, SHELL_ROUTES, type ShellNavItem } from './usePersistent
 
 const icon = () => null;
 const COACH_MENU: ShellNavItem[] = [
-  { icon, id: 'coach.clients', labelKey: 'app.nav.coach.clients' },
-  { icon, id: 'coach.library.unified', labelKey: 'app.nav.coach.library.unified' },
+  { group: 'clients', icon, id: 'coach.clients', labelKey: 'app.nav.coach.clients' },
+  { group: 'library', icon, id: 'coach.library.unified', labelKey: 'app.nav.coach.library.unified' },
 ];
-const ADMIN_MENU: ShellNavItem[] = [{ icon, id: 'admin.coaches', labelKey: 'app.nav.admin.coaches' }];
+const ADMIN_MENU: ShellNavItem[] = [{ group: 'admin', icon, id: 'admin.coaches', labelKey: 'app.nav.admin.coaches' }];
 
 describe('isRouteAllowed', () => {
   it('accepts routes that are in the menu', () => {

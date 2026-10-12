@@ -11,6 +11,8 @@ import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuer
 import { useMicrocycleProgressQuery } from '../../data/hooks/useMicrocycleProgressQuery';
 import { useClientRoutineDaysQuery } from '../../data/hooks/useCalendarQuery';
 import { QueryResult } from '../../components/AsyncStatus';
+import { Breadcrumbs } from '../../layout/Breadcrumbs';
+import { buildClientCrumbs } from '../../layout/crumbs';
 import { MetricDetailModal } from './progress/MetricDetailModal';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
 import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
@@ -33,7 +35,7 @@ import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 import type { MicrocycleProgressPoint } from '../../data/hooks/useMicrocycleProgressQuery';
 import type { SessionProgressPoint } from '../../data/hooks/useSessionProgressQuery';
-import { Button, EmptyState, SegmentedControl, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, SegmentedControl, colors, fontSize, radius, space, useBreakpoint } from '@trainerpro/ui';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -276,6 +278,11 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     );
   }
 
+  const progressCrumbs = [
+    ...buildClientCrumbs({ clientId, clientName: clientDisplayName ?? '', mode: 'progress', t }).slice(0, 2),
+    { label: t('coach.progress.client.title'), to: null },
+  ];
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       {props.onRouteChange ? (
@@ -288,11 +295,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
         />
       ) : null}
       {/* Breadcrumb */}
-      <View style={styles.breadcrumb}>
-        <Text style={styles.breadcrumbClient}>{clientDisplayName}</Text>
-        <Text style={styles.breadcrumbSep}>{' › '}</Text>
-        <Text style={styles.breadcrumbTitle}>{t('coach.progress.client.title')}</Text>
-      </View>
+      <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={progressCrumbs} />
       <Text style={styles.subtitle}>{t('coach.progress.client.subtitle')}</Text>
 
       {/* Mode + range selector */}
@@ -454,11 +457,13 @@ function ModeSelector({
     { id: 'microcycle', key: 'coach.progress.filter.mode.microcycle' },
   ];
   return (
-    <SegmentedControl
-      onChange={(value) => onChange(value as AnalysisMode)}
-      options={modes.map((m) => ({ label: t(m.key), value: m.id }))}
-      value={mode}
-    />
+    <ScrollIfCompact>
+      <SegmentedControl
+        onChange={(value) => onChange(value as AnalysisMode)}
+        options={modes.map((m) => ({ label: t(m.key), value: m.id }))}
+        value={mode}
+      />
+    </ScrollIfCompact>
   );
 }
 
@@ -481,15 +486,27 @@ function RangeSelector({
     { label: customLabel, value: 'custom' },
   ];
   return (
-    <SegmentedControl
-      accessibilityLabel={t('coach.progress.range.label')}
-      onChange={(value) => {
-        if (value === 'custom') onCustom();
-        else onPreset(Number(value) as 4 | 8 | 12);
-      }}
-      options={options}
-      value={customRange ? 'custom' : String(weeksPreset)}
-    />
+    <ScrollIfCompact>
+      <SegmentedControl
+        accessibilityLabel={t('coach.progress.range.label')}
+        onChange={(value) => {
+          if (value === 'custom') onCustom();
+          else onPreset(Number(value) as 4 | 8 | 12);
+        }}
+        options={options}
+        value={customRange ? 'custom' : String(weeksPreset)}
+      />
+    </ScrollIfCompact>
+  );
+}
+
+function ScrollIfCompact({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const compact = useBreakpoint() === 'sm';
+  if (!compact) return <>{children}</>;
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scrollRow}>
+      {children}
+    </ScrollView>
   );
 }
 
@@ -735,6 +752,7 @@ const styles = StyleSheet.create({
   breadcrumbTitle: { color: C.text, fontSize: fontSize.sm, fontWeight: '900' },
   subtitle: { color: C.muted, fontSize: fontSize.sm, width: '100%' },
   microcycleMeta: { color: C.muted, fontSize: fontSize.sm, fontWeight: '700', width: '100%' },
+  scrollRow: { maxWidth: '100%', flexGrow: 0 },
   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, alignItems: 'center' },
   variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   loading: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
@@ -781,7 +799,7 @@ const kpiValueStyle: React.CSSProperties = { margin: '6px 0 0', fontSize: fontSi
 
 const chartsGrid: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(min(360px, 100%), 1fr))',
   gap: space.lg,
   width: '100%',
 };

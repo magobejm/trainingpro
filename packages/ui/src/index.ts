@@ -37,3 +37,4 @@ export { EmptyState, type EmptyStateProps } from './primitives/EmptyState';
 export { Skeleton, type SkeletonProps } from './primitives/Skeleton';
 export { ToastProvider, useToast, type ToastApi } from './primitives/Toast';
 export { useDialogFocus, restoreFocus, nextFocusable, keepTabInside, focusFirstField } from './primitives/useDialogFocus';
+export { BREAKPOINTS, resolveBreakpoint, useBreakpoint, type Breakpoint } from './theme/breakpoints';

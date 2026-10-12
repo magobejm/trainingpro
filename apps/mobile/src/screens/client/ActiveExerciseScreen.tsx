@@ -35,6 +35,7 @@ import {
   type SetColumn,
   type SetFieldKey,
 } from './active-exercise.helpers';
+import { useRestCountdown } from '../../features/timers/useRestCountdown';
 import { CircularCountdown } from './CircularCountdown';
 import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
@@ -53,6 +54,7 @@ type ActiveExerciseScreenProps = {
   visible: boolean;
   workoutElapsed?: string;
   completedRestKeys: string[];
+  onAdjustRest: (endAt: number, lastSeenAt: number) => void;
   onClose: () => void;
   onCollapseRest: () => void;
   onExpandRest: () => void;
@@ -97,6 +99,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
   const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
   const [finishing, setFinishing] = useState(false);
   const recordedRestRef = useRef<Record<number, number>>({});
+  const finishedRestKey = useRef<string | null>(null);
 
   const groupIndex = props.exerciseGroup.findIndex((entry) => entry.id === props.item.id);
   const setCount = getSetCount(props.item);
@@ -151,16 +154,19 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
 
   const handleRestComplete = () => {
     const rest = props.restState;
-    if (rest) {
-      const setIndex = Number(rest.setKey.split(':').at(-1));
-      const elapsed = elapsedRestSeconds(rest.endAt, rest.seconds);
-      if (Number.isInteger(setIndex) && setIndex > 0) {
-        recordedRestRef.current = { ...recordedRestRef.current, [setIndex]: elapsed };
-        if (setWasLogged(props.item, setIndex)) void saveSet(setIndex, elapsed);
-      }
+    if (!rest) return;
+    const restKey = `${rest.setKey}:${rest.endAt}`;
+    if (finishedRestKey.current === restKey) return;
+    finishedRestKey.current = restKey;
+    const setIndex = Number(rest.setKey.split(':').at(-1));
+    const elapsed = elapsedRestSeconds(rest.endAt, rest.seconds);
+    if (Number.isInteger(setIndex) && setIndex > 0) {
+      recordedRestRef.current = { ...recordedRestRef.current, [setIndex]: elapsed };
+      if (setWasLogged(props.item, setIndex)) void saveSet(setIndex, elapsed);
     }
     props.onRestFinish();
   };
+  const remaining = useRestCountdown(props.restState, props.onAdjustRest, handleRestComplete);
 
   const handleFinishExercise = async () => {
     if (finishing) return;
@@ -266,10 +272,9 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
                       active={isActiveRest}
                       completed={restDone}
                       disabled={restLocked}
-                      endAt={isActiveRest ? props.restState!.endAt : null}
+                      remaining={isActiveRest ? remaining : null}
                       restSeconds={restSeconds}
                       onExpand={props.onExpandRest}
-                      onFinish={handleRestComplete}
                       onStart={() => props.onStartRest(setKey, restSeconds)}
                     />
                   ) : null}
@@ -361,7 +366,7 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
         />
         {props.restState?.expanded ? (
           <RestTimerOverlay
-            endAt={props.restState.endAt}
+            remaining={remaining ?? 0}
             totalSeconds={props.restState.seconds}
             visible
             onHide={props.onCollapseRest}
@@ -377,30 +382,12 @@ function SetRestButton(props: {
   active: boolean;
   completed: boolean;
   disabled: boolean;
-  endAt: number | null;
+  remaining: number | null;
   restSeconds: number;
   onExpand: () => void;
-  onFinish: () => void;
   onStart: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation();
-  const [remaining, setRemaining] = useState(() =>
-    props.endAt ? Math.max(0, Math.ceil((props.endAt - Date.now()) / 1000)) : props.restSeconds,
-  );
-
-  useEffect(() => {
-    if (!props.active || !props.endAt) return;
-    const tick = () => {
-      const next = Math.max(0, Math.ceil((props.endAt! - Date.now()) / 1000));
-      setRemaining(next);
-      if (next <= 0) {
-        props.onFinish();
-      }
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [props.active, props.endAt, props.onFinish]);
 
   if (props.completed) {
     return (
@@ -410,10 +397,10 @@ function SetRestButton(props: {
     );
   }
 
-  if (props.active && props.endAt) {
+  if (props.active && props.remaining != null) {
     return (
       <Pressable onPress={props.onExpand} style={styles.restBtnCircle}>
-        <CircularCountdown remaining={remaining} size={56} strokeWidth={5} totalSeconds={props.restSeconds} />
+        <CircularCountdown remaining={props.remaining} size={56} strokeWidth={5} totalSeconds={props.restSeconds} />
       </Pressable>
     );
   }

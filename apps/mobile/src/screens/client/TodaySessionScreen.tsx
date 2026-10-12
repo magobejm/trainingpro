@@ -18,7 +18,6 @@ import type {
 import { SESSION } from '../../theme/sessionStyles';
 import { LIGHT } from '../../theme/light';
 import { showError, showToast } from '../../shell/client/feedback';
-import { formatWorkoutElapsed } from '../../features/timers/workout-elapsed';
 import { ActiveExerciseScreen } from './ActiveExerciseScreen';
 import { RoutineDayScreen } from './RoutineDayScreen';
 import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
@@ -26,6 +25,7 @@ import { useOptionalCoachNotice } from './MorningCheckinGate';
 import { SessionRpeModal } from './SessionRpeModal';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
+import { usePersistedSessionTimers, useWorkoutElapsed } from './today-session.timers';
 import { localDateKey, readTodayCheckin } from './daily-checkin.utils';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
@@ -36,12 +36,6 @@ type TodaySessionScreenProps = {
   onFinishedDay: () => void;
   sessionId: string;
 };
-
-function formatElapsed(startedAt: null | string): string {
-  if (!startedAt) return '';
-  const ms = Date.now() - new Date(startedAt).getTime();
-  return formatWorkoutElapsed(ms / 1000);
-}
 
 type TodaySessionBodyProps = {
   completedRestKeys: string[];
@@ -56,11 +50,15 @@ type TodaySessionBodyProps = {
   onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<void> | void;
   onLogSet: (input: LogSetMutationInput) => Promise<void> | void;
   onLogSport: (input: LogSportMutationInput) => Promise<void> | void;
+  onAdjustRest: (endAt: number, lastSeenAt: number) => void;
   onClose: () => void;
+  onCloseExercise: () => void;
   onFinishDay: () => void;
+  onFinishExercise: (itemId: string) => void;
   onRestFinish: () => void;
   onCollapseRest: () => void;
   onExpandRest: () => void;
+  onNavigateExercise: (item: SessionItem) => void;
   onSelectExercise: (item: SessionItem, group: SessionItem[]) => void;
   onStartRest: (setKey: string, seconds: number) => void;
   banner: React.ReactNode;
@@ -68,11 +66,6 @@ type TodaySessionBodyProps = {
   selectedExercise: SessionItem | null;
   session: SessionView;
   sessionId: string;
-  setCompletedRestKeys: React.Dispatch<React.SetStateAction<string[]>>;
-  setExerciseGroup: React.Dispatch<React.SetStateAction<SessionItem[]>>;
-  setFinishedExerciseIds: React.Dispatch<React.SetStateAction<Set<string>>>;
-  setRestState: React.Dispatch<React.SetStateAction<RestState | null>>;
-  setSelectedExercise: React.Dispatch<React.SetStateAction<SessionItem | null>>;
   showActiveDay: boolean;
   t: (key: string, options?: Record<string, unknown>) => string;
   workoutElapsed: string | undefined;
@@ -115,22 +108,13 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           visible
           workoutElapsed={props.workoutElapsed}
           completedRestKeys={props.completedRestKeys}
-          onClose={() => {
-            props.setRestState(null);
-            props.setSelectedExercise(null);
-          }}
-          onNavigateExercise={(item) => {
-            props.setRestState(null);
-            props.setSelectedExercise(item);
-          }}
+          onAdjustRest={props.onAdjustRest}
+          onClose={props.onCloseExercise}
+          onNavigateExercise={props.onNavigateExercise}
           onCollapseRest={props.onCollapseRest}
           onExpandRest={props.onExpandRest}
           onRestFinish={props.onRestFinish}
-          onFinishExercise={(itemId) => {
-            props.setFinishedExerciseIds((current) => new Set(current).add(itemId));
-            props.setRestState(null);
-            props.setSelectedExercise(null);
-          }}
+          onFinishExercise={props.onFinishExercise}
           onStartRest={props.onStartRest}
           onLogSet={props.onLogSet}
           onLogPlioSet={props.onLogPlioSet}
@@ -156,14 +140,11 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     [pendingOps, rawSession],
   );
 
-  const [selectedExercise, setSelectedExercise] = useState<SessionItem | null>(null);
-  const [exerciseGroup, setExerciseGroup] = useState<SessionItem[]>([]);
+  const timers = usePersistedSessionTimers(sessionId, session, sessionQuery.data?.status);
+  const workoutElapsed = useWorkoutElapsed(session);
   const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
-  const [completedRestKeys, setCompletedRestKeys] = useState<string[]>([]);
-  const [restState, setRestState] = useState<RestState | null>(null);
   const [rpeVisible, setRpeVisible] = useState(false);
   const [finishBusy, setFinishBusy] = useState(false);
-  const [, tick] = useState(0);
   const startPromptedRef = React.useRef(false);
   const pendingFinishRpe = React.useRef<number | null>(null);
   const [checkinHydrated, setCheckinHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
@@ -178,17 +159,10 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     });
   }, []);
 
-  React.useEffect(() => {
-    if (!sessionQuery.data?.startedAt) return;
-    const interval = setInterval(() => tick((value) => value + 1), 1000);
-    return () => clearInterval(interval);
-  }, [sessionQuery.data?.startedAt]);
-
   const isPending = session?.status === 'PENDING';
   const isRunning = session?.status === 'IN_PROGRESS';
   const isCompleted = session?.status === 'COMPLETED';
   const showActiveDay = isRunning || isCompleted;
-  const workoutElapsed = session?.startedAt ? formatElapsed(session.startedAt) : undefined;
 
   const handleMutationError = useCallback(
     (error: unknown) => {
@@ -229,28 +203,6 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
       });
   }, [actions, checkinHydrated, handleMutationError, sessionId, sessionQuery.data, t, todayScores]);
 
-  React.useEffect(() => {
-    if (!session || !selectedExercise) {
-      return;
-    }
-    const updated = session.items.find((entry) => entry.id === selectedExercise.id);
-    if (updated) {
-      setSelectedExercise(updated);
-    }
-  }, [session, selectedExercise?.id]);
-
-  React.useEffect(() => {
-    if (!session || exerciseGroup.length === 0) {
-      return;
-    }
-    const updatedGroup = exerciseGroup
-      .map((entry) => session.items.find((item) => item.id === entry.id))
-      .filter((entry): entry is SessionItem => entry != null);
-    if (updatedGroup.length > 0) {
-      setExerciseGroup(updatedGroup);
-    }
-  }, [session, exerciseGroup.map((entry) => entry.id).join('|')]);
-
   const handleFinishDay = useCallback(() => {
     if (finishBusy || isCompleted) {
       return;
@@ -269,6 +221,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
             setRpeVisible(false);
             return;
           }
+          timers.clearSessionTimers();
           if (outcome === 'pending') {
             pendingFinishRpe.current = sessionRpe;
             showToast(t('mobile.client.sync.savedOffline'));
@@ -283,7 +236,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         })
         .finally(() => setFinishBusy(false));
     },
-    [actions, finishBusy, handleMutationError, notifyCoach, onFinishedDay, t],
+    [actions, finishBusy, handleMutationError, notifyCoach, onFinishedDay, t, timers.clearSessionTimers],
   );
 
   React.useEffect(() => {
@@ -294,36 +247,13 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     void notifyFinishedSession(notifyCoach, onFinishedDay, sessionRpe, t);
   }, [actions.conflicts.length, actions.pendingCount, notifyCoach, onFinishedDay, session?.status, t]);
 
-  const handleStartRest = useCallback((setKey: string, seconds: number) => {
-    setRestState({
-      endAt: Date.now() + seconds * 1000,
-      expanded: true,
-      seconds,
-      setKey,
-    });
-  }, []);
-
-  const handleExpandRest = useCallback(() => {
-    setRestState((prev) => (prev ? { ...prev, expanded: true } : null));
-  }, []);
-
-  const handleCollapseRest = useCallback(() => {
-    setRestState((prev) => (prev ? { ...prev, expanded: false } : null));
-  }, []);
-
-  const handleRestFinish = useCallback(() => {
-    setRestState((prev) => {
-      if (prev) {
-        setCompletedRestKeys((current) => (current.includes(prev.setKey) ? current : [...current, prev.setKey]));
-      }
-      return null;
-    });
-  }, []);
-
-  const handleSelectExercise = useCallback((item: SessionItem, group: SessionItem[]) => {
-    setSelectedExercise(item);
-    setExerciseGroup(group);
-  }, []);
+  const handleFinishExercise = useCallback(
+    (itemId: string) => {
+      setFinishedExerciseIds((current) => new Set(current).add(itemId));
+      timers.leaveExercise();
+    },
+    [timers.leaveExercise],
+  );
 
   if (!session) {
     return (
@@ -348,12 +278,13 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
             pendingCount={actions.pendingCount}
           />
         }
-        completedRestKeys={completedRestKeys}
-        exerciseGroup={exerciseGroup}
+        completedRestKeys={timers.completedRestKeys}
+        exerciseGroup={timers.exerciseGroup}
         finishedExerciseIds={finishedExerciseIds}
         isCompleted={isCompleted}
         isPending={isPending}
         isRunning={isRunning}
+        onAdjustRest={timers.onAdjustRest}
         onLogInterval={actions.handleLogInterval}
         onLogIsometricSet={actions.handleLogIsometricSet}
         onLogMobilitySet={actions.handleLogMobilitySet}
@@ -361,21 +292,19 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         onLogSet={actions.handleLogSet}
         onLogSport={actions.handleLogSport}
         onClose={onClose}
+        onCloseExercise={timers.leaveExercise}
         onFinishDay={handleFinishDay}
-        onCollapseRest={handleCollapseRest}
-        onExpandRest={handleExpandRest}
-        onRestFinish={handleRestFinish}
-        onSelectExercise={handleSelectExercise}
-        onStartRest={handleStartRest}
-        restState={restState}
-        selectedExercise={selectedExercise}
+        onFinishExercise={handleFinishExercise}
+        onCollapseRest={timers.onCollapseRest}
+        onExpandRest={timers.onExpandRest}
+        onNavigateExercise={timers.onNavigateExercise}
+        onRestFinish={timers.onRestFinish}
+        onSelectExercise={timers.onSelectExercise}
+        onStartRest={timers.onStartRest}
+        restState={timers.restState}
+        selectedExercise={timers.selectedExercise}
         session={session}
         sessionId={sessionId}
-        setCompletedRestKeys={setCompletedRestKeys}
-        setExerciseGroup={setExerciseGroup}
-        setFinishedExerciseIds={setFinishedExerciseIds}
-        setRestState={setRestState}
-        setSelectedExercise={setSelectedExercise}
         showActiveDay={showActiveDay}
         t={t}
         workoutElapsed={workoutElapsed}

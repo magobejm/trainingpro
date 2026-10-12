@@ -11,7 +11,8 @@ import {
   useSendChatMessageMutation,
   type ChatMessage,
 } from '../../data/hooks/useChat';
-import { CALL_COLOR, CALL_REQUEST_COLOR, callTimeOptions } from '../client/calendar-fixed-colors';
+import { CALL_COLOR, CALL_REQUEST_COLOR } from '../client/calendar-fixed-colors';
+import { CallTimeSelect } from '../client/CallTimeSelect';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { LIGHT } from '../../theme/light';
 
@@ -223,13 +224,7 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
       ) : null}
       {countering ? (
         <View>
-          <select onChange={(event) => setTime(event.target.value)} style={callSelectStyle} value={time}>
-            {callTimeOptions().map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <CallTimeSelect onChange={setTime} value={time} />
           <CallButton
             label={t('client.chat.call.sendCounter')}
             onPress={() => counter.mutate({ proposalId: proposal.id, time }, { onSuccess: () => setCountering(false) })}
@@ -247,8 +242,6 @@ function CallButton(props: { label: string; onPress: () => void }): React.JSX.El
     </Pressable>
   );
 }
-
-const callSelectStyle = { borderRadius: 8, marginTop: 8, padding: 6 } as const;
 
 function AttachmentItem(props: { attachment: ChatMessage['attachments'][number] }): React.JSX.Element {
   const url = props.attachment.publicUrl;

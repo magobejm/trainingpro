@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
 import { CircularCountdown } from './CircularCountdown';
 
 type RestTimerOverlayProps = {
-  endAt: number;
+  remaining: number;
   totalSeconds: number;
   visible: boolean;
   onHide: () => void;
@@ -13,28 +13,13 @@ type RestTimerOverlayProps = {
 };
 
 export function RestTimerOverlay({
-  endAt,
+  remaining,
   totalSeconds,
   visible,
   onHide,
   onFinish,
 }: RestTimerOverlayProps): React.JSX.Element | null {
   const { t } = useTranslation();
-  const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
-
-  useEffect(() => {
-    if (!visible) return;
-    const tick = () => {
-      const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
-      setRemaining(next);
-      if (next <= 0) {
-        onFinish();
-      }
-    };
-    tick();
-    const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
-  }, [visible, endAt, onFinish]);
 
   if (!visible) return null;
 

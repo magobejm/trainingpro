@@ -11,8 +11,8 @@ import {
   CLIENT_NOTE_COLOR,
   COACH_NOTE_COLOR,
   QUICK_CALL_TIMES,
-  callTimeOptions,
 } from './calendar-fixed-colors';
+import { CallTimeSelect } from './CallTimeSelect';
 import { useCreateCallProposalMutation, useSaveClientDayNoteMutation } from '../../data/hooks/useClientCalendar';
 import { LIGHT } from '../../theme/light';
 
@@ -188,7 +188,7 @@ export function CallRequest(props: { dateStr: string }): React.JSX.Element {
           </Pressable>
         ))}
       </View>
-      <TimeSelect onChange={setTime} value={time} />
+      <CallTimeSelect onChange={setTime} value={time} />
       <Pressable
         onPress={() => propose.mutate({ date: props.dateStr, time }, { onSuccess: () => setSent(true) })}
         style={styles.blockButton}
@@ -199,20 +199,6 @@ export function CallRequest(props: { dateStr: string }): React.JSX.Element {
     </View>
   );
 }
-
-function TimeSelect(props: { onChange: (time: string) => void; value: string }): React.JSX.Element {
-  return (
-    <select onChange={(event) => props.onChange(event.target.value)} style={selectStyle} value={props.value}>
-      {callTimeOptions().map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-const selectStyle = { borderRadius: 8, marginTop: 8, padding: 6 } as const;
 
 const styles = StyleSheet.create({
   backdrop: { backgroundColor: LIGHT.overlay, bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },

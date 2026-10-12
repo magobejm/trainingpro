@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Pressable, StyleSheet, Text, View } from 'react-native';
+import { remainingSeconds, rewindEndAt } from './countdown';
 
 type Props = {
   onComplete?: () => void;
@@ -34,38 +35,83 @@ export function IntervalTimer(props: Props): React.JSX.Element {
 
 function useCountdown(seconds: number, onComplete?: () => void) {
   const [isRunning, setRunning] = useState(false);
+  const [endAt, setEndAt] = useState<number | null>(null);
   const [remaining, setRemaining] = useState(seconds);
   const onCompleteRef = useRef(onComplete);
+  const lastSeenRef = useRef(Date.now());
+  const endAtRef = useRef<number | null>(null);
+  const remainingRef = useRef(seconds);
+  const completedRef = useRef(false);
   onCompleteRef.current = onComplete;
+  endAtRef.current = endAt;
+  remainingRef.current = remaining;
 
   useEffect(() => {
+    completedRef.current = false;
+    remainingRef.current = seconds;
+    endAtRef.current = null;
     setRemaining(seconds);
+    setEndAt(null);
     setRunning(false);
   }, [seconds]);
 
   useEffect(() => {
-    if (!isRunning) return;
-    const timer = setInterval(() => {
-      setRemaining((value) => {
-        if (value <= 1) {
-          setRunning(false);
-          onCompleteRef.current?.();
-          return 0;
-        }
-        return value - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [isRunning]);
-  return {
-    isRunning,
-    remaining,
-    reset: () => {
+    if (!isRunning || endAt == null) return;
+    const tick = () => {
+      const now = Date.now();
+      let currentEnd = endAtRef.current ?? endAt;
+      if (now < lastSeenRef.current) {
+        currentEnd = rewindEndAt(currentEnd, lastSeenRef.current, now);
+        endAtRef.current = currentEnd;
+        setEndAt(currentEnd);
+      }
+      lastSeenRef.current = now;
+      const next = remainingSeconds(currentEnd, seconds, now);
+      remainingRef.current = next;
+      setRemaining(next);
+      if (next > 0 || completedRef.current) return;
+      completedRef.current = true;
       setRunning(false);
-      setRemaining(seconds);
-    },
-    toggle: () => setRunning((value) => !value),
+      onCompleteRef.current?.();
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') tick();
+    });
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, [endAt, isRunning, seconds]);
+
+  const reset = () => {
+    completedRef.current = false;
+    remainingRef.current = seconds;
+    endAtRef.current = null;
+    setRunning(false);
+    setEndAt(null);
+    setRemaining(seconds);
   };
+  const toggle = () => {
+    if (isRunning) {
+      const currentEnd = endAtRef.current;
+      const left = currentEnd == null ? remainingRef.current : remainingSeconds(currentEnd, seconds, Date.now());
+      remainingRef.current = left;
+      endAtRef.current = null;
+      setRemaining(left);
+      setEndAt(null);
+      setRunning(false);
+      return;
+    }
+    const nextEnd = Date.now() + remainingRef.current * 1000;
+    lastSeenRef.current = Date.now();
+    completedRef.current = false;
+    endAtRef.current = nextEnd;
+    setEndAt(nextEnd);
+    setRunning(true);
+  };
+  return { isRunning, remaining, reset, toggle };
 }
 
 function ActionButton(props: { label: string; onPress: () => void }) {

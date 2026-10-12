@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ClientPhysicalTestAssignmentView, TestInputs } from '../../data/hooks/usePhysicalTests';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export type CompletedTestRow = {
   classification: string;
@@ -44,7 +44,7 @@ export function buildCompletedRows(
 
 export function CompletedTestList(props: { rows: CompletedTestRow[]; t: Translate }): React.JSX.Element {
   if (props.rows.length === 0) {
-    return <Text style={styles.empty}>{props.t('coach.tests.completed.empty')}</Text>;
+    return <EmptyState title={props.t('coach.tests.completed.empty')} />;
   }
   return (
     <View style={styles.list}>
@@ -92,7 +92,6 @@ const styles = StyleSheet.create({
     padding: space.lg,
   },
   classification: { fontSize: fontSize.sm, fontWeight: '800' },
-  empty: { color: colors.textMuted, fontSize: fontSize.sm, paddingVertical: space.md },
   inputs: { color: colors.text, fontSize: fontSize.xs },
   list: { gap: space.md },
   meta: { color: colors.textMuted, fontSize: fontSize.xs },

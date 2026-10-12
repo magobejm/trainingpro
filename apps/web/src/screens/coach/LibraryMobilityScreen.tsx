@@ -1,9 +1,9 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
-import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
+import { Button, colors, EmptyState, FilterChips, fontSize, SearchBar, space } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
@@ -122,39 +122,47 @@ export function LibraryMobilityScreen(): React.JSX.Element {
           <FilterChips activeId={activeFilter} items={chips} onSelect={setActiveFilter} />
         </View>
 
-        {QueryResult({
-          emptyTitle: t('coach.library.empty'),
-          error,
-          hasActiveFilter: query.trim().length > 0 || activeFilter !== 'all',
-          isError,
-          isLoading,
-          itemCount: items.length,
-          onRetry: () => void refetch(),
-        }) ?? (
-          <View style={gridStyles.grid}>
-            {items.map((item) => (
-              <View key={item.id} style={gridStyles.gridItem}>
-                <LibraryItemCard
-                  category="mobility"
-                  deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                  expanded={expandedId === item.id}
-                  imageUrl={item.media?.url}
-                  name={item.name}
-                  onDelete={() => setPendingDeleteId(item.id)}
-                  onEdit={() => onOpenEdit(item)}
-                  onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
-                  scope={item.scope}
-                  subtitle={
-                    item.mobilityType
-                      ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
-                      : t('coach.library.type.undefined')
-                  }
-                  t={t}
-                />
-              </View>
-            ))}
-          </View>
-        )}
+        {(!isLoading && !isError && items.length === 0 && !(query.trim().length > 0 || activeFilter !== 'all') ? (
+          <EmptyState
+            actionLabel={t('coach.library.actions.create')}
+            message={t('coach.library.emptyHint')}
+            onAction={onOpenCreate}
+            title={t('coach.library.empty')}
+          />
+        ) : null) ??
+          QueryResult({
+            emptyTitle: t('coach.library.empty'),
+            error,
+            hasActiveFilter: query.trim().length > 0 || activeFilter !== 'all',
+            isError,
+            isLoading,
+            itemCount: items.length,
+            onRetry: () => void refetch(),
+          }) ?? (
+            <View style={gridStyles.grid}>
+              {items.map((item) => (
+                <View key={item.id} style={gridStyles.gridItem}>
+                  <LibraryItemCard
+                    category="mobility"
+                    deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
+                    expanded={expandedId === item.id}
+                    imageUrl={item.media?.url}
+                    name={item.name}
+                    onDelete={() => setPendingDeleteId(item.id)}
+                    onEdit={() => onOpenEdit(item)}
+                    onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
+                    scope={item.scope}
+                    subtitle={
+                      item.mobilityType
+                        ? toMobilityTypeLabel(item.mobilityType, item.mobilityType, t)
+                        : t('coach.library.type.undefined')
+                    }
+                    t={t}
+                  />
+                </View>
+              ))}
+            </View>
+          )}
       </ScrollView>
 
       <LibraryCreateModal
@@ -269,9 +277,7 @@ function TopBar({
         <View style={topBarStyles.searchWrapper}>
           <SearchBar onChangeText={setQuery} placeholder={t('coach.library.exercises.searchPlaceholder')} value={query} />
         </View>
-        <Pressable onPress={onOpenCreate} style={topBarStyles.createBtn}>
-          <Text style={topBarStyles.createBtnText}>{t('coach.library.actions.create')}</Text>
-        </Pressable>
+        <Button label={t('coach.library.actions.create')} onPress={onOpenCreate} />
       </View>
     </View>
   );
@@ -292,13 +298,6 @@ const topBarStyles = StyleSheet.create({
   title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.lg },
   searchWrapper: { width: 320 },
-  createBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.md,
-    borderRadius: radius.lg,
-  },
-  createBtnText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' },
 });
 
 function toMobilityTypeLabel(id: string, fallback: string, t: (key: string) => string): string {

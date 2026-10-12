@@ -1,8 +1,8 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, Text, TextInput, View, useWindowDimensions } from 'react-native';
-import { useDialogFocus } from '../../../../layout/useDialogFocus';
+import React, { useEffect, useState } from 'react';
+import { Text, View, useWindowDimensions } from 'react-native';
+import { Button, Modal, TextField } from '@trainerpro/ui';
 import { useLibraryItems, useLockBodyScroll } from './ExercisePickerModal.hooks';
-import { PickerHeader, PickerBody, PickerTypeBar } from './ExercisePickerModal.components';
+import { PickerBody, PickerTypeBar } from './ExercisePickerModal.components';
 import { s } from './ExercisePickerModal.styles';
 import { DEFAULT_PICKER_BLOCK_TYPES, type PickerProps, type LibraryItem } from './ExercisePickerModal.types';
 import type { BlockType } from '../../RoutinePlanner.types';
@@ -30,8 +30,6 @@ function usePickerDetailItem(
   if (!selectedId && !selectedName) return null;
   return (data ?? []).find((i) => i.id === selectedId || i.name === selectedName) ?? null;
 }
-
-const ANIM = 'slide' as const;
 
 export const ExercisePickerModal = (p: PickerProps) => {
   const allowedTypes = p.allowedTypes ?? DEFAULT_PICKER_BLOCK_TYPES;
@@ -72,10 +70,17 @@ export const ExercisePickerModal = (p: PickerProps) => {
 
   return (
     <>
-      <Modal animationType={ANIM} onRequestClose={p.onCancel} transparent visible={!!p.blockType}>
+      <Modal
+        closeLabel={p.t('common.close')}
+        footer={<ModalFooter addedCount={addedCount} onDone={p.onCancel} t={p.t} />}
+        onClose={p.onCancel}
+        scroll={false}
+        size="xl"
+        title={p.t('coach.routine.picker.title')}
+        visible={!!p.blockType}
+      >
         <ModalView
           {...p}
-          dialogVisible={!!p.blockType}
           activeType={activeType}
           addedCount={addedCount}
           addedIds={addedIds}
@@ -107,7 +112,6 @@ const Layout = (p: { isNarrow: boolean; children: React.ReactNode }) => (
 
 interface ModalViewProps extends Omit<PickerProps, 'onSelect'> {
   activeType: BlockType;
-  dialogVisible: boolean;
   addedCount: number;
   addedIds: Set<string>;
   allowedTypes: BlockType[];
@@ -122,31 +126,20 @@ interface ModalViewProps extends Omit<PickerProps, 'onSelect'> {
 
 const ModalView = (p: ModalViewProps) => {
   const layout = useModalLayout();
-  const sheetRef = useRef<View>(null);
-  useDialogFocus(p.dialogVisible, sheetRef);
   return (
-    <View style={s.overlay}>
-      <View ref={sheetRef} style={s.sheet}>
-        <PickerHeader t={p.t} />
-        <PickerTypeBar activeType={p.activeType} allowedTypes={p.allowedTypes} onChange={p.setActiveType} t={p.t} />
-        <TextInput
-          onChangeText={p.setQuery}
-          placeholder={p.t('coach.routine.picker.search')}
-          style={s.search}
-          value={p.query}
-        />
-        <ModalBody
-          addedIds={p.addedIds}
-          block={p.activeType}
-          isLoading={p.isLoading}
-          items={p.items}
-          isNarrow={layout.isNarrow}
-          onSelect={p.onSelect}
-          onViewDetail={p.setSelectedId}
-          t={p.t}
-        />
-        <ModalFooter addedCount={p.addedCount} onDone={p.onCancel} t={p.t} />
-      </View>
+    <View style={s.sheet}>
+      <PickerTypeBar activeType={p.activeType} allowedTypes={p.allowedTypes} onChange={p.setActiveType} t={p.t} />
+      <TextField onChangeText={p.setQuery} placeholder={p.t('coach.routine.picker.search')} value={p.query} />
+      <ModalBody
+        addedIds={p.addedIds}
+        block={p.activeType}
+        isLoading={p.isLoading}
+        items={p.items}
+        isNarrow={layout.isNarrow}
+        onSelect={p.onSelect}
+        onViewDetail={p.setSelectedId}
+        t={p.t}
+      />
     </View>
   );
 };
@@ -219,11 +212,9 @@ function ModalFooter({
   t: (k: string, options?: { count: number }) => string;
 }) {
   return (
-    <View style={s.footer}>
+    <>
       <Text style={s.footerCount}>{addedCount > 0 ? t('coach.routine.picker.addedCount', { count: addedCount }) : ''}</Text>
-      <Pressable accessibilityRole="button" onPress={onDone} style={s.doneBtn}>
-        <Text style={s.doneBtnText}>{t('coach.routine.picker.done')}</Text>
-      </Pressable>
-    </View>
+      <Button label={t('coach.routine.picker.done')} onPress={onDone} />
+    </>
   );
 }

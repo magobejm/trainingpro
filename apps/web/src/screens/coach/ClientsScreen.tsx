@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
@@ -227,6 +228,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
           clientsLoading={props.clientsLoading}
           objectiveFilter={props.objectiveFilter}
           onObjectiveFilterChange={props.onObjectiveFilterChange}
+          onCreateClient={props.onOpenModal}
           onRetry={props.onRetryClients}
           onSearchValueChange={props.onSearchValueChange}
           onSelectClient={props.onSelectClient}
@@ -304,9 +306,7 @@ function renderCta(props: ViewProps): React.JSX.Element {
         <Text style={styles.ctaTitle}>{props.t('coach.clients.cta.title')}</Text>
         <Text style={styles.ctaSubtitle}>{props.t('coach.clients.cta.subtitle')}</Text>
       </View>
-      <Pressable accessibilityRole="button" onPress={props.onOpenModal} style={styles.createButton}>
-        <Text style={styles.createLabel}>{props.t('coach.clients.form.submit')}</Text>
-      </Pressable>
+      <Button label={props.t('coach.clients.form.submit')} onPress={props.onOpenModal} />
     </View>
   );
 }
@@ -333,9 +333,7 @@ function renderNutritionPage(props: ViewProps): React.JSX.Element {
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable onPress={props.onBackToProfile} style={styles.backButton}>
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
+        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
         <Text style={styles.breadcrumb}>
           {formatBreadcrumb([props.t('coach.clients.title'), currentLabel, props.t('coach.nutrition.client.title')])}
         </Text>
@@ -356,9 +354,7 @@ function renderMoodPage(props: ViewProps): React.JSX.Element {
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable onPress={props.onBackToProfile} style={styles.backButton}>
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
+        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
         <Text style={styles.breadcrumb}>
           {formatBreadcrumb([
             props.t('coach.clients.title'),
@@ -383,9 +379,7 @@ function renderTestsPage(props: ViewProps): React.JSX.Element {
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable onPress={props.onBackToProfile} style={styles.backButton}>
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
+        <Button label={props.t('common.back')} onPress={props.onBackToProfile} size="sm" variant="secondary" />
         <Text style={styles.breadcrumb}>
           {formatBreadcrumb([
             props.t('coach.clients.title'),
@@ -425,12 +419,12 @@ function renderProfilePage(props: ViewProps): React.JSX.Element {
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable
+        <Button
+          label={props.t('common.back')}
           onPress={props.screenMode === 'profileEdit' ? props.onBackToProfile : props.onBackToList}
-          style={styles.backButton}
-        >
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
+          size="sm"
+          variant="secondary"
+        />
         <Text style={styles.breadcrumb}>{formatBreadcrumb([props.t('coach.clients.title'), currentLabel, lastCrumb])}</Text>
       </View>
       <View style={styles.profileCard}>

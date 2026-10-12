@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { DraftBlock, DraftExerciseGroup } from '../../RoutinePlanner.types';
 import { RoutineBlockCard } from '../RoutineBlockCard';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { IconButton, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const PLACEHOLDER_TEXT_COLOR = colors.textMuted;
 const ICON_REMOVE_GROUP = '✕';
 
 interface GroupContainerProps {
@@ -28,7 +27,7 @@ interface GroupContainerProps {
 
 const GROUP_STYLE: Record<'CIRCUIT' | 'SUPERSET', { color: string; bgColor: string }> = {
   CIRCUIT: { color: colors.primaryHover, bgColor: colors.primaryBorder },
-  SUPERSET: { color: '#7c3aed', bgColor: '#ede9fe' },
+  SUPERSET: { color: colors.warning, bgColor: colors.warningSoft },
 };
 
 export function GroupContainer({
@@ -68,14 +67,12 @@ export function GroupContainer({
         </View>
         <View style={st.noteArea}>
           {editingNote ? (
-            <TextInput
+            <TextField
               autoFocus
               onBlur={handleNoteSave}
               onChangeText={setNoteValue}
               onSubmitEditing={handleNoteSave}
               placeholder={t('coach.routine.group.notePlaceholder')}
-              placeholderTextColor={PLACEHOLDER_TEXT_COLOR}
-              style={st.noteInput}
               value={noteValue}
             />
           ) : (
@@ -91,9 +88,13 @@ export function GroupContainer({
           )}
         </View>
         {!readOnly && (
-          <TouchableOpacity onPress={() => onRemoveGroup(group.id)} style={st.removeBtn}>
-            <Text style={st.removeIcon}>{ICON_REMOVE_GROUP}</Text>
-          </TouchableOpacity>
+          <IconButton
+            accessibilityLabel={t('coach.routine.group.a11y.remove')}
+            icon={(color) => <Text style={[st.removeIcon, { color }]}>{ICON_REMOVE_GROUP}</Text>}
+            onPress={() => onRemoveGroup(group.id)}
+            size={28}
+            tone="danger"
+          />
         )}
       </View>
 
@@ -158,21 +159,6 @@ const st = {
   noteTrigger: { paddingVertical: space.xs },
   noteText: { fontSize: fontSize.xs, color: colors.text },
   notePlaceholder: { fontSize: fontSize.xs, color: colors.textMuted },
-  noteInput: {
-    fontSize: fontSize.xs,
-    color: colors.text,
-    paddingVertical: space.xs,
-    paddingHorizontal: space.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surface,
-  },
-  removeBtn: {
-    padding: space.sm,
-    borderRadius: radius.sm,
-    backgroundColor: 'rgba(255,255,255,0.6)',
-  },
-  removeIcon: { fontSize: fontSize.xs, color: colors.danger },
+  removeIcon: { fontSize: fontSize.xs },
   blocksContainer: { padding: space.sm, gap: space.sm },
 };

@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { Image, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { IconButton, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   avatars: string[];
@@ -29,7 +29,7 @@ function AvatarCarousel(props: Props): React.JSX.Element {
   const panResponder = createPanResponder(dragOffsetRef, dragStartRef, offsetRef, scrollRef);
   return (
     <View>
-      <CarouselHeader offsetRef={offsetRef} scrollRef={scrollRef} />
+      <CarouselHeader offsetRef={offsetRef} scrollRef={scrollRef} t={props.t} />
       <View {...panResponder.panHandlers} style={styles.dragArea}>
         <ScrollView
           horizontal
@@ -62,22 +62,33 @@ function renderAvatar(props: Props, avatarUrl: string): React.JSX.Element {
 function CarouselHeader(props: {
   offsetRef: React.RefObject<number>;
   scrollRef: React.RefObject<ScrollView | null>;
+  t: (key: string) => string;
 }): React.JSX.Element {
   return (
     <View style={styles.headerRow}>
       <View style={styles.arrowWrap}>
-        <Arrow isLeft onPress={() => scrollBy(props.scrollRef, props.offsetRef, -300)} />
-        <Arrow isLeft={false} onPress={() => scrollBy(props.scrollRef, props.offsetRef, 300)} />
+        <Arrow
+          isLeft
+          label={props.t('coach.clients.form.avatarPrevious')}
+          onPress={() => scrollBy(props.scrollRef, props.offsetRef, -300)}
+        />
+        <Arrow
+          isLeft={false}
+          label={props.t('coach.clients.form.avatarNext')}
+          onPress={() => scrollBy(props.scrollRef, props.offsetRef, 300)}
+        />
       </View>
     </View>
   );
 }
 
-function Arrow(props: { isLeft: boolean; onPress: () => void }): React.JSX.Element {
+function Arrow(props: { isLeft: boolean; label: string; onPress: () => void }): React.JSX.Element {
   return (
-    <Pressable onPress={props.onPress} style={styles.arrowButton}>
-      <Text style={styles.arrowLabel}>{props.isLeft ? ICON_LEFT : ICON_RIGHT}</Text>
-    </Pressable>
+    <IconButton
+      accessibilityLabel={props.label}
+      icon={(color) => <Text style={[styles.arrowLabel, { color }]}>{props.isLeft ? ICON_LEFT : ICON_RIGHT}</Text>}
+      onPress={props.onPress}
+    />
   );
 }
 
@@ -109,18 +120,7 @@ function createPanResponder(
 }
 
 const styles = StyleSheet.create({
-  arrowButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: 999,
-    borderWidth: 1,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
   arrowLabel: {
-    color: colors.textMuted,
     fontSize: fontSize.md,
     fontWeight: '700',
   },

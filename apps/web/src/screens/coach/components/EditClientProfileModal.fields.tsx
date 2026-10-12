@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Field, Select, TextField } from '@trainerpro/ui';
 import type { ClientForm } from '../client-profile.form';
 import { selectStyle, styles } from './EditClientProfileModal.styles';
 
@@ -115,23 +115,15 @@ function AdvancedTextAreas({ props }: { props: Props }): React.JSX.Element {
 }
 
 function ObjectiveField(props: Props): React.JSX.Element {
-  const error = props.errors[FIELD_OBJECTIVE_ID];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t('coach.clientProfile.fields.objective')}</Text>
-      <select
-        onChange={(event) => props.onChange(FIELD_OBJECTIVE_ID, event.target.value)}
-        style={selectStyle}
-        value={props.form.objectiveId}
-      >
-        {props.objectiveOptions.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <Select
+      containerStyle={styles.field}
+      error={props.errors[FIELD_OBJECTIVE_ID]}
+      label={props.t('coach.clientProfile.fields.objective')}
+      onChange={(value) => props.onChange(FIELD_OBJECTIVE_ID, value)}
+      options={props.objectiveOptions.map((item) => ({ label: item.label, value: item.id }))}
+      value={props.form.objectiveId}
+    />
   );
 }
 
@@ -143,86 +135,75 @@ function Input(
   },
 ): React.JSX.Element {
   const key = `coach.clientProfile.fields.${props.field}`;
-  const error = props.errors[props.field];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t(key)}</Text>
-      <TextInput
-        autoCapitalize={props.field === FIELD_EMAIL ? 'none' : 'sentences'}
-        editable={props.field !== FIELD_EMAIL}
-        keyboardType={props.keyboardType ?? 'default'}
-        onChangeText={(value) => props.onChange(props.field, value)}
-        placeholder={props.placeholder}
-        style={[
-          styles.input,
-          props.field === FIELD_EMAIL ? styles.inputReadonly : null,
-          error ? styles.inputError : null,
-        ]}
-        value={props.form[props.field]}
-      />
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <TextField
+      autoCapitalize={props.field === FIELD_EMAIL ? 'none' : 'sentences'}
+      containerStyle={styles.field}
+      disabled={props.field === FIELD_EMAIL}
+      error={props.errors[props.field]}
+      keyboardType={props.keyboardType ?? 'default'}
+      label={props.t(key)}
+      onChangeText={(value) => props.onChange(props.field, value)}
+      placeholder={props.placeholder}
+      value={props.form[props.field]}
+    />
   );
 }
 
 function DateField(props: Props): React.JSX.Element {
-  const error = props.errors[FIELD_BIRTH_DATE];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t('coach.clientProfile.fields.birthDate')}</Text>
+    <Field
+      error={props.errors[FIELD_BIRTH_DATE]}
+      label={props.t('coach.clientProfile.fields.birthDate')}
+      style={styles.field}
+    >
       <input
+        aria-label={props.t('coach.clientProfile.fields.birthDate')}
         onChange={(event) => props.onChange(FIELD_BIRTH_DATE, event.target.value)}
         style={selectStyle}
         type={INPUT_TYPE_DATE}
         value={props.form.birthDate}
       />
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    </Field>
   );
 }
 
 function SexField(props: Props): React.JSX.Element {
-  const error = props.errors[FIELD_SEX];
+  const options = [
+    { label: props.t('coach.clientProfile.sex.unspecified'), value: SEX_UNSPECIFIED },
+    { label: props.t('coach.clientProfile.sex.male'), value: SEX_MALE },
+    { label: props.t('coach.clientProfile.sex.female'), value: SEX_FEMALE },
+    { label: props.t('coach.clientProfile.sex.other'), value: SEX_OTHER },
+  ];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t('coach.clientProfile.fields.sex')}</Text>
-      <select
-        onChange={(event) => props.onChange(FIELD_SEX, event.target.value)}
-        style={selectStyle}
-        value={props.form.sex}
-      >
-        <option value={SEX_UNSPECIFIED}>{props.t('coach.clientProfile.sex.unspecified')}</option>
-        <option value={SEX_MALE}>{props.t('coach.clientProfile.sex.male')}</option>
-        <option value={SEX_FEMALE}>{props.t('coach.clientProfile.sex.female')}</option>
-        <option value={SEX_OTHER}>{props.t('coach.clientProfile.sex.other')}</option>
-      </select>
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <Select
+      containerStyle={styles.field}
+      error={props.errors[FIELD_SEX]}
+      label={props.t('coach.clientProfile.fields.sex')}
+      onChange={(value) => props.onChange(FIELD_SEX, value)}
+      options={options}
+      value={props.form.sex}
+    />
   );
 }
 
 function FitnessField(props: Props): React.JSX.Element {
-  const error = props.errors[FIELD_FITNESS_LEVEL];
+  const options = [
+    { label: props.t('coach.clientProfile.fitness.unspecified'), value: FITNESS_UNSPECIFIED },
+    { label: props.t('coach.clientProfile.fitness.beginner'), value: FITNESS_BEGINNER },
+    { label: props.t('coach.clientProfile.fitness.intermediate'), value: FITNESS_INTERMEDIATE },
+    { label: props.t('coach.clientProfile.fitness.advanced'), value: FITNESS_ADVANCED },
+    { label: props.t('coach.clientProfile.fitness.elite'), value: FITNESS_ELITE },
+  ];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t('coach.clientProfile.fields.fitnessLevel')}</Text>
-      <select
-        onChange={(event) => props.onChange(FIELD_FITNESS_LEVEL, event.target.value)}
-        style={selectStyle}
-        value={props.form.fitnessLevel}
-      >
-        <option value={FITNESS_UNSPECIFIED}>
-          {props.t('coach.clientProfile.fitness.unspecified')}
-        </option>
-        <option value={FITNESS_BEGINNER}>{props.t('coach.clientProfile.fitness.beginner')}</option>
-        <option value={FITNESS_INTERMEDIATE}>
-          {props.t('coach.clientProfile.fitness.intermediate')}
-        </option>
-        <option value={FITNESS_ADVANCED}>{props.t('coach.clientProfile.fitness.advanced')}</option>
-        <option value={FITNESS_ELITE}>{props.t('coach.clientProfile.fitness.elite')}</option>
-      </select>
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <Select
+      containerStyle={styles.field}
+      error={props.errors[FIELD_FITNESS_LEVEL]}
+      label={props.t('coach.clientProfile.fields.fitnessLevel')}
+      onChange={(value) => props.onChange(FIELD_FITNESS_LEVEL, value)}
+      options={options}
+      value={props.form.fitnessLevel}
+    />
   );
 }
 
@@ -232,18 +213,15 @@ function TextArea(
   },
 ): React.JSX.Element {
   const key = `coach.clientProfile.fields.${props.field}`;
-  const error = props.errors[props.field];
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t(key)}</Text>
-      <TextInput
-        multiline
-        numberOfLines={3}
-        onChangeText={(value) => props.onChange(props.field, value)}
-        style={[styles.input, styles.textArea, error ? styles.inputError : null]}
-        value={props.form[props.field]}
-      />
-      {error ? <Text style={styles.fieldError}>{error}</Text> : null}
-    </View>
+    <TextField
+      containerStyle={styles.field}
+      error={props.errors[props.field]}
+      label={props.t(key)}
+      multiline
+      numberOfLines={3}
+      onChangeText={(value) => props.onChange(props.field, value)}
+      value={props.form[props.field]}
+    />
   );
 }

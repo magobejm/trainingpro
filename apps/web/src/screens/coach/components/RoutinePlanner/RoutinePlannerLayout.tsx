@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
@@ -13,7 +13,7 @@ import { createWarmupTemplateSelector, removeWarmupTemplateFromDay } from './Rou
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
 import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
-import { colors, fontSize, space } from '@trainerpro/ui';
+import { Button, colors } from '@trainerpro/ui';
 
 interface LayoutProps {
   clientContextId?: null | string;
@@ -115,9 +115,12 @@ function RoutineMainSection(
         onViewWarmupTemplate={props.onViewWarmupTemplate}
       />
       {!isReadOnly && (
-        <Pressable accessibilityRole="button" onPress={draftState.addDay} style={s.addDayBtn}>
-          <Text style={s.addDayText}>{`+ ${t(labels.addContainerKey)}`}</Text>
-        </Pressable>
+        <Button
+          label={`+ ${t(labels.addContainerKey)}`}
+          onPress={draftState.addDay}
+          style={s.addDayBtn}
+          variant="secondary"
+        />
       )}
     </>
   );
@@ -156,14 +159,11 @@ function RoutineFooterSection(props: LayoutProps) {
   return (
     <>
       <View style={s.saveBar}>
-        <Pressable
-          accessibilityRole="button"
+        <Button
           disabled={props.saveDisabled}
+          label={showAssign ? t('coach.routine.assign') : t('coach.routine.save')}
           onPress={() => uiState.setShowSaveModal(true)}
-          style={[s.saveBtn, props.saveDisabled ? { opacity: 0.5 } : null]}
-        >
-          <Text style={s.saveBtnText}>{showAssign ? t('coach.routine.assign') : t('coach.routine.save')}</Text>
-        </Pressable>
+        />
       </View>
       <SaveRoutineModal
         initialName={draftState.draft.name}
@@ -279,22 +279,23 @@ function RoutinePlannerBackHeader({
   t: LayoutProps['t'];
 }) {
   return (
-    <Pressable onPress={onBack} style={plannerBackStyles.row}>
-      <ArrowLeft color={colors.textMuted} size={18} />
-      <Text style={plannerBackStyles.text}>{t(backLabelKey)}</Text>
-    </Pressable>
+    <View style={plannerBackStyles.row}>
+      <Button
+        icon={<ArrowLeft color={colors.textMuted} size={18} />}
+        label={t(backLabelKey)}
+        onPress={onBack}
+        size="sm"
+        variant="ghost"
+      />
+    </View>
   );
 }
 
 const plannerBackStyles = {
   row: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: space.sm,
-    padding: space.xs,
-    marginBottom: space.sm,
+    alignItems: 'flex-start' as const,
+    marginBottom: 8,
   },
-  text: { fontSize: fontSize.sm, color: colors.textMuted },
 };
 
 function RoutineLayoutSections(props: {

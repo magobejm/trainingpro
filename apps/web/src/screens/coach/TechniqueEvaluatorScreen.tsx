@@ -1,6 +1,6 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import { AsyncStatus } from '../../components/AsyncStatus';
 import { LOADING_MESSAGE_KEYS, resolveFailureKind } from './technique-evaluator.logic';
 import { useAnalyzeTechniqueMutation, type TechniqueAnalysisResult } from '../../data/hooks/ai/useAnalyzeTechniqueMutation';
 import type { TFunction } from 'i18next';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const EVALUATOR_MAX_BYTES = 20 * 1024 * 1024;
 
@@ -104,9 +104,12 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
             onRetry={() => void handleAnalyze()}
             titleOverride={t('app.evaluator.error.title')}
           />
-          <Pressable onPress={resetEvaluator} style={[styles.resetButton, styles.errorResetButton]}>
-            <Text style={styles.resetLabel}>{t('app.evaluator.resetAction')}</Text>
-          </Pressable>
+          <Button
+            label={t('app.evaluator.resetAction')}
+            onPress={resetEvaluator}
+            style={styles.errorResetButton}
+            variant="secondary"
+          />
         </View>
       </ScrollView>
     );
@@ -140,13 +143,12 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
 
           {dropError ? <Text style={styles.failureText}>{dropError}</Text> : null}
           <View style={styles.actionsBox}>
-            <Pressable
-              style={[styles.analyzeButton, !file && styles.analyzeButtonDisabled]}
-              onPress={() => void handleAnalyze()}
+            <Button
               disabled={!file}
-            >
-              <Text style={styles.analyzeLabel}>{t('app.evaluator.analyzeAction')}</Text>
-            </Pressable>
+              label={t('app.evaluator.analyzeAction')}
+              onPress={() => void handleAnalyze()}
+              style={styles.analyzeButton}
+            />
           </View>
         </View>
       </View>
@@ -209,9 +211,7 @@ function ResultsView({
               <Text style={styles.title}>{result.ejercicio}</Text>
               <Text style={styles.subtitle}>{result.fase_movimiento}</Text>
             </View>
-            <Pressable onPress={onReset} style={styles.resetButton}>
-              <Text style={styles.resetLabel}>{t('app.evaluator.resetAction')}</Text>
-            </Pressable>
+            <Button label={t('app.evaluator.resetAction')} onPress={onReset} size="sm" variant="secondary" />
           </View>
           <View style={[styles.scoreBadge, isDanger ? styles.scoreBadgeDanger : styles.scoreBadgeSafe]}>
             <Text style={[styles.scoreBadgeText, isDanger ? styles.scoreBadgeTextDanger : styles.scoreBadgeTextSafe]}>
@@ -383,23 +383,7 @@ const styles = StyleSheet.create({
     marginTop: space.xl,
   },
   analyzeButton: {
-    backgroundColor: COLORS.action,
-    paddingHorizontal: space.xxl,
-    paddingVertical: space.lg,
-    borderRadius: radius.lg,
-    shadowColor: COLORS.action,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  analyzeButtonDisabled: {
-    backgroundColor: colors.borderStrong,
-    shadowOpacity: 0,
-  },
-  analyzeLabel: {
-    color: COLORS.white,
-    fontWeight: '800',
-    fontSize: fontSize.md,
+    minWidth: 200,
   },
   loaderContainer: {
     flex: 1,
@@ -465,21 +449,8 @@ const styles = StyleSheet.create({
     borderColor: colors.dangerSoft,
     backgroundColor: colors.dangerSoft,
   },
-  resetButton: {
-    backgroundColor: colors.background,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
   errorResetButton: {
     alignSelf: 'center',
-  },
-  resetLabel: {
-    color: COLORS.text,
-    fontWeight: '600',
-    fontSize: fontSize.sm,
   },
   mediaRow: {
     flexDirection: 'row',

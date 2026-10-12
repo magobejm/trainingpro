@@ -26,14 +26,6 @@ export const styles = StyleSheet.create({
   body: {
     gap: space.lg,
   },
-  closeBtn: {
-    alignItems: 'center',
-    backgroundColor: colors.textMuted,
-    borderRadius: radius.md,
-    marginTop: space.md,
-    paddingVertical: space.md,
-  },
-  closeText: { color: colors.surface, fontSize: fontSize.md, fontWeight: '600' },
   dayCard: {
     backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
@@ -47,36 +39,10 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
-  empty: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.lg,
-  },
   planName: {
     color: colors.text,
     fontSize: fontSize.md,
     fontWeight: '800',
-  },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    maxHeight: '85%',
-    maxWidth: 840,
-    padding: space.xl,
-    width: '100%',
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    marginBottom: space.md,
   },
   value: {
     color: colors.text,

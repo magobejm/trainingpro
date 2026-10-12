@@ -4,7 +4,6 @@ import {
   FlatList,
   Image,
   Pressable,
-  StyleSheet,
   Text,
   View,
   type ImageProps,
@@ -15,13 +14,9 @@ import { LibraryMediaViewer } from '../LibraryMediaViewer';
 import type { LibraryItem } from './ExercisePickerModal.types';
 import { getFullUrl } from './ExercisePickerModal.utils';
 import { s } from './ExercisePickerModal.styles';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Badge, Button, EmptyState } from '@trainerpro/ui';
 
 const IMAGE_RESIZE_MODE: ImageProps['resizeMode'] = 'contain';
-
-export const PickerHeader = ({ t }: { t: (k: string) => string }) => (
-  <Text style={s.title}>{t('coach.routine.picker.title')}</Text>
-);
 
 export function PickerTypeBar({
   activeType,
@@ -57,14 +52,20 @@ interface CardActionsProps {
 
 const CardActions = ({ isAdded, onSelect, onViewDetail, t }: CardActionsProps) => (
   <View style={s.cardActions}>
-    <Pressable onPress={onViewDetail} style={s.cardGhostBtn}>
-      <Text style={s.cardGhostText}>{t('coach.routine.picker.actions.viewDetails')}</Text>
-    </Pressable>
-    <Pressable accessibilityRole="button" onPress={onSelect} style={[s.cardPrimaryBtn, isAdded && s.cardPrimaryBtnAdded]}>
-      <Text style={[s.cardPrimaryText, isAdded && s.cardPrimaryTextAdded]}>
-        {isAdded ? t('coach.routine.picker.added') : t('coach.routine.picker.actions.select')}
-      </Text>
-    </Pressable>
+    <Button
+      label={t('coach.routine.picker.actions.viewDetails')}
+      onPress={onViewDetail}
+      size="sm"
+      style={s.cardAction}
+      variant="secondary"
+    />
+    <Button
+      label={isAdded ? t('coach.routine.picker.added') : t('coach.routine.picker.actions.select')}
+      onPress={onSelect}
+      size="sm"
+      style={s.cardAction}
+      variant={isAdded ? 'secondary' : 'primary'}
+    />
   </View>
 );
 
@@ -95,7 +96,7 @@ export const PickerCard = ({ blockType, isAdded, item, onSelect, onViewDetail, t
       </Text>
       {isAdded ? (
         <View style={s.cardAddedBadge}>
-          <Text style={s.cardAddedBadgeText}>{t('coach.routine.picker.added')}</Text>
+          <Badge label={t('coach.routine.picker.added')} tone="success" />
         </View>
       ) : null}
       <CardActions
@@ -121,7 +122,7 @@ interface BodyProps {
 
 export const PickerBody = (p: BodyProps) => {
   if (p.isLoading) return <ActivityIndicator style={s.loader} />;
-  if (!p.items.length) return <Text style={s.empty}>{p.t('coach.routine.picker.empty')}</Text>;
+  if (!p.items.length) return <EmptyState title={p.t('coach.routine.picker.empty')} />;
   const renderItem: ListRenderItem<LibraryItem> = ({ item }) => (
     <PickerCard
       blockType={p.blockType}
@@ -224,47 +225,9 @@ function MediaSection(props: {
 
 function DetailTags(props: { categoryLabel: null | string | undefined; equipmentLabel: null | string }) {
   return (
-    <View style={tagStyles.tagsRow}>
-      {props.categoryLabel ? (
-        <View style={[tagStyles.tag, tagStyles.primaryTag]}>
-          <Text style={tagStyles.primaryTagText}>{props.categoryLabel}</Text>
-        </View>
-      ) : null}
-      {props.equipmentLabel ? (
-        <View style={[tagStyles.tag, tagStyles.secondaryTag]}>
-          <Text style={tagStyles.secondaryTagText}>{props.equipmentLabel}</Text>
-        </View>
-      ) : null}
+    <View style={s.tagsRow}>
+      {props.categoryLabel ? <Badge label={props.categoryLabel} tone="primary" /> : null}
+      {props.equipmentLabel ? <Badge label={props.equipmentLabel} tone="info" /> : null}
     </View>
   );
 }
-
-const tagStyles = StyleSheet.create({
-  tagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
-    marginBottom: space.sm,
-  },
-  tag: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-  },
-  primaryTag: {
-    backgroundColor: colors.primaryBorder,
-  },
-  primaryTagText: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  secondaryTag: {
-    backgroundColor: '#f3e8ff',
-  },
-  secondaryTagText: {
-    color: '#9333ea',
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-});

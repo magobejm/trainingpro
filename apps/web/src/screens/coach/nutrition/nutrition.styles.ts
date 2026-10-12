@@ -38,15 +38,13 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     marginVertical: space.xl,
   },
+  addButton: {
+    alignSelf: 'flex-start',
+    marginTop: space.sm,
+  },
   backButton: {
     alignSelf: 'flex-start',
     marginBottom: space.md,
-    paddingVertical: space.xs,
-  },
-  backLabel: {
-    color: COLORS.accent,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
   card: {
     backgroundColor: COLORS.card,
@@ -108,40 +106,19 @@ export const styles = StyleSheet.create({
     padding: space.xl,
   },
   ctaButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderRadius: radius.md,
     marginTop: space.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
   },
-  ctaLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  empty: {
-    color: COLORS.muted,
-    fontSize: fontSize.sm,
-    paddingVertical: space.xl,
-    textAlign: 'center',
-  },
-  field: {
-    backgroundColor: COLORS.card,
-    borderColor: COLORS.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: COLORS.text,
-    fontSize: fontSize.sm,
-    marginBottom: space.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
+  deleteButton: {
+    marginTop: space.md,
   },
   fieldLabel: {
     color: COLORS.muted,
     fontSize: fontSize.xs,
     fontWeight: '600',
     marginBottom: space.xs,
+  },
+  fieldGap: {
+    marginBottom: space.md,
   },
   header: {
     marginBottom: space.sm,
@@ -199,31 +176,6 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: space.xs,
   },
-  modalBackdrop: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(14, 26, 47, 0.45)',
-    bottom: 0,
-    justifyContent: 'center',
-    left: 0,
-    padding: space.xl,
-    position: 'fixed' as unknown as 'absolute',
-    right: 0,
-    top: 0,
-    zIndex: 50,
-  },
-  modalCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: radius.lg,
-    maxHeight: '85%',
-    maxWidth: 560,
-    padding: space.xl,
-    width: '100%',
-  },
-  rowBetween: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
   searchCard: {
     backgroundColor: COLORS.card,
     borderColor: COLORS.border,
@@ -231,19 +183,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: space.lg,
     padding: space.lg,
-  },
-  secondaryButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderRadius: radius.md,
-    marginTop: space.sm,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  secondaryLabel: {
-    color: COLORS.accent,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
   },
   sectionTitle: {
     color: COLORS.text,

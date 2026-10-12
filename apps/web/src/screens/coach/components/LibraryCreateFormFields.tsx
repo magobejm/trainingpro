@@ -1,6 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput, TextInputProps, View } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { TextInputProps } from 'react-native';
+import { Select, TextField } from '@trainerpro/ui';
 
 type Translator = (key: string) => string;
 type StringSetter = (field: string) => (value: string) => void;
@@ -203,14 +203,13 @@ function FormFields(props: FieldsProps): React.JSX.Element {
 
 function renderInputField(field: FieldConfig, props: FieldsProps): React.JSX.Element {
   return (
-    <TextInput
+    <TextField
       key={field.field}
       keyboardType={field.keyboardType}
       multiline={field.multiline}
       numberOfLines={field.numberOfLines}
       onChangeText={props.setField(field.field)}
       placeholder={field.placeholderKey ? props.t(field.placeholderKey) : ''}
-      style={[styles.input, field.multiline ? styles.inputMultiline : null]}
       value={props.form[field.field] ?? ''}
     />
   );
@@ -219,20 +218,13 @@ function renderInputField(field: FieldConfig, props: FieldsProps): React.JSX.Ele
 function renderSelectField(field: FieldConfig, props: FieldsProps): React.JSX.Element {
   const options = readOptions(field.field, props.options, props.t);
   return (
-    <View key={field.field} style={styles.selectWrap}>
-      <Text style={styles.selectLabel}>{readSelectLabel(field.field, props.t)}</Text>
-      <select
-        onChange={(event) => props.setField(field.field)(event.target.value)}
-        style={selectStyle}
-        value={props.form[field.field] ?? ''}
-      >
-        {options.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-    </View>
+    <Select
+      key={field.field}
+      label={readSelectLabel(field.field, props.t)}
+      onChange={props.setField(field.field)}
+      options={options.map((item) => ({ label: item.label, value: item.id }))}
+      value={props.form[field.field] ?? ''}
+    />
   );
 }
 
@@ -273,34 +265,3 @@ function readSelectLabel(field: string, t: Translator): string {
   }
   return '';
 }
-
-const styles = StyleSheet.create({
-  input: {
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
-  inputMultiline: {
-    minHeight: 70,
-    textAlignVertical: 'top',
-  },
-  selectLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  selectWrap: {
-    gap: space.sm,
-  },
-});
-
-const selectStyle: React.CSSProperties = {
-  border: `1px solid ${colors.border}`,
-  borderRadius: radius.md,
-  fontSize: fontSize.sm,
-  minHeight: 40,
-  outline: 'none',
-  padding: space.md,
-  width: '100%',
-};

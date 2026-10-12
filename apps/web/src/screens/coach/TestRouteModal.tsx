@@ -1,10 +1,11 @@
 import { physicalTestFields, type PhysicalTestFieldKey } from '@trainerpro/shared';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { PhysicalTestResultView, PhysicalTestView, TestInputs } from '../../data/hooks/usePhysicalTests';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Field, Modal, SegmentedControl, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const MODAL_ANIMATION_FADE = 'fade' as const;
+const VARIANT_SECONDARY = 'secondary' as const;
+const MODAL_SIZE = 'md' as const;
 const KEYBOARD_NUMERIC = 'numeric' as const;
 
 type Props = {
@@ -39,43 +40,49 @@ type FieldState = {
 export function TestRouteModal(props: Props): React.JSX.Element {
   const fields = useMemo(() => physicalTestFields(props.test?.name ?? ''), [props.test?.name]);
   const [state, setState] = useState<FieldState>(() => createInitialState(props));
+  const [submitted, setSubmitted] = useState(false);
   useEffect(() => {
-    if (props.visible) setState(createInitialState(props));
+    if (props.visible) {
+      setState(createInitialState(props));
+      setSubmitted(false);
+    }
   }, [props.visible, props.test?.id, props.clientAge, props.clientGender]);
 
   const onSubmit = () => {
+    setSubmitted(true);
     const inputs = toInputs(state, fields);
     if (!inputs) return;
     props.onSubmit(inputs);
   };
 
   return (
-    <Modal animationType={MODAL_ANIMATION_FADE} onRequestClose={props.onClose} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{props.t('coach.tests.route.title')}</Text>
-          {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
-          <ScrollView contentContainerStyle={styles.content}>
-            {fields.map((field) => renderField(field, state, setState, props.t))}
-            {props.result ? (
-              <View style={styles.resultCard}>
-                <Text style={styles.resultTitle}>{props.t('coach.tests.route.result')}</Text>
-                <Text style={styles.resultLine}>{props.result.rawScore}</Text>
-                <Text style={styles.resultClassification}>{props.result.classification}</Text>
-              </View>
-            ) : null}
-          </ScrollView>
-          <View style={styles.actions}>
-            <Pressable onPress={props.onClose} style={styles.cancelButton}>
-              <Text style={styles.cancelLabel}>{props.t('common.cancel')}</Text>
-            </Pressable>
-            <Pressable disabled={props.isSubmitting} onPress={onSubmit} style={styles.submitButton}>
-              <Text style={styles.submitLabel}>
-                {props.isSubmitting ? props.t('coach.tests.route.calculating') : props.t('coach.tests.route.calculate')}
-              </Text>
-            </Pressable>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('common.cancel')} onPress={props.onClose} variant={VARIANT_SECONDARY} />
+          <Button
+            label={props.isSubmitting ? props.t('coach.tests.route.calculating') : props.t('coach.tests.route.calculate')}
+            loading={props.isSubmitting}
+            onPress={onSubmit}
+          />
+        </>
+      }
+      onClose={props.onClose}
+      size={MODAL_SIZE}
+      title={props.t('coach.tests.route.title')}
+      visible={props.visible}
+    >
+      {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
+      <View style={styles.content}>
+        {fields.map((field) => renderField(field, state, setState, props.t, submitted))}
+        {props.result ? (
+          <View style={styles.resultCard}>
+            <Text style={styles.resultTitle}>{props.t('coach.tests.route.result')}</Text>
+            <Text style={styles.resultLine}>{props.result.rawScore}</Text>
+            <Text style={styles.resultClassification}>{props.result.classification}</Text>
           </View>
-        </View>
+        ) : null}
       </View>
     </Modal>
   );
@@ -98,88 +105,66 @@ function createInitialState(props: Pick<Props, 'clientAge' | 'clientGender'>): F
   };
 }
 
+function choiceField(
+  field: string,
+  label: string,
+  options: Array<{ label: string; value: string }>,
+  value: string,
+  onChange: (value: string) => void,
+): React.JSX.Element {
+  return (
+    <Field key={field} label={label}>
+      <SegmentedControl accessibilityLabel={label} onChange={onChange} options={options} value={value} />
+    </Field>
+  );
+}
+
 function renderField(
   field: FieldKey,
   state: FieldState,
   setState: React.Dispatch<React.SetStateAction<FieldState>>,
   t: Props['t'],
+  submitted: boolean,
 ): React.JSX.Element {
   if (field === 'gender') {
-    return (
-      <View key={field} style={styles.fieldBlock}>
-        <Text style={styles.label}>{t('coach.tests.fields.gender')}</Text>
-        <View style={styles.choiceRow}>
-          <ChoiceButton
-            active={state.gender === 'M'}
-            label={t('coach.tests.fields.genderMale')}
-            onPress={() => setState((prev) => ({ ...prev, gender: 'M' }))}
-          />
-          <ChoiceButton
-            active={state.gender === 'F'}
-            label={t('coach.tests.fields.genderFemale')}
-            onPress={() => setState((prev) => ({ ...prev, gender: 'F' }))}
-          />
-        </View>
-      </View>
+    const options = [
+      { label: t('coach.tests.fields.genderMale'), value: 'M' },
+      { label: t('coach.tests.fields.genderFemale'), value: 'F' },
+    ];
+    return choiceField(field, t('coach.tests.fields.gender'), options, state.gender, (value) =>
+      setState((prev) => ({ ...prev, gender: value === 'F' ? 'F' : 'M' })),
     );
   }
   if (field === 'eyesClosed') {
-    return (
-      <View key={field} style={styles.fieldBlock}>
-        <Text style={styles.label}>{t('coach.tests.fields.eyesClosed')}</Text>
-        <View style={styles.choiceRow}>
-          <ChoiceButton
-            active={!state.eyesClosed}
-            label={t('coach.tests.fields.eyesOpen')}
-            onPress={() => setState((prev) => ({ ...prev, eyesClosed: false }))}
-          />
-          <ChoiceButton
-            active={state.eyesClosed}
-            label={t('coach.tests.fields.eyesClosedOption')}
-            onPress={() => setState((prev) => ({ ...prev, eyesClosed: true }))}
-          />
-        </View>
-      </View>
+    const options = [
+      { label: t('coach.tests.fields.eyesOpen'), value: 'open' },
+      { label: t('coach.tests.fields.eyesClosedOption'), value: 'closed' },
+    ];
+    const current = state.eyesClosed ? 'closed' : 'open';
+    return choiceField(field, t('coach.tests.fields.eyesClosed'), options, current, (value) =>
+      setState((prev) => ({ ...prev, eyesClosed: value === 'closed' })),
     );
   }
   if (field === 'level') {
-    return (
-      <View key={field} style={styles.fieldBlock}>
-        <Text style={styles.label}>{t('coach.tests.fields.level')}</Text>
-        <View style={styles.choiceRow}>
-          <ChoiceButton
-            active={state.level === 'Recreacional'}
-            label={t('coach.tests.fields.levelRecreational')}
-            onPress={() => setState((prev) => ({ ...prev, level: 'Recreacional' }))}
-          />
-          <ChoiceButton
-            active={state.level === 'Avanzado'}
-            label={t('coach.tests.fields.levelAdvanced')}
-            onPress={() => setState((prev) => ({ ...prev, level: 'Avanzado' }))}
-          />
-        </View>
-      </View>
+    const options = [
+      { label: t('coach.tests.fields.levelRecreational'), value: 'Recreacional' },
+      { label: t('coach.tests.fields.levelAdvanced'), value: 'Avanzado' },
+    ];
+    return choiceField(field, t('coach.tests.fields.level'), options, state.level, (value) =>
+      setState((prev) => ({ ...prev, level: value === 'Avanzado' ? 'Avanzado' : 'Recreacional' })),
     );
   }
-  const value = state[field];
+  const ageInvalid = field === 'age' && submitted && !(Number(state.age) > 0);
   return (
-    <View key={field} style={styles.fieldBlock}>
-      <Text style={styles.label}>{t(`coach.tests.fields.${field}`)}</Text>
-      <TextInput
-        keyboardType={KEYBOARD_NUMERIC}
-        onChangeText={(text) => setState((prev) => ({ ...prev, [field]: text }))}
-        style={styles.input}
-        value={value}
-      />
-    </View>
-  );
-}
-
-function ChoiceButton(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
-  return (
-    <Pressable onPress={props.onPress} style={[styles.choiceButton, props.active && styles.choiceButtonActive]}>
-      <Text style={[styles.choiceLabel, props.active && styles.choiceLabelActive]}>{props.label}</Text>
-    </Pressable>
+    <TextField
+      error={ageInvalid ? t('coach.tests.route.ageRequired') : null}
+      key={field}
+      keyboardType={KEYBOARD_NUMERIC}
+      label={t(`coach.tests.fields.${field}`)}
+      onChangeText={(text) => setState((prev) => ({ ...prev, [field]: text }))}
+      required={field === 'age'}
+      value={state[field]}
+    />
   );
 }
 
@@ -201,77 +186,13 @@ function toInputs(state: FieldState, fields: FieldKey[]): TestInputs | null {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    maxHeight: '90%',
-    maxWidth: 640,
-    padding: space.xl,
-    width: '100%',
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
   subtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-    marginTop: space.xs,
+    marginBottom: space.sm,
   },
   content: {
     gap: space.md,
-    paddingVertical: space.lg,
-  },
-  fieldBlock: {
-    gap: space.sm,
-  },
-  label: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: fontSize.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
-  choiceRow: {
-    flexDirection: 'row',
-    gap: space.sm,
-  },
-  choiceButton: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: space.md,
-  },
-  choiceButtonActive: {
-    backgroundColor: colors.background,
-    borderColor: colors.primary,
-  },
-  choiceLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    textAlign: 'center',
-  },
-  choiceLabelActive: {
-    color: colors.primary,
-    fontWeight: '600',
   },
   resultCard: {
     backgroundColor: colors.successSoft,
@@ -294,35 +215,5 @@ const styles = StyleSheet.create({
   resultClassification: {
     color: colors.success,
     fontSize: fontSize.sm,
-  },
-  actions: {
-    flexDirection: 'row',
-    gap: space.md,
-  },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    paddingVertical: space.md,
-  },
-  cancelLabel: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  submitButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    flex: 1,
-    paddingVertical: space.md,
-  },
-  submitLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
 });

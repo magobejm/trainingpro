@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Badge, Button } from '@trainerpro/ui';
 import { s } from '../../RoutinePlanner.styles';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 
@@ -55,10 +56,8 @@ function TemplateInfo(props: {
         <Text numberOfLines={2} style={s.templateName}>
           {props.tpl.name}
         </Text>
-        {props.isGlobal && <Text style={[s.templateBadge, s.templateBadgeGlobal]}>{props.t('common.global')}</Text>}
-        {props.isAssigned && (
-          <Text style={[s.templateBadge, s.templateBadgeGlobal]}>{props.t('coach.routine.list.inUse')}</Text>
-        )}
+        {props.isGlobal && <Badge label={props.t('common.global')} tone="primary" />}
+        {props.isAssigned && <Badge label={props.t('coach.routine.list.inUse')} tone="primary" />}
       </View>
       <Text style={s.templateMeta}>{props.t('coach.routine.list.days', { count: props.tpl.days.length })}</Text>
     </View>
@@ -79,15 +78,21 @@ function TemplateActions(props: {
   return (
     <View style={s.templateActions}>
       {props.canAssign && (
-        <Pressable accessibilityRole="button" onPress={() => void props.onAssignTemplate?.(props.tpl.id)} style={s.editBtn}>
-          <Text style={s.editBtnText}>{resolveAssignLabel(props.clientContextName, props.t)}</Text>
-        </Pressable>
+        <Button
+          label={resolveAssignLabel(props.clientContextName, props.t)}
+          onPress={() => void props.onAssignTemplate?.(props.tpl.id)}
+          size="sm"
+          variant="secondary"
+        />
       )}
       <LoadButton isGlobal={props.isGlobal} onLoad={props.onLoad} t={props.t} tpl={props.tpl} />
       {!props.isGlobal && !props.isAssigned && (
-        <Pressable accessibilityRole="button" onPress={() => props.onDelete(props.tpl.id)} style={s.deleteBtn}>
-          <Text style={s.deleteBtnText}>{props.t('coach.routine.list.delete')}</Text>
-        </Pressable>
+        <Button
+          label={props.t('coach.routine.list.delete')}
+          onPress={() => props.onDelete(props.tpl.id)}
+          size="sm"
+          variant="danger"
+        />
       )}
     </View>
   );
@@ -110,8 +115,11 @@ function LoadButton(props: {
   tpl: RoutineTemplateView;
 }): React.JSX.Element {
   return (
-    <Pressable accessibilityRole="button" onPress={() => props.onLoad(props.tpl)} style={s.editBtn}>
-      <Text style={s.editBtnText}>{props.isGlobal ? props.t('common.view') : props.t('coach.routine.list.edit')}</Text>
-    </Pressable>
+    <Button
+      label={props.isGlobal ? props.t('common.view') : props.t('coach.routine.list.edit')}
+      onPress={() => props.onLoad(props.tpl)}
+      size="sm"
+      variant="secondary"
+    />
   );
 }

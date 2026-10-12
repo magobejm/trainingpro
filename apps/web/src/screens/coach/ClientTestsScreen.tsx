@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import {
   useAssignPhysicalTestMutation,
@@ -16,7 +16,10 @@ import { buildCompletedRows, CompletedTestList } from './ClientTestsCompleted';
 import { ScheduleTestModal } from './ClientTestsScheduleModal';
 import { TestRouteModal } from './TestRouteModal';
 import { TestTablesModal } from './TestTablesModal';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 type Props = {
   clientId: string;
@@ -130,10 +133,10 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
         />
       </View>
 
-      <TextInput
+      <TextField
+        accessibilityLabel={props.t('coach.tests.searchPlaceholder')}
         onChangeText={props.setSearch}
         placeholder={props.t('coach.tests.searchPlaceholder')}
-        style={styles.searchInput}
         value={props.search}
       />
 
@@ -150,7 +153,7 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
 
       {props.isLoading ? <Text style={styles.empty}>{props.t('coach.tests.loading')}</Text> : null}
       {!props.isLoading && props.viewMode === 'catalog' && items.length === 0 ? (
-        <Text style={styles.empty}>{props.t('coach.tests.empty')}</Text>
+        <EmptyState title={props.t('coach.tests.empty')} />
       ) : null}
 
       {props.viewMode === 'completed' ? <CompletedTestList rows={completedRows} t={props.t} /> : null}
@@ -265,12 +268,23 @@ function TestCard(props: {
       ) : null}
 
       <View style={styles.actionsRow}>
-        <ActionButton label={props.t('coach.tests.actions.tables')} onPress={props.onOpenTables} />
-        <ActionButton label={props.t('coach.tests.actions.route')} onPress={props.onOpenRoute} />
-        <ActionButton
+        <Button
+          label={props.t('coach.tests.actions.tables')}
+          onPress={props.onOpenTables}
+          size={SIZE_SM}
+          variant={VARIANT_SECONDARY}
+        />
+        <Button
+          label={props.t('coach.tests.actions.route')}
+          onPress={props.onOpenRoute}
+          size={SIZE_SM}
+          variant={VARIANT_SECONDARY}
+        />
+        <Button
           label={props.assigned ? props.t('coach.tests.actions.unassign') : props.t('coach.tests.actions.assign')}
           onPress={props.assigned ? props.onUnassign : props.onAssign}
-          primary={!props.assigned}
+          size={SIZE_SM}
+          variant={props.assigned ? VARIANT_SECONDARY : undefined}
         />
       </View>
     </View>
@@ -289,35 +303,6 @@ function CategoryChip(props: { active: boolean; label: string; onPress: () => vo
   return (
     <Pressable onPress={props.onPress} style={[styles.chip, props.active && styles.chipActive]}>
       <Text style={[styles.chipLabel, props.active && styles.chipLabelActive]}>{props.label}</Text>
-    </Pressable>
-  );
-}
-
-function ActionButton(props: {
-  disabled?: boolean;
-  label: string;
-  onPress: () => void;
-  primary?: boolean;
-}): React.JSX.Element {
-  return (
-    <Pressable
-      disabled={props.disabled}
-      onPress={props.onPress}
-      style={[
-        styles.actionButton,
-        props.primary && styles.actionButtonPrimary,
-        props.disabled && styles.actionButtonDisabled,
-      ]}
-    >
-      <Text
-        style={[
-          styles.actionLabel,
-          props.primary && styles.actionLabelPrimary,
-          props.disabled && styles.actionLabelDisabled,
-        ]}
-      >
-        {props.label}
-      </Text>
     </Pressable>
   );
 }
@@ -404,16 +389,6 @@ const styles = StyleSheet.create({
   toggleLabelActive: {
     color: colors.primary,
   },
-  searchInput: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: fontSize.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
   categoryScroll: {
     flexGrow: 0,
   },
@@ -491,31 +466,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: space.sm,
-  },
-  actionButton: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
-  actionButtonPrimary: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  actionButtonDisabled: {
-    opacity: 0.6,
-  },
-  actionLabel: {
-    color: colors.text,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  actionLabelPrimary: {
-    color: colors.surface,
-  },
-  actionLabelDisabled: {
-    color: colors.textMuted,
   },
 });

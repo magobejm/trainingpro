@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Button, EmptyState, useToast } from '@trainerpro/ui';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
@@ -14,6 +15,8 @@ import { buildLabels, type Labels } from './ClientProfileEditScreen.labels';
 import { toForm, toUpdateInput } from './client-profile.form';
 import { validateClientProfileForm } from './client-profile.validation';
 
+const VARIANT_SECONDARY = 'secondary' as const;
+
 type Props = {
   clientId: string;
   onArchived?: () => void;
@@ -25,8 +28,8 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 export function ClientProfileEditScreen(props: Props): React.JSX.Element {
   const { i18n, t } = useTranslation();
   const vm = useClientProfileEditState(props.clientId, i18n.language, t);
-  if (vm.query.isLoading) return <Text style={styles.helperText}>{t('coach.clientProfile.loading')}</Text>;
-  if (vm.query.isError || !vm.query.data) return <Text style={styles.errorText}>{t('coach.clientProfile.error')}</Text>;
+  if (vm.query.isLoading) return <EmptyState title={t('coach.clientProfile.loading')} />;
+  if (vm.query.isError || !vm.query.data) return <EmptyState title={t('coach.clientProfile.error')} />;
   return <EditScreenContent onBack={props.onBack} onArchived={props.onArchived} t={t} vm={vm} />;
 }
 
@@ -38,10 +41,15 @@ function EditScreenContent(props: {
 }): React.JSX.Element {
   const labels = buildLabels(props.t, props.vm.state.form);
   const work = useClientProfileDraft(props.vm);
+  const toast = useToast();
+  const onSaved = (): void => {
+    toast.success(props.t('coach.clientProfile.editPage.saved'));
+    props.onBack();
+  };
   return (
     <View style={styles.page}>
       <UnsavedWorkDialogs
-        onOverwrite={() => void saveForm(props.vm, props.onBack, props.t, work)}
+        onOverwrite={() => void saveForm(props.vm, onSaved, props.t, work)}
         onReload={() => {
           work.release();
           window.location.reload();
@@ -52,7 +60,7 @@ function EditScreenContent(props: {
       <UnsavedStatus t={props.t} work={work} />
       <HeaderCard labels={labels} vm={props.vm} />
       <MainLayout labels={labels} onArchived={props.onArchived} t={props.t} vm={props.vm} />
-      <BottomActions labels={labels} onBack={props.onBack} t={props.t} vm={props.vm} work={work} />
+      <BottomActions labels={labels} onBack={props.onBack} onSaved={onSaved} t={props.t} vm={props.vm} work={work} />
       <ProgressGallery
         activeIndex={props.vm.data.effectiveGalleryIndex}
         photos={props.vm.data.visiblePhotos}
@@ -66,6 +74,7 @@ function EditScreenContent(props: {
 function BottomActions(props: {
   labels: Labels;
   onBack: () => void;
+  onSaved: () => void;
   t: Translate;
   vm: ReturnType<typeof useClientProfileEditState>;
   work: ReturnType<typeof useUnsavedWork<ClientForm>>;
@@ -73,16 +82,12 @@ function BottomActions(props: {
   const busy = props.work.saving || props.vm.actions.isSaving;
   return (
     <View style={styles.row}>
-      <Pressable onPress={props.onBack} style={styles.secondaryButton}>
-        <Text style={styles.secondaryLabel}>{props.labels.back}</Text>
-      </Pressable>
-      <Pressable
-        disabled={busy}
-        onPress={() => void saveForm(props.vm, props.onBack, props.t, props.work)}
-        style={[styles.actionButton, busy ? { opacity: 0.5 } : null]}
-      >
-        <Text style={styles.actionLabel}>{busy ? props.t('unsaved.saving') : props.labels.save}</Text>
-      </Pressable>
+      <Button label={props.labels.back} onPress={props.onBack} variant={VARIANT_SECONDARY} />
+      <Button
+        label={busy ? props.t('unsaved.saving') : props.labels.save}
+        loading={busy}
+        onPress={() => void saveForm(props.vm, props.onSaved, props.t, props.work)}
+      />
     </View>
   );
 }

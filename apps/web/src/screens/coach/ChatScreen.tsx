@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
-import { Banner, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Banner, Button, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
@@ -71,7 +71,8 @@ function useMessageComposer(threadId: string, t: (key: string) => string) {
       t,
       text,
     });
-  return { attachments, canSend, error, onAttach, onSend, setError, setText, text };
+  const sending = sendMessage.isPending;
+  return { attachments, canSend, error, onAttach, onSend, sending, setError, setText, text };
 }
 
 async function sendChatMessage(
@@ -135,13 +136,7 @@ function ChatHeader(props: { retentionSubtitle: string; retentionTitle: string; 
 function ChatComposer(props: ViewModel) {
   return (
     <View style={styles.inputPanel}>
-      <TextInput
-        multiline
-        onChangeText={props.setText}
-        placeholder={props.t('coach.chat.placeholder')}
-        style={styles.textInput}
-        value={props.text}
-      />
+      <TextField multiline onChangeText={props.setText} placeholder={props.t('coach.chat.placeholder')} value={props.text} />
       <AttachmentsPicker onAttach={props.onAttach} onError={props.setError} threadId={props.threadId} />
       {props.attachments.map((item) => (
         <Text key={item.storagePath} style={styles.draft}>
@@ -149,9 +144,7 @@ function ChatComposer(props: ViewModel) {
         </Text>
       ))}
       {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
-      <Pressable onPress={props.onSend} style={styles.sendButton}>
-        <Text style={styles.sendLabel}>{props.t('coach.chat.send')}</Text>
-      </Pressable>
+      <Button label={props.t('coach.chat.send')} loading={props.sending} onPress={props.onSend} />
     </View>
   );
 }
@@ -232,10 +225,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
-  empty: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-  },
   error: {
     color: colors.danger,
     fontSize: fontSize.xs,
@@ -266,31 +255,9 @@ const styles = StyleSheet.create({
     minHeight: '100%',
     padding: space.lg,
   },
-  sendButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  sendLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
   subtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-  },
-  textInput: {
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.text,
-    minHeight: 72,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-    textAlignVertical: 'top',
   },
   title: {
     color: colors.text,

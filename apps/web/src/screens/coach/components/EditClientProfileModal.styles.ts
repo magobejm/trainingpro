@@ -11,19 +11,6 @@ export const styles = StyleSheet.create({
     marginTop: space.sm,
     padding: space.md,
   },
-  archiveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.danger,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.lg,
-  },
-  archiveLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
   archiveText: {
     color: colors.danger,
     fontSize: fontSize.xs,
@@ -31,27 +18,13 @@ export const styles = StyleSheet.create({
     flex: 1,
     marginRight: space.md,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: space.md,
-    justifyContent: 'flex-end',
-    marginTop: space.md,
-  },
   avatarActions: {
     flexDirection: 'row',
     gap: space.sm,
     width: '100%',
   },
   avatarButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
     flex: 1,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: space.md,
   },
   avatarFallback: {
     alignItems: 'center',
@@ -76,36 +49,6 @@ export const styles = StyleSheet.create({
     marginBottom: space.md,
     width: 76,
   },
-  avatarLabel: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: space.lg,
-  },
-  cancelLabel: {
-    color: colors.text,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    maxHeight: '90%',
-    maxWidth: 560,
-    padding: space.lg,
-    width: '100%',
-  },
   error: {
     color: colors.danger,
     fontSize: fontSize.xs,
@@ -114,40 +57,8 @@ export const styles = StyleSheet.create({
   field: {
     gap: space.xs,
   },
-  fieldError: {
-    color: colors.danger,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   form: {
-    gap: space.sm,
-  },
-  input: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  inputReadonly: {
-    backgroundColor: colors.background,
-    color: colors.textMuted,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(9, 16, 28, 0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
+    gap: space.md,
   },
   resetBox: {
     backgroundColor: colors.successSoft,
@@ -156,19 +67,6 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     marginTop: space.sm,
     padding: space.md,
-  },
-  resetButton: {
-    alignItems: 'center',
-    backgroundColor: colors.success,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.lg,
-  },
-  resetLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
   },
   resetPasswordValue: {
     color: colors.success,
@@ -183,22 +81,6 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     marginRight: space.md,
   },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: space.lg,
-  },
-  saveLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  scroll: {
-    marginTop: space.md,
-  },
   sectionRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -206,26 +88,17 @@ export const styles = StyleSheet.create({
   subtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-  },
-  textArea: {
-    minHeight: 72,
-    textAlignVertical: 'top',
+    marginBottom: space.md,
   },
 });
 
 export const selectStyle: CSSProperties = {
-  backgroundColor: colors.primarySoft,
+  backgroundColor: colors.surface,
   border: `1px solid ${colors.border}`,
   borderRadius: radius.md,
   boxSizing: 'border-box',
   color: colors.text,
   minHeight: 38,
-  outline: 'none',
   padding: '8px 12px',
   paddingRight: space.xxl,
   width: '100%',

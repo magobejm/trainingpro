@@ -1,12 +1,9 @@
 import { StyleSheet } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { colors, fontSize, space } from '@trainerpro/ui';
 
 export const styles = StyleSheet.create({
-  actions: {
-    flexDirection: 'row',
+  modalBody: {
     gap: space.md,
-    justifyContent: 'flex-end',
-    marginTop: space.md,
   },
   userTop: {
     flexDirection: 'row',
@@ -38,21 +35,6 @@ export const styles = StyleSheet.create({
     height: 72,
     width: 72,
   },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.md,
-  },
-  cancelLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   card: {
     backgroundColor: colors.surfaceInverse,
     borderColor: colors.text,
@@ -61,39 +43,12 @@ export const styles = StyleSheet.create({
     padding: space.xl,
     width: '100%',
   },
-  changeAvatarButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: 999,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: space.md,
-  },
-  changeAvatarLabel: {
-    color: colors.text,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   email: {
     color: colors.textMuted,
     fontSize: fontSize.xs,
   },
-  fieldLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-    marginBottom: 3,
-  },
   fields: {
     gap: space.sm,
-  },
-  gearButton: {
-    alignItems: 'center',
-    backgroundColor: colors.surfaceInverse,
-    borderRadius: radius.md,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
   },
   gearIcon: {
     color: colors.borderStrong,
@@ -103,54 +58,9 @@ export const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  input: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  inputReadonly: {
-    backgroundColor: colors.background,
-    color: colors.textMuted,
-  },
-  modalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    gap: space.md,
-    maxWidth: 420,
-    padding: space.lg,
-    width: '100%',
-  },
-  modalTitle: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-  },
   name: {
     color: colors.surfaceMuted,
     fontSize: fontSize.sm,
     fontWeight: '700',
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(11, 17, 24, 0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
-  },
-  saveButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.md,
-  },
-  saveLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
   },
 });

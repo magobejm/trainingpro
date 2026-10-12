@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
-import { Image, Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Image, Text, View } from 'react-native';
+import { Button, IconButton, Modal, TextField, useToast } from '@trainerpro/ui';
 import { useUserSettings } from '../data/hooks/useUserSettings';
 import { styles } from './SidebarUserPanel.styles';
 
-const MODAL_ANIMATION = 'fade' as const;
+const GEAR_GLYPH = '\u2699\uFE0F';
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SMALL = 'sm' as const;
+const TRANSPARENT = { backgroundColor: 'transparent' } as const;
 
 type Props = {
   email: string;
@@ -18,6 +23,8 @@ export function SidebarUserPanel(props: Props): React.JSX.Element {
 
 function useSidebarUserPanelModel(email: string, fallbackName: string) {
   const profile = useUserSettings(email);
+  const toast = useToast();
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [form, setForm] = useState(profile.settings);
   const onOpen = () => {
@@ -27,6 +34,7 @@ function useSidebarUserPanelModel(email: string, fallbackName: string) {
   const onSave = async () => {
     await profile.saveSettings(form);
     setIsOpen(false);
+    toast.success(t('app.user.modal.saved'));
   };
   return {
     avatarUrl: profile.avatarUrl,
@@ -58,10 +66,12 @@ function SidebarUserPanelView(props: ViewModel): React.JSX.Element {
               {props.form.email}
             </Text>
           </View>
-          <Pressable onPress={props.onOpen} style={styles.gearButton}>
-            {/* eslint-disable-next-line no-restricted-syntax */}
-            <Text style={styles.gearIcon}>⚙️</Text>
-          </Pressable>
+          <IconButton
+            accessibilityLabel={props.t('app.user.modal.title')}
+            icon={() => <Text style={styles.gearIcon}>{GEAR_GLYPH}</Text>}
+            onPress={props.onOpen}
+            style={TRANSPARENT}
+          />
         </View>
       </View>
       <EditProfileModal {...props} />
@@ -72,25 +82,21 @@ function SidebarUserPanelView(props: ViewModel): React.JSX.Element {
 function EditProfileModal(props: ViewModel): React.JSX.Element {
   return (
     <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onClose}
-      transparent
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('app.user.modal.cancel')} onPress={props.onClose} variant={VARIANT_SECONDARY} />
+          <Button label={props.t('app.user.modal.save')} onPress={() => void props.onSave()} />
+        </>
+      }
+      onClose={props.onClose}
+      size="sm"
+      title={props.t('app.user.modal.title')}
       visible={props.isOpen}
     >
-      <View style={styles.overlay}>
-        <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>{props.t('app.user.modal.title')}</Text>
-          <AvatarEditor {...props} />
-          <ProfileFields {...props} />
-          <View style={styles.actions}>
-            <Pressable onPress={props.onClose} style={styles.cancelButton}>
-              <Text style={styles.cancelLabel}>{props.t('app.user.modal.cancel')}</Text>
-            </Pressable>
-            <Pressable onPress={() => void props.onSave()} style={styles.saveButton}>
-              <Text style={styles.saveLabel}>{props.t('app.user.modal.save')}</Text>
-            </Pressable>
-          </View>
-        </View>
+      <View style={styles.modalBody}>
+        <AvatarEditor {...props} />
+        <ProfileFields {...props} />
       </View>
     </Modal>
   );
@@ -100,9 +106,12 @@ function AvatarEditor(props: ViewModel): React.JSX.Element {
   return (
     <View style={styles.avatarEditor}>
       <Image source={{ uri: props.form.avatarUrl ?? props.avatarUrl }} style={styles.avatarLarge} />
-      <Pressable onPress={() => void pickAvatar(props)} style={styles.changeAvatarButton}>
-        <Text style={styles.changeAvatarLabel}>{props.t('app.user.modal.avatar')}</Text>
-      </Pressable>
+      <Button
+        label={props.t('app.user.modal.avatar')}
+        onPress={() => void pickAvatar(props)}
+        size={SIZE_SMALL}
+        variant={VARIANT_SECONDARY}
+      />
     </View>
   );
 }
@@ -139,23 +148,9 @@ function ProfileFields(props: ViewModel): React.JSX.Element {
   );
 }
 
-function Field(props: {
-  editable?: boolean;
-  label: string;
-  onChange: (value: string) => void;
-  value: string;
-}) {
-  const isEditable = props.editable ?? true;
+function Field(props: { editable?: boolean; label: string; onChange: (value: string) => void; value: string }) {
   return (
-    <View>
-      <Text style={styles.fieldLabel}>{props.label}</Text>
-      <TextInput
-        editable={isEditable}
-        onChangeText={props.onChange}
-        style={[styles.input, !isEditable ? styles.inputReadonly : null]}
-        value={props.value}
-      />
-    </View>
+    <TextField disabled={props.editable === false} label={props.label} onChangeText={props.onChange} value={props.value} />
   );
 }
 

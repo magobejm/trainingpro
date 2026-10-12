@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { styles } from './ClientProfileEditScreen.styles';
 import { pickImageFile } from './client-profile.avatar';
 import { buildArchiveBadgeText, photoThumbStyle } from './ClientProfileEditScreen.sections';
@@ -19,6 +20,9 @@ import {
   scrollRail,
   type ProgressPhoto,
 } from './ClientProfileEditScreen.utils';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -61,9 +65,7 @@ type ProgressLabels = {
   visible: string;
 };
 
-function ProgressActions(
-  props: React.ComponentProps<typeof ProgressPhotosPanel>,
-): React.JSX.Element {
+function ProgressActions(props: React.ComponentProps<typeof ProgressPhotosPanel>): React.JSX.Element {
   return (
     <>
       <Text style={styles.label}>{props.labels.progressPhotos}</Text>
@@ -76,17 +78,13 @@ function ProgressActions(
   );
 }
 
-function UploadPhotoButton(props: {
-  t: Translate;
-  uploadPhoto: (file: File) => Promise<unknown>;
-}): React.JSX.Element {
+function UploadPhotoButton(props: { t: Translate; uploadPhoto: (file: File) => Promise<unknown> }): React.JSX.Element {
   return (
-    <Pressable
+    <Button
+      label={props.t('coach.clientProfile.avatar.upload')}
       onPress={() => void onUploadProgressPhoto(props.uploadPhoto)}
-      style={styles.secondaryButton}
-    >
-      <Text style={styles.secondaryLabel}>{props.t('coach.clientProfile.avatar.upload')}</Text>
-    </Pressable>
+      variant={VARIANT_SECONDARY}
+    />
   );
 }
 
@@ -97,17 +95,13 @@ function onUploadProgressPhoto(uploadPhoto: (file: File) => Promise<unknown>): P
   });
 }
 
-function ArchiveDropBadge(
-  props: React.ComponentProps<typeof ProgressPhotosPanel>,
-): React.JSX.Element {
+function ArchiveDropBadge(props: React.ComponentProps<typeof ProgressPhotosPanel>): React.JSX.Element {
   const text = buildArchiveBadgeText(props.labels.archived, props.archivedPhotos.length);
   return (
     <div
       onClick={() => props.setShowArchivedPhotos((prev) => !prev)}
       onDragOver={preventDropDefault}
-      onDrop={(event) =>
-        void onArchiveDrop(event, props.draggedPhotoId, props.archivePhoto, props.setDraggedPhotoId)
-      }
+      onDrop={(event) => void onArchiveDrop(event, props.draggedPhotoId, props.archivePhoto, props.setDraggedPhotoId)}
       style={envelopeStyle}
       title={props.labels.archived}
     >
@@ -131,16 +125,10 @@ function onArchiveDrop(
   return archivePhoto(draggedPhotoId).then(() => setDraggedPhotoId('')) as Promise<void>;
 }
 
-function ProgressVisibleRail(
-  props: React.ComponentProps<typeof ProgressPhotosPanel>,
-): React.JSX.Element {
+function ProgressVisibleRail(props: React.ComponentProps<typeof ProgressPhotosPanel>): React.JSX.Element {
   return (
     <div style={carouselWrapStyle}>
-      <button
-        onClick={() => scrollRail(props.photoRailRef.current, -300)}
-        style={carouselArrowStyle}
-        type={buttonType}
-      >
+      <button onClick={() => scrollRail(props.photoRailRef.current, -300)} style={carouselArrowStyle} type={buttonType}>
         {ICON_PREV}
       </button>
       <div ref={props.photoRailRef} style={carouselRailStyle}>
@@ -148,11 +136,7 @@ function ProgressVisibleRail(
           <ProgressThumb key={item.id} index={index} item={item} {...props} />
         ))}
       </div>
-      <button
-        onClick={() => scrollRail(props.photoRailRef.current, 300)}
-        style={carouselArrowStyle}
-        type={buttonType}
-      >
+      <button onClick={() => scrollRail(props.photoRailRef.current, 300)} style={carouselArrowStyle} type={buttonType}>
         {ICON_NEXT}
       </button>
     </div>
@@ -202,11 +186,7 @@ function ThumbButton(props: {
   );
 }
 
-function thumbDate(props: {
-  formatLocale: string;
-  item: ProgressPhoto;
-  labels: ProgressLabels;
-}): string {
+function thumbDate(props: { formatLocale: string; item: ProgressPhoto; labels: ProgressLabels }): string {
   return formatPhotoDate(props.item.createdAt, props.formatLocale, props.labels.archivedHint);
 }
 
@@ -253,27 +233,23 @@ function ArchivedRow(props: {
   labels: ProgressLabels;
   onRestore: (photoId: string) => Promise<unknown>;
 }): React.JSX.Element {
-  const subtitleDate = formatPhotoDate(
-    props.item.createdAt,
-    props.formatLocale,
-    props.labels.archivedHint,
-  );
+  const subtitleDate = formatPhotoDate(props.item.createdAt, props.formatLocale, props.labels.archivedHint);
   return (
     <View style={styles.archivedRow}>
       <View style={styles.archivedLeft}>
-        <Image
-          source={{ uri: resolvePhotoUrl(props.item.imageUrl, props.item.imagePath) }}
-          style={styles.archivedThumb}
-        />
+        <Image source={{ uri: resolvePhotoUrl(props.item.imageUrl, props.item.imagePath) }} style={styles.archivedThumb} />
         <View>
           <Text style={styles.archivedTitle}>{props.labels.archivedTitle}</Text>
           <Text style={styles.archivedSubtitle}>{props.labels.archivedHint}</Text>
           <Text style={styles.archivedSubtitle}>{subtitleDate}</Text>
         </View>
       </View>
-      <Pressable onPress={() => void props.onRestore(props.item.id)} style={styles.secondaryButton}>
-        <Text style={styles.secondaryLabel}>{props.labels.restore}</Text>
-      </Pressable>
+      <Button
+        label={props.labels.restore}
+        onPress={() => void props.onRestore(props.item.id)}
+        size={SIZE_SM}
+        variant={VARIANT_SECONDARY}
+      />
     </View>
   );
 }

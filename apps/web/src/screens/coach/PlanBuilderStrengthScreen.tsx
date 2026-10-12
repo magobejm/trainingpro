@@ -1,15 +1,20 @@
-import React from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { ExercisePicker, SetPrescriptionEditor, space } from '@trainerpro/ui';
+import React, { useEffect } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import {
+  Button,
+  EmptyState,
+  ExercisePicker,
+  IconButton,
+  SetPrescriptionEditor,
+  TextField,
+  space,
+  useToast,
+} from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { usePlanBuilderViewModel } from './PlanBuilderStrengthScreen.state';
 import { styles } from './PlanBuilderStrengthScreen.styles';
 import '../../i18n';
-
-const INPUT_PROPS = {
-  keyboardType: 'default' as const,
-};
 
 const ICON_REMOVE = '×';
 
@@ -41,15 +46,12 @@ function PlanBuilderStrengthView(props: ViewModel): React.JSX.Element {
       <View style={styles.card}>
         <SelectedExerciseList {...props} />
       </View>
-      <Pressable
-        disabled={props.isSaving}
+      <Button
+        fullWidth
+        label={props.currentTemplateId ? props.t('coach.clientProfile.save') : props.t('coach.builder.save')}
+        loading={props.isSaving}
         onPress={props.onSaveTemplate}
-        style={[styles.button, props.isSaving ? { opacity: 0.5 } : null]}
-      >
-        <Text style={styles.buttonLabel}>
-          {props.currentTemplateId ? props.t('coach.clientProfile.save') : props.t('coach.builder.save')}
-        </Text>
-      </Pressable>
+      />
       <BuilderTemplateList {...props} />
       <ActionConfirmModal
         cancelLabel={props.t('coach.builder.delete.cancel')}
@@ -66,14 +68,14 @@ function PlanBuilderStrengthView(props: ViewModel): React.JSX.Element {
 }
 
 function BuilderHeader(props: ViewModel): React.JSX.Element {
+  const toast = useToast();
+  const { saveSuccess, t } = props;
+  useEffect(() => {
+    if (saveSuccess) toast.success(t('coach.builder.saved'));
+  }, [saveSuccess]);
   return (
     <>
       <Text style={styles.title}>{props.t('coach.builder.title')}</Text>
-      {props.saveSuccess && (
-        <View style={styles.successBanner}>
-          <Text style={styles.successText}>{props.t('coach.builder.saved')}</Text>
-        </View>
-      )}
       <BuilderNameCard props={props} />
       <BuilderPickerCard props={props} />
     </>
@@ -83,12 +85,10 @@ function BuilderHeader(props: ViewModel): React.JSX.Element {
 function BuilderNameCard({ props }: { props: ViewModel }) {
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>{props.t('coach.builder.templateName')}</Text>
-      <TextInput
-        {...INPUT_PROPS}
+      <TextField
+        label={props.t('coach.builder.templateName')}
         onChangeText={props.setTemplateName}
         placeholder={props.t('coach.builder.templateNamePlaceholder')}
-        style={styles.input}
         value={props.templateName}
       />
     </View>
@@ -114,7 +114,7 @@ function BuilderTemplateList(props: ViewModel): React.JSX.Element {
     <View style={[styles.card, { marginTop: space.xl }]}>
       <Text style={styles.label}>{props.t('coach.builder.list.title')}</Text>
       {props.templates.length === 0 ? (
-        <Text style={styles.empty}>{props.t('coach.builder.list.empty')}</Text>
+        <EmptyState title={props.t('coach.builder.list.empty')} />
       ) : (
         <View style={styles.templateList}>
           {props.templates.map((tpl) => (
@@ -140,12 +140,18 @@ function TemplateListItem({ props, tpl }: { props: ViewModel; tpl: ViewModel['te
         </Text>
       </View>
       <View style={styles.templateActions}>
-        <Pressable onPress={() => props.onLoadTemplate(tpl)} style={styles.editAction}>
-          <Text style={styles.editActionLabel}>{props.t('coach.builder.list.edit')}</Text>
-        </Pressable>
-        <Pressable onPress={() => props.onDeleteRequest(tpl.id)} style={styles.deleteAction}>
-          <Text style={styles.deleteActionLabel}>{props.t('coach.builder.list.delete')}</Text>
-        </Pressable>
+        <Button
+          label={props.t('coach.builder.list.edit')}
+          onPress={() => props.onLoadTemplate(tpl)}
+          size="sm"
+          variant="secondary"
+        />
+        <Button
+          label={props.t('coach.builder.list.delete')}
+          onPress={() => props.onDeleteRequest(tpl.id)}
+          size="sm"
+          variant="danger"
+        />
       </View>
     </View>
   );
@@ -153,7 +159,7 @@ function TemplateListItem({ props, tpl }: { props: ViewModel; tpl: ViewModel['te
 
 function SelectedExerciseList(props: ViewModel): React.JSX.Element {
   if (props.selected.length === 0) {
-    return <Text style={styles.empty}>{props.t('coach.builder.emptySelected')}</Text>;
+    return <EmptyState title={props.t('coach.builder.emptySelected')} />;
   }
   return (
     <View style={styles.selectedList}>
@@ -167,19 +173,31 @@ function SelectedExerciseList(props: ViewModel): React.JSX.Element {
 function SelectedExerciseItem({ item, props }: { item: ViewModel['selected'][0]; props: ViewModel }) {
   return (
     <View style={styles.exerciseCard}>
-      <SelectedExerciseHeader item={item} onRemove={props.onRemoveExercise} />
+      <SelectedExerciseHeader item={item} onRemove={props.onRemoveExercise} t={props.t} />
       <SelectedExerciseEditor item={item} props={props} />
     </View>
   );
 }
 
-function SelectedExerciseHeader({ item, onRemove }: { item: ViewModel['selected'][0]; onRemove: (id: string) => void }) {
+function SelectedExerciseHeader({
+  item,
+  onRemove,
+  t,
+}: {
+  item: ViewModel['selected'][0];
+  onRemove: (id: string) => void;
+  t: ViewModel['t'];
+}) {
   return (
     <View style={styles.exerciseHeader}>
       <Text style={styles.exerciseTitle}>{item.displayName}</Text>
-      <Pressable onPress={() => onRemove(item.id)} style={styles.removeExerciseBtn}>
-        <Text style={styles.removeExerciseLabel}>{ICON_REMOVE}</Text>
-      </Pressable>
+      <IconButton
+        accessibilityLabel={t('coach.builder.list.delete')}
+        icon={(color) => <Text style={[styles.removeExerciseLabel, { color }]}>{ICON_REMOVE}</Text>}
+        onPress={() => onRemove(item.id)}
+        size={28}
+        tone="danger"
+      />
     </View>
   );
 }

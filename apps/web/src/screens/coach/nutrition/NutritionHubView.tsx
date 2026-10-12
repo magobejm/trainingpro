@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { SearchBar } from '@trainerpro/ui';
+import { EmptyState, SearchBar } from '@trainerpro/ui';
 import { Apple, ClipboardList } from 'lucide-react';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
 import { COLORS, styles } from './nutrition.styles';
@@ -46,10 +46,8 @@ export function NutritionHubView(props: Props): React.JSX.Element {
           placeholder={t('coach.nutrition.hub.foodSearchPlaceholder')}
           value={props.query}
         />
-        {foodsQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
-        {foods.length === 0 && !foodsQuery.isLoading ? (
-          <Text style={styles.empty}>{t('coach.nutrition.hub.noFoods')}</Text>
-        ) : null}
+        {foodsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+        {foods.length === 0 && !foodsQuery.isLoading ? <EmptyState title={t('coach.nutrition.hub.noFoods')} /> : null}
         {foods.slice(0, 12).map((food) => (
           <Pressable key={food.id} onPress={() => props.onOpenFoodDetail(food.id)} style={styles.listItem}>
             <Text style={styles.cardTitle}>{food.name}</Text>

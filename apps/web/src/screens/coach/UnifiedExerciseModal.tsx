@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback } from 'react';
-import { Modal, View, ScrollView, Text, TextInput } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   useUnifiedExerciseForm,
@@ -10,7 +10,7 @@ import { useAllCatalogsQuery } from '../../data/hooks/useUnifiedLibraryQuery';
 import { UnifiedExerciseModalProps } from './UnifiedExerciseModal.types';
 import { styles } from './UnifiedExerciseModal.styles';
 import { FormSelect } from './components/UnifiedExerciseFormSelect';
-import { ModalHeader, ErrorBanner, MediaSection } from './UnifiedExerciseModal.components';
+import { ErrorBanner, MediaSection } from './UnifiedExerciseModal.components';
 import {
   EquipmentSection,
   CategorySpecificFields,
@@ -19,10 +19,7 @@ import {
 } from './UnifiedExerciseModal.fields';
 import { useExerciseModalSave } from './hooks/useExerciseModalSave';
 import { useExerciseModalData } from './hooks/useExerciseModalData';
-import { space } from '@trainerpro/ui';
-
-const ANIM_FADE = 'fade' as const;
-const TAPS_HANDLED = 'handled' as const;
+import { Button, Modal, TextField, space } from '@trainerpro/ui';
 
 function useModalFileHandler(
   form: ReturnType<typeof useUnifiedExerciseForm>,
@@ -82,36 +79,38 @@ function useModalState(
 export function UnifiedExerciseModal({ visible, onClose, itemToEdit, defaultCategory }: UnifiedExerciseModalProps) {
   const st = useModalState(itemToEdit, defaultCategory, onClose);
   if (!visible) return null;
+  const isEdit = !!itemToEdit;
+  const { t } = st;
   return (
-    <Modal visible={visible} transparent animationType={ANIM_FADE}>
-      <View style={styles.overlay}>
-        <View style={styles.modalContainer}>
-          <ModalHeader
-            isEdit={!!itemToEdit}
-            onSave={st.saveHook.handleSave}
-            onClose={onClose}
-            isPending={st.saveHook.isPending}
-            canSave={!!st.form.formState.name.trim()}
-            t={st.t}
+    <Modal
+      closeLabel={t('common.close')}
+      footer={
+        <>
+          <Button label={t('common.cancel')} onPress={onClose} variant="secondary" />
+          <Button
+            disabled={!st.form.formState.name.trim()}
+            label={isEdit ? t('coach.library.actions.saveChanges') : t('coach.library.actions.createExercise')}
+            loading={st.saveHook.isPending}
+            onPress={st.saveHook.handleSave}
           />
-          {st.saveHook.errorMessage && (
-            <ErrorBanner message={st.saveHook.errorMessage} t={st.t} onClose={() => st.saveHook.setErrorMessage(null)} />
-          )}
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            keyboardShouldPersistTaps={TAPS_HANDLED}
-          >
-            <FormRows st={st} />
-          </ScrollView>
-        </View>
-      </View>
+        </>
+      }
+      onClose={onClose}
+      size="xl"
+      title={isEdit ? t('coach.library.modal.editTitle') : t('coach.library.modal.createTitle')}
+      visible={visible}
+    >
+      {st.saveHook.errorMessage && (
+        <ErrorBanner message={st.saveHook.errorMessage} t={t} onClose={() => st.saveHook.setErrorMessage(null)} />
+      )}
+      <FormRows st={st} />
     </Modal>
   );
 }
 
 function FormRow1({ st }: { st: ReturnType<typeof useModalState> }) {
   const { form, modalData: md, t } = st;
+  const [nameTouched, setNameTouched] = useState(false);
   const formState = form.formState;
   return (
     <View style={[styles.gridRow, { zIndex: 100 }]}>
@@ -129,19 +128,21 @@ function FormRow1({ st }: { st: ReturnType<typeof useModalState> }) {
       <View style={[styles.gridColRight, { zIndex: 100 }]}>
         <View style={[styles.cardContainer, { zIndex: 100, marginBottom: 0 }]}>
           <View style={styles.fieldSection}>
-            <Text style={styles.label}>{t('coach.library.fields.nameLabel')}</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={t('coach.library.fields.namePlaceholder')}
-              value={formState.name}
+            <TextField
+              error={nameTouched && !formState.name.trim() ? t('coach.clientProfile.validation.required') : null}
+              label={t('coach.library.fields.nameLabel')}
+              onBlur={() => setNameTouched(true)}
               onChangeText={(v) => form.handleChange('name', v)}
               onFocus={st.closeMuscles}
+              placeholder={t('coach.library.fields.namePlaceholder')}
+              required
+              value={formState.name}
             />
           </View>
           <View style={[styles.row, { zIndex: 90 }]}>
             <View style={[{ flex: 1, marginRight: space.md, zIndex: 100 }]}>
-              <Text style={styles.label}>{t('coach.library.fields.categoryLabel')}</Text>
               <FormSelect
+                label={t('coach.library.fields.categoryLabel')}
                 options={md.categories}
                 value={formState.category}
                 placeholder={''}

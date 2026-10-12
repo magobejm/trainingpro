@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ChatCallProposal } from '../../../data/hooks/useChat';
 import { useAcceptCallProposalMutation, useCounterCallProposalMutation } from '../../../data/hooks/useChat';
 import { CALL_CARD_TONES, callCardActions, callCardTone, callTimeOptions } from '../call-proposal-card.logic';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, Select, space } from '@trainerpro/ui';
 
 const TEXT_LIGHT = colors.surfaceMuted;
 
@@ -49,7 +49,11 @@ export function CallProposalCard(props: { proposal: ChatCallProposal }): React.J
         })}
       </Text>
       {actions.includes('accept') ? (
-        <CardButton label={t('coach.chat.call.accept')} onPress={() => accept.mutate(proposal.id)} />
+        <CardButton
+          label={t('coach.chat.call.accept')}
+          loading={accept.isPending}
+          onPress={() => accept.mutate(proposal.id)}
+        />
       ) : null}
       {actions.includes('counter') && !countering ? (
         <CardButton label={t('coach.chat.call.counter')} onPress={() => setCountering(true)} />
@@ -59,6 +63,7 @@ export function CallProposalCard(props: { proposal: ChatCallProposal }): React.J
           onCancel={() => setCountering(false)}
           onSend={() => counter.mutate({ proposalId: proposal.id, time }, { onSuccess: () => setCountering(false) })}
           onTime={setTime}
+          sending={counter.isPending}
           time={time}
         />
       ) : null}
@@ -66,16 +71,16 @@ export function CallProposalCard(props: { proposal: ChatCallProposal }): React.J
   );
 }
 
-function CardButton(props: { label: string; onPress: () => void }): React.JSX.Element {
+function CardButton(props: { label: string; loading?: boolean; onPress: () => void }): React.JSX.Element {
   return (
-    <Pressable
+    <Button
+      label={props.label}
+      loading={props.loading}
       onPress={props.onPress}
-      style={{ backgroundColor: '#ffffff22', borderRadius: radius.md, marginTop: space.sm, paddingVertical: space.sm }}
-    >
-      <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs, fontWeight: 'bold', textAlign: 'center' }}>
-        {props.label}
-      </Text>
-    </Pressable>
+      size="sm"
+      style={{ marginTop: space.sm }}
+      variant="secondary"
+    />
   );
 }
 
@@ -83,24 +88,21 @@ function CounterForm(props: {
   onCancel: () => void;
   onSend: () => void;
   onTime: (time: string) => void;
+  sending: boolean;
   time: string;
 }): React.JSX.Element {
   const { t } = useTranslation();
   return (
     <View style={{ marginTop: space.sm }}>
       <Text style={{ color: TEXT_LIGHT, fontSize: fontSize.xs }}>{t('coach.chat.call.counterLabel')}</Text>
-      <select
-        onChange={(event) => props.onTime(event.target.value)}
-        style={{ borderRadius: radius.md, marginTop: space.xs, padding: space.sm }}
+      <Select
+        containerStyle={{ marginTop: space.xs }}
+        onChange={props.onTime}
+        options={callTimeOptions().map((option) => ({ label: option, value: option }))}
+        placeholder={t('coach.chat.call.counterLabel')}
         value={props.time}
-      >
-        {callTimeOptions().map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
-      <CardButton label={t('coach.chat.call.sendCounter')} onPress={props.onSend} />
+      />
+      <CardButton label={t('coach.chat.call.sendCounter')} loading={props.sending} onPress={props.onSend} />
       <CardButton label={t('coach.chat.call.cancel')} onPress={props.onCancel} />
     </View>
   );

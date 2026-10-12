@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { View } from 'react-native';
+import { TextField } from '@trainerpro/ui';
 import { s } from '../../RoutinePlanner.styles';
 import type { DraftState } from '../../RoutinePlanner.types';
-import { colors } from '@trainerpro/ui';
 
 interface RoutineNameInputProps {
   name: string;
@@ -23,12 +23,11 @@ export function RoutineNameInput({
 }: RoutineNameInputProps) {
   return (
     <View style={s.card}>
-      <Text style={s.label}>{t(labelKey)}</Text>
-      <TextInput
-        editable={!isReadOnly}
+      <TextField
+        disabled={isReadOnly}
+        label={t(labelKey)}
         onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))}
         placeholder={t(placeholderKey)}
-        style={[s.input, isReadOnly && { backgroundColor: colors.surfaceMuted }]}
         value={name}
       />
     </View>

@@ -65,27 +65,9 @@ export const metricStyles = {
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
-  metricInput: {
-    minHeight: 34,
-  },
   metricInputLarge: {
     fontSize: fontSize.lg,
     fontWeight: '700',
     minHeight: 40,
-  },
-  pencilButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    height: 28,
-    justifyContent: 'center',
-    width: 28,
-  },
-  pencilLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
   },
 } as const;

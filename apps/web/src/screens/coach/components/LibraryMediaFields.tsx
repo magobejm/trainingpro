@@ -1,7 +1,7 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, type TextInputProps, View, DimensionValue } from 'react-native';
+import { Image, StyleSheet, Text, type TextInputProps, View, DimensionValue } from 'react-native';
 import { resolvePlaceholder } from './LibraryMediaViewer';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   imageUrl: string;
@@ -15,20 +15,29 @@ type Props = {
 };
 
 const IMAGE_BLUR_RADIUS = 16;
+const REMOVE_GLYPH = '✕';
+const noop = (): void => undefined;
 
 export function LibraryMediaFields(props: Props): React.JSX.Element {
   const displayImage = props.imageUrl || resolvePlaceholder(props.category);
 
   return (
     <View style={styles.wrap}>
-      <PreviewArea displayImage={displayImage} imageUrl={props.imageUrl} onRemoveImage={props.onRemoveImage} />
+      <PreviewArea
+        displayImage={displayImage}
+        imageUrl={props.imageUrl}
+        onRemoveImage={props.onRemoveImage}
+        removeLabel={props.t('coach.library.media.removeImage')}
+      />
 
       <View style={styles.actionsRow}>
-        <Pressable onPress={props.onUpload} style={styles.uploadButton}>
-          <Text style={styles.uploadButtonLabel}>
-            {props.isUploading ? props.t('coach.library.media.uploading') : props.t('coach.library.media.uploadImage')}
-          </Text>
-        </Pressable>
+        <Button
+          label={props.isUploading ? props.t('coach.library.media.uploading') : props.t('coach.library.media.uploadImage')}
+          loading={props.isUploading}
+          onPress={props.onUpload}
+          style={styles.uploadButton}
+          variant="secondary"
+        />
       </View>
 
       {props.setYoutubeUrl && <YouTubeInput setYoutubeUrl={props.setYoutubeUrl} t={props.t} youtubeUrl={props.youtubeUrl} />}
@@ -40,13 +49,13 @@ function PreviewArea({
   displayImage,
   imageUrl,
   onRemoveImage,
+  removeLabel,
 }: {
   displayImage: string;
   imageUrl: string;
   onRemoveImage?: () => void;
+  removeLabel: string;
 }) {
-  // eslint-disable-next-line no-restricted-syntax
-  const removeIcon = '✕';
   return (
     <View style={styles.previewContainer}>
       <Image
@@ -61,9 +70,15 @@ function PreviewArea({
       <Image resizeMode="contain" source={{ uri: displayImage }} style={styles.image} />
 
       {imageUrl ? (
-        <Pressable onPress={onRemoveImage} style={styles.removeBtn}>
-          <Text style={styles.removeBtnText}>{removeIcon}</Text>
-        </Pressable>
+        <View style={styles.removeBtn}>
+          <IconButton
+            accessibilityLabel={removeLabel}
+            icon={(color) => <Text style={[styles.removeBtnText, { color }]}>{REMOVE_GLYPH}</Text>}
+            onPress={onRemoveImage ?? noop}
+            size={28}
+            tone="danger"
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -84,17 +99,14 @@ function YouTubeInput({
   const placeholder = 'https://youtube.com/...';
 
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.label}>{t('coach.library.media.youtubePlaceholder')}</Text>
-      <TextInput
-        autoCapitalize={autoCapitalize}
-        keyboardType={keyboardType}
-        onChangeText={setYoutubeUrl}
-        placeholder={placeholder}
-        style={styles.input}
-        value={youtubeUrl}
-      />
-    </View>
+    <TextField
+      autoCapitalize={autoCapitalize}
+      keyboardType={keyboardType}
+      label={t('coach.library.media.youtubePlaceholder')}
+      onChangeText={setYoutubeUrl}
+      placeholder={placeholder}
+      value={youtubeUrl}
+    />
   );
 }
 
@@ -128,16 +140,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 12,
     right: 12,
-    backgroundColor: 'rgba(239, 68, 68, 0.9)',
-    width: 28,
-    height: 28,
-    borderRadius: radius.lg,
-    justifyContent: 'center',
-    alignItems: 'center',
     zIndex: 10,
   },
   removeBtnText: {
-    color: colors.surface,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
@@ -147,36 +152,5 @@ const styles = StyleSheet.create({
   },
   uploadButton: {
     flex: 1,
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderColor: colors.borderStrong,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: space.lg,
-  },
-  uploadButtonLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-  },
-  inputGroup: {
-    gap: space.sm,
-  },
-  label: {
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    color: colors.textMuted,
-  },
-  input: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    fontSize: fontSize.sm,
-    color: colors.text,
   },
 });

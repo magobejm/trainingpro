@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { styles } from '../ClientProfileScreen.styles';
 
 type Props = {
@@ -17,11 +18,7 @@ export function ClientProfileTrainingPlan(props: Props): React.JSX.Element {
       <Pressable onPress={props.onOpenPlanner} style={{ flex: 1 }}>
         <PlanInfo name={props.trainingPlan?.name} t={props.t} />
       </Pressable>
-      <RightActions
-        hasAssignedPlan={Boolean(props.trainingPlan?.id)}
-        onUnassign={props.onUnassign}
-        t={props.t}
-      />
+      <RightActions hasAssignedPlan={Boolean(props.trainingPlan?.id)} onUnassign={props.onUnassign} t={props.t} />
     </View>
   );
 }
@@ -34,9 +31,7 @@ function PlanInfo({ name, t }: { name?: string; t: (k: string) => string }) {
         <Text style={styles.detailIconLabel}>{PLAN_ICON}</Text>
       </View>
       <View style={styles.detailText}>
-        <Text style={styles.detailTitle}>
-          {t('coach.clientProfile.details.trainingPlan.title')}
-        </Text>
+        <Text style={styles.detailTitle}>{t('coach.clientProfile.details.trainingPlan.title')}</Text>
         <Text style={styles.detailSubtitle}>{subtitle}</Text>
       </View>
     </View>
@@ -47,17 +42,11 @@ function Arrow(): React.JSX.Element {
   return <Text style={styles.arrow}>{'>'}</Text>;
 }
 
-function RightActions(props: {
-  hasAssignedPlan: boolean;
-  onUnassign: () => void;
-  t: (key: string) => string;
-}) {
+function RightActions(props: { hasAssignedPlan: boolean; onUnassign: () => void; t: (key: string) => string }) {
   return (
     <View style={styles.actionsColumn}>
       {props.hasAssignedPlan ? (
-        <Pressable onPress={props.onUnassign} style={styles.primaryAction}>
-          <Text style={styles.primaryActionLabel}>{props.t('common.unassign')}</Text>
-        </Pressable>
+        <Button label={props.t('common.unassign')} onPress={props.onUnassign} size="sm" variant="secondary" />
       ) : null}
       <Arrow />
     </View>

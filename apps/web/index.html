@@ -27,6 +27,14 @@
       #root :where(div, span, input, textarea, button, select, a):not([data-font='mono']) {
         font-family: inherit;
       }
+      /* Foco visible al navegar con teclado (también dentro de ventanas, que viven fuera de #root). */
+      body *:focus-visible {
+        outline: 2px solid #2563eb;
+        outline-offset: 2px;
+      }
+      body [role='dialog']:focus-visible {
+        outline: none;
+      }
     </style>
   </head>
   <body>

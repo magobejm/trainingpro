@@ -1,7 +1,7 @@
 /* eslint-disable max-lines */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import '../../i18n';
 import { useProgressRouteClient, useProgressSelection } from './progress/useProgressListState';
@@ -33,7 +33,7 @@ import { buildInsights } from './progress/build-insights';
 import type { ExerciseProgressPoint } from '../../data/hooks/useExerciseProgressQuery';
 import type { MicrocycleProgressPoint } from '../../data/hooks/useMicrocycleProgressQuery';
 import type { SessionProgressPoint } from '../../data/hooks/useSessionProgressQuery';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, SegmentedControl, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -263,12 +263,15 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
     return (
       <View style={styles.emptyWrap}>
         {props.onRouteChange ? (
-          <Pressable onPress={goBackToClients} style={styles.backButton}>
-            <Text style={styles.backButtonText}>{`← ${t('common.back')}`}</Text>
-          </Pressable>
+          <Button
+            label={`← ${t('common.back')}`}
+            onPress={goBackToClients}
+            size="sm"
+            style={styles.backButtonCentered}
+            variant="secondary"
+          />
         ) : null}
-        <Text style={styles.emptyTitle}>{t('coach.progress.empty.title')}</Text>
-        <Text style={styles.emptySubtitle}>{t('coach.progress.empty.subtitle')}</Text>
+        <EmptyState message={t('coach.progress.empty.subtitle')} title={t('coach.progress.empty.title')} />
       </View>
     );
   }
@@ -276,9 +279,13 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       {props.onRouteChange ? (
-        <Pressable onPress={goBackToClients} style={styles.backButton}>
-          <Text style={styles.backButtonText}>{`← ${t('common.back')}`}</Text>
-        </Pressable>
+        <Button
+          label={`← ${t('common.back')}`}
+          onPress={goBackToClients}
+          size="sm"
+          style={styles.backButton}
+          variant="secondary"
+        />
       ) : null}
       {/* Breadcrumb */}
       <View style={styles.breadcrumb}>
@@ -368,7 +375,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
         </div>
       )}
 
-      {!hasSelection && <EmptyState t={t} />}
+      {!hasSelection && <ProgressEmptyState t={t} />}
       {hasSelection ? (
         <QueryResult
           emptyTitle={t('coach.progress.empty')}
@@ -408,9 +415,13 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
       {mode === 'session' && (sessionQuery.data ?? []).length > 0 ? (
         <View style={styles.variablesRow}>
           {(sessionQuery.data ?? []).map((point) => (
-            <Pressable key={point.sessionId} onPress={() => setDetailSessionId(point.sessionId)} style={styles.backButton}>
-              <Text style={styles.backButtonText}>{`${point.sessionDate} · ${t('coach.progress.sessionDetail.open')}`}</Text>
-            </Pressable>
+            <Button
+              key={point.sessionId}
+              label={`${point.sessionDate} · ${t('coach.progress.sessionDetail.open')}`}
+              onPress={() => setDetailSessionId(point.sessionId)}
+              size="sm"
+              variant="secondary"
+            />
           ))}
         </View>
       ) : null}
@@ -443,13 +454,11 @@ function ModeSelector({
     { id: 'microcycle', key: 'coach.progress.filter.mode.microcycle' },
   ];
   return (
-    <div style={modeRow}>
-      {modes.map((m) => (
-        <button key={m.id} style={{ ...modeBtn, ...(mode === m.id ? modeBtnActive : {}) }} onClick={() => onChange(m.id)}>
-          {t(m.key)}
-        </button>
-      ))}
-    </div>
+    <SegmentedControl
+      onChange={(value) => onChange(value as AnalysisMode)}
+      options={modes.map((m) => ({ label: t(m.key), value: m.id }))}
+      value={mode}
+    />
   );
 }
 
@@ -466,21 +475,21 @@ function RangeSelector({
   onCustom: () => void;
   t: (k: string) => string;
 }) {
+  const customLabel = customRange ? `${customRange.from} – ${customRange.to}` : t('coach.progress.range.custom');
+  const options = [
+    ...([4, 8, 12] as const).map((w) => ({ label: t(`coach.progress.range.${w}w`), value: String(w) })),
+    { label: customLabel, value: 'custom' },
+  ];
   return (
-    <div style={rangeRow}>
-      {([4, 8, 12] as const).map((w) => (
-        <button
-          key={w}
-          style={{ ...rangeBtn, ...(!customRange && weeksPreset === w ? rangeBtnActive : {}) }}
-          onClick={() => onPreset(w)}
-        >
-          {t(`coach.progress.range.${w}w`)}
-        </button>
-      ))}
-      <button style={{ ...rangeBtn, ...(customRange ? rangeBtnActive : {}) }} onClick={onCustom}>
-        {customRange ? `${customRange.from} – ${customRange.to}` : t('coach.progress.range.custom')}
-      </button>
-    </div>
+    <SegmentedControl
+      accessibilityLabel={t('coach.progress.range.label')}
+      onChange={(value) => {
+        if (value === 'custom') onCustom();
+        else onPreset(Number(value) as 4 | 8 | 12);
+      }}
+      options={options}
+      value={customRange ? 'custom' : String(weeksPreset)}
+    />
   );
 }
 
@@ -541,9 +550,7 @@ function ChartCard({
     <div style={chartCard}>
       <div style={chartCardHeader}>
         <p style={chartCardTitle}>{t(variable.labelKey)}</p>
-        <button style={expandBtn} onClick={onExpand}>
-          {t('coach.progress.chart.detailCta')}
-        </button>
+        <Button label={t('coach.progress.chart.detailCta')} onPress={onExpand} size="sm" variant="ghost" />
       </div>
       <div style={{ height: 180 }}>
         <ResponsiveContainer width={fullSize} height={fullSize}>
@@ -606,13 +613,13 @@ function InsightBlock({
   );
 }
 
-function EmptyState({ t }: { t: (k: string) => string }) {
+function ProgressEmptyState({ t }: { t: (k: string) => string }) {
   return (
-    <View style={styles.emptyWrap}>
-      <Text style={styles.emptyIcon}>{t('coach.progress.empty.icon')}</Text>
-      <Text style={styles.emptyTitle}>{t('coach.progress.empty.title')}</Text>
-      <Text style={styles.emptySubtitle}>{t('coach.progress.empty.subtitle')}</Text>
-    </View>
+    <EmptyState
+      icon={<Text style={styles.emptyIcon}>{t('coach.progress.empty.icon')}</Text>}
+      message={t('coach.progress.empty.subtitle')}
+      title={t('coach.progress.empty.title')}
+    />
   );
 }
 
@@ -720,17 +727,8 @@ const C = {
 
 const styles = StyleSheet.create({
   page: { backgroundColor: C.bg, padding: space.xl, gap: space.lg, minHeight: '100%' },
-  backButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.textMuted,
-    borderRadius: radius.md,
-    marginBottom: space.md,
-    minHeight: 40,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-    justifyContent: 'center',
-  },
-  backButtonText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '800', letterSpacing: 0.2 },
+  backButton: { alignSelf: 'flex-start' },
+  backButtonCentered: { alignSelf: 'center' },
   breadcrumb: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
   breadcrumbClient: { color: C.muted, fontSize: fontSize.sm, fontWeight: '700' },
   breadcrumbSep: { color: C.muted, fontSize: fontSize.sm, marginHorizontal: space.xs },
@@ -743,40 +741,9 @@ const styles = StyleSheet.create({
   noData: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
   emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: space.md },
   emptyIcon: { fontSize: 48 },
-  emptyTitle: { color: C.text, fontSize: fontSize.xl, fontWeight: '900', textAlign: 'center' },
-  emptySubtitle: { color: C.muted, fontSize: fontSize.sm, textAlign: 'center', maxWidth: 400 },
 });
 
 // CSS-in-JS for non-RN elements
-const modeRow: React.CSSProperties = { display: 'flex', gap: space.sm, flexWrap: 'wrap' };
-const modeBtn: React.CSSProperties = {
-  padding: '8px 16px',
-  borderRadius: radius.md,
-  border: `1.5px solid ${colors.border}`,
-  background: colors.surface,
-  color: C.muted,
-  fontWeight: 700,
-  cursor: 'pointer',
-  fontSize: fontSize.sm,
-};
-const modeBtnActive: React.CSSProperties = { background: C.text, color: colors.surface, borderColor: C.text };
-
-const rangeRow: React.CSSProperties = { display: 'flex', gap: space.sm, flexWrap: 'wrap' };
-const rangeBtn: React.CSSProperties = {
-  padding: '7px 13px',
-  borderRadius: radius.md,
-  border: `1.5px solid ${colors.border}`,
-  background: colors.surface,
-  color: C.muted,
-  fontWeight: 700,
-  cursor: 'pointer',
-  fontSize: fontSize.xs,
-};
-const rangeBtnActive: React.CSSProperties = {
-  background: colors.primary,
-  color: colors.surface,
-  borderColor: colors.primary,
-};
 
 const pill: React.CSSProperties = {
   padding: '7px 14px',
@@ -832,16 +799,6 @@ const chartCardHeader: React.CSSProperties = {
   marginBottom: space.md,
 };
 const chartCardTitle: React.CSSProperties = { margin: 0, fontWeight: 800, fontSize: fontSize.sm, color: C.text };
-const expandBtn: React.CSSProperties = {
-  padding: '4px 10px',
-  borderRadius: radius.md,
-  border: 'none',
-  background: colors.primarySoft,
-  color: colors.primary,
-  fontWeight: 700,
-  cursor: 'pointer',
-  fontSize: fontSize.xs,
-};
 
 const insightWrap: React.CSSProperties = { width: '100%', display: 'flex', flexDirection: 'column', gap: space.md };
 const insightTitle: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, fontWeight: 800, color: C.text };

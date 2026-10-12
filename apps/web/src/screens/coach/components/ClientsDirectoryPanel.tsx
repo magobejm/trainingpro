@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { EmptyState, Select, TextField } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
@@ -12,6 +13,7 @@ type Props = {
   clientsLoading: boolean;
   objectiveFilter: string;
   onObjectiveFilterChange: (nextValue: string) => void;
+  onCreateClient?: () => void;
   onRetry: () => void;
   onSearchValueChange: (nextValue: string) => void;
   onSelectClient: (clientId: string) => void;
@@ -22,15 +24,26 @@ type Props = {
 
 export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
   const vm = useDirectoryModel(props);
-  const status = QueryResult({
-    emptyTitle: props.t('coach.clients.empty'),
-    error: props.clientsError,
-    hasActiveFilter: props.searchValue.trim().length > 0 || props.objectiveFilter !== 'ALL',
-    isError: Boolean(props.clientsError),
-    isLoading: props.clientsLoading,
-    itemCount: vm.items.length,
-    onRetry: props.onRetry,
-  });
+  const hasActiveFilter = props.searchValue.trim().length > 0 || props.objectiveFilter !== 'ALL';
+  const isEmpty = !props.clientsLoading && !props.clientsError && !hasActiveFilter && vm.items.length === 0;
+  const status = isEmpty ? (
+    <EmptyState
+      actionLabel={props.onCreateClient ? props.t('coach.clients.form.submit') : undefined}
+      message={props.t('coach.clients.emptyHint')}
+      onAction={props.onCreateClient}
+      title={props.t('coach.clients.empty')}
+    />
+  ) : (
+    QueryResult({
+      emptyTitle: props.t('coach.clients.empty'),
+      error: props.clientsError,
+      hasActiveFilter,
+      isError: Boolean(props.clientsError),
+      isLoading: props.clientsLoading,
+      itemCount: vm.items.length,
+      onRetry: props.onRetry,
+    })
+  );
   if (status) {
     return (
       <View>
@@ -118,10 +131,10 @@ function SearchInput(props: {
   value: string;
 }): React.JSX.Element {
   return (
-    <TextInput
+    <TextField
+      containerStyle={styles.searchInput}
       onChangeText={props.onChangeText}
       placeholder={props.t('coach.clients.filters.searchPlaceholder')}
-      style={styles.searchInput}
       value={props.value}
     />
   );
@@ -133,17 +146,12 @@ function ObjectiveSelect(props: {
   onChange: (nextValue: string) => void;
 }): React.JSX.Element {
   return (
-    <select
-      onChange={(event) => props.onChange(event.target.value)}
-      style={styles.objectiveFilter as React.CSSProperties}
+    <Select
+      containerStyle={styles.objectiveFilter}
+      onChange={props.onChange}
+      options={props.objectives}
       value={props.objectiveFilter}
-    >
-      {props.objectives.map((item) => (
-        <option key={item.value} value={item.value}>
-          {item.label}
-        </option>
-      ))}
-    </select>
+    />
   );
 }
 

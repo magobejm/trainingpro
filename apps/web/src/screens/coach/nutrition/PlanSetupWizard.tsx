@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { buildPlanSetupData } from './nutrition-tdee.utils';
 import type { ActivityLevel, NutritionPlanType, PlanSetupData, TdeeFormula } from './nutrition.types';
 import { styles } from './nutrition.styles';
-import { space } from '@trainerpro/ui';
+import { Button, TextField, space } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -50,17 +50,27 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
     [activityLevel, age, bodyFatPercent, carbsPct, fatPct, formula, heightCm, proteinPct, sex, targetCalories, weightKg],
   );
 
-  const canContinue = name.trim().length > 0;
+  const [submitted, setSubmitted] = useState(false);
+  const nameError = submitted && name.trim().length === 0 ? t('coach.nutrition.plans.nameRequired') : null;
+  const onContinue = (): void => {
+    setSubmitted(true);
+    if (name.trim().length === 0) return;
+    props.onComplete({ name: name.trim(), setupData: preview, type: props.planType });
+  };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{t('coach.nutrition.wizard.title')}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.wizard.generic')}</Text>
-      <Text style={styles.fieldLabel}>{t('coach.nutrition.plans.name')}</Text>
-      <TextInput onChangeText={setName} style={styles.field} value={name} />
+      <TextField
+        containerStyle={styles.fieldGap}
+        error={nameError}
+        label={t('coach.nutrition.plans.name')}
+        onChangeText={setName}
+        required
+        value={name}
+      />
       <View style={{ flexDirection: 'row', gap: space.sm }}>
         <Chip active={sex === 'male'} label={t('coach.nutrition.wizard.male')} onPress={() => setSex('male')} />
         <Chip active={sex === 'female'} label={t('coach.nutrition.wizard.female')} onPress={() => setSex('female')} />
@@ -112,13 +122,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
           })}
         </Text>
       </View>
-      <Pressable
-        disabled={!canContinue}
-        onPress={() => props.onComplete({ name: name.trim(), setupData: preview, type: props.planType })}
-        style={[styles.ctaButton, !canContinue && { opacity: 0.5 }]}
-      >
-        <Text style={styles.ctaLabel}>{t('coach.nutrition.wizard.continue')}</Text>
-      </Pressable>
+      <Button label={t('coach.nutrition.wizard.continue')} onPress={onContinue} style={styles.ctaButton} />
     </ScrollView>
   );
 }
@@ -138,15 +142,13 @@ function Field(props: {
   value: string;
 }): React.JSX.Element {
   return (
-    <View>
-      <Text style={styles.fieldLabel}>{props.label}</Text>
-      <TextInput
-        keyboardType={KEYBOARD_NUMERIC}
-        onChangeText={props.onChange}
-        placeholder={props.placeholder}
-        style={styles.field}
-        value={props.value}
-      />
-    </View>
+    <TextField
+      containerStyle={styles.fieldGap}
+      keyboardType={KEYBOARD_NUMERIC}
+      label={props.label}
+      onChangeText={props.onChange}
+      placeholder={props.placeholder}
+      value={props.value}
+    />
   );
 }

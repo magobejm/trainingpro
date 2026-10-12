@@ -3,7 +3,8 @@ import { Image, Pressable, StyleSheet, Text, View, DimensionValue } from 'react-
 import { readFrontEnv } from '../../../data/env';
 import type { CardioMethodLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { resolvePlaceholder } from './LibraryMediaViewer';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Badge, IconButton, colors, fontSize, space } from '@trainerpro/ui';
+import { Pencil, Trash2 } from 'lucide-react';
 
 type Props = {
   deleting: boolean;
@@ -31,8 +32,7 @@ function getFullUrl(url: string | null | undefined): string {
   return `${API_BASE_URL}${cleanPath}`;
 }
 
-const ICON_EDIT = '✏️';
-const ICON_DELETE = '🗑️';
+const ICON_SIZE = 16;
 const IMAGE_BLUR_RADIUS = 16;
 
 // eslint-disable-next-line max-lines-per-function
@@ -61,26 +61,23 @@ export function CardioMethodLibraryCard(props: Props): React.JSX.Element {
         </Text>
 
         <View style={styles.tagsRow}>
-          <View style={styles.tagPrimary}>
-            <Text style={styles.tagPrimaryText}>{props.item.methodType}</Text>
-          </View>
-          {props.item.equipment && (
-            <View style={styles.tagSecondary}>
-              <Text style={styles.tagSecondaryText}>{props.item.equipment}</Text>
-            </View>
-          )}
+          <Badge label={props.item.methodType} />
+          {props.item.equipment ? <Badge label={props.item.equipment} tone="primary" /> : null}
         </View>
 
         {coachOwned && (
           <View style={styles.actionsRow}>
-            <Pressable onPress={props.onEdit} style={styles.actionBtn}>
-              {/* eslint-disable-next-line no-restricted-syntax */}
-              <Text style={styles.actionIcon}>{ICON_EDIT}</Text>
-            </Pressable>
-            <Pressable onPress={props.onDelete} style={[styles.actionBtn, styles.actionDelete]}>
-              {/* eslint-disable-next-line no-restricted-syntax */}
-              <Text style={styles.actionIcon}>{ICON_DELETE}</Text>
-            </Pressable>
+            <IconButton
+              accessibilityLabel={props.t('coach.library.exercises.actions.edit')}
+              icon={(color) => <Pencil color={color} size={ICON_SIZE} />}
+              onPress={props.onEdit}
+            />
+            <IconButton
+              accessibilityLabel={props.t('coach.library.exercises.actions.delete')}
+              icon={(color) => <Trash2 color={color} size={ICON_SIZE} />}
+              onPress={props.onDelete}
+              tone="danger"
+            />
           </View>
         )}
       </View>
@@ -132,43 +129,10 @@ const styles = StyleSheet.create({
     gap: space.sm,
     flexWrap: 'wrap',
   },
-  tagPrimary: {
-    backgroundColor: colors.primaryBorder,
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-  },
-  tagPrimaryText: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  tagSecondary: {
-    backgroundColor: '#f3e8ff',
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-  },
-  tagSecondaryText: {
-    color: '#9333ea',
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     gap: space.md,
     marginTop: space.sm,
-  },
-  actionBtn: {
-    backgroundColor: colors.background,
-    padding: space.sm,
-    borderRadius: radius.md,
-  },
-  actionDelete: {
-    backgroundColor: colors.dangerSoft,
-  },
-  actionIcon: {
-    fontSize: fontSize.sm,
   },
 });

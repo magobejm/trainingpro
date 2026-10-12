@@ -27,16 +27,6 @@ export const avatarStyles = {
     fontWeight: '700',
     lineHeight: 38,
   },
-  headerAvatar: {
-    borderRadius: 40,
-    height: 180,
-    width: 180,
-  },
-  avatarCarousel: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.sm,
-  },
   avatarOption: {
     borderColor: colors.border,
     borderRadius: radius.lg,

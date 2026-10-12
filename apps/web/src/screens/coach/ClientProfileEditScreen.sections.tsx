@@ -1,9 +1,5 @@
 import React from 'react';
-import {
-  photoThumbImageHoverStyle,
-  photoThumbImageStyle,
-  ICON_ARCHIVE,
-} from './ClientProfileEditScreen.utils';
+import { photoThumbImageHoverStyle, photoThumbImageStyle, ICON_ARCHIVE } from './ClientProfileEditScreen.utils';
 
 export function buildArchiveBadgeText(label: string, count: number): string {
   return `${ICON_ARCHIVE} ${label} (${count})`;

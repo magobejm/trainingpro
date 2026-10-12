@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import {
   useCreatePlanMutation,
   useNutritionMealsQuery,
@@ -10,6 +10,7 @@ import {
 import type { FreePlanContent, FreePlanItem, PlanSetupData } from './nutrition.types';
 import { FREE_PLAN_COLUMNS } from './nutrition.types';
 import { styles } from './nutrition.styles';
+import { Button, useToast } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -26,6 +27,8 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
   const createMutation = useCreatePlanMutation();
   const updateMutation = useUpdatePlanMutation();
   const [content, setContent] = useState<FreePlanContent>(emptyContent());
+  const toast = useToast();
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
     if (!props.planId) return;
@@ -38,9 +41,7 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.container} horizontal>
       <View style={{ minWidth: 900 }}>
-        <Pressable onPress={props.onBack} style={styles.backButton}>
-          <Text style={styles.backLabel}>{t('common.back')}</Text>
-        </Pressable>
+        <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
         <Text style={styles.headerTitle}>{props.planName}</Text>
         <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildFree.subtitle')}</Text>
         <ScrollView horizontal contentContainerStyle={styles.horizontalScroll}>
@@ -56,26 +57,28 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
                 .filter((meal) => meal.category === column)
                 .slice(0, 3)
                 .map((meal) => (
-                  <Pressable
+                  <Button
                     key={meal.id}
+                    label={t('coach.nutrition.meals.addButton', { name: meal.name })}
                     onPress={() => addMeal(content, setContent, column, meal.id, meal.name)}
-                    style={styles.secondaryButton}
-                  >
-                    <Text style={styles.secondaryLabel}>{t('coach.nutrition.meals.addButton', { name: meal.name })}</Text>
-                  </Pressable>
+                    size="sm"
+                    style={styles.addButton}
+                    variant="secondary"
+                  />
                 ))}
             </View>
           ))}
         </ScrollView>
-        <Pressable
-          disabled={createMutation.isPending || updateMutation.isPending}
-          onPress={() => void savePlan(props, content, createMutation, updateMutation)}
+        <Button
+          label={saving ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
+          loading={saving}
+          onPress={() =>
+            void savePlan(props, content, createMutation, updateMutation).then(() =>
+              toast.success(t('coach.nutrition.plans.savedToast')),
+            )
+          }
           style={styles.ctaButton}
-        >
-          <Text style={styles.ctaLabel}>
-            {createMutation.isPending || updateMutation.isPending ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
-          </Text>
-        </Pressable>
+        />
       </View>
     </ScrollView>
   );

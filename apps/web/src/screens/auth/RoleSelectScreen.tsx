@@ -5,7 +5,7 @@ import '../../i18n';
 import type { ActiveRole } from '../../data/api-client';
 import { useMeQuery } from '../../data/hooks/useMeQuery';
 import { useAuthStore } from '../../store/auth.store';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
   accent: colors.primary,
@@ -52,13 +52,13 @@ function RoleSelectCard(props: RoleSelectCardProps): React.JSX.Element {
 
 function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
   if (props.isLoading) {
-    return <Text style={styles.empty}>{props.t('auth.roleSelect.loading')}</Text>;
+    return <EmptyState title={props.t('auth.roleSelect.loading')} />;
   }
   if (props.hasError) {
-    return <Text style={styles.empty}>{props.t('auth.roleSelect.error')}</Text>;
+    return <EmptyState title={props.t('auth.roleSelect.error')} />;
   }
   if (!props.hasRoles) {
-    return <Text style={styles.empty}>{props.t('auth.roleSelect.empty')}</Text>;
+    return <EmptyState title={props.t('auth.roleSelect.empty')} />;
   }
   return (
     <View style={styles.list}>
@@ -104,10 +104,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: space.xl,
     width: 460,
-  },
-  empty: {
-    color: COLORS.muted,
-    fontSize: fontSize.sm,
   },
   list: {
     gap: space.md,

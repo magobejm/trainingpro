@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { LIST_KEYS } from '../../../layout/list-context';
 import { useListContext } from '../../../layout/useListContext';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
 import { useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
 import { BuildFreePlanScreen } from './BuildFreePlanScreen';
@@ -18,6 +18,7 @@ import { readSetupData } from './nutrition-tdee.utils';
 import type { NutritionPlanType, PlanSetupData } from './nutrition.types';
 import { ConsiderationBadges } from './ConsiderationBadges';
 import { styles } from './nutrition.styles';
+import { Button } from '@trainerpro/ui';
 
 type ViewState =
   | 'buildFree'
@@ -188,9 +189,13 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
     const food = props.foodsQuery.data?.find((item) => item.id === props.selectedFoodId);
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        <Pressable onPress={props.onBackToHub} style={styles.backButton}>
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
+        <Button
+          label={props.t('common.back')}
+          onPress={props.onBackToHub}
+          size="sm"
+          style={styles.backButton}
+          variant="secondary"
+        />
         <Text style={styles.headerTitle}>{food?.name ?? props.t('coach.nutrition.food.notFound')}</Text>
         {food ? (
           <View style={styles.card}>

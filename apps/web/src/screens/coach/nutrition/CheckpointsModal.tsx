@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useCreateCheckpointMutation, useNutritionCheckpointsQuery } from '../../../data/hooks/useNutrition';
 import type { NutritionPlan } from './nutrition.types';
 import { styles } from './nutrition.styles';
-import { space } from '@trainerpro/ui';
+import { Button, EmptyState, Modal, TextField, useToast } from '@trainerpro/ui';
 
 type Props = {
   onClose: () => void;
@@ -17,54 +17,50 @@ export function CheckpointsModal(props: Props): React.JSX.Element | null {
   const checkpointsQuery = useNutritionCheckpointsQuery(props.plan.id);
   const createMutation = useCreateCheckpointMutation();
   const [note, setNote] = useState('');
+  const toast = useToast();
 
   if (!props.visible) return null;
 
   const checkpoints = checkpointsQuery.data ?? [];
 
+  const onCreate = (): void =>
+    void createMutation
+      .mutateAsync({
+        planId: props.plan.id,
+        payload: {
+          content: props.plan.content,
+          note: note.trim() || null,
+          planName: props.plan.name,
+          setupData: props.plan.setupData,
+        },
+      })
+      .then(() => {
+        setNote('');
+        toast.success(t('coach.nutrition.checkpoints.created'));
+      });
+
   return (
-    <View style={styles.modalBackdrop}>
-      <View style={styles.modalCard}>
-        <View style={styles.rowBetween}>
-          <Text style={styles.headerTitle}>{t('coach.nutrition.checkpoints.title')}</Text>
-          <Pressable onPress={props.onClose}>
-            <Text style={styles.backLabel}>{t('common.close')}</Text>
-          </Pressable>
+    <Modal
+      closeLabel={t('common.close')}
+      footer={
+        <Button label={t('coach.nutrition.checkpoints.create')} loading={createMutation.isPending} onPress={onCreate} />
+      }
+      onClose={props.onClose}
+      size="md"
+      title={t('coach.nutrition.checkpoints.title')}
+      visible={props.visible}
+    >
+      <TextField label={t('coach.nutrition.checkpoints.note')} multiline onChangeText={setNote} value={note} />
+      {checkpointsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {checkpoints.length === 0 && !checkpointsQuery.isLoading ? (
+        <EmptyState title={t('coach.nutrition.checkpoints.empty')} />
+      ) : null}
+      {checkpoints.map((checkpoint) => (
+        <View key={checkpoint.id} style={styles.listItem}>
+          <Text style={styles.cardTitle}>{new Date(checkpoint.createdAt).toLocaleDateString()}</Text>
+          {checkpoint.note ? <Text style={styles.cardMuted}>{checkpoint.note}</Text> : null}
         </View>
-        <Text style={styles.fieldLabel}>{t('coach.nutrition.checkpoints.note')}</Text>
-        <TextInput multiline onChangeText={setNote} style={styles.field} value={note} />
-        <Pressable
-          disabled={createMutation.isPending}
-          onPress={() =>
-            void createMutation
-              .mutateAsync({
-                planId: props.plan.id,
-                payload: {
-                  content: props.plan.content,
-                  note: note.trim() || null,
-                  planName: props.plan.name,
-                  setupData: props.plan.setupData,
-                },
-              })
-              .then(() => setNote(''))
-          }
-          style={styles.ctaButton}
-        >
-          <Text style={styles.ctaLabel}>{t('coach.nutrition.checkpoints.create')}</Text>
-        </Pressable>
-        <ScrollView style={{ marginTop: space.md, maxHeight: 280 }}>
-          {checkpointsQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
-          {checkpoints.length === 0 && !checkpointsQuery.isLoading ? (
-            <Text style={styles.empty}>{t('coach.nutrition.checkpoints.empty')}</Text>
-          ) : null}
-          {checkpoints.map((checkpoint) => (
-            <View key={checkpoint.id} style={styles.listItem}>
-              <Text style={styles.cardTitle}>{new Date(checkpoint.createdAt).toLocaleDateString()}</Text>
-              {checkpoint.note ? <Text style={styles.cardMuted}>{checkpoint.note}</Text> : null}
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-    </View>
+      ))}
+    </Modal>
   );
 }

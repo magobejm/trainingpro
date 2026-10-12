@@ -1,11 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { usePerformedTemplatesQuery } from '../../../data/hooks/usePerformedTemplatesQuery';
 import { usePerformedSessionDaysQuery } from '../../../data/hooks/usePerformedSessionDaysQuery';
 import { useClientRoutineDaysQuery } from '../../../data/hooks/useCalendarQuery';
 import type { SessionProgressCategory } from '../../../data/types/session-progress';
 import type { PerformedSessionDay } from '../../../data/hooks/usePerformedSessionDaysQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   clientId: string | null;
@@ -148,7 +148,6 @@ export function ProgressRoutineFilter({
 }: Props) {
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const performedQuery = usePerformedTemplatesQuery(
     { clientId: clientId ?? undefined, from, to },
@@ -217,14 +216,12 @@ export function ProgressRoutineFilter({
   return (
     <div style={filterBlock}>
       <div style={{ position: 'relative' }}>
-        <input
-          ref={inputRef}
-          style={searchInput}
+        <TextField
+          onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
+          onChangeText={handleInputChange}
+          onFocus={() => setDropdownOpen(true)}
           placeholder={t('coach.progress.filter.routine.placeholder')}
           value={search}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => setDropdownOpen(true)}
-          onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
         />
         {dropdownOpen && (
           <div style={dropdownContainer}>
@@ -307,16 +304,6 @@ const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'colu
 const secondaryBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.sm };
 const secondaryLabel: React.CSSProperties = { margin: 0, fontSize: fontSize.xs, fontWeight: 800, color: colors.textMuted };
 const muted: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted };
-const searchInput: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: radius.lg,
-  border: `1.5px solid ${colors.border}`,
-  fontSize: fontSize.sm,
-  color: colors.text,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
 const dropdownContainer: React.CSSProperties = {
   position: 'absolute',
   top: 'calc(100% + 4px)',

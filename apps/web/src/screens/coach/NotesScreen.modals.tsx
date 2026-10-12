@@ -1,16 +1,17 @@
 import React from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
-import { Check, Pencil } from 'lucide-react';
+import { Text, View } from 'react-native';
+import { Check } from 'lucide-react';
 import type { NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Modal, TextField, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
-const ICON_CLOSE = '✕' as const;
-const MODAL_ANIMATION = 'fade' as const;
-const COLOR_WHITE = tk.surface;
+const MODAL_SIZE = 'md' as const;
+const MODAL_SIZE_SM = 'sm' as const;
+const VARIANT_SECONDARY = 'secondary' as const;
+const VARIANT_DANGER = 'danger' as const;
+const EDITOR_LINES = 10;
 
 const colors = {
-  primary: tk.primary,
   text: tk.text,
   textMuted: tk.textMuted,
 };
@@ -22,44 +23,28 @@ export type EditNoteModalProps = {
   editContent: string;
   setEditContent: (v: string) => void;
   onClose: () => void;
+  isSaving?: boolean;
   onSave: () => void;
   t: TFunc;
 };
 
 export function EditNoteModal(props: EditNoteModalProps): React.JSX.Element {
   return (
-    <Modal animationType={MODAL_ANIMATION} visible={Boolean(props.editingNote)} transparent>
-      <View style={modalOverlayStyle}>
-        <View style={modalCardStyle}>
-          <EditNoteModalHeader onClose={props.onClose} t={props.t} />
-          <EditNoteModalBody
-            editContent={props.editContent}
-            editingNote={props.editingNote}
-            setEditContent={props.setEditContent}
-            t={props.t}
-          />
-          <EditNoteModalFooter onClose={props.onClose} onSave={props.onSave} t={props.t} />
-        </View>
-      </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={<EditNoteModalFooter isSaving={props.isSaving} onClose={props.onClose} onSave={props.onSave} t={props.t} />}
+      onClose={props.onClose}
+      size={MODAL_SIZE}
+      title={props.t('coach.notes.edit.title')}
+      visible={Boolean(props.editingNote)}
+    >
+      <EditNoteModalBody
+        editContent={props.editContent}
+        editingNote={props.editingNote}
+        setEditContent={props.setEditContent}
+        t={props.t}
+      />
     </Modal>
-  );
-}
-
-function EditNoteModalHeader(props: { onClose: () => void; t: TFunc }): React.JSX.Element {
-  return (
-    <View style={modalHeaderStyle}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-        <View style={{ marginRight: space.md }}>
-          <Pencil color={colors.primary} size={22} strokeWidth={2} />
-        </View>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text }}>
-          {props.t('coach.notes.edit.title')}
-        </Text>
-      </View>
-      <Pressable onPress={props.onClose} hitSlop={8}>
-        <Text style={{ fontSize: fontSize.xl, color: colors.textMuted }}>{ICON_CLOSE}</Text>
-      </Pressable>
-    </View>
   );
 }
 
@@ -70,9 +55,15 @@ function EditNoteModalBody(props: {
   t: TFunc;
 }): React.JSX.Element {
   return (
-    <View style={{ padding: space.xl }}>
+    <View>
       <EditNoteMetaBadge editingNote={props.editingNote} t={props.t} />
-      <TextInput value={props.editContent} onChangeText={props.setEditContent} multiline style={editorInputStyle} />
+      <TextField
+        accessibilityLabel={props.t('coach.notes.edit.title')}
+        multiline
+        numberOfLines={EDITOR_LINES}
+        onChangeText={props.setEditContent}
+        value={props.editContent}
+      />
     </View>
   );
 }
@@ -105,23 +96,27 @@ function readEditBadgeLabel(note: NoteData, t: TFunc): string {
   });
 }
 
-function EditNoteModalFooter(props: { onClose: () => void; onSave: () => void; t: TFunc }): React.JSX.Element {
+function EditNoteModalFooter(props: {
+  isSaving?: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  t: TFunc;
+}): React.JSX.Element {
   return (
-    <View style={modalFooterStyle}>
-      <Pressable onPress={props.onClose} style={cancelButtonStyle}>
-        <Text style={{ fontWeight: 'bold', color: colors.text }}>{props.t('common.cancel')}</Text>
-      </Pressable>
-      <Pressable onPress={props.onSave} style={saveButtonStyle}>
-        <View style={{ marginRight: space.sm }}>
-          <Check color={COLOR_WHITE} size={18} strokeWidth={2.5} />
-        </View>
-        <Text style={{ color: COLOR_WHITE, fontWeight: 'bold' }}>{props.t('coach.notes.edit.finish')}</Text>
-      </Pressable>
-    </View>
+    <>
+      <Button label={props.t('common.cancel')} onPress={props.onClose} variant={VARIANT_SECONDARY} />
+      <Button
+        icon={<Check color={tk.onPrimary} size={18} strokeWidth={2.5} />}
+        label={props.t('coach.notes.edit.finish')}
+        loading={props.isSaving}
+        onPress={props.onSave}
+      />
+    </>
   );
 }
 
 export type DeleteConfirmModalProps = {
+  isDeleting?: boolean;
   note: NoteData | null;
   onCancel: () => void;
   onConfirm: () => void;
@@ -130,63 +125,28 @@ export type DeleteConfirmModalProps = {
 
 export function DeleteConfirmModal(props: DeleteConfirmModalProps): React.JSX.Element {
   return (
-    <Modal animationType={MODAL_ANIMATION} visible={!!props.note} transparent>
-      <View style={modalOverlayStyle}>
-        <View style={deleteModalCardStyle}>
-          <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text, marginBottom: space.lg }}>
-            {props.t('coach.notes.delete.title')}
-          </Text>
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: space.xl }}>
-            {props.t('coach.notes.delete.confirm')}
-          </Text>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end' }}>
-            <Pressable onPress={props.onCancel} style={deleteCancelButtonStyle}>
-              <Text style={{ fontWeight: 'bold', color: colors.textMuted }}>{props.t('common.cancel')}</Text>
-            </Pressable>
-            <Pressable onPress={props.onConfirm} style={deleteConfirmButtonStyle}>
-              <Text style={{ color: COLOR_WHITE, fontWeight: 'bold' }}>{props.t('coach.notes.delete.action')}</Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('common.cancel')} onPress={props.onCancel} variant={VARIANT_SECONDARY} />
+          <Button
+            label={props.t('coach.notes.delete.action')}
+            loading={props.isDeleting}
+            onPress={props.onConfirm}
+            variant={VARIANT_DANGER}
+          />
+        </>
+      }
+      onClose={props.onCancel}
+      size={MODAL_SIZE_SM}
+      title={props.t('coach.notes.delete.title')}
+      visible={!!props.note}
+    >
+      <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{props.t('coach.notes.delete.confirm')}</Text>
     </Modal>
   );
 }
-
-const modalOverlayStyle = {
-  flex: 1,
-  backgroundColor: 'rgba(0,0,0,0.5)',
-  justifyContent: 'center' as const,
-  alignItems: 'center' as const,
-  padding: space.xl,
-};
-
-const modalCardStyle = {
-  backgroundColor: 'white',
-  borderRadius: 24,
-  width: '100%' as const,
-  maxWidth: 600,
-  maxHeight: '80%' as unknown as number,
-};
-
-const modalHeaderStyle = {
-  padding: space.xl,
-  borderBottomWidth: 1,
-  borderColor: tk.border,
-  flexDirection: 'row' as const,
-  justifyContent: 'space-between' as const,
-  alignItems: 'center' as const,
-};
-
-const editorInputStyle = {
-  backgroundColor: tk.surfaceMuted,
-  borderWidth: 1,
-  borderColor: tk.primaryBorder,
-  borderRadius: radius.lg,
-  padding: space.lg,
-  minHeight: 250,
-  fontSize: fontSize.md,
-};
 
 const noteBadgeRowStyle = {
   flexDirection: 'row' as const,
@@ -212,51 +172,3 @@ function noteBadgeTextStyle(type: NoteData['type']) {
     color: type === 'general' ? tk.primary : tk.success,
   };
 }
-
-const modalFooterStyle = {
-  padding: space.xl,
-  borderTopWidth: 1,
-  borderColor: tk.border,
-  backgroundColor: tk.surfaceMuted,
-  flexDirection: 'row' as const,
-  justifyContent: 'flex-end' as const,
-  alignItems: 'center' as const,
-};
-
-const cancelButtonStyle = {
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
-  marginRight: space.sm,
-};
-
-const saveButtonStyle = {
-  backgroundColor: colors.primary,
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
-  flexDirection: 'row' as const,
-  alignItems: 'center' as const,
-};
-
-const deleteModalCardStyle = {
-  backgroundColor: 'white',
-  borderRadius: 24,
-  width: '100%' as const,
-  maxWidth: 400,
-  padding: space.xl,
-};
-
-const deleteCancelButtonStyle = {
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
-  marginRight: space.md,
-};
-
-const deleteConfirmButtonStyle = {
-  backgroundColor: tk.danger,
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
-};

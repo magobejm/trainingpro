@@ -1,10 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useDeleteMealMutation, useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
 import { ConsiderationBadges } from './ConsiderationBadges';
 import { styles } from './nutrition.styles';
-import { colors } from '@trainerpro/ui';
+import { Button, EmptyState, useToast } from '@trainerpro/ui';
 
 type Props = {
   mealId: string;
@@ -15,18 +15,17 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const mealsQuery = useNutritionMealsQuery();
   const deleteMutation = useDeleteMealMutation();
+  const toast = useToast();
   const meal = mealsQuery.data?.find((item) => item.id === props.mealId);
 
   if (mealsQuery.isLoading) {
-    return <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text>;
+    return <EmptyState title={t('coach.nutrition.loading')} />;
   }
   if (!meal) {
     return (
       <View style={styles.container}>
-        <Pressable onPress={props.onBack} style={styles.backButton}>
-          <Text style={styles.backLabel}>{t('common.back')}</Text>
-        </Pressable>
-        <Text style={styles.empty}>{t('coach.nutrition.meals.notFound')}</Text>
+        <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+        <EmptyState title={t('coach.nutrition.meals.notFound')} />
       </View>
     );
   }
@@ -46,9 +45,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{meal.name}</Text>
       <Text style={styles.cardMuted}>
         {t(`coach.nutrition.categories.${meal.category}`, { defaultValue: meal.category })}
@@ -80,13 +77,13 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
           <Text style={styles.cardMuted}>{t('coach.nutrition.meals.amountGrams', { grams: item.amountGrams })}</Text>
         </View>
       ))}
-      <Pressable
-        disabled={deleteMutation.isPending}
-        onPress={() => void deleteMeal(props, deleteMutation)}
-        style={[styles.secondaryButton, { backgroundColor: colors.dangerSoft }]}
-      >
-        <Text style={[styles.secondaryLabel, { color: colors.danger }]}>{t('coach.nutrition.delete')}</Text>
-      </Pressable>
+      <Button
+        label={t('coach.nutrition.delete')}
+        loading={deleteMutation.isPending}
+        onPress={() => void deleteMeal(props, deleteMutation).then(() => toast.success(t('coach.nutrition.meals.deleted')))}
+        style={styles.deleteButton}
+        variant="danger"
+      />
     </ScrollView>
   );
 }

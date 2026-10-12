@@ -1,5 +1,6 @@
 import React from 'react';
-import { Modal, Pressable, Text, TextInput, View } from 'react-native';
+import { Text } from 'react-native';
+import { Button, Modal, TextField } from '@trainerpro/ui';
 import { styles } from './ClientProfileNoteModal.styles';
 
 type Props = {
@@ -17,30 +18,24 @@ export function ClientProfileNoteModal(props: Props): React.JSX.Element {
   const canDelete = canDeleteNote(props.draft);
   return (
     <Modal
-      animationType={MODAL_ANIMATION}
-      onRequestClose={props.onClose}
-      transparent
+      closeLabel={props.t('common.close')}
+      footer={<ModalActions canDelete={canDelete} {...props} />}
+      onClose={props.onClose}
+      size="md"
+      title={props.t('coach.clientProfile.note.title')}
       visible={props.visible}
     >
-      <View style={styles.backdrop}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{props.t('coach.clientProfile.note.title')}</Text>
-          <Text style={styles.subtitle}>{props.t('coach.clientProfile.note.subtitle')}</Text>
-          <TextInput
-            multiline
-            onChangeText={props.onChange}
-            placeholder={props.t('coach.clientProfile.note.placeholder')}
-            style={styles.input}
-            value={props.draft}
-          />
-          <ModalActions canDelete={canDelete} {...props} />
-        </View>
-      </View>
+      <Text style={styles.subtitle}>{props.t('coach.clientProfile.note.subtitle')}</Text>
+      <TextField
+        accessibilityLabel={props.t('coach.clientProfile.note.title')}
+        multiline
+        onChangeText={props.onChange}
+        placeholder={props.t('coach.clientProfile.note.placeholder')}
+        value={props.draft}
+      />
     </Modal>
   );
 }
-
-const MODAL_ANIMATION = 'fade' as const;
 
 function canDeleteNote(draft: string): boolean {
   return draft.trim().length > 0;
@@ -53,24 +48,15 @@ function ModalActions(
 ): React.JSX.Element {
   const isDeleteDisabled = !props.canDelete || props.isSaving;
   return (
-    <View style={styles.actions}>
-      <Pressable onPress={props.onClose} style={[styles.btn, styles.btnCancel]}>
-        <Text style={styles.textCancel}>{props.t('coach.clientProfile.edit.cancel')}</Text>
-      </Pressable>
-      <Pressable
+    <>
+      <Button label={props.t('coach.clientProfile.edit.cancel')} onPress={props.onClose} variant="secondary" />
+      <Button
         disabled={isDeleteDisabled}
+        label={props.t('coach.clientProfile.note.delete')}
         onPress={props.onDelete}
-        style={[styles.btn, styles.btnDelete, isDeleteDisabled && styles.btnDisabled]}
-      >
-        <Text style={styles.textDelete}>{props.t('coach.clientProfile.note.delete')}</Text>
-      </Pressable>
-      <Pressable
-        disabled={props.isSaving}
-        onPress={props.onSave}
-        style={[styles.btn, styles.btnSave, props.isSaving && styles.btnDisabled]}
-      >
-        <Text style={styles.textSave}>{props.t('coach.clientProfile.note.save')}</Text>
-      </Pressable>
-    </View>
+        variant="danger"
+      />
+      <Button loading={props.isSaving} label={props.t('coach.clientProfile.note.save')} onPress={props.onSave} />
+    </>
   );
 }

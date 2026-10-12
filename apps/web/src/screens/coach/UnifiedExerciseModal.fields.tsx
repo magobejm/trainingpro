@@ -1,17 +1,22 @@
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text } from 'react-native';
 import { FormSelect } from './components/UnifiedExerciseFormSelect';
 import { MuscleMultiSelect } from './components/MuscleMultiSelect';
 import { styles } from './UnifiedExerciseModal.styles';
 import { EquipmentProps, CatFieldsProps, DescProps, BioProps } from './UnifiedExerciseModal.components';
-import { space } from '@trainerpro/ui';
+import { TextField, space } from '@trainerpro/ui';
 
 export function EquipmentSection({ equipmentId, options, onChange, onFocus, t, style }: EquipmentProps) {
   return (
     <View style={[styles.cardContainer, style]}>
       <View style={styles.fieldSection}>
-        <Text style={styles.label}>{t('coach.library.fields.equipmentLabel')}</Text>
-        <FormSelect options={options} value={equipmentId} onSelect={onChange} onFocus={onFocus} />
+        <FormSelect
+          label={t('coach.library.fields.equipmentLabel')}
+          options={options}
+          value={equipmentId}
+          onSelect={onChange}
+          onFocus={onFocus}
+        />
       </View>
     </View>
   );
@@ -39,8 +44,8 @@ function CardioPlioFields({ props }: { props: CatFieldsProps }) {
   if (formState.category === 'cardio') {
     return (
       <>
-        <Text style={styles.label}>{t('coach.library.fields.cardioTypeLabel')}</Text>
         <FormSelect
+          label={t('coach.library.fields.cardioTypeLabel')}
           options={mappedCatalogs.cardioTypes || []}
           value={formState.cardioTypeId}
           onSelect={(v) => handleChange('cardioTypeId', v)}
@@ -51,8 +56,8 @@ function CardioPlioFields({ props }: { props: CatFieldsProps }) {
   }
   return (
     <>
-      <Text style={styles.label}>{t('coach.library.fields.plioTypeLabel')}</Text>
       <FormSelect
+        label={t('coach.library.fields.plioTypeLabel')}
         options={mappedCatalogs.plioTypes || []}
         value={formState.plioTypeId}
         onSelect={(v) => handleChange('plioTypeId', v)}
@@ -67,8 +72,8 @@ function WarmupSportFields({ props }: { props: CatFieldsProps }) {
   if (formState.category === 'warmup') {
     return (
       <>
-        <Text style={styles.label}>{t('coach.library.fields.mobilityTypeLabel')}</Text>
         <FormSelect
+          label={t('coach.library.fields.mobilityTypeLabel')}
           options={mappedCatalogs.mobilityTypes || []}
           value={formState.mobilityTypeId}
           onSelect={(v) => handleChange('mobilityTypeId', v)}
@@ -79,8 +84,8 @@ function WarmupSportFields({ props }: { props: CatFieldsProps }) {
   }
   return (
     <>
-      <Text style={styles.label}>{t('coach.library.fields.sportTypeLabel')}</Text>
       <FormSelect
+        label={t('coach.library.fields.sportTypeLabel')}
         options={mappedCatalogs.sportTypes || []}
         value={formState.sportTypeId}
         onSelect={(v) => handleChange('sportTypeId', v)}
@@ -94,8 +99,8 @@ function IsometricFields({ props }: { props: CatFieldsProps }) {
   const { formState, mappedCatalogs, handleChange, onFocus, t } = props;
   return (
     <>
-      <Text style={styles.label}>{t('coach.library.fields.isometricTypeLabel')}</Text>
       <FormSelect
+        label={t('coach.library.fields.isometricTypeLabel')}
         options={mappedCatalogs.isometricTypes || []}
         value={formState.isometricTypeId}
         onSelect={(v) => handleChange('isometricTypeId', v)}
@@ -122,9 +127,8 @@ export function DescriptionSection({ instructions, coachInstructions, onChange, 
     <View style={[styles.cardContainer, style]}>
       <View style={styles.row}>
         <View style={[{ flex: 1, marginRight: space.md }]}>
-          <Text style={styles.label}>{t('coach.library.fields.descriptionLabel')}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
+          <TextField
+            label={t('coach.library.fields.descriptionLabel')}
             placeholder={t('coach.library.fields.descriptionPlaceholder')}
             multiline
             numberOfLines={6}
@@ -134,9 +138,8 @@ export function DescriptionSection({ instructions, coachInstructions, onChange, 
           />
         </View>
         <View style={[{ flex: 1, marginLeft: space.md }]}>
-          <Text style={styles.label}>{t('coach.library.fields.coachInstructionsLabel')}</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
+          <TextField
+            label={t('coach.library.fields.coachInstructionsLabel')}
             placeholder={t('coach.library.fields.coachInstructionsPlaceholder')}
             multiline
             numberOfLines={6}
@@ -163,8 +166,8 @@ export function BiomechanicsSection({
     <View style={[styles.cardContainer, styles.biomechBlock, style]}>
       <View style={styles.row}>
         <View style={[{ flex: 1, marginRight: space.md }]}>
-          <Text style={styles.label}>{t('coach.library.fields.movementPatternLabel')}</Text>
           <FormSelect
+            label={t('coach.library.fields.movementPatternLabel')}
             options={mappedCatalogs.movementPatterns || []}
             value={movementPatternId}
             onSelect={(v) => onChange('movementPatternId', v)}
@@ -172,8 +175,8 @@ export function BiomechanicsSection({
           />
         </View>
         <View style={[{ flex: 1, marginLeft: space.md }]}>
-          <Text style={styles.label}>{t('coach.library.fields.anatomicalPlaneLabel')}</Text>
           <FormSelect
+            label={t('coach.library.fields.anatomicalPlaneLabel')}
             options={mappedCatalogs.anatomicalPlanes || []}
             value={anatomicalPlaneId}
             onSelect={(v) => onChange('anatomicalPlaneId', v)}

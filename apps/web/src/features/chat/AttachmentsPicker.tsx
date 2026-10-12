@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { postChatUpload } from '../../data/hooks/useChat';
 import { useAuthStore } from '../../store/auth.store';
 import { acceptChatFile, CHAT_ATTACHMENT_ACCEPT } from './chat-attachment.utils';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, space } from '@trainerpro/ui';
 
 export type AttachmentDraft = {
   fileName: string;
@@ -36,9 +36,7 @@ export function AttachmentsPicker(props: Props): React.JSX.Element {
   return (
     <View style={styles.root}>
       <Text style={styles.label}>{t('coach.chat.attachments.title')}</Text>
-      <Pressable disabled={!canAttach} onPress={onPress} style={styles.button}>
-        <Text style={styles.buttonLabel}>{t('coach.chat.attachments.add')}</Text>
-      </Pressable>
+      <Button disabled={!canAttach} label={t('coach.chat.attachments.add')} loading={pending} onPress={onPress} />
     </View>
   );
 }
@@ -108,18 +106,6 @@ function pickWebFile(): Promise<File | null> {
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 40,
-  },
-  buttonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
   label: {
     color: colors.textMuted,
     fontSize: fontSize.xs,

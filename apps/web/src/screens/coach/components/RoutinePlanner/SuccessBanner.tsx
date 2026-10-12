@@ -1,30 +1,15 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { useEffect } from 'react';
+import { useToast } from '@trainerpro/ui';
 
 interface SuccessBannerProps {
   t: (k: string) => string;
 }
 
-export function SuccessBanner({ t }: SuccessBannerProps) {
-  return (
-    <View style={styles.successBanner}>
-      <Text style={styles.successText}>{t('coach.routine.saved')}</Text>
-    </View>
-  );
+/** Ya no pinta un banner: avisa con un toast al montarse (mientras `saveSuccess` es verdadero). */
+export function SuccessBanner({ t }: SuccessBannerProps): null {
+  const toast = useToast();
+  useEffect(() => {
+    toast.success(t('coach.routine.saved'));
+  }, []);
+  return null;
 }
-
-const styles = StyleSheet.create({
-  successBanner: {
-    backgroundColor: colors.successSoft,
-    borderRadius: radius.md,
-    marginBottom: space.lg,
-    padding: space.md,
-  },
-  successText: {
-    color: colors.success,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-});

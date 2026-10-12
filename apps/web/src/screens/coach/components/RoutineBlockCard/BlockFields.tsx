@@ -10,7 +10,7 @@ import { blockTypeShowsRepRange } from '../../exercise-rep-range';
 import { canUnlockSetVariable, resolveLockedFields } from '@trainerpro/shared';
 import { RoutineNumberField } from '../RoutineNumberField';
 import { ActionConfirmModal } from '../ActionConfirmModal';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { TextField as UiTextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface BlockFieldsProps {
   block: DraftBlock;
@@ -282,16 +282,14 @@ function TextField(props: {
   placeholder?: string;
 }) {
   return (
-    <View style={s.numberField}>
-      <Text style={s.numberLabel}>{props.label}</Text>
-      <TextInput
-        editable={!props.readOnly}
-        onChangeText={props.onChange}
-        placeholder={props.placeholder ?? props.label}
-        style={txtStyles.textInput}
-        value={props.value ?? ''}
-      />
-    </View>
+    <UiTextField
+      containerStyle={txtStyles.field}
+      disabled={props.readOnly}
+      label={props.label}
+      onChangeText={props.onChange}
+      placeholder={props.placeholder ?? props.label}
+      value={props.value ?? ''}
+    />
   );
 }
 
@@ -354,9 +352,5 @@ const bf = {
 };
 
 const txtStyles = {
-  textInput: {
-    ...s.numberInput,
-    minWidth: 140,
-    textAlign: 'left' as const,
-  },
+  field: { minWidth: 140 },
 };

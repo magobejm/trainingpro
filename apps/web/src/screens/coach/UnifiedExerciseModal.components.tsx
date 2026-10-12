@@ -1,11 +1,10 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput, Image, TouchableOpacity, StyleProp, ViewStyle } from 'react-native';
-import { X, UploadCloud, PlayCircle, ChevronLeft } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { SelectOption, MODAL_THEME } from './UnifiedExerciseModal.types';
+import { View, Text, Pressable, Image, StyleProp, ViewStyle } from 'react-native';
+import { X, UploadCloud, PlayCircle } from 'lucide-react';
+import { SelectOption } from './UnifiedExerciseModal.types';
 import { UnifiedExerciseFormState } from './hooks/useUnifiedExerciseForm';
 import { styles } from './UnifiedExerciseModal.styles';
-import { colors } from '@trainerpro/ui';
+import { IconButton, TextField, colors } from '@trainerpro/ui';
 
 type TFn = (key: string) => string;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -78,15 +77,6 @@ export interface BioProps {
   style?: StyleProp<ViewStyle>;
 }
 
-export interface HeaderProps {
-  isEdit: boolean;
-  onSave: () => void;
-  onClose: () => void;
-  isPending: boolean;
-  canSave: boolean;
-  t: TFn;
-}
-
 export interface ErrorBannerProps {
   message: string;
   onClose: () => void;
@@ -96,62 +86,18 @@ export interface ErrorBannerProps {
 const ICON_COLOR_DANGER = colors.danger;
 const ICON_COLOR_WHITE = colors.surface;
 
-export function CustomButton({
-  title,
-  onPress,
-  variant = 'primary',
-  loading = false,
-  disabled = false,
-}: {
-  title: string;
-  onPress: () => void;
-  variant?: 'primary' | 'outline';
-  loading?: boolean;
-  disabled?: boolean;
-}) {
-  const isPrimary = variant === 'primary';
-  const { t } = useTranslation();
-  return (
-    <TouchableOpacity
-      style={[
-        styles.btnBase,
-        isPrimary ? styles.btnPrimary : styles.btnOutline,
-        (disabled || loading) && styles.btnDisabled,
-      ]}
-      onPress={onPress}
-      disabled={disabled || loading}
-    >
-      <Text style={[styles.btnText, isPrimary ? styles.btnTextPrimary : styles.btnTextOutline]}>
-        {loading ? t('common.loading') : title}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
-export function ModalHeader({ isEdit, onSave, onClose, isPending, canSave, t }: HeaderProps) {
-  const title = isEdit ? t('coach.library.modal.editTitle') : t('coach.library.modal.createTitle');
-  const saveTitle = isEdit ? t('coach.library.actions.saveChanges') : t('coach.library.actions.createExercise');
-  return (
-    <View style={styles.header}>
-      <View style={styles.headerLeft}>
-        <Pressable onPress={onClose} style={styles.closeBtn}>
-          <ChevronLeft size={24} color={MODAL_THEME.colors.textSecondary} />
-        </Pressable>
-        <Text style={styles.title}>{title}</Text>
-      </View>
-      <CustomButton title={saveTitle} onPress={onSave} loading={isPending} disabled={!canSave} />
-    </View>
-  );
-}
-
 export function ErrorBanner({ message, t, onClose }: ErrorBannerProps) {
   return (
     <View style={styles.errorBanner}>
-      <X size={16} color={MODAL_THEME.colors.danger} />
+      <X size={16} color={ICON_COLOR_DANGER} />
       <Text style={styles.errorText}>{t(message)}</Text>
-      <TouchableOpacity onPress={onClose} style={styles.errorClose}>
-        <X size={14} color={ICON_COLOR_DANGER} />
-      </TouchableOpacity>
+      <IconButton
+        accessibilityLabel={t('common.close')}
+        icon={(color) => <X size={14} color={color} />}
+        onPress={onClose}
+        size={28}
+        tone="danger"
+      />
     </View>
   );
 }
@@ -171,7 +117,7 @@ function ImagePreview({ uri, mediaHelp, t }: { uri?: string | null; mediaHelp: s
   return (
     <>
       <View style={styles.mediaUploadIconWrapper}>
-        <UploadCloud size={28} color={MODAL_THEME.colors.primary} />
+        <UploadCloud size={28} color={colors.primary} />
       </View>
       <Text style={styles.mediaUploadTitle}>{t('common.uploadOrSelect')}</Text>
       <Text style={styles.mediaHelp}>{mediaHelp}</Text>
@@ -260,9 +206,8 @@ function MediaVideoSection({
   return (
     <View style={styles.cardContainer}>
       <View style={styles.fieldSection}>
-        <Text style={styles.label}>{t('coach.library.fields.videoLabel')}</Text>
-        <TextInput
-          style={styles.input}
+        <TextField
+          label={t('coach.library.fields.videoLabel')}
           placeholder={t('coach.library.fields.videoPlaceholder')}
           value={(formState.youtubeUrl as string) || ''}
           onChangeText={(v) => handleChange('youtubeUrl', v)}

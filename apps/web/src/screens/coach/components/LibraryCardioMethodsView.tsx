@@ -1,6 +1,6 @@
 import React from 'react';
-import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
-import { DimensionValue, ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { Button, colors, EmptyState, FilterChips, fontSize, SearchBar, space } from '@trainerpro/ui';
+import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { CardioMethodLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { libraryStyles as styles } from '../library-screen.styles';
@@ -96,9 +96,7 @@ function TopBar(props: Props): React.JSX.Element {
             value={props.query}
           />
         </View>
-        <Pressable onPress={props.onOpenCreateModal} style={topBarStyles.createBtn}>
-          <Text style={topBarStyles.createBtnText}>{props.t('coach.library.actions.create')}</Text>
-        </Pressable>
+        <Button label={props.t('coach.library.actions.create')} onPress={props.onOpenCreateModal} />
       </View>
     </View>
   );
@@ -128,17 +126,6 @@ const topBarStyles = StyleSheet.create({
   },
   searchWrapper: {
     width: 320,
-  },
-  createBtn: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.md,
-    borderRadius: radius.lg,
-  },
-  createBtnText: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
   },
 });
 
@@ -179,10 +166,21 @@ function EditModal(props: Props): React.JSX.Element {
 }
 
 function renderList(props: Props): React.JSX.Element {
+  const filtered = props.query.trim().length > 0 || props.activeFilter !== 'all';
+  if (!props.listLoading && !props.listFailed && props.items.length === 0 && !filtered) {
+    return (
+      <EmptyState
+        actionLabel={props.t('coach.library.actions.create')}
+        message={props.t('coach.library.emptyHint')}
+        onAction={props.onOpenCreateModal}
+        title={props.t('coach.library.empty')}
+      />
+    );
+  }
   const status = QueryResult({
     emptyTitle: props.t('coach.library.empty'),
     error: props.listError,
-    hasActiveFilter: props.query.trim().length > 0 || props.activeFilter !== 'all',
+    hasActiveFilter: filtered,
     isError: props.listFailed,
     isLoading: props.listLoading,
     itemCount: props.items.length,

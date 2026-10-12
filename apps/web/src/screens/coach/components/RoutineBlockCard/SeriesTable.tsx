@@ -400,7 +400,6 @@ function SelectCell({
         color: value ? colors.text : colors.textMuted,
         width: '100%',
         cursor: readOnly ? 'default' : 'pointer',
-        outline: 'none',
         appearance: 'auto',
       },
     },

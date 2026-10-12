@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { ExerciseLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { LibraryMediaViewer } from './LibraryMediaViewer';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Badge, Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   deleting: boolean;
@@ -37,11 +37,10 @@ function TitleBlock(props: Pick<Props, 'item' | 't'>): React.JSX.Element {
   return (
     <View style={styles.titleBox}>
       <Text style={styles.title}>{props.item.name}</Text>
-      <View style={[styles.badge, coachOwned ? styles.mineBadge : null]}>
-        <Text style={styles.badgeLabel}>
-          {coachOwned ? props.t('coach.library.exercises.badge.mine') : props.t('coach.library.scope.global')}
-        </Text>
-      </View>
+      <Badge
+        label={coachOwned ? props.t('coach.library.exercises.badge.mine') : props.t('coach.library.scope.global')}
+        tone={coachOwned ? 'primary' : 'neutral'}
+      />
     </View>
   );
 }
@@ -50,9 +49,7 @@ function ActionBlock(props: Props): React.JSX.Element {
   const coachOwned = isCoachScope(props.item.scope);
   return (
     <View style={styles.actions}>
-      <Pressable onPress={props.onToggle} style={styles.detailButton}>
-        <Text style={styles.detailLabel}>{readDetailActionLabel(props)}</Text>
-      </Pressable>
+      <Button label={readDetailActionLabel(props)} onPress={props.onToggle} size="sm" variant="secondary" />
       {coachOwned ? <EditButton {...props} /> : null}
       {coachOwned ? <DeleteButton {...props} /> : null}
     </View>
@@ -61,21 +58,23 @@ function ActionBlock(props: Props): React.JSX.Element {
 
 function EditButton(props: Props): React.JSX.Element {
   return (
-    <Pressable onPress={props.onEdit} style={styles.editButton}>
-      <Text style={styles.editLabel}>{props.t('coach.library.exercises.actions.edit')}</Text>
-    </Pressable>
+    <Button label={props.t('coach.library.exercises.actions.edit')} onPress={props.onEdit} size="sm" variant="secondary" />
   );
 }
 
 function DeleteButton(props: Props): React.JSX.Element {
   return (
-    <Pressable onPress={props.onDelete} style={styles.deleteButton}>
-      <Text style={styles.deleteLabel}>
-        {props.deleting
+    <Button
+      label={
+        props.deleting
           ? props.t('coach.library.exercises.actions.deleting')
-          : props.t('coach.library.exercises.actions.delete')}
-      </Text>
-    </Pressable>
+          : props.t('coach.library.exercises.actions.delete')
+      }
+      loading={props.deleting}
+      onPress={props.onDelete}
+      size="sm"
+      variant="danger"
+    />
   );
 }
 
@@ -121,43 +120,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space.sm,
   },
-  badge: {
-    backgroundColor: colors.background,
-    borderRadius: 999,
-    paddingHorizontal: space.sm,
-    paddingVertical: space.xs,
-  },
-  badgeLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  deleteButton: {
-    alignItems: 'center',
-    backgroundColor: colors.danger,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: space.md,
-  },
-  editButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: space.md,
-  },
-  editLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  deleteLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
   detailBox: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.border,
@@ -166,14 +128,6 @@ const styles = StyleSheet.create({
     gap: space.sm,
     marginTop: space.md,
     padding: space.md,
-  },
-  detailButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: space.md,
   },
   detailLabel: {
     color: colors.textMuted,
@@ -191,9 +145,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  mineBadge: {
-    backgroundColor: colors.primaryBorder,
   },
   row: {
     borderBottomColor: colors.border,

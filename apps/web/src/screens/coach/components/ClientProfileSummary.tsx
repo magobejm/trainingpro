@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { styles } from '../ClientProfileScreen.styles';
 
@@ -55,9 +56,7 @@ function IdentityBlock(props: Props & { meta: ReturnType<typeof resolveMeta> }):
 function ActionsBlock(props: { onEdit: () => void; t: (key: string) => string }): React.JSX.Element {
   return (
     <View style={styles.actionsColumn}>
-      <Pressable onPress={props.onEdit} style={styles.primaryAction}>
-        <Text style={styles.primaryActionLabel}>{props.t('coach.clientProfile.actions.edit')}</Text>
-      </Pressable>
+      <Button label={props.t('coach.clientProfile.actions.edit')} onPress={props.onEdit} size="sm" />
     </View>
   );
 }

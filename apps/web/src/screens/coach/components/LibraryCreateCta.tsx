@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { StyleSheet, Text, View } from 'react-native';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   buttonLabel: string;
@@ -16,27 +16,12 @@ export function LibraryCreateCta(props: Props): React.JSX.Element {
         <Text style={styles.title}>{props.title}</Text>
         <Text style={styles.subtitle}>{props.subtitle}</Text>
       </View>
-      <Pressable onPress={props.onPress} style={styles.button}>
-        <Text style={styles.buttonLabel}>{props.buttonLabel}</Text>
-      </Pressable>
+      <Button label={props.buttonLabel} onPress={props.onPress} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: space.xl,
-  },
-  buttonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
   card: {
     alignItems: 'center',
     backgroundColor: colors.surface,

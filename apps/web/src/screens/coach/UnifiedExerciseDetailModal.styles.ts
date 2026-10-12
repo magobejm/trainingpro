@@ -20,49 +20,7 @@ export const theme = {
 };
 
 export const detailModalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(5, 10, 20, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: space.xxxl,
-    // @ts-expect-error RN Web backdrop filter
-    backdropFilter: 'blur(8px)',
-    WebkitBackdropFilter: 'blur(8px)',
-  },
-  container: {
-    width: '100%',
-    maxWidth: 1000,
-    maxHeight: '90%',
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.xl,
-    overflow: 'hidden',
-    shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-    display: 'flex',
-  },
-  header: {
-    paddingTop: space.xl,
-    paddingHorizontal: space.xxxl,
-    paddingBottom: space.xs,
-    backgroundColor: theme.colors.surface,
-    zIndex: 10,
-  },
-  backBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space.xs,
-  },
-  backText: {
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-    color: colors.textMuted,
-  },
-  scroll: { flex: 1, backgroundColor: theme.colors.background },
-  scrollContent: { padding: space.xxxl },
+  content: { paddingVertical: space.md },
   heroWrapper: {
     flexDirection: 'row',
     gap: space.xxxl,
@@ -110,6 +68,7 @@ export const detailModalStyles = StyleSheet.create({
     borderRadius: radius.md,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.4)',
+    // @ts-expect-error RN Web backdrop filter
     backdropFilter: 'blur(10px)',
   },
   playBtnText: {
@@ -118,14 +77,6 @@ export const detailModalStyles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: space.xxl,
-    flexWrap: 'wrap',
-  },
-  title: { fontSize: 44, fontWeight: '800', color: colors.text, marginRight: space.md },
-  alias: { fontSize: fontSize.xxxl, fontWeight: '600', color: colors.borderStrong },
   infoGrid: { flexDirection: 'row', gap: space.xxl },
   infoCol: { flex: 1 },
   sectionHeader: {

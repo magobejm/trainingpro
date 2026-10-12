@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import {
@@ -13,7 +13,10 @@ import {
 import { ClientSelectionStrip } from './components/ClientSelectionStrip';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 const COLORS = {
   action: colors.primary,
@@ -52,8 +55,18 @@ function useIncidentsViewModel() {
     incidents: incidentsQuery.data ?? [],
     isLoading: incidentsQuery.isLoading,
     ...buildActions(actions, fields),
+    pending: readPendingIds(actions),
     setClientId,
     t,
+  };
+}
+
+function readPendingIds(actions: ReturnType<typeof useIncidentActions>) {
+  return {
+    draft: actions.draftMutation.isPending ? actions.draftMutation.variables?.id : undefined,
+    reply: actions.respondMutation.isPending ? actions.respondMutation.variables?.id : undefined,
+    review: actions.reviewMutation.isPending ? actions.reviewMutation.variables?.id : undefined,
+    tag: actions.tagMutation.isPending ? actions.tagMutation.variables?.id : undefined,
   };
 }
 
@@ -115,10 +128,10 @@ function IncidentsView(props: ViewModel) {
 
 function IncidentList(props: ViewModel) {
   if (props.isLoading) {
-    return <Text style={styles.info}>{props.t('coach.incidents.loading')}</Text>;
+    return <EmptyState title={props.t('coach.incidents.loading')} />;
   }
   if (props.incidents.length === 0) {
-    return <Text style={styles.info}>{props.t('coach.incidents.empty')}</Text>;
+    return <EmptyState title={props.t('coach.incidents.empty')} />;
   }
   return <View style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
 }
@@ -151,22 +164,15 @@ function renderIncidentCard(
 function ActionInputs(props: ViewModel) {
   return (
     <View style={styles.inputs}>
-      <TextInput
+      <TextField
         onChangeText={props.setReply}
         placeholder={props.t('coach.incidents.replyPlaceholder')}
-        style={styles.input}
         value={props.reply}
       />
-      <TextInput
-        onChangeText={props.setTag}
-        placeholder={props.t('coach.incidents.tagPlaceholder')}
-        style={styles.input}
-        value={props.tag}
-      />
-      <TextInput
+      <TextField onChangeText={props.setTag} placeholder={props.t('coach.incidents.tagPlaceholder')} value={props.tag} />
+      <TextField
         onChangeText={props.setDraft}
         placeholder={props.t('coach.incidents.draftPlaceholder')}
-        style={styles.input}
         value={props.draft}
       />
     </View>
@@ -174,24 +180,36 @@ function ActionInputs(props: ViewModel) {
 }
 
 function ActionButtons(props: { incidentId: string; props: ViewModel }) {
+  const { incidentId, props: vm } = props;
   return (
     <View style={styles.row}>
-      <ActionButton label={props.props.t('coach.incidents.review')} onPress={() => props.props.onReview(props.incidentId)} />
-      <ActionButton label={props.props.t('coach.incidents.reply')} onPress={() => props.props.onReply(props.incidentId)} />
-      <ActionButton label={props.props.t('coach.incidents.tag')} onPress={() => props.props.onTag(props.incidentId)} />
       <ActionButton
-        label={props.props.t('coach.incidents.adjust')}
-        onPress={() => props.props.onCreateDraft(props.incidentId)}
+        label={vm.t('coach.incidents.review')}
+        loading={vm.pending.review === incidentId}
+        onPress={() => vm.onReview(incidentId)}
+      />
+      <ActionButton
+        label={vm.t('coach.incidents.reply')}
+        loading={vm.pending.reply === incidentId}
+        onPress={() => vm.onReply(incidentId)}
+      />
+      <ActionButton
+        label={vm.t('coach.incidents.tag')}
+        loading={vm.pending.tag === incidentId}
+        onPress={() => vm.onTag(incidentId)}
+      />
+      <ActionButton
+        label={vm.t('coach.incidents.adjust')}
+        loading={vm.pending.draft === incidentId}
+        onPress={() => vm.onCreateDraft(incidentId)}
       />
     </View>
   );
 }
 
-function ActionButton(props: { label: string; onPress: () => void }) {
+function ActionButton(props: { label: string; loading: boolean; onPress: () => void }) {
   return (
-    <Pressable onPress={props.onPress} style={styles.button}>
-      <Text style={styles.buttonLabel}>{props.label}</Text>
-    </Pressable>
+    <Button label={props.label} loading={props.loading} onPress={props.onPress} size={SIZE_SM} variant={VARIANT_SECONDARY} />
   );
 }
 
@@ -218,19 +236,6 @@ function mapClientItems(
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: COLORS.action,
-    borderRadius: radius.md,
-    minHeight: 34,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  buttonLabel: {
-    color: COLORS.white,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   card: {
     backgroundColor: COLORS.card,
     borderRadius: radius.lg,
@@ -245,16 +250,6 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: fontSize.sm,
     fontWeight: '800',
-  },
-  info: {
-    color: COLORS.muted,
-    fontSize: fontSize.sm,
-  },
-  input: {
-    backgroundColor: COLORS.input,
-    borderRadius: radius.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
   },
   inputs: {
     gap: space.sm,

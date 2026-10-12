@@ -1,11 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ADVANCED_TECHNIQUE_IDS, normalizeAdvancedTechniqueId, type AdvancedTechniqueId } from './advanced-technique.i18n';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
-
-const MODAL_ANIM = 'fade' as const;
-const ICON_CLOSE = '✕';
+import { Button, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface AdvancedSeriesModalProps {
   visible: boolean;
@@ -37,64 +34,55 @@ export function AdvancedSeriesModal({
   const descKey = `${nameKey}.desc`;
 
   return (
-    <Modal animationType={MODAL_ANIM} onRequestClose={onClose} transparent visible={visible}>
-      <View style={st.overlay}>
-        <View style={st.dialog}>
-          <View style={st.header}>
-            <Text style={st.title}>{t('coach.routine.advancedSeries.title')}</Text>
-            <TouchableOpacity onPress={onClose} style={st.closeBtn}>
-              <Text style={st.closeIcon}>{ICON_CLOSE}</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={st.body}>
-            {!viewOnly ? (
-              <ScrollView style={st.sidebar}>
-                {ADVANCED_TECHNIQUE_IDS.map((id) => (
-                  <TouchableOpacity
-                    key={id}
-                    onPress={() => setSelected(id)}
-                    style={[st.sidebarItem, selected === id && st.sidebarItemActive]}
-                  >
-                    <Text style={[st.sidebarItemText, selected === id && st.sidebarItemTextActive]}>
-                      {t(`coach.routine.advancedTechnique.${id}`)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            ) : null}
-
-            <View style={[st.content, viewOnly && { paddingLeft: space.xl }]}>
-              <Text style={st.contentTitle}>{t(nameKey)}</Text>
-              <ScrollView style={st.descScroll}>
-                <Text style={st.descText}>{t(descKey)}</Text>
-              </ScrollView>
-            </View>
-          </View>
-
-          <View style={st.footer}>
-            {!viewOnly && currentValue ? (
-              <TouchableOpacity onPress={onRemove} style={st.removeBtn}>
-                <Text style={st.removeBtnText}>{t('coach.routine.advancedSeries.removeTechnique')}</Text>
-              </TouchableOpacity>
-            ) : null}
-            <View style={{ flex: 1 }} />
-            {viewOnly ? (
-              <TouchableOpacity onPress={onClose} style={st.applyBtn}>
-                <Text style={st.applyBtnText}>{t('common.close')}</Text>
-              </TouchableOpacity>
-            ) : (
+    <Modal
+      closeLabel={t('common.close')}
+      footer={
+        <>
+          {!viewOnly && currentValue ? (
+            <Button label={t('coach.routine.advancedSeries.removeTechnique')} onPress={onRemove} variant="danger" />
+          ) : null}
+          <View style={st.spacer} />
+          {viewOnly ? (
+            <Button label={t('common.close')} onPress={onClose} />
+          ) : (
+            <Button
+              label={t('coach.routine.advancedSeries.applyToSet', { n: seriesIndex + 1 })}
+              onPress={() => {
+                onApply(selected);
+                onClose();
+              }}
+            />
+          )}
+        </>
+      }
+      onClose={onClose}
+      scroll={false}
+      size="lg"
+      title={t('coach.routine.advancedSeries.title')}
+      visible={visible}
+    >
+      <View style={st.body}>
+        {!viewOnly ? (
+          <ScrollView style={st.sidebar}>
+            {ADVANCED_TECHNIQUE_IDS.map((id) => (
               <TouchableOpacity
-                onPress={() => {
-                  onApply(selected);
-                  onClose();
-                }}
-                style={st.applyBtn}
+                key={id}
+                onPress={() => setSelected(id)}
+                style={[st.sidebarItem, selected === id && st.sidebarItemActive]}
               >
-                <Text style={st.applyBtnText}>{t('coach.routine.advancedSeries.applyToSet', { n: seriesIndex + 1 })}</Text>
+                <Text style={[st.sidebarItemText, selected === id && st.sidebarItemTextActive]}>
+                  {t(`coach.routine.advancedTechnique.${id}`)}
+                </Text>
               </TouchableOpacity>
-            )}
-          </View>
+            ))}
+          </ScrollView>
+        ) : null}
+
+        <View style={[st.content, viewOnly && { paddingLeft: space.xl }]}>
+          <Text style={st.contentTitle}>{t(nameKey)}</Text>
+          <ScrollView style={st.descScroll}>
+            <Text style={st.descText}>{t(descKey)}</Text>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -102,46 +90,14 @@ export function AdvancedSeriesModal({
 }
 
 const st = {
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    padding: space.xl,
-  },
-  dialog: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    width: '100%' as const,
-    maxWidth: 700,
-    maxHeight: '85%' as const,
-    overflow: 'hidden' as const,
-    shadowColor: colors.text,
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 10,
-    display: 'flex' as const,
-    flexDirection: 'column' as const,
-  },
-  header: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    justifyContent: 'space-between' as const,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.background,
-  },
-  title: { fontSize: fontSize.md, fontWeight: '700' as const, color: colors.text },
-  closeBtn: { padding: space.xs },
-  closeIcon: { fontSize: fontSize.lg, color: colors.textMuted },
+  spacer: { flex: 1 },
   body: {
     flexDirection: 'row' as const,
-    flex: 1,
     minHeight: 280,
   },
   sidebar: {
     width: 180,
+    maxHeight: 360,
     flexShrink: 0,
     backgroundColor: colors.surfaceMuted,
     borderRightWidth: 1,
@@ -165,7 +121,7 @@ const st = {
   },
   contentTitle: { fontSize: fontSize.lg, fontWeight: '700' as const, color: colors.text },
   descScroll: {
-    flex: 1,
+    maxHeight: 320,
     backgroundColor: colors.primarySoft,
     borderRadius: radius.md,
     padding: space.lg,
@@ -173,30 +129,4 @@ const st = {
     borderColor: colors.primaryBorder,
   },
   descText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 20 },
-  footer: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.background,
-    backgroundColor: colors.surfaceMuted,
-    gap: space.md,
-  },
-  removeBtn: {
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.dangerSoft,
-    backgroundColor: colors.dangerSoft,
-  },
-  removeBtnText: { fontSize: fontSize.sm, color: colors.danger, fontWeight: '500' as const },
-  applyBtn: {
-    paddingHorizontal: space.xl,
-    paddingVertical: space.md,
-    borderRadius: radius.md,
-    backgroundColor: colors.primary,
-  },
-  applyBtnText: { fontSize: fontSize.sm, color: colors.surface, fontWeight: '600' as const },
 };

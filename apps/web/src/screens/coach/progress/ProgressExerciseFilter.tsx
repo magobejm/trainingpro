@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   useLibraryCardioMethodsQuery,
   useLibraryExercisesQuery,
@@ -10,7 +10,7 @@ import {
 import { usePerformedExercisesQuery } from '../../../data/hooks/usePerformedExercisesQuery';
 import type { ExerciseType, SelectedExercise } from './progress-screen.types';
 import { matchesSearch } from '../../../utils/normalize-search';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { IconButton, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Group = {
   type: ExerciseType;
@@ -31,7 +31,6 @@ type Props = {
 export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect, t }: Props) {
   const [search, setSearch] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   const exercisesQuery = useLibraryExercisesQuery({ query: search });
   const cardioQuery = useLibraryCardioMethodsQuery({ query: search });
@@ -123,15 +122,12 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
   return (
     <div style={filterBlock}>
       <div style={{ position: 'relative' }}>
-        <div style={searchIconWrap} />
-        <input
-          ref={inputRef}
-          style={searchInput}
+        <TextField
+          onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
+          onChangeText={handleInputChange}
+          onFocus={() => setDropdownOpen(true)}
           placeholder={t('coach.progress.filter.exercise.placeholder')}
           value={search}
-          onChange={(e) => handleInputChange(e.target.value)}
-          onFocus={() => setDropdownOpen(true)}
-          onBlur={() => setTimeout(() => setDropdownOpen(false), 150)}
         />
         {dropdownOpen && (
           <div style={dropdownContainer}>
@@ -163,17 +159,17 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
       {selected ? (
         <div style={selectedExerciseRow}>
           <span style={selectedExerciseName}>{selected.name}</span>
-          <button
-            type={'button'}
-            style={selectedClearBtn}
-            aria-label={t('common.close')}
-            onClick={() => {
+          <IconButton
+            accessibilityLabel={t('common.close')}
+            icon={(color) => (
+              <span style={{ color, fontSize: fontSize.md, lineHeight: 1 }}>{t('common.modalCloseGlyph')}</span>
+            )}
+            onPress={() => {
               onSelect(null);
               setSearch('');
             }}
-          >
-            {t('common.modalCloseGlyph')}
-          </button>
+            size={32}
+          />
         </div>
       ) : null}
 
@@ -183,23 +179,6 @@ export function ProgressExerciseFilter({ clientId, from, to, selected, onSelect,
 }
 
 const filterBlock: React.CSSProperties = { display: 'flex', flexDirection: 'column', gap: space.md, width: '100%' };
-const searchIconWrap: React.CSSProperties = {
-  position: 'absolute',
-  left: 14,
-  top: '50%',
-  transform: 'translateY(-50%)',
-  pointerEvents: 'none',
-};
-const searchInput: React.CSSProperties = {
-  padding: '10px 14px 10px 40px',
-  borderRadius: radius.lg,
-  border: `1.5px solid ${colors.border}`,
-  fontSize: fontSize.sm,
-  color: colors.text,
-  outline: 'none',
-  width: '100%',
-  boxSizing: 'border-box',
-};
 const dropdownContainer: React.CSSProperties = {
   position: 'absolute',
   top: 'calc(100% + 4px)',
@@ -263,20 +242,5 @@ const selectedExerciseName: React.CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
-};
-const selectedClearBtn: React.CSSProperties = {
-  flexShrink: 0,
-  width: 32,
-  height: 32,
-  borderRadius: radius.md,
-  border: `1.5px solid ${colors.border}`,
-  background: colors.surfaceMuted,
-  color: colors.textMuted,
-  fontSize: fontSize.md,
-  lineHeight: 1,
-  cursor: 'pointer',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
 };
 const noClientMsg: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted };

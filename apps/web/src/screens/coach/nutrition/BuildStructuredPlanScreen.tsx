@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import {
   useCreatePlanMutation,
   useNutritionMealsQuery,
@@ -9,7 +9,7 @@ import {
 } from '../../../data/hooks/useNutrition';
 import type { PlanSetupData, StructuredDay, StructuredPlanContent, StructuredWeek } from './nutrition.types';
 import { styles } from './nutrition.styles';
-import { space } from '@trainerpro/ui';
+import { Button, TextField, space, useToast } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -26,6 +26,8 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
   const createMutation = useCreatePlanMutation();
   const updateMutation = useUpdatePlanMutation();
   const [content, setContent] = useState<StructuredPlanContent>(defaultContent());
+  const toast = useToast();
+  const saving = createMutation.isPending || updateMutation.isPending;
 
   useEffect(() => {
     if (!props.planId) return;
@@ -37,9 +39,7 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{props.planName}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildStructured.subtitle')}</Text>
       {content.weeks.map((week, weekIndex) => (
@@ -47,47 +47,53 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
           <Text style={styles.cardTitle}>{week.label}</Text>
           {week.days.map((day, dayIndex) => (
             <View key={day.id} style={{ marginTop: space.md }}>
-              <TextInput
+              <TextField
+                containerStyle={styles.fieldGap}
                 onChangeText={(value) => renameDay(content, setContent, weekIndex, dayIndex, value)}
-                style={styles.field}
                 value={day.label}
               />
               {day.meals.map((meal, mealIndex) => (
                 <View key={meal.id} style={styles.listItem}>
                   <Text style={styles.cardTitle}>{meal.name}</Text>
-                  <Pressable
+                  <Button
+                    label={t('coach.nutrition.delete')}
                     onPress={() => removeMeal(content, setContent, weekIndex, dayIndex, mealIndex)}
-                    style={styles.secondaryButton}
-                  >
-                    <Text style={styles.secondaryLabel}>{t('coach.nutrition.delete')}</Text>
-                  </Pressable>
+                    size="sm"
+                    style={styles.addButton}
+                    variant="danger"
+                  />
                 </View>
               ))}
               {meals.slice(0, 2).map((meal) => (
-                <Pressable
+                <Button
                   key={`${day.id}-${meal.id}`}
+                  label={t('coach.nutrition.meals.addButton', { name: meal.name })}
                   onPress={() => addMeal(content, setContent, weekIndex, dayIndex, meal.id, meal.name)}
-                  style={styles.secondaryButton}
-                >
-                  <Text style={styles.secondaryLabel}>{t('coach.nutrition.meals.addButton', { name: meal.name })}</Text>
-                </Pressable>
+                  size="sm"
+                  style={styles.addButton}
+                  variant="secondary"
+                />
               ))}
             </View>
           ))}
         </View>
       ))}
-      <Pressable onPress={() => addWeek(content, setContent, t)} style={styles.secondaryButton}>
-        <Text style={styles.secondaryLabel}>{t('coach.nutrition.buildStructured.addWeek')}</Text>
-      </Pressable>
-      <Pressable
-        disabled={createMutation.isPending || updateMutation.isPending}
-        onPress={() => void savePlan(props, content, createMutation, updateMutation)}
+      <Button
+        label={t('coach.nutrition.buildStructured.addWeek')}
+        onPress={() => addWeek(content, setContent, t)}
+        style={styles.addButton}
+        variant="secondary"
+      />
+      <Button
+        label={saving ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
+        loading={saving}
+        onPress={() =>
+          void savePlan(props, content, createMutation, updateMutation).then(() =>
+            toast.success(t('coach.nutrition.plans.savedToast')),
+          )
+        }
         style={styles.ctaButton}
-      >
-        <Text style={styles.ctaLabel}>
-          {createMutation.isPending || updateMutation.isPending ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
-        </Text>
-      </Pressable>
+      />
     </ScrollView>
   );
 }

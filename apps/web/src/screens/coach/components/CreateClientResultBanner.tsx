@@ -1,7 +1,7 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import type { CreateClientResult } from '../../../data/hooks/useClientMutations';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
 
 type Props = {
   isResettingPassword?: boolean;
@@ -13,13 +13,18 @@ type Props = {
 
 export function CreateClientResultBanner(props: Props): React.JSX.Element {
   const fullName = `${props.result.client.firstName} ${props.result.client.lastName}`.trim();
+  const toast = useToast();
+  const { result } = props;
+  const successMessage = resolveStatusLabel(props);
+  useEffect(() => {
+    toast.success(successMessage);
+    // Solo al mostrarse un resultado nuevo.
+  }, [result]);
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>{props.t('coach.clients.credentials.title')}</Text>
-        <Pressable onPress={props.onClose}>
-          <Text style={styles.close}>{props.t('coach.clients.credentials.close')}</Text>
-        </Pressable>
+        <Button label={props.t('coach.clients.credentials.close')} onPress={props.onClose} size="sm" variant="ghost" />
       </View>
       <Text style={styles.line}>{formatLine(props, 'coach.clients.credentials.email', props.result.client.email)}</Text>
       <Text style={styles.line}>{formatLine(props, 'coach.clients.credentials.client', fullName)}</Text>
@@ -30,13 +35,19 @@ export function CreateClientResultBanner(props: Props): React.JSX.Element {
         </Text>
       ) : null}
       {showResetPasswordAction(props) ? (
-        <Pressable onPress={props.onResetPassword} style={styles.resetButton}>
-          <Text style={styles.resetButtonLabel}>{resetButtonLabel(props)}</Text>
-        </Pressable>
+        <Button
+          label={resetButtonLabel(props)}
+          loading={props.isResettingPassword}
+          onPress={props.onResetPassword ?? noop}
+          size="sm"
+          style={styles.resetButton}
+        />
       ) : null}
     </View>
   );
 }
+
+const noop = (): void => undefined;
 
 function formatLine(props: Props, labelKey: string, value: string): string {
   return props.t('coach.clients.credentials.line', { label: props.t(labelKey), value });
@@ -60,11 +71,6 @@ function showResetPasswordAction(props: Props): boolean {
 }
 
 const styles = StyleSheet.create({
-  close: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   container: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.primaryBorder,
@@ -89,18 +95,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   resetButton: {
-    alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
     marginTop: space.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  resetButtonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
   },
   title: {
     color: colors.text,

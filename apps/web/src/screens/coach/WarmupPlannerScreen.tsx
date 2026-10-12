@@ -1,7 +1,7 @@
 /* eslint-disable max-lines-per-function */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react';
 import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType, DraftDay } from './RoutinePlanner.types';
@@ -22,7 +22,7 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { saveTemplate } from '../../layout/template-save';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, EmptyState, fontSize, radius, space } from '@trainerpro/ui';
 
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 
@@ -173,13 +173,13 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
       <WarmupPlannerHeader vm={vm} />
       <WarmupBlocksCard vm={vm} />
       {!vm.isReadOnly && (
-        <Pressable
+        <Button
           disabled={vm.isSaving}
+          label={vm.t('coach.warmupPlanner.save')}
+          loading={vm.isSaving}
           onPress={() => vm.setShowSaveModal(true)}
-          style={[s.saveBtn, vm.isSaving ? { opacity: 0.5 } : null]}
-        >
-          <Text style={s.saveBtnText}>{vm.t('coach.warmupPlanner.save')}</Text>
-        </Pressable>
+          fullWidth
+        />
       )}
       <ExercisePickerModal
         allowedTypes={WARMUP_BLOCK_TYPES}
@@ -206,23 +206,21 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
 }
 
 const headerStyles = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.lg, marginBottom: space.xs };
-const backBtnStyle = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.sm, padding: space.xs };
-const backBtnTextStyle = { fontSize: fontSize.sm, color: colors.textMuted };
 
 function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
   return (
     <View style={headerStyles}>
       {vm.fromLibrary ? (
-        <Pressable
+        <Button
+          icon={<ArrowLeft color={colors.textMuted} size={18} />}
+          label={vm.t('coach.warmupPlanner.back')}
           onPress={() => {
             useWarmupPlannerContextStore.getState().clear();
             vm.onRouteChange('coach.library.warmups');
           }}
-          style={backBtnStyle}
-        >
-          <ArrowLeft color={colors.textMuted} size={18} />
-          <Text style={backBtnTextStyle}>{vm.t('coach.warmupPlanner.back')}</Text>
-        </Pressable>
+          size="sm"
+          variant="ghost"
+        />
       ) : null}
       <Text style={s.title}>{vm.t('coach.warmupPlanner.title')}</Text>
     </View>
@@ -234,9 +232,12 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
     <View style={s.card}>
       {!vm.isReadOnly && (
         <View style={s.dayHeaderRight}>
-          <Pressable onPress={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')} style={s.dayAddExerciseBtn}>
-            <Text style={s.dayAddExerciseBtnText}>{`+ ${vm.t('coach.routine.addExercise')}`}</Text>
-          </Pressable>
+          <Button
+            label={`+ ${vm.t('coach.routine.addExercise')}`}
+            onPress={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')}
+            size="sm"
+            variant="secondary"
+          />
         </View>
       )}
       {!vm.isReadOnly && (
@@ -249,7 +250,14 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
           onConfirm={vm.handleConfirmGroup}
         />
       )}
-      {vm.orderedBlocks.length === 0 ? <Text style={s.emptyDay}>{vm.t('coach.warmupPlanner.emptyGroup')}</Text> : null}
+      {vm.orderedBlocks.length === 0 ? (
+        <EmptyState
+          actionLabel={vm.isReadOnly ? undefined : `+ ${vm.t('coach.routine.addExercise')}`}
+          message={vm.t('coach.warmupPlanner.emptyGroup')}
+          onAction={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')}
+          title={vm.t('coach.warmupPlanner.emptyTitle')}
+        />
+      ) : null}
       <WarmupBlocksContent vm={vm} />
     </View>
   );
@@ -410,9 +418,7 @@ function WarmupGroupModeBar({ groupMode, selectedCount, t, onStartCircuit, onCan
   if (!groupMode) {
     return (
       <View style={gbs.bar}>
-        <TouchableOpacity onPress={onStartCircuit} style={gbs.circuitBtn}>
-          <Text style={gbs.circuitBtnText}>{t('coach.routine.group.addCircuit')}</Text>
-        </TouchableOpacity>
+        <Button label={t('coach.routine.group.addCircuit')} onPress={onStartCircuit} size="sm" variant="secondary" />
       </View>
     );
   }
@@ -422,15 +428,13 @@ function WarmupGroupModeBar({ groupMode, selectedCount, t, onStartCircuit, onCan
         {t('coach.routine.group.selectHint', { label: t('coach.routine.group.circuit'), count: selectedCount })}
       </Text>
       <View style={gbs.spacer} />
-      <TouchableOpacity onPress={onCancel} style={gbs.cancelBtn}>
-        <Text style={gbs.cancelBtnText}>{t('coach.routine.delete.cancel')}</Text>
-      </TouchableOpacity>
+      <Button label={t('coach.routine.delete.cancel')} onPress={onCancel} size="sm" variant="secondary" />
       {selectedCount >= 2 && (
-        <TouchableOpacity onPress={onConfirm} style={gbs.confirmBtn}>
-          <Text style={gbs.confirmBtnText}>
-            {t('coach.routine.group.create', { label: t('coach.routine.group.circuit') })}
-          </Text>
-        </TouchableOpacity>
+        <Button
+          label={t('coach.routine.group.create', { label: t('coach.routine.group.circuit') })}
+          onPress={onConfirm}
+          size="sm"
+        />
       )}
     </View>
   );
@@ -448,29 +452,6 @@ const gbs = {
     borderTopColor: colors.background,
   },
   activeBar: { backgroundColor: colors.primarySoft },
-  circuitBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryBorder,
-    backgroundColor: colors.primaryBorder,
-  },
-  circuitBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: colors.primaryHover },
   hint: { fontSize: fontSize.xs, color: colors.textMuted },
   spacer: { flex: 1 },
-  cancelBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.background,
-  },
-  cancelBtnText: { fontSize: fontSize.xs, color: colors.textMuted },
-  confirmBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primary,
-  },
-  confirmBtnText: { fontSize: fontSize.xs, fontWeight: '700' as const, color: colors.surface },
 };

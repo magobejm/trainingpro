@@ -1,9 +1,8 @@
 import React from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const PLACEHOLDER_COLOR = colors.textMuted;
 const ICON_WARMUP = '🔥';
 const ICON_REMOVE = '✕';
 const ICON_OPEN = '∨';
@@ -41,9 +40,16 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
   return (
     <View>
       <View style={s.dayCardHeaderRow}>
-        <Pressable onPress={props.onToggleCollapse} style={s.dayCollapseBtn}>
-          <Text style={s.dayCollapseBtnText}>{props.isCollapsed ? ICON_CLOSED : ICON_OPEN}</Text>
-        </Pressable>
+        <IconButton
+          accessibilityLabel={props.t(
+            props.isCollapsed ? 'coach.routine.day.a11y.expand' : 'coach.routine.day.a11y.collapse',
+          )}
+          icon={(color) => (
+            <Text style={[s.dayCollapseBtnText, { color }]}>{props.isCollapsed ? ICON_CLOSED : ICON_OPEN}</Text>
+          )}
+          onPress={props.onToggleCollapse}
+          size={28}
+        />
         {/* eslint-disable-next-line no-restricted-syntax */}
         <Pressable
           onPress={props.onToggleCollapse}
@@ -57,40 +63,39 @@ export function DayHeader(props: DayHeaderProps): React.JSX.Element {
             <Text style={s.dayTitleSub}>{props.t('coach.routine.exercisesAdded', { count: props.blockCount })}</Text>
           </View>
         </Pressable>
-        <TextInput
-          editable={!props.readOnly}
+        <TextField
+          containerStyle={s.daySessionInput}
+          disabled={props.readOnly}
           onChangeText={props.onRename}
           placeholder={props.t(vm.placeholderKey)}
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          style={s.daySessionInput}
           value={props.title}
         />
         <View style={s.dayHeaderRight}>
-          {!props.readOnly && (
-            <Pressable accessibilityRole="button" onPress={props.onAddBlock} style={s.dayAddExerciseBtn}>
-              <Text style={s.dayAddExerciseBtnText}>{props.t(vm.addKey)}</Text>
-            </Pressable>
-          )}
+          {!props.readOnly && <Button label={props.t(vm.addKey)} onPress={props.onAddBlock} size="sm" />}
           {!props.readOnly && (
             <>
-              <Pressable
+              <IconButton
+                accessibilityLabel={props.t('coach.routine.day.a11y.moveUp')}
                 disabled={props.isFirst}
+                icon={(color) => <Text style={{ color, fontSize: fontSize.sm }}>{ICON_UP}</Text>}
                 onPress={() => props.onMoveDay(-1)}
-                style={[s.dayMoveBtn, props.isFirst && { opacity: 0.3 }]}
-              >
-                <Text style={s.dayMoveBtnText}>{ICON_UP}</Text>
-              </Pressable>
-              <Pressable
+                size={28}
+              />
+              <IconButton
+                accessibilityLabel={props.t('coach.routine.day.a11y.moveDown')}
                 disabled={props.isLast}
+                icon={(color) => <Text style={{ color, fontSize: fontSize.sm }}>{ICON_DOWN}</Text>}
                 onPress={() => props.onMoveDay(1)}
-                style={[s.dayMoveBtn, props.isLast && { opacity: 0.3 }]}
-              >
-                <Text style={s.dayMoveBtnText}>{ICON_DOWN}</Text>
-              </Pressable>
+                size={28}
+              />
               {props.daysCount > 1 && (
-                <Pressable onPress={props.onRemove} style={s.dayTrashBtn}>
-                  <Text style={s.dayTrashBtnText}>{ICON_TRASH}</Text>
-                </Pressable>
+                <IconButton
+                  accessibilityLabel={props.t('coach.routine.day.a11y.remove')}
+                  icon={(color) => <Text style={{ color, fontSize: fontSize.sm }}>{ICON_TRASH}</Text>}
+                  onPress={props.onRemove}
+                  size={28}
+                  tone="danger"
+                />
               )}
             </>
           )}

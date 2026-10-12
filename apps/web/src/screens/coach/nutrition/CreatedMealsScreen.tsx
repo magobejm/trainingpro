@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
 import { styles } from './nutrition.styles';
+import { Button, EmptyState } from '@trainerpro/ui';
 
 type Props = {
   onBack: () => void;
@@ -17,17 +18,17 @@ export function CreatedMealsScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{t('coach.nutrition.meals.title')}</Text>
-      <Pressable onPress={props.onCreate} style={styles.ctaButton}>
-        <Text style={styles.ctaLabel}>{t('coach.nutrition.meals.create')}</Text>
-      </Pressable>
-      {mealsQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
-      {mealsQuery.isError ? <Text style={styles.empty}>{t('coach.nutrition.error')}</Text> : null}
+      <Button label={t('coach.nutrition.meals.create')} onPress={props.onCreate} style={styles.ctaButton} />
+      {mealsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {mealsQuery.isError ? <EmptyState title={t('coach.nutrition.error')} /> : null}
       {meals.length === 0 && !mealsQuery.isLoading ? (
-        <Text style={styles.empty}>{t('coach.nutrition.meals.empty')}</Text>
+        <EmptyState
+          actionLabel={t('coach.nutrition.meals.create')}
+          onAction={props.onCreate}
+          title={t('coach.nutrition.meals.empty')}
+        />
       ) : null}
       {meals.map((meal) => (
         <Pressable key={meal.id} onPress={() => props.onOpenMeal(meal.id)} style={styles.card}>

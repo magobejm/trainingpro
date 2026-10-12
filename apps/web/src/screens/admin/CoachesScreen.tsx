@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Button, EmptyState, Modal, TextField, useToast } from '@trainerpro/ui';
 import '../../i18n';
 import {
   useArchiveCoachMutation,
@@ -10,7 +11,7 @@ import {
   type CreateCoachResult,
 } from '../../data/hooks/useCoachMutations';
 import { useArchivedCoachesQuery, useCoachesQuery, type CoachView } from '../../data/hooks/useCoachesQuery';
-import { COLORS, styles } from './CoachesScreen.styles';
+import { styles } from './CoachesScreen.styles';
 import { MONO_FONT_PROPS } from '../../layout/font-props';
 
 type Tab = 'active' | 'archived';
@@ -32,6 +33,7 @@ function useCoachesViewModel() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [createResult, setCreateResult] = useState<CreateCoachResult | null>(null);
   const [passwordCopied, setPasswordCopied] = useState(false);
+  const toast = useToast();
 
   const refetchArchived = archivedQuery.refetch;
   useEffect(() => {
@@ -52,6 +54,7 @@ function useCoachesViewModel() {
     createMutation.mutate(email, {
       onSuccess: (result) => {
         setCreateResult(result);
+        toast.success(t('admin.coaches.createModal.success'));
         setShowCreateModal(false);
       },
     });
@@ -101,7 +104,13 @@ function CoachesView(props: ViewProps): React.JSX.Element {
         />
         <TabBar activeTab={props.activeTab} onSelect={props.setActiveTab} t={props.t} />
         {props.activeTab === 'active' ? (
-          <ActiveList items={props.activeItems} onArchive={props.onArchive} onToggle={props.onToggle} t={props.t} />
+          <ActiveList
+            items={props.activeItems}
+            onArchive={props.onArchive}
+            onCreate={() => props.setShowCreateModal(true)}
+            onToggle={props.onToggle}
+            t={props.t}
+          />
         ) : (
           <ArchivedList items={props.archivedItems} onRestore={props.onRestore} t={props.t} />
         )}
@@ -139,9 +148,7 @@ function Header(props: {
           <Text style={styles.title}>{props.t('admin.coaches.title')}</Text>
           <Text style={styles.subtitle}>{props.t('admin.coaches.subtitle')}</Text>
         </View>
-        <Pressable onPress={props.onCreatePress} style={styles.createButton}>
-          <Text style={styles.createButtonLabel}>{props.t('admin.coaches.create')}</Text>
-        </Pressable>
+        <Button label={props.t('admin.coaches.create')} onPress={props.onCreatePress} />
       </View>
       <View style={styles.pillsRow}>
         <Pill label={props.t('admin.coaches.total')} value={String(props.totalCount)} />
@@ -188,11 +195,18 @@ function TabButton(props: { active: boolean; label: string; onPress: () => void 
 function ActiveList(props: {
   items: CoachView[];
   onArchive: (id: string) => void;
+  onCreate: () => void;
   onToggle: (coach: CoachView) => void;
   t: (key: string) => string;
 }): React.JSX.Element {
   if (props.items.length === 0) {
-    return <Text style={styles.empty}>{props.t('admin.coaches.empty')}</Text>;
+    return (
+      <EmptyState
+        actionLabel={props.t('admin.coaches.create')}
+        onAction={props.onCreate}
+        title={props.t('admin.coaches.empty')}
+      />
+    );
   }
   return (
     <View style={styles.list}>
@@ -215,7 +229,7 @@ function ArchivedList(props: {
   t: (key: string) => string;
 }): React.JSX.Element {
   if (props.items.length === 0) {
-    return <Text style={styles.empty}>{props.t('admin.coaches.archivedEmpty')}</Text>;
+    return <EmptyState title={props.t('admin.coaches.archivedEmpty')} />;
   }
   return (
     <View style={styles.list}>
@@ -242,12 +256,18 @@ function CoachRow(props: {
         </View>
       </View>
       <View style={styles.rowActions}>
-        <Pressable onPress={() => props.onToggle(props.coach)} style={styles.ghostButton}>
-          <Text style={styles.ghostLabel}>{readToggleLabel(props.coach.isActive, props.t)}</Text>
-        </Pressable>
-        <Pressable onPress={() => props.onArchive(props.coach.coachMembershipId)} style={styles.dangerButton}>
-          <Text style={styles.dangerLabel}>{props.t('admin.coaches.archive')}</Text>
-        </Pressable>
+        <Button
+          label={readToggleLabel(props.coach.isActive, props.t)}
+          onPress={() => props.onToggle(props.coach)}
+          size="sm"
+          variant="secondary"
+        />
+        <Button
+          label={props.t('admin.coaches.archive')}
+          onPress={() => props.onArchive(props.coach.coachMembershipId)}
+          size="sm"
+          variant="danger"
+        />
       </View>
     </View>
   );
@@ -273,9 +293,12 @@ function ArchivedCoachRow(props: {
         </View>
       </View>
       <View style={styles.rowActions}>
-        <Pressable onPress={() => props.onRestore(props.coach.coachMembershipId)} style={styles.successButton}>
-          <Text style={styles.successLabel}>{props.t('admin.coaches.restore')}</Text>
-        </Pressable>
+        <Button
+          label={props.t('admin.coaches.restore')}
+          onPress={() => props.onRestore(props.coach.coachMembershipId)}
+          size="sm"
+          variant="secondary"
+        />
       </View>
     </View>
   );
@@ -310,39 +333,36 @@ function CreateCoachModal(props: {
     props.onClose();
   };
 
+  const canSubmit = email.trim().length > 0;
   return (
-    <Modal animationType={'fade'} onRequestClose={handleClose} transparent visible={props.visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalCard}>
-          <Text style={styles.modalTitle}>{props.t('admin.coaches.createModal.title')}</Text>
-          <TextInput
-            autoCapitalize={'none'}
-            autoComplete={'email'}
-            keyboardType={'email-address'}
-            onChangeText={setEmail}
-            placeholder={props.t('admin.coaches.createModal.emailPlaceholder')}
-            placeholderTextColor={COLORS.textMuted}
-            style={styles.modalInput}
-            value={email}
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('admin.coaches.createModal.cancel')} onPress={handleClose} variant="secondary" />
+          <Button
+            disabled={!canSubmit}
+            label={
+              props.isLoading ? props.t('admin.coaches.createModal.loading') : props.t('admin.coaches.createModal.submit')
+            }
+            loading={props.isLoading}
+            onPress={handleSubmit}
           />
-          <View style={styles.modalActions}>
-            <Pressable onPress={handleClose} style={styles.ghostButton}>
-              <Text style={styles.ghostLabel}>{props.t('admin.coaches.createModal.cancel')}</Text>
-            </Pressable>
-            <Pressable
-              disabled={props.isLoading || !email.trim()}
-              onPress={handleSubmit}
-              style={[styles.accentButton, (props.isLoading || !email.trim()) && styles.buttonDisabled]}
-            >
-              <Text style={styles.accentButtonLabel}>
-                {props.isLoading
-                  ? props.t('admin.coaches.createModal.loading')
-                  : props.t('admin.coaches.createModal.submit')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
+        </>
+      }
+      onClose={handleClose}
+      size="sm"
+      title={props.t('admin.coaches.createModal.title')}
+      visible={props.visible}
+    >
+      <TextField
+        autoCapitalize={'none'}
+        autoComplete={'email'}
+        keyboardType={'email-address'}
+        label={props.t('admin.coaches.createModal.emailPlaceholder')}
+        onChangeText={setEmail}
+        value={email}
+      />
     </Modal>
   );
 }
@@ -364,21 +384,29 @@ function ResultBanner(props: {
             <Text {...MONO_FONT_PROPS} style={styles.resultPassword}>
               {temporaryPassword}
             </Text>
-            <Pressable onPress={() => props.onCopyPassword(temporaryPassword)} style={styles.copyButton}>
-              <Text style={styles.copyButtonLabel}>
-                {props.passwordCopied
+            <Button
+              label={
+                props.passwordCopied
                   ? props.t('admin.coaches.createModal.passwordCopied')
-                  : props.t('admin.coaches.createModal.copyPassword')}
-              </Text>
-            </Pressable>
+                  : props.t('admin.coaches.createModal.copyPassword')
+              }
+              onPress={() => props.onCopyPassword(temporaryPassword)}
+              size="sm"
+              style={styles.copyButton}
+              variant="secondary"
+            />
           </>
         ) : (
           <Text style={styles.resultText}>{props.t('admin.coaches.createModal.success')}</Text>
         )}
       </View>
-      <Pressable onPress={props.onClose} style={styles.resultClose}>
-        <Text style={styles.resultCloseLabel}>{props.t('admin.coaches.createModal.dismiss')}</Text>
-      </Pressable>
+      <Button
+        label={props.t('admin.coaches.createModal.dismiss')}
+        onPress={props.onClose}
+        size="sm"
+        style={styles.resultClose}
+        variant="ghost"
+      />
     </View>
   );
 }

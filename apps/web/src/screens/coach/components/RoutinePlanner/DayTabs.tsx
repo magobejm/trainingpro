@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { s } from '../../RoutinePlanner.styles';
 
 interface DayTabsProps {
@@ -35,11 +36,7 @@ export function DayTabs({
           readOnly={readOnly}
         />
       ))}
-      {!readOnly && (
-        <Pressable onPress={onAdd} style={s.addDayBtn}>
-          <Text style={s.addDayText}>{`+ ${t(addLabelKey)}`}</Text>
-        </Pressable>
-      )}
+      {!readOnly && <Button label={`+ ${t(addLabelKey)}`} onPress={onAdd} size="sm" variant="secondary" />}
     </View>
   );
 }
@@ -59,10 +56,7 @@ function DayTabDropTarget(props: {
       onDrop={createDropToDay(props.onMoveBlockToDay, props.readOnly, props.index)}
       style={{ display: 'flex' }}
     >
-      <Pressable
-        onPress={() => props.onSelect(props.index)}
-        style={[s.dayTab, props.active && s.dayTabActive]}
-      >
+      <Pressable onPress={() => props.onSelect(props.index)} style={[s.dayTab, props.active && s.dayTabActive]}>
         <Text style={[s.dayTabText, props.active && s.dayTabTextActive]}>{props.day.title}</Text>
       </Pressable>
     </div>
@@ -74,11 +68,7 @@ function onDragOverDayTab(event: React.DragEvent<HTMLDivElement>) {
   event.dataTransfer.dropEffect = 'move';
 }
 
-function createDropToDay(
-  onMoveBlockToDay: DayTabsProps['onMoveBlockToDay'],
-  readOnly: boolean,
-  targetDayIdx: number,
-) {
+function createDropToDay(onMoveBlockToDay: DayTabsProps['onMoveBlockToDay'], readOnly: boolean, targetDayIdx: number) {
   return (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     if (readOnly || !onMoveBlockToDay) return;

@@ -1,6 +1,11 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { styles } from './ClientProfileSectionsBoard.styles';
+
+const VARIANT_DANGER = 'danger' as const;
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 import type { SectionId } from './ClientProfileSectionsBoard.types';
 
@@ -27,16 +32,17 @@ export function ClientProfileSectionsBoardHeader(props: Props): React.JSX.Elemen
 
 function ArchiveButton(props: Props): React.JSX.Element {
   const danger = props.archivedCount > 0;
-  const tone = danger ? styles.archivedButtonDanger : styles.archivedButton;
-  const textTone = danger ? styles.archivedLabel : styles.archivedLabelNeutral;
   const label = `✉ ${props.t('coach.clientProfile.sections.archived', {
     count: props.archivedCount,
   })}`;
   return (
     <div onDragOver={preventDefault} onDrop={(event) => onDropArchive(event, props.onDropArchive)}>
-      <Pressable onPress={props.onToggleArchived} style={tone}>
-        <Text style={textTone}>{label}</Text>
-      </Pressable>
+      <Button
+        label={label}
+        onPress={props.onToggleArchived}
+        size={SIZE_SM}
+        variant={danger ? VARIANT_DANGER : VARIANT_SECONDARY}
+      />
     </div>
   );
 }

@@ -1,16 +1,18 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
-import { FileText, Pencil, Plus, StickyNote, Trash2, X } from 'lucide-react';
+import { Text, View } from 'react-native';
+import { FileText, Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { formatCalendarDate, getColorForHex } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, Modal, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const TONE_DANGER = 'danger' as const;
 
 export { AddNoteModal, AddReminderModal } from './CalendarScreen.modals.forms';
 
-const MODAL_ANIMATION = 'fade' as const;
-const COLOR_GREEN = tk.success;
+const MODAL_SIZE = 'md' as const;
 const TIME_ICON = '⏰ ' as const;
 
 const colors = {
@@ -19,7 +21,6 @@ const colors = {
   text: tk.text,
   textMuted: tk.textMuted,
   border: tk.border,
-  bg: tk.surfaceMuted,
 };
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
@@ -37,44 +38,6 @@ type DayModalProps = {
   t: TFunc;
 };
 
-type DayDetailHeaderProps = { dateStr: string; eventCount: number; onClose: () => void; t: TFunc };
-
-function DayDetailHeader({ dateStr, eventCount, onClose, t }: DayDetailHeaderProps): React.JSX.Element {
-  const date = new Date(dateStr + 'T12:00:00');
-  return (
-    <View
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: space.xl,
-        borderBottomWidth: 1,
-        borderColor: colors.border,
-      }}
-    >
-      <View>
-        <Text style={{ fontSize: fontSize.lg, fontWeight: 'bold', color: colors.text }}>{formatCalendarDate(date)}</Text>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>
-          {eventCount} {t('coach.calendar.day.events')}
-        </Text>
-      </View>
-      <Pressable
-        onPress={onClose}
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          backgroundColor: colors.bg,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <X color={colors.textMuted} size={16} />
-      </Pressable>
-    </View>
-  );
-}
-
 type DayEventListProps = {
   dayEvents: CalendarEventData[];
   onDeleteEvent: (id: string) => void;
@@ -84,14 +47,9 @@ type DayEventListProps = {
 
 function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventListProps): React.JSX.Element {
   return (
-    <ScrollView style={{ flexGrow: 1, flexShrink: 1 }} contentContainerStyle={{ padding: space.lg }}>
+    <View>
       {dayEvents.length === 0 && (
-        <View style={{ alignItems: 'center', padding: space.xl }}>
-          <FileText color={colors.border} size={32} />
-          <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginTop: space.sm }}>
-            {t('coach.calendar.empty')}
-          </Text>
-        </View>
+        <EmptyState icon={<FileText color={colors.border} size={32} />} title={t('coach.calendar.empty')} />
       )}
       {dayEvents.map((ev) => (
         <EventRow
@@ -102,7 +60,7 @@ function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventList
           t={t}
         />
       ))}
-    </ScrollView>
+    </View>
   );
 }
 
@@ -116,74 +74,29 @@ export function DayDetailModal({
   onEditEvent,
   t,
 }: DayModalProps): React.JSX.Element {
+  const date = new Date(dateStr + 'T12:00:00');
   return (
-    <Modal transparent animationType={MODAL_ANIMATION} onRequestClose={onClose}>
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }}
-        onPress={onClose}
-      >
-        <Pressable
-          onPress={(e) => e.stopPropagation()}
-          style={{
-            width: 480,
-            maxWidth: '95%',
-            backgroundColor: 'white',
-            borderRadius: 20,
-            overflow: 'hidden',
-            maxHeight: '80%',
-          }}
-        >
-          <DayDetailHeader dateStr={dateStr} eventCount={dayEvents.length} onClose={onClose} t={t} />
-          <View
-            style={{
-              flexDirection: 'row',
-              padding: space.lg,
-              gap: space.sm,
-              borderBottomWidth: 1,
-              borderColor: colors.border,
-              flexShrink: 0,
-            }}
-          >
-            <Pressable
-              onPress={onAddNote}
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: tk.primarySoft,
-                borderRadius: radius.lg,
-                paddingVertical: space.md,
-                gap: space.sm,
-              }}
-            >
-              <StickyNote color={colors.primary} size={15} />
-              <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary }}>
-                {t('coach.calendar.day.addNote')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={onAddReminder}
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: tk.successSoft,
-                borderRadius: radius.lg,
-                paddingVertical: space.md,
-                gap: space.sm,
-              }}
-            >
-              <Plus color={COLOR_GREEN} size={15} />
-              <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: COLOR_GREEN }}>
-                {t('coach.calendar.day.addReminder')}
-              </Text>
-            </Pressable>
-          </View>
-          <DayEventList dayEvents={dayEvents} onDeleteEvent={onDeleteEvent} onEditEvent={onEditEvent} t={t} />
-        </Pressable>
-      </Pressable>
+    <Modal closeLabel={t('common.close')} onClose={onClose} size={MODAL_SIZE} title={formatCalendarDate(date)} visible>
+      <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, marginBottom: space.md }}>
+        {dayEvents.length} {t('coach.calendar.day.events')}
+      </Text>
+      <View style={{ flexDirection: 'row', gap: space.sm, marginBottom: space.md }}>
+        <Button
+          icon={<StickyNote color={colors.primary} size={15} />}
+          label={t('coach.calendar.day.addNote')}
+          onPress={onAddNote}
+          style={{ flex: 1 }}
+          variant={VARIANT_SECONDARY}
+        />
+        <Button
+          icon={<Plus color={colors.primary} size={15} />}
+          label={t('coach.calendar.day.addReminder')}
+          onPress={onAddReminder}
+          style={{ flex: 1 }}
+          variant={VARIANT_SECONDARY}
+        />
+      </View>
+      <DayEventList dayEvents={dayEvents} onDeleteEvent={onDeleteEvent} onEditEvent={onEditEvent} t={t} />
     </Modal>
   );
 }
@@ -249,33 +162,20 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm, marginLeft: space.sm }}>
         {event.type !== 'workout' && event.type !== 'physical_test' && onEdit != null && (
-          <Pressable
+          <IconButton
+            accessibilityLabel={t('coach.calendar.event.edit')}
+            icon={(color) => <Pencil color={color} size={13} />}
             onPress={onEdit}
-            style={{
-              width: 28,
-              height: 28,
-              borderRadius: radius.lg,
-              backgroundColor: 'rgba(59,130,246,0.1)',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Pencil color={colors.primary} size={13} />
-          </Pressable>
+            size={28}
+          />
         )}
-        <Pressable
+        <IconButton
+          accessibilityLabel={t('coach.calendar.event.delete')}
+          icon={(color) => <Trash2 color={color} size={13} />}
           onPress={onDelete}
-          style={{
-            width: 28,
-            height: 28,
-            borderRadius: radius.lg,
-            backgroundColor: 'rgba(239,68,68,0.1)',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <Trash2 color={colors.danger} size={13} />
-        </Pressable>
+          size={28}
+          tone={TONE_DANGER}
+        />
       </View>
     </View>
   );

@@ -1,13 +1,16 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import {
   useNotificationPreferencesQuery,
   useSetNotificationPreferenceMutation,
   type NotificationPreference,
 } from '../../data/hooks/useNotificationPreferences';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 const TOPIC_KEYS: Array<NotificationPreference['topic']> = [
   'SESSION_COMPLETED',
@@ -56,9 +59,13 @@ function renderRows(
     return (
       <View key={topic} style={styles.row}>
         <Text style={styles.rowLabel}>{labelForTopic(topic, props.t)}</Text>
-        <Pressable onPress={() => props.update(topic, !enabled)} style={[styles.toggle, enabled ? styles.toggleOn : null]}>
-          <Text style={styles.toggleLabel}>{readToggleLabel(enabled, props.t)}</Text>
-        </Pressable>
+        <Button
+          label={readToggleLabel(enabled, props.t)}
+          onPress={() => props.update(topic, !enabled)}
+          size={SIZE_SM}
+          style={styles.toggle}
+          variant={enabled ? undefined : VARIANT_SECONDARY}
+        />
       </View>
     );
   });
@@ -109,19 +116,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   toggle: {
-    alignItems: 'center',
-    backgroundColor: colors.border,
-    borderRadius: 999,
     minWidth: 88,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  toggleLabel: {
-    color: colors.text,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  toggleOn: {
-    backgroundColor: colors.success,
   },
 });

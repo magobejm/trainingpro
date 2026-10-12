@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useExportReportPdfMutation } from '../../data/hooks/useExportReportPdf';
 import {
@@ -11,7 +11,9 @@ import {
   type ClientWellnessWeeklyReport,
 } from '../../data/hooks/useClientWellness';
 import { buildDefaultWellnessRange, formatDateLabel, formatScore, hasWellnessData } from './client-mood.helpers';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
 
 type Props = {
   clientId: string;
@@ -52,15 +54,13 @@ function ClientMoodView(props: ViewModel): React.JSX.Element {
         <Text style={styles.title}>{props.t('coach.mood.title')}</Text>
         <Text style={styles.subtitle}>{props.clientName}</Text>
       </View>
-      <Pressable
-        disabled={props.exporting}
+      <Button
+        label={props.exporting ? props.t('coach.mood.exporting') : props.t('coach.mood.exportPdf')}
+        loading={props.exporting}
         onPress={props.onExport}
-        style={[styles.exportBtn, props.exporting ? styles.exportBtnDisabled : null]}
-      >
-        <Text style={styles.exportLabel}>
-          {props.exporting ? props.t('coach.mood.exporting') : props.t('coach.mood.exportPdf')}
-        </Text>
-      </Pressable>
+        style={styles.exportBtn}
+        variant={VARIANT_SECONDARY}
+      />
       {props.exportError ? <Text style={styles.error}>{props.t('coach.mood.exportError')}</Text> : null}
       {renderBody(props)}
     </ScrollView>
@@ -69,14 +69,14 @@ function ClientMoodView(props: ViewModel): React.JSX.Element {
 
 function renderBody(props: ViewModel): React.JSX.Element {
   if (props.isLoading) {
-    return <Text style={styles.empty}>{props.t('coach.mood.loading')}</Text>;
+    return <EmptyState title={props.t('coach.mood.loading')} />;
   }
   if (props.isError || !props.wellness) {
-    return <Text style={styles.error}>{props.t('coach.mood.error')}</Text>;
+    return <EmptyState title={props.t('coach.mood.error')} />;
   }
   const isEmpty = props.wellness.summary.sessionsWithWellness === 0 && props.wellness.summary.reportsCount === 0;
   if (isEmpty) {
-    return <Text style={styles.empty}>{props.t('coach.mood.empty')}</Text>;
+    return <EmptyState title={props.t('coach.mood.empty')} />;
   }
   return <WellnessBody t={props.t} wellness={props.wellness} />;
 }
@@ -119,7 +119,7 @@ function SessionList(props: { sessions: ClientWellnessSession[]; t: ViewModel['t
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.sessions')}</Text>
-      {withData.length === 0 ? <Text style={styles.empty}>{props.t('coach.mood.empty')}</Text> : null}
+      {withData.length === 0 ? <EmptyState title={props.t('coach.mood.empty')} /> : null}
       {withData.map((session) => (
         <View key={session.id} style={styles.card}>
           <Text style={styles.cardTitle}>{session.planDayTitle ?? formatDateLabel(session.sessionDate)}</Text>
@@ -140,7 +140,7 @@ function WeeklyList(props: { reports: ClientWellnessWeeklyReport[]; t: ViewModel
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.weeklyReports')}</Text>
-      {props.reports.length === 0 ? <Text style={styles.empty}>{props.t('coach.mood.empty')}</Text> : null}
+      {props.reports.length === 0 ? <EmptyState title={props.t('coach.mood.empty')} /> : null}
       {props.reports.map((report) => (
         <View key={report.id} style={styles.card}>
           <Text style={styles.cardTitle}>{props.t('coach.mood.weeklyReport.weekOf', { date: report.weekStartDate })}</Text>
@@ -176,17 +176,8 @@ const styles = StyleSheet.create({
   },
   cardMeta: { color: colors.textMuted, fontSize: fontSize.xs },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
-  empty: { color: colors.textMuted, fontSize: fontSize.sm, paddingVertical: space.md },
   error: { color: colors.danger, fontSize: fontSize.sm },
-  exportBtn: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  exportBtnDisabled: { opacity: 0.6 },
-  exportLabel: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' },
+  exportBtn: { alignSelf: 'flex-start' },
   header: { gap: space.xs },
   kpiChip: {
     alignItems: 'center',

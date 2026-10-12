@@ -1,10 +1,5 @@
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const photoStyles = {
-  photoGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.md,
-  },
   photoCard: {
     backgroundColor: colors.surfaceMuted,
     borderColor: colors.border,
@@ -13,11 +8,6 @@ export const photoStyles = {
     gap: space.sm,
     padding: space.sm,
     width: 150,
-  },
-  photoImage: {
-    borderRadius: radius.md,
-    height: 120,
-    width: '100%',
   },
   photoDate: {
     color: colors.textMuted,

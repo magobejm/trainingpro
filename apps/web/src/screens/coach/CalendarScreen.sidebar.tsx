@@ -5,7 +5,10 @@ import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, Select, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 const EMPTY_FILTER = '';
 
@@ -89,47 +92,24 @@ function SidebarHeader({
           style={{ flex: 1, padding: space.sm, fontSize: fontSize.sm, color: colors.text }}
         />
       </View>
-      <select
+      <Select
+        label={t('coach.calendar.sidebar.objectiveFilter')}
+        onChange={onObjectiveFilterChange}
+        options={[
+          { label: t('coach.calendar.sidebar.allObjectives'), value: EMPTY_FILTER },
+          ...objectives.map((obj) => ({ label: obj.label, value: obj.id })),
+        ]}
         value={objectiveFilter}
-        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => onObjectiveFilterChange(e.target.value)}
-        style={{
-          width: '100%',
-          backgroundColor: colors.bg,
-          border: `1px solid ${colors.border}`,
-          borderRadius: radius.md,
-          padding: '8px 10px',
-          fontSize: fontSize.sm,
-          color: colors.textMuted,
-          cursor: 'pointer',
-        }}
-      >
-        <option value={EMPTY_FILTER}>{t('coach.calendar.sidebar.allObjectives')}</option>
-        {objectives.map((obj) => (
-          <option key={obj.id} value={obj.id}>
-            {obj.label}
-          </option>
-        ))}
-      </select>
+      />
       {(selectedClient || viewMode === 'coachOnly') && (
-        <Pressable
+        <Button
+          icon={<ChevronLeft color={colors.textMuted} size={14} />}
+          label={t('coach.calendar.sidebar.back')}
           onPress={() => (selectedClient ? onSelectClient(null) : onAllView())}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginTop: space.md,
-            backgroundColor: colors.bg,
-            borderRadius: radius.md,
-            paddingVertical: space.sm,
-            borderWidth: 1,
-            borderColor: colors.border,
-          }}
-        >
-          <ChevronLeft color={colors.textMuted} size={14} />
-          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.textMuted, marginLeft: space.xs }}>
-            {t('coach.calendar.sidebar.back')}
-          </Text>
-        </Pressable>
+          size={SIZE_SM}
+          style={{ marginTop: space.md }}
+          variant={VARIANT_SECONDARY}
+        />
       )}
     </View>
   );
@@ -352,11 +332,7 @@ export function CalendarSidebar({
             t={t}
           />
         ))}
-        {filtered.length === 0 && (
-          <View style={{ padding: space.xl, alignItems: 'center' }}>
-            <Text style={{ fontSize: fontSize.sm, color: colors.textMuted }}>{t('coach.calendar.sidebar.noClients')}</Text>
-          </View>
-        )}
+        {filtered.length === 0 && <EmptyState title={t('coach.calendar.sidebar.noClients')} />}
       </ScrollView>
     </View>
   );

@@ -1,35 +1,28 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Button, useToast } from '@trainerpro/ui';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { styles } from './ClientProfileEditScreen.styles';
 import type { Labels } from './ClientProfileEditScreen.labels';
 import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks';
 
+const VARIANT_SECONDARY = 'secondary' as const;
+const VARIANT_DANGER = 'danger' as const;
+
 type Vm = ReturnType<typeof useClientProfileEditState>;
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-export function AccountCard(props: {
-  labels: Labels;
-  onArchived?: () => void;
-  t: Translate;
-  vm: Vm;
-}): React.JSX.Element {
+export function AccountCard(props: { labels: Labels; onArchived?: () => void; t: Translate; vm: Vm }): React.JSX.Element {
   const confirm = useAccountActionConfirm(props);
   return (
     <View style={styles.card}>
       <Text style={styles.label}>{props.labels.accountTitle}</Text>
       <View style={styles.row}>
-        <Pressable onPress={confirm.requestReset} style={styles.secondaryButton}>
-          <Text style={styles.secondaryLabel}>{props.labels.resetPassword}</Text>
-        </Pressable>
-        <Pressable onPress={confirm.requestArchive} style={styles.dangerButton}>
-          <Text style={styles.dangerLabel}>{props.labels.archiveClient}</Text>
-        </Pressable>
+        <Button label={props.labels.resetPassword} onPress={confirm.requestReset} variant={VARIANT_SECONDARY} />
+        <Button label={props.labels.archiveClient} onPress={confirm.requestArchive} variant={VARIANT_DANGER} />
       </View>
       {props.vm.state.tempPassword ? (
-        <Text style={styles.helperText}>
-          {props.labels.tempPasswordLine(props.vm.state.tempPassword)}
-        </Text>
+        <Text style={styles.helperText}>{props.labels.tempPasswordLine(props.vm.state.tempPassword)}</Text>
       ) : null}
       <AccountActionConfirm confirm={confirm} t={props.t} />
     </View>
@@ -38,7 +31,8 @@ export function AccountCard(props: {
 
 function useAccountActionConfirm(props: { onArchived?: () => void; t: Translate; vm: Vm }) {
   const [pendingAction, setPendingAction] = React.useState<'' | 'archive' | 'reset'>('');
-  const onConfirm = () => executeAccountAction(pendingAction, props, setPendingAction);
+  const toast = useToast();
+  const onConfirm = () => executeAccountAction(pendingAction, { ...props, onDone: toast.success }, setPendingAction);
   return {
     message:
       pendingAction === 'archive'
@@ -71,18 +65,22 @@ function AccountActionConfirm(props: {
 
 function executeAccountAction(
   pendingAction: '' | 'archive' | 'reset',
-  props: { onArchived?: () => void; vm: Vm },
+  props: { onArchived?: () => void; onDone: (message: string) => unknown; t: Translate; vm: Vm },
   setPendingAction: (value: '' | 'archive' | 'reset') => void,
 ): void {
   if (pendingAction === 'archive') {
     void props.vm.actions.archiveClient().then(() => {
       setPendingAction('');
+      props.onDone(props.t('coach.clientProfile.archive.toast'));
       props.onArchived?.();
     });
     return;
   }
   if (pendingAction === 'reset') {
-    void resetPassword(props.vm).then(() => setPendingAction(''));
+    void resetPassword(props.vm).then(() => {
+      setPendingAction('');
+      props.onDone(props.t('coach.clientProfile.resetPassword.toast'));
+    });
   }
 }
 

@@ -1,9 +1,7 @@
 import React, { useRef, useState } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Text } from 'react-native';
 import type { HandoffChoice } from './routine-handoff';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
-
-const MODAL_ANIMATION = 'fade' as const;
+import { Button, Modal, colors, fontSize } from '@trainerpro/ui';
 
 type Translate = (key: string) => string;
 
@@ -17,22 +15,21 @@ type DialogProps = {
 
 export function RoutineHandoffDialog(props: DialogProps): React.JSX.Element {
   return (
-    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onCancel} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{props.t('coach.routine.handoff.title')}</Text>
-          <Text style={styles.message}>{props.t('coach.routine.handoff.message')}</Text>
-          <Pressable onPress={props.onContinue} style={styles.continueButton}>
-            <Text style={styles.continueLabel}>{props.t('coach.routine.handoff.continue')}</Text>
-          </Pressable>
-          <Pressable onPress={props.onReplace} style={styles.replaceButton}>
-            <Text style={styles.replaceLabel}>{props.t('coach.routine.handoff.replace')}</Text>
-          </Pressable>
-          <Pressable onPress={props.onCancel} style={styles.cancelButton}>
-            <Text style={styles.cancelLabel}>{props.t('common.cancel')}</Text>
-          </Pressable>
-        </View>
-      </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('common.cancel')} onPress={props.onCancel} variant="secondary" />
+          <Button label={props.t('coach.routine.handoff.replace')} onPress={props.onReplace} variant="danger" />
+          <Button label={props.t('coach.routine.handoff.continue')} onPress={props.onContinue} />
+        </>
+      }
+      onClose={props.onCancel}
+      size="sm"
+      title={props.t('coach.routine.handoff.title')}
+      visible={props.visible}
+    >
+      <Text style={styles.message}>{props.t('coach.routine.handoff.message')}</Text>
     </Modal>
   );
 }
@@ -72,44 +69,5 @@ export function useRoutineHandoffPrompt(t: Translate): {
 }
 
 const styles = {
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    padding: space.xl,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    gap: space.md,
-    maxWidth: 440,
-    padding: space.lg,
-    width: '100%' as const,
-  },
-  title: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' as const },
   message: { color: colors.text, fontSize: fontSize.sm, lineHeight: 20 },
-  continueButton: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  continueLabel: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
-  replaceButton: {
-    backgroundColor: colors.warning,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  replaceLabel: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
-  cancelButton: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  cancelLabel: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' as const, textAlign: 'center' as const },
 };

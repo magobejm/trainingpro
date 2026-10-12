@@ -12,21 +12,6 @@ const COLORS = {
 };
 
 export const styles = StyleSheet.create({
-  backButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 34,
-    paddingHorizontal: space.md,
-  },
-  backLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   badge: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.primaryBorder,
@@ -61,24 +46,6 @@ export const styles = StyleSheet.create({
     gap: space.md,
     maxWidth: 1280,
     width: '100%',
-  },
-  createButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.action,
-    borderRadius: radius.lg,
-    flexShrink: 0,
-    justifyContent: 'center',
-    minHeight: 48,
-    paddingHorizontal: space.xxl,
-    shadowColor: colors.primaryHover,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-  },
-  createLabel: {
-    color: COLORS.white,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
   },
   ctaCard: {
     alignItems: 'center',
@@ -135,18 +102,7 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   managementButton: {
-    alignItems: 'center',
     alignSelf: 'flex-start',
-    backgroundColor: colors.surfaceInverse,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.lg,
-  },
-  managementButtonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
   },
   managementCard: {
     backgroundColor: colors.surface,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { colors, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
+import { colors, EmptyState, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
@@ -221,6 +221,9 @@ function renderList(props: ViewModel): React.JSX.Element {
     props.activeUnitFilter !== 'all' ||
     props.activeTypeFilter !== 'all' ||
     props.activeCategoryFilter !== 'all';
+  if (!props.listQuery.isLoading && !props.listQuery.isError && !filtered && items.length === 0) {
+    return <EmptyState message={props.t('coach.library.emptyHint')} title={props.t('coach.library.empty')} />;
+  }
   const status = QueryResult({
     emptyTitle: props.t('coach.library.empty'),
     error: props.listQuery.error,

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useOrgSubscriptionOccupancyQuery, useUpdateOrgClientLimitMutation } from '../../data/hooks/useOrgSubscription';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, TextField, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
 
 const COLORS = {
   action: colors.primary,
@@ -23,6 +23,7 @@ export function SubscriptionScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const occupancyQuery = useOrgSubscriptionOccupancyQuery();
   const updateLimit = useUpdateOrgClientLimitMutation();
+  const toast = useToast();
   const [limitDraft, setLimitDraft] = useState('');
   const [invalidLimit, setInvalidLimit] = useState(false);
 
@@ -39,7 +40,7 @@ export function SubscriptionScreen(): React.JSX.Element {
       setInvalidLimit(true);
       return;
     }
-    updateLimit.mutate(parsed);
+    updateLimit.mutate(parsed, { onSuccess: () => toast.success(t('admin.subscription.saved')) });
   };
 
   const onChangeLimit = (text: string) => {
@@ -62,7 +63,7 @@ export function SubscriptionScreen(): React.JSX.Element {
   if (occupancyQuery.isError) {
     return (
       <View style={[styles.page, styles.centered]}>
-        <Text style={styles.error}>{t('admin.subscription.error')}</Text>
+        <EmptyState title={t('admin.subscription.error')} />
       </View>
     );
   }
@@ -80,28 +81,18 @@ export function SubscriptionScreen(): React.JSX.Element {
           <MetricCard label={t('admin.subscription.current')} value={String(activeCount)} />
           <MetricCard label={t('admin.subscription.max')} value={String(currentLimit)} />
         </View>
-        <Text style={styles.inputLabel}>{t('admin.subscription.limit.label')}</Text>
-        <TextInput
+        <TextField
           {...LIMIT_INPUT_PROPS}
-          editable={!updateLimit.isPending}
+          containerStyle={styles.input}
+          disabled={updateLimit.isPending}
+          error={invalidLimit ? t('admin.subscription.invalidLimit') : null}
+          label={t('admin.subscription.limit.label')}
           onChangeText={onChangeLimit}
           placeholder={t('admin.subscription.limit.placeholder')}
-          style={styles.input}
           value={limitDraft}
         />
-        {invalidLimit ? <Text style={styles.errorInline}>{t('admin.subscription.invalidLimit')}</Text> : null}
         {updateLimit.isError ? <Text style={styles.errorInline}>{t('admin.subscription.saveError')}</Text> : null}
-        <Pressable
-          disabled={updateLimit.isPending}
-          onPress={onSave}
-          style={[styles.button, updateLimit.isPending && styles.buttonDisabled]}
-        >
-          {updateLimit.isPending ? (
-            <ActivityIndicator color={COLORS.card} />
-          ) : (
-            <Text style={styles.buttonLabel}>{t('admin.subscription.limit.save')}</Text>
-          )}
-        </Pressable>
+        <Button label={t('admin.subscription.limit.save')} loading={updateLimit.isPending} onPress={onSave} />
       </View>
     </View>
   );
@@ -122,25 +113,10 @@ function MetricCard(props: MetricCardProps): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: COLORS.action,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 42,
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonLabel: {
-    color: COLORS.card,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
   card: {
     backgroundColor: COLORS.card,
     borderColor: COLORS.border,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     borderWidth: 1,
     maxWidth: 760,
     padding: space.xl,
@@ -150,12 +126,6 @@ const styles = StyleSheet.create({
     gap: space.md,
     justifyContent: 'center',
   },
-  error: {
-    color: COLORS.danger,
-    fontSize: fontSize.md,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
   errorInline: {
     color: COLORS.danger,
     fontSize: fontSize.sm,
@@ -163,18 +133,7 @@ const styles = StyleSheet.create({
     marginBottom: space.md,
   },
   input: {
-    borderColor: COLORS.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
     marginBottom: space.lg,
-    marginTop: space.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
-  inputLabel: {
-    color: COLORS.text,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
     marginTop: space.lg,
   },
   metricCard: {

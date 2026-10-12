@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { Lock } from 'lucide-react';
 import '../../i18n';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
@@ -17,7 +17,7 @@ import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { ClientNoteSection } from './NotesScreen.client-section';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, TextField, colors, fontSize, space, useToast } from '@trainerpro/ui';
 
 const theme = {
   colors: {
@@ -31,11 +31,12 @@ const theme = {
 type GeneralNoteSectionProps = {
   value: string;
   onChange: (v: string) => void;
+  isSaving?: boolean;
   onSave: () => void;
   t: (k: string) => string;
 };
 
-function GeneralNoteSection({ value, onChange, onSave, t }: GeneralNoteSectionProps): React.JSX.Element {
+function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNoteSectionProps): React.JSX.Element {
   return (
     <View style={{ marginBottom: space.xxxl }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: space.lg }}>
@@ -47,17 +48,18 @@ function GeneralNoteSection({ value, onChange, onSave, t }: GeneralNoteSectionPr
         </Text>
       </View>
       <View style={generalCardStyle}>
-        <TextInput
-          value={value}
-          onChangeText={onChange}
-          placeholder={t('coach.notes.private.placeholder')}
-          multiline
-          style={{ padding: space.xl, minHeight: 200, fontSize: fontSize.md, color: theme.colors.text }}
-        />
+        <View style={{ padding: space.lg }}>
+          <TextField
+            accessibilityLabel={t('coach.notes.private.title')}
+            multiline
+            numberOfLines={8}
+            onChangeText={onChange}
+            placeholder={t('coach.notes.private.placeholder')}
+            value={value}
+          />
+        </View>
         <View style={generalFooterStyle}>
-          <Pressable onPress={onSave} style={primaryButtonStyle}>
-            <Text style={{ color: 'white', fontWeight: 'bold' }}>{t('coach.notes.save')}</Text>
-          </Pressable>
+          <Button label={t('coach.notes.save')} loading={isSaving} onPress={onSave} />
         </View>
       </View>
     </View>
@@ -78,6 +80,7 @@ export function NotesScreen(): React.JSX.Element {
             <Text style={{ fontSize: fontSize.md, color: theme.colors.textMuted }}>{t('coach.notes.subtitle')}</Text>
           </View>
           <GeneralNoteSection
+            isSaving={vm.isCreating}
             onChange={vm.setGeneralNoteText}
             onSave={vm.handleSaveGeneralNote}
             t={t}
@@ -87,6 +90,7 @@ export function NotesScreen(): React.JSX.Element {
             clientNoteText={vm.clientNoteText}
             clientSearch={vm.clientSearch}
             filteredClients={vm.filteredClients}
+            isSaving={vm.isCreating}
             objectives={vm.objectives}
             onSave={vm.handleSaveClientNote}
             selectedClient={vm.selectedClient}
@@ -117,12 +121,14 @@ export function NotesScreen(): React.JSX.Element {
       <EditNoteModal
         editContent={vm.editContent}
         editingNote={vm.editingNote}
+        isSaving={vm.isUpdating}
         onClose={() => vm.setEditingNote(null)}
         onSave={vm.handleSaveEdit}
         setEditContent={vm.setEditContent}
         t={t}
       />
       <DeleteConfirmModal
+        isDeleting={vm.isDeleting}
         note={vm.deleteConfirmNote}
         onCancel={() => vm.setDeleteConfirmNote(null)}
         onConfirm={vm.handleDeleteNote}
@@ -134,6 +140,7 @@ export function NotesScreen(): React.JSX.Element {
 
 function useNotesScreenModel() {
   const { t } = useTranslation();
+  const toast = useToast();
   const [generalNoteText, setGeneralNoteText] = useState('');
   const [clientNoteText, setClientNoteText] = useState('');
   const { filters, setFilters } = useNotesFilters();
@@ -185,6 +192,8 @@ function useNotesScreenModel() {
     setEditContent,
     setEditingNote,
     setGeneralNoteText,
+    t,
+    toast,
     updateNoteMutation,
   });
 
@@ -200,6 +209,9 @@ function useNotesScreenModel() {
     filteredClients,
     generalNoteText,
     ...commands,
+    isCreating: createNoteMutation.isPending,
+    isDeleting: deleteNoteMutation.isPending,
+    isUpdating: updateNoteMutation.isPending,
     historyFilter: filters.historyFilter,
     objectives,
     selectedClient,
@@ -236,13 +248,30 @@ function readNoteCommands(input: {
   setEditContent: (value: string) => void;
   setEditingNote: (note: NoteData | null) => void;
   setGeneralNoteText: (value: string) => void;
+  t: (k: string) => string;
+  toast: ReturnType<typeof useToast>;
   updateNoteMutation: ReturnType<typeof useUpdateNoteMutation>;
 }) {
+  const run = async (action: () => Promise<unknown>, successKey: string, errorKey: string): Promise<boolean> => {
+    try {
+      await action();
+      input.toast.success(input.t(successKey));
+      return true;
+    } catch {
+      input.toast.error(input.t(errorKey));
+      return false;
+    }
+  };
   return {
     handleDeleteNote: async () => {
       if (!input.deleteConfirmNote) return;
-      await input.deleteNoteMutation.mutateAsync(input.deleteConfirmNote.id);
-      input.setDeleteConfirmNote(null);
+      const id = input.deleteConfirmNote.id;
+      const ok = await run(
+        () => input.deleteNoteMutation.mutateAsync(id),
+        'coach.notes.toast.deleted',
+        'coach.notes.error.delete',
+      );
+      if (ok) input.setDeleteConfirmNote(null);
     },
     handleEditNote: (note: NoteData) => {
       input.setEditingNote(note);
@@ -250,25 +279,35 @@ function readNoteCommands(input: {
     },
     handleSaveClientNote: async () => {
       if (!input.clientNoteText.trim() || !input.selectedClient) return;
-      await input.createNoteMutation.mutateAsync({
-        clientId: input.selectedClient.id,
-        content: input.clientNoteText.trim(),
-        type: 'client',
-      });
-      input.setClientNoteText('');
+      const clientId = input.selectedClient.id;
+      const content = input.clientNoteText.trim();
+      const ok = await run(
+        () => input.createNoteMutation.mutateAsync({ clientId, content, type: 'client' }),
+        'coach.notes.toast.created',
+        'coach.notes.error.create',
+      );
+      if (ok) input.setClientNoteText('');
     },
     handleSaveEdit: async () => {
       if (!input.editingNote || !input.editContent.trim()) return;
-      await input.updateNoteMutation.mutateAsync({
-        input: { content: input.editContent.trim() },
-        noteId: input.editingNote.id,
-      });
-      input.setEditingNote(null);
+      const noteId = input.editingNote.id;
+      const content = input.editContent.trim();
+      const ok = await run(
+        () => input.updateNoteMutation.mutateAsync({ input: { content }, noteId }),
+        'coach.notes.toast.updated',
+        'coach.notes.error.update',
+      );
+      if (ok) input.setEditingNote(null);
     },
     handleSaveGeneralNote: async () => {
       if (!input.generalNoteText.trim()) return;
-      await input.createNoteMutation.mutateAsync({ content: input.generalNoteText.trim(), type: 'general' });
-      input.setGeneralNoteText('');
+      const content = input.generalNoteText.trim();
+      const ok = await run(
+        () => input.createNoteMutation.mutateAsync({ content, type: 'general' }),
+        'coach.notes.toast.created',
+        'coach.notes.error.create',
+      );
+      if (ok) input.setGeneralNoteText('');
     },
   };
 }
@@ -342,11 +381,4 @@ const generalFooterStyle = {
   borderColor: colors.border,
   flexDirection: 'row' as const,
   justifyContent: 'flex-end' as const,
-};
-
-const primaryButtonStyle = {
-  backgroundColor: theme.colors.primary,
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
 };

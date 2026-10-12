@@ -1,14 +1,12 @@
-import React, { useRef } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useDialogFocus } from '../../../layout/useDialogFocus';
+import React, { useState } from 'react';
+import { Text } from 'react-native';
+import { Button, Modal, Select, TextField, colors, fontSize, space } from '@trainerpro/ui';
 import { CreateClientAvatarPicker } from './CreateClientAvatarPicker';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
   keyboardType: 'email-address' as const,
 };
-const MODAL_ANIMATION = 'fade' as const;
 
 type Props = {
   availableAvatars: string[];
@@ -34,32 +32,35 @@ type Props = {
   visible: boolean;
 };
 
+type FieldsProps = Props & { submitted: boolean };
+
 export function CreateClientModal(props: Props): React.JSX.Element {
-  const cardRef = useRef<View>(null);
-  useDialogFocus(props.visible, cardRef);
+  const [submitted, setSubmitted] = useState(false);
+  function handleCreate(): void {
+    setSubmitted(true);
+    if (props.isFormValid) props.onCreate();
+  }
   return (
-    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onClose} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View ref={cardRef} style={styles.card}>
-          <ModalHeader t={props.t} />
-          <ModalFields {...props} />
-          <ModalActions {...props} />
-        </View>
-      </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={<ModalActions {...props} onCreate={handleCreate} />}
+      onClose={props.onClose}
+      size="sm"
+      title={props.t('coach.clients.modal.title')}
+      visible={props.visible}
+    >
+      <Text style={styles.subtitle}>{props.t('coach.clients.modal.subtitle')}</Text>
+      <ModalFields {...props} submitted={submitted} />
     </Modal>
   );
 }
 
-function ModalHeader(props: Pick<Props, 't'>): React.JSX.Element {
-  return (
-    <>
-      <Text style={styles.title}>{props.t('coach.clients.modal.title')}</Text>
-      <Text style={styles.subtitle}>{props.t('coach.clients.modal.subtitle')}</Text>
-    </>
-  );
-}
+const styles = {
+  gap: { marginBottom: space.md },
+  subtitle: { color: colors.textMuted, fontSize: fontSize.sm, marginBottom: space.md },
+};
 
-function ModalFields(props: Props): React.JSX.Element {
+function ModalFields(props: FieldsProps): React.JSX.Element {
   return (
     <>
       <EmailFields {...props} />
@@ -75,208 +76,82 @@ function ModalFields(props: Props): React.JSX.Element {
   );
 }
 
-function TextFields(props: Props): React.JSX.Element {
+function requiredError(props: FieldsProps, value: string): string | null {
+  return props.submitted && value.trim().length === 0 ? props.t('coach.clientProfile.validation.required') : null;
+}
+
+function TextFields(props: FieldsProps): React.JSX.Element {
   return (
     <>
-      <LabeledInput
+      <TextField
+        accessibilityLabel={props.t('coach.clients.form.firstName')}
+        containerStyle={styles.gap}
+        error={requiredError(props, props.firstName)}
         label={props.t('coach.clients.form.firstName')}
         onChangeText={props.onFirstNameChange}
+        required
         value={props.firstName}
       />
-      <LabeledInput
+      <TextField
+        accessibilityLabel={props.t('coach.clients.form.lastName')}
+        containerStyle={styles.gap}
+        error={requiredError(props, props.lastName)}
         label={props.t('coach.clients.form.lastName')}
         onChangeText={props.onLastNameChange}
+        required
         value={props.lastName}
       />
     </>
   );
 }
 
-function EmailFields(props: Props): React.JSX.Element {
+function EmailFields(props: FieldsProps): React.JSX.Element {
+  const mismatch = props.emailMismatch ? props.t('coach.clients.form.confirmEmailMismatch') : null;
   return (
     <>
-      <LabeledInput
+      <TextField
         {...EMAIL_PROPS}
-        error={props.emailMismatch}
+        containerStyle={styles.gap}
+        error={mismatch ?? requiredError(props, props.email)}
         label={props.t('coach.clients.form.email')}
         onChangeText={props.onEmailChange}
+        required
         value={props.email}
       />
-      <LabeledInput
+      <TextField
         {...EMAIL_PROPS}
-        error={props.emailMismatch}
+        containerStyle={styles.gap}
+        error={mismatch ?? requiredError(props, props.confirmEmail)}
         label={props.t('coach.clients.form.confirmEmail')}
         onChangeText={props.onConfirmEmailChange}
+        required
         value={props.confirmEmail}
       />
-      {props.emailMismatch ? <Text style={styles.error}>{props.t('coach.clients.form.confirmEmailMismatch')}</Text> : null}
     </>
   );
 }
 
 function ObjectiveField(props: Props): React.JSX.Element {
   return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.t('coach.clients.form.objective')}</Text>
-      <select
-        aria-label={props.t('coach.clients.form.objective')}
-        onChange={(event) => props.onObjectiveChange(event.target.value)}
-        style={selectStyle}
-        value={props.objectiveId}
-      >
-        {props.objectiveOptions.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </View>
+    <Select
+      containerStyle={styles.gap}
+      label={props.t('coach.clients.form.objective')}
+      onChange={props.onObjectiveChange}
+      options={props.objectiveOptions.map((option) => ({ label: option.label, value: option.id }))}
+      value={props.objectiveId}
+    />
   );
 }
 
 function ModalActions(props: Props): React.JSX.Element {
   return (
-    <View style={styles.actions}>
-      <Pressable accessibilityRole="button" onPress={props.onClose} style={styles.cancelButton}>
-        <Text style={styles.cancelLabel}>{props.t('coach.clients.modal.cancel')}</Text>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        disabled={!props.isFormValid || props.isSubmitting}
-        onPress={props.onCreate}
-        style={[styles.submitButton, !props.isFormValid ? styles.submitButtonDisabled : null]}
-      >
-        <Text style={styles.submitLabel}>{submitLabel(props)}</Text>
-      </Pressable>
-    </View>
-  );
-}
-
-function LabeledInput(props: {
-  autoCapitalize?: 'none';
-  error?: boolean;
-  keyboardType?: 'email-address';
-  label: string;
-  onChangeText: (value: string) => void;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View style={styles.field}>
-      <Text style={styles.label}>{props.label}</Text>
-      <TextInput
-        accessibilityLabel={props.label}
-        autoCapitalize={props.autoCapitalize}
-        keyboardType={props.keyboardType}
-        onChangeText={props.onChangeText}
-        style={[styles.input, props.error ? styles.inputError : null]}
-        value={props.value}
-      />
-    </View>
+    <>
+      <Button label={props.t('coach.clients.modal.cancel')} onPress={props.onClose} variant="secondary" />
+      <Button label={submitLabel(props)} loading={props.isSubmitting} onPress={props.onCreate} />
+    </>
   );
 }
 
 function submitLabel(props: Props): string {
   return props.isSubmitting ? props.t('coach.clients.modal.creating') : props.t('coach.clients.form.submit');
 }
-
-const styles = StyleSheet.create({
-  actions: {
-    flexDirection: 'row',
-    gap: space.md,
-    justifyContent: 'flex-end',
-    marginTop: space.sm,
-  },
-  cancelButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: space.lg,
-  },
-  cancelLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: space.sm,
-    maxWidth: 450,
-    padding: space.lg,
-    width: '100%',
-  },
-  field: {
-    gap: space.xs,
-  },
-  label: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  input: {
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
-  inputError: {
-    borderColor: colors.danger,
-  },
-  error: {
-    color: colors.danger,
-    fontSize: fontSize.xs,
-    marginTop: -2,
-  },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(9, 16, 28, 0.4)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
-  },
-  submitButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 40,
-    paddingHorizontal: space.lg,
-  },
-  submitButtonDisabled: {
-    opacity: 0.55,
-  },
-  submitLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    marginBottom: space.xs,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '800',
-  },
-});
-
-const selectStyle = {
-  backgroundColor: colors.primarySoft,
-  border: `1px solid ${colors.border}`,
-  borderRadius: radius.md,
-  boxSizing: 'border-box' as const,
-  color: colors.text,
-  minHeight: 40,
-  padding: '8px 12px',
-  width: '100%',
-};

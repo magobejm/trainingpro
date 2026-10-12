@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { menuStyle, menuStyleTop, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
-import { colors } from '@trainerpro/ui';
+import { IconButton, colors } from '@trainerpro/ui';
 
 type Props = {
   hasTrainingPlan: boolean;
@@ -92,9 +92,11 @@ function RowMain(props: {
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
         <Text style={styles.rowSubtitle}>{subtitle}</Text>
       </Pressable>
-      <Pressable onPress={props.onToggleMenu} style={styles.menuButton}>
-        <Text style={styles.menuLabel}>{'⋯'}</Text>
-      </Pressable>
+      <IconButton
+        accessibilityLabel={props.t('coach.clientProfile.sections.actions.menu')}
+        icon={(color) => <Text style={[styles.menuLabel, { color }]}>{'⋯'}</Text>}
+        onPress={props.onToggleMenu}
+      />
       <Text style={styles.chevron}>{'›'}</Text>
     </>
   );

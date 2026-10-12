@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRoutineTemplatesQuery } from '../../../data/hooks/useRoutineTemplates';
 import { usePlanTemplatesQuery } from '../../../data/hooks/usePlanTemplates';
 import { matchesSearch } from '../../../utils/normalize-search';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, Modal, TextField, colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -12,8 +12,6 @@ type Props = {
   t: (key: string) => string;
 };
 
-const ANIMATION_FADE = 'fade' as const;
-
 export function PlanSelectionModal(props: Props): React.JSX.Element {
   const { routines, strength, isLoading } = usePlanData();
   const [search, setSearch] = useState('');
@@ -21,7 +19,15 @@ export function PlanSelectionModal(props: Props): React.JSX.Element {
   const filtered = allTemplates.filter((tpl) => matchesSearch(tpl.name, search));
 
   return (
-    <Modal animationType={ANIMATION_FADE} onRequestClose={props.onClose} transparent visible={props.visible}>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={<Button label={props.t('common.cancel')} onPress={props.onClose} variant="secondary" />}
+      onClose={props.onClose}
+      scroll={false}
+      size="md"
+      title={props.t('coach.routine.list.title')}
+      visible={props.visible}
+    >
       <ModalContent
         filtered={filtered}
         isLoading={isLoading}
@@ -54,15 +60,14 @@ interface ContentProps {
 function ModalContent(props: ContentProps) {
   const { search, setSearch, isLoading, filtered, onSelect, onClose, t } = props;
   return (
-    <View style={styles.overlay}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{t('coach.routine.list.title')}</Text>
-        <TextInput onChangeText={setSearch} placeholder={t('common.search')} style={styles.input} value={search} />
-        <PlanListContent filtered={filtered} isLoading={isLoading} onClose={onClose} onSelect={onSelect} t={t} />
-        <Pressable onPress={onClose} style={styles.closeButton}>
-          <Text style={styles.closeLabel}>{t('common.cancel')}</Text>
-        </Pressable>
-      </View>
+    <View style={styles.content}>
+      <TextField
+        accessibilityLabel={t('common.search')}
+        onChangeText={setSearch}
+        placeholder={t('common.search')}
+        value={search}
+      />
+      <PlanListContent filtered={filtered} isLoading={isLoading} onClose={onClose} onSelect={onSelect} t={t} />
     </View>
   );
 }
@@ -91,6 +96,7 @@ function PlanListContent({
   t: (k: string) => string;
 }) {
   if (isLoading) return <Text style={styles.loading}>{t('common.loading')}</Text>;
+  if (filtered.length === 0) return <EmptyState title={t('coach.plans.selection.empty')} />;
   return (
     <FlatList
       data={filtered}
@@ -127,30 +133,9 @@ function PlanListItem({
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: space.xl,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    width: '100%',
-    maxHeight: '80%',
-    padding: space.xl,
-  },
-  title: {
-    fontSize: fontSize.xl,
-    fontWeight: 'bold',
-    marginBottom: space.lg,
-  },
-  input: {
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    padding: space.md,
-    marginBottom: space.lg,
+  content: {
+    gap: space.md,
+    maxHeight: 420,
   },
   list: {
     marginVertical: space.sm,
@@ -173,16 +158,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     padding: space.xl,
     color: colors.textMuted,
-  },
-  closeButton: {
-    marginTop: space.lg,
-    paddingVertical: space.md,
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-  },
-  closeLabel: {
-    fontWeight: 'bold',
-    color: colors.text,
   },
 });

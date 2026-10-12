@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
 import { readSessionExpired } from '../../data/session-end';
 import { usePasswordRecoveryStore } from '../../store/password-recovery.store';
 import { isValidEmail, readResetNotice } from './login-form.logic';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
   error: colors.danger,
@@ -15,11 +15,10 @@ const COLORS = {
   text: colors.text,
   white: colors.surface,
   muted: colors.textMuted,
-  inputBg: colors.background,
-  inputBorder: colors.border,
 };
 
 const ALERT_ROLE = 'alert' as const;
+const VARIANT_GHOST = 'ghost' as const;
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
   keyboardType: 'email-address' as const,
@@ -59,7 +58,7 @@ function useLoginViewModel() {
     setEmail(value);
     setEmailError(null);
   };
-  const error = emailError ?? mapErrorMessage(loginMutation.error, t('auth.login.error'));
+  const error = mapErrorMessage(loginMutation.error, t('auth.login.error'));
   const passwordUpdated = usePasswordRecoveryStore((state) => state.passwordUpdated);
   const resetNotice = passwordUpdated
     ? { isError: false, text: t('auth.reset.updated') }
@@ -68,6 +67,7 @@ function useLoginViewModel() {
   return {
     t,
     email,
+    emailError,
     password,
     error,
     isLoading,
@@ -103,74 +103,52 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
             {props.t('auth.login.sessionExpired')}
           </Text>
         ) : null}
-        <TextInput
+        <TextField
           {...EMAIL_PROPS}
+          containerStyle={styles.field}
+          error={props.emailError}
+          label={props.t('auth.login.email.placeholder')}
           onChangeText={props.setEmail}
           onSubmitEditing={props.onLogin}
-          placeholder={props.t('auth.login.email.placeholder')}
-          style={styles.input}
           value={props.email}
         />
-        <TextInput
+        <TextField
+          containerStyle={styles.field}
+          label={props.t('auth.login.password.placeholder')}
           onChangeText={props.setPassword}
           onSubmitEditing={props.onLogin}
-          placeholder={props.t('auth.login.password.placeholder')}
           secureTextEntry
-          style={styles.input}
           value={props.password}
         />
-        {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
+        {props.error ? (
+          <Text accessibilityRole={ALERT_ROLE} style={styles.error}>
+            {props.error}
+          </Text>
+        ) : null}
         {props.resetNotice ? (
           <Text style={props.resetNotice.isError ? styles.error : styles.notice}>{props.resetNotice.text}</Text>
         ) : null}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ busy: props.isLoading, disabled: props.isLoading }}
-          disabled={props.isLoading}
+        <Button
+          fullWidth
+          label={props.isLoading ? props.t('auth.login.submitting') : props.t('auth.login.submit')}
+          loading={props.isLoading}
           onPress={props.onLogin}
-          style={[styles.button, props.isLoading && styles.buttonDisabled]}
-        >
-          {renderSubmitContent(props.isLoading, props.t('auth.login.submit'), props.t('auth.login.submitting'))}
-        </Pressable>
-        <Pressable accessibilityRole="button" onPress={props.onForgotPassword} style={styles.forgotLink}>
-          <Text style={styles.forgotLabel}>{props.t('auth.login.forgot')}</Text>
-        </Pressable>
+        />
+        <Button
+          label={props.t('auth.login.forgot')}
+          onPress={props.onForgotPassword}
+          style={styles.forgotLink}
+          variant={VARIANT_GHOST}
+        />
       </View>
     </View>
   );
 }
 
-function renderSubmitContent(isLoading: boolean, label: string, loadingLabel: string): React.JSX.Element {
-  if (isLoading) {
-    return (
-      <View style={styles.loadingRow}>
-        <ActivityIndicator color={COLORS.white} />
-        <Text style={styles.buttonText}>{loadingLabel}</Text>
-      </View>
-    );
-  }
-  return <Text style={styles.buttonText}>{label}</Text>;
-}
-
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: COLORS.primary,
-    borderRadius: radius.lg,
-    height: 48,
-    justifyContent: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: COLORS.white,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
   card: {
     backgroundColor: COLORS.white,
-    borderRadius: 16,
+    borderRadius: radius.lg,
     padding: space.xl,
     width: 420,
   },
@@ -179,33 +157,17 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginBottom: space.sm,
   },
-  forgotLabel: {
-    color: COLORS.primary,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
+  field: {
+    marginBottom: space.md,
   },
   forgotLink: {
-    alignItems: 'center',
-    marginTop: space.lg,
-  },
-  loadingRow: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: space.sm,
+    alignSelf: 'center',
+    marginTop: space.md,
   },
   notice: {
     color: COLORS.muted,
     fontSize: fontSize.sm,
     marginBottom: space.sm,
-  },
-  input: {
-    backgroundColor: COLORS.inputBg,
-    borderColor: COLORS.inputBorder,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    marginBottom: space.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
   },
   page: {
     alignItems: 'center',

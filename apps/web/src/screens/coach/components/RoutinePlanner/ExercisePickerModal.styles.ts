@@ -4,7 +4,6 @@ import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const s = StyleSheet.create({
   body: {
     gap: space.lg,
-    marginTop: space.md,
     flex: 1,
   },
   bodyColumn: {
@@ -13,14 +12,6 @@ export const s = StyleSheet.create({
   bodyRow: {
     flexDirection: 'row',
   },
-  cancelBtn: {
-    alignItems: 'center',
-    backgroundColor: colors.textMuted,
-    borderRadius: radius.md,
-    marginTop: space.md,
-    paddingVertical: space.md,
-  },
-  cancelText: { color: colors.surface, fontSize: fontSize.md, fontWeight: '600' },
   typeBar: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -47,51 +38,21 @@ export const s = StyleSheet.create({
   typeBtnTextActive: {
     color: colors.primaryHover,
   },
-  footer: {
-    alignItems: 'center',
-    borderTopColor: colors.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    gap: space.md,
-    marginTop: space.md,
-    paddingTop: space.md,
-  },
   footerCount: {
     color: colors.textMuted,
     flex: 1,
     fontSize: fontSize.sm,
   },
-  doneBtn: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    minWidth: 120,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.md,
-  },
-  doneBtnText: {
-    color: colors.surface,
-    fontSize: fontSize.md,
-    fontWeight: '700',
-  },
   cardAddedBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: colors.successSoft,
-    borderRadius: radius.sm,
     marginTop: space.sm,
-    paddingHorizontal: space.sm,
-    paddingVertical: 2,
   },
-  cardAddedBadgeText: {
-    color: colors.success,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  cardPrimaryBtnAdded: {
-    backgroundColor: colors.border,
-  },
-  cardPrimaryTextAdded: {
-    color: colors.textMuted,
+  cardAction: { flex: 1 },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginBottom: space.sm,
   },
   card: {
     backgroundColor: colors.surface,
@@ -109,15 +70,6 @@ export const s = StyleSheet.create({
   cardBody: {
     padding: space.md,
   },
-  cardGhostBtn: {
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.md,
-    flex: 1,
-    paddingVertical: space.sm,
-    alignItems: 'center',
-  },
-  cardGhostText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '600' },
   cardGrid: {
     gap: space.md,
     paddingBottom: space.md,
@@ -132,14 +84,6 @@ export const s = StyleSheet.create({
     justifyContent: 'center',
     padding: space.sm,
   },
-  cardPrimaryBtn: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    flex: 1,
-    paddingVertical: space.sm,
-    alignItems: 'center',
-  },
-  cardPrimaryText: { color: colors.surface, fontSize: fontSize.xs, fontWeight: '700' },
   cardRow: {
     gap: space.md,
   },
@@ -205,7 +149,6 @@ export const s = StyleSheet.create({
     fontSize: fontSize.sm,
     lineHeight: 18,
   },
-  empty: { color: colors.textMuted, marginTop: space.xl, textAlign: 'center' },
   list: { flex: 1, overflow: 'hidden' },
   listColumn: {
     flex: 2,
@@ -213,33 +156,8 @@ export const s = StyleSheet.create({
     flexBasis: 0,
   },
   loader: { marginTop: space.xl },
-  overlay: {
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  search: {
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    fontSize: fontSize.sm,
-    marginBottom: space.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
-  },
   sheet: {
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    height: '85%',
-    maxHeight: '85%',
-    paddingBottom: space.xxl,
-    paddingHorizontal: space.xl,
-    paddingTop: space.xl,
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.lg,
-    fontWeight: '700',
-    marginBottom: space.md,
+    gap: space.sm,
+    height: '60vh' as unknown as number,
   },
 });

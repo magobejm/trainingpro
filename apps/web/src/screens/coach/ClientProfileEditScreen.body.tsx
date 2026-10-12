@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+import { Button, Select, TextField } from '@trainerpro/ui';
 import { styles } from './ClientProfileEditScreen.styles';
 import { ProfileFieldsSection } from './components/EditClientProfileModal.fields';
 import { EditableBlockCard } from './ClientProfileEditScreen.components';
@@ -9,16 +10,20 @@ import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks'
 import { ICON_ALERT, ICON_IDEA, ICON_INJURY, ICON_NOTE } from './ClientProfileEditScreen.utils';
 import { AccountCard } from './ClientProfileEditScreen.account';
 
+const VARIANT_SECONDARY = 'secondary' as const;
+const FITNESS_LEVELS = [
+  { key: 'unspecified', value: '' },
+  { key: 'beginner', value: 'beginner' },
+  { key: 'intermediate', value: 'intermediate' },
+  { key: 'advanced', value: 'advanced' },
+  { key: 'elite', value: 'elite' },
+];
+
 type Vm = ReturnType<typeof useClientProfileEditState>;
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 type EditableSectionKey = 'allergies' | 'considerations' | 'injuries' | 'notes';
 
-export function MainLayout(props: {
-  labels: Labels;
-  onArchived?: () => void;
-  t: Translate;
-  vm: Vm;
-}): React.JSX.Element {
+export function MainLayout(props: { labels: Labels; onArchived?: () => void; t: Translate; vm: Vm }): React.JSX.Element {
   return (
     <View style={styles.mainLayout}>
       <MainColumn labels={props.labels} t={props.t} vm={props.vm} />
@@ -74,27 +79,21 @@ function ObjectivesCard(props: { labels: Labels; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>{props.labels.primaryObjective}</Text>
-      <ObjectiveSelect vm={vm} />
+      <ObjectiveSelect label={props.labels.primaryObjective} vm={vm} />
       <Text style={styles.label}>{props.labels.secondaryObjectives}</Text>
       <SecondaryChips labels={props.labels} vm={vm} />
     </View>
   );
 }
 
-function ObjectiveSelect(props: { vm: Vm }): React.JSX.Element {
+function ObjectiveSelect(props: { label: string; vm: Vm }): React.JSX.Element {
   return (
-    <select
-      onChange={(event) => setFormField(props.vm, 'objectiveId', event.target.value)}
-      style={styles.selectInput}
+    <Select
+      label={props.label}
+      onChange={(value) => setFormField(props.vm, 'objectiveId', value)}
+      options={props.vm.data.objectiveOptions.map((item) => ({ label: item.label, value: item.id }))}
       value={props.vm.state.form.objectiveId}
-    >
-      {props.vm.data.objectiveOptions.map((item) => (
-        <option key={item.id} value={item.id}>
-          {item.label}
-        </option>
-      ))}
-    </select>
+    />
   );
 }
 
@@ -113,15 +112,18 @@ function SecondaryChips(props: { labels: Labels; vm: Vm }): React.JSX.Element {
         ))}
       </View>
       <View style={styles.row}>
-        <TextInput
+        <TextField
+          containerStyle={styles.flexInput}
           onChangeText={props.vm.state.setSecondaryInput}
+          onSubmitEditing={() => addSecondaryObjective(props.vm)}
           placeholder={props.labels.secondaryPlaceholder}
-          style={[styles.input, styles.flexInput]}
           value={props.vm.state.secondaryInput}
         />
-        <Pressable onPress={() => addSecondaryObjective(props.vm)} style={styles.secondaryButton}>
-          <Text style={styles.secondaryLabel}>{props.labels.addSecondaryObjective}</Text>
-        </Pressable>
+        <Button
+          label={props.labels.addSecondaryObjective}
+          onPress={() => addSecondaryObjective(props.vm)}
+          variant={VARIANT_SECONDARY}
+        />
       </View>
     </>
   );
@@ -165,12 +167,7 @@ function onFieldChange(vm: Vm, key: string, value: string): void {
   vm.state.setForm((prev) => ({ ...prev, [key]: value }));
 }
 
-function SideColumn(props: {
-  labels: Labels;
-  onArchived?: () => void;
-  t: Translate;
-  vm: Vm;
-}): React.JSX.Element {
+function SideColumn(props: { labels: Labels; onArchived?: () => void; t: Translate; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
   return (
     <View style={styles.sideColumn}>
@@ -213,29 +210,18 @@ function HealthCards(props: { labels: Labels; vm: Vm }): React.JSX.Element {
 }
 
 function FitnessCard(props: { labels: Labels; t: Translate; vm: Vm }): React.JSX.Element {
-  const emptyLevel = '';
-  const beginnerLevel = 'beginner';
-  const intermediateLevel = 'intermediate';
-  const advancedLevel = 'advanced';
-  const eliteLevel = 'elite';
+  const options = FITNESS_LEVELS.map((level) => ({
+    label: props.t(`coach.clientProfile.fitness.${level.key}`),
+    value: level.value,
+  }));
   return (
     <View style={styles.card}>
-      <View style={styles.blockHeader}>
-        <Text style={styles.label}>{props.labels.fitnessLevel}</Text>
-      </View>
-      <select
-        onChange={(event) => setFormField(props.vm, 'fitnessLevel', event.target.value)}
-        style={styles.selectInput}
+      <Select
+        label={props.labels.fitnessLevel}
+        onChange={(value) => setFormField(props.vm, 'fitnessLevel', value)}
+        options={options}
         value={props.vm.state.form.fitnessLevel}
-      >
-        <option value={emptyLevel}>{props.t('coach.clientProfile.fitness.unspecified')}</option>
-        <option value={beginnerLevel}>{props.t('coach.clientProfile.fitness.beginner')}</option>
-        <option value={intermediateLevel}>
-          {props.t('coach.clientProfile.fitness.intermediate')}
-        </option>
-        <option value={advancedLevel}>{props.t('coach.clientProfile.fitness.advanced')}</option>
-        <option value={eliteLevel}>{props.t('coach.clientProfile.fitness.elite')}</option>
-      </select>
+      />
     </View>
   );
 }

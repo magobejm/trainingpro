@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Clock } from 'lucide-react';
 import type { ClientData, NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 export {
   DeleteConfirmModal,
   EditNoteModal,
@@ -14,6 +14,8 @@ export {
 const ICON_CLOSE = '✕' as const;
 const DATE_INPUT_TYPE = 'date' as const;
 const COLOR_WHITE = tk.surface;
+const VARIANT_SECONDARY = 'secondary' as const;
+const TONE_DANGER = 'danger' as const;
 
 const colors = {
   primary: tk.primary,
@@ -57,9 +59,13 @@ function HistoryNoteRow({ note, onEdit, onDelete, t }: HistoryNoteRowProps): Rea
           <Text style={{ fontSize: fontSize.xs, color: colors.textMuted, marginRight: space.md }}>
             {fmt(note.createdAt)}
           </Text>
-          <Pressable onPress={() => onDelete(note)}>
-            <Text style={{ fontSize: fontSize.xs, color: tk.danger }}>{ICON_CLOSE}</Text>
-          </Pressable>
+          <IconButton
+            accessibilityLabel={t('coach.notes.delete.action')}
+            icon={(color) => <Text style={{ fontSize: fontSize.xs, color }}>{ICON_CLOSE}</Text>}
+            onPress={() => onDelete(note)}
+            size={24}
+            tone={TONE_DANGER}
+          />
         </View>
       </View>
       <Pressable onPress={() => onEdit(note)}>
@@ -224,11 +230,7 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
 
   const historyList =
     displayedNotes.length === 0 ? (
-      <View style={{ padding: space.xxl, alignItems: 'center' }}>
-        <Text style={{ fontSize: fontSize.sm, color: colors.textMuted, textAlign: 'center' }}>
-          {t('coach.notes.history.empty')}
-        </Text>
-      </View>
+      <EmptyState title={t('coach.notes.history.empty')} />
     ) : (
       displayedNotes.map((note: NoteData) => (
         <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />
@@ -299,25 +301,16 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
           elevation: 8,
         }}
       >
-        <Pressable
+        <Button
+          fullWidth
+          label={showAllHistory ? t('coach.notes.history.lastMonth') : t('coach.notes.history.viewAll')}
           onPress={() => {
             props.setDateFrom('');
             props.setDateTo('');
             props.setShowAllHistory(!showAllHistory);
           }}
-          style={{
-            backgroundColor: tk.surfaceMuted,
-            paddingHorizontal: space.lg,
-            paddingVertical: space.md,
-            borderRadius: radius.md,
-            borderWidth: 1,
-            borderColor: tk.border,
-          }}
-        >
-          <Text style={{ fontSize: fontSize.sm, fontWeight: 'bold', color: colors.primary, textAlign: 'center' }}>
-            {showAllHistory ? t('coach.notes.history.lastMonth') : t('coach.notes.history.viewAll')}
-          </Text>
-        </Pressable>
+          variant={VARIANT_SECONDARY}
+        />
       </View>
     </View>
   );
@@ -332,6 +325,7 @@ const dateInputStyle: React.CSSProperties = {
   width: '100%',
   fontFamily: 'inherit',
   cursor: 'pointer',
+  boxSizing: 'border-box',
 };
 
 function historyChipStyle(active: boolean) {

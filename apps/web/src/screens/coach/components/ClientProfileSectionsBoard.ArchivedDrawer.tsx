@@ -1,8 +1,11 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { backdropStyle, drawerStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
-import { colors } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, colors } from '@trainerpro/ui';
+
+const VARIANT_SECONDARY = 'secondary' as const;
+const SIZE_SM = 'sm' as const;
 
 type Props = {
   archived: SectionItem[];
@@ -36,9 +39,11 @@ function DrawerHeader(props: { onClose: () => void; t: Props['t'] }): React.JSX.
           <Text style={styles.drawerSubtitle}>{props.t('coach.clientProfile.sections.archivedLabel')}</Text>
         </View>
       </View>
-      <Pressable onPress={props.onClose}>
-        <Text style={styles.drawerClose}>{'×'}</Text>
-      </Pressable>
+      <IconButton
+        accessibilityLabel={props.t('common.close')}
+        icon={(color) => <Text style={[styles.drawerClose, { color }]}>{'×'}</Text>}
+        onPress={props.onClose}
+      />
     </View>
   );
 }
@@ -49,7 +54,7 @@ function DrawerBody(props: {
   t: Props['t'];
 }): React.JSX.Element {
   if (props.archived.length === 0) {
-    return <Text style={styles.archivedEmpty}>{props.t('coach.clientProfile.sections.archivedEmpty')}</Text>;
+    return <EmptyState title={props.t('coach.clientProfile.sections.archivedEmpty')} />;
   }
   return <View style={styles.drawerList}>{props.archived.map((item) => renderRow(item, props))}</View>;
 }
@@ -66,9 +71,12 @@ function renderRow(item: SectionItem, props: { onRestore: (id: SectionId) => voi
           <Text style={styles.archivedItemSubtitle}>{props.t('coach.clientProfile.sections.archivedItemSubtitle')}</Text>
         </View>
       </View>
-      <Pressable onPress={() => props.onRestore(item.id)} style={styles.restoreButton}>
-        <Text style={styles.restoreLabel}>{props.t('coach.clientProfile.sections.actions.restore')}</Text>
-      </Pressable>
+      <Button
+        label={props.t('coach.clientProfile.sections.actions.restore')}
+        onPress={() => props.onRestore(item.id)}
+        size={SIZE_SM}
+        variant={VARIANT_SECONDARY}
+      />
     </View>
   );
 }

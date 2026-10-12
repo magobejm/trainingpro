@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Users } from 'lucide-react';
 import type { ClientData } from './notes-screen.types';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const theme = {
   colors: {
@@ -25,6 +25,7 @@ export type ClientNoteSectionProps = {
   setSelectedClient: (c: ClientData) => void;
   clientNoteText: string;
   setClientNoteText: (v: string) => void;
+  isSaving?: boolean;
   onSave: () => void;
   t: (k: string, opts?: Record<string, unknown>) => string;
 };
@@ -67,11 +68,11 @@ function ClientSelectionPane(props: { vm: ClientSectionViewModel }): React.JSX.E
   const vm = props.vm;
   return (
     <View style={{ flex: 1, paddingHorizontal: space.md }}>
-      <TextInput
-        value={vm.clientSearch}
+      <TextField
+        containerStyle={{ marginBottom: space.lg }}
         onChangeText={vm.setClientSearch}
         placeholder={vm.t('coach.notes.client.search')}
-        style={clientSearchInputStyle}
+        value={vm.clientSearch}
       />
       <ObjectiveFilterChips vm={vm} />
       {(vm.clientSearch || vm.selectedObjectiveLabel) && (
@@ -195,13 +196,16 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
           {vm.t('coach.notes.client.newEntry', { name: selectedClient.firstName })}
         </Text>
       </View>
-      <TextInput
-        value={vm.clientNoteText}
-        onChangeText={vm.setClientNoteText}
-        placeholder={vm.t('coach.notes.client.placeholder', { name: selectedClient.firstName })}
-        multiline
-        style={{ flex: 1, padding: space.xl, minHeight: 250, fontSize: fontSize.md, color: theme.colors.text }}
-      />
+      <View style={{ flex: 1, padding: space.lg }}>
+        <TextField
+          accessibilityLabel={vm.t('coach.notes.client.newEntry', { name: selectedClient.firstName })}
+          multiline
+          numberOfLines={10}
+          onChangeText={vm.setClientNoteText}
+          placeholder={vm.t('coach.notes.client.placeholder', { name: selectedClient.firstName })}
+          value={vm.clientNoteText}
+        />
+      </View>
       <View
         style={{
           padding: space.lg,
@@ -211,9 +215,7 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
           justifyContent: 'flex-end',
         }}
       >
-        <Pressable onPress={vm.onSave} style={primaryButtonStyle}>
-          <Text style={{ color: 'white', fontWeight: 'bold' }}>{vm.t('coach.notes.client.register')}</Text>
-        </Pressable>
+        <Button label={vm.t('coach.notes.client.register')} loading={vm.isSaving} onPress={vm.onSave} />
       </View>
     </View>
   );
@@ -222,22 +224,10 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
 function ClientEmptyState(props: { vm: ClientSectionViewModel }): React.JSX.Element {
   return (
     <View style={clientEmptyStateStyle}>
-      <Text style={{ fontSize: fontSize.sm, color: theme.colors.textMuted, textAlign: 'center' }}>
-        {props.vm.t('coach.notes.client.selectPrompt')}
-      </Text>
+      <EmptyState title={props.vm.t('coach.notes.client.selectPrompt')} />
     </View>
   );
 }
-
-const clientSearchInputStyle = {
-  backgroundColor: 'white',
-  borderWidth: 1,
-  borderColor: colors.border,
-  borderRadius: radius.lg,
-  padding: space.lg,
-  fontSize: fontSize.sm,
-  marginBottom: space.lg,
-};
 
 function objectiveChipStyle(active: boolean) {
   return {
@@ -300,13 +290,6 @@ const clientEditorCardStyle = {
   borderColor: colors.border,
   minHeight: 400,
   overflow: 'hidden' as const,
-};
-
-const primaryButtonStyle = {
-  backgroundColor: theme.colors.primary,
-  paddingHorizontal: space.xl,
-  paddingVertical: space.md,
-  borderRadius: radius.lg,
 };
 
 const clientEmptyStateStyle = {

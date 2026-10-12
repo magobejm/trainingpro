@@ -1,5 +1,6 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, View } from 'react-native';
+import { Button, useToast } from '@trainerpro/ui';
 import { styles } from './EditClientProfileModal.styles';
 
 type Translator = (key: string, params?: Record<string, number | string>) => string;
@@ -18,17 +19,26 @@ type ArchiveProps = {
 };
 
 export function ResetPasswordSection(props: ResetProps): React.JSX.Element {
+  const toast = useToast();
+  const doneMessage = props.t('coach.clientProfile.resetPassword.done');
+  useEffect(() => {
+    if (props.resetPassword) toast.success(doneMessage);
+    // Solo cuando aparece una contraseña nueva.
+  }, [props.resetPassword]);
   return (
     <View style={styles.resetBox}>
       <View style={styles.sectionRow}>
         <Text style={styles.resetText}>{props.t('coach.clientProfile.resetPassword.notice')}</Text>
-        <Pressable onPress={props.onRequestConfirm} style={styles.resetButton}>
-          <Text style={styles.resetLabel}>
-            {props.isResettingPassword
+        <Button
+          label={
+            props.isResettingPassword
               ? props.t('coach.clientProfile.resetPassword.loading')
-              : props.t('coach.clientProfile.resetPassword.action')}
-          </Text>
-        </Pressable>
+              : props.t('coach.clientProfile.resetPassword.action')
+          }
+          loading={props.isResettingPassword}
+          onPress={props.onRequestConfirm}
+          size="sm"
+        />
       </View>
       {props.resetPassword ? (
         <Text style={styles.resetPasswordValue}>
@@ -47,13 +57,15 @@ export function ArchiveSection(props: ArchiveProps): React.JSX.Element {
     <View style={styles.archiveBox}>
       <View style={styles.sectionRow}>
         <Text style={styles.archiveText}>{props.t('coach.clientProfile.archive.notice')}</Text>
-        <Pressable onPress={props.onRequestConfirm} style={styles.archiveButton}>
-          <Text style={styles.archiveLabel}>
-            {props.isArchiving
-              ? props.t('coach.clientProfile.archive.archiving')
-              : props.t('coach.clientProfile.archive')}
-          </Text>
-        </Pressable>
+        <Button
+          label={
+            props.isArchiving ? props.t('coach.clientProfile.archive.archiving') : props.t('coach.clientProfile.archive')
+          }
+          loading={props.isArchiving}
+          onPress={props.onRequestConfirm}
+          size="sm"
+          variant="danger"
+        />
       </View>
     </View>
   );

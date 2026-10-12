@@ -1,10 +1,6 @@
-import React, { useRef } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
-import { useDialogFocus } from '../../../layout/useDialogFocus';
-import { styles } from './ActionConfirmModal.styles';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
-
-const MODAL_ANIMATION = 'fade' as const;
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Button, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   cancelLabel: string;
@@ -19,65 +15,55 @@ type Props = {
 };
 
 export function ActionConfirmModal(props: Props): React.JSX.Element {
-  const cardRef = useRef<View>(null);
-  useDialogFocus(props.visible, cardRef);
   return (
-    <Modal animationType={MODAL_ANIMATION} onRequestClose={props.onCancel} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View ref={cardRef} style={styles.card}>
-          <Text style={styles.title}>{props.title}</Text>
-          <Text style={styles.message}>{props.message}</Text>
-          {props.errorMessage ? (
-            <View style={errorStyles.banner}>
-              <Text style={errorStyles.bannerText}>{props.errorMessage}</Text>
-            </View>
-          ) : null}
-          <ActionButtons {...props} />
+    <Modal
+      closeLabel={props.cancelLabel}
+      footer={<ActionButtons {...props} />}
+      onClose={props.onCancel}
+      size="sm"
+      title={props.title}
+      visible={props.visible}
+    >
+      <Text style={styles.message}>{props.message}</Text>
+      {props.errorMessage ? (
+        <View style={styles.banner}>
+          <Text style={styles.bannerText}>{props.errorMessage}</Text>
         </View>
-      </View>
+      ) : null}
     </Modal>
   );
 }
 
-const errorStyles = {
+const styles = StyleSheet.create({
   banner: {
     backgroundColor: colors.dangerSoft,
-    borderWidth: 1,
     borderColor: colors.dangerSoft,
     borderRadius: radius.md,
-    padding: space.md,
+    borderWidth: 1,
     marginTop: space.md,
+    padding: space.md,
   },
   bannerText: {
     color: colors.danger,
     fontSize: fontSize.sm,
     lineHeight: 18,
   },
-};
+  message: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    lineHeight: 20,
+  },
+});
 
 function ActionButtons(
   props: Pick<Props, 'cancelLabel' | 'confirmLabel' | 'isLoading' | 'onCancel' | 'onConfirm'>,
 ): React.JSX.Element {
   return (
-    <View style={styles.actions}>
-      <Pressable
-        accessibilityRole="button"
-        disabled={props.isLoading}
-        onPress={props.onCancel}
-        style={[styles.cancelButton, props.isLoading && { opacity: 0.5 }]}
-      >
-        <Text style={styles.cancelLabel}>{props.cancelLabel}</Text>
-      </Pressable>
+    <>
+      <Button disabled={props.isLoading} label={props.cancelLabel} onPress={props.onCancel} variant="secondary" />
       {props.confirmLabel && props.onConfirm ? (
-        <Pressable
-          accessibilityRole="button"
-          disabled={props.isLoading}
-          onPress={props.onConfirm}
-          style={[styles.confirmButton, props.isLoading && { opacity: 0.5 }]}
-        >
-          <Text style={styles.confirmLabel}>{props.isLoading ? '...' : props.confirmLabel}</Text>
-        </Pressable>
+        <Button label={props.confirmLabel} loading={props.isLoading} onPress={props.onConfirm} variant="danger" />
       ) : null}
-    </View>
+    </>
   );
 }

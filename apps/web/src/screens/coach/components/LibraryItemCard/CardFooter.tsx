@@ -1,30 +1,36 @@
 import React from 'react';
-import { StyleSheet, View, Pressable, Text } from 'react-native';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { StyleSheet, View } from 'react-native';
+import { IconButton, space } from '@trainerpro/ui';
+import { Pencil, Trash2 } from 'lucide-react';
 
-const ICON_EDIT = '✏️';
-const ICON_DELETE = '🗑️';
+const ICON_SIZE = 16;
+
+const noop = (): void => undefined;
 
 interface CardFooterProps {
   onEdit?: () => void;
   onDelete?: () => void;
   coachOwned: boolean;
+  t: (key: string) => string;
 }
 
-export function CardFooter({ onEdit, onDelete, coachOwned }: CardFooterProps) {
+export function CardFooter({ onEdit, onDelete, coachOwned, t }: CardFooterProps) {
   if (!coachOwned) return null;
 
   return (
     <View style={styles.footer}>
       <View style={styles.adminActions}>
-        <Pressable onPress={onEdit} style={styles.iconButton}>
-          {/* eslint-disable-next-line no-restricted-syntax */}
-          <Text style={styles.iconText}>{ICON_EDIT}</Text>
-        </Pressable>
-        <Pressable onPress={onDelete} style={[styles.iconButton, styles.deleteButton]}>
-          {/* eslint-disable-next-line no-restricted-syntax */}
-          <Text style={styles.iconText}>{ICON_DELETE}</Text>
-        </Pressable>
+        <IconButton
+          accessibilityLabel={t('coach.library.exercises.actions.edit')}
+          icon={(color) => <Pencil color={color} size={ICON_SIZE} />}
+          onPress={onEdit ?? noop}
+        />
+        <IconButton
+          accessibilityLabel={t('coach.library.exercises.actions.delete')}
+          icon={(color) => <Trash2 color={color} size={ICON_SIZE} />}
+          onPress={onDelete ?? noop}
+          tone="danger"
+        />
       </View>
     </View>
   );
@@ -40,19 +46,5 @@ const styles = StyleSheet.create({
   adminActions: {
     flexDirection: 'row',
     gap: space.md,
-  },
-  iconButton: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    height: 32,
-    justifyContent: 'center',
-    width: 32,
-  },
-  deleteButton: {
-    backgroundColor: colors.dangerSoft,
-  },
-  iconText: {
-    fontSize: fontSize.sm,
   },
 });

@@ -1,10 +1,10 @@
 import React, { useRef, useState } from 'react';
 import ReactDOM from 'react-dom';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { MONTH_NAMES_ES, DAY_NAMES_ES } from './calendar-screen.utils';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
-import { colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 
@@ -13,7 +13,6 @@ const colors = {
   text: tk.text,
   textMuted: tk.textMuted,
   border: tk.border,
-  bg: tk.surfaceMuted,
 };
 
 function ClipboardBadge({
@@ -44,13 +43,12 @@ function ClipboardBadge({
       }}
     >
       <span>{label}</span>
-      <div
-        onClick={onClear}
-        style={{ cursor: 'pointer', lineHeight: 0, marginLeft: 2 }}
-        title={t('coach.calendar.clipboard.clear')}
-      >
-        <X size={12} color={colors.primary} />
-      </div>
+      <IconButton
+        accessibilityLabel={t('coach.calendar.clipboard.clear')}
+        icon={(color) => <X size={12} color={color} />}
+        onPress={onClear}
+        size={20}
+      />
     </div>
   );
 }
@@ -62,6 +60,7 @@ function MonthPicker({
   anchorLeft,
   onGoTo,
   onClose,
+  t,
 }: {
   currentYear: number;
   currentMonth: number;
@@ -69,6 +68,7 @@ function MonthPicker({
   anchorLeft: number;
   onGoTo: (year: number, month: number) => void;
   onClose: () => void;
+  t: TFunc;
 }): React.JSX.Element {
   const [pickerYear, setPickerYear] = useState(currentYear);
   return ReactDOM.createPortal(
@@ -89,25 +89,19 @@ function MonthPicker({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.md }}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setPickerYear((y) => y - 1);
-            }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: fontSize.lg }}
-          >
-            {'‹'}
-          </button>
+          <IconButton
+            accessibilityLabel={t('coach.calendar.header.prevYear')}
+            icon={(color) => <ChevronLeft color={color} size={16} />}
+            onPress={() => setPickerYear((y) => y - 1)}
+            size={32}
+          />
           <span style={{ fontWeight: 'bold', fontSize: fontSize.md, color: colors.text }}>{pickerYear}</span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setPickerYear((y) => y + 1);
-            }}
-            style={{ border: 'none', background: 'none', cursor: 'pointer', padding: '4px 12px', fontSize: fontSize.lg }}
-          >
-            {'›'}
-          </button>
+          <IconButton
+            accessibilityLabel={t('coach.calendar.header.nextYear')}
+            icon={(color) => <ChevronRight color={color} size={16} />}
+            onPress={() => setPickerYear((y) => y + 1)}
+            size={32}
+          />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: space.sm }}>
           {MONTH_NAMES_ES.map((name, i) => {
@@ -200,40 +194,23 @@ export function CalendarMonthHeader({
           anchorLeft={anchor.left}
           onGoTo={onGoTo}
           onClose={() => setShowPicker(false)}
+          t={t}
         />
       )}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: space.sm }}>
         <ClipboardBadge clipboard={clipboard} onClear={onClearClipboard} t={t} />
-        <Pressable
+        <IconButton
+          accessibilityLabel={t('coach.calendar.header.prevMonth')}
+          icon={(color) => <ChevronLeft color={color} size={16} />}
           onPress={onPrevMonth}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: colors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: colors.bg,
-          }}
-        >
-          <ChevronLeft color={colors.textMuted} size={16} />
-        </Pressable>
-        <Pressable
+          size={36}
+        />
+        <IconButton
+          accessibilityLabel={t('coach.calendar.header.nextMonth')}
+          icon={(color) => <ChevronRight color={color} size={16} />}
           onPress={onNextMonth}
-          style={{
-            width: 36,
-            height: 36,
-            borderRadius: 18,
-            borderWidth: 1,
-            borderColor: colors.border,
-            justifyContent: 'center',
-            alignItems: 'center',
-            backgroundColor: colors.bg,
-          }}
-        >
-          <ChevronRight color={colors.textMuted} size={16} />
-        </Pressable>
+          size={36}
+        />
       </View>
     </View>
   );

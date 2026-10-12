@@ -1,10 +1,10 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { setVariablesForType } from '@trainerpro/shared';
 import { useSessionDetailQuery } from '../../../data/hooks/useSessionDetailQuery';
 import { comparePlannedAndLogged, type ComparedCell } from './session-compare.helpers';
-import { colors, fontSize, space } from '@trainerpro/ui';
+import { Modal, colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   onClose: () => void;
@@ -28,43 +28,40 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const query = useSessionDetailQuery(props.sessionId);
   return (
-    <Modal onRequestClose={props.onClose} transparent visible={Boolean(props.sessionId)}>
-      <Pressable onPress={props.onClose} style={styles.backdrop} />
-      <View style={styles.sheet}>
-        <View style={styles.header}>
-          <Text style={styles.title}>{t('coach.progress.sessionDetail.title')}</Text>
-          <Pressable onPress={props.onClose}>
-            <Text style={styles.close}>{'✕'}</Text>
-          </Pressable>
-        </View>
-        {query.isLoading ? <Text style={styles.muted}>{t('coach.progress.loading')}</Text> : null}
-        <ScrollView>
-          {(query.data?.items ?? []).map((item) => {
-            const rows = comparePlannedAndLogged(item);
-            const columns = setVariablesForType(item.type);
-            return (
-              <View key={item.id} style={styles.block}>
-                <Text style={styles.blockTitle}>{item.displayName}</Text>
-                <View style={styles.tableHead}>
-                  <Text style={styles.headCell}>{'#'}</Text>
-                  {columns.map((key) => (
-                    <Text key={key} style={styles.headCell}>
-                      {COLUMN_LABEL[key] ?? key}
-                    </Text>
-                  ))}
-                </View>
-                {rows.map((row) => (
-                  <View key={row.setIndex} style={styles.tableRow}>
-                    <Text style={styles.cell}>{row.setIndex}</Text>
-                    {row.cells.map((cell) => (
-                      <ComparedValueCell cell={cell} key={cell.key} />
-                    ))}
-                  </View>
+    <Modal
+      closeLabel={t('common.close')}
+      onClose={props.onClose}
+      size="lg"
+      title={t('coach.progress.sessionDetail.title')}
+      visible={Boolean(props.sessionId)}
+    >
+      {query.isLoading ? <Text style={styles.muted}>{t('coach.progress.loading')}</Text> : null}
+      <View>
+        {(query.data?.items ?? []).map((item) => {
+          const rows = comparePlannedAndLogged(item);
+          const columns = setVariablesForType(item.type);
+          return (
+            <View key={item.id} style={styles.block}>
+              <Text style={styles.blockTitle}>{item.displayName}</Text>
+              <View style={styles.tableHead}>
+                <Text style={styles.headCell}>{'#'}</Text>
+                {columns.map((key) => (
+                  <Text key={key} style={styles.headCell}>
+                    {COLUMN_LABEL[key] ?? key}
+                  </Text>
                 ))}
               </View>
-            );
-          })}
-        </ScrollView>
+              {rows.map((row) => (
+                <View key={row.setIndex} style={styles.tableRow}>
+                  <Text style={styles.cell}>{row.setIndex}</Text>
+                  {row.cells.map((cell) => (
+                    <ComparedValueCell cell={cell} key={cell.key} />
+                  ))}
+                </View>
+              ))}
+            </View>
+          );
+        })}
       </View>
     </Modal>
   );
@@ -77,26 +74,12 @@ function ComparedValueCell(props: { cell: ComparedCell }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  backdrop: { backgroundColor: 'rgba(15,23,42,0.4)', bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   block: { marginBottom: space.lg },
   blockTitle: { fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
   cell: { flex: 1, fontSize: fontSize.xs },
-  close: { fontSize: fontSize.lg, fontWeight: '700' },
   differs: { color: colors.warning, fontWeight: '700' },
   headCell: { color: colors.textMuted, flex: 1, fontSize: fontSize.xs, fontWeight: '700' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.md },
   muted: { color: colors.textMuted, marginBottom: space.md },
-  sheet: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    left: 24,
-    maxHeight: '80%',
-    padding: space.lg,
-    position: 'absolute',
-    right: 24,
-    top: 48,
-  },
   tableHead: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },
   tableRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },
-  title: { fontSize: fontSize.lg, fontWeight: '800' },
 });

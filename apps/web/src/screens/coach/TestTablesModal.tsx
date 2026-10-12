@@ -1,9 +1,10 @@
 import React from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { PhysicalTestView } from '../../data/hooks/usePhysicalTests';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const MODAL_ANIMATION_FADE = 'fade' as const;
+const MODAL_SIZE = 'lg' as const;
+const VARIANT_SECONDARY = 'secondary' as const;
 
 type Props = {
   onClose: () => void;
@@ -28,22 +29,21 @@ type NormTable = {
 export function TestTablesModal(props: Props): React.JSX.Element {
   const tables = parseNormTables(props.test?.normTables);
   return (
-    <Modal animationType={MODAL_ANIMATION_FADE} onRequestClose={props.onClose} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{props.t('coach.tests.tables.title')}</Text>
-          {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
-          <ScrollView contentContainerStyle={styles.content}>
-            {tables.length > 0 ? (
-              tables.map((table, index) => renderTable(table, index))
-            ) : (
-              <Text style={styles.fallback}>{props.t('coach.tests.tables.fallback')}</Text>
-            )}
-          </ScrollView>
-          <Pressable onPress={props.onClose} style={styles.closeButton}>
-            <Text style={styles.closeLabel}>{props.t('common.close')}</Text>
-          </Pressable>
-        </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={<Button label={props.t('common.close')} onPress={props.onClose} variant={VARIANT_SECONDARY} />}
+      onClose={props.onClose}
+      size={MODAL_SIZE}
+      title={props.t('coach.tests.tables.title')}
+      visible={props.visible}
+    >
+      {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
+      <View style={styles.content}>
+        {tables.length > 0 ? (
+          tables.map((table, index) => renderTable(table, index))
+        ) : (
+          <EmptyState title={props.t('coach.tests.tables.fallback')} />
+        )}
       </View>
     </Modal>
   );
@@ -94,39 +94,13 @@ function renderTable(table: NormTable, index: number): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15, 23, 42, 0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    maxHeight: '85%',
-    maxWidth: 720,
-    padding: space.xl,
-    width: '100%',
-  },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xl,
-    fontWeight: '700',
-  },
   subtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-    marginTop: space.xs,
+    marginBottom: space.sm,
   },
   content: {
     gap: space.lg,
-    paddingVertical: space.lg,
-  },
-  fallback: {
-    color: colors.textMuted,
-    fontSize: fontSize.sm,
-    lineHeight: 20,
   },
   tableBlock: {
     borderColor: colors.border,
@@ -169,16 +143,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: fontSize.xs,
     minWidth: 80,
-  },
-  closeButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingVertical: space.md,
-  },
-  closeLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '600',
   },
 });

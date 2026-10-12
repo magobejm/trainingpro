@@ -9,7 +9,7 @@ import { GroupContainer } from './RoutineDayCard/GroupContainer';
 import { RoutineBlockCard } from './RoutineBlockCard';
 import type { PlannerLabels } from './RoutinePlanner/planner-labels';
 import { useGroupManagement } from '../hooks/useGroupManagement';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 interface RoutineDayCardProps {
   day: DraftDay;
@@ -152,12 +152,8 @@ function GroupModeBar({
   if (!groupMode) {
     return (
       <View style={gbs.bar}>
-        <TouchableOpacity onPress={onStartCircuit} style={gbs.circuitBtn}>
-          <Text style={gbs.circuitBtnText}>{t('coach.routine.group.addCircuit')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={onStartSuperset} style={gbs.supersetBtn}>
-          <Text style={gbs.supersetBtnText}>{t('coach.routine.group.addSuperset')}</Text>
-        </TouchableOpacity>
+        <Button label={t('coach.routine.group.addCircuit')} onPress={onStartCircuit} size="sm" variant="secondary" />
+        <Button label={t('coach.routine.group.addSuperset')} onPress={onStartSuperset} size="sm" variant="secondary" />
       </View>
     );
   }
@@ -167,14 +163,8 @@ function GroupModeBar({
     <View style={[gbs.bar, gbs.activeBar]}>
       <Text style={gbs.hint}>{t('coach.routine.group.selectHint', { label, count: selectedCount })}</Text>
       <View style={gbs.spacer} />
-      <TouchableOpacity onPress={onCancel} style={gbs.cancelBtn}>
-        <Text style={gbs.cancelBtnText}>{t('coach.routine.delete.cancel')}</Text>
-      </TouchableOpacity>
-      {selectedCount >= 2 && (
-        <TouchableOpacity onPress={onConfirm} style={gbs.confirmBtn}>
-          <Text style={gbs.confirmBtnText}>{t('coach.routine.group.create', { label })}</Text>
-        </TouchableOpacity>
-      )}
+      <Button label={t('coach.routine.delete.cancel')} onPress={onCancel} size="sm" variant="secondary" />
+      {selectedCount >= 2 && <Button label={t('coach.routine.group.create', { label })} onPress={onConfirm} size="sm" />}
     </View>
   );
 }
@@ -191,40 +181,8 @@ const gbs = {
     borderTopColor: colors.background,
   },
   activeBar: { backgroundColor: colors.primarySoft },
-  circuitBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.primaryBorder,
-    backgroundColor: colors.primaryBorder,
-  },
-  circuitBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: colors.primaryHover },
-  supersetBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: '#c4b5fd',
-    backgroundColor: '#ede9fe',
-  },
-  supersetBtnText: { fontSize: fontSize.xs, fontWeight: '600' as const, color: '#7c3aed' },
   hint: { fontSize: fontSize.xs, color: colors.textMuted },
   spacer: { flex: 1 },
-  cancelBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.background,
-  },
-  cancelBtnText: { fontSize: fontSize.xs, color: colors.textMuted },
-  confirmBtn: {
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.primary,
-  },
-  confirmBtnText: { fontSize: fontSize.xs, fontWeight: '700' as const, color: colors.surface },
 };
 
 interface DayBlocksContentProps {
@@ -249,7 +207,7 @@ interface DayBlocksContentProps {
 function DayBlocksContent(props: DayBlocksContentProps) {
   const { day, readOnly, t } = props;
   if (day.blocks.length === 0) {
-    return <Text style={s.emptyDay}>{t('coach.routine.day.noExercises')}</Text>;
+    return <EmptyState title={t('coach.routine.day.noExercises')} />;
   }
 
   const groups = day.groups ?? [];

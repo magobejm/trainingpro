@@ -14,19 +14,6 @@ export const COLORS = {
 };
 
 export const styles = StyleSheet.create({
-  accentButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.lg,
-  },
-  accentButtonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
   avatar: {
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
@@ -46,74 +33,14 @@ export const styles = StyleSheet.create({
   avatarMuted: {
     backgroundColor: colors.background,
   },
-  buttonDisabled: {
-    opacity: 0.5,
-  },
   container: {
     gap: space.lg,
     maxWidth: 980,
     width: '100%',
   },
   copyButton: {
-    alignItems: 'center',
-    borderColor: COLORS.success,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
+    alignSelf: 'flex-start',
     marginTop: space.sm,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  copyButtonLabel: {
-    color: COLORS.success,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  createButton: {
-    alignItems: 'center',
-    backgroundColor: COLORS.accent,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.lg,
-  },
-  createButtonLabel: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
-  },
-  dangerButton: {
-    alignItems: 'center',
-    borderColor: COLORS.warning,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.md,
-  },
-  dangerLabel: {
-    color: COLORS.warning,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
-  empty: {
-    color: COLORS.textMuted,
-    fontSize: fontSize.sm,
-    paddingVertical: space.sm,
-  },
-  ghostButton: {
-    alignItems: 'center',
-    borderColor: COLORS.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.md,
-  },
-  ghostLabel: {
-    color: COLORS.text,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
   },
   hero: {
     backgroundColor: COLORS.card,
@@ -135,41 +62,6 @@ export const styles = StyleSheet.create({
   },
   list: {
     gap: space.md,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: space.sm,
-    justifyContent: 'flex-end',
-    marginTop: space.xs,
-  },
-  modalCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: 16,
-    gap: space.lg,
-    maxWidth: 420,
-    padding: space.xl,
-    width: '90%',
-  },
-  modalInput: {
-    borderColor: COLORS.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: COLORS.text,
-    fontSize: fontSize.sm,
-    minHeight: 40,
-    paddingHorizontal: space.md,
-    paddingVertical: space.sm,
-  },
-  modalOverlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    flex: 1,
-    justifyContent: 'center',
-  },
-  modalTitle: {
-    color: COLORS.text,
-    fontSize: fontSize.md,
-    fontWeight: '800',
   },
   page: {
     alignItems: 'center',
@@ -216,12 +108,6 @@ export const styles = StyleSheet.create({
   },
   resultClose: {
     marginLeft: space.sm,
-    padding: space.xs,
-  },
-  resultCloseLabel: {
-    color: COLORS.textMuted,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
   },
   resultContent: {
     flex: 1,
@@ -276,20 +162,6 @@ export const styles = StyleSheet.create({
   subtitle: {
     color: COLORS.textMuted,
     fontSize: fontSize.sm,
-  },
-  successButton: {
-    alignItems: 'center',
-    borderColor: COLORS.success,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.md,
-  },
-  successLabel: {
-    color: COLORS.success,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
   },
   tabBar: {
     backgroundColor: COLORS.card,

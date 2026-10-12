@@ -1,12 +1,7 @@
 import React from 'react';
 import { PhotoGalleryModal } from './ClientProfileEditScreen.components';
 import { buildGalleryCounter } from './ClientProfileEditScreen.sections';
-import {
-  ICON_CLOSE,
-  ICON_NEXT,
-  ICON_PREV,
-  type ProgressPhoto,
-} from './ClientProfileEditScreen.utils';
+import { ICON_CLOSE, ICON_NEXT, ICON_PREV, type ProgressPhoto } from './ClientProfileEditScreen.utils';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -37,17 +32,11 @@ export function ProgressGallery(props: {
   );
 }
 
-function rotateGalleryNext(
-  size: number,
-  setIndex: React.Dispatch<React.SetStateAction<null | number>>,
-): void {
+function rotateGalleryNext(size: number, setIndex: React.Dispatch<React.SetStateAction<null | number>>): void {
   setIndex((prev) => ((prev ?? 0) + 1) % size);
 }
 
-function rotateGalleryPrev(
-  size: number,
-  setIndex: React.Dispatch<React.SetStateAction<null | number>>,
-): void {
+function rotateGalleryPrev(size: number, setIndex: React.Dispatch<React.SetStateAction<null | number>>): void {
   setIndex((prev) => {
     const current = prev ?? 0;
     return (current - 1 + size) % size;

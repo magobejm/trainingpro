@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
+  Button,
   type CardioIntervalDraft,
   CardioIntervalEditor,
   colors,
@@ -9,6 +10,7 @@ import {
   fontSize,
   radius,
   space,
+  TextField,
 } from '@trainerpro/ui';
 import '../../i18n';
 import { useLibraryCardioMethodsQuery } from '../../data/hooks/useLibraryQuery';
@@ -115,13 +117,7 @@ function PlanBuilderCardioView(props: ViewModel) {
       <TemplateNameCard {...props} />
       <MethodPickerCard {...props} />
       <BlocksEditorCard {...props} />
-      <Pressable
-        disabled={props.isSaving}
-        onPress={props.onSave}
-        style={[styles.button, props.isSaving ? { opacity: 0.5 } : null]}
-      >
-        <Text style={styles.buttonLabel}>{props.t('coach.builder.save')}</Text>
-      </Pressable>
+      <Button fullWidth label={props.t('coach.builder.save')} loading={props.isSaving} onPress={props.onSave} />
     </ScrollView>
   );
 }
@@ -129,11 +125,10 @@ function PlanBuilderCardioView(props: ViewModel) {
 function TemplateNameCard(props: ViewModel) {
   return (
     <View style={styles.card}>
-      <Text style={styles.label}>{props.t('coach.builder.templateName')}</Text>
-      <TextInput
+      <TextField
+        label={props.t('coach.builder.templateName')}
         onChangeText={props.setTemplateName}
         placeholder={props.t('coach.builder.templateNamePlaceholder')}
-        style={styles.input}
         value={props.templateName}
       />
     </View>
@@ -266,31 +261,12 @@ function toNumber(value: string): null | number {
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: COLORS.action,
-    borderRadius: radius.lg,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: space.xl,
-  },
-  buttonLabel: {
-    color: COLORS.white,
-    fontSize: fontSize.sm,
-    fontWeight: '800',
-  },
   card: {
     backgroundColor: COLORS.card,
     borderRadius: radius.lg,
     gap: space.md,
     padding: space.lg,
     width: '100%',
-  },
-  input: {
-    backgroundColor: COLORS.input,
-    borderRadius: radius.md,
-    paddingHorizontal: space.md,
-    paddingVertical: space.md,
   },
   label: {
     color: COLORS.text,

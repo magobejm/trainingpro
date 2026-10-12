@@ -1,7 +1,6 @@
 /* eslint-disable max-lines-per-function */
-import React, { useEffect, useRef, useState } from 'react';
-import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useDialogFocus } from '../../../../layout/useDialogFocus';
+import React, { useEffect, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../../utils/normalize-search';
 import { useRoutineHandoffPrompt } from '../../RoutineHandoffDialog';
@@ -12,13 +11,9 @@ import {
   localCalendarDay,
   type RoutineAssignOptions,
 } from '../../routine-handoff';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Modal, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
-const MODAL_ANIM = 'fade' as const;
 const SCROLL_KEYBOARD_TAPS = 'handled' as const;
-const PLACEHOLDER_COLOR = colors.textMuted;
-const SEARCH_ICON = '🔍';
-const BACK_ICON = '‹';
 
 function isVersionConflict(error: unknown): boolean {
   return typeof error === 'object' && error != null && 'status' in error && error.status === 409;
@@ -66,8 +61,6 @@ function clientHasSameRoutine(client: ClientView | undefined, templateId: string
   return isSameAssignedRoutine(client.trainingPlanId, client.trainingPlan?.id, templateId);
 }
 
-function noop() {}
-
 export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const { visible, initialName, isGlobal, onClose, onSave, onSaveAndAssign, onAssignOnly, templateId, t } = props;
   const { data: clients = [] } = useClientsQuery();
@@ -79,8 +72,8 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const handoff = useRoutineHandoffPrompt(t);
-  const dialogRef = useRef<View>(null);
-  useDialogFocus(visible, dialogRef);
+  const [nameTouched, setNameTouched] = useState(false);
+  const nameError = !isGlobal && nameTouched && !name.trim() ? t('coach.clientProfile.validation.required') : null;
 
   useEffect(() => {
     if (visible) {
@@ -90,6 +83,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
       setSelectedObjectiveId(null);
       setSaveError(null);
       setIsSaving(false);
+      setNameTouched(false);
     }
   }, [visible, initialName]);
 
@@ -100,7 +94,12 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
     return nameMatches && matchesObjective;
   });
 
+  function markNameTouched() {
+    setNameTouched(true);
+  }
+
   async function handleSaveOnly() {
+    markNameTouched();
     setSaveError(null);
     setIsSaving(true);
     try {
@@ -133,6 +132,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
 
   async function handleSaveAndAssign() {
     if (!selectedClientId || alreadyAssigned) return;
+    markNameTouched();
     const options = await resolveHandoff(selectedClientId);
     if (!options) return;
     setSaveError(null);
@@ -169,178 +169,117 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
 
   if (!visible) return null;
 
-  return (
-    <Modal animationType={MODAL_ANIM} onRequestClose={onClose} transparent visible={visible}>
-      <Pressable onPress={onClose} style={styles.overlay}>
-        <Pressable onPress={noop} ref={dialogRef} style={styles.modal}>
-          {/* ── Scrollable body ── */}
-          <ScrollView
-            style={styles.body}
-            contentContainerStyle={styles.bodyContent}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
-          >
-            <Pressable accessibilityRole="button" onPress={onClose} style={styles.backBtn}>
-              <Text style={styles.backIcon}>{BACK_ICON}</Text>
-              <Text style={styles.backText}>{t('coach.library.detail.back')}</Text>
-            </Pressable>
-            <Text style={styles.title}>
-              {isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
-            </Text>
-            {!isGlobal && (
-              <View style={styles.field}>
-                <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.name')}</Text>
-                <TextInput
-                  onChangeText={setName}
-                  placeholder={t('coach.routine.saveModal.namePlaceholder')}
-                  placeholderTextColor={PLACEHOLDER_COLOR}
-                  style={styles.input}
-                  value={name}
-                />
-              </View>
-            )}
-            <View style={styles.field}>
-              <Text style={styles.fieldLabel}>{t('coach.routine.saveModal.assignClient')}</Text>
-              <View style={styles.searchRow}>
-                <Text style={styles.searchIcon}>{SEARCH_ICON}</Text>
-                <TextInput
-                  onChangeText={setSearch}
-                  placeholder={t('coach.routine.saveModal.searchClient')}
-                  placeholderTextColor={PLACEHOLDER_COLOR}
-                  style={styles.searchInput}
-                  value={search}
-                />
-              </View>
-              {objectives.length > 0 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.objectiveFilterRow}
-                  contentContainerStyle={styles.objectiveFilterContent}
-                >
-                  {objectives.map((obj) => {
-                    const active = selectedObjectiveId === obj.id;
-                    return (
-                      <Pressable
-                        key={obj.id}
-                        onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
-                        style={[styles.objectiveChip, active && styles.objectiveChipActive]}
-                      >
-                        <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </ScrollView>
-              )}
-              <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
-              {filtered.map((client) => (
-                <ClientRow
-                  client={client}
-                  isSelected={client.id === selectedClientId}
-                  key={client.id}
-                  onPress={() => setSelectedClientId((prev) => (prev === client.id ? null : client.id))}
-                />
-              ))}
-            </View>
-          </ScrollView>
+  const assignDisabled = !selectedClientId || isSaving || alreadyAssigned;
+  const footer = isGlobal ? (
+    <Button
+      disabled={assignDisabled}
+      label={t('coach.routine.saveModal.assignOnly')}
+      loading={isSaving}
+      onPress={() => void handleAssignOnly()}
+    />
+  ) : (
+    <>
+      <Button
+        disabled={isSaving}
+        label={isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveOnly')}
+        onPress={handleSaveOnly}
+        variant="secondary"
+      />
+      <Button
+        disabled={assignDisabled}
+        label={isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}
+        loading={isSaving}
+        onPress={handleSaveAndAssign}
+      />
+    </>
+  );
 
-          {/* ── Sticky footer ── */}
-          {alreadyAssigned || saveError ? (
-            <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>
-                {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
-              </Text>
-            </View>
-          ) : null}
-          {isGlobal ? (
-            <View style={styles.footer}>
-              <Pressable
-                accessibilityRole="button"
-                disabled={!selectedClientId || isSaving || alreadyAssigned}
-                onPress={() => void handleAssignOnly()}
-                style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
-              >
-                <Text style={styles.btnPrimaryText}>{t('coach.routine.saveModal.assignOnly')}</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <View style={styles.footer}>
-              <Pressable
-                accessibilityRole="button"
-                disabled={isSaving}
-                onPress={handleSaveOnly}
-                style={[styles.btnSecondary, isSaving && styles.btnDisabled]}
-              >
-                <Text style={styles.btnSecondaryText}>
-                  {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveOnly')}
-                </Text>
-              </Pressable>
-              <Pressable
-                accessibilityRole="button"
-                disabled={!selectedClientId || isSaving || alreadyAssigned}
-                onPress={handleSaveAndAssign}
-                style={[styles.btnPrimary, (!selectedClientId || isSaving || alreadyAssigned) && styles.btnDisabled]}
-              >
-                <Text style={styles.btnPrimaryText}>
-                  {isSaving ? t('coach.routine.saveModal.saving') : t('coach.routine.saveModal.saveAndAssign')}
-                </Text>
-              </Pressable>
-            </View>
+  return (
+    <Modal
+      closeLabel={t('common.close')}
+      dismissOnOverlay
+      footer={footer}
+      onClose={onClose}
+      scroll={false}
+      title={isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
+      visible={visible}
+    >
+      <ScrollView
+        contentContainerStyle={styles.bodyContent}
+        keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
+        showsVerticalScrollIndicator={false}
+        style={styles.body}
+      >
+        {alreadyAssigned || saveError ? (
+          <View style={styles.errorBanner}>
+            <Text style={styles.errorBannerText}>
+              {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
+            </Text>
+          </View>
+        ) : null}
+        {!isGlobal && (
+          <TextField
+            error={nameError}
+            label={t('coach.routine.saveModal.name')}
+            onBlur={() => setNameTouched(true)}
+            onChangeText={setName}
+            placeholder={t('coach.routine.saveModal.namePlaceholder')}
+            required
+            value={name}
+          />
+        )}
+        <View style={styles.field}>
+          <TextField
+            label={t('coach.routine.saveModal.assignClient')}
+            onChangeText={setSearch}
+            placeholder={t('coach.routine.saveModal.searchClient')}
+            value={search}
+          />
+          {objectives.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.objectiveFilterRow}
+              contentContainerStyle={styles.objectiveFilterContent}
+            >
+              {objectives.map((obj) => {
+                const active = selectedObjectiveId === obj.id;
+                return (
+                  <Pressable
+                    key={obj.id}
+                    onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
+                    style={[styles.objectiveChip, active && styles.objectiveChipActive]}
+                  >
+                    <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           )}
-        </Pressable>
-      </Pressable>
+          <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
+          {filtered.map((client) => (
+            <ClientRow
+              client={client}
+              isSelected={client.id === selectedClientId}
+              key={client.id}
+              onPress={() => setSelectedClientId((prev) => (prev === client.id ? null : client.id))}
+            />
+          ))}
+        </View>
+      </ScrollView>
       {handoff.dialog}
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modal: {
-    backgroundColor: colors.surface,
-    borderRadius: 16,
-    width: 420,
-    maxWidth: '92%',
-    maxHeight: '88%',
-    flexDirection: 'column',
-    overflow: 'hidden',
-  },
   body: {
-    flex: 1,
+    maxHeight: '60vh' as unknown as number,
   },
   bodyContent: {
-    padding: space.xl,
     gap: space.lg,
   },
-  backBtn: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  backIcon: { fontSize: fontSize.xl, color: colors.textMuted, lineHeight: 24 },
-  backText: { fontSize: fontSize.sm, color: colors.textMuted, fontWeight: '500' },
-  title: { fontSize: fontSize.xl, fontWeight: '700', color: colors.text },
   field: { gap: space.sm },
-  fieldLabel: { fontSize: fontSize.sm, fontWeight: '500', color: colors.text },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: space.md,
-    fontSize: fontSize.sm,
-    color: colors.text,
-  },
-  searchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: space.md,
-  },
-  searchIcon: { fontSize: fontSize.sm, marginRight: space.sm },
-  searchInput: { flex: 1, paddingVertical: space.sm, fontSize: fontSize.sm, color: colors.text },
   objectiveFilterRow: { marginTop: space.sm },
   objectiveFilterContent: { flexDirection: 'row', gap: space.sm, paddingVertical: 2 },
   objectiveChip: {
@@ -385,37 +324,10 @@ const styles = StyleSheet.create({
   clientName: { flex: 1, fontSize: fontSize.sm, color: colors.text },
   clientNameSelected: { color: colors.primary, fontWeight: '600' },
   checkIcon: { fontSize: fontSize.md, color: colors.primary },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: space.sm,
-    paddingHorizontal: space.xl,
-    paddingVertical: space.lg,
-    borderTopWidth: 1,
-    borderTopColor: colors.background,
-    backgroundColor: colors.surface,
-  },
-  btnPrimary: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  btnPrimaryText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '600' },
-  btnSecondary: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  btnSecondaryText: { color: colors.textMuted, fontSize: fontSize.sm },
-  btnDisabled: { backgroundColor: colors.borderStrong },
   errorBanner: {
     backgroundColor: colors.dangerSoft,
-    borderTopWidth: 1,
-    borderTopColor: colors.dangerSoft,
-    paddingHorizontal: space.xl,
+    borderRadius: radius.md,
+    paddingHorizontal: space.lg,
     paddingVertical: space.md,
   },
   errorBannerText: { color: colors.danger, fontSize: fontSize.sm, lineHeight: 18 },

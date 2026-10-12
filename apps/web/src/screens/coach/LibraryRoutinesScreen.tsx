@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
+import { Button, EmptyState, IconButton } from '@trainerpro/ui';
 import { C, ss } from './LibraryRoutinesScreen.styles';
 import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
 import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
@@ -46,6 +47,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
           items={vm.filteredRoutines}
           mediaMap={vm.mediaMap}
           onAssign={vm.onAssignRoutine}
+          onCreate={vm.onCreateRoutine}
           onDelete={vm.onDeleteRoutine}
           onEdit={vm.onEditRoutine}
           onRetry={() => void vm.routinesQuery.refetch()}
@@ -60,6 +62,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
           hasActiveFilter={vm.query.trim().length > 0}
           items={vm.filteredWarmups}
           mediaMap={vm.mediaMap}
+          onCreate={vm.onCreateWarmup}
           onDelete={vm.onDeleteWarmup}
           onEdit={vm.onEditWarmup}
           onRetry={() => void vm.warmupsQuery.refetch()}
@@ -113,15 +116,17 @@ function ScreenHeader({ vm }: { vm: VM }): React.JSX.Element {
           />
         </View>
         {vm.tab === 'routines' ? (
-          <Pressable onPress={vm.onCreateRoutine} style={ss.createBtn}>
-            <Plus color={C.white} size={14} />
-            <Text style={ss.createBtnText}>{vm.t('coach.routineLib.createRoutine')}</Text>
-          </Pressable>
+          <Button
+            icon={<Plus color={C.white} size={14} />}
+            label={vm.t('coach.routineLib.createRoutine')}
+            onPress={vm.onCreateRoutine}
+          />
         ) : (
-          <Pressable onPress={vm.onCreateWarmup} style={ss.createBtn}>
-            <Plus color={C.white} size={14} />
-            <Text style={ss.createBtnText}>{vm.t('coach.routineLib.createWarmup')}</Text>
-          </Pressable>
+          <Button
+            icon={<Plus color={C.white} size={14} />}
+            label={vm.t('coach.routineLib.createWarmup')}
+            onPress={vm.onCreateWarmup}
+          />
         )}
       </View>
     </View>
@@ -151,6 +156,7 @@ function RoutineGrid(props: {
   items: RoutineTemplateView[];
   mediaMap: MediaMap;
   onAssign: (tpl: RoutineTemplateView) => void;
+  onCreate: () => void;
   onDelete: (id: string) => void;
   onEdit: (tpl: RoutineTemplateView) => void;
   onRetry: () => void;
@@ -160,6 +166,16 @@ function RoutineGrid(props: {
   queryLoading: boolean;
   t: T;
 }) {
+  if (!props.queryLoading && !props.queryFailed && !props.hasActiveFilter && props.items.length === 0) {
+    return (
+      <EmptyState
+        actionLabel={props.t('coach.routineLib.createRoutine')}
+        message={props.t('coach.routineLib.emptyRoutinesHint')}
+        onAction={props.onCreate}
+        title={props.t('coach.routineLib.emptyRoutines')}
+      />
+    );
+  }
   const status = QueryResult({
     emptyTitle: props.t('coach.routineLib.emptyRoutines'),
     error: props.queryError,
@@ -195,6 +211,7 @@ function WarmupGrid(props: {
   hasActiveFilter: boolean;
   items: WarmupTemplateView[];
   mediaMap: MediaMap;
+  onCreate: () => void;
   onDelete: (id: string) => void;
   onEdit: (tpl: WarmupTemplateView) => void;
   onRetry: () => void;
@@ -204,6 +221,16 @@ function WarmupGrid(props: {
   queryLoading: boolean;
   t: T;
 }) {
+  if (!props.queryLoading && !props.queryFailed && !props.hasActiveFilter && props.items.length === 0) {
+    return (
+      <EmptyState
+        actionLabel={props.t('coach.routineLib.createWarmup')}
+        message={props.t('coach.routineLib.emptyWarmupsHint')}
+        onAction={props.onCreate}
+        title={props.t('coach.routineLib.emptyWarmups')}
+      />
+    );
+  }
   const status = QueryResult({
     emptyTitle: props.t('coach.routineLib.emptyWarmups'),
     error: props.queryError,
@@ -261,6 +288,7 @@ function RoutineCard(props: {
         onAssign={canEdit ? () => props.onAssign(tpl) : undefined}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
+        t={t}
       />
       <CardImage hovered={hovered} mediaUrl={props.mediaUrl} />
       <View style={ss.cardBody}>
@@ -299,6 +327,7 @@ function WarmupCard(props: {
         icon={<Activity color={C.blue} size={18} />}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
+        t={t}
       />
       <CardImage hovered={hovered} mediaUrl={props.mediaUrl} />
       <View style={ss.cardBody}>
@@ -315,6 +344,7 @@ function CardTopBar(props: {
   onAssign?: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  t: T;
 }) {
   return (
     <View style={ss.cardTop}>
@@ -322,18 +352,28 @@ function CardTopBar(props: {
       {props.icon}
       <View style={{ flex: 1 }} />
       {props.onAssign && (
-        <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onAssign)} style={ss.iconBtn}>
-          <UserPlus color={C.blue} size={16} />
-        </Pressable>
+        <IconButton
+          accessibilityLabel={props.t('common.assign')}
+          icon={() => <UserPlus color={C.blue} size={16} />}
+          onPress={props.onAssign}
+          size={28}
+        />
       )}
       {props.canEdit ? (
         <>
-          <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onEdit)} style={ss.iconBtn}>
-            <Pencil color={C.muted} size={14} />
-          </Pressable>
-          <Pressable onPress={(event) => pressWithoutOpeningCard(event, props.onDelete)} style={ss.iconBtn}>
-            <Trash2 color={C.muted} size={14} />
-          </Pressable>
+          <IconButton
+            accessibilityLabel={props.t('coach.library.exercises.actions.edit')}
+            icon={(color) => <Pencil color={color} size={14} />}
+            onPress={props.onEdit}
+            size={28}
+          />
+          <IconButton
+            accessibilityLabel={props.t('coach.library.exercises.actions.delete')}
+            icon={(color) => <Trash2 color={color} size={14} />}
+            onPress={props.onDelete}
+            size={28}
+            tone="danger"
+          />
         </>
       ) : null}
     </View>
@@ -374,9 +414,4 @@ function pickWarmupImage(tpl: WarmupTemplateView, map: MediaMap): string {
     if (id && map[id]) return map[id] as string;
   }
   return WARMUP_PLACEHOLDER();
-}
-
-function pressWithoutOpeningCard(event: { stopPropagation?: () => void }, action?: () => void): void {
-  event.stopPropagation?.();
-  action?.();
 }

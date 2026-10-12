@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { VariableDef } from './progress-screen.types';
 import type { ExerciseProgressPoint } from '../../../data/hooks/useExerciseProgressQuery';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   visible: boolean;
@@ -61,18 +61,9 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
       : 0;
 
   return (
-    <div style={overlay} onClick={onClose}>
-      <div style={modal} onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div style={header}>
-          <div>
-            <h2 style={modalTitle}>{detailTitle}</h2>
-            <p style={modalSubtitle}>{exerciseName ?? ''}</p>
-          </div>
-          <button style={closeBtn} onClick={onClose}>
-            {t('common.modalCloseGlyph')}
-          </button>
-        </div>
+    <Modal closeLabel={t('common.close')} onClose={onClose} size="xl" title={detailTitle} visible={visible}>
+      <div style={modalBody}>
+        <p style={modalSubtitle}>{exerciseName ?? ''}</p>
 
         {/* KPI tiles */}
         <div style={kpiRow}>
@@ -164,7 +155,7 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -178,47 +169,12 @@ function KpiTile({ label, value }: { label: string; value: string }) {
 }
 
 // Styles
-const overlay: React.CSSProperties = {
-  position: 'fixed',
-  inset: 0,
-  zIndex: 200,
-  background: 'rgba(15,27,47,0.55)',
-  backdropFilter: 'blur(4px)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: space.xl,
-};
-const modal: React.CSSProperties = {
-  background: colors.surface,
-  borderRadius: 28,
-  width: '100%',
-  maxWidth: 960,
-  maxHeight: '90vh',
-  overflowY: 'auto',
+const modalBody: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: space.xl,
-  padding: space.xxl,
-  boxShadow: '0 24px 80px rgba(0,0,0,0.18)',
 };
-const header: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
-};
-const modalTitle: React.CSSProperties = { margin: 0, fontSize: fontSize.xl, fontWeight: 900, color: colors.text };
 const modalSubtitle: React.CSSProperties = { margin: 0, fontSize: fontSize.sm, color: colors.textMuted, fontWeight: 600 };
-const closeBtn: React.CSSProperties = {
-  padding: '8px 12px',
-  borderRadius: radius.lg,
-  border: 'none',
-  background: colors.background,
-  color: colors.textMuted,
-  cursor: 'pointer',
-  fontSize: fontSize.md,
-  fontWeight: 700,
-};
 const kpiRow: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(3, 1fr)',

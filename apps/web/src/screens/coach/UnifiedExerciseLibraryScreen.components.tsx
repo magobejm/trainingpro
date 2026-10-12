@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Pressable, TextInput, ScrollView } from 'react-native';
-import { Dumbbell, Heart, Zap, Wind, Trophy, Search, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { View, Text, TouchableOpacity, Image, Pressable, ScrollView } from 'react-native';
+import { Dumbbell, Heart, Zap, Wind, Trophy, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { QueryResult } from '../../components/AsyncStatus';
 import { UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
 import { styles } from './UnifiedExerciseLibraryScreen.styles';
@@ -10,13 +11,10 @@ import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnifiedExerciseModal } from './UnifiedExerciseModal';
 import { UnifiedExerciseDetailModal } from './UnifiedExerciseDetailModal';
 import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMultiSelect';
-import { colors } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors } from '@trainerpro/ui';
 
 const C_BLUE = colors.primary;
-const C_GRAY = colors.textMuted;
-const C_SLATE = colors.textMuted;
 const C_WHITE = colors.surface;
-const C_RED = colors.danger;
 const REMODE_CVR = 'cover' as const;
 const REMODE_CNT = 'contain' as const;
 
@@ -92,20 +90,13 @@ export function LibraryHeader({
         <Text style={styles.headerSubtitle}>{t('coach.library.header.subtitle')}</Text>
       </View>
       <View style={styles.headerRight}>
-        <View style={styles.searchContainer}>
-          <Search size={16} color={C_GRAY} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder={t('coach.library.search.placeholder')}
-            placeholderTextColor={C_GRAY}
-            value={search}
-            onChangeText={setSearch}
-          />
-        </View>
-        <TouchableOpacity style={styles.newButton} onPress={onNew}>
-          <Plus size={16} color={C_WHITE} />
-          <Text style={styles.newButtonText}>{t('coach.library.actions.newExercise')}</Text>
-        </TouchableOpacity>
+        <TextField
+          containerStyle={styles.searchContainer}
+          onChangeText={setSearch}
+          placeholder={t('coach.library.search.placeholder')}
+          value={search}
+        />
+        <Button icon={<Plus size={16} color={C_WHITE} />} label={t('coach.library.actions.newExercise')} onPress={onNew} />
       </View>
     </View>
   );
@@ -127,19 +118,29 @@ function ExerciseCardActions({
   onEdit,
   onDelete,
   disabled,
+  t,
 }: {
   onEdit: () => void;
   onDelete: () => void;
   disabled: boolean;
+  t: (k: string) => string;
 }) {
   return (
     <View style={styles.actionsRow}>
-      <TouchableOpacity style={styles.actionBtn} onPress={onEdit}>
-        <Edit2 size={12} color={C_GRAY} />
-      </TouchableOpacity>
-      <TouchableOpacity style={[styles.actionBtn, styles.actionDelete]} onPress={onDelete} disabled={disabled}>
-        <Trash2 size={12} color={C_RED} />
-      </TouchableOpacity>
+      <IconButton
+        accessibilityLabel={t('coach.library.exercises.actions.edit')}
+        icon={(color) => <Edit2 size={14} color={color} />}
+        onPress={onEdit}
+        size={28}
+      />
+      <IconButton
+        accessibilityLabel={t('coach.library.exercises.actions.delete')}
+        disabled={disabled}
+        icon={(color) => <Trash2 size={14} color={color} />}
+        onPress={onDelete}
+        size={28}
+        tone="danger"
+      />
     </View>
   );
 }
@@ -156,6 +157,7 @@ export type ExerciseCardProps = {
 
 export function ExerciseCard(props: ExerciseCardProps) {
   const { item, onDetail, onEdit, onDelete, deletionDisabled, hovered, setHovered } = props;
+  const { t } = useTranslation();
   const coachOwned = item.scope?.trim().toLowerCase() === 'coach';
   const imageUrl = item.mediaUrl || resolvePlaceholder(item.kind === 'exercise' ? 'strength' : item.kind);
   return (
@@ -179,7 +181,7 @@ export function ExerciseCard(props: ExerciseCardProps) {
           {item.name}
         </Text>
         <ExerciseCardTags tags={item.tags} />
-        {coachOwned && <ExerciseCardActions onEdit={onEdit} onDelete={onDelete} disabled={deletionDisabled} />}
+        {coachOwned && <ExerciseCardActions onEdit={onEdit} onDelete={onDelete} disabled={deletionDisabled} t={t} />}
       </View>
     </Pressable>
   );
@@ -264,10 +266,13 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
       </View>
 
       {st.hasActiveFilters && (
-        <TouchableOpacity style={styles.clearFilters} onPress={st.clearAllFilters}>
-          <X size={14} color={C_SLATE} />
-          <Text style={styles.clearFiltersText}>{st.t('coach.library.sidebar.clearFilters')}</Text>
-        </TouchableOpacity>
+        <Button
+          icon={<X size={14} color={colors.primary} />}
+          label={st.t('coach.library.sidebar.clearFilters')}
+          onPress={st.clearAllFilters}
+          size="sm"
+          variant="ghost"
+        />
       )}
     </View>
   );

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Pressable, Text } from 'react-native';
-import { s } from '../../RoutinePlanner.styles';
+import { Button } from '@trainerpro/ui';
 
 interface SaveButtonProps {
   clientContextName?: null | string;
@@ -11,11 +10,7 @@ interface SaveButtonProps {
 
 export function SaveButton({ clientContextName, isEditing, onSave, t }: SaveButtonProps) {
   const label = resolveSaveLabel(clientContextName, isEditing, t);
-  return (
-    <Pressable onPress={onSave} style={s.saveBtn}>
-      <Text style={s.saveBtnText}>{label}</Text>
-    </Pressable>
-  );
+  return <Button label={label} onPress={onSave} />;
 }
 
 function resolveSaveLabel(

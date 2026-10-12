@@ -64,6 +64,10 @@ module.exports = {
               ":not([name.name='accessibilityLabel'])",
               ":not([name.name='aria-label'])",
               ":not([name.name='accessibilityRole'])",
+              // props de enumeración de las primitivas de @trainerpro/ui (no son texto de interfaz)
+              ":not([name.name='variant'])",
+              ":not([name.name='size'])",
+              ":not([name.name='tone'])",
             ].join(''),
             message: 'Use i18n keys for string props (except testID, labels, and accessibilityRole).',
           },

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { DraftBlock } from '../../RoutinePlanner.types';
 import { useUnifiedExercisesQuery } from '../../../../data/hooks/useUnifiedLibraryQuery';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, Modal, TextField, colors, fontSize, space } from '@trainerpro/ui';
 
 const NOTES_CATEGORY_MAP: Record<string, string> = {
   strength: 'muscleGroups',
@@ -22,9 +22,6 @@ function useLibraryInstructions(block: DraftBlock): string {
   return item?.coachInstructions ?? '';
 }
 
-const MODAL_ANIMATION = 'fade' as const;
-const PLACEHOLDER_COLOR = colors.textMuted;
-
 interface BlockNotesModalProps {
   block: DraftBlock;
   visible: boolean;
@@ -34,38 +31,22 @@ interface BlockNotesModalProps {
   t: (k: string) => string;
 }
 
-function ModalHeader({ title }: { title: string }) {
-  return <Text style={styles.headerTitle}>{title}</Text>;
-}
-
 function SectionTitle({ title }: { title: string }) {
   return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
 function ModalFooterEdit({ onSave, onCancel, t }: { onSave: () => void; onCancel: () => void; t: (k: string) => string }) {
   return (
-    <View style={styles.footer}>
-      <Pressable onPress={onCancel} style={styles.btnSecondary}>
-        <Text style={styles.btnSecondaryText}>{t('common.cancel')}</Text>
-      </Pressable>
-      <Pressable onPress={onSave} style={styles.btnPrimary}>
-        <Text style={styles.btnPrimaryText}>{t('common.save')}</Text>
-      </Pressable>
-    </View>
+    <>
+      <Button label={t('common.cancel')} onPress={onCancel} variant="secondary" />
+      <Button label={t('common.save')} onPress={onSave} />
+    </>
   );
 }
 
 function ModalFooterView({ onClose, t }: { onClose: () => void; t: (k: string) => string }) {
-  return (
-    <View style={styles.footer}>
-      <Pressable onPress={onClose} style={styles.btnSecondary}>
-        <Text style={styles.btnSecondaryText}>{t('common.close')}</Text>
-      </Pressable>
-    </View>
-  );
+  return <Button label={t('common.close')} onPress={onClose} variant="secondary" />;
 }
-
-function noop() {}
 
 export function BlockNotesModal(props: BlockNotesModalProps) {
   const { block, visible, isEditing, onClose, onUpdate, t } = props;
@@ -89,59 +70,46 @@ export function BlockNotesModal(props: BlockNotesModalProps) {
   const trainerEmpty = !draft.trim();
 
   return (
-    <Modal animationType={MODAL_ANIMATION} transparent visible={visible}>
-      <Pressable onPress={onClose} style={styles.overlay}>
-        <Pressable onPress={noop} style={styles.modal}>
-          <ModalHeader title={t('coach.routine.block.trainerNote')} />
+    <Modal
+      closeLabel={t('common.close')}
+      dismissOnOverlay
+      footer={
+        isEditing ? (
+          <ModalFooterEdit onCancel={onClose} onSave={handleSave} t={t} />
+        ) : (
+          <ModalFooterView onClose={onClose} t={t} />
+        )
+      }
+      onClose={onClose}
+      title={t('coach.routine.block.trainerNote')}
+      visible={visible}
+    >
+      <View style={styles.body}>
+        <SectionTitle title={t('coach.routine.block.libraryInstructions')} />
+        <Text style={[styles.readOnlyText, libraryEmpty && styles.placeholderText]}>
+          {libraryEmpty ? t('coach.routine.block.noLibraryInstructions') : libraryInstructions}
+        </Text>
 
-          <SectionTitle title={t('coach.routine.block.libraryInstructions')} />
-          <Text style={[styles.readOnlyText, libraryEmpty && styles.placeholderText]}>
-            {libraryEmpty ? t('coach.routine.block.noLibraryInstructions') : libraryInstructions}
+        <SectionTitle title={t('coach.routine.block.trainerNote')} />
+        {isEditing ? (
+          <TextField
+            multiline
+            onChangeText={setDraft}
+            placeholder={t('coach.routine.block.trainerNotePlaceholder')}
+            value={draft}
+          />
+        ) : (
+          <Text style={[styles.readOnlyText, trainerEmpty && styles.placeholderText]}>
+            {trainerEmpty ? t('coach.routine.block.noTrainerNote') : draft}
           </Text>
-
-          <SectionTitle title={t('coach.routine.block.trainerNote')} />
-          {isEditing ? (
-            <TextInput
-              multiline
-              onChangeText={setDraft}
-              placeholder={t('coach.routine.block.trainerNotePlaceholder')}
-              placeholderTextColor={PLACEHOLDER_COLOR}
-              style={styles.textInput}
-              value={draft}
-            />
-          ) : (
-            <Text style={[styles.readOnlyText, trainerEmpty && styles.placeholderText]}>
-              {trainerEmpty ? t('coach.routine.block.noTrainerNote') : draft}
-            </Text>
-          )}
-
-          {isEditing ? (
-            <ModalFooterEdit onCancel={onClose} onSave={handleSave} t={t} />
-          ) : (
-            <ModalFooterView onClose={onClose} t={t} />
-          )}
-        </Pressable>
-      </Pressable>
+        )}
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modal: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: space.xl,
-    width: 420,
-    maxWidth: '90%',
-    gap: space.md,
-  },
-  headerTitle: { fontSize: fontSize.md, fontWeight: '600', color: colors.text },
+  body: { gap: space.md },
   sectionTitle: {
     fontSize: fontSize.xs,
     fontWeight: '700',
@@ -149,32 +117,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
-  textInput: {
-    minHeight: 120,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    padding: space.md,
-    fontSize: fontSize.sm,
-    color: colors.text,
-    textAlignVertical: 'top',
-  },
   readOnlyText: { fontSize: fontSize.sm, color: colors.text, lineHeight: 22, minHeight: 40 },
   placeholderText: { color: colors.textMuted },
-  footer: { flexDirection: 'row', justifyContent: 'flex-end', gap: space.sm, marginTop: space.xs },
-  btnPrimary: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.sm,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-  },
-  btnPrimaryText: { color: colors.surface, fontSize: fontSize.sm, fontWeight: '600' },
-  btnSecondary: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-  },
-  btnSecondaryText: { color: colors.textMuted, fontSize: fontSize.sm },
 });

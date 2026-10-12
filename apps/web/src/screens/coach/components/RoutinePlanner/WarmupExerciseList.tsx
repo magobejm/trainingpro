@@ -23,7 +23,7 @@ import {
 } from './warmup-exercise-list.helpers';
 import { el } from './warmup-exercise-list.styles';
 import { WarmupBlockDetailModal } from './WarmupExerciseList.modals';
-import { colors } from '@trainerpro/ui';
+import { EmptyState, colors } from '@trainerpro/ui';
 
 interface Props {
   items: WarmupTemplateItemInput[];
@@ -65,11 +65,7 @@ export function WarmupExerciseList({ items, groups }: Props): React.JSX.Element 
   });
 
   if (elements.length === 0) {
-    return (
-      <View style={el.empty}>
-        <Text style={el.emptyText}>{t('coach.routine.day.noExercises')}</Text>
-      </View>
-    );
+    return <EmptyState title={t('coach.routine.day.noExercises')} />;
   }
 
   return (
@@ -87,6 +83,7 @@ function ExerciseRow({
   item: WarmupTemplateItemInput;
   onShowDetail: (item: UnifiedExerciseItem) => void;
 }) {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(true);
   const [blockDetailOpen, setBlockDetailOpen] = useState(false);
   const libraryId = resolveLibraryId(item);
@@ -111,7 +108,12 @@ function ExerciseRow({
               </Text>
             </View>
             {libraryItem && (
-              <Pressable onPress={() => onShowDetail(libraryItem)} style={el.actionBtn}>
+              <Pressable
+                accessibilityLabel={t('common.view')}
+                accessibilityRole={ACCESSIBILITY_ROLE_BUTTON}
+                onPress={() => onShowDetail(libraryItem)}
+                style={el.actionBtn}
+              >
                 <Text style={el.actionBtnText}>{ICON_DETAIL}</Text>
               </Pressable>
             )}

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View, type ImageProps, DimensionValue } from 'react-native';
 import { getYouTubeThumbnailUrl, toYouTubeEmbedUrl } from '../library-media.helpers';
 import { readFrontEnv } from '../../../data/env';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   imageUrl: null | string;
@@ -90,9 +90,13 @@ function YouTubeBlock(props: { t: Props['t']; youtubeUrl: string; fullWidth?: bo
         <YouTubePreview fullWidth={props.fullWidth} onPress={onPlay} thumbnailUrl={thumbnailUrl} />
       )}
       {!props.fullWidth && (
-        <Pressable onPress={() => void Linking.openURL(props.youtubeUrl)}>
-          <Text style={styles.videoLink}>{props.t('coach.library.media.openYoutube')}</Text>
-        </Pressable>
+        <Button
+          label={props.t('coach.library.media.openYoutube')}
+          onPress={() => void Linking.openURL(props.youtubeUrl)}
+          size="sm"
+          style={styles.videoLink}
+          variant="ghost"
+        />
       )}
     </View>
   );
@@ -229,9 +233,7 @@ const styles = StyleSheet.create({
     height: '100%' as DimensionValue,
   },
   videoLink: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
+    alignSelf: 'flex-start',
   },
   videoPreview: {
     borderRadius: radius.md,

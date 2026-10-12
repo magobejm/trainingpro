@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
-import { Modal, View, Text, ScrollView, Pressable, Image } from 'react-native';
-import { ChevronLeft, FileText, Dumbbell, Info, Play } from 'lucide-react';
+import { View, Text, Pressable, Image } from 'react-native';
+import { FileText, Dumbbell, Info, Play } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { UnifiedExerciseItem } from '../../data/hooks/useUnifiedLibraryQuery';
 import { resolvePlaceholder } from './components/LibraryMediaViewer';
 import { detailModalStyles as s, theme } from './UnifiedExerciseDetailModal.styles';
-import { colors } from '@trainerpro/ui';
+import { Modal, colors } from '@trainerpro/ui';
 
 const MEDIA_RESIZE_MODE = 'contain' as const;
-const MODAL_ANIM = 'fade' as const;
 const YT_REGEX = new RegExp(
   '(?:https?:\\/\\/)?(?:www\\.)?(?:youtube\\.com\\/watch\\?v=|' +
     'youtu\\.be\\/|youtube\\.com\\/embed\\/|youtube\\.com\\/shorts\\/)([^& \\n<?]+)',
@@ -171,10 +170,6 @@ function HeroSection({
         <HeroMedia item={item} t={t} youtubeId={youtubeId} playingYT={playingYT} setPlayingYT={setPlayingYT} />
       </View>
       <View style={s.heroRight}>
-        <View style={s.titleRow}>
-          <Text style={s.title}>{item.name}</Text>
-          {item.alias ? <Text style={s.alias}>{`(${item.alias})`}</Text> : null}
-        </View>
         <View style={s.infoGrid}>
           <MuscleSection t={t} muscles={muscles} kind={item.kind} catLabel={catLabel} catValue={catValue} />
           <EquipmentSection t={t} label={equipmentLabel} />
@@ -271,7 +266,7 @@ function ModalContent({ item, t }: { item: ItemWithExtras; t: (k: string) => str
   const [playingYT, setPlayingYT] = useState(false);
 
   return (
-    <ScrollView style={s.scroll} contentContainerStyle={s.scrollContent}>
+    <View style={s.content}>
       <HeroSection
         item={item}
         equipmentLabel={equipmentLabel}
@@ -284,7 +279,7 @@ function ModalContent({ item, t }: { item: ItemWithExtras; t: (k: string) => str
       />
       <ContentSection item={item} t={t} />
       <FooterSection patternLabel={patternLabel} planeLabel={planeLabel} t={t} />
-    </ScrollView>
+    </View>
   );
 }
 
@@ -292,19 +287,10 @@ export function UnifiedExerciseDetailModal({ visible, onClose, item }: Props) {
   const { t } = useTranslation();
   if (!item) return null;
   const ext = item as ItemWithExtras;
+  const title = ext.alias ? `${ext.name} (${ext.alias})` : ext.name;
   return (
-    <Modal visible={visible} animationType={MODAL_ANIM} transparent onRequestClose={onClose}>
-      <View style={s.overlay}>
-        <View style={s.container}>
-          <View style={s.header}>
-            <Pressable onPress={onClose} style={s.backBtn}>
-              <ChevronLeft size={20} color={theme.colors.textSecondary} strokeWidth={3} />
-              <Text style={s.backText}>{t('coach.library.detail.back')}</Text>
-            </Pressable>
-          </View>
-          <ModalContent item={ext} t={t} />
-        </View>
-      </View>
+    <Modal closeLabel={t('common.close')} onClose={onClose} size="xl" title={title} visible={visible}>
+      <ModalContent item={ext} t={t} />
     </Modal>
   );
 }

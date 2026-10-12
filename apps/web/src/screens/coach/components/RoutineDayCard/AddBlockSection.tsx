@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { View } from 'react-native';
 import { s } from '../../RoutinePlanner.styles';
 import type { BlockType } from '../../RoutinePlanner.types';
-import { colors } from '@trainerpro/ui';
+import { Button } from '@trainerpro/ui';
 
 const ALL_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'isometric', 'sport', 'mobility'];
 
@@ -17,11 +17,7 @@ interface AddBlockSectionProps {
 
 export function AddBlockSection({ isAdding, onAdd, onAddWarmupTemplate, onCancel, t, types }: AddBlockSectionProps) {
   if (isAdding) return renderTypeButtons(onAdd, onAddWarmupTemplate, onCancel, t, types ?? ALL_BLOCK_TYPES);
-  return (
-    <Pressable onPress={onCancel} style={s.addBlockBtn}>
-      <Text style={s.addBlockText}>{`+ ${t('coach.routine.addBlock')}`}</Text>
-    </Pressable>
-  );
+  return <Button label={`+ ${t('coach.routine.addBlock')}`} onPress={onCancel} style={s.addBlockBtn} variant="secondary" />;
 }
 
 function renderTypeButtons(
@@ -34,13 +30,9 @@ function renderTypeButtons(
   return (
     <View style={s.blockTypeRow}>
       {types.map((bt) => (
-        <Pressable key={bt} onPress={() => onAdd(bt)} style={s.blockTypeBtn}>
-          <Text style={s.blockTypeBtnText}>{t(`coach.routine.blockType.${bt}`)}</Text>
-        </Pressable>
+        <Button key={bt} label={t(`coach.routine.blockType.${bt}`)} onPress={() => onAdd(bt)} size="sm" />
       ))}
-      <Pressable onPress={onCancel} style={[s.blockTypeBtn, { backgroundColor: colors.textMuted }]}>
-        <Text style={s.blockTypeBtnText}>{t('common.cancel')}</Text>
-      </Pressable>
+      <Button label={t('common.cancel')} onPress={onCancel} size="sm" variant="secondary" />
     </View>
   );
 }

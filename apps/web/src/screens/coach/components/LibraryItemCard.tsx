@@ -4,7 +4,7 @@ import { CardImage } from './LibraryItemCard/CardImage';
 import { CardFooter } from './LibraryItemCard/CardFooter';
 import { readFrontEnv } from '../../../data/env';
 import { resolvePlaceholder } from './LibraryMediaViewer';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Badge, colors, fontSize, space } from '@trainerpro/ui';
 
 type Props = {
   deleting?: boolean;
@@ -54,7 +54,7 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
           {props.name}
         </Text>
         <Tags subtitle={props.subtitle} equipment={equipment} />
-        <CardFooter coachOwned={coachOwned} onDelete={props.onDelete} onEdit={props.onEdit} />
+        <CardFooter coachOwned={coachOwned} onDelete={props.onDelete} onEdit={props.onEdit} t={props.t} />
       </View>
     </Pressable>
   );
@@ -63,16 +63,8 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
 function Tags(props: { equipment?: null | string; subtitle?: null | string }): React.JSX.Element {
   return (
     <View style={styles.tagsRow}>
-      {props.subtitle ? (
-        <View style={styles.tagPrimary}>
-          <Text style={styles.tagPrimaryText}>{props.subtitle}</Text>
-        </View>
-      ) : null}
-      {props.equipment ? (
-        <View style={styles.tagSecondary}>
-          <Text style={styles.tagSecondaryText}>{props.equipment}</Text>
-        </View>
-      ) : null}
+      {props.subtitle ? <Badge label={props.subtitle} /> : null}
+      {props.equipment ? <Badge label={props.equipment} tone="primary" /> : null}
     </View>
   );
 }
@@ -101,27 +93,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: space.sm,
     flexWrap: 'wrap',
-  },
-  tagPrimary: {
-    backgroundColor: colors.background,
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-  },
-  tagPrimaryText: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '600',
-  },
-  tagSecondary: {
-    backgroundColor: '#f3e8ff',
-    paddingHorizontal: space.md,
-    paddingVertical: space.xs,
-    borderRadius: radius.sm,
-  },
-  tagSecondaryText: {
-    color: '#9333ea',
-    fontSize: fontSize.xs,
-    fontWeight: '600',
   },
 });

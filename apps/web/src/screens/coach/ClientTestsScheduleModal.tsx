@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ApiClientError } from '../../data/api-client';
 import { useSchedulePhysicalTestMutation, type PhysicalTestView } from '../../data/hooks/usePhysicalTests';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, IconButton, Modal, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
 
 type Props = {
   clientId: string;
@@ -12,10 +12,12 @@ type Props = {
 };
 
 const WEEKDAYS = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
-const MODAL_FADE = 'fade' as const;
+const VARIANT_SECONDARY = 'secondary' as const;
+const MODAL_SIZE = 'sm' as const;
 
 export function ScheduleTestModal(props: Props): React.JSX.Element {
   const schedule = useSchedulePhysicalTestMutation(props.clientId);
+  const toast = useToast();
   const [month, setMonth] = useState(() => startOfMonth(new Date()));
   const [selected, setSelected] = useState(() => formatDate(new Date()));
   const [notice, setNotice] = useState<string | null>(null);
@@ -26,6 +28,7 @@ export function ScheduleTestModal(props: Props): React.JSX.Element {
     setNotice(null);
     try {
       await schedule.mutateAsync({ date: selected, physicalTestId: props.test.id, replace: confirmed });
+      toast.success(props.t('coach.tests.schedule.success'));
       props.onClose();
     } catch (error) {
       const conflict = readScheduleConflict(error);
@@ -46,25 +49,26 @@ export function ScheduleTestModal(props: Props): React.JSX.Element {
   };
 
   return (
-    <Modal animationType={MODAL_FADE} onRequestClose={props.onClose} transparent visible={Boolean(props.test)}>
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>{props.t('coach.tests.schedule.title')}</Text>
-          {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
-          <MonthPicker month={month} onMonth={setMonth} onSelect={setSelected} selected={selected} />
-          {notice ? <Text style={styles.notice}>{notice}</Text> : null}
-          <View style={styles.actions}>
-            <Pressable onPress={props.onClose} style={styles.secondary}>
-              <Text style={styles.secondaryLabel}>{props.t('common.cancel')}</Text>
-            </Pressable>
-            <Pressable disabled={schedule.isPending} onPress={() => void submit(replace)} style={styles.primary}>
-              <Text style={styles.primaryLabel}>
-                {replace ? props.t('coach.tests.schedule.replaceAction') : props.t('coach.tests.schedule.confirm')}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </View>
+    <Modal
+      closeLabel={props.t('common.close')}
+      footer={
+        <>
+          <Button label={props.t('common.cancel')} onPress={props.onClose} variant={VARIANT_SECONDARY} />
+          <Button
+            label={replace ? props.t('coach.tests.schedule.replaceAction') : props.t('coach.tests.schedule.confirm')}
+            loading={schedule.isPending}
+            onPress={() => void submit(replace)}
+          />
+        </>
+      }
+      onClose={props.onClose}
+      size={MODAL_SIZE}
+      title={props.t('coach.tests.schedule.title')}
+      visible={Boolean(props.test)}
+    >
+      {props.test ? <Text style={styles.subtitle}>{props.test.name}</Text> : null}
+      <MonthPicker month={month} onMonth={setMonth} onSelect={setSelected} selected={selected} t={props.t} />
+      {notice ? <Text style={styles.notice}>{notice}</Text> : null}
     </Modal>
   );
 }
@@ -74,19 +78,24 @@ function MonthPicker(props: {
   onMonth: (month: Date) => void;
   onSelect: (date: string) => void;
   selected: string;
+  t: Props['t'];
 }): React.JSX.Element {
   const cells = monthCells(props.month);
   const label = props.month.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
   return (
     <View>
       <View style={styles.monthRow}>
-        <Pressable onPress={() => props.onMonth(shiftMonth(props.month, -1))}>
-          <Text style={styles.nav}>{'‹'}</Text>
-        </Pressable>
+        <IconButton
+          accessibilityLabel={props.t('coach.tests.schedule.prevMonth')}
+          icon={(color) => <Text style={[styles.nav, { color }]}>{'‹'}</Text>}
+          onPress={() => props.onMonth(shiftMonth(props.month, -1))}
+        />
         <Text style={styles.monthLabel}>{label}</Text>
-        <Pressable onPress={() => props.onMonth(shiftMonth(props.month, 1))}>
-          <Text style={styles.nav}>{'›'}</Text>
-        </Pressable>
+        <IconButton
+          accessibilityLabel={props.t('coach.tests.schedule.nextMonth')}
+          icon={(color) => <Text style={[styles.nav, { color }]}>{'›'}</Text>}
+          onPress={() => props.onMonth(shiftMonth(props.month, 1))}
+        />
       </View>
       <View style={styles.grid}>
         {WEEKDAYS.map((day) => (
@@ -141,39 +150,14 @@ function formatDate(date: Date): string {
 }
 
 const styles = StyleSheet.create({
-  actions: { flexDirection: 'row', gap: space.sm, justifyContent: 'flex-end', marginTop: space.md },
-  card: { backgroundColor: colors.surface, borderRadius: 16, maxWidth: 420, padding: space.lg, width: '100%' },
   day: { alignItems: 'center', width: '14.28%' },
   daySelected: { backgroundColor: colors.primary, borderRadius: radius.lg, color: colors.surface, overflow: 'hidden' },
   dayText: { color: colors.text, fontSize: fontSize.sm, paddingVertical: space.sm, textAlign: 'center', width: 28 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   monthLabel: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', textTransform: 'capitalize' },
   monthRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', marginBottom: space.sm },
-  nav: { color: colors.primary, fontSize: fontSize.xl, paddingHorizontal: space.sm },
+  nav: { fontSize: fontSize.xl, fontWeight: '700' },
   notice: { color: colors.danger, fontSize: fontSize.sm, marginTop: space.sm },
-  overlay: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(15,23,42,0.45)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: space.lg,
-  },
-  primary: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  primaryLabel: { color: colors.surface, fontWeight: '700' },
-  secondary: {
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  secondaryLabel: { color: colors.text, fontWeight: '600' },
   subtitle: { color: colors.textMuted, marginBottom: space.sm },
-  title: { color: colors.text, fontSize: fontSize.lg, fontWeight: '700' },
   weekday: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700', textAlign: 'center', width: '14.28%' },
 });

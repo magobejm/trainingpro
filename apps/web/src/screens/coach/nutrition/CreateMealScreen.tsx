@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SearchBar } from '@trainerpro/ui';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Button, SearchBar, TextField, useToast } from '@trainerpro/ui';
 import { useCreateMealMutation } from '../../../data/hooks/useNutrition';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
 import { MEAL_CATEGORIES } from './nutrition.types';
@@ -25,18 +25,31 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
   const [ingredients, setIngredients] = useState<DraftIngredient[]>([]);
   const foodsQuery = useLibraryFoodsQuery({ query });
   const createMutation = useCreateMealMutation();
-  const canSave = name.trim().length > 0;
+  const toast = useToast();
+  const [submitted, setSubmitted] = useState(false);
+  const nameError = submitted && name.trim().length === 0 ? t('coach.nutrition.meals.nameRequired') : null;
+  const onSave = (): void => {
+    setSubmitted(true);
+    if (name.trim().length === 0) return;
+    void saveMeal(props, createMutation, { category, ingredients, name, notes }).then(() =>
+      toast.success(t('coach.nutrition.meals.created')),
+    );
+  };
 
   const totals = useMemo(() => sumIngredientMacros(ingredients, foodsQuery.data ?? []), [ingredients, foodsQuery.data]);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{t('coach.nutrition.meals.create')}</Text>
-      <Text style={styles.fieldLabel}>{t('coach.nutrition.meals.name')}</Text>
-      <TextInput onChangeText={setName} style={styles.field} value={name} />
+      <TextField
+        containerStyle={styles.fieldGap}
+        error={nameError}
+        label={t('coach.nutrition.meals.name')}
+        onChangeText={setName}
+        required
+        value={name}
+      />
       <Text style={styles.fieldLabel}>{t('coach.nutrition.meals.category')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         {MEAL_CATEGORIES.map((item) => (
@@ -51,8 +64,13 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
           </Pressable>
         ))}
       </View>
-      <Text style={styles.fieldLabel}>{t('coach.nutrition.meals.notes')}</Text>
-      <TextInput multiline onChangeText={setNotes} style={styles.field} value={notes} />
+      <TextField
+        containerStyle={styles.fieldGap}
+        label={t('coach.nutrition.meals.notes')}
+        multiline
+        onChangeText={setNotes}
+        value={notes}
+      />
       <Text style={styles.sectionTitle}>{t('coach.nutrition.meals.addIngredient')}</Text>
       <SearchBar onChangeText={setQuery} placeholder={t('coach.nutrition.hub.foodSearchPlaceholder')} value={query} />
       {(foodsQuery.data ?? []).slice(0, 8).map((food) => (
@@ -67,11 +85,10 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
       {ingredients.map((item, index) => (
         <View key={`${item.foodId}-${index}`} style={styles.card}>
           <Text style={styles.cardTitle}>{item.foodName}</Text>
-          <TextInput
+          <TextField
             keyboardType={KEYBOARD_NUMERIC}
+            label={t('coach.nutrition.meals.grams')}
             onChangeText={(value) => updateAmount(ingredients, setIngredients, index, value)}
-            placeholder={t('coach.nutrition.meals.grams')}
-            style={styles.field}
             value={item.amountGrams}
           />
         </View>
@@ -84,15 +101,12 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
           fat: totals.fat,
         })}
       </Text>
-      <Pressable
-        disabled={!canSave || createMutation.isPending}
-        onPress={() => void saveMeal(props, createMutation, { category, ingredients, name, notes })}
-        style={[styles.ctaButton, !canSave && { opacity: 0.5 }]}
-      >
-        <Text style={styles.ctaLabel}>
-          {createMutation.isPending ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
-        </Text>
-      </Pressable>
+      <Button
+        label={createMutation.isPending ? t('coach.nutrition.saving') : t('coach.nutrition.save')}
+        loading={createMutation.isPending}
+        onPress={onSave}
+        style={styles.ctaButton}
+      />
     </ScrollView>
   );
 }

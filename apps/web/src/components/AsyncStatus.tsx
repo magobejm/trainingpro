@@ -1,12 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { classifyQueryStatus, type QueryStatus, type QueryStatusInput } from '../data/classify-query-status';
 import { FAILURE_KINDS, readCopy } from './async-status.copy';
 import { requestSignIn } from '../data/session-end';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, space } from '@trainerpro/ui';
 
-const BUTTON_ROLE = 'button' as const;
 const SPINNER_COLOR = colors.primary;
 
 type AsyncStatusProps = {
@@ -48,44 +47,17 @@ export function AsyncStatus(props: AsyncStatusProps): React.JSX.Element {
 
 function StatusAction(props: { kind: QueryStatus; label: string; onRetry?: () => void }): React.JSX.Element | null {
   if (props.kind === 'sessionExpired') {
-    return (
-      <Pressable
-        accessibilityLabel={props.label}
-        accessibilityRole={BUTTON_ROLE}
-        onPress={requestSignIn}
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>{props.label}</Text>
-      </Pressable>
-    );
+    return <Button label={props.label} onPress={requestSignIn} style={styles.button} />;
   }
   if ((props.kind === 'network' || props.kind === 'server') && props.onRetry) {
-    return (
-      <Pressable
-        accessibilityLabel={props.label}
-        accessibilityRole={BUTTON_ROLE}
-        onPress={props.onRetry}
-        style={styles.button}
-      >
-        <Text style={styles.buttonText}>{props.label}</Text>
-      </Pressable>
-    );
+    return <Button label={props.label} onPress={props.onRetry} style={styles.button} />;
   }
   return null;
 }
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
     marginTop: space.sm,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.md,
-  },
-  buttonText: {
-    color: colors.surface,
-    fontSize: fontSize.sm,
-    fontWeight: '700',
   },
   message: {
     color: colors.textMuted,

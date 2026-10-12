@@ -13,21 +13,6 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.lg,
     fontWeight: '700',
   },
-  assignButton: {
-    alignItems: 'center',
-    backgroundColor: colors.primarySoft,
-    borderColor: colors.primaryBorder,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 36,
-    paddingHorizontal: space.md,
-  },
-  assignLabel: {
-    color: colors.primary,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
   avatarFallback: {
     alignItems: 'center',
     backgroundColor: colors.primarySoft,
@@ -144,40 +129,8 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     fontWeight: '700',
   },
-  clientNote: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    lineHeight: 18,
-    marginTop: 2,
-  },
   page: {
     gap: space.md,
-  },
-  primaryAction: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.md,
-  },
-  primaryActionLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
-  },
-  secondaryAction: {
-    alignItems: 'center',
-    backgroundColor: colors.primary,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 38,
-    paddingHorizontal: space.md,
-  },
-  secondaryActionLabel: {
-    color: colors.surface,
-    fontSize: fontSize.xs,
-    fontWeight: '800',
   },
   headerMetricsText: {
     color: colors.textMuted, // A slate/blue hue derived from the prototype picture

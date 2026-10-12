@@ -11,11 +11,6 @@ export const layoutStyles = {
     gap: space.md,
     padding: space.lg,
   },
-  splitRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.md,
-  },
   mainLayout: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -31,10 +26,6 @@ export const layoutStyles = {
     gap: space.md,
     minWidth: 280,
   },
-  splitCard: {
-    flex: 1,
-    minWidth: 280,
-  },
   title: {
     color: colors.text,
     fontSize: fontSize.xxl,
@@ -43,14 +34,6 @@ export const layoutStyles = {
   subtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,
-  },
-  statsCard: {
-    gap: space.sm,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: space.md,
   },
   topFramesRow: {
     flexDirection: 'row',

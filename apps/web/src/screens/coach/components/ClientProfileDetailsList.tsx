@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { styles } from '../ClientProfileScreen.styles';
 
 type DetailItem = {
@@ -81,12 +82,10 @@ function DetailCard(props: { item: DetailItem; t: (key: string) => string }): Re
   );
 }
 
+const noop = (): void => undefined;
+
 function ActionButton(props: { label: string }): React.JSX.Element {
-  return (
-    <Pressable style={styles.assignButton}>
-      <Text style={styles.assignLabel}>{props.label}</Text>
-    </Pressable>
-  );
+  return <Button label={props.label} onPress={noop} size="sm" variant="secondary" />;
 }
 
 function Arrow(): React.JSX.Element {

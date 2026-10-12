@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { styles } from './ClientProfileEditScreen.styles';
-import { CompactMetricItem } from './ClientProfileEditScreen.components';
+import { CompactMetricItem, PencilButton } from './ClientProfileEditScreen.components';
 import type { Labels } from './ClientProfileEditScreen.labels';
 import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks';
 import {
@@ -16,7 +16,6 @@ import {
   headerAvatarHoverStyle,
   headerAvatarStyle,
   ICON_NEXT,
-  ICON_PENCIL,
   ICON_PLUS,
   ICON_PREV,
   scrollRail,
@@ -39,12 +38,7 @@ export function HeaderCard(props: { labels: Labels; vm: Vm }): React.JSX.Element
 }
 
 function resolveAvatarUrl(vm: Vm): string {
-  return (
-    vm.state.form.avatarUrl ||
-    String(vm.query.data?.avatarUrl ?? '') ||
-    vm.data.avatarChoices[0] ||
-    ''
-  );
+  return vm.state.form.avatarUrl || String(vm.query.data?.avatarUrl ?? '') || vm.data.avatarChoices[0] || '';
 }
 
 function AvatarColumn(props: { avatarUrl: string; vm: Vm }): React.JSX.Element {
@@ -101,25 +95,15 @@ function AvatarRail(props: { avatarUrl: string; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
   return (
     <div style={carouselWrapStyle}>
-      <CarouselArrow
-        icon={ICON_PREV}
-        onClick={() => scrollRail(vm.refs.avatarRailRef.current, -220)}
-      />
+      <CarouselArrow icon={ICON_PREV} onClick={() => scrollRail(vm.refs.avatarRailRef.current, -220)} />
       <div ref={vm.refs.avatarRailRef} style={carouselRailStyle}>
         {vm.data.avatarChoices.map((url) => (
-          <Pressable
-            key={url}
-            onPress={() => setAvatar(vm, url)}
-            style={avatarItemStyle(props.avatarUrl, url)}
-          >
+          <Pressable key={url} onPress={() => setAvatar(vm, url)} style={avatarItemStyle(props.avatarUrl, url)}>
             <img alt={emptyAlt} src={url} style={styles.avatarOptionImage} />
           </Pressable>
         ))}
       </div>
-      <CarouselArrow
-        icon={ICON_NEXT}
-        onClick={() => scrollRail(vm.refs.avatarRailRef.current, 220)}
-      />
+      <CarouselArrow icon={ICON_NEXT} onClick={() => scrollRail(vm.refs.avatarRailRef.current, 220)} />
     </div>
   );
 }
@@ -168,27 +152,9 @@ function MetricFrames(props: { labels: Labels; vm: Vm }): React.JSX.Element {
 function MainMetricFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
   return (
     <View style={[styles.frameCard, styles.multiMetricsFrame]}>
-      <MetricField
-        field={'heightCm'}
-        isLarge
-        label={props.labels.height}
-        suffix={'cm'}
-        vm={props.vm}
-      />
-      <MetricPair
-        labels={props.labels}
-        suffix={'cm'}
-        vm={props.vm}
-        leftField={'waistCm'}
-        rightField={'hipCm'}
-      />
-      <MetricPair
-        labels={props.labels}
-        suffix={'bpm'}
-        vm={props.vm}
-        leftField={'fcMax'}
-        rightField={'fcRest'}
-      />
+      <MetricField field={'heightCm'} isLarge label={props.labels.height} suffix={'cm'} vm={props.vm} />
+      <MetricPair labels={props.labels} suffix={'cm'} vm={props.vm} leftField={'waistCm'} rightField={'hipCm'} />
+      <MetricPair labels={props.labels} suffix={'bpm'} vm={props.vm} leftField={'fcMax'} rightField={'fcRest'} />
     </View>
   );
 }
@@ -196,13 +162,7 @@ function MainMetricFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
 function WeightFrame(props: { labels: Labels; vm: Vm }): React.JSX.Element {
   return (
     <View style={[styles.frameCard, styles.weightFrame]}>
-      <MetricField
-        field={'weightKg'}
-        isLarge
-        label={props.labels.weight}
-        suffix={'kg'}
-        vm={props.vm}
-      />
+      <MetricField field={'weightKg'} isLarge label={props.labels.weight} suffix={'kg'} vm={props.vm} />
     </View>
   );
 }
@@ -270,12 +230,7 @@ function AgeFrame(props: { ageValue: string; labels: Labels; vm: Vm }): React.JS
     <View style={[styles.frameCard, styles.ageFrame]}>
       <View style={styles.metricHeader}>
         <Text style={styles.metricLabel}>{props.labels.age}</Text>
-        <Pressable
-          onPress={() => vm.state.setEditableBirthDate((prev) => !prev)}
-          style={styles.pencilButton}
-        >
-          <Text style={styles.pencilLabel}>{ICON_PENCIL}</Text>
-        </Pressable>
+        <PencilButton onPress={() => vm.state.setEditableBirthDate((prev) => !prev)} />
       </View>
       <Text style={styles.metricBigValue}>{props.ageValue}</Text>
       {vm.state.editableBirthDate ? (

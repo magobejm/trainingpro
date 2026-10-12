@@ -4,6 +4,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { LayoutGrid, List } from 'lucide-react';
 import { useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
 import { COLORS, styles } from './nutrition.styles';
+import { Button, EmptyState } from '@trainerpro/ui';
 import type { NutritionPlanType } from './nutrition.types';
 
 type Props = {
@@ -19,9 +20,7 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Pressable onPress={props.onBack} style={styles.backButton}>
-        <Text style={styles.backLabel}>{t('common.back')}</Text>
-      </Pressable>
+      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{t('coach.nutrition.plans.title')}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.plans.subtitle')}</Text>
       <View style={styles.actionRow}>
@@ -39,10 +38,8 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
         </Pressable>
       </View>
       <Text style={styles.sectionTitle}>{t('coach.nutrition.plans.saved')}</Text>
-      {plansQuery.isLoading ? <Text style={styles.empty}>{t('coach.nutrition.loading')}</Text> : null}
-      {plans.length === 0 && !plansQuery.isLoading ? (
-        <Text style={styles.empty}>{t('coach.nutrition.plans.empty')}</Text>
-      ) : null}
+      {plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {plans.length === 0 && !plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.plans.empty')} /> : null}
       {plans.map((plan) => (
         <Pressable key={plan.id} onPress={() => props.onOpenPlan(plan.id, plan.type)} style={styles.card}>
           <Text style={styles.cardTitle}>{plan.name}</Text>

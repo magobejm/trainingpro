@@ -8,7 +8,7 @@ import { LibraryCreateCta } from './components/LibraryCreateCta';
 import { LibraryCreateModal } from './components/LibraryCreateModal';
 import { LibraryMediaFields } from './components/LibraryMediaFields';
 import { SportBaseFields } from './components/LibraryCreateFormFields';
-import { SearchBar, space } from '@trainerpro/ui';
+import { EmptyState, SearchBar, space } from '@trainerpro/ui';
 import {
   useCreateSportMutation,
   useDeleteSportMutation,
@@ -186,35 +186,43 @@ export function LibrarySportsScreen(): React.JSX.Element {
         visible={Boolean(pendingDeleteId)}
       />
 
-      {QueryResult({
-        emptyTitle: t('coach.library.empty'),
-        error,
-        hasActiveFilter: query.trim().length > 0,
-        isError,
-        isLoading,
-        itemCount: items.length,
-        onRetry: () => void refetch(),
-      }) ?? (
-        <View style={gridStyles.grid}>
-          {items.map((item) => (
-            <View key={item.id} style={gridStyles.gridItem}>
-              <LibraryItemCard
-                deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
-                description={item.description}
-                expanded={expandedId === item.id}
-                imageUrl={item.mediaUrl || SPORTS_PLACEHOLDER}
-                name={`${item.icon} ${item.name}`}
-                onDelete={() => setPendingDeleteId(item.id)}
-                onEdit={() => onOpenEdit(item)}
-                onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
-                scope={item.scope}
-                t={t}
-                youtubeUrl={item.youtubeUrl}
-              />
-            </View>
-          ))}
-        </View>
-      )}
+      {(!isLoading && !isError && items.length === 0 && !(query.trim().length > 0) ? (
+        <EmptyState
+          actionLabel={t('coach.library.actions.create')}
+          message={t('coach.library.emptyHint')}
+          onAction={onOpenCreate}
+          title={t('coach.library.empty')}
+        />
+      ) : null) ??
+        QueryResult({
+          emptyTitle: t('coach.library.empty'),
+          error,
+          hasActiveFilter: query.trim().length > 0,
+          isError,
+          isLoading,
+          itemCount: items.length,
+          onRetry: () => void refetch(),
+        }) ?? (
+          <View style={gridStyles.grid}>
+            {items.map((item) => (
+              <View key={item.id} style={gridStyles.gridItem}>
+                <LibraryItemCard
+                  deleting={deleteMutation.isPending && deleteMutation.variables === item.id}
+                  description={item.description}
+                  expanded={expandedId === item.id}
+                  imageUrl={item.mediaUrl || SPORTS_PLACEHOLDER}
+                  name={`${item.icon} ${item.name}`}
+                  onDelete={() => setPendingDeleteId(item.id)}
+                  onEdit={() => onOpenEdit(item)}
+                  onToggle={() => setExpandedId(expandedId === item.id ? '' : item.id)}
+                  scope={item.scope}
+                  t={t}
+                  youtubeUrl={item.youtubeUrl}
+                />
+              </View>
+            ))}
+          </View>
+        )}
     </ScrollView>
   );
 }

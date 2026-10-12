@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Button } from '@trainerpro/ui';
 import { styles } from '../clients-screen.styles';
 
 type Props = {
@@ -15,12 +16,8 @@ export function ClientManagementPanel(props: Props): React.JSX.Element {
   return (
     <>
       <View style={styles.breadcrumbCard}>
-        <Pressable onPress={props.onBack} style={styles.backButton}>
-          <Text style={styles.backLabel}>{props.t('common.back')}</Text>
-        </Pressable>
-        <Text style={styles.breadcrumb}>
-          {buildBreadcrumb(props.t('coach.clients.title'), props.selectedClientName)}
-        </Text>
+        <Button label={props.t('common.back')} onPress={props.onBack} size="sm" variant="secondary" />
+        <Text style={styles.breadcrumb}>{buildBreadcrumb(props.t('coach.clients.title'), props.selectedClientName)}</Text>
       </View>
       <View style={styles.managementCard}>
         <Text style={styles.managementTitle}>{props.t('coach.clientManagement.title')}</Text>
@@ -29,11 +26,11 @@ export function ClientManagementPanel(props: Props): React.JSX.Element {
           <Text style={styles.managementSummaryText}>{props.selectedClientName}</Text>
           <Text style={styles.managementSummaryText}>{props.selectedObjective ?? ''}</Text>
         </View>
-        <Pressable onPress={props.onOpenProfile} style={styles.managementButton}>
-          <Text style={styles.managementButtonLabel}>
-            {props.t('coach.clientManagement.openProfile')}
-          </Text>
-        </Pressable>
+        <Button
+          label={props.t('coach.clientManagement.openProfile')}
+          onPress={props.onOpenProfile}
+          style={styles.managementButton}
+        />
       </View>
     </>
   );

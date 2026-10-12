@@ -1,8 +1,8 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { FoodLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { ConsiderationBadges } from '../nutrition/ConsiderationBadges';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Props = {
   expanded: boolean;
@@ -24,13 +24,16 @@ export function FoodLibraryRow(props: Props): React.JSX.Element {
             {readServingUnitLabel(props.item.servingUnit, props.t)}
           </Text>
         </View>
-        <Pressable onPress={props.onToggle} style={styles.button}>
-          <Text style={styles.buttonLabel}>
-            {props.expanded
+        <Button
+          label={
+            props.expanded
               ? props.t('coach.library.foods.actions.hideDetail')
-              : props.t('coach.library.foods.actions.viewDetail')}
-          </Text>
-        </Pressable>
+              : props.t('coach.library.foods.actions.viewDetail')
+          }
+          onPress={props.onToggle}
+          size="sm"
+          variant="secondary"
+        />
       </View>
       {props.expanded ? <FoodDetail item={props.item} t={props.t} /> : null}
     </View>
@@ -122,19 +125,6 @@ function DetailLine(props: { label: string; value: string }): React.JSX.Element 
 }
 
 const styles = StyleSheet.create({
-  button: {
-    alignItems: 'center',
-    backgroundColor: colors.background,
-    borderRadius: radius.md,
-    justifyContent: 'center',
-    minHeight: 30,
-    paddingHorizontal: space.md,
-  },
-  buttonLabel: {
-    color: colors.textMuted,
-    fontSize: fontSize.xs,
-    fontWeight: '700',
-  },
   detail: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.border,

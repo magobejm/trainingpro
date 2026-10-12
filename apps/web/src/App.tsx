@@ -3,21 +3,25 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   Dumbbell,
   Apple,
-  AlertCircle,
+  Bell,
   MessageSquare,
   GraduationCap,
   CreditCard,
-  BarChart2,
-  User,
+  ScanSearch,
+  Users,
   CalendarDays,
+  CalendarRange,
   BookOpen,
   FileText,
+  Flame,
+  TriangleAlert,
   Utensils,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View, ViewStyle } from 'react-native';
 import './i18n';
 import { LoginScreen } from './screens/auth/LoginScreen';
+import { ResetPasswordScreen } from './screens/auth/ResetPasswordScreen';
 import { RoleSelectScreen } from './screens/auth/RoleSelectScreen';
 import { SidebarIdentity, TopBar } from './layout/ShellChrome';
 import { UNAUTHORIZED_EVENT } from './data/api-client';
@@ -28,9 +32,11 @@ import { SidebarUserPanel } from './layout/SidebarUserPanel';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
 import { applyMenuClientReset } from './layout/menu-client-context';
+import { resolveRouteTitleKey } from './layout/route-title';
 import { requestUnsavedLeave } from './layout/unsaved-leave';
 import { type ShellNavItem, type ShellRoute, usePersistentShellRoute } from './layout/usePersistentShellRoute';
 import { useAuthStore } from './store/auth.store';
+import { usePasswordRecoveryStore } from './store/password-recovery.store';
 
 const CoachesScreen = React.lazy(() =>
   import('./screens/admin/CoachesScreen').then((mod) => ({ default: mod.CoachesScreen })),
@@ -119,7 +125,11 @@ export function App(): React.JSX.Element {
     window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
   }, [clearSession, queryClient]);
+  const recoveryPhase = usePasswordRecoveryStore((state) => state.phase);
   const hasRole = isSupportedRole(activeRole) && availableRoles.includes(activeRole);
+  if (recoveryPhase !== 'none') {
+    return <ResetPasswordScreen />;
+  }
   if (!accessToken) {
     return <LoginScreen />;
   }
@@ -215,7 +225,7 @@ function ShellContentArea(props: {
 }) {
   return (
     <View style={styles.content}>
-      <TopBar roleLabel={props.t(`auth.role.${props.activeRole}`)} title={props.t('screen.dashboard.title')} />
+      <TopBar roleLabel={props.t(`auth.role.${props.activeRole}`)} title={props.t(resolveRouteTitleKey(props.route))} />
       <View style={styles.contentBody}>
         <React.Suspense fallback={<Text style={styles.logoutLabel}>{'…'}</Text>}>
           {resolveRouteScreen(props.route, props.activeRole, props.setRoute)}
@@ -358,7 +368,7 @@ function resolveAdminNavItems(): ShellNavItem[] {
 function resolveCoachNavItems(): ShellNavItem[] {
   return [
     {
-      icon: (p) => <User {...p} />,
+      icon: (p) => <Users {...p} />,
       id: 'coach.clients',
       labelKey: 'app.nav.coach.clients',
       badgeColor: 'rgba(99, 102, 241, 0.1)',
@@ -382,13 +392,13 @@ function resolveCoachNavItems(): ShellNavItem[] {
       badgeColor: 'rgba(249, 115, 22, 0.1)',
     },
     {
-      icon: (p) => <CalendarDays {...p} />,
+      icon: (p) => <CalendarRange {...p} />,
       id: 'coach.routine.planner',
       labelKey: 'app.nav.coach.routine.planner',
       badgeColor: 'rgba(249, 115, 22, 0.1)',
     },
     {
-      icon: (p) => <CalendarDays {...p} />,
+      icon: (p) => <Flame {...p} />,
       id: 'coach.warmup.planner',
       labelKey: 'app.nav.coach.warmup.planner',
       badgeColor: 'rgba(249, 115, 22, 0.1)',
@@ -400,13 +410,13 @@ function resolveCoachNavItems(): ShellNavItem[] {
       badgeColor: 'rgba(16, 185, 129, 0.1)',
     },
     {
-      icon: (p) => <BarChart2 {...p} />,
+      icon: (p) => <ScanSearch {...p} />,
       id: 'coach.evaluator',
       labelKey: 'app.nav.coach.evaluator',
       badgeColor: 'rgba(59, 130, 246, 0.1)',
     },
     {
-      icon: (p) => <AlertCircle {...p} />,
+      icon: (p) => <TriangleAlert {...p} />,
       id: 'coach.incidents',
       labelKey: 'app.nav.coach.incidents',
       badgeColor: 'rgba(239, 68, 68, 0.1)',
@@ -430,7 +440,7 @@ function resolveCoachNavItems(): ShellNavItem[] {
       badgeColor: 'rgba(16, 185, 129, 0.1)',
     },
     {
-      icon: (p) => <AlertCircle {...p} />,
+      icon: (p) => <Bell {...p} />,
       id: 'coach.notifications',
       labelKey: 'app.nav.coach.notifications',
       badgeColor: 'rgba(239, 68, 68, 0.1)',

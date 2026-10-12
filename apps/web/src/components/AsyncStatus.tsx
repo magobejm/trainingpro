@@ -2,17 +2,19 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { classifyQueryStatus, type QueryStatus, type QueryStatusInput } from '../data/classify-query-status';
+import { FAILURE_KINDS, readCopy } from './async-status.copy';
 import { requestSignIn } from '../data/session-end';
 
 const BUTTON_ROLE = 'button' as const;
-const FAILURES = new Set<QueryStatus>(['forbidden', 'network', 'server', 'sessionExpired']);
 const SPINNER_COLOR = '#1c74e9';
 
 type AsyncStatusProps = {
   emptyMessage?: string;
   emptyTitle: string;
   kind: Exclude<QueryStatus, 'ready'>;
+  messageOverride?: string;
   onRetry?: () => void;
+  titleOverride?: string;
 };
 
 type QueryResultProps = QueryStatusInput & {
@@ -32,7 +34,7 @@ export function QueryResult(props: QueryResultProps): React.JSX.Element | null {
 export function AsyncStatus(props: AsyncStatusProps): React.JSX.Element {
   const { t } = useTranslation();
   const copy = readCopy(props, t);
-  const role = props.kind === 'loading' ? 'progressbar' : FAILURES.has(props.kind) ? 'alert' : 'text';
+  const role = props.kind === 'loading' ? 'progressbar' : FAILURE_KINDS.has(props.kind) ? 'alert' : 'text';
   return (
     <View accessibilityLabel={copy.title} accessibilityRole={role} style={styles.panel}>
       {props.kind === 'loading' ? <ActivityIndicator color={SPINNER_COLOR} /> : null}
@@ -69,27 +71,6 @@ function StatusAction(props: { kind: QueryStatus; label: string; onRetry?: () =>
     );
   }
   return null;
-}
-
-function readCopy(props: AsyncStatusProps, t: (key: string) => string): { action: string; message: string; title: string } {
-  if (props.kind === 'empty') {
-    return { action: '', message: props.emptyMessage ?? '', title: props.emptyTitle };
-  }
-  if (props.kind === 'noResults') {
-    return { action: '', message: t('coach.status.noResults.message'), title: t('coach.status.noResults.title') };
-  }
-  if (props.kind === 'sessionExpired') {
-    return {
-      action: t('coach.status.signIn'),
-      message: t('auth.login.sessionExpired'),
-      title: t('coach.status.sessionExpired.title'),
-    };
-  }
-  return {
-    action: t('coach.status.retry'),
-    message: t(`coach.status.${props.kind}.message`),
-    title: t(`coach.status.${props.kind}.title`),
-  };
 }
 
 const styles = StyleSheet.create({

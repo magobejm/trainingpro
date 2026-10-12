@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
-import { useLoginMutation } from '../../data/hooks/useAuthMutations';
+import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
 import { readSessionExpired } from '../../data/session-end';
+import { usePasswordRecoveryStore } from '../../store/password-recovery.store';
+import { isValidEmail, readResetNotice } from './login-form.logic';
 
 const COLORS = {
   error: '#b42318',
@@ -31,14 +33,50 @@ function useLoginViewModel() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
   const loginMutation = useLoginMutation();
-  const onLogin = (): void => {
-    loginMutation.mutate({ email, password });
-  };
-  const error = mapErrorMessage(loginMutation.error, t('auth.login.error'));
+  const resetMutation = usePasswordResetMutation();
   const isLoading = loginMutation.isPending;
+  const validateEmail = (): boolean => {
+    const valid = isValidEmail(email);
+    setEmailError(valid ? null : t('auth.login.email.invalid'));
+    return valid;
+  };
+  const onLogin = (): void => {
+    if (isLoading || !validateEmail()) {
+      return;
+    }
+    loginMutation.mutate({ email: email.trim(), password });
+  };
+  const onForgotPassword = (): void => {
+    if (resetMutation.isPending || !validateEmail()) {
+      return;
+    }
+    resetMutation.mutate(email.trim());
+  };
+  const changeEmail = (value: string): void => {
+    setEmail(value);
+    setEmailError(null);
+  };
+  const error = emailError ?? mapErrorMessage(loginMutation.error, t('auth.login.error'));
+  const passwordUpdated = usePasswordRecoveryStore((state) => state.passwordUpdated);
+  const resetNotice = passwordUpdated
+    ? { isError: false, text: t('auth.reset.updated') }
+    : readResetNotice(resetMutation, t);
   const sessionExpired = readSessionExpired();
-  return { t, email, password, error, isLoading, onLogin, sessionExpired, setEmail, setPassword };
+  return {
+    t,
+    email,
+    password,
+    error,
+    isLoading,
+    onForgotPassword,
+    onLogin,
+    resetNotice,
+    sessionExpired,
+    setEmail: changeEmail,
+    setPassword,
+  };
 }
 
 function mapErrorMessage(caught: unknown, fallback: string): string | null {
@@ -67,29 +105,48 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
         <TextInput
           {...EMAIL_PROPS}
           onChangeText={props.setEmail}
+          onSubmitEditing={props.onLogin}
           placeholder={props.t('auth.login.email.placeholder')}
           style={styles.input}
           value={props.email}
         />
         <TextInput
           onChangeText={props.setPassword}
+          onSubmitEditing={props.onLogin}
           placeholder={props.t('auth.login.password.placeholder')}
           secureTextEntry
           style={styles.input}
           value={props.password}
         />
         {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
-        <Pressable onPress={props.onLogin} style={styles.button}>
-          {renderSubmitContent(props.isLoading, props.t('auth.login.submit'))}
+        {props.resetNotice ? (
+          <Text style={props.resetNotice.isError ? styles.error : styles.notice}>{props.resetNotice.text}</Text>
+        ) : null}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ busy: props.isLoading, disabled: props.isLoading }}
+          disabled={props.isLoading}
+          onPress={props.onLogin}
+          style={[styles.button, props.isLoading && styles.buttonDisabled]}
+        >
+          {renderSubmitContent(props.isLoading, props.t('auth.login.submit'), props.t('auth.login.submitting'))}
+        </Pressable>
+        <Pressable accessibilityRole="button" onPress={props.onForgotPassword} style={styles.forgotLink}>
+          <Text style={styles.forgotLabel}>{props.t('auth.login.forgot')}</Text>
         </Pressable>
       </View>
     </View>
   );
 }
 
-function renderSubmitContent(isLoading: boolean, label: string): React.JSX.Element {
+function renderSubmitContent(isLoading: boolean, label: string, loadingLabel: string): React.JSX.Element {
   if (isLoading) {
-    return <ActivityIndicator color={COLORS.white} />;
+    return (
+      <View style={styles.loadingRow}>
+        <ActivityIndicator color={COLORS.white} />
+        <Text style={styles.buttonText}>{loadingLabel}</Text>
+      </View>
+    );
   }
   return <Text style={styles.buttonText}>{label}</Text>;
 }
@@ -101,6 +158,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     height: 48,
     justifyContent: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: COLORS.white,
@@ -115,6 +175,25 @@ const styles = StyleSheet.create({
   },
   error: {
     color: COLORS.error,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  forgotLabel: {
+    color: COLORS.primary,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  forgotLink: {
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  loadingRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 8,
+  },
+  notice: {
+    color: COLORS.muted,
     fontSize: 13,
     marginBottom: 8,
   },

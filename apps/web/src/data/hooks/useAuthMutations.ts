@@ -1,5 +1,11 @@
 import { useMutation, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
-import { loginWithPassword, type LoginResult } from '../auth-service';
+import {
+  completePasswordRecovery,
+  loginWithPassword,
+  requestPasswordReset,
+  type LoginResult,
+  type PasswordRecoveryInput,
+} from '../auth-service';
 import { clearSessionExpired } from '../session-end';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -19,6 +25,14 @@ export function useLoginMutation(): UseMutationResult<LoginResult, Error, LoginI
       setSession(result.accessToken);
     },
   });
+}
+
+export function usePasswordResetMutation(): UseMutationResult<void, Error, string> {
+  return useMutation({ mutationFn: requestPasswordReset });
+}
+
+export function useCompleteRecoveryMutation(): UseMutationResult<void, Error, PasswordRecoveryInput> {
+  return useMutation({ mutationFn: completePasswordRecovery });
 }
 
 async function runLogin(input: LoginInput): Promise<LoginResult> {

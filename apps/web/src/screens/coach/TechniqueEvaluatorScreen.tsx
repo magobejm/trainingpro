@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { AsyncStatus } from '../../components/AsyncStatus';
+import { LOADING_MESSAGE_KEYS, resolveFailureKind } from './technique-evaluator.logic';
 import { useAnalyzeTechniqueMutation, type TechniqueAnalysisResult } from '../../data/hooks/ai/useAnalyzeTechniqueMutation';
 import type { TFunction } from 'i18next';
 
@@ -65,30 +67,24 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
     try {
       await analyzeMutation.mutateAsync({ file });
     } catch {
-      setIsUploading(false);
+      // El fallo queda en analyzeMutation.isError y se muestra con reintento.
     } finally {
       setIsUploading(false);
     }
   };
 
-  const failureMessage = dropError ?? readFailure(analyzeMutation.isError, analyzeMutation.error, t);
+  const resetEvaluator = () => {
+    setDropError(null);
+    setFile(null);
+    setFileUrl(null);
+    setIsUploading(false);
+    analyzeMutation.reset();
+  };
 
   if (analyzeMutation.isSuccess && analyzeMutation.data && fileUrl) {
     const fileIsVideo = file ? file.type.startsWith('video/') : false;
     return (
-      <ResultsView
-        result={analyzeMutation.data}
-        onReset={() => {
-          setDropError(null);
-          setFile(null);
-          setFileUrl(null);
-          setIsUploading(false);
-          analyzeMutation.reset();
-        }}
-        fileUrl={fileUrl}
-        isVideo={fileIsVideo}
-        t={t}
-      />
+      <ResultsView result={analyzeMutation.data} onReset={resetEvaluator} fileUrl={fileUrl} isVideo={fileIsVideo} t={t} />
     );
   }
 
@@ -96,17 +92,31 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
     return <EntertainingLoader />;
   }
 
+  if (analyzeMutation.isError) {
+    return (
+      <ScrollView contentContainerStyle={styles.page}>
+        <View style={styles.container}>
+          <AsyncStatus
+            emptyTitle={t('app.evaluator.error.title')}
+            kind={resolveFailureKind(analyzeMutation.error)}
+            messageOverride={t('app.evaluator.error.message')}
+            onRetry={() => void handleAnalyze()}
+            titleOverride={t('app.evaluator.error.title')}
+          />
+          <Pressable onPress={resetEvaluator} style={[styles.resetButton, styles.errorResetButton]}>
+            <Text style={styles.resetLabel}>{t('app.evaluator.resetAction')}</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.container}>
         <View style={styles.hero}>
-          <Text style={styles.title}>{t('app.evaluator.title', 'Evaluador de Técnica Biomecánica')}</Text>
-          <Text style={styles.subtitle}>
-            {t(
-              'app.evaluator.subtitle',
-              'Sube un video corto (máx 30s) o imagen de un ejercicio para que nuestra IA especializada identifique errores posturales y brinde correcciones de seguridad inmediatas.',
-            )}
-          </Text>
+          <Text style={styles.title}>{t('app.evaluator.title')}</Text>
+          <Text style={styles.subtitle}>{t('app.evaluator.subtitle')}</Text>
         </View>
 
         <View style={styles.formCard}>
@@ -121,24 +131,20 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
             ) : (
               <View style={styles.dropZoneContent}>
                 <Text style={styles.dropZoneIcon}>{'\u2601\uFE0F'}</Text>
-                <Text style={styles.dropZoneTitle}>{t('app.evaluator.dropHere', 'Arrastra y suelta tu archivo aquí')}</Text>
-                <Text style={styles.dropZoneHint}>
-                  {t('app.evaluator.dropHint', 'o haz clic para seleccionar (MP4, MOV, JPG, PNG)')}
-                </Text>
+                <Text style={styles.dropZoneTitle}>{t('app.evaluator.dropHere')}</Text>
+                <Text style={styles.dropZoneHint}>{t('app.evaluator.dropHint')}</Text>
               </View>
             )}
           </div>
 
-          {failureMessage ? <Text style={styles.failureText}>{failureMessage}</Text> : null}
+          {dropError ? <Text style={styles.failureText}>{dropError}</Text> : null}
           <View style={styles.actionsBox}>
             <Pressable
               style={[styles.analyzeButton, !file && styles.analyzeButtonDisabled]}
               onPress={() => void handleAnalyze()}
               disabled={!file}
             >
-              <Text style={styles.analyzeLabel}>
-                {t('app.evaluator.analyzeAction', 'Analizar Técnica con Gemini IA \u2728')}
-              </Text>
+              <Text style={styles.analyzeLabel}>{t('app.evaluator.analyzeAction')}</Text>
             </Pressable>
           </View>
         </View>
@@ -147,28 +153,13 @@ export function TechniqueEvaluatorScreen(): React.JSX.Element {
   );
 }
 
-function readFailure(isError: boolean, error: unknown, t: (key: string) => string): string | null {
-  if (!isError) return null;
-  if (error instanceof Error && error.message.trim()) return error.message;
-  return t('app.evaluator.analyzeFailed');
-}
-
-const MESSAGES = [
-  'Analizando cinemática del movimiento...',
-  'Evaluando alineación de articulaciones...',
-  'Consultando modelos biomecánicos predictivos...',
-  'Verificando curvatura espinal y estrés lumbar...',
-  'Calculando Score de Seguridad...',
-  'Preparando correcciones inmediatas...',
-];
-
 function EntertainingLoader() {
   const { t } = useTranslation();
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % MESSAGES.length);
+      setIndex((prev) => (prev + 1) % LOADING_MESSAGE_KEYS.length);
     }, 2800);
     return () => clearInterval(interval);
   }, []);
@@ -185,12 +176,10 @@ function EntertainingLoader() {
           transition={{ duration: 0.5 }}
           style={stylesHtml.motionWrapper}
         >
-          <Text style={styles.loaderText}>{MESSAGES[index]}</Text>
+          <Text style={styles.loaderText}>{t(LOADING_MESSAGE_KEYS[index] ?? '')}</Text>
         </motion.div>
       </AnimatePresence>
-      <Text style={styles.loaderSubtext}>
-        {t('app.evaluator.waitSubtext', 'Este proceso puede demorar hasta 30 segundos.')}
-      </Text>
+      <Text style={styles.loaderSubtext}>{t('app.evaluator.waitSubtext')}</Text>
     </View>
   );
 }
@@ -220,12 +209,12 @@ function ResultsView({
               <Text style={styles.subtitle}>{result.fase_movimiento}</Text>
             </View>
             <Pressable onPress={onReset} style={styles.resetButton}>
-              <Text style={styles.resetLabel}>{t('app.evaluator.resetAction', 'Evaluar otro')}</Text>
+              <Text style={styles.resetLabel}>{t('app.evaluator.resetAction')}</Text>
             </Pressable>
           </View>
           <View style={[styles.scoreBadge, isDanger ? styles.scoreBadgeDanger : styles.scoreBadgeSafe]}>
             <Text style={[styles.scoreBadgeText, isDanger ? styles.scoreBadgeTextDanger : styles.scoreBadgeTextSafe]}>
-              {t('app.evaluator.scoreLabel', 'Score de Seguridad:')} {result.score_seguridad}/100
+              {t('app.evaluator.scoreLabel')} {result.score_seguridad}/100
             </Text>
           </View>
           <Text style={styles.reviewHint}>{t('app.evaluator.reviewHint')}</Text>
@@ -239,16 +228,14 @@ function ResultsView({
               <img src={fileUrl} style={stylesHtml.resultMedia} alt="Preview" />
             )}
             <View style={styles.correctionBanner}>
-              <Text style={styles.correctionTitle}>
-                {t('app.evaluator.correctionTitle', '\uD83D\uDCA1 Corrección Inmediata')}
-              </Text>
+              <Text style={styles.correctionTitle}>{t('app.evaluator.correctionTitle')}</Text>
               <Text style={styles.correctionText}>{result.correccion_inmediata}</Text>
             </View>
           </View>
 
           <View style={styles.detailsGrid}>
             <View style={styles.detailList}>
-              <Text style={styles.detailTitle}>{t('app.evaluator.errorsTitle', '\u26A0\uFE0F Errores Detectados')}</Text>
+              <Text style={styles.detailTitle}>{t('app.evaluator.errorsTitle')}</Text>
               {result.errores_detectados.map((e: string, i: number) => (
                 <Text key={i} style={styles.detailItem}>
                   • {e}
@@ -256,17 +243,17 @@ function ResultsView({
               ))}
             </View>
             <View style={styles.detailList}>
-              <Text style={styles.detailTitle}>{t('app.evaluator.pointsTitle', '\uD83D\uDD0D Puntos Clave')}</Text>
+              <Text style={styles.detailTitle}>{t('app.evaluator.pointsTitle')}</Text>
               <View style={styles.pointRow}>
-                <Text style={styles.pointLabel}>{t('app.evaluator.backLabel', 'Espalda:')} </Text>
+                <Text style={styles.pointLabel}>{t('app.evaluator.backLabel')} </Text>
                 <Text style={styles.pointValue}>{result.analisis_puntos_clave.espalda}</Text>
               </View>
               <View style={styles.pointRow}>
-                <Text style={styles.pointLabel}>{t('app.evaluator.rangeLabel', 'Rango:')} </Text>
+                <Text style={styles.pointLabel}>{t('app.evaluator.rangeLabel')} </Text>
                 <Text style={styles.pointValue}>{result.analisis_puntos_clave.rango_movimiento}</Text>
               </View>
               <View style={styles.pointRow}>
-                <Text style={styles.pointLabel}>{t('app.evaluator.jointsLabel', 'Articulaciones:')} </Text>
+                <Text style={styles.pointLabel}>{t('app.evaluator.jointsLabel')} </Text>
                 <Text style={styles.pointValue}>{result.analisis_puntos_clave.alineacion_articulaciones}</Text>
               </View>
             </View>
@@ -484,6 +471,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#e2e8f0',
+  },
+  errorResetButton: {
+    alignSelf: 'center',
   },
   resetLabel: {
     color: COLORS.text,

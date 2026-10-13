@@ -48,12 +48,12 @@ function resolveCoachNavItems(): ShellNavItem[] {
     item('coach.notes', 'clients', <FileText />, 'rgba(99, 102, 241, 0.1)'),
     item('coach.incidents', 'clients', <TriangleAlert />, 'rgba(239, 68, 68, 0.1)'),
     item('coach.calendar', 'clients', <CalendarDays />, 'rgba(16, 185, 129, 0.1)'),
-    item('coach.library.routines', 'planning', <BookOpen />, 'rgba(249, 115, 22, 0.1)'),
     item('coach.routine.planner', 'planning', <CalendarRange />, 'rgba(249, 115, 22, 0.1)'),
     item('coach.warmup.planner', 'planning', <Flame />, 'rgba(249, 115, 22, 0.1)'),
     item('coach.nutrition', 'planning', <Utensils />, 'rgba(16, 185, 129, 0.1)'),
     item('coach.library.unified', 'library', <Dumbbell />, 'rgba(37, 99, 235, 0.1)'),
     item('coach.library.foods', 'library', <Apple />, 'rgba(59, 130, 246, 0.1)'),
+    item('coach.library.routines', 'library', <BookOpen />, 'rgba(249, 115, 22, 0.1)'),
     item('coach.evaluator', 'tools', <ScanSearch />, 'rgba(59, 130, 246, 0.1)'),
     item('coach.notifications', 'tools', <Bell />, 'rgba(239, 68, 68, 0.1)'),
   ];

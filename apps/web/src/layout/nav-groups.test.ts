@@ -21,7 +21,7 @@ describe('COACH_MENU_LAYOUT', () => {
   it('puts the screens of each block where the design says', () => {
     const byGroup = Object.fromEntries(COACH_MENU_LAYOUT.map((entry) => [entry.group, entry.routes]));
     expect(byGroup.clients).toEqual(['coach.clients', 'coach.chat', 'coach.notes', 'coach.incidents', 'coach.calendar']);
-    expect(byGroup.library).toEqual(['coach.library.unified', 'coach.library.foods']);
+    expect(byGroup.library).toEqual(['coach.library.unified', 'coach.library.foods', 'coach.library.routines']);
     expect(byGroup.tools).toEqual(['coach.evaluator', 'coach.notifications']);
   });
 

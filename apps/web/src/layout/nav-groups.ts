@@ -5,9 +5,9 @@ export const COACH_MENU_LAYOUT: { group: NavGroupId; routes: ShellRoute[] }[] = 
   { group: 'clients', routes: ['coach.clients', 'coach.chat', 'coach.notes', 'coach.incidents', 'coach.calendar'] },
   {
     group: 'planning',
-    routes: ['coach.library.routines', 'coach.routine.planner', 'coach.warmup.planner', 'coach.nutrition'],
+    routes: ['coach.routine.planner', 'coach.warmup.planner', 'coach.nutrition'],
   },
-  { group: 'library', routes: ['coach.library.unified', 'coach.library.foods'] },
+  { group: 'library', routes: ['coach.library.unified', 'coach.library.foods', 'coach.library.routines'] },
   { group: 'tools', routes: ['coach.evaluator', 'coach.notifications'] },
 ];
 

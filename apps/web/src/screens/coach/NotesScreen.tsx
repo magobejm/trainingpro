@@ -11,7 +11,7 @@ import {
   getLayoutStyle10,
 } from './NotesScreen.layout-styles';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { Lock } from 'lucide-react';
@@ -28,17 +28,22 @@ import { filterAndSortNotes } from './notes-screen.utils';
 import { matchesSearch } from '../../utils/normalize-search';
 import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
-import { DeleteConfirmModal, EditNoteModal, HistorySidebar } from './NotesScreen.parts';
+import { EditNoteModal, HistorySidebar } from './NotesScreen.parts';
+import { useDeferredDelete } from '../../layout/useDeferredDelete';
+import { useQuickCreateStore } from '../../store/quickCreate.store';
 import { ClientNoteSection } from './NotesScreen.client-section';
 import { Button, TextField, colors, space, useBreakpoint, useToast } from '@trainerpro/ui';
+const GENERAL_NOTE_FIELD = 'coach-notes-general';
 type GeneralNoteSectionProps = {
+  focusGeneral?: boolean;
   value: string;
   onChange: (v: string) => void;
   isSaving?: boolean;
   onSave: () => void;
   t: (k: string) => string;
 };
-function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNoteSectionProps): React.JSX.Element {
+function GeneralNoteSection(props: GeneralNoteSectionProps): React.JSX.Element {
+  const { focusGeneral, value, onChange, isSaving, onSave, t } = props;
   const layoutStyle1 = getLayoutStyle1;
   const layoutStyle2 = getLayoutStyle2;
   const layoutStyle3 = getLayoutStyle3;
@@ -56,7 +61,9 @@ function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNot
         <View style={layoutStyle5}>
           <TextField
             accessibilityLabel={t('coach.notes.private.title')}
+            autoFocus={focusGeneral}
             multiline
+            nativeID={GENERAL_NOTE_FIELD}
             numberOfLines={8}
             onChangeText={onChange}
             placeholder={t('coach.notes.private.placeholder')}
@@ -72,6 +79,7 @@ function GeneralNoteSection({ value, onChange, isSaving, onSave, t }: GeneralNot
 }
 export function NotesScreen(): React.JSX.Element {
   const vm = useNotesScreenModel();
+  const focusGeneral = useFocusGeneralNote();
   const { t } = vm;
   const bp = useBreakpoint();
   const stacked = bp !== 'lg';
@@ -92,6 +100,7 @@ export function NotesScreen(): React.JSX.Element {
             <Text style={layoutStyle10}>{t('coach.notes.subtitle')}</Text>
           </View>
           <GeneralNoteSection
+            focusGeneral={focusGeneral}
             isSaving={vm.isCreating}
             onChange={vm.setGeneralNoteText}
             onSave={vm.handleSaveGeneralNote}
@@ -121,7 +130,7 @@ export function NotesScreen(): React.JSX.Element {
         dateTo={vm.dateTo}
         displayedNotes={vm.displayedNotes}
         historyFilter={vm.historyFilter}
-        onDeleteNote={vm.setDeleteConfirmNote}
+        onDeleteNote={vm.requestDeleteNote}
         onEditNote={vm.handleEditNote}
         selectedClient={vm.selectedClient}
         setDateFrom={vm.setDateFrom}
@@ -140,41 +149,31 @@ export function NotesScreen(): React.JSX.Element {
         setEditContent={vm.setEditContent}
         t={t}
       />
-      <DeleteConfirmModal
-        isDeleting={vm.isDeleting}
-        note={vm.deleteConfirmNote}
-        onCancel={() => vm.setDeleteConfirmNote(null)}
-        onConfirm={vm.handleDeleteNote}
-        t={t}
-      />
     </View>
   );
 }
-function useNotesScreenModel() {
-  const { t } = useTranslation();
-  const toast = useToast();
-  const [generalNoteText, setGeneralNoteText] = useState('');
-  const [clientNoteText, setClientNoteText] = useState('');
-  const { filters, setFilters } = useNotesFilters();
-  const [editingNote, setEditingNote] = useState<NoteData | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [deleteConfirmNote, setDeleteConfirmNote] = useState<NoteData | null>(null);
-  const clients = useClientsQuery().data ?? [];
-  const objectives = useClientObjectivesQuery().data ?? [];
-  const notes = useNotesQuery().data ?? [];
-  const createNoteMutation = useCreateNoteMutation();
-  const updateNoteMutation = useUpdateNoteMutation();
+function useFocusGeneralNote(): boolean {
+  const intent = useQuickCreateStore((state) => state.intent);
+  const [focusGeneral, setFocusGeneral] = useState(false);
+  useEffect(() => {
+    if (intent !== 'note') return;
+    useQuickCreateStore.getState().consume();
+    setFocusGeneral(true);
+  }, [intent]);
+  useEffect(() => {
+    if (!focusGeneral) return;
+    document.getElementById(GENERAL_NOTE_FIELD)?.focus();
+  }, [focusGeneral]);
+  return focusGeneral;
+}
+function useDisplayedNotes(
+  notes: NoteData[],
+  filters: NotesFilters,
+  selectedClient: ClientData | null,
+  t: (key: string, options?: { name: string }) => string,
+) {
+  const deferred = useDeferredDelete();
   const deleteNoteMutation = useDeleteNoteMutation();
-  const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
-  const filteredClients = useMemo(
-    () =>
-      clients.filter((client) => {
-        const name = `${client.firstName} ${client.lastName}`;
-        const matchesName = matchesSearch(name, filters.clientSearch);
-        return matchesName && (filters.selectedObjective ? client.objectiveId === filters.selectedObjective : true);
-      }),
-    [clients, filters.clientSearch, filters.selectedObjective],
-  );
   const displayedNotes = useMemo(
     () =>
       filterAndSortNotes(
@@ -184,20 +183,52 @@ function useNotesScreenModel() {
         filters.dateFrom,
         filters.dateTo,
         filters.showAllHistory,
-      ),
-    [filters.dateFrom, filters.dateTo, filters.historyFilter, filters.showAllHistory, notes, selectedClient],
+      ).filter((note) => !deferred.pending.has(note.id)),
+    [deferred.pending, filters, notes, selectedClient],
+  );
+  const requestDeleteNote = (note: NoteData) => {
+    const name = note.content.trim().slice(0, 40) || t('coach.notes.title');
+    deferred.schedule({
+      formatError: () => t('coach.notes.error.delete'),
+      id: note.id,
+      label: t('coach.notes.toast.deletedUndo', { name }),
+      run: () => deleteNoteMutation.mutateAsync(note.id),
+    });
+  };
+  return { displayedNotes, isDeleting: deleteNoteMutation.isPending, requestDeleteNote };
+}
+function useNotesScreenModel() {
+  const { t } = useTranslation();
+  const toast = useToast();
+  const [generalNoteText, setGeneralNoteText] = useState('');
+  const [clientNoteText, setClientNoteText] = useState('');
+  const { filters, setFilters } = useNotesFilters();
+  const [editingNote, setEditingNote] = useState<NoteData | null>(null);
+  const [editContent, setEditContent] = useState('');
+  const clients = useClientsQuery().data ?? [];
+  const objectives = useClientObjectivesQuery().data ?? [];
+  const notes = useNotesQuery().data ?? [];
+  const createNoteMutation = useCreateNoteMutation();
+  const updateNoteMutation = useUpdateNoteMutation();
+  const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
+  const history = useDisplayedNotes(notes, filters, selectedClient, t);
+  const filteredClients = useMemo(
+    () =>
+      clients.filter((client) => {
+        const name = `${client.firstName} ${client.lastName}`;
+        const matchesName = matchesSearch(name, filters.clientSearch);
+        return matchesName && (filters.selectedObjective ? client.objectiveId === filters.selectedObjective : true);
+      }),
+    [clients, filters.clientSearch, filters.selectedObjective],
   );
   const commands = readNoteCommands({
     clientNoteText,
     createNoteMutation,
-    deleteConfirmNote,
-    deleteNoteMutation,
     editContent,
     editingNote,
     generalNoteText,
     selectedClient,
     setClientNoteText,
-    setDeleteConfirmNote,
     setEditContent,
     setEditingNote,
     setGeneralNoteText,
@@ -210,15 +241,15 @@ function useNotesScreenModel() {
     clientSearch: filters.clientSearch,
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
-    deleteConfirmNote,
-    displayedNotes,
+    displayedNotes: history.displayedNotes,
+    requestDeleteNote: history.requestDeleteNote,
     editContent,
     editingNote,
     filteredClients,
     generalNoteText,
     ...commands,
     isCreating: createNoteMutation.isPending,
-    isDeleting: deleteNoteMutation.isPending,
+    isDeleting: history.isDeleting,
     isUpdating: updateNoteMutation.isPending,
     historyFilter: filters.historyFilter,
     objectives,
@@ -228,7 +259,6 @@ function useNotesScreenModel() {
     setClientSearch: (clientSearch: string) => setFilters((prev) => ({ ...prev, clientSearch })),
     setDateFrom: (dateFrom: string) => setFilters((prev) => ({ ...prev, dateFrom })),
     setDateTo: (dateTo: string) => setFilters((prev) => ({ ...prev, dateTo })),
-    setDeleteConfirmNote,
     setEditContent,
     setEditingNote,
     setGeneralNoteText,
@@ -244,8 +274,6 @@ function useNotesScreenModel() {
 function readNoteCommands(input: {
   clientNoteText: string;
   createNoteMutation: ReturnType<typeof useCreateNoteMutation>;
-  deleteConfirmNote: NoteData | null;
-  deleteNoteMutation: ReturnType<typeof useDeleteNoteMutation>;
   editContent: string;
   editingNote: NoteData | null;
   generalNoteText: string;
@@ -253,7 +281,6 @@ function readNoteCommands(input: {
     id: string;
   } | null;
   setClientNoteText: (value: string) => void;
-  setDeleteConfirmNote: (note: NoteData | null) => void;
   setEditContent: (value: string) => void;
   setEditingNote: (note: NoteData | null) => void;
   setGeneralNoteText: (value: string) => void;
@@ -272,16 +299,6 @@ function readNoteCommands(input: {
     }
   };
   return {
-    handleDeleteNote: async () => {
-      if (!input.deleteConfirmNote) return;
-      const id = input.deleteConfirmNote.id;
-      const ok = await run(
-        () => input.deleteNoteMutation.mutateAsync(id),
-        'coach.notes.toast.deleted',
-        'coach.notes.error.delete',
-      );
-      if (ok) input.setDeleteConfirmNote(null);
-    },
     handleEditNote: (note: NoteData) => {
       input.setEditingNote(note);
       input.setEditContent(note.content);

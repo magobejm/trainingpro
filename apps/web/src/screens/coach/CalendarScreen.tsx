@@ -7,7 +7,7 @@ import {
   getLayoutStyle5,
 } from './CalendarScreen.layout-styles';
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { CalendarDays } from 'lucide-react';
@@ -30,6 +30,7 @@ import { CalendarGrid } from './CalendarScreen.grid';
 import { DayDetailModal, AddNoteModal, AddReminderModal } from './CalendarScreen.modals';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
 import type { ModalState } from './CalendarScreen.handlers';
+import { useQuickCreateStore } from '../../store/quickCreate.store';
 import {
   filterDayEvents,
   moveToPrevMonth,
@@ -288,6 +289,19 @@ function CalendarModalsRenderer({
     </>
   );
 }
+function useOpenTodayFromQuickCreate(setModal: (modal: ModalState) => void): void {
+  const intent = useQuickCreateStore((state) => state.intent);
+  useEffect(() => {
+    if (intent !== 'calendar') return;
+    useQuickCreateStore.getState().consume();
+    setModal({ dateStr: localDateString(new Date()), type: 'day' });
+  }, [intent, setModal]);
+}
+function localDateString(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 export function CalendarScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const {
@@ -329,7 +343,7 @@ export function CalendarScreen(): React.JSX.Element {
     handleEditEvent,
     onRoutineDayColorChange,
   } = useCalendarLogic();
-  const clientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined;
+  useOpenTodayFromQuickCreate(setModal);
   const stacked = useBreakpoint() === 'sm';
   const layoutStyle5 = getLayoutStyle5;
   return (
@@ -374,7 +388,7 @@ export function CalendarScreen(): React.JSX.Element {
         modal={modal}
         setModal={setModal}
         dayEvents={dayEvents}
-        clientName={clientName}
+        clientName={selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : undefined}
         createIsPending={createEvent.isPending || proposeCall.isPending}
         updateIsPending={updateEvent.isPending}
         onDeleteEvent={handleDeleteEvent}

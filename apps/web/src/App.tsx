@@ -16,6 +16,7 @@ import { useMeQuery } from './data/hooks/useMeQuery';
 import { logoutSession } from './data/auth-service';
 import { styles } from './App.styles';
 import { Drawer } from './layout/Drawer';
+import { QuickCreateButton } from './layout/QuickCreateButton';
 import { applyMenuClientReset } from './layout/menu-client-context';
 import { resolveActiveNavRoute } from './layout/nav-groups';
 import { resolveNavItems } from './layout/nav-items';
@@ -233,6 +234,13 @@ function ShellContentArea(props: ShellViewProps): React.JSX.Element {
           {resolveRouteScreen(props.route, props.activeRole, props.goTo)}
         </React.Suspense>
       </View>
+      <QuickCreateButton
+        compact={compact}
+        onMenuRoute={props.onMenuRoute}
+        role={props.activeRole}
+        route={props.route}
+        t={props.t}
+      />
     </View>
   );
 }

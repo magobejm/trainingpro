@@ -14,7 +14,7 @@ export type EmptyStateProps = {
 export function EmptyState(props: EmptyStateProps): React.JSX.Element {
   return (
     <View style={styles.root}>
-      {props.icon}
+      {props.icon ? <View style={styles.icon}>{props.icon}</View> : null}
       <Text style={styles.title}>{props.title}</Text>
       {props.message ? <Text style={styles.message}>{props.message}</Text> : null}
       {props.actionLabel && props.onAction ? (
@@ -27,6 +27,11 @@ export function EmptyState(props: EmptyStateProps): React.JSX.Element {
 const styles = StyleSheet.create({
   action: {
     marginTop: space.sm,
+  },
+  icon: {
+    alignItems: 'center',
+    maxHeight: 120,
+    maxWidth: 160,
   },
   message: {
     color: colors.textMuted,

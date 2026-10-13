@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal as NativeModal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useReducedMotion } from '../theme/motion';
 import { colors, fontSize, radius, shadow, space } from '../theme/tokens';
 import { IconButton } from './IconButton';
 import { MODAL_WIDTHS, type ModalSize } from './modal.logic';
@@ -25,7 +26,18 @@ export type ModalProps = {
 export function Modal(props: ModalProps): React.JSX.Element {
   const cardRef = useRef<View>(null);
   useDialogFocus(props.visible, cardRef);
+  const reduced = useReducedMotion();
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    if (!props.visible) {
+      setEntered(false);
+      return undefined;
+    }
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, [props.visible]);
   const { scroll = true, size = 'md' } = props;
+  const revealed = reduced || entered;
   const Body = scroll ? ScrollView : View;
   return (
     <NativeModal animationType="fade" onRequestClose={props.onClose} transparent visible={props.visible}>
@@ -44,7 +56,11 @@ export function Modal(props: ModalProps): React.JSX.Element {
           aria-modal
           ref={cardRef}
           role="dialog"
-          style={[styles.card, { maxWidth: MODAL_WIDTHS[size] }]}
+          style={[
+            styles.card,
+            styles.enter,
+            { maxWidth: MODAL_WIDTHS[size], opacity: revealed ? 1 : 0, transform: [{ scale: revealed ? 1 : 0.98 }] },
+          ]}
         >
           <View style={styles.header}>
             <Text numberOfLines={2} style={styles.title}>
@@ -78,6 +94,11 @@ const styles = StyleSheet.create({
     maxHeight: '90%',
     width: '100%',
     ...shadow.lg,
+  },
+  enter: {
+    // @ts-expect-error web-only
+    transitionDuration: '150ms',
+    transitionProperty: 'opacity, transform',
   },
   closeGlyph: {
     fontSize: fontSize.md,

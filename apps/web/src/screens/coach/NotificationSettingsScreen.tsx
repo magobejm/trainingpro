@@ -39,6 +39,7 @@ type ViewModel = ReturnType<typeof useNotificationSettingsModel>;
 function NotificationSettingsView(props: ViewModel) {
   const status = QueryResult({
     emptyTitle: props.t('coach.notifications.title'),
+    skeleton: 'panel',
     error: props.query.error,
     isError: props.query.isError,
     isLoading: props.query.isLoading,

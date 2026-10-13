@@ -1,6 +1,6 @@
 /* eslint-disable max-lines, max-lines-per-function, no-restricted-syntax, max-len */
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,7 +9,7 @@ import { AsyncStatus } from '../../components/AsyncStatus';
 import { LOADING_MESSAGE_KEYS, resolveFailureKind } from './technique-evaluator.logic';
 import { useAnalyzeTechniqueMutation, type TechniqueAnalysisResult } from '../../data/hooks/ai/useAnalyzeTechniqueMutation';
 import type { TFunction } from 'i18next';
-import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { Button, colors, fontSize, radius, SkeletonList, space } from '@trainerpro/ui';
 
 const EVALUATOR_MAX_BYTES = 20 * 1024 * 1024;
 
@@ -169,7 +169,7 @@ function EntertainingLoader() {
 
   return (
     <View style={styles.loaderContainer}>
-      <ActivityIndicator size="large" color={COLORS.action} />
+      <SkeletonList variant="panel" />
       <AnimatePresence mode="wait">
         <motion.div
           key={index}

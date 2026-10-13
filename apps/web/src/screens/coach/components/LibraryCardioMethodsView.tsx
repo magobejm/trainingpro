@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, colors, EmptyState, FilterChips, fontSize, SearchBar, space } from '@trainerpro/ui';
 import { DimensionValue, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../../components/AsyncStatus';
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import type { CardioMethodLibraryItem } from '../../../data/hooks/useLibraryQuery';
 import { libraryStyles as styles } from '../library-screen.styles';
 import { CardioMethodLibraryCard } from './CardioMethodLibraryCard';
@@ -170,7 +171,8 @@ function renderList(props: Props): React.JSX.Element {
   if (!props.listLoading && !props.listFailed && props.items.length === 0 && !filtered) {
     return (
       <EmptyState
-        actionLabel={props.t('coach.library.actions.create')}
+        actionLabel={props.t('coach.library.list.emptyAction')}
+        icon={<EmptyIllustration kind={'library'} />}
         message={props.t('coach.library.emptyHint')}
         onAction={props.onOpenCreateModal}
         title={props.t('coach.library.empty')}
@@ -178,7 +180,9 @@ function renderList(props: Props): React.JSX.Element {
     );
   }
   const status = QueryResult({
+    emptyIllustration: 'library',
     emptyTitle: props.t('coach.library.empty'),
+    skeleton: 'cards',
     error: props.listError,
     hasActiveFilter: filtered,
     isError: props.listFailed,

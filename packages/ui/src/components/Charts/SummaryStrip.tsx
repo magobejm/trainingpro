@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { CountUpText } from '../../primitives/CountUpText';
 import { colors } from '../../theme/tokens';
 
 export type SummaryStripItem = {
@@ -25,7 +26,7 @@ export function SummaryStrip(props: Props): React.JSX.Element {
       {props.items.map((item) => (
         <View key={item.id} style={styles.card}>
           <Text style={styles.label}>{item.label}</Text>
-          <Text style={styles.value}>{item.value}</Text>
+          <CountUpText style={styles.value} value={item.value} />
         </View>
       ))}
     </View>

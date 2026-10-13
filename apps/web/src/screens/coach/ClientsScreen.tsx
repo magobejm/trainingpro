@@ -25,6 +25,7 @@ import { buildClientCrumbs, type ClientCrumbMode } from '../../layout/crumbs';
 import { SHELL_PATHS } from '../../layout/shell-routes';
 import { clientsScreenPath, readClientsLocation, type ScreenMode } from './clients-location';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
+import { useQuickCreateStore } from '../../store/quickCreate.store';
 
 const MODE_NUTRITION = 'nutrition' as const;
 const MODE_MOOD = 'mood' as const;
@@ -52,6 +53,12 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const refs = useClientsDataRefs();
   const state = useClientsViewState();
   const consumeClientId = useRoutinePlannerContextStore((state) => state.consumeClientId);
+  const quickIntent = useQuickCreateStore((current) => current.intent);
+  useEffect(() => {
+    if (quickIntent !== 'client') return;
+    useQuickCreateStore.getState().consume();
+    refs.form.onOpenModal();
+  }, [quickIntent, refs.form]);
   useEffect(() => {
     const clientIdFromPlanner = consumeClientId();
     if (clientIdFromPlanner) {

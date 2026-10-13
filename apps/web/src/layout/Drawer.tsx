@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
-import { colors, useDialogFocus } from '@trainerpro/ui';
+import { colors, useDialogFocus, useReducedMotion } from '@trainerpro/ui';
 
 const DRAWER_WIDTH = 290;
 const FADE = 'fade' as const;
@@ -14,11 +14,35 @@ export function Drawer(props: {
   visible: boolean;
 }): React.JSX.Element {
   const panelRef = useRef<View>(null);
+  const reduced = useReducedMotion();
+  const [entered, setEntered] = useState(false);
   useDialogFocus(props.visible, panelRef);
+  useEffect(() => {
+    if (!props.visible) {
+      setEntered(false);
+      return undefined;
+    }
+    let alive = true;
+    const reveal = (): void => {
+      if (alive) setEntered(true);
+    };
+    const frame = requestAnimationFrame(reveal);
+    const timer = setTimeout(reveal, 50);
+    return () => {
+      alive = false;
+      cancelAnimationFrame(frame);
+      clearTimeout(timer);
+    };
+  }, [props.visible]);
+  const revealed = reduced || entered;
   return (
-    <Modal animationType={FADE} onRequestClose={props.onClose} transparent visible={props.visible}>
-      <View style={styles.overlay}>
-        <View ref={panelRef} role={DIALOG} style={styles.panel}>
+    <Modal animationType={reduced ? FADE : 'none'} onRequestClose={props.onClose} transparent visible={props.visible}>
+      <View style={[styles.overlay, styles.motion, { opacity: revealed ? 1 : 0 }]}>
+        <View
+          ref={panelRef}
+          role={DIALOG}
+          style={[styles.panel, styles.motion, { transform: [{ translateX: revealed ? 0 : -DRAWER_WIDTH }] }]}
+        >
           {props.children}
         </View>
         <Pressable
@@ -37,6 +61,11 @@ const styles = StyleSheet.create({
   backdrop: {
     backgroundColor: colors.overlay,
     flex: 1,
+  },
+  motion: {
+    // @ts-expect-error web-only
+    transitionDuration: '200ms',
+    transitionProperty: 'opacity, transform',
   },
   overlay: {
     flex: 1,

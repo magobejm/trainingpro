@@ -21,6 +21,7 @@ import { writeRouteClientId } from '../../layout/list-context';
 import { useProgressContextStore } from '../../store/progressContext.store';
 import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
+import { useDeferredDelete } from '../../layout/useDeferredDelete';
 import {
   archiveClient,
   assignRandomAvatar,
@@ -69,6 +70,7 @@ function useClientProfileModel(
   const openProgressForClient = useProgressContextStore((state) => state.openForClient);
   const openNutritionForClient = useNutritionContextStore((state) => state.openForClient);
   const mutations = useProfileMutations(clientId);
+  const deferred = useDeferredDelete();
   const state = useProfileState();
   useSyncFormFromQuery(query.data, state.setForm, state.setErrors, state.setNoteDraft);
   return buildViewModel({
@@ -85,6 +87,7 @@ function useClientProfileModel(
     openProgressForClient,
     prepareClientAssignment,
     ...mutations,
+    deferred,
     ...state,
     t,
   });
@@ -141,6 +144,7 @@ function useSyncFormFromQuery(
 
 interface ViewModelInput {
   archiveMutation: ReturnType<typeof useArchiveClientMutation>;
+  deferred: ReturnType<typeof useDeferredDelete>;
   editing: boolean;
   editingNote: boolean;
   errors: FormErrors;
@@ -204,8 +208,22 @@ function buildNoteActions(input: ViewModelInput, updateMutation: ReturnType<type
   return {
     onChangeNote: (value: string) => input.setNoteDraft(value),
     onCloseNote: () => input.setEditingNote(false),
-    onDeleteNote: async () => {
-      await updateMutation.mutateAsync({ notes: null });
+    onDeleteNote: () => {
+      const previous = input.noteDraft;
+      const name = input.query.data?.firstName ?? '';
+      input.deferred.schedule({
+        formatError: () => input.t('coach.notes.error.delete'),
+        id: `client-note-${input.query.data?.id ?? 'current'}`,
+        label: input.t('coach.notes.toast.deletedUndo', { name }),
+        onUndo: () => {
+          input.setNoteDraft(previous);
+          input.setEditingNote(true);
+        },
+        run: async () => {
+          await updateMutation.mutateAsync({ notes: null });
+          input.setNoteDraft('');
+        },
+      });
       input.setNoteDraft('');
       input.setEditingNote(false);
     },

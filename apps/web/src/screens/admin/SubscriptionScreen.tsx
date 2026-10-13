@@ -1,10 +1,10 @@
 import { QueryResult } from '../../components/AsyncStatus';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useOrgSubscriptionOccupancyQuery, useUpdateOrgClientLimitMutation } from '../../data/hooks/useOrgSubscription';
-import { Button, TextField, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
+import { Button, SkeletonList, TextField, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
 
 const LIMIT_INPUT_PROPS = {
   keyboardType: 'numeric' as const,
@@ -48,8 +48,9 @@ export function SubscriptionScreen(): React.JSX.Element {
   if (occupancyQuery.isPending) {
     return (
       <View style={[styles.page, styles.centered]}>
-        <ActivityIndicator color={colors.primary} size={'large'} />
-        <Text style={styles.muted}>{t('admin.subscription.loading')}</Text>
+        <View accessibilityLabel={t('admin.subscription.loading')} accessibilityRole="progressbar">
+          <SkeletonList variant="panel" />
+        </View>
       </View>
     );
   }

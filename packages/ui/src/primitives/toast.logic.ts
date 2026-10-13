@@ -1,6 +1,14 @@
 export type ToastTone = 'error' | 'info' | 'success';
 
-export type ToastItem = { id: number; message: string; tone: ToastTone };
+export type ToastAction = { label: string; onPress: () => void };
+
+export type ToastOptions = {
+  action?: ToastAction;
+  durationMs?: number;
+  onExpire?: () => void;
+};
+
+export type ToastItem = { action?: ToastAction; id: number; message: string; tone: ToastTone };
 
 export const TOAST_DURATION_MS = 4000;
 export const TOAST_MAX_VISIBLE = 3;
@@ -17,4 +25,13 @@ export function removeToast(list: ToastItem[], id: number): ToastItem[] {
 /** Los errores se quedan un poco más para dar tiempo a leerlos. */
 export function toastDuration(tone: ToastTone): number {
   return tone === 'error' ? TOAST_DURATION_MS * 2 : TOAST_DURATION_MS;
+}
+
+export function resolveToastDuration(tone: ToastTone, durationMs?: number): number {
+  return durationMs ?? toastDuration(tone);
+}
+
+/** La acción (Deshacer) cierra el aviso sin ejecutar lo que iba a pasar al caducar. */
+export function shouldFireExpire(dismissedByAction: boolean): boolean {
+  return !dismissedByAction;
 }

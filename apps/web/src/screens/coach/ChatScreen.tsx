@@ -152,6 +152,7 @@ function ChatComposer(props: ViewModel) {
 function renderClientStrip(props: ViewModel): React.JSX.Element {
   const status = QueryResult({
     emptyTitle: props.t('coach.clients.empty'),
+    skeleton: 'rows',
     error: props.clientsQuery.error,
     isError: props.clientsQuery.isError,
     isLoading: props.clientsQuery.isLoading,
@@ -172,6 +173,7 @@ function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
   const waitingForThread = props.clientId.length > 0 && props.threadId.length === 0 && !props.threadQuery.isError;
   const status = QueryResult({
     emptyTitle: props.t('coach.chat.empty'),
+    skeleton: 'rows',
     error: props.threadQuery.error ?? props.messagesQuery.error,
     isError: props.threadQuery.isError || props.messagesQuery.isError,
     isLoading: props.threadQuery.isLoading || props.messagesQuery.isLoading || waitingForThread,

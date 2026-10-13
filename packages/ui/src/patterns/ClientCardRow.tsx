@@ -47,7 +47,7 @@ export function ClientCardRow(props: Props): React.JSX.Element {
   return (
     <View style={styles.row}>
       {props.items.map((item) => (
-        <Card key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
+        <Card interactive key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={item.title}

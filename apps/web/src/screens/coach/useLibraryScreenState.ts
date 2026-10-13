@@ -18,6 +18,8 @@ import {
 } from '../../data/hooks/useLibrarySpecializedMutations';
 import { CATEGORIES, CategoryKey } from './UnifiedExerciseLibraryScreen.components';
 import { LIST_KEYS, readListContext, writeListContext } from '../../layout/list-context';
+import { useDeferredDelete } from '../../layout/useDeferredDelete';
+import { formatLibraryDeleteError, runLibraryDelete } from './library-delete';
 
 // eslint-disable-next-line max-lines-per-function
 export function useLibraryScreenState() {
@@ -70,9 +72,7 @@ export function useLibraryScreenState() {
   }, [expandedCategory, search, selectedCategoryFilters, selectedEquipment]);
 
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<{ id: string; kind: string } | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const deferred = useDeferredDelete();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<UnifiedExerciseItem | null>(null);
@@ -136,42 +136,43 @@ export function useLibraryScreenState() {
     });
   }, []);
 
-  const confirmDelete = useCallback(() => {
-    if (!pendingDelete) return;
-    setDeleteError(null);
-    setDeletingId(pendingDelete.id);
-    const { id, kind } = pendingDelete;
-    const itemName =
-      exercises?.find((item) => item.id === id && item.kind === kind)?.name ??
-      t('coach.library.exercises.actions.deleteInRoutineFallbackName');
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let mutationItem: any;
-
-    if (kind === 'exercise') mutationItem = deleteExercise;
-    else if (kind === 'cardio') mutationItem = deleteCardio;
-    else if (kind === 'isometric') mutationItem = deleteIsometric;
-    else if (kind === 'plio') mutationItem = deletePlio;
-    else if (kind === 'warmup') mutationItem = deleteMobility;
-    else if (kind === 'sport') mutationItem = deleteSport;
-
-    if (mutationItem) {
-      mutationItem.mutate(id, {
-        onSuccess: () => {
-          setPendingDelete(null);
-          setDeletingId(null);
-        },
-        onError: (err: unknown) => {
-          const raw = readApiErrorMessage(err);
-          setDeleteError(
-            isLibraryItemUsedInRoutineError(raw)
-              ? t('coach.library.exercises.actions.deleteInRoutineError', { name: itemName })
-              : raw || t('coach.library.exercises.actions.deleteFailed'),
-          );
-          setDeletingId(null);
-        },
+  const setPendingDelete = useCallback(
+    (item: { id: string; kind: string } | null) => {
+      if (!item) return;
+      const name =
+        exercises?.find((row) => row.id === item.id && row.kind === item.kind)?.name ??
+        t('coach.library.exercises.actions.deleteInRoutineFallbackName');
+      deferred.schedule({
+        formatError: (error) => formatLibraryDeleteError(error, name, t),
+        id: `${item.kind}:${item.id}`,
+        label: t('coach.library.toast.deletedUndo', { name }),
+        run: () =>
+          runLibraryDelete(item.kind, item.id, {
+            cardio: deleteCardio.mutateAsync,
+            exercise: deleteExercise.mutateAsync,
+            isometric: deleteIsometric.mutateAsync,
+            plio: deletePlio.mutateAsync,
+            sport: deleteSport.mutateAsync,
+            warmup: deleteMobility.mutateAsync,
+          }),
       });
-    }
-  }, [pendingDelete, exercises, t, deleteExercise, deleteCardio, deleteIsometric, deletePlio, deleteMobility, deleteSport]);
+    },
+    [
+      deferred,
+      deleteCardio.mutateAsync,
+      deleteExercise.mutateAsync,
+      deleteIsometric.mutateAsync,
+      deleteMobility.mutateAsync,
+      deletePlio.mutateAsync,
+      deleteSport.mutateAsync,
+      exercises,
+      t,
+    ],
+  );
+  const visibleExercises = useMemo(
+    () => (exercises ?? []).filter((item) => !deferred.pending.has(`${item.kind}:${item.id}`)),
+    [deferred.pending, exercises],
+  );
 
   return {
     t,
@@ -184,11 +185,7 @@ export function useLibraryScreenState() {
     setSearch,
     hoveredCard,
     setHoveredCard,
-    pendingDelete,
     setPendingDelete,
-    deletingId,
-    deleteError,
-    setDeleteError,
     isModalVisible,
     setIsModalVisible,
     itemToEdit,
@@ -197,7 +194,7 @@ export function useLibraryScreenState() {
     setDetailVisible,
     itemForDetail,
     setItemForDetail,
-    exercises,
+    exercises: visibleExercises,
     isListError: exercisesQuery.isError,
     isLoading,
     listError: exercisesQuery.error,
@@ -206,31 +203,10 @@ export function useLibraryScreenState() {
     clearAllFilters,
     toggleCategoryItem,
     toggleEquipment,
-    confirmDelete,
     defaultCategory,
   };
 }
 export type LibraryScreenState = ReturnType<typeof useLibraryScreenState>;
-
-function readApiErrorMessage(err: unknown): string {
-  const raw = err instanceof Error ? err.message : String(err);
-  try {
-    const parsed = JSON.parse(raw) as { message?: string | string[] };
-    if (typeof parsed.message === 'string') {
-      return parsed.message;
-    }
-    if (Array.isArray(parsed.message)) {
-      return parsed.message.join(', ');
-    }
-  } catch {
-    // not JSON
-  }
-  return raw;
-}
-
-function isLibraryItemUsedInRoutineError(message: string): boolean {
-  return message.toLowerCase().includes('routine template');
-}
 
 type UnifiedFilters = {
   expandedCategory: CategoryKey | null;

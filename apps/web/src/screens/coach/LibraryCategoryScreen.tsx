@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import type { UseQueryResult } from '@tanstack/react-query';
 import { Button, EmptyState, FilterChips, SearchBar, colors, fontSize, space, useToast } from '@trainerpro/ui';
 import { QueryResult } from '../../components/AsyncStatus';
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { useQueryFilter } from '../../layout/useListContext';
 import { useUploadLibraryImageMutation } from '../../data/hooks/useLibraryMediaMutations';
 import { matchesSearch } from '../../utils/normalize-search';
@@ -201,7 +202,9 @@ function LibraryCategoryList<T extends Item, F extends Record<string, string>>({
     setPendingDelete,
   } = vm;
   const status = QueryResult({
+    emptyIllustration: 'library',
     emptyTitle: t('coach.library.empty'),
+    skeleton: 'cards',
     error: itemsQuery.error ?? catalogQuery?.error,
     isError: itemsQuery.isError || Boolean(catalogQuery?.isError),
     isLoading: itemsQuery.isLoading || Boolean(catalogQuery?.isLoading),
@@ -224,7 +227,8 @@ function LibraryCategoryList<T extends Item, F extends Record<string, string>>({
     <>
       {trulyEmpty ? (
         <EmptyState
-          actionLabel={t('coach.library.actions.create')}
+          actionLabel={t('coach.library.list.emptyAction')}
+          icon={<EmptyIllustration kind={'library'} />}
           message={t('coach.library.emptyHint')}
           onAction={openCreate}
           title={t('coach.library.empty')}

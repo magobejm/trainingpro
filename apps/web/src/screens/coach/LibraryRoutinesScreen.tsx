@@ -7,6 +7,7 @@ import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
 import { type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { readFrontEnv } from '../../data/env';
 import { QueryResult } from '../../components/AsyncStatus';
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { SaveRoutineModal } from './components/RoutinePlanner/SaveRoutineModal';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -171,14 +172,17 @@ function RoutineGrid(props: {
     return (
       <EmptyState
         actionLabel={props.t('coach.routineLib.createRoutine')}
-        message={props.t('coach.routineLib.emptyRoutinesHint')}
+        icon={<EmptyIllustration kind={'generic'} />}
+        message={props.t('coach.routineLib.emptyInvite')}
         onAction={props.onCreate}
         title={props.t('coach.routineLib.emptyRoutines')}
       />
     );
   }
   const status = QueryResult({
+    emptyIllustration: 'generic',
     emptyTitle: props.t('coach.routineLib.emptyRoutines'),
+    skeleton: 'rows',
     error: props.queryError,
     hasActiveFilter: props.hasActiveFilter,
     isError: props.queryFailed,
@@ -226,6 +230,7 @@ function WarmupGrid(props: {
     return (
       <EmptyState
         actionLabel={props.t('coach.routineLib.createWarmup')}
+        icon={<EmptyIllustration kind={'generic'} />}
         message={props.t('coach.routineLib.emptyWarmupsHint')}
         onAction={props.onCreate}
         title={props.t('coach.routineLib.emptyWarmups')}
@@ -233,7 +238,9 @@ function WarmupGrid(props: {
     );
   }
   const status = QueryResult({
+    emptyIllustration: 'generic',
     emptyTitle: props.t('coach.routineLib.emptyWarmups'),
+    skeleton: 'rows',
     error: props.queryError,
     hasActiveFilter: props.hasActiveFilter,
     isError: props.queryFailed,

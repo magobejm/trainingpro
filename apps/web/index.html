@@ -35,6 +35,23 @@
       body [role='dialog']:focus-visible {
         outline: none;
       }
+      @keyframes trainerpro-skeleton {
+        0%,
+        100% {
+          opacity: 0.5;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #root *,
+        [role='dialog'],
+        [role='dialog'] * {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
     </style>
   </head>
   <body>

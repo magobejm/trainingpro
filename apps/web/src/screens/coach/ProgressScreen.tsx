@@ -365,6 +365,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
       {hasSelection ? (
         <QueryResult
           emptyTitle={t('coach.progress.empty')}
+          skeleton={'panel'}
           error={activeProgressQuery.error}
           isError={activeProgressQuery.isError}
           isLoading={isLoading}

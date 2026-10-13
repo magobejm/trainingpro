@@ -226,6 +226,7 @@ function renderList(props: ViewModel): React.JSX.Element {
   }
   const status = QueryResult({
     emptyTitle: props.t('coach.library.empty'),
+    skeleton: 'rows',
     error: props.listQuery.error,
     hasActiveFilter: filtered,
     isError: props.listQuery.isError,

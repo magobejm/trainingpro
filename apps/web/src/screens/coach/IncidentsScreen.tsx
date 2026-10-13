@@ -116,6 +116,7 @@ function IncidentsView(props: ViewModel) {
 function IncidentList(props: ViewModel) {
   const status = QueryResult({
     emptyTitle: props.t('coach.incidents.empty'),
+    skeleton: 'rows',
     error: props.error,
     isError: props.isError,
     isLoading: props.isLoading,

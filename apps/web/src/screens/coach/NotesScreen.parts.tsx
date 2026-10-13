@@ -28,6 +28,7 @@ import { Clock } from 'lucide-react';
 import type { ClientData, NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
 import { Button, DateTimeField, EmptyState, IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 export {
   DeleteConfirmModal,
   EditNoteModal,
@@ -221,7 +222,11 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
   const { displayedNotes, showAllHistory, t } = props;
   const historyList =
     displayedNotes.length === 0 ? (
-      <EmptyState title={t('coach.notes.history.empty')} />
+      <EmptyState
+        icon={<EmptyIllustration kind={'notes'} />}
+        message={t('coach.notes.history.emptyInvite')}
+        title={t('coach.notes.history.empty')}
+      />
     ) : (
       displayedNotes.map((note: NoteData) => (
         <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />

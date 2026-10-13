@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { ClientCardRow, EmptyState, Select, TextField, useBreakpoint } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
 import type { ClientSelectorItem } from './ClientSelectionStrip';
@@ -30,13 +31,15 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
   const isEmpty = !props.clientsLoading && !props.clientsError && !hasActiveFilter && vm.items.length === 0;
   const status = isEmpty ? (
     <EmptyState
-      actionLabel={props.onCreateClient ? props.t('coach.clients.form.submit') : undefined}
+      actionLabel={props.onCreateClient ? props.t('coach.clients.emptyAction') : undefined}
+      icon={<EmptyIllustration kind={'clients'} />}
       message={props.t('coach.clients.emptyHint')}
       onAction={props.onCreateClient}
       title={props.t('coach.clients.empty')}
     />
   ) : (
     QueryResult({
+      emptyIllustration: 'clients',
       emptyTitle: props.t('coach.clients.empty'),
       error: props.clientsError,
       hasActiveFilter,
@@ -44,6 +47,7 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
       isLoading: props.clientsLoading,
       itemCount: vm.items.length,
       onRetry: props.onRetry,
+      skeleton: 'cards',
     })
   );
   if (status) {

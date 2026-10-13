@@ -42,6 +42,7 @@ import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClient
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
 import { Button, EmptyState, IconButton, TextField, Select, colors as tk, useBreakpoint } from '@trainerpro/ui';
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
 const EMPTY_FILTER = '';
@@ -291,7 +292,13 @@ export function CalendarSidebar({
             t={t}
           />
         ))}
-        {filtered.length === 0 && <EmptyState title={t('coach.calendar.sidebar.noClients')} />}
+        {filtered.length === 0 && (
+          <EmptyState
+            icon={<EmptyIllustration kind={'calendar'} />}
+            message={t('coach.calendar.sidebar.emptyInvite')}
+            title={t('coach.calendar.sidebar.noClients')}
+          />
+        )}
       </ScrollView>
     </View>
   );

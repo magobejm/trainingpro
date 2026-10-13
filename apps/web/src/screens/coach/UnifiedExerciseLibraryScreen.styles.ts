@@ -27,6 +27,15 @@ export const styles = StyleSheet.create({
     shadowRadius: 4,
     width: 'calc(25% - 18px)' as unknown as number,
   },
+  cardHovered: {
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    transform: [{ translateY: -2 }],
+    // @ts-expect-error web-only
+    transitionDuration: '150ms',
+    transitionProperty: 'transform, box-shadow',
+  },
   cardContent: { padding: space.md },
   cardGrid: {
     flexDirection: 'row',

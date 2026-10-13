@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Card, colors, fontSize, space } from '@trainerpro/ui';
+import { Card, colors, CountUpText, fontSize, space } from '@trainerpro/ui';
 type Kpi = { id: string; label: string; value: string };
 export function KpiGrid({ items, t }: { items: Kpi[]; t: (key: string) => string }): React.JSX.Element {
   return (
@@ -8,7 +8,7 @@ export function KpiGrid({ items, t }: { items: Kpi[]; t: (key: string) => string
       {items.map((item) => (
         <Card key={item.id} style={styles.card}>
           <Text style={styles.label}>{t(item.label)}</Text>
-          <Text style={styles.value}>{item.value}</Text>
+          <CountUpText style={styles.value} value={item.value} />
         </Card>
       ))}
     </View>

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, type DimensionValue, type StyleProp, type ViewStyle } from 'react-native';
+import { useReducedMotion } from '../theme/motion';
 import { colors, radius } from '../theme/tokens';
 
 export type SkeletonProps = {
@@ -11,23 +12,19 @@ export type SkeletonProps = {
 
 /** Bloque gris que parpadea mientras carga el contenido real. */
 export function Skeleton(props: SkeletonProps): React.JSX.Element {
-  const opacity = useRef(new Animated.Value(0.5)).current;
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { duration: 700, toValue: 1, useNativeDriver: false }),
-        Animated.timing(opacity, { duration: 700, toValue: 0.5, useNativeDriver: false }),
-      ]),
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [opacity]);
+  const reduced = useReducedMotion();
   return (
-    <Animated.View
+    <View
       accessibilityElementsHidden
       style={[
         styles.base,
-        { borderRadius: props.radius ?? radius.md, height: props.height ?? 16, opacity, width: props.width ?? '100%' },
+        {
+          borderRadius: props.radius ?? radius.md,
+          height: props.height ?? 16,
+          opacity: reduced ? 0.7 : undefined,
+          width: props.width ?? '100%',
+        },
+        reduced ? null : styles.pulse,
         props.style,
       ]}
     />
@@ -37,5 +34,12 @@ export function Skeleton(props: SkeletonProps): React.JSX.Element {
 const styles = StyleSheet.create({
   base: {
     backgroundColor: colors.border,
+  },
+  pulse: {
+    // @ts-expect-error web-only
+    animationDuration: '1400ms',
+    animationIterationCount: 'infinite',
+    animationName: 'trainerpro-skeleton',
+    animationTimingFunction: 'ease-in-out',
   },
 });

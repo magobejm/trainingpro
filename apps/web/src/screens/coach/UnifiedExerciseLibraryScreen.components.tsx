@@ -7,11 +7,10 @@ import { UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/us
 import { styles } from './UnifiedExerciseLibraryScreen.styles';
 import { resolvePlaceholder } from './components/LibraryMediaViewer';
 import { LibraryScreenState } from './useLibraryScreenState';
-import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { UnifiedExerciseModal } from './UnifiedExerciseModal';
 import { UnifiedExerciseDetailModal } from './UnifiedExerciseDetailModal';
 import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMultiSelect';
-import { Button, IconButton, TextField, colors, useBreakpoint } from '@trainerpro/ui';
+import { Button, IconButton, TextField, colors, useBreakpoint, useReducedMotion } from '@trainerpro/ui';
 
 const C_BLUE = colors.primary;
 const C_WHITE = colors.surface;
@@ -160,12 +159,18 @@ export type ExerciseCardProps = {
 export function ExerciseCard(props: ExerciseCardProps) {
   const { item, onDetail, onEdit, onDelete, deletionDisabled, hovered, setHovered } = props;
   const { t } = useTranslation();
+  const reduced = useReducedMotion();
   const coachOwned = item.scope?.trim().toLowerCase() === 'coach';
   const imageUrl = item.mediaUrl || resolvePlaceholder(item.kind === 'exercise' ? 'strength' : item.kind);
   const bp = useBreakpoint();
   return (
     <Pressable
-      style={[styles.card, bp === 'md' && styles.cardMd, bp === 'sm' && styles.cardSm]}
+      style={[
+        styles.card,
+        bp === 'md' && styles.cardMd,
+        bp === 'sm' && styles.cardSm,
+        hovered && !reduced && styles.cardHovered,
+      ]}
       onPress={onDetail}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
@@ -284,7 +289,10 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
 
 export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
   const stacked = useBreakpoint() === 'sm';
+  const canCreate = !st.hasActiveFilters && st.search.trim().length === 0;
   const status = QueryResult({
+    emptyActionLabel: canCreate ? st.t('coach.library.list.emptyAction') : undefined,
+    emptyIllustration: 'library',
     emptyMessage: st.t('coach.library.list.emptySubtitle'),
     emptyTitle: st.t('coach.library.list.emptyTitle'),
     error: st.listError,
@@ -292,7 +300,9 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
     isError: st.isListError,
     isLoading: st.isLoading,
     itemCount: st.exercises?.length ?? 0,
+    onEmptyAction: canCreate ? () => st.setIsModalVisible(true) : undefined,
     onRetry: st.refetchList,
+    skeleton: 'cards',
   });
   const grid = status ?? (
     <View style={styles.cardGrid}>
@@ -310,11 +320,8 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
             st.setItemToEdit(item);
             st.setIsModalVisible(true);
           }}
-          onDelete={() => {
-            st.setDeleteError(null);
-            st.setPendingDelete({ id: item.id, kind: item.kind });
-          }}
-          deletionDisabled={st.deletingId === item.id}
+          onDelete={() => st.setPendingDelete({ id: item.id, kind: item.kind })}
+          deletionDisabled={false}
         />
       ))}
     </View>
@@ -332,20 +339,6 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
 export function LibraryModals({ st }: { st: LibraryScreenState }) {
   return (
     <>
-      <ActionConfirmModal
-        cancelLabel={st.t('coach.clients.modal.cancel')}
-        confirmLabel={st.t('coach.library.exercises.actions.delete')}
-        errorMessage={st.deleteError}
-        isLoading={Boolean(st.deletingId)}
-        message={st.t('coach.library.exercises.actions.deleteConfirm')}
-        onCancel={() => {
-          st.setDeleteError(null);
-          st.setPendingDelete(null);
-        }}
-        onConfirm={st.confirmDelete}
-        title={st.t('coach.library.confirm.title')}
-        visible={Boolean(st.pendingDelete)}
-      />
       {st.isModalVisible && (
         <UnifiedExerciseModal
           visible={st.isModalVisible}

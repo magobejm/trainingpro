@@ -12,6 +12,7 @@ import { GetPerformedSessionDaysUseCase } from '../../application/use-cases/get-
 import { GetPerformedTemplatesUseCase } from '../../application/use-cases/get-performed-templates.usecase';
 import { GetProgressOverviewUseCase } from '../../application/use-cases/get-progress-overview.usecase';
 import { GetRecentSessionsUseCase } from '../../application/use-cases/get-recent-sessions.usecase';
+import { GetPersonalRecordsUseCase } from '../../application/use-cases/get-personal-records.usecase';
 import { GetSessionProgressUseCase } from '../../application/use-cases/get-session-progress.usecase';
 import type { ExerciseType } from '../../domain/progress-repository.port';
 import { GetExercisePrQueryDto } from '../dto/get-exercise-pr-query.dto';
@@ -21,6 +22,7 @@ import { GetPerformedExercisesQueryDto } from '../dto/get-performed-exercises-qu
 import { GetPerformedTemplatesQueryDto } from '../dto/get-performed-templates-query.dto';
 import { GetProgressQueryDto } from '../dto/get-progress-query.dto';
 import { GetRecentSessionsQueryDto } from '../dto/get-recent-sessions-query.dto';
+import { GetPersonalRecordsQueryDto } from '../dto/get-personal-records-query.dto';
 import { GetPerformedSessionDaysQueryDto } from '../dto/get-performed-session-days-query.dto';
 import { GetSessionProgressQueryDto } from '../dto/get-session-progress-query.dto';
 
@@ -35,6 +37,7 @@ export class ProgressController {
     private readonly getSessionProgressUseCase: GetSessionProgressUseCase,
     private readonly getMicrocycleProgressUseCase: GetMicrocycleProgressUseCase,
     private readonly getRecentSessionsUseCase: GetRecentSessionsUseCase,
+    private readonly getPersonalRecordsUseCase: GetPersonalRecordsUseCase,
     private readonly getPerformedExercisesUseCase: GetPerformedExercisesUseCase,
     private readonly getPerformedTemplatesUseCase: GetPerformedTemplatesUseCase,
     private readonly getPerformedSessionDaysUseCase: GetPerformedSessionDaysUseCase,
@@ -147,5 +150,17 @@ export class ProgressController {
       to: new Date(parsed.to),
       limit: parsed.limit ?? 20,
     });
+  }
+
+  @Get('records')
+  async getPersonalRecords(@Query() query: GetPersonalRecordsQueryDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const parsed = GetPersonalRecordsQueryDto.schema.parse(query);
+    const records = await this.getPersonalRecordsUseCase.execute(auth, {
+      clientId: parsed.clientId,
+      from: new Date(parsed.from),
+      to: new Date(parsed.to),
+    });
+    return { records };
   }
 }

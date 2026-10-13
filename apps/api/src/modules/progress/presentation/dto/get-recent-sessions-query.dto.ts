@@ -10,7 +10,7 @@ export class GetRecentSessionsQueryDto {
       templateId: postgresUuidString.optional(),
       from: z.string().date(),
       to: z.string().date(),
-      limit: z.coerce.number().int().min(1).max(50).optional().default(20),
+      limit: z.coerce.number().int().min(1).max(200).optional().default(20),
     })
     .superRefine(spanWithin(PROGRESS_MAX_DAYS));
 

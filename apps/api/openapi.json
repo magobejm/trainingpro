@@ -353,6 +353,40 @@
                     }
                   ]
                 },
+                "status": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "level": {
+                      "enum": ["amber", "green", "none", "red"],
+                      "type": "string"
+                    },
+                    "reasons": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "adherencePercent": {
+                            "type": "number"
+                          },
+                          "code": {
+                            "enum": ["adherence_low", "inactive", "incident_open", "incident_severe", "mood_low"],
+                            "type": "string"
+                          },
+                          "days": {
+                            "type": "number"
+                          },
+                          "mood": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["code"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": ["level", "reasons"],
+                  "type": "object"
+                },
                 "trainingPlan": {
                   "additionalProperties": false,
                   "properties": {
@@ -3835,6 +3869,10 @@
                       "progressPhotos": [],
                       "secondaryObjectives": [],
                       "sex": null,
+                      "status": {
+                        "level": "none",
+                        "reasons": []
+                      },
                       "trainingPlanId": null,
                       "updatedAt": "2026-02-03T04:05:06.000Z",
                       "waistCm": null,
@@ -6179,6 +6217,85 @@
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
         "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
+    "/clients/{clientId}/timeline": {
+      "get": {
+        "operationId": "get_clients_clientId_timeline",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "beforeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/{clientId}/timeline",
+        "x-controller": "ClientsController",
+        "x-filters": ["before", "beforeId"],
+        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-pagination": ["limit"],
         "x-roles": ["coach"]
       }
     },
@@ -12276,6 +12393,77 @@
           }
         ],
         "summary": "GET /progress/performed-templates",
+        "x-controller": "ProgressController",
+        "x-filters": ["clientId", "from", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
+    "/progress/records": {
+      "get": {
+        "operationId": "get_progress_records",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "clientId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /progress/records",
         "x-controller": "ProgressController",
         "x-filters": ["clientId", "from", "to"],
         "x-guards": ["AuthGuard", "RolesGuard"],

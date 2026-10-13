@@ -3,6 +3,8 @@ import { Image, Text, View } from 'react-native';
 import { Button } from '@trainerpro/ui';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { styles } from '../ClientProfileScreen.styles';
+import { RecordBadge } from './RecordBadge';
+import { recentRecordRange, useClientRecordsQuery } from '../../../data/hooks/useClientRecordsQuery';
 
 type Props = {
   client: ClientView;
@@ -42,6 +44,7 @@ function IdentityBlock(props: Props & { meta: ReturnType<typeof resolveMeta> }):
       <Avatar avatarUrl={props.client.avatarUrl} t={props.t} />
       <View style={styles.identityText}>
         <Text style={styles.name}>{props.meta.fullName}</Text>
+        <RecentRecordBadge clientId={props.client.id} t={props.t} />
         <HeaderMetrics
           ageLabel={props.meta.ageLabel}
           heightLabel={props.meta.heightLabel}
@@ -51,6 +54,13 @@ function IdentityBlock(props: Props & { meta: ReturnType<typeof resolveMeta> }):
       </View>
     </View>
   );
+}
+
+function RecentRecordBadge(props: { clientId: string; t: (key: string) => string }): React.JSX.Element | null {
+  const range = recentRecordRange(7);
+  const record = useClientRecordsQuery(props.clientId, range.from, range.to).data?.records[0];
+  if (!record) return null;
+  return <RecordBadge record={record} t={props.t} />;
 }
 
 function ActionsBlock(props: { onEdit: () => void; t: (key: string) => string }): React.JSX.Element {

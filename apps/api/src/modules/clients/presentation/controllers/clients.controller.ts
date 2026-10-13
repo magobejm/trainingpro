@@ -31,6 +31,7 @@ import { GetClientUseCase } from '../../application/use-cases/get-client.usecase
 import { GetClientManagementSectionsUseCase } from '../../application/use-cases/get-client-management-sections.usecase';
 import { ListClientProgressPhotosUseCase } from '../../application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from '../../application/use-cases/list-clients.usecase';
+import { ListClientTimelineUseCase } from '../../application/use-cases/list-client-timeline.usecase';
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { ListClientObjectivesUseCase } from '../../application/use-cases/list-client-objectives.usecase';
 import { ResetClientPasswordUseCase } from '../../application/use-cases/reset-client-password.usecase';
@@ -39,6 +40,7 @@ import { SetClientProgressPhotoArchivedUseCase } from '../../application/use-cas
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
 import { UploadClientAvatarUseCase } from '../../application/use-cases/upload-client-avatar.usecase';
 import { UploadClientProgressPhotoUseCase } from '../../application/use-cases/upload-client-progress-photo.usecase';
+import { ClientTimelineQueryDto, timelineQuery } from '../dto/client-timeline-query.dto';
 import { ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientProgressPhotoIdParamDto } from '../dto/client-progress-photo-id-param.dto';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
@@ -76,6 +78,7 @@ export class ClientsController {
     private readonly getClientManagementSectionsUseCase: GetClientManagementSectionsUseCase,
     private readonly listClientProgressPhotosUseCase: ListClientProgressPhotosUseCase,
     private readonly listClientsUseCase: ListClientsUseCase,
+    private readonly listClientTimelineUseCase: ListClientTimelineUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly listClientObjectivesUseCase: ListClientObjectivesUseCase,
     private readonly resetClientPasswordUseCase: ResetClientPasswordUseCase,
@@ -114,6 +117,17 @@ export class ClientsController {
   async listObjectives() {
     const items = await this.listClientObjectivesUseCase.execute();
     return { items };
+  }
+
+  @Get(':clientId/timeline')
+  @UseGuards(ClientOwnershipGuard)
+  async timeline(
+    @Param() params: ClientIdParamDto,
+    @Query() query: ClientTimelineQueryDto,
+    @Req() request: HttpAuthRequest,
+  ) {
+    const auth = readAuthContext(request);
+    return this.listClientTimelineUseCase.execute(auth, params.clientId, timelineQuery(query));
   }
 
   @Get(':clientId')

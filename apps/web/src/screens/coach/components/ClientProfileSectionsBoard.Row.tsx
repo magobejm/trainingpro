@@ -3,6 +3,8 @@ import { Pressable, Text, View } from 'react-native';
 import { menuStyle, menuStyleTop, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
 import { IconButton, colors } from '@trainerpro/ui';
+import { ClientTimelinePanel } from './ClientTimelinePanel';
+import { ClientComparePanel } from './ClientComparePanel';
 
 type Props = {
   hasTrainingPlan: boolean;
@@ -23,6 +25,7 @@ type Props = {
   showMenu: boolean;
   t: (key: string, params?: Record<string, number | string>) => string;
   trainingPlanName?: string;
+  clientId: string;
 };
 
 export function ClientProfileSectionRow(props: Props): React.JSX.Element {
@@ -42,6 +45,8 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
         t={props.t}
         trainingPlanName={props.trainingPlanName}
       />
+      {props.item.id === 'timeline' ? <ClientTimelinePanel clientId={props.clientId} t={props.t} /> : null}
+      {props.item.id === 'compare' ? <ClientComparePanel clientId={props.clientId} t={props.t} /> : null}
       {props.showMenu ? (
         <RowMenu
           hasTrainingPlan={props.hasTrainingPlan}
@@ -219,6 +224,8 @@ function isSectionId(value: unknown): value is SectionId {
     value === 'planning' ||
     value === 'external' ||
     value === 'incidents' ||
-    value === 'chat'
+    value === 'chat' ||
+    value === 'timeline' ||
+    value === 'compare'
   );
 }

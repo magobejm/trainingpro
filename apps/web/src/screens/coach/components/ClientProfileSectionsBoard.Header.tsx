@@ -93,5 +93,7 @@ function isSectionId(value: string): value is SectionId {
     'external',
     'incidents',
     'chat',
+    'timeline',
+    'compare',
   ].includes(value);
 }

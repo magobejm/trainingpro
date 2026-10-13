@@ -26,7 +26,16 @@ export function useRecentSessionsQuery(input: QueryInput, options?: { enabled?: 
   return useQuery({
     enabled: Boolean(auth) && (options?.enabled ?? true),
     queryFn: () => fetchRecentSessions(auth, input),
-    queryKey: ['progress', 'sessions', input.clientId, input.exerciseId, input.templateId, input.from, input.to],
+    queryKey: [
+      'progress',
+      'sessions',
+      input.clientId,
+      input.exerciseId,
+      input.templateId,
+      input.from,
+      input.to,
+      input.limit,
+    ],
   });
 }
 

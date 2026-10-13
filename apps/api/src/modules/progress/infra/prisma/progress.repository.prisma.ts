@@ -12,6 +12,8 @@ import type {
   PerformedExercisesQuery,
   PerformedSessionDaysQuery,
   PerformedTemplatesQuery,
+  PersonalRecord,
+  PersonalRecordsQuery,
   ProgressQuery,
   ProgressRepositoryPort,
   RecentSessionsQuery,
@@ -31,6 +33,7 @@ import type {
   StrengthLogRow,
 } from '../../domain/progress.models';
 import { aggregateExerciseSets, estimateE1rm } from '../../domain/metrics/exercise-metrics';
+import { collectBrokenRecords } from '../../domain/prior-records';
 import {
   fetchPerformedExerciseNames,
   readCardioExerciseProgress,
@@ -457,22 +460,89 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       orderBy: [{ session: { sessionDate: 'asc' } }, { sessionId: 'asc' }, { setIndex: 'asc' }],
     });
 
+    const records = collectBrokenRecords(
+      priorBestByExercise,
+      logsInRange.map((log) => ({
+        effortRpe: toRpeNumber(log.effortRpe),
+        exerciseId: log.sessionItem?.sourceExerciseId ?? null,
+        exerciseName: '',
+        repsDone: log.repsDone,
+        sessionDate: log.session.sessionDate.toISOString().slice(0, 10),
+        sessionId: log.sessionId,
+        weightDoneKg: log.weightDoneKg !== null ? Number(log.weightDoneKg) : null,
+      })),
+    );
     const recordsBySession = new Map<string, number>();
-    for (const log of logsInRange) {
-      const exerciseId = log.sessionItem?.sourceExerciseId;
-      const reps = log.repsDone;
-      const weight = log.weightDoneKg !== null ? Number(log.weightDoneKg) : null;
-      if (!exerciseId || reps === null || weight === null) continue;
-      const e1rm = estimateE1rm(weight, reps, toRpeNumber(log.effortRpe));
-      if (e1rm === null) continue;
-
-      const prevBest = priorBestByExercise.get(exerciseId);
-      if (prevBest === undefined || e1rm > prevBest) {
-        recordsBySession.set(log.sessionId, (recordsBySession.get(log.sessionId) ?? 0) + 1);
-        priorBestByExercise.set(exerciseId, e1rm);
-      }
+    for (const record of records) {
+      recordsBySession.set(record.sessionId, (recordsBySession.get(record.sessionId) ?? 0) + 1);
     }
     return recordsBySession;
+  }
+
+  async readPersonalRecords(context: AuthContext, query: PersonalRecordsQuery): Promise<PersonalRecord[]> {
+    const clientId = await this.resolveClientId(context, query.clientId);
+    const priorRows = await this.prisma.$queryRaw<Array<{ best_e1rm: number; exercise_id: string }>>`
+      SELECT i.source_exercise_id AS exercise_id,
+             MAX(
+               CASE
+                 WHEN l.weight_done_kg > 0 AND l.reps_done > 0
+                  AND (1.0278 - 0.0278 * (
+                    l.reps_done + CASE WHEN l.effort_rpe IS NULL THEN 0 ELSE GREATEST(0, 10 - l.effort_rpe) END
+                  )) > 0
+                 THEN ROUND((
+                   l.weight_done_kg / (1.0278 - 0.0278 * (
+                     l.reps_done + CASE WHEN l.effort_rpe IS NULL THEN 0 ELSE GREATEST(0, 10 - l.effort_rpe) END
+                   ))
+                 )::numeric, 2)
+                 ELSE NULL
+               END
+             )::float8 AS best_e1rm
+      FROM set_log l
+      JOIN session_strength_item i ON i.id = l.session_item_id
+      JOIN session_instance s ON s.id = l.session_id
+      WHERE s.client_id = ${clientId}::uuid
+        AND s.archived_at IS NULL
+        AND s.is_completed = true
+        AND s.session_date < ${query.from}::date
+        AND i.source_exercise_id IS NOT NULL
+      GROUP BY i.source_exercise_id
+    `;
+    const priorBest = new Map<string, number>();
+    for (const row of priorRows) {
+      if (row.best_e1rm !== null) priorBest.set(row.exercise_id, Number(row.best_e1rm));
+    }
+    const logs = await this.prisma.setLog.findMany({
+      where: {
+        session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      },
+      select: {
+        effortRpe: true,
+        repsDone: true,
+        session: { select: { sessionDate: true } },
+        sessionId: true,
+        sessionItem: { select: { displayName: true, sourceExerciseId: true } },
+        weightDoneKg: true,
+      },
+      orderBy: [{ session: { sessionDate: 'asc' } }, { sessionId: 'asc' }, { setIndex: 'asc' }],
+    });
+    return collectBrokenRecords(
+      priorBest,
+      logs.map((log) => ({
+        effortRpe: toRpeNumber(log.effortRpe),
+        exerciseId: log.sessionItem?.sourceExerciseId ?? null,
+        exerciseName: log.sessionItem?.displayName ?? '',
+        repsDone: log.repsDone,
+        sessionDate: log.session.sessionDate.toISOString().slice(0, 10),
+        sessionId: log.sessionId,
+        weightDoneKg: log.weightDoneKg !== null ? Number(log.weightDoneKg) : null,
+      })),
+    ).map((record) => ({
+      e1rm: record.e1rm,
+      exerciseId: record.exerciseId,
+      exerciseName: record.exerciseName,
+      previousBest: record.previousBest,
+      sessionDate: record.sessionDate,
+    }));
   }
 
   async readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]> {

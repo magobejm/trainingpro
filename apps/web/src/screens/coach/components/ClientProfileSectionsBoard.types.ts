@@ -6,7 +6,9 @@ import {
   BarChart2,
   CalendarDays,
   CheckSquare,
+  Columns2,
   Dumbbell,
+  History,
   LineChart,
   MessageSquare,
   Smile,
@@ -24,7 +26,9 @@ export type SectionId =
   | 'planning'
   | 'external'
   | 'incidents'
-  | 'chat';
+  | 'chat'
+  | 'timeline'
+  | 'compare';
 
 export type SectionItem = {
   emptyKey: string;
@@ -47,6 +51,8 @@ export const DEFAULT_ORDER: SectionId[] = [
   'external',
   'incidents',
   'chat',
+  'timeline',
+  'compare',
 ];
 
 export const SECTIONS: SectionItem[] = [
@@ -137,5 +143,21 @@ export const SECTIONS: SectionItem[] = [
     iconColor: '#64748b', // slate-500
     id: 'chat',
     titleKey: 'coach.clientProfile.details.chat.title',
+  },
+  {
+    emptyKey: 'coach.timeline.subtitle',
+    icon: (props) => React.createElement(History, props),
+    badgeColor: 'rgba(37, 99, 235, 0.1)',
+    iconColor: '#2563eb',
+    id: 'timeline',
+    titleKey: 'coach.timeline.title',
+  },
+  {
+    emptyKey: 'coach.compare.subtitle',
+    icon: (props) => React.createElement(Columns2, props),
+    badgeColor: 'rgba(15, 118, 110, 0.1)',
+    iconColor: '#0f766e',
+    id: 'compare',
+    titleKey: 'coach.compare.title',
   },
 ];

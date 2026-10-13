@@ -1,3 +1,4 @@
+import type { ClientStatus } from './client-status';
 import type { ClientProgressPhoto } from './client-progress-photo';
 
 export type Client = {
@@ -24,6 +25,7 @@ export type Client = {
   phone: null | string;
   secondaryObjectives: string[];
   sex: null | string;
+  status?: ClientStatus;
   updatedAt: Date;
   waistCm: null | number;
   weightKg: null | number;

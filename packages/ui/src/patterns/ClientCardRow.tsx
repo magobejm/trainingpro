@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, radius, space } from '../theme/tokens';
 import { Badge, type BadgeTone } from '../primitives/Badge';
+import { StatusDot } from '../primitives/StatusDot';
 import { Button } from '../primitives/Button';
 import { Card } from '../primitives/Card';
 
@@ -11,6 +12,7 @@ export type ClientCardItem = {
   title: string;
   avatarUrl?: string | null;
   objective?: string;
+  statusDot?: { reason: string; tone: BadgeTone };
   statusLabel?: string;
   statusTone?: BadgeTone;
 };
@@ -50,12 +52,15 @@ export function ClientCardRow(props: Props): React.JSX.Element {
         <Card interactive key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={item.title}
+            accessibilityLabel={item.statusDot ? `${item.title}. ${item.statusDot.reason}` : item.title}
             onPress={() => props.onItemPress(item.id)}
             style={styles.content}
           >
             <ClientAvatar item={item} />
-            <Text style={styles.title}>{item.title}</Text>
+            <View style={styles.titleRow}>
+              <Text style={styles.title}>{item.title}</Text>
+              {item.statusDot ? <StatusDot reason={item.statusDot.reason} tone={item.statusDot.tone} /> : null}
+            </View>
             <Text style={styles.subtitle}>{item.objective ?? item.subtitle}</Text>
             {item.objective ? <Text style={styles.subtitle}>{item.subtitle}</Text> : null}
             {item.statusLabel ? <Badge label={item.statusLabel} tone={item.statusTone ?? 'neutral'} /> : null}
@@ -83,6 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   initialsText: { fontSize: fontSize.lg, fontWeight: '700', color: colors.primary },
-  title: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
+  titleRow: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
+  title: { color: colors.text, flexShrink: 1, fontSize: fontSize.md, fontWeight: '700' },
   subtitle: { color: colors.textMuted, fontSize: fontSize.sm },
 });

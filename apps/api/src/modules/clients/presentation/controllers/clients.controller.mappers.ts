@@ -67,6 +67,7 @@ function mapClientCoreOutput(client: Client, urls?: StoredFileUrls) {
     weightKg: client.weightKg,
     trainingPlanId: client.trainingPlanId,
     trainingPlan: client.trainingPlan,
+    ...(client.status ? { status: client.status } : {}),
   };
 }
 

@@ -48,6 +48,7 @@ export function clientFixture(): Client {
     progressPhotos: [],
     secondaryObjectives: [],
     sex: null,
+    status: { level: 'none', reasons: [] },
     trainingPlanId: null,
     updatedAt: new Date(UPDATED_AT),
     waistCm: null,

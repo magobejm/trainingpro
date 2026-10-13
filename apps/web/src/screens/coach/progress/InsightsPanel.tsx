@@ -1,18 +1,23 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Card, colors, fontSize, space } from '@trainerpro/ui';
-import { buildInsights } from './build-insights';
+import { buildInsights, recordInsights } from './build-insights';
+import { recentRecordRange, useClientRecordsQuery } from '../../../data/hooks/useClientRecordsQuery';
 import type { AnalysisMode } from './progress-screen.types';
 export function InsightsPanel({
+  clientId,
   mode,
   points,
   t,
 }: {
+  clientId?: string;
   mode: AnalysisMode;
   points: Record<string, unknown>[];
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, number | string>) => string;
 }): React.JSX.Element | null {
-  const insights = buildInsights(mode, points);
+  const range = recentRecordRange(14);
+  const records = useClientRecordsQuery(clientId ?? '', range.from, range.to).data?.records ?? [];
+  const insights = [...recordInsights(records, t), ...buildInsights(mode, points)];
   if (!insights.length) return null;
   return (
     <View style={styles.panel}>

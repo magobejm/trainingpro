@@ -41,12 +41,14 @@ import { ChevronLeft, Dumbbell, Search, Users } from 'lucide-react';
 import type { ClientObjectiveView, ClientView } from '../../data/hooks/useClientsQuery';
 import type { RoutineDayCard } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
-import { Button, EmptyState, IconButton, TextField, Select, colors as tk, useBreakpoint } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, Select, StatusDot, TextField, colors as tk, useBreakpoint } from '@trainerpro/ui';
+import { clientStatusDot } from './client-card-items';
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
 const EMPTY_FILTER = '';
 const SIDEBAR_STACKED_HEIGHT = 520;
+const nameRow = { alignItems: 'center' as const, flexDirection: 'row' as const, gap: 8 };
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 type ViewMode = 'all' | 'coachOnly';
 type SidebarProps = {
@@ -163,6 +165,7 @@ function SidebarClientRow({
   const layoutStyle15 = getLayoutStyle15;
   const layoutStyle16 = getLayoutStyle16;
   const layoutStyle17 = getLayoutStyle17;
+  const statusDot = clientStatusDot(client, t);
   return (
     <View style={layoutStyle8}>
       <Pressable onPress={() => onSelectClient(isSelected ? null : client)} style={layoutStyle9}>
@@ -177,9 +180,12 @@ function SidebarClientRow({
           )}
         </View>
         <View style={layoutStyle13}>
-          <Text style={layoutStyle14} numberOfLines={1}>
-            {client.firstName} {client.lastName}
-          </Text>
+          <View style={nameRow}>
+            <Text style={layoutStyle14} numberOfLines={1}>
+              {client.firstName} {client.lastName}
+            </Text>
+            {statusDot ? <StatusDot reason={statusDot.reason} tone={statusDot.tone} /> : null}
+          </View>
           {objective && (
             <Text style={layoutStyle15} numberOfLines={1}>
               {objective.label}

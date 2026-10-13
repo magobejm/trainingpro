@@ -6,6 +6,7 @@ import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../utils/normalize-search';
 import type { ClientSelectorItem } from './ClientSelectionStrip';
+import { clientStatusDot } from '../client-card-items';
 import { sortClients, type ClientSort } from '../clients-sort';
 import { useListContext } from '../../../layout/useListContext';
 import { styles } from './ClientsDirectoryPanel.styles';
@@ -110,6 +111,7 @@ function renderDirectory(props: Props, vm: ReturnType<typeof useDirectoryModel>)
           subtitle: item.weightLabel ?? '',
           avatarUrl: item.avatarUrl,
           objective: item.objective,
+          statusDot: statusFor(props.clients, item.id, props.t),
           statusTone: item.statusTone,
           statusLabel:
             item.statusTone === 'success'
@@ -193,6 +195,11 @@ function ObjectiveSelect(props: {
       value={props.objectiveFilter}
     />
   );
+}
+
+function statusFor(clients: ClientView[], clientId: string, t: Props['t']) {
+  const client = clients.find((item) => item.id === clientId);
+  return client ? clientStatusDot(client, t) : undefined;
 }
 
 function buildClientCards(

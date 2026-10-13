@@ -32,6 +32,8 @@ export { Select, type SelectOption, type SelectProps } from './primitives/Select
 export { Modal, type ModalProps } from './primitives/Modal';
 export { Card, type CardProps } from './primitives/Card';
 export { Badge, type BadgeTone } from './primitives/Badge';
+export { StatusDot } from './primitives/StatusDot';
+export { Tooltip } from './primitives/Tooltip';
 export { SegmentedControl, type SegmentOption, type SegmentedControlProps } from './primitives/SegmentedControl';
 export { EmptyState, type EmptyStateProps } from './primitives/EmptyState';
 export { Skeleton, type SkeletonProps } from './primitives/Skeleton';

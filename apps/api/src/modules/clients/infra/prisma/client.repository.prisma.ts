@@ -1,4 +1,5 @@
 import { readLastClientActivities } from './client-last-activity.prisma';
+import { readClientStatusFacts, statusForClient } from './client-status.prisma';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {
@@ -162,14 +163,19 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       },
       orderBy: { createdAt: 'desc' },
     });
-    const activity = await readLastClientActivities(
-      this.prisma,
-      clients.map((row) => row.id),
-    );
-    return clients.map((row) => ({
-      ...mapClient({ ...row, progressPhotos: [] }),
-      lastActivityAt: activity.get(row.id) ?? null,
-    }));
+    const clientIds = clients.map((row) => row.id);
+    const [activity, statusFacts] = await Promise.all([
+      readLastClientActivities(this.prisma, clientIds),
+      readClientStatusFacts(this.prisma, clientIds),
+    ]);
+    return clients.map((row) => {
+      const lastActivityAt = activity.get(row.id) ?? null;
+      return {
+        ...mapClient({ ...row, progressPhotos: [] }),
+        lastActivityAt,
+        status: statusForClient({ facts: statusFacts.get(row.id), hasPlan: Boolean(row.trainingPlanId), lastActivityAt }),
+      };
+    });
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

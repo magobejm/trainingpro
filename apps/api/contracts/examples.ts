@@ -47,6 +47,7 @@ export const clientListExample = {
       progressPhotos: [],
       secondaryObjectives: [],
       sex: null,
+      status: { level: 'none', reasons: [] },
       trainingPlanId: null,
       updatedAt: UPDATED_AT,
       waistCm: null,

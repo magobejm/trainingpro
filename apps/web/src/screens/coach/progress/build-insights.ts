@@ -169,3 +169,14 @@ export function buildInsights(mode: AnalysisMode, points: Record<string, unknown
   }
   return buildMicrocycleInsights(points as MicroPoint[]);
 }
+
+export function recordInsights(
+  records: Array<{ e1rm: number; exerciseName: string }>,
+  t: (key: string, options?: Record<string, number | string>) => string,
+): InsightItem[] {
+  return records.slice(0, 3).map((record) => ({
+    color: colors.success,
+    emoji: '🏆',
+    text: t('coach.progress.record.insight', { exercise: record.exerciseName, kg: record.e1rm }),
+  }));
+}

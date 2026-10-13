@@ -35,6 +35,7 @@ import { ProgressFilters } from './progress/ProgressFilters';
 import { KpiGrid } from './progress/KpiGrid';
 import { MetricChart } from './progress/MetricChart';
 import { InsightsPanel } from './progress/InsightsPanel';
+import { ConsistencyHeatmap } from './progress/ConsistencyHeatmap';
 import { buildKpis } from './progress/build-kpis';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
@@ -297,6 +298,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
       {/* Breadcrumb */}
       <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={progressCrumbs} />
       <Text style={styles.subtitle}>{t('coach.progress.client.subtitle')}</Text>
+      <ConsistencyHeatmap clientId={clientId} t={t} />
 
       <ProgressFilters
         mode={mode}
@@ -389,7 +391,9 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
       )}
 
       {/* Insights */}
-      {hasSelection && chartPoints.length > 0 && <InsightsPanel mode={mode} points={chartPoints} t={t} />}
+      {hasSelection && chartPoints.length > 0 && (
+        <InsightsPanel clientId={clientId ?? undefined} mode={mode} points={chartPoints} t={t} />
+      )}
 
       {/* Modals */}
       <MetricDetailModal

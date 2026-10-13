@@ -8,6 +8,7 @@ import { GetPerformedSessionDaysUseCase } from './application/use-cases/get-perf
 import { GetPerformedTemplatesUseCase } from './application/use-cases/get-performed-templates.usecase';
 import { GetProgressOverviewUseCase } from './application/use-cases/get-progress-overview.usecase';
 import { GetRecentSessionsUseCase } from './application/use-cases/get-recent-sessions.usecase';
+import { GetPersonalRecordsUseCase } from './application/use-cases/get-personal-records.usecase';
 import { GetSessionProgressUseCase } from './application/use-cases/get-session-progress.usecase';
 import { PROGRESS_REPOSITORY } from './domain/progress-repository.port';
 import { ProgressRepositoryPrisma } from './infra/prisma/progress.repository.prisma';
@@ -23,6 +24,7 @@ import { ProgressController } from './presentation/controllers/progress.controll
     GetSessionProgressUseCase,
     GetMicrocycleProgressUseCase,
     GetRecentSessionsUseCase,
+    GetPersonalRecordsUseCase,
     GetPerformedExercisesUseCase,
     GetPerformedTemplatesUseCase,
     GetPerformedSessionDaysUseCase,

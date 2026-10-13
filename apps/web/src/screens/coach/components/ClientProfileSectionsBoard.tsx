@@ -143,6 +143,7 @@ function renderRow(
       showMenu={vm.openMenuId === item.id}
       t={props.t}
       trainingPlanName={props.trainingPlanName}
+      clientId={props.clientId}
     />
   );
 }

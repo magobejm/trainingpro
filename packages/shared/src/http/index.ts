@@ -1,7 +1,11 @@
 export { chatCallProposalSchema, chatMessageListSchema, chatMessageSchema } from './chat';
 export type { ChatAttachment, ChatCallProposal, ChatMessage, ChatMessageList } from './chat';
 export { clientListResponseSchema, clientObjectiveSchema, clientViewSchema } from './clients';
-export type { ClientListResponse, ClientObjective, ClientProgressPhoto, ClientView } from './clients';
+export type { ClientListResponse, ClientObjective, ClientProgressPhoto, ClientStatus, ClientView } from './clients';
+export { progressRecordsResponseSchema } from './records';
+export type { ProgressRecord, ProgressRecordsResponse } from './records';
+export { clientTimelineResponseSchema } from './timeline';
+export type { ClientTimelineItem, ClientTimelineResponse } from './timeline';
 export { httpErrorSchema } from './errors';
 export type { HttpErrorBody } from './errors';
 export {

@@ -81,6 +81,20 @@ export type RecentSessionsQuery = {
   limit: number;
 };
 
+export type PersonalRecord = {
+  e1rm: number;
+  exerciseId: string;
+  exerciseName: string;
+  previousBest: number | null;
+  sessionDate: string;
+};
+
+export type PersonalRecordsQuery = {
+  clientId?: string;
+  from: Date;
+  to: Date;
+};
+
 export interface ProgressRepositoryPort {
   resolveProgressClient(context: AuthContext, clientId?: string): Promise<string>;
   readCardioLogs(context: AuthContext, query: ProgressQuery, resolvedClientId?: string): Promise<CardioLogRow[]>;
@@ -91,6 +105,7 @@ export interface ProgressRepositoryPort {
   readSessionProgress(context: AuthContext, query: SessionProgressQuery): Promise<SessionProgressPoint[]>;
   readMicrocycleProgress(context: AuthContext, query: MicrocycleProgressQuery): Promise<MicrocycleProgressResult>;
   readRecentSessions(context: AuthContext, query: RecentSessionsQuery): Promise<RecentSessionSummary[]>;
+  readPersonalRecords(context: AuthContext, query: PersonalRecordsQuery): Promise<PersonalRecord[]>;
   readPerformedExercises(context: AuthContext, query: PerformedExercisesQuery): Promise<PerformedExercisesResult>;
   readPerformedTemplates(context: AuthContext, query: PerformedTemplatesQuery): Promise<PerformedTemplatesResult>;
   readPerformedSessionDays(context: AuthContext, query: PerformedSessionDaysQuery): Promise<PerformedSessionDaysResult>;

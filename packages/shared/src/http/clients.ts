@@ -22,6 +22,22 @@ export const clientProgressPhotoSchema = z
   })
   .strict();
 
+export const clientStatusReasonSchema = z
+  .object({
+    adherencePercent: z.number().optional(),
+    code: z.enum(['adherence_low', 'inactive', 'incident_open', 'incident_severe', 'mood_low']),
+    days: z.number().optional(),
+    mood: z.number().optional(),
+  })
+  .strict();
+
+export const clientStatusSchema = z
+  .object({
+    level: z.enum(['amber', 'green', 'none', 'red']),
+    reasons: z.array(clientStatusReasonSchema),
+  })
+  .strict();
+
 export const clientViewSchema = z
   .object({
     allergies: z.string().nullable(),
@@ -50,6 +66,7 @@ export const clientViewSchema = z
     progressPhotos: z.array(clientProgressPhotoSchema),
     secondaryObjectives: z.array(z.string()),
     sex: z.string().nullable(),
+    status: clientStatusSchema.optional(),
     trainingPlan: z
       .object({
         id: z.string(),
@@ -70,6 +87,7 @@ export const clientListResponseSchema = z
   })
   .strict();
 
+export type ClientStatus = z.infer<typeof clientStatusSchema>;
 export type ClientObjective = z.infer<typeof clientObjectiveSchema>;
 export type ClientProgressPhoto = z.infer<typeof clientProgressPhotoSchema>;
 export type ClientView = z.infer<typeof clientViewSchema>;

@@ -9,7 +9,9 @@ export type ClientManagementSectionCode =
   | 'planning'
   | 'external'
   | 'incidents'
-  | 'chat';
+  | 'chat'
+  | 'timeline'
+  | 'compare';
 
 export type ClientManagementSection = {
   archived: boolean;
@@ -29,6 +31,8 @@ export const CLIENT_MANAGEMENT_SECTION_DEFAULT_ORDER: ClientManagementSectionCod
   'external',
   'incidents',
   'chat',
+  'timeline',
+  'compare',
 ];
 
 export function isClientManagementSectionCode(value: string): value is ClientManagementSectionCode {

@@ -1,0 +1,50 @@
+:root {
+  background: var(--tp-background);
+  color: var(--tp-text);
+}
+body {
+  background: var(--tp-background);
+}
+body *:focus-visible {
+  outline-color: var(--tp-primary) !important;
+}
+input,
+textarea,
+select {
+  color-scheme: inherit;
+}
+[data-density-list] {
+  --tp-row-padding: 16px;
+  --tp-list-gap: 12px;
+}
+html[data-density='compact'] [data-density-list] {
+  --tp-row-padding: 8px;
+  --tp-list-gap: 6px;
+}
+html[data-density='compact'] [data-density-list] [data-density-row] {
+  min-height: 44px;
+}
+[data-density-row] {
+  padding-block: var(--tp-row-padding) !important;
+}
+[data-density-list] {
+  gap: var(--tp-list-gap) !important;
+}
+[data-interactive-card='true'] {
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease;
+}
+[data-interactive-card='true']:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--tp-shadowColor);
+}
+@media (prefers-reduced-motion: reduce) {
+  body *,
+  body *::before,
+  body *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -2,12 +2,16 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { View } from 'react-native';
-import { ThemeProvider, ToastProvider } from '@trainerpro/ui';
+import { ToastProvider } from '@trainerpro/ui';
 import { useTranslation } from 'react-i18next';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import './i18n';
 import { App } from './App';
 import { createQueryClient } from './data/query-client';
+import { AppearanceProvider, bootstrapAppearance } from './theme/AppearanceProvider';
+import './theme/appearance.css';
+
+bootstrapAppearance();
 
 const queryClient = createQueryClient();
 // Una sola ruta comodín: App decide qué pantalla toca según la dirección (ver layout/shell-routes.ts).
@@ -17,13 +21,13 @@ function Root(): React.JSX.Element {
   const { t } = useTranslation();
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <AppearanceProvider>
         <ToastProvider dismissLabel={t('common.close')}>
           <View style={{ flex: 1, height: '100%', minHeight: 0, width: '100%' }}>
             <RouterProvider router={router} />
           </View>
         </ToastProvider>
-      </ThemeProvider>
+      </AppearanceProvider>
     </QueryClientProvider>
   );
 }

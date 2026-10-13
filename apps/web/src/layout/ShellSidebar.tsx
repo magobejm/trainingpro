@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, Text, View, type ViewStyle } from 'react-native';
 import { styles } from '../App.styles';
+import { colors } from '@trainerpro/ui';
 import { buildNavSections, formatBadge } from './nav-groups';
 import { SidebarIdentity } from './ShellChrome';
 import { SidebarUserPanel } from './SidebarUserPanel';
@@ -92,7 +93,7 @@ function NavButton(props: NavButtonProps): React.JSX.Element {
 function NavButtonContent(props: NavButtonProps & { hovered: boolean; label: string }): React.JSX.Element {
   const { isActive, hovered, item } = props;
   const lit = isActive || hovered;
-  const iconColor = lit ? '#ffffff' : '#94a3b8';
+  const iconColor = lit ? colors.onPrimary : colors.textInverseMuted;
   const gradientSize = lit ? '100% 100%' : '0% 100%';
   const badgeStyle = item.badgeColor && !lit ? { backgroundColor: item.badgeColor } : {};
   return (

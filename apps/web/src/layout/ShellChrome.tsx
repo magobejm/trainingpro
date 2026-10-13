@@ -1,16 +1,26 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { Dumbbell } from 'lucide-react';
 import { colors, fontSize, IconButton, radius, space } from '@trainerpro/ui';
+import { useBranding } from '../data/hooks/useBranding';
 
 const MENU_GLYPH = '\u2630';
 
 export function SidebarIdentity(props: { compact?: boolean; roleLabel: string; title: string }): React.JSX.Element {
+  const branding = useBranding();
   return (
     <View style={[styles.identityCard, props.compact ? styles.identityCompact : null]}>
       <View style={styles.avatarStub}>
-        {/* eslint-disable-next-line no-restricted-syntax */}
-        <Dumbbell color="#ffffff" size={24} />
+        {branding.data?.brandLogoUrl ? (
+          <Image
+            source={{ uri: branding.data.brandLogoUrl }}
+            accessibilityLabel={props.title}
+            resizeMode={'contain'}
+            style={{ height: 36, width: 36 }}
+          />
+        ) : (
+          <Dumbbell color={colors.onPrimary} size={24} />
+        )}
       </View>
       {props.compact ? null : (
         <View style={styles.identityTextWrap}>
@@ -101,12 +111,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logo: {
-    color: colors.surface,
+    color: colors.textInverse,
     fontSize: fontSize.xxl,
     fontWeight: '800',
   },
   logoSubtitle: {
-    color: colors.textMuted,
+    color: colors.textInverseMuted,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.8,

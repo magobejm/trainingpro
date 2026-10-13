@@ -43,19 +43,19 @@ function resolveAdminNavItems(): ShellNavItem[] {
 // Los bloques y el orden los define nav-groups.ts; aquí solo cada pantalla: icono, color y nombre.
 function resolveCoachNavItems(): ShellNavItem[] {
   return [
-    item('coach.clients', 'clients', <Users />, 'rgba(99, 102, 241, 0.1)'),
-    item('coach.chat', 'clients', <MessageSquare />, 'rgba(59, 130, 246, 0.1)'),
-    item('coach.notes', 'clients', <FileText />, 'rgba(99, 102, 241, 0.1)'),
-    item('coach.incidents', 'clients', <TriangleAlert />, 'rgba(239, 68, 68, 0.1)'),
-    item('coach.calendar', 'clients', <CalendarDays />, 'rgba(16, 185, 129, 0.1)'),
-    item('coach.routine.planner', 'planning', <CalendarRange />, 'rgba(249, 115, 22, 0.1)'),
-    item('coach.warmup.planner', 'planning', <Flame />, 'rgba(249, 115, 22, 0.1)'),
-    item('coach.nutrition', 'planning', <Utensils />, 'rgba(16, 185, 129, 0.1)'),
-    item('coach.library.unified', 'library', <Dumbbell />, 'rgba(37, 99, 235, 0.1)'),
-    item('coach.library.foods', 'library', <Apple />, 'rgba(59, 130, 246, 0.1)'),
-    item('coach.library.routines', 'library', <BookOpen />, 'rgba(249, 115, 22, 0.1)'),
-    item('coach.evaluator', 'tools', <ScanSearch />, 'rgba(59, 130, 246, 0.1)'),
-    item('coach.notifications', 'tools', <Bell />, 'rgba(239, 68, 68, 0.1)'),
+    item('coach.clients', 'clients', <Users />, 'var(--tp-chartPurpleSoft)'),
+    item('coach.chat', 'clients', <MessageSquare />, 'var(--tp-primarySoft)'),
+    item('coach.notes', 'clients', <FileText />, 'var(--tp-chartPurpleSoft)'),
+    item('coach.incidents', 'clients', <TriangleAlert />, 'var(--tp-dangerSoft)'),
+    item('coach.calendar', 'clients', <CalendarDays />, 'var(--tp-successSoft)'),
+    item('coach.routine.planner', 'planning', <CalendarRange />, 'var(--tp-warningSoft)'),
+    item('coach.warmup.planner', 'planning', <Flame />, 'var(--tp-warningSoft)'),
+    item('coach.nutrition', 'planning', <Utensils />, 'var(--tp-successSoft)'),
+    item('coach.library.unified', 'library', <Dumbbell />, 'var(--tp-primarySoft)'),
+    item('coach.library.foods', 'library', <Apple />, 'var(--tp-primarySoft)'),
+    item('coach.library.routines', 'library', <BookOpen />, 'var(--tp-warningSoft)'),
+    item('coach.evaluator', 'tools', <ScanSearch />, 'var(--tp-primarySoft)'),
+    item('coach.notifications', 'tools', <Bell />, 'var(--tp-dangerSoft)'),
   ];
 }
 

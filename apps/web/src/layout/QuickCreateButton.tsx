@@ -51,7 +51,7 @@ export function QuickCreateButton(props: Props): React.JSX.Element | null {
           onPress={() => setOpen((current) => !current)}
           style={styles.fab}
         >
-          <Plus color={colors.surface} size={22} />
+          <Plus color={colors.onPrimary} size={22} />
         </Pressable>
       </View>
     </View>

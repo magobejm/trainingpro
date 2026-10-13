@@ -4,6 +4,7 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { Button, IconButton, Modal, TextField, useToast } from '@trainerpro/ui';
 import { useUserSettings } from '../data/hooks/useUserSettings';
 import { styles } from './SidebarUserPanel.styles';
+import { AppearanceSettings } from './AppearanceSettings';
 
 const GEAR_GLYPH = '\u2699\uFE0F';
 const VARIANT_SECONDARY = 'secondary' as const;
@@ -116,6 +117,7 @@ function EditProfileModal(props: ViewModel): React.JSX.Element {
       <View style={styles.modalBody}>
         <AvatarEditor {...props} />
         <ProfileFields {...props} />
+        <AppearanceSettings />
       </View>
     </Modal>
   );

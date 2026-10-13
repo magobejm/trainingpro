@@ -48,7 +48,7 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   email: {
-    color: colors.textMuted,
+    color: colors.textInverseMuted,
     fontSize: fontSize.xs,
   },
   fields: {
@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
     gap: 2,
   },
   name: {
-    color: colors.surfaceMuted,
+    color: colors.textInverse,
     fontSize: fontSize.sm,
     fontWeight: '700',
   },

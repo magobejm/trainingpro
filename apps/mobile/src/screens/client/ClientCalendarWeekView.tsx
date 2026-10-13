@@ -7,12 +7,14 @@ import { LIGHT } from '../../theme/light';
 import { CallRequest, ClientNoteEditor } from './ClientCalendarDayDetail';
 import { KpiStrip } from './ClientCalendarKpiStrip';
 import type { DayData } from './client-calendar.helpers';
+import { CalendarWorkoutList } from './ClientCalendarWorkouts';
 
 const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 type Props = {
   data: DayData | undefined;
-  exerciseCount: number | null;
+  dayData: Map<string, DayData>;
+  exerciseCountFor: (planDayId: string | null) => number | null;
   onOpenPlanDay: (planDayId: string) => void;
   onOpenTest: (scheduleId: string) => void;
   onSelectDate: (date: Date) => void;
@@ -26,7 +28,6 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const [notesOpen, setNotesOpen] = useState(false);
   const [callOpen, setCallOpen] = useState(false);
-  const title = props.data?.planDayTitle ?? (props.data?.hasPlanned || props.data?.hasCompleted ? '—' : null);
   const monthName = t(`client.calendar.month.${String(props.selectedDate.getMonth() + 1)}`);
   const dateLabel = `${monthName} ${String(props.selectedDate.getDate())}`;
   const note = props.data?.coachNotes?.[0] ?? '';
@@ -34,22 +35,14 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
   return (
     <View style={styles.stack}>
       <View style={styles.dayCard}>
-        <Pressable
-          disabled={!props.data?.planDayId}
-          onPress={() => {
-            if (props.data?.planDayId) props.onOpenPlanDay(props.data.planDayId);
-          }}
-          style={styles.dayBody}
-        >
+        <View style={styles.dayBody}>
           <Text style={styles.kicker}>{dateLabel}</Text>
-          <Text style={styles.title}>{title ?? t('client.calendar.detail.rest')}</Text>
-          <Text style={styles.hint}>{dayHint(Boolean(title), Boolean(props.data?.planDayId), t)}</Text>
-          {title && props.exerciseCount != null ? (
-            <Text style={styles.meta}>
-              {t('client.calendar.detail.exerciseCount', { count: props.exerciseCount, title })}
-            </Text>
-          ) : null}
-        </Pressable>
+          <CalendarWorkoutList
+            data={props.data}
+            exerciseCountFor={props.exerciseCountFor}
+            onOpenPlanDay={props.onOpenPlanDay}
+          />
+        </View>
         {props.data?.physicalTest ? (
           <Pressable onPress={() => props.onOpenTest(props.data!.physicalTest!.scheduleId)} style={styles.testChip}>
             <Text style={styles.testChipText}>{props.data.physicalTest.name}</Text>
@@ -72,6 +65,7 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
             isSelected={sameDay(date, props.selectedDate)}
             isToday={formatKey(date) === props.todayStr}
             key={formatKey(date)}
+            label={weekLabel(props.dayData.get(formatKey(date)), t)}
             letter={t(`client.calendar.weekday.${WEEKDAY_KEYS[index]}`)}
             onPress={() => props.onSelectDate(date)}
           />
@@ -99,6 +93,7 @@ function WeekDay(props: {
   date: Date;
   isSelected: boolean;
   isToday: boolean;
+  label: string;
   letter: string;
   onPress: () => void;
 }): React.JSX.Element {
@@ -108,15 +103,18 @@ function WeekDay(props: {
         <Text style={[styles.weekNumber, props.isSelected && styles.weekSelectedText]}>{String(props.date.getDate())}</Text>
         <Text style={[styles.weekLetter, props.isSelected && styles.weekSelectedText]}>{props.letter}</Text>
       </Pressable>
+      <Text numberOfLines={2} style={styles.weekLabel}>
+        {props.label}
+      </Text>
       {props.isToday && !props.isSelected ? <View style={styles.todayDot} /> : null}
     </View>
   );
 }
 
-function dayHint(hasWorkout: boolean, canOpen: boolean, t: (key: string) => string): string {
-  if (canOpen) return t('client.calendar.detail.openWorkout');
-  if (hasWorkout) return t('client.calendar.detail.sessionSummary');
-  return t('client.calendar.detail.restHint');
+function weekLabel(data: DayData | undefined, t: (key: string) => string): string {
+  const titles = (data?.workouts ?? []).map((workout) => workout.title).filter(Boolean);
+  if (titles.length === 0) return t('client.calendar.chip.rest');
+  return titles.join(' · ');
 }
 
 function sameDay(a: Date, b: Date): boolean {
@@ -177,7 +175,8 @@ const styles = StyleSheet.create({
     width: 44,
   },
   weekButtonSelected: { backgroundColor: LIGHT.accent, borderColor: LIGHT.accent },
-  weekDay: { alignItems: 'center', gap: 4 },
+  weekDay: { alignItems: 'center', gap: 4, width: 44 },
+  weekLabel: { color: LIGHT.textMuted, fontSize: 9, fontWeight: '700', textAlign: 'center', width: 44 },
   weekLetter: { color: LIGHT.textMuted, fontSize: 10 },
   weekNumber: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700' },
   weekRow: {

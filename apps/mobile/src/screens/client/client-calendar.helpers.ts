@@ -1,6 +1,16 @@
 import { workoutShift, type WorkoutShift } from '@trainerpro/shared';
 import type { ClientCalendarEvent, ClientSessionSummary } from '../../data/hooks/useClientCalendar';
 
+export type DayWorkout = {
+  color: string | null;
+  done: boolean;
+  originDate: string | null;
+  planDayId: string | null;
+  sessionId: string | null;
+  shift: WorkoutShift | null;
+  title: string;
+};
+
 export type DayData = {
   hasCompleted: boolean;
   hasPlanned: boolean;
@@ -17,11 +27,14 @@ export type DayData = {
   clientNote: string | null;
   planDayId: string | null;
   physicalTest: { done: boolean; name: string; scheduleId: string } | null;
+  workouts: DayWorkout[];
 };
 
 export type DayChipKind = 'call' | 'notes' | 'rest' | 'test' | 'workout';
 
 export type DayChip = {
+  color?: string | null;
+  extra?: number;
   kind: DayChipKind;
   text: string;
 };
@@ -58,72 +71,31 @@ export function buildMonthGrid(month: Date): GridCell[] {
 
 export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSessionSummary[]): Map<string, DayData> {
   const map = new Map<string, DayData>();
-  const get = (k: string): DayData =>
-    map.get(k) ?? {
-      hasCompleted: false,
-      hasPlanned: false,
-      hasMeeting: false,
-      sessionId: null,
-      sessionStatus: null,
-      mood: null,
-      originDate: null,
-      planDayTitle: null,
-      shift: null,
-      workoutColor: null,
-      coachNotes: [],
-      call: null,
-      clientNote: null,
-      planDayId: null,
-      physicalTest: null,
-    };
+  const get = (key: string): DayData => map.get(key) ?? emptyDay();
 
-  for (const s of sessions) {
-    const d = get(s.sessionDate);
-    d.sessionId = s.id;
-    d.sessionStatus = s.status;
-    d.hasCompleted = s.isCompleted;
-    d.hasPlanned = !s.isCompleted;
-    d.mood = s.postMood;
-    d.planDayTitle = s.planDayTitle;
-    d.planDayId = s.planDayId;
-    map.set(s.sessionDate, d);
+  for (const session of sessions) {
+    const day = get(session.sessionDate);
+    day.mood = session.postMood;
+    day.sessionStatus = session.status;
+    addWorkout(day, workoutFromSession(session));
+    map.set(session.sessionDate, day);
   }
 
-  for (const e of events) {
-    const dateStr = e.date.slice(0, 10);
-    const d = get(dateStr);
-    if (e.type === 'workout' && !d.sessionId) d.hasPlanned = true;
-    if (e.type === 'workout' && e.isCompleted) {
-      const shift = workoutShift(dateStr, e.originDate);
-      if (shift) {
-        d.originDate = e.originDate ?? null;
-        d.shift = shift;
-      }
-    }
-    if (e.type === 'workout' && e.color) d.workoutColor = e.color;
-    if (e.planDayId) d.planDayId = e.planDayId;
-    if (e.type === 'physical_test') {
-      d.physicalTest = { done: Boolean(e.isCompleted), name: e.title ?? '', scheduleId: e.scheduleId ?? e.id };
-    }
-    if (e.type === 'note' && e.content) d.coachNotes.push(e.content);
-    if (e.type === 'call' && e.time) d.call = { time: e.time };
-    if (e.type === 'client_note' && e.content) d.clientNote = e.content;
-    if (e.type === 'reminder') d.hasMeeting = true;
-    map.set(dateStr, d);
+  for (const event of events) {
+    const dateStr = event.date.slice(0, 10);
+    const day = get(dateStr);
+    applyEvent(day, event, dateStr);
+    map.set(dateStr, day);
   }
 
   return map;
 }
 
-/** Orden fijo: test, entreno o descanso, llamada y notas. Lo que no existe no sale. */
+/** Orden fijo: test, entrenos o descanso, llamada y notas. Lo que no existe no sale. */
 export function dayChips(data: DayData | undefined): DayChip[] {
   const chips: DayChip[] = [];
   if (data?.physicalTest) chips.push({ kind: 'test', text: data.physicalTest.name });
-  if (data && (data.hasPlanned || data.hasCompleted || data.planDayTitle)) {
-    chips.push({ kind: 'workout', text: data.planDayTitle ?? '' });
-  } else {
-    chips.push({ kind: 'rest', text: '' });
-  }
+  chips.push(...workoutChips(data));
   if (data?.call || data?.hasMeeting) chips.push({ kind: 'call', text: data.call?.time ?? '' });
   if ((data?.coachNotes.length ?? 0) > 0 || data?.clientNote) chips.push({ kind: 'notes', text: '' });
   return chips;
@@ -136,3 +108,109 @@ export const MOOD_EMOJI: Record<number, string> = {
   4: '🙂',
   5: '😄',
 };
+
+function emptyDay(): DayData {
+  return {
+    call: null,
+    clientNote: null,
+    coachNotes: [],
+    hasCompleted: false,
+    hasMeeting: false,
+    hasPlanned: false,
+    mood: null,
+    originDate: null,
+    physicalTest: null,
+    planDayId: null,
+    planDayTitle: null,
+    sessionId: null,
+    sessionStatus: null,
+    shift: null,
+    workoutColor: null,
+    workouts: [],
+  };
+}
+
+function workoutFromSession(session: ClientSessionSummary): DayWorkout {
+  return {
+    color: null,
+    done: session.isCompleted,
+    originDate: null,
+    planDayId: session.planDayId,
+    sessionId: session.id,
+    shift: null,
+    title: session.planDayTitle ?? '',
+  };
+}
+
+function applyEvent(day: DayData, event: ClientCalendarEvent, dateStr: string): void {
+  if (event.type === 'workout') addWorkout(day, workoutFromEvent(event, dateStr));
+  if (event.type === 'physical_test') {
+    day.physicalTest = {
+      done: Boolean(event.isCompleted),
+      name: event.title ?? '',
+      scheduleId: event.scheduleId ?? event.id,
+    };
+  }
+  if (event.type === 'note' && event.content) day.coachNotes.push(event.content);
+  if (event.type === 'call' && event.time) day.call = { time: event.time };
+  if (event.type === 'client_note' && event.content) day.clientNote = event.content;
+  if (event.type === 'reminder') day.hasMeeting = true;
+}
+
+function workoutFromEvent(event: ClientCalendarEvent, dateStr: string): DayWorkout {
+  const shift = event.isCompleted ? workoutShift(dateStr, event.originDate) : null;
+  return {
+    color: event.color,
+    done: Boolean(event.isCompleted),
+    originDate: shift ? (event.originDate ?? null) : null,
+    planDayId: event.planDayId,
+    sessionId: null,
+    shift,
+    title: (event.planDayTitle ?? event.title ?? '').trim(),
+  };
+}
+
+function addWorkout(day: DayData, workout: DayWorkout): void {
+  const same = day.workouts.find((item) => sameWorkout(item, workout));
+  if (same) mergeWorkout(same, workout);
+  else day.workouts.push(workout);
+  const first = day.workouts[0];
+  day.planDayId = first?.planDayId ?? null;
+  day.planDayTitle = first?.title || null;
+  day.sessionId = day.workouts.find((item) => item.sessionId)?.sessionId ?? null;
+  day.hasCompleted = day.workouts.some((item) => item.done);
+  day.hasPlanned = day.workouts.some((item) => !item.done);
+  day.workoutColor = day.workouts.find((item) => item.color)?.color ?? null;
+  const shifted = day.workouts.find((item) => item.shift);
+  day.shift = shifted?.shift ?? null;
+  day.originDate = shifted?.originDate ?? null;
+}
+
+function sameWorkout(item: DayWorkout, workout: DayWorkout): boolean {
+  if (workout.planDayId && item.planDayId) return item.planDayId === workout.planDayId;
+  return Boolean(workout.title) && item.title === workout.title;
+}
+
+function mergeWorkout(item: DayWorkout, workout: DayWorkout): void {
+  if (workout.done) item.done = true;
+  if (workout.sessionId) item.sessionId = workout.sessionId;
+  if (workout.title) item.title = workout.title;
+  if (workout.planDayId) item.planDayId = workout.planDayId;
+  if (workout.color) item.color = workout.color;
+  if (workout.shift) {
+    item.shift = workout.shift;
+    item.originDate = workout.originDate;
+  }
+}
+
+function workoutChips(data: DayData | undefined): DayChip[] {
+  const workouts = data?.workouts ?? [];
+  if (workouts.length === 0) return [{ kind: 'rest', text: '' }];
+  const visible: DayChip[] = workouts.slice(0, 2).map((workout) => ({
+    color: workout.color,
+    kind: 'workout',
+    text: workout.title,
+  }));
+  if (workouts.length > 2) visible.push({ extra: workouts.length - 2, kind: 'workout', text: '' });
+  return visible;
+}

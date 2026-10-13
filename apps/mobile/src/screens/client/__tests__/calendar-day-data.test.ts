@@ -66,6 +66,7 @@ describe('dayChips', () => {
     sessionStatus: null,
     shift: null,
     workoutColor: null,
+    workouts: [],
   };
 
   it('stacks a test, the workout, a call and notes, and skips what is missing', () => {
@@ -77,6 +78,9 @@ describe('dayChips', () => {
         hasPlanned: true,
         physicalTest: { done: false, name: 'Cooper', scheduleId: 's1' },
         planDayTitle: 'Pull',
+        workouts: [
+          { color: null, done: false, originDate: null, planDayId: null, sessionId: null, shift: null, title: 'Pull' },
+        ],
       }).map((chip) => chip.kind),
     ).toEqual(['test', 'workout', 'call', 'notes']);
   });
@@ -84,6 +88,27 @@ describe('dayChips', () => {
   it('shows a rest day when there is no workout', () => {
     expect(dayChips({ ...base, clientNote: 'Bien' }).map((chip) => chip.kind)).toEqual(['rest', 'notes']);
     expect(dayChips(undefined).map((chip) => chip.kind)).toEqual(['rest']);
+  });
+
+  it('shows the planned workout name before the session is logged', () => {
+    const map = mergeDayData([event({ planDayId: 'day-1', planDayTitle: 'Pierna', title: 'Pierna' })], []);
+    const chips = dayChips(map.get('2026-10-20'));
+    expect(chips.map((chip) => chip.text)).toEqual(['Pierna']);
+    expect(chips[0]?.kind).toBe('workout');
+  });
+
+  it('shows two workouts on the same day and a more chip after that', () => {
+    const map = mergeDayData(
+      [
+        event({ id: 'one', planDayId: 'day-1', planDayTitle: 'Pierna' }),
+        event({ id: 'two', planDayId: 'day-2', planDayTitle: 'Empuje' }),
+        event({ id: 'three', planDayId: 'day-3', planDayTitle: 'Tirón' }),
+      ],
+      [],
+    );
+    const chips = dayChips(map.get('2026-10-20'));
+    expect(chips.map((chip) => chip.text)).toEqual(['Pierna', 'Empuje', '']);
+    expect(chips[2]?.extra).toBe(1);
   });
 });
 

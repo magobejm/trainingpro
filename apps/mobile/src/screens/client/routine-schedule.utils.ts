@@ -8,6 +8,14 @@ export function formatLocalDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function getMoveWindowRange(date: Date): { from: string; to: string } {
+  const from = new Date(date);
+  from.setDate(from.getDate() - 28);
+  const to = new Date(date);
+  to.setDate(to.getDate() + 28);
+  return { from: formatLocalDate(from), to: formatLocalDate(to) };
+}
+
 export function getWeekDateRange(date: Date): { from: string; to: string } {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -34,6 +42,7 @@ export type RoutineWeekSchedule =
       mode: 'calendar';
       otherDays: ScheduledWorkout[];
       today: ScheduledWorkout | null;
+      todayWorkouts: ScheduledWorkout[];
     };
 
 function resolveWorkoutTitle(event: ClientCalendarEvent): string {
@@ -91,14 +100,16 @@ function listWeekWorkouts(
   date: Date,
 ): ScheduledWorkout[] {
   const { from, to } = getWeekDateRange(date);
-  const seenDates = new Set<string>();
+  const seen = new Set<string>();
   const workouts: ScheduledWorkout[] = [];
 
   for (const event of calendarEvents) {
     if (event.type !== 'workout') continue;
     const eventDate = event.date.slice(0, 10);
-    if (eventDate < from || eventDate > to || seenDates.has(eventDate)) continue;
-    seenDates.add(eventDate);
+    if (eventDate < from || eventDate > to) continue;
+    const key = `${eventDate}|${event.planDayId ?? event.id}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
     workouts.push(buildScheduledWorkout(event, planDays));
   }
 
@@ -116,13 +127,14 @@ export function resolveRoutineWeekSchedule(
   }
 
   const todayStr = formatLocalDate(date);
-  const today = weekWorkouts.find((workout) => workout.date === todayStr) ?? null;
+  const todayWorkouts = weekWorkouts.filter((workout) => workout.date === todayStr);
 
   return {
-    isRestDay: today == null,
+    isRestDay: todayWorkouts.length === 0,
     mode: 'calendar',
     otherDays: weekWorkouts.filter((workout) => workout.date !== todayStr),
-    today,
+    today: todayWorkouts[0] ?? null,
+    todayWorkouts,
   };
 }
 
@@ -153,16 +165,53 @@ export function isSelectedPlanDayScheduledForToday(
   if (!schedule || schedule.mode === 'assigned') {
     return false;
   }
-  if (!schedule.today) {
-    return false;
-  }
-  const todayPlanDayId = schedule.today.planDayId || schedule.today.routineDay?.id || '';
-  return todayPlanDayId === selectedPlanDayId;
+  return schedule.todayWorkouts.some((workout) => workoutPlanDayId(workout) === selectedPlanDayId);
+}
+
+function workoutPlanDayId(workout: ScheduledWorkout): string {
+  return workout.planDayId || workout.routineDay?.id || '';
 }
 
 export function scheduledTitleForToday(schedule: RoutineWeekSchedule | null): string | null {
-  if (!schedule || schedule.mode !== 'calendar' || !schedule.today) return null;
-  return schedule.today.title;
+  if (!schedule || schedule.mode !== 'calendar' || schedule.todayWorkouts.length === 0) return null;
+  const titles = schedule.todayWorkouts.map((workout) => workout.title).filter(Boolean);
+  return titles.length > 0 ? titles.join(' · ') : null;
+}
+
+export function describePendingMove(
+  events: ClientCalendarEvent[],
+  planDays: ClientRoutineDay[],
+  selectedPlanDayId: string,
+  today: Date,
+): { fromDate: string | null; kind: 'move' | 'scheduled' | 'unplanned' } {
+  const todayKey = formatLocalDate(today);
+  const pending = events.filter((event) => isPendingPlanDay(event, planDays, selectedPlanDayId));
+  if (pending.some((event) => eventKey(event) === todayKey)) {
+    return { fromDate: null, kind: 'scheduled' };
+  }
+  const candidates = pending
+    .filter((event) => eventKey(event) !== todayKey)
+    .sort((left, right) => compareNearness(todayKey, eventKey(left), eventKey(right)));
+  const nearest = candidates[0];
+  if (!nearest) return { fromDate: null, kind: 'unplanned' };
+  return { fromDate: eventKey(nearest), kind: 'move' };
+}
+
+function eventKey(event: ClientCalendarEvent): string {
+  return event.date.slice(0, 10);
+}
+
+function isPendingPlanDay(event: ClientCalendarEvent, planDays: ClientRoutineDay[], selectedPlanDayId: string): boolean {
+  if (event.type !== 'workout' || event.isCompleted) return false;
+  const matched = resolvePlanDayFromCalendarEvent(event, planDays);
+  return (matched?.id ?? event.planDayId) === selectedPlanDayId;
+}
+
+function compareNearness(todayKey: string, leftKey: string, rightKey: string): number {
+  const leftDistance = Math.abs(Date.parse(`${leftKey}T00:00:00`) - Date.parse(`${todayKey}T00:00:00`));
+  const rightDistance = Math.abs(Date.parse(`${rightKey}T00:00:00`) - Date.parse(`${todayKey}T00:00:00`));
+  if (leftDistance !== rightDistance) return leftDistance - rightDistance;
+  return leftKey.localeCompare(rightKey);
 }
 
 export type DayStartGate = 'blocked' | 'confirm' | 'resume' | 'start';
@@ -171,19 +220,15 @@ export function resolveDayStartGate(input: {
   calendarLoading: boolean;
   selectedPlanDayId: string;
   schedule: RoutineWeekSchedule | null;
-  todaySessionPlanDayId: string | null;
-  todaySessionStatus: string | null;
+  sessions: Array<{ planDayId: string | null; status: string | null }>;
 }): DayStartGate {
-  if (input.todaySessionStatus === 'COMPLETED' || input.calendarLoading) return 'blocked';
+  if (input.calendarLoading) return 'blocked';
+  const mine = input.sessions.find((session) => session.planDayId === input.selectedPlanDayId);
+  if (mine?.status === 'COMPLETED') return 'blocked';
 
   const scheduledToday = isSelectedPlanDayScheduledForToday(input.selectedPlanDayId, input.schedule);
-  const inProgress = input.todaySessionStatus === 'IN_PROGRESS';
-  const sameOpenSession = inProgress && input.todaySessionPlanDayId === input.selectedPlanDayId;
-  if (sameOpenSession && scheduledToday) return 'resume';
+  if (mine?.status === 'IN_PROGRESS' && scheduledToday) return 'resume';
   if (!scheduledToday) return 'confirm';
-  if (inProgress && input.todaySessionPlanDayId && input.todaySessionPlanDayId !== input.selectedPlanDayId) {
-    return 'confirm';
-  }
   return 'start';
 }
 

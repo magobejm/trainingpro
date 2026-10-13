@@ -118,15 +118,17 @@ function CalendarScheduleSections(props: {
         {props.todayTest ? (
           <TodayTestCard onPress={() => props.onOpenTest(props.todayTest!.id)} schedule={props.todayTest} t={t} />
         ) : null}
-        {schedule.today ? (
+        {schedule.todayWorkouts.map((workout) => (
           <ScheduledWorkoutCard
             isActive
-            isDone={props.completedPlanDayIds.has(schedule.today.planDayId)}
-            onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(schedule.today!))}
+            isDone={props.completedPlanDayIds.has(workout.planDayId)}
+            key={`${workout.date}-${workout.planDayId}`}
+            onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout))}
             subtitle={t('mobile.client.routine.scheduledToday')}
-            workout={schedule.today}
+            workout={workout}
           />
-        ) : schedule.isRestDay ? (
+        ))}
+        {schedule.todayWorkouts.length === 0 && schedule.isRestDay ? (
           <View style={styles.restDayCard}>
             <Text style={styles.restDayTitle}>{t('mobile.client.routine.restDay')}</Text>
             <Text style={styles.restDaySubtitle}>{t('mobile.client.routine.restDayHint')}</Text>

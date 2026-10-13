@@ -1363,7 +1363,7 @@ model SessionInstance {
   incidents             Incident[]
   weeklyReports         WeeklyReport[]
 
-  @@unique([clientId, sessionDate], map: "uq_session_client_date")
+  @@index([clientId, sessionDate], map: "idx_session_client_date")
   @@index([coachMembershipId, sessionDate], map: "idx_session_coach_date")
   @@index([organizationId, sessionDate], map: "idx_session_org_date")
   @@map("session_instance")

@@ -36,9 +36,13 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
     if (schedule.mode === 'assigned') {
       return t('mobile.client.routine.restDay');
     }
-    if (schedule.today) return schedule.today.title;
-    if (schedule.isRestDay) return t('mobile.client.routine.restDay');
-    return '—';
+    if (schedule.todayWorkouts.length > 0) {
+      return schedule.todayWorkouts
+        .map((workout) => workout.title)
+        .filter(Boolean)
+        .join(' · ');
+    }
+    return t('mobile.client.routine.restDay');
   }, [schedule, t]);
   const routineSubtitle = focusLabel;
 

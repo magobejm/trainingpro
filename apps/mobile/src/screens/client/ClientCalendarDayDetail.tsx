@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { weekdayName } from '@trainerpro/shared';
 import type { DayData } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
+import { CalendarWorkoutList } from './ClientCalendarWorkouts';
 import {
   CALL_COLOR,
   CALL_REQUEST_COLOR,
@@ -23,7 +23,7 @@ type DayDetailModalProps = {
   onOpenPlanDay?: (planDayId: string) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest?: (scheduleId: string) => void;
-  exerciseCount?: number | null;
+  exerciseCountFor: (planDayId: string | null) => number | null;
 };
 
 const MODAL_ANIM = 'fade' as const;
@@ -33,17 +33,17 @@ const TEXT_LIGHT = '#f8fafc';
 export function DayDetailModal({
   data,
   dateStr,
-  exerciseCount,
+  exerciseCountFor,
   onClose,
   onOpenPlanDay,
   onOpenSession,
   onOpenTest,
 }: DayDetailModalProps): React.JSX.Element {
-  const { i18n, t } = useTranslation();
-  const date = new Date(dateStr);
+  const { t } = useTranslation();
+  const date = new Date(`${dateStr}T12:00:00`);
   const dateLabel = date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', weekday: 'long' });
-  const trainingTitle = data?.planDayTitle ?? (data?.hasPlanned || data?.hasCompleted ? '—' : null);
   const moodEmoji = data?.mood !== null && data?.mood !== undefined ? (MOOD_EMOJI[data.mood] ?? null) : null;
+  const hasWorkout = (data?.workouts.length ?? 0) > 0;
 
   return (
     <Modal animationType={MODAL_ANIM} onRequestClose={onClose} transparent>
@@ -52,9 +52,8 @@ export function DayDetailModal({
         <ScrollView>
           <Text style={styles.dateLabel}>{dateLabel}</Text>
           <View style={styles.titleRow}>
-            <Text style={styles.dayTitle}>{trainingTitle ?? t('client.calendar.detail.rest')}</Text>
             <Text style={styles.badge}>
-              {trainingTitle ? t('client.calendar.chip.workout') : t('client.calendar.chip.rest')}
+              {hasWorkout ? t('client.calendar.chip.workout') : t('client.calendar.chip.rest')}
             </Text>
           </View>
           {data?.physicalTest ? (
@@ -63,61 +62,23 @@ export function DayDetailModal({
               <Text style={styles.summaryHint}>{t('client.calendar.chip.test')}</Text>
             </Pressable>
           ) : null}
-          {trainingTitle ? (
-            <Pressable
-              disabled={!data?.planDayId}
-              onPress={() => {
-                if (data?.planDayId) onOpenPlanDay?.(data.planDayId);
-              }}
-              style={styles.summaryCard}
-            >
-              <Text style={styles.summaryTitle}>
-                {t('client.calendar.detail.exerciseCount', { count: exerciseCount ?? 0, title: trainingTitle })}
-              </Text>
-              <Text style={styles.summaryHint}>
-                {data?.planDayId ? t('client.calendar.detail.openWorkout') : t('client.calendar.detail.sessionSummary')}
-              </Text>
-            </Pressable>
-          ) : (
-            <Text style={styles.sectionValue}>{t('client.calendar.detail.restHint')}</Text>
-          )}
-          <TrainingSection data={data} language={i18n.language} moodEmoji={moodEmoji} t={t} />
+          <CalendarWorkoutList
+            data={data}
+            exerciseCountFor={exerciseCountFor}
+            onOpenPlanDay={(planDayId) => onOpenPlanDay?.(planDayId)}
+            onOpenSession={onOpenSession}
+          />
+          {moodEmoji ? <Text style={styles.mood}>{moodEmoji}</Text> : null}
           <CoachNotes notes={data?.coachNotes ?? []} />
           {data?.call ? <CallBlock time={data.call.time} /> : null}
           <ClientNoteEditor dateStr={dateStr} initial={data?.clientNote ?? ''} />
           <CallRequest dateStr={dateStr} />
-          {data?.sessionId ? (
-            <Pressable onPress={() => onOpenSession(data.sessionId!)} style={styles.btnPrimary}>
-              <Text style={styles.btnPrimaryText}>{t('client.calendar.detail.viewSession')}</Text>
-            </Pressable>
-          ) : null}
         </ScrollView>
         <Pressable onPress={onClose} style={styles.btnPrimary}>
           <Text style={styles.btnPrimaryText}>{t('client.calendar.detail.close')}</Text>
         </Pressable>
       </View>
     </Modal>
-  );
-}
-
-function TrainingSection(props: {
-  data: DayData | undefined;
-  language: string;
-  moodEmoji: string | null;
-  t: (key: string, options?: Record<string, unknown>) => string;
-}): React.JSX.Element {
-  const { data, t } = props;
-  if (!props.moodEmoji && !data?.hasCompleted) return <></>;
-  return (
-    <View style={styles.section}>
-      {props.moodEmoji ? <Text style={styles.mood}>{props.moodEmoji}</Text> : null}
-      {data?.hasCompleted ? <Text style={styles.shift}>{t('client.calendar.workout.done')}</Text> : null}
-      {data?.hasCompleted && data.shift && data.originDate ? (
-        <Text style={styles.shift}>
-          {t(`client.calendar.workout.${data.shift}`, { day: weekdayName(data.originDate, props.language) })}
-        </Text>
-      ) : null}
-    </View>
   );
 }
 

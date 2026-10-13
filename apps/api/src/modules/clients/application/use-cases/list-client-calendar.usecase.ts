@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { isWorkoutCompleted, rememberCompletedSession } from '../../../calendar/domain/completed-workout';
 import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 
 export type ClientCalendarEvent = {
@@ -85,7 +86,7 @@ export class ListClientCalendarUseCase {
           content: r.content,
           time: r.time,
           color: r.color,
-          isCompleted: r.type === 'workout' && completed.has(r.date.toISOString().slice(0, 10)),
+          isCompleted: r.type === 'workout' && isWorkoutCompleted(completed, client.id, r.date, r.planDayId),
           originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
           planDayId: r.planDayId,
           planDayTitle: r.planDay?.title,
@@ -126,9 +127,11 @@ export class ListClientCalendarUseCase {
         isCompleted: true,
         sessionDate: { gte: input.dateFrom, lte: input.dateTo },
       },
-      select: { sessionDate: true },
+      select: { planDayId: true, sessionDate: true },
     });
-    return new Set(rows.map((row) => row.sessionDate.toISOString().slice(0, 10)));
+    const keys = new Set<string>();
+    for (const row of rows) rememberCompletedSession(keys, clientId, row.sessionDate, row.planDayId);
+    return keys;
   }
 
   private async resolveClient(context: AuthContext) {

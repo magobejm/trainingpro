@@ -10,6 +10,7 @@ import {
   type ListCalendarEventsQuery,
 } from '../../domain/calendar.repository.port';
 import { pendingProposalAsEvent, withCallStatus } from '../../domain/call-status';
+import { isWorkoutCompleted, rememberCompletedSession } from '../../domain/completed-workout';
 
 @Injectable()
 export class ListCalendarEventsUseCase {
@@ -33,7 +34,8 @@ export class ListCalendarEventsUseCase {
       data: [
         ...events.map((event) => ({
           ...withCallStatus(event),
-          isCompleted: event.type === 'workout' && completed.has(this.dayKey(event.clientId, event.date)),
+          isCompleted:
+            event.type === 'workout' && isWorkoutCompleted(completed, event.clientId, event.date, event.planDayId),
         })),
         ...pending,
         ...tests,
@@ -110,13 +112,11 @@ export class ListCalendarEventsUseCase {
         sessionDate: { gte: query.dateFrom, lte: query.dateTo },
         ...(query.clientId ? { clientId: query.clientId } : {}),
       },
-      select: { clientId: true, sessionDate: true },
+      select: { clientId: true, planDayId: true, sessionDate: true },
     });
-    return new Set(rows.map((row) => this.dayKey(row.clientId, row.sessionDate)));
-  }
-
-  private dayKey(clientId: string | null, date: Date): string {
-    return `${clientId ?? ''}|${date.toISOString().slice(0, 10)}`;
+    const keys = new Set<string>();
+    for (const row of rows) rememberCompletedSession(keys, row.clientId, row.sessionDate, row.planDayId);
+    return keys;
   }
 
   private async readCoachMembership(subject: string) {

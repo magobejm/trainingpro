@@ -41,10 +41,7 @@ export async function persistEnsuredSession(
   loadTemplate: () => Promise<TemplateWrite>,
 ) {
   return prisma.$transaction(async (tx) => {
-    const existing = await tx.sessionInstance.findFirst({
-      where: { clientId: input.clientId, sessionDate: input.sessionDate },
-      include: sessionInclude(),
-    });
+    const existing = await findExistingSession(tx, input);
     if (existing && isStartedSession(existing)) {
       return existing;
     }
@@ -66,12 +63,34 @@ export async function persistEnsuredSession(
           data: createData(context, input, membership, template),
           include: sessionInclude(),
         }),
-      () =>
-        tx.sessionInstance.findFirst({
-          where: { clientId: input.clientId, sessionDate: input.sessionDate },
-          include: sessionInclude(),
-        }),
+      () => findExistingSession(tx, input),
     );
+  });
+}
+
+async function findExistingSession(tx: Prisma.TransactionClient, input: EnsureSessionInput) {
+  if (!input.planDayId) {
+    return tx.sessionInstance.findFirst({
+      where: { clientId: input.clientId, sessionDate: input.sessionDate },
+      include: sessionInclude(),
+    });
+  }
+  const samePlanDay = await tx.sessionInstance.findFirst({
+    where: { clientId: input.clientId, planDayId: input.planDayId, sessionDate: input.sessionDate },
+    include: sessionInclude(),
+    orderBy: { createdAt: 'desc' },
+  });
+  if (samePlanDay) return samePlanDay;
+  return tx.sessionInstance.findFirst({
+    where: {
+      archivedAt: null,
+      clientId: input.clientId,
+      planDayId: null,
+      sessionDate: input.sessionDate,
+      startedAt: null,
+      status: SessionStatus.PENDING,
+    },
+    include: sessionInclude(),
   });
 }
 

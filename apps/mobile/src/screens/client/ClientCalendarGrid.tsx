@@ -69,7 +69,8 @@ const CHIP_BG: Record<DayChip['kind'], string> = {
   workout: BG_PLANNED,
 };
 
-function chipLabel(chip: DayChip, t: (key: string) => string): string {
+function chipLabel(chip: DayChip, t: (key: string, options?: Record<string, unknown>) => string): string {
+  if (chip.extra) return t('client.calendar.chip.more', { count: chip.extra });
   if (chip.kind === 'rest') return t('client.calendar.chip.rest');
   if (chip.kind === 'call') return t('client.calendar.chip.call');
   if (chip.kind === 'notes') return t('client.calendar.chip.notes');
@@ -85,13 +86,16 @@ export function DayCell({ cell, data, isToday, onPress }: DayCellProps): React.J
       <Text style={[styles.cellText, !cell.isCurrentMonth && styles.cellDim, isToday && styles.cellToday]}>
         {String(cell.date.getDate())}
       </Text>
-      {chips.map((chip) => (
+      {chips.map((chip, index) => (
         <Text
-          key={chip.kind}
+          key={`${chip.kind}-${String(index)}`}
           numberOfLines={1}
           style={[
             styles.chip,
-            { backgroundColor: chip.kind === 'workout' && data?.workoutColor ? data.workoutColor : CHIP_BG[chip.kind] },
+            {
+              backgroundColor:
+                chip.kind === 'workout' ? (chip.color ?? data?.workoutColor ?? CHIP_BG.workout) : CHIP_BG[chip.kind],
+            },
             chip.kind === 'rest' && styles.chipRest,
           ]}
         >

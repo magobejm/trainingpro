@@ -1,6 +1,7 @@
 import type { ClientRoutineDay } from '../../../data/hooks/useClientRoutineQuery';
 import type { ClientCalendarEvent } from '../../../data/hooks/useClientCalendar';
 import {
+  describePendingMove,
   formatLocalDate,
   formatScheduledDateLabel,
   getWeekDateRange,
@@ -271,8 +272,7 @@ describe('resolveDayStartGate', () => {
         calendarLoading: false,
         selectedPlanDayId: 'day-2',
         schedule: calendarSchedule,
-        todaySessionPlanDayId: 'day-2',
-        todaySessionStatus: 'IN_PROGRESS',
+        sessions: [{ planDayId: 'day-2', status: 'IN_PROGRESS' }],
       }),
     ).toBe('confirm');
     expect(
@@ -280,8 +280,7 @@ describe('resolveDayStartGate', () => {
         calendarLoading: false,
         selectedPlanDayId: 'day-2',
         schedule: null,
-        todaySessionPlanDayId: null,
-        todaySessionStatus: null,
+        sessions: [],
       }),
     ).toBe('confirm');
   });
@@ -292,8 +291,7 @@ describe('resolveDayStartGate', () => {
         calendarLoading: false,
         selectedPlanDayId: 'day-1',
         schedule: calendarSchedule,
-        todaySessionPlanDayId: 'day-1',
-        todaySessionStatus: 'IN_PROGRESS',
+        sessions: [{ planDayId: 'day-1', status: 'IN_PROGRESS' }],
       }),
     ).toBe('resume');
   });
@@ -304,9 +302,67 @@ describe('resolveDayStartGate', () => {
         calendarLoading: false,
         selectedPlanDayId: 'day-1',
         schedule: calendarSchedule,
-        todaySessionPlanDayId: null,
-        todaySessionStatus: null,
+        sessions: [],
       }),
     ).toBe('start');
+  });
+
+  it('does not block another plan day when a different one is already done today', () => {
+    expect(
+      resolveDayStartGate({
+        calendarLoading: false,
+        selectedPlanDayId: 'day-2',
+        schedule: calendarSchedule,
+        sessions: [{ planDayId: 'day-1', status: 'COMPLETED' }],
+      }),
+    ).toBe('confirm');
+  });
+});
+
+describe('several workouts on one day', () => {
+  const days: ClientRoutineDay[] = [
+    { dayIndex: 1, exercises: [], id: 'day-1', notes: null, title: 'Pierna' },
+    { dayIndex: 2, exercises: [], id: 'day-2', notes: null, title: 'Empuje' },
+  ];
+
+  function workout(overrides: Partial<ClientCalendarEvent>): ClientCalendarEvent {
+    return {
+      color: null,
+      content: null,
+      date: '2026-09-01',
+      id: 'event-1',
+      planDayId: 'day-1',
+      planDayTitle: 'Pierna',
+      time: null,
+      title: 'Pierna',
+      type: 'workout',
+      ...overrides,
+    };
+  }
+
+  it('keeps two workouts planned on the same day', () => {
+    const schedule = resolveRoutineWeekSchedule(
+      days,
+      [workout({ id: 'one' }), workout({ id: 'two', planDayId: 'day-2', planDayTitle: 'Empuje', title: 'Empuje' })],
+      new Date(2026, 8, 1),
+    );
+    expect(schedule.mode).toBe('calendar');
+    if (schedule.mode !== 'calendar') return;
+    expect(schedule.todayWorkouts).toHaveLength(2);
+    expect(schedule.otherDays).toHaveLength(0);
+  });
+
+  it('describes moving the nearest pending workout, or an unplanned session', () => {
+    const moved = describePendingMove(
+      [
+        workout({ date: '2026-08-30', id: 'past', planDayId: 'day-2' }),
+        workout({ date: '2026-09-04', id: 'future', planDayId: 'day-2' }),
+      ],
+      days,
+      'day-2',
+      new Date(2026, 8, 1),
+    );
+    expect(moved).toEqual({ fromDate: '2026-08-30', kind: 'move' });
+    expect(describePendingMove([], days, 'day-2', new Date(2026, 8, 1))).toEqual({ fromDate: null, kind: 'unplanned' });
   });
 });

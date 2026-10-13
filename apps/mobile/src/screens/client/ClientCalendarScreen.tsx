@@ -49,9 +49,7 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
   const selectedKey = toDateStr(selectedDate);
   const selectedDay = dayData.get(selectedKey);
   const planDays = routineQuery.data?.planDays ?? [];
-  const exerciseCount = exerciseCountFor(planDays, selectedDay?.planDayId ?? null);
-  const popupPlanDayId = popupDate ? (dayData.get(popupDate)?.planDayId ?? null) : null;
-  const popupCount = exerciseCountFor(planDays, popupPlanDayId);
+  const countFor = (planDayId: string | null): number | null => exerciseCountFor(planDays, planDayId);
 
   const openMonth = useCallback(() => {
     setCurrentMonth(startOfMonth(selectedDate));
@@ -91,7 +89,8 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
         ) : (
           <CalendarWeekView
             data={selectedDay}
-            exerciseCount={exerciseCount}
+            dayData={dayData}
+            exerciseCountFor={countFor}
             onOpenPlanDay={openPlanDay}
             onOpenTest={(scheduleId) => onOpenTest?.(scheduleId)}
             onSelectDate={setSelectedDate}
@@ -103,7 +102,7 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
         )}
       </ScrollView>
       <DayPopup
-        count={popupCount}
+        countFor={countFor}
         data={popupDate ? dayData.get(popupDate) : undefined}
         dateStr={popupDate}
         onClose={() => setPopupDate(null)}
@@ -116,7 +115,7 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
 }
 
 function DayPopup(props: {
-  count: number | null;
+  countFor: (planDayId: string | null) => number | null;
   data: DayData | undefined;
   dateStr: string | null;
   onClose: () => void;
@@ -129,7 +128,7 @@ function DayPopup(props: {
     <DayDetailModal
       data={props.data}
       dateStr={props.dateStr}
-      exerciseCount={props.count}
+      exerciseCountFor={props.countFor}
       onClose={props.onClose}
       onOpenPlanDay={(planDayId) => {
         props.onClose();

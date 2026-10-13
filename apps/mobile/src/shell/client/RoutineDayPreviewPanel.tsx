@@ -10,11 +10,12 @@ import { useClientPlanDayQuery, useClientRoutineQuery } from '../../data/hooks/u
 import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
 import { RoutineDayScreen } from '../../screens/client/RoutineDayScreen';
 import {
+  describePendingMove,
   formatLocalDate,
-  getWeekDateRange,
+  formatScheduledDateLabel,
+  getMoveWindowRange,
   resolveDayStartGate,
   resolveRoutineWeekSchedule,
-  scheduledTitleForToday,
 } from '../../screens/client/routine-schedule.utils';
 import { ConfirmModal } from '../../theme/ConfirmModal';
 import { s } from './client-shell.styles';
@@ -32,8 +33,8 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   const ensureMutation = useEnsureClientSessionMutation();
   const today = useMemo(() => new Date(), []);
   const todayStr = formatLocalDate(today);
-  const weekRange = useMemo(() => getWeekDateRange(today), [today]);
-  const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
+  const moveWindow = useMemo(() => getMoveWindowRange(today), [today]);
+  const calendarQuery = useClientCalendarEventsQuery(moveWindow.from, moveWindow.to);
   const routineQuery = useClientRoutineQuery();
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
   const planDayQuery = useClientPlanDayQuery(props.day.id);
@@ -45,19 +46,23 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     return resolveRoutineWeekSchedule(routineQuery.data.planDays, calendarQuery.data?.data ?? [], today);
   }, [calendarQuery.data?.data, routineQuery.data, today]);
 
+  const sessions = sessionsQuery.data ?? [];
+  const move = useMemo(
+    () => describePendingMove(calendarQuery.data?.data ?? [], routineQuery.data?.planDays ?? [], resolvedDay.id, today),
+    [calendarQuery.data?.data, resolvedDay.id, routineQuery.data?.planDays, today],
+  );
   const startGate = useMemo(
     () =>
       resolveDayStartGate({
         calendarLoading: calendarQuery.isLoading,
         selectedPlanDayId: resolvedDay.id,
         schedule,
-        todaySessionPlanDayId: sessionsQuery.data?.[0]?.planDayId ?? null,
-        todaySessionStatus: sessionsQuery.data?.[0]?.status ?? null,
+        sessions,
       }),
-    [calendarQuery.isLoading, resolvedDay.id, schedule, sessionsQuery.data],
+    [calendarQuery.isLoading, resolvedDay.id, schedule, sessions],
   );
 
-  const todaySession = sessionsQuery.data?.[0] ?? null;
+  const todaySession = sessions.find((session) => session.planDayId === resolvedDay.id) ?? null;
   const isCompleted = todaySession?.status === 'COMPLETED';
   const isInProgress = todaySession?.status === 'IN_PROGRESS';
 
@@ -138,10 +143,14 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
       <ConfirmModal
         cancelLabel={t('mobile.client.dayChange.cancel')}
         confirmLabel={t('mobile.client.dayChange.confirm')}
-        message={t('mobile.client.dayChange.message', {
-          scheduled: scheduledTitleForToday(schedule) ?? t('mobile.client.routine.restDay'),
-          selected: resolvedDay.title,
-        })}
+        message={
+          move.kind === 'move'
+            ? t('mobile.client.dayChange.move', {
+                day: formatScheduledDateLabel(move.fromDate ?? ''),
+                selected: resolvedDay.title,
+              })
+            : t('mobile.client.dayChange.unplanned', { selected: resolvedDay.title })
+        }
         question={t('mobile.client.dayChange.question')}
         title={t('mobile.client.dayChange.title')}
         visible={dayChangeOpen}

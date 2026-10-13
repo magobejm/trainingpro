@@ -3568,6 +3568,58 @@
         "x-roles": ["coach", "client"]
       }
     },
+    "/calls/proposals/{proposalId}/cancel": {
+      "post": {
+        "operationId": "post_calls_proposals_proposalId_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "proposalId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /calls/proposals/{proposalId}/cancel",
+        "x-controller": "CallsController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
     "/calls/proposals/{proposalId}/counter": {
       "post": {
         "operationId": "post_calls_proposals_proposalId_counter",

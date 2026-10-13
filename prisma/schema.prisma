@@ -149,6 +149,8 @@ model User {
 }
 
 model OrganizationMember {
+  brandAccent              String?                   @map("brand_accent") @db.VarChar(20)
+  brandLogoPath            String?                   @map("brand_logo_path") @db.VarChar(500)
   id                       String                    @id @default(uuid()) @db.Uuid
   organizationId           String                    @map("organization_id") @db.Uuid
   userId                   String                    @map("user_id") @db.Uuid

@@ -1,4 +1,7 @@
 import { Module } from '@nestjs/common';
+import { FilesModule } from '../files/files.module';
+import { CoachBrandingService } from './application/coach-branding.service';
+import { CoachBrandingController } from './presentation/controllers/coach-branding.controller';
 import { AuthModule } from '../auth/auth.module';
 import { ActivateCoachUseCase } from './application/activate-coach.usecase';
 import { ArchiveCoachUseCase } from './application/archive-coach.usecase';
@@ -13,9 +16,11 @@ import { CoachAdminRepositoryPrisma } from './infra/prisma/coach-admin.repositor
 import { CoachesAdminController } from './presentation/controllers/coaches-admin.controller';
 
 @Module({
-  imports: [AuthModule],
-  controllers: [CoachesAdminController],
+  imports: [AuthModule, FilesModule],
+  controllers: [CoachesAdminController, CoachBrandingController],
+  exports: [CoachBrandingService],
   providers: [
+    CoachBrandingService,
     ActivateCoachUseCase,
     ArchiveCoachUseCase,
     CoachAuthProvisionerService,

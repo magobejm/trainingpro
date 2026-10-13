@@ -1,3 +1,5 @@
+import type { ReportPdfBranding } from '../../domain/report-pdf-renderer.port';
+
 const PAGE_WIDTH = 612;
 const PAGE_HEIGHT = 792;
 const MARGIN = 50;
@@ -106,9 +108,9 @@ const HELVETICA_WIDTHS: Record<string, number> = {
   '¿': 556,
 };
 
-export function buildSimplePdf(lines: string[]): Buffer {
-  const pages = paginate(wrapLines(lines));
-  return assemblePdf(buildObjects(pages));
+export function buildSimplePdf(lines: string[], branding?: ReportPdfBranding): Buffer {
+  const pages = paginate(wrapLines(lines), Boolean(branding));
+  return assemblePdf(buildObjects(pages, branding));
 }
 
 function wrapLines(lines: string[]): string[] {
@@ -164,8 +166,8 @@ function splitWord(word: string): string[] {
   return pieces;
 }
 
-function paginate(lines: string[]): string[][] {
-  const capacity = linesPerPage();
+function paginate(lines: string[], branded: boolean): string[][] {
+  const capacity = linesPerPage() - (branded ? 4 : 0);
   const pages: string[][] = [];
   for (let index = 0; index < lines.length; index += capacity) {
     pages.push(lines.slice(index, index + capacity));
@@ -181,7 +183,8 @@ function linesPerPage(): number {
   return count;
 }
 
-function buildObjects(pages: string[][]): Buffer[] {
+function buildObjects(pages: string[][], branding?: ReportPdfBranding): Buffer[] {
+  const imageId = branding?.logo ? 4 + pages.length * 2 : undefined;
   const kids = pages.map((_, index) => `${pageObjectId(index)} 0 R`).join(' ');
   const objects = [
     pdfObject(1, '<< /Type /Catalog /Pages 2 0 R >>'),
@@ -189,21 +192,24 @@ function buildObjects(pages: string[][]): Buffer[] {
     pdfObject(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),
   ];
   pages.forEach((page, index) => {
-    objects.push(pdfObject(pageObjectId(index), pageDictionary(contentObjectId(index))));
-    objects.push(pdfStreamObject(contentObjectId(index), pageStream(page)));
+    objects.push(pdfObject(pageObjectId(index), pageDictionary(contentObjectId(index), imageId)));
+    objects.push(pdfStreamObject(contentObjectId(index), pageStream(page, branding)));
   });
+  if (imageId && branding?.logo) objects.push(imageObject(imageId, branding.logo));
   return objects;
 }
 
-function pageDictionary(contentId: number): string {
+function pageDictionary(contentId: number, imageId?: number): string {
+  const imageResources = imageId ? `/XObject << /BrandLogo ${imageId} 0 R >>` : '';
   return (
     '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] ' +
-    `/Resources << /Font << /F1 3 0 R >> >> /Contents ${contentId} 0 R >>`
+    `/Resources << /Font << /F1 3 0 R >> ${imageResources} >> /Contents ${contentId} 0 R >>`
   );
 }
 
-function pageStream(lines: string[]): Buffer {
-  const commands = ['BT', `/F1 ${FONT_SIZE} Tf`, `${LEADING} TL`, `${MARGIN} ${FIRST_BASELINE} Td`];
+function pageStream(lines: string[], branding?: ReportPdfBranding): Buffer {
+  const baseline = FIRST_BASELINE - (branding ? 64 : 0);
+  const commands = [...headerCommands(branding), 'BT', `/F1 ${FONT_SIZE} Tf`, `${LEADING} TL`, `${MARGIN} ${baseline} Td`];
   lines.forEach((line, index) => {
     if (index > 0) {
       commands.push('T*');
@@ -212,6 +218,33 @@ function pageStream(lines: string[]): Buffer {
   });
   commands.push('ET');
   return Buffer.from(`${commands.join('\n')}\n`, 'latin1');
+}
+
+function headerCommands(branding?: ReportPdfBranding): string[] {
+  if (!branding) return [];
+  const accents: Record<string, string> = {
+    blue: '0.114 0.306 0.847', indigo: '0.263 0.220 0.792', violet: '0.427 0.157 0.851',
+    teal: '0.059 0.463 0.431', green: '0.082 0.502 0.239', orange: '0.761 0.255 0.047',
+    pink: '0.745 0.094 0.365', slate: '0.200 0.255 0.333',
+  };
+  const commands = ['q', '1 1 1 rg', '0 0 612 792 re f', `${accents[branding.accent ?? 'blue'] ?? accents.blue} rg`,
+    '50 679 512 3 re f', 'Q'];
+  if (branding.logo) {
+    const scale = Math.min(140 / branding.logo.width, 42 / branding.logo.height);
+    const width = (branding.logo.width * scale).toFixed(2);
+    const height = (branding.logo.height * scale).toFixed(2);
+    commands.push(`q ${width} 0 0 ${height} 50 697 cm /BrandLogo Do Q`);
+  } else {
+    commands.push('BT /F1 16 Tf 50 712 Td (TrainerPro) Tj ET');
+  }
+  return commands;
+}
+
+function imageObject(id: number, logo: NonNullable<ReportPdfBranding['logo']>): Buffer {
+  const dictionary = `<< /Type /XObject /Subtype /Image /Width ${logo.width} /Height ${logo.height} ` +
+    `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logo.data.length} >>`;
+  return Buffer.concat([Buffer.from(`${id} 0 obj\n${dictionary}\nstream\n`, 'latin1'), logo.data,
+    Buffer.from('\nendstream\nendobj\n', 'latin1')]);
 }
 
 function escapePdfText(input: string): string {

@@ -1,4 +1,4 @@
-const PRIVATE_PREFIXES = ['clients/', 'chat/'];
+const PRIVATE_PREFIXES = ['clients/', 'chat/', 'coaches/'];
 
 export function normalizeStoragePath(path: string): string {
   const normalized = path.replace(/\\/g, '/').replace(/^\/+/, '');

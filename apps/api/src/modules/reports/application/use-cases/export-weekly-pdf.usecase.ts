@@ -7,12 +7,14 @@ import type { CardioLogRow, SessionSrpeRow, StrengthLogRow } from '../../../prog
 import { REPORT_PDF_RENDERER, type ReportPdfRenderer } from '../../domain/report-pdf-renderer.port';
 import type { ReportPdfFile, ReportPdfInput } from '../../domain/report-pdf.models';
 import { buildWeeklyReportLines } from '../weekly-report-lines';
+import { CoachBrandingService } from '../../../coaches/application/coach-branding.service';
 
 @Injectable()
 export class ExportWeeklyPdfUseCase {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(REPORT_PDF_RENDERER) private readonly pdfRenderer: ReportPdfRenderer,
+    private readonly brandingService: CoachBrandingService,
   ) {}
 
   async execute(context: AuthContext, input: ReportPdfInput): Promise<ReportPdfFile> {
@@ -25,8 +27,9 @@ export class ExportWeeklyPdfUseCase {
       this.readSrpeRows(input.clientId, input.from, input.to),
     ]);
     const lines = buildWeeklyReportLines({ cardioRows, srpeRows, strengthRows, weeklyReports }, input);
+    const branding = await this.brandingService.pdfBranding(context);
     return {
-      data: this.pdfRenderer.render(lines),
+      data: this.pdfRenderer.render(lines, branding.accent || branding.logo ? branding : undefined),
       fileName: `report-${input.clientId}-${toDateKey(input.to)}.pdf`,
     };
   }

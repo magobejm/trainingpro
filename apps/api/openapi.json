@@ -16,7 +16,11 @@
                     "type": "string"
                   },
                   "kind": {
-                    "enum": ["AUDIO", "IMAGE", "PDF"],
+                    "enum": [
+                      "AUDIO",
+                      "IMAGE",
+                      "PDF"
+                    ],
                     "type": "string"
                   },
                   "mimeType": {
@@ -39,7 +43,15 @@
                     "type": "string"
                   }
                 },
-                "required": ["fileName", "id", "kind", "mimeType", "publicUrl", "sizeBytes", "storagePath"],
+                "required": [
+                  "fileName",
+                  "id",
+                  "kind",
+                  "mimeType",
+                  "publicUrl",
+                  "sizeBytes",
+                  "storagePath"
+                ],
                 "type": "object"
               },
               "type": "array"
@@ -56,22 +68,39 @@
                       "type": "string"
                     },
                     "initiatedBy": {
-                      "enum": ["COACH", "CLIENT"],
+                      "enum": [
+                        "COACH",
+                        "CLIENT"
+                      ],
                       "type": "string"
                     },
                     "lastProposedBy": {
-                      "enum": ["COACH", "CLIENT"],
+                      "enum": [
+                        "COACH",
+                        "CLIENT"
+                      ],
                       "type": "string"
                     },
                     "proposedTime": {
                       "type": "string"
                     },
                     "status": {
-                      "enum": ["accepted", "cancelled", "pending"],
+                      "enum": [
+                        "accepted",
+                        "cancelled",
+                        "pending"
+                      ],
                       "type": "string"
                     }
                   },
-                  "required": ["date", "id", "initiatedBy", "lastProposedBy", "proposedTime", "status"],
+                  "required": [
+                    "date",
+                    "id",
+                    "initiatedBy",
+                    "lastProposedBy",
+                    "proposedTime",
+                    "status"
+                  ],
                   "type": "object"
                 },
                 {
@@ -89,7 +118,10 @@
               "type": "string"
             },
             "senderRole": {
-              "enum": ["COACH", "CLIENT"],
+              "enum": [
+                "COACH",
+                "CLIENT"
+              ],
               "type": "string"
             },
             "senderSubject": {
@@ -288,7 +320,13 @@
                         "type": "number"
                       }
                     },
-                    "required": ["code", "id", "isDefault", "label", "sortOrder"],
+                    "required": [
+                      "code",
+                      "id",
+                      "isDefault",
+                      "label",
+                      "sortOrder"
+                    ],
                     "type": "object"
                   },
                   "type": "array"
@@ -332,7 +370,15 @@
                         "type": "string"
                       }
                     },
-                    "required": ["archived", "clientId", "createdAt", "id", "imagePath", "imageUrl", "updatedAt"],
+                    "required": [
+                      "archived",
+                      "clientId",
+                      "createdAt",
+                      "id",
+                      "imagePath",
+                      "imageUrl",
+                      "updatedAt"
+                    ],
                     "type": "object"
                   },
                   "type": "array"
@@ -357,7 +403,12 @@
                   "additionalProperties": false,
                   "properties": {
                     "level": {
-                      "enum": ["amber", "green", "none", "red"],
+                      "enum": [
+                        "amber",
+                        "green",
+                        "none",
+                        "red"
+                      ],
                       "type": "string"
                     },
                     "reasons": {
@@ -368,7 +419,13 @@
                             "type": "number"
                           },
                           "code": {
-                            "enum": ["adherence_low", "inactive", "incident_open", "incident_severe", "mood_low"],
+                            "enum": [
+                              "adherence_low",
+                              "inactive",
+                              "incident_open",
+                              "incident_severe",
+                              "mood_low"
+                            ],
                             "type": "string"
                           },
                           "days": {
@@ -378,13 +435,18 @@
                             "type": "number"
                           }
                         },
-                        "required": ["code"],
+                        "required": [
+                          "code"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
                     }
                   },
-                  "required": ["level", "reasons"],
+                  "required": [
+                    "level",
+                    "reasons"
+                  ],
                   "type": "object"
                 },
                 "trainingPlan": {
@@ -397,7 +459,10 @@
                       "type": "string"
                     }
                   },
-                  "required": ["id", "name"],
+                  "required": [
+                    "id",
+                    "name"
+                  ],
                   "type": "object"
                 },
                 "trainingPlanId": {
@@ -469,7 +534,9 @@
             "type": "array"
           }
         },
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "type": "object"
       },
       "HttpError": {
@@ -502,7 +569,11 @@
             "type": "integer"
           }
         },
-        "required": ["error", "message", "statusCode"],
+        "required": [
+          "error",
+          "message",
+          "statusCode"
+        ],
         "type": "object"
       },
       "SessionView": {
@@ -572,7 +643,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -801,7 +875,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -903,7 +981,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1121,7 +1202,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -1222,7 +1307,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1451,7 +1539,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -1542,7 +1634,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1771,7 +1866,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -1865,7 +1964,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -1921,7 +2023,12 @@
                               "type": "string"
                             }
                           },
-                          "required": ["avgHeartRate", "durationMinutesDone", "effortRpe", "sessionSportBlockId"],
+                          "required": [
+                            "avgHeartRate",
+                            "durationMinutesDone",
+                            "effortRpe",
+                            "sessionSportBlockId"
+                          ],
                           "type": "object"
                         },
                         {
@@ -2067,7 +2174,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -2277,7 +2388,10 @@
                     "groupType": {
                       "anyOf": [
                         {
-                          "enum": ["CIRCUIT", "SUPERSET"],
+                          "enum": [
+                            "CIRCUIT",
+                            "SUPERSET"
+                          ],
                           "type": "string"
                         },
                         {
@@ -2506,7 +2620,11 @@
                             ]
                           }
                         },
-                        "required": ["advancedTechnique", "note", "setIndex"],
+                        "required": [
+                          "advancedTechnique",
+                          "note",
+                          "setIndex"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -2724,7 +2842,10 @@
           "startMode": {
             "anyOf": [
               {
-                "enum": ["INTERACTIVE", "TIMER"],
+                "enum": [
+                  "INTERACTIVE",
+                  "TIMER"
+                ],
                 "type": "string"
               },
               {
@@ -2743,7 +2864,11 @@
             ]
           },
           "status": {
-            "enum": ["COMPLETED", "IN_PROGRESS", "PENDING"],
+            "enum": [
+              "COMPLETED",
+              "IN_PROGRESS",
+              "PENDING"
+            ],
             "type": "string"
           },
           "templateId": {
@@ -2831,11 +2956,18 @@
                                         "type": "string"
                                       },
                                       "mode": {
-                                        "enum": ["CLIENT_INPUT", "COACH_INPUT", "HIDDEN"],
+                                        "enum": [
+                                          "CLIENT_INPUT",
+                                          "COACH_INPUT",
+                                          "HIDDEN"
+                                        ],
                                         "type": "string"
                                       }
                                     },
-                                    "required": ["fieldKey", "mode"],
+                                    "required": [
+                                      "fieldKey",
+                                      "mode"
+                                    ],
                                     "type": "object"
                                   },
                                   "type": "array"
@@ -2880,7 +3012,10 @@
                                           ]
                                         }
                                       },
-                                      "required": ["maxKg", "minKg"],
+                                      "required": [
+                                        "maxKg",
+                                        "minKg"
+                                      ],
                                       "type": "object"
                                     },
                                     "perSetWeightRanges": {
@@ -2908,7 +3043,10 @@
                                             ]
                                           }
                                         },
-                                        "required": ["maxKg", "minKg"],
+                                        "required": [
+                                          "maxKg",
+                                          "minKg"
+                                        ],
                                         "type": "object"
                                       },
                                       "type": "array"
@@ -3010,7 +3148,12 @@
                             "type": "string"
                           }
                         },
-                        "required": ["dayIndex", "exercises", "id", "title"],
+                        "required": [
+                          "dayIndex",
+                          "exercises",
+                          "id",
+                          "title"
+                        ],
                         "type": "object"
                       },
                       "type": "array"
@@ -3022,7 +3165,10 @@
                       "type": "string"
                     },
                     "scope": {
-                      "enum": ["COACH", "GLOBAL"],
+                      "enum": [
+                        "COACH",
+                        "GLOBAL"
+                      ],
                       "type": "string"
                     },
                     "templateVersion": {
@@ -3060,14 +3206,21 @@
                       "type": "string"
                     },
                     "kind": {
-                      "enum": ["CARDIO", "ROUTINE", "STRENGTH"],
+                      "enum": [
+                        "CARDIO",
+                        "ROUTINE",
+                        "STRENGTH"
+                      ],
                       "type": "string"
                     },
                     "name": {
                       "type": "string"
                     },
                     "scope": {
-                      "enum": ["COACH", "GLOBAL"],
+                      "enum": [
+                        "COACH",
+                        "GLOBAL"
+                      ],
                       "type": "string"
                     },
                     "templateVersion": {
@@ -3077,7 +3230,16 @@
                       "type": "string"
                     }
                   },
-                  "required": ["createdAt", "days", "id", "kind", "name", "scope", "templateVersion", "updatedAt"],
+                  "required": [
+                    "createdAt",
+                    "days",
+                    "id",
+                    "kind",
+                    "name",
+                    "scope",
+                    "templateVersion",
+                    "updatedAt"
+                  ],
                   "type": "object"
                 }
               ]
@@ -3085,7 +3247,9 @@
             "type": "array"
           }
         },
-        "required": ["items"],
+        "required": [
+          "items"
+        ],
         "type": "object"
       }
     },
@@ -3158,9 +3322,14 @@
         "summary": "POST /ai-evaluator/analyze",
         "x-controller": "AiEvaluatorController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/calendar": {
@@ -3237,10 +3406,20 @@
         ],
         "summary": "GET /calendar",
         "x-controller": "CalendarController",
-        "x-filters": ["clientId", "coachOnly", "dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "coachOnly",
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_calendar",
@@ -3290,9 +3469,14 @@
         "summary": "POST /calendar",
         "x-controller": "CalendarController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/calendar/clear-future-workouts": {
@@ -3344,9 +3528,14 @@
         "summary": "POST /calendar/clear-future-workouts",
         "x-controller": "CalendarController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/calendar/{eventId}": {
@@ -3396,9 +3585,14 @@
         "summary": "DELETE /calendar/{eventId}",
         "x-controller": "CalendarController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_calendar_eventId",
@@ -3457,9 +3651,14 @@
         "summary": "PATCH /calendar/{eventId}",
         "x-controller": "CalendarController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/calls/proposals": {
@@ -3511,9 +3710,15 @@
         "summary": "POST /calls/proposals",
         "x-controller": "CallsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/calls/proposals/{proposalId}/accept": {
@@ -3563,9 +3768,15 @@
         "summary": "POST /calls/proposals/{proposalId}/accept",
         "x-controller": "CallsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/calls/proposals/{proposalId}/cancel": {
@@ -3615,9 +3826,15 @@
         "summary": "POST /calls/proposals/{proposalId}/cancel",
         "x-controller": "CallsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/calls/proposals/{proposalId}/counter": {
@@ -3678,9 +3895,15 @@
         "summary": "POST /calls/proposals/{proposalId}/counter",
         "x-controller": "CallsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/chat/messages": {
@@ -3773,10 +3996,19 @@
         ],
         "summary": "GET /chat/messages",
         "x-controller": "ChatController",
-        "x-filters": ["before", "threadId"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "before",
+          "threadId"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       },
       "post": {
         "operationId": "post_chat_messages",
@@ -3826,9 +4058,15 @@
         "summary": "POST /chat/messages",
         "x-controller": "ChatController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/chat/thread": {
@@ -3878,10 +4116,18 @@
         ],
         "summary": "GET /chat/thread",
         "x-controller": "ChatController",
-        "x-filters": ["clientId"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/clients": {
@@ -3969,9 +4215,14 @@
         "summary": "GET /clients",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_clients",
@@ -4021,9 +4272,14 @@
         "summary": "POST /clients",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/catalog/objectives": {
@@ -4064,9 +4320,14 @@
         "summary": "GET /clients/catalog/objectives",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/me": {
@@ -4107,9 +4368,14 @@
         "summary": "GET /clients/me",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/calendar": {
@@ -4168,10 +4434,18 @@
         ],
         "summary": "GET /clients/me/calendar",
         "x-controller": "ClientSelfController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/calendar-summary": {
@@ -4230,10 +4504,18 @@
         ],
         "summary": "GET /clients/me/calendar-summary",
         "x-controller": "ClientSelfController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/calendar/notes/{date}": {
@@ -4294,9 +4576,14 @@
         "summary": "PUT /clients/me/calendar/notes/{date}",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/exercises/{sourceExerciseId}/history": {
@@ -4355,9 +4642,16 @@
         "summary": "GET /clients/me/exercises/{sourceExerciseId}/history",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": ["limit"],
-        "x-roles": ["client"]
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [
+          "limit"
+        ],
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/cardio-methods": {
@@ -4407,10 +4701,17 @@
         ],
         "summary": "GET /clients/me/library/cardio-methods",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/exercises": {
@@ -4460,10 +4761,17 @@
         ],
         "summary": "GET /clients/me/library/exercises",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/isometric-exercises": {
@@ -4513,10 +4821,17 @@
         ],
         "summary": "GET /clients/me/library/isometric-exercises",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/mobility-exercises": {
@@ -4566,10 +4881,17 @@
         ],
         "summary": "GET /clients/me/library/mobility-exercises",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/plio-exercises": {
@@ -4619,10 +4941,17 @@
         ],
         "summary": "GET /clients/me/library/plio-exercises",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/library/sports": {
@@ -4672,10 +5001,17 @@
         ],
         "summary": "GET /clients/me/library/sports",
         "x-controller": "ClientLibraryController",
-        "x-filters": ["q"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "q"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/nutrition": {
@@ -4716,9 +5052,14 @@
         "summary": "GET /clients/me/nutrition",
         "x-controller": "ClientNutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/physical-test-schedules": {
@@ -4777,10 +5118,18 @@
         ],
         "summary": "GET /clients/me/physical-test-schedules",
         "x-controller": "ClientPhysicalTestsController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/physical-tests": {
@@ -4821,9 +5170,14 @@
         "summary": "GET /clients/me/physical-tests",
         "x-controller": "ClientPhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/physical-tests/{testId}/results": {
@@ -4884,9 +5238,14 @@
         "summary": "POST /clients/me/physical-tests/{testId}/results",
         "x-controller": "ClientPhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/plan-days/{planDayId}": {
@@ -4936,9 +5295,14 @@
         "summary": "GET /clients/me/plan-days/{planDayId}",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/routine": {
@@ -4979,9 +5343,14 @@
         "summary": "GET /clients/me/routine",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/sessions": {
@@ -5040,10 +5409,18 @@
         ],
         "summary": "GET /clients/me/sessions",
         "x-controller": "ClientSelfController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/sessions/ensure": {
@@ -5095,9 +5472,14 @@
         "summary": "POST /clients/me/sessions/ensure",
         "x-controller": "ClientSelfController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/me/wellness": {
@@ -5156,10 +5538,18 @@
         ],
         "summary": "GET /clients/me/wellness",
         "x-controller": "ClientSelfController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/clients/{clientId}": {
@@ -5209,9 +5599,15 @@
         "summary": "DELETE /clients/{clientId}",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "get": {
         "operationId": "get_clients_clientId",
@@ -5259,9 +5655,15 @@
         "summary": "GET /clients/{clientId}",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_clients_clientId",
@@ -5320,9 +5722,15 @@
         "summary": "PATCH /clients/{clientId}",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/avatar": {
@@ -5383,9 +5791,15 @@
         "summary": "POST /clients/{clientId}/avatar",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/management-sections": {
@@ -5435,9 +5849,15 @@
         "summary": "GET /clients/{clientId}/management-sections",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_clients_clientId_management_sections",
@@ -5496,9 +5916,15 @@
         "summary": "PATCH /clients/{clientId}/management-sections",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/physical-test-schedules": {
@@ -5548,9 +5974,14 @@
         "summary": "GET /clients/{clientId}/physical-test-schedules",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_clients_clientId_physical_test_schedules",
@@ -5609,9 +6040,14 @@
         "summary": "POST /clients/{clientId}/physical-test-schedules",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/physical-test-schedules/{scheduleId}": {
@@ -5669,9 +6105,14 @@
         "summary": "DELETE /clients/{clientId}/physical-test-schedules/{scheduleId}",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/physical-tests": {
@@ -5721,9 +6162,14 @@
         "summary": "GET /clients/{clientId}/physical-tests",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/physical-tests/{testId}": {
@@ -5781,9 +6227,14 @@
         "summary": "DELETE /clients/{clientId}/physical-tests/{testId}",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_clients_clientId_physical_tests_testId",
@@ -5839,9 +6290,14 @@
         "summary": "POST /clients/{clientId}/physical-tests/{testId}",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/physical-tests/{testId}/results": {
@@ -5910,9 +6366,14 @@
         "summary": "POST /clients/{clientId}/physical-tests/{testId}/results",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/progress-photos": {
@@ -5962,9 +6423,15 @@
         "summary": "GET /clients/{clientId}/progress-photos",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_clients_clientId_progress_photos",
@@ -6023,9 +6490,15 @@
         "summary": "POST /clients/{clientId}/progress-photos",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/progress-photos/upload": {
@@ -6086,9 +6559,15 @@
         "summary": "POST /clients/{clientId}/progress-photos/upload",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/progress-photos/{photoId}": {
@@ -6146,9 +6625,15 @@
         "summary": "DELETE /clients/{clientId}/progress-photos/{photoId}",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_clients_clientId_progress_photos_photoId",
@@ -6215,9 +6700,15 @@
         "summary": "PATCH /clients/{clientId}/progress-photos/{photoId}",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/reset-password": {
@@ -6267,9 +6758,15 @@
         "summary": "POST /clients/{clientId}/reset-password",
         "x-controller": "ClientsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/timeline": {
@@ -6345,10 +6842,21 @@
         ],
         "summary": "GET /clients/{clientId}/timeline",
         "x-controller": "ClientsController",
-        "x-filters": ["before", "beforeId"],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
-        "x-pagination": ["limit"],
-        "x-roles": ["coach"]
+        "x-filters": [
+          "before",
+          "beforeId"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
+        "x-pagination": [
+          "limit"
+        ],
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/clients/{clientId}/wellness": {
@@ -6415,10 +6923,19 @@
         ],
         "summary": "GET /clients/{clientId}/wellness",
         "x-controller": "ClientsController",
-        "x-filters": ["dateFrom", "dateTo"],
-        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-filters": [
+          "dateFrom",
+          "dateTo"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "ClientOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/coaches": {
@@ -6468,10 +6985,17 @@
         ],
         "summary": "GET /coaches",
         "x-controller": "CoachesAdminController",
-        "x-filters": ["archived"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "archived"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       },
       "post": {
         "operationId": "post_coaches",
@@ -6521,9 +7045,213 @@
         "summary": "POST /coaches",
         "x-controller": "CoachesAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
+      }
+    },
+    "/coaches/me/branding": {
+      "get": {
+        "operationId": "get_coaches_me_branding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /coaches/me/branding",
+        "x-controller": "CoachBrandingController",
+        "x-filters": [],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [],
+        "x-roles": [
+          "coach"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_coaches_me_branding",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PATCH /coaches/me/branding",
+        "x-controller": "CoachBrandingController",
+        "x-filters": [],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [],
+        "x-roles": [
+          "coach"
+        ]
+      }
+    },
+    "/coaches/me/branding/logo": {
+      "delete": {
+        "operationId": "delete_coaches_me_branding_logo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "DELETE /coaches/me/branding/logo",
+        "x-controller": "CoachBrandingController",
+        "x-filters": [],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [],
+        "x-roles": [
+          "coach"
+        ]
+      },
+      "post": {
+        "operationId": "post_coaches_me_branding_logo",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Archivo",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /coaches/me/branding/logo",
+        "x-controller": "CoachBrandingController",
+        "x-filters": [],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [],
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/coaches/{coachMembershipId}": {
@@ -6573,9 +7301,14 @@
         "summary": "DELETE /coaches/{coachMembershipId}",
         "x-controller": "CoachesAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/coaches/{coachMembershipId}/activate": {
@@ -6625,9 +7358,14 @@
         "summary": "PATCH /coaches/{coachMembershipId}/activate",
         "x-controller": "CoachesAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/coaches/{coachMembershipId}/deactivate": {
@@ -6677,9 +7415,14 @@
         "summary": "PATCH /coaches/{coachMembershipId}/deactivate",
         "x-controller": "CoachesAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/coaches/{coachMembershipId}/restore": {
@@ -6729,9 +7472,14 @@
         "summary": "POST /coaches/{coachMembershipId}/restore",
         "x-controller": "CoachesAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/files/chat-upload": {
@@ -6783,9 +7531,15 @@
         "summary": "POST /files/chat-upload",
         "x-controller": "ChatUploadPolicyController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/files/private/*path": {
@@ -6818,7 +7572,10 @@
         },
         "summary": "GET /files/private/*path",
         "x-controller": "PrivateMediaController",
-        "x-filters": ["exp", "sig"],
+        "x-filters": [
+          "exp",
+          "sig"
+        ],
         "x-guards": [],
         "x-pagination": [],
         "x-roles": []
@@ -6873,9 +7630,15 @@
         "summary": "POST /files/upload-policy",
         "x-controller": "ChatUploadPolicyController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/health": {
@@ -6951,10 +7714,19 @@
         ],
         "summary": "GET /incidents",
         "x-controller": "IncidentsController",
-        "x-filters": ["clientId", "status"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "status"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       },
       "post": {
         "operationId": "post_incidents",
@@ -7004,9 +7776,14 @@
         "summary": "POST /incidents",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/incidents/{incidentId}": {
@@ -7056,9 +7833,14 @@
         "summary": "DELETE /incidents/{incidentId}",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       },
       "get": {
         "operationId": "get_incidents_incidentId",
@@ -7106,9 +7888,15 @@
         "summary": "GET /incidents/{incidentId}",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/incidents/{incidentId}/adjustment-draft": {
@@ -7169,9 +7957,14 @@
         "summary": "POST /incidents/{incidentId}/adjustment-draft",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/incidents/{incidentId}/respond": {
@@ -7232,9 +8025,14 @@
         "summary": "POST /incidents/{incidentId}/respond",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/incidents/{incidentId}/review": {
@@ -7284,9 +8082,14 @@
         "summary": "POST /incidents/{incidentId}/review",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/incidents/{incidentId}/tag": {
@@ -7347,9 +8150,14 @@
         "summary": "POST /incidents/{incidentId}/tag",
         "x-controller": "IncidentsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/cardio-methods": {
@@ -7408,10 +8216,18 @@
         ],
         "summary": "GET /library/cardio-methods",
         "x-controller": "LibraryController",
-        "x-filters": ["methodTypeId", "query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "methodTypeId",
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_cardio_methods",
@@ -7461,9 +8277,14 @@
         "summary": "POST /library/cardio-methods",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/cardio-methods/{itemId}": {
@@ -7513,9 +8334,14 @@
         "summary": "DELETE /library/cardio-methods/{itemId}",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_cardio_methods_itemId",
@@ -7574,9 +8400,14 @@
         "summary": "PATCH /library/cardio-methods/{itemId}",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs": {
@@ -7617,9 +8448,14 @@
         "summary": "GET /library/catalogs",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs/cardio-method-types": {
@@ -7660,9 +8496,14 @@
         "summary": "GET /library/catalogs/cardio-method-types",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs/isometric-types": {
@@ -7703,9 +8544,14 @@
         "summary": "GET /library/catalogs/isometric-types",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs/mobility-types": {
@@ -7746,9 +8592,14 @@
         "summary": "GET /library/catalogs/mobility-types",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs/muscle-groups": {
@@ -7789,9 +8640,14 @@
         "summary": "GET /library/catalogs/muscle-groups",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/catalogs/plio-types": {
@@ -7832,9 +8688,14 @@
         "summary": "GET /library/catalogs/plio-types",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/exercises": {
@@ -7893,10 +8754,18 @@
         ],
         "summary": "GET /library/exercises",
         "x-controller": "LibraryController",
-        "x-filters": ["muscleGroupId", "query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "muscleGroupId",
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_exercises",
@@ -7946,9 +8815,14 @@
         "summary": "POST /library/exercises",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/exercises/all": {
@@ -7989,9 +8863,14 @@
         "summary": "GET /library/exercises/all",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/exercises/unified": {
@@ -8043,9 +8922,14 @@
         "summary": "POST /library/exercises/unified",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/exercises/unified/{id}": {
@@ -8106,9 +8990,14 @@
         "summary": "PATCH /library/exercises/unified/{id}",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/exercises/{itemId}": {
@@ -8158,9 +9047,14 @@
         "summary": "DELETE /library/exercises/{itemId}",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_exercises_itemId",
@@ -8219,9 +9113,14 @@
         "summary": "PATCH /library/exercises/{itemId}",
         "x-controller": "LibraryController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/foods": {
@@ -8298,10 +9197,20 @@
         ],
         "summary": "GET /library/foods",
         "x-controller": "LibraryFoodController",
-        "x-filters": ["foodCategory", "foodType", "query", "servingUnit"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "foodCategory",
+          "foodType",
+          "query",
+          "servingUnit"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_foods",
@@ -8351,9 +9260,14 @@
         "summary": "POST /library/foods",
         "x-controller": "LibraryFoodController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/foods/{itemId}": {
@@ -8403,9 +9317,14 @@
         "summary": "DELETE /library/foods/{itemId}",
         "x-controller": "LibraryFoodController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_foods_itemId",
@@ -8464,9 +9383,14 @@
         "summary": "PATCH /library/foods/{itemId}",
         "x-controller": "LibraryFoodController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/isometrics": {
@@ -8525,10 +9449,18 @@
         ],
         "summary": "GET /library/isometrics",
         "x-controller": "LibrarySpecializedController",
-        "x-filters": ["isometricType", "query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "isometricType",
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_isometrics",
@@ -8578,9 +9510,14 @@
         "summary": "POST /library/isometrics",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/isometrics/{itemId}": {
@@ -8630,9 +9567,14 @@
         "summary": "DELETE /library/isometrics/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_isometrics_itemId",
@@ -8691,9 +9633,14 @@
         "summary": "PATCH /library/isometrics/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/media-image": {
@@ -8745,9 +9692,14 @@
         "summary": "POST /library/media-image",
         "x-controller": "LibraryMediaController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/mobility": {
@@ -8806,10 +9758,18 @@
         ],
         "summary": "GET /library/mobility",
         "x-controller": "LibrarySpecializedController",
-        "x-filters": ["mobilityType", "query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "mobilityType",
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_mobility",
@@ -8859,9 +9819,14 @@
         "summary": "POST /library/mobility",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/mobility/{itemId}": {
@@ -8911,9 +9876,14 @@
         "summary": "DELETE /library/mobility/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_mobility_itemId",
@@ -8972,9 +9942,14 @@
         "summary": "PATCH /library/mobility/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/plyometrics": {
@@ -9033,10 +10008,18 @@
         ],
         "summary": "GET /library/plyometrics",
         "x-controller": "LibrarySpecializedController",
-        "x-filters": ["plioType", "query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "plioType",
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_plyometrics",
@@ -9086,9 +10069,14 @@
         "summary": "POST /library/plyometrics",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/plyometrics/{itemId}": {
@@ -9138,9 +10126,14 @@
         "summary": "DELETE /library/plyometrics/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_plyometrics_itemId",
@@ -9199,9 +10192,14 @@
         "summary": "PATCH /library/plyometrics/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/seed-biomechanics": {
@@ -9242,9 +10240,14 @@
         "summary": "POST /library/seed-biomechanics",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/seed-mobility-library": {
@@ -9285,9 +10288,14 @@
         "summary": "POST /library/seed-mobility-library",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/seed-sports-library": {
@@ -9328,9 +10336,14 @@
         "summary": "POST /library/seed-sports-library",
         "x-controller": "LibraryUnifiedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/sports": {
@@ -9380,10 +10393,17 @@
         ],
         "summary": "GET /library/sports",
         "x-controller": "LibrarySpecializedController",
-        "x-filters": ["query"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "query"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_library_sports",
@@ -9433,9 +10453,14 @@
         "summary": "POST /library/sports",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/library/sports/{itemId}": {
@@ -9485,9 +10510,14 @@
         "summary": "DELETE /library/sports/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_library_sports_itemId",
@@ -9546,9 +10576,14 @@
         "summary": "PATCH /library/sports/{itemId}",
         "x-controller": "LibrarySpecializedController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/maintenance/dispatch": {
@@ -9592,7 +10627,9 @@
         "summary": "POST /maintenance/dispatch",
         "x-controller": "MaintenanceController",
         "x-filters": [],
-        "x-guards": ["CronSecretGuard"],
+        "x-guards": [
+          "CronSecretGuard"
+        ],
         "x-pagination": [],
         "x-roles": []
       }
@@ -9671,10 +10708,20 @@
         ],
         "summary": "GET /notes",
         "x-controller": "NotesController",
-        "x-filters": ["clientId", "dateFrom", "dateTo", "type"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "dateFrom",
+          "dateTo",
+          "type"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_notes",
@@ -9724,9 +10771,14 @@
         "summary": "POST /notes",
         "x-controller": "NotesController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/notes/{noteId}": {
@@ -9776,9 +10828,14 @@
         "summary": "DELETE /notes/{noteId}",
         "x-controller": "NotesController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_notes_noteId",
@@ -9837,9 +10894,14 @@
         "summary": "PATCH /notes/{noteId}",
         "x-controller": "NotesController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/notifications/device-token": {
@@ -9891,9 +10953,15 @@
         "summary": "DELETE /notifications/device-token",
         "x-controller": "NotificationsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       },
       "post": {
         "operationId": "post_notifications_device_token",
@@ -9943,9 +11011,15 @@
         "summary": "POST /notifications/device-token",
         "x-controller": "NotificationsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/notifications/preferences": {
@@ -9986,9 +11060,14 @@
         "summary": "GET /notifications/preferences",
         "x-controller": "NotificationsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_notifications_preferences",
@@ -10038,9 +11117,14 @@
         "summary": "POST /notifications/preferences",
         "x-controller": "NotificationsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/clients/{clientId}/plans": {
@@ -10090,9 +11174,14 @@
         "summary": "GET /nutrition/clients/{clientId}/plans",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/meals": {
@@ -10133,9 +11222,14 @@
         "summary": "GET /nutrition/meals",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_nutrition_meals",
@@ -10185,9 +11279,14 @@
         "summary": "POST /nutrition/meals",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/meals/{mealId}": {
@@ -10237,9 +11336,14 @@
         "summary": "DELETE /nutrition/meals/{mealId}",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_nutrition_meals_mealId",
@@ -10298,9 +11402,14 @@
         "summary": "PATCH /nutrition/meals/{mealId}",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/plans": {
@@ -10341,9 +11450,14 @@
         "summary": "GET /nutrition/plans",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_nutrition_plans",
@@ -10393,9 +11507,14 @@
         "summary": "POST /nutrition/plans",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/plans/{planId}": {
@@ -10445,9 +11564,14 @@
         "summary": "DELETE /nutrition/plans/{planId}",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_nutrition_plans_planId",
@@ -10506,9 +11630,14 @@
         "summary": "PATCH /nutrition/plans/{planId}",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/plans/{planId}/assign": {
@@ -10569,9 +11698,14 @@
         "summary": "POST /nutrition/plans/{planId}/assign",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/nutrition/plans/{planId}/checkpoints": {
@@ -10621,9 +11755,14 @@
         "summary": "GET /nutrition/plans/{planId}/checkpoints",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_nutrition_plans_planId_checkpoints",
@@ -10682,9 +11821,14 @@
         "summary": "POST /nutrition/plans/{planId}/checkpoints",
         "x-controller": "NutritionController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/org/subscription/limit": {
@@ -10736,9 +11880,14 @@
         "summary": "PATCH /org/subscription/limit",
         "x-controller": "OrgAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/org/subscription/occupancy": {
@@ -10779,9 +11928,14 @@
         "summary": "GET /org/subscription/occupancy",
         "x-controller": "OrgAdminController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin"]
+        "x-roles": [
+          "admin"
+        ]
       }
     },
     "/physical-tests": {
@@ -10822,9 +11976,14 @@
         "summary": "GET /physical-tests",
         "x-controller": "PhysicalTestsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/cardio": {
@@ -10874,10 +12033,17 @@
         ],
         "summary": "GET /plans/templates/cardio",
         "x-controller": "PlansCardioController",
-        "x-filters": ["summary"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "summary"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_plans_templates_cardio",
@@ -10927,9 +12093,14 @@
         "summary": "POST /plans/templates/cardio",
         "x-controller": "PlansCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/cardio/{templateId}": {
@@ -10979,9 +12150,15 @@
         "summary": "DELETE /plans/templates/cardio/{templateId}",
         "x-controller": "PlansCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "get": {
         "operationId": "get_plans_templates_cardio_templateId",
@@ -11029,9 +12206,14 @@
         "summary": "GET /plans/templates/cardio/{templateId}",
         "x-controller": "PlansCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_plans_templates_cardio_templateId",
@@ -11090,9 +12272,15 @@
         "summary": "PATCH /plans/templates/cardio/{templateId}",
         "x-controller": "PlansCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/routines": {
@@ -11142,10 +12330,17 @@
         ],
         "summary": "GET /plans/templates/routines",
         "x-controller": "PlansRoutineController",
-        "x-filters": ["summary"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "summary"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_plans_templates_routines",
@@ -11195,9 +12390,14 @@
         "summary": "POST /plans/templates/routines",
         "x-controller": "PlansRoutineController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/routines/catalog/objectives": {
@@ -11238,9 +12438,14 @@
         "summary": "GET /plans/templates/routines/catalog/objectives",
         "x-controller": "PlansRoutineController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/routines/{templateId}": {
@@ -11290,9 +12495,15 @@
         "summary": "DELETE /plans/templates/routines/{templateId}",
         "x-controller": "PlansRoutineController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "get": {
         "operationId": "get_plans_templates_routines_templateId",
@@ -11340,9 +12551,14 @@
         "summary": "GET /plans/templates/routines/{templateId}",
         "x-controller": "PlansRoutineController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_plans_templates_routines_templateId",
@@ -11401,9 +12617,15 @@
         "summary": "PATCH /plans/templates/routines/{templateId}",
         "x-controller": "PlansRoutineController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/strength": {
@@ -11417,7 +12639,10 @@
             "name": "summary",
             "required": false,
             "schema": {
-              "enum": ["false", "true"],
+              "enum": [
+                "false",
+                "true"
+              ],
               "type": "string"
             }
           }
@@ -11510,10 +12735,17 @@
         ],
         "summary": "GET /plans/templates/strength",
         "x-controller": "PlansController",
-        "x-filters": ["summary"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "summary"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_plans_templates_strength",
@@ -11563,9 +12795,14 @@
         "summary": "POST /plans/templates/strength",
         "x-controller": "PlansController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/strength/{templateId}": {
@@ -11615,9 +12852,15 @@
         "summary": "DELETE /plans/templates/strength/{templateId}",
         "x-controller": "PlansController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "get": {
         "operationId": "get_plans_templates_strength_templateId",
@@ -11665,9 +12908,14 @@
         "summary": "GET /plans/templates/strength/{templateId}",
         "x-controller": "PlansController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_plans_templates_strength_templateId",
@@ -11726,9 +12974,15 @@
         "summary": "PATCH /plans/templates/strength/{templateId}",
         "x-controller": "PlansController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard", "PlanOwnershipGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard",
+          "PlanOwnershipGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/warmups": {
@@ -11778,10 +13032,17 @@
         ],
         "summary": "GET /plans/templates/warmups",
         "x-controller": "PlansWarmupController",
-        "x-filters": ["summary"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "summary"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "post": {
         "operationId": "post_plans_templates_warmups",
@@ -11831,9 +13092,14 @@
         "summary": "POST /plans/templates/warmups",
         "x-controller": "PlansWarmupController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/plans/templates/warmups/{templateId}": {
@@ -11883,9 +13149,14 @@
         "summary": "DELETE /plans/templates/warmups/{templateId}",
         "x-controller": "PlansWarmupController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "get": {
         "operationId": "get_plans_templates_warmups_templateId",
@@ -11933,9 +13204,14 @@
         "summary": "GET /plans/templates/warmups/{templateId}",
         "x-controller": "PlansWarmupController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       },
       "patch": {
         "operationId": "patch_plans_templates_warmups_templateId",
@@ -11994,9 +13270,14 @@
         "summary": "PATCH /plans/templates/warmups/{templateId}",
         "x-controller": "PlansWarmupController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/progress/exercise": {
@@ -12082,10 +13363,22 @@
         ],
         "summary": "GET /progress/exercise",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "exerciseId", "exerciseType", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "exerciseId",
+          "exerciseType",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/exercise-pr": {
@@ -12144,10 +13437,19 @@
         ],
         "summary": "GET /progress/exercise-pr",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "exerciseId"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "exerciseId"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/microcycle": {
@@ -12233,10 +13535,22 @@
         ],
         "summary": "GET /progress/microcycle",
         "x-controller": "ProgressController",
-        "x-filters": ["category", "clientId", "from", "templateId", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "category",
+          "clientId",
+          "from",
+          "templateId",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/overview": {
@@ -12304,10 +13618,20 @@
         ],
         "summary": "GET /progress/overview",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/performed-exercises": {
@@ -12375,10 +13699,20 @@
         ],
         "summary": "GET /progress/performed-exercises",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/performed-templates": {
@@ -12446,10 +13780,20 @@
         ],
         "summary": "GET /progress/performed-templates",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/records": {
@@ -12517,10 +13861,20 @@
         ],
         "summary": "GET /progress/records",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/session": {
@@ -12615,10 +13969,23 @@
         ],
         "summary": "GET /progress/session",
         "x-controller": "ProgressController",
-        "x-filters": ["category", "clientId", "dayIndex", "from", "templateId", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "category",
+          "clientId",
+          "dayIndex",
+          "from",
+          "templateId",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/session/days": {
@@ -12695,10 +14062,21 @@
         ],
         "summary": "GET /progress/session/days",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "from", "templateId", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "templateId",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/progress/sessions": {
@@ -12793,10 +14171,24 @@
         ],
         "summary": "GET /progress/sessions",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "exerciseId", "from", "templateId", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": ["limit"],
-        "x-roles": ["coach", "client"]
+        "x-filters": [
+          "clientId",
+          "exerciseId",
+          "from",
+          "templateId",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
+        "x-pagination": [
+          "limit"
+        ],
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/reports/export/pdf": {
@@ -12864,10 +14256,19 @@
         ],
         "summary": "GET /reports/export/pdf",
         "x-controller": "ReportExportsController",
-        "x-filters": ["clientId", "from", "to"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "clientId",
+          "from",
+          "to"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach"]
+        "x-roles": [
+          "coach"
+        ]
       }
     },
     "/reports/weekly": {
@@ -12917,10 +14318,17 @@
         ],
         "summary": "GET /reports/weekly",
         "x-controller": "ReportsController",
-        "x-filters": ["reportDate"],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-filters": [
+          "reportDate"
+        ],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       },
       "post": {
         "operationId": "post_reports_weekly",
@@ -12970,9 +14378,14 @@
         "summary": "POST /reports/weekly",
         "x-controller": "ReportsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["client"]
+        "x-roles": [
+          "client"
+        ]
       }
     },
     "/sessions/cardio/ensure": {
@@ -13024,9 +14437,15 @@
         "summary": "POST /sessions/cardio/ensure",
         "x-controller": "SessionsCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/cardio/{sessionId}": {
@@ -13076,9 +14495,15 @@
         "summary": "GET /sessions/cardio/{sessionId}",
         "x-controller": "SessionsCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/cardio/{sessionId}/finish": {
@@ -13147,9 +14572,15 @@
         "summary": "POST /sessions/cardio/{sessionId}/finish",
         "x-controller": "SessionsCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/cardio/{sessionId}/log-interval": {
@@ -13218,9 +14649,15 @@
         "summary": "POST /sessions/cardio/{sessionId}/log-interval",
         "x-controller": "SessionsCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/cardio/{sessionId}/start": {
@@ -13270,9 +14707,15 @@
         "summary": "POST /sessions/cardio/{sessionId}/start",
         "x-controller": "SessionsCardioController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/ensure": {
@@ -13324,9 +14767,15 @@
         "summary": "POST /sessions/ensure",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}": {
@@ -13449,9 +14898,15 @@
         "summary": "GET /sessions/{sessionId}",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/finish": {
@@ -13520,9 +14975,15 @@
         "summary": "POST /sessions/{sessionId}/finish",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-interval": {
@@ -13591,9 +15052,15 @@
         "summary": "POST /sessions/{sessionId}/log-interval",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-isometric-set": {
@@ -13662,9 +15129,15 @@
         "summary": "POST /sessions/{sessionId}/log-isometric-set",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-mobility-set": {
@@ -13733,9 +15206,15 @@
         "summary": "POST /sessions/{sessionId}/log-mobility-set",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-plio-set": {
@@ -13804,9 +15283,15 @@
         "summary": "POST /sessions/{sessionId}/log-plio-set",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-set": {
@@ -13875,9 +15360,15 @@
         "summary": "POST /sessions/{sessionId}/log-set",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/log-sport": {
@@ -13946,9 +15437,15 @@
         "summary": "POST /sessions/{sessionId}/log-sport",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/sport-blocks/{blockId}/sets": {
@@ -14025,9 +15522,15 @@
         "summary": "POST /sessions/{sessionId}/sport-blocks/{blockId}/sets",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/sessions/{sessionId}/start": {
@@ -14088,9 +15591,15 @@
         "summary": "POST /sessions/{sessionId}/start",
         "x-controller": "SessionsController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["coach", "client"]
+        "x-roles": [
+          "coach",
+          "client"
+        ]
       }
     },
     "/users/me": {
@@ -14140,9 +15649,16 @@
         "summary": "GET /users/me",
         "x-controller": "UsersController",
         "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-guards": [
+          "AuthGuard",
+          "RolesGuard"
+        ],
         "x-pagination": [],
-        "x-roles": ["admin", "coach", "client"]
+        "x-roles": [
+          "admin",
+          "coach",
+          "client"
+        ]
       }
     }
   }

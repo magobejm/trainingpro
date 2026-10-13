@@ -2,6 +2,16 @@ import { buildSimplePdf } from '../../src/modules/reports/infra/pdf/simple-pdf.b
 import { buildWeeklyReportLines } from '../../src/modules/reports/application/weekly-report-lines';
 
 describe('simple pdf builder', () => {
+  it('repeats the branded header and embedded image on every page without dropping report lines', () => {
+    const source = Array.from({ length: 100 }, (_, index) => `Fila ${index}`);
+    const pdf = buildSimplePdf(source, { accent: 'teal', logo: { data: Buffer.from([0xff, 0xd8, 0xff, 0xd9]), width: 2, height: 3 } });
+    const text = pdf.toString('latin1');
+    expect(text).toContain('/Subtype /Image');
+    expect(text).toContain('/DCTDecode');
+    expect([...text.matchAll(/\/BrandLogo Do/g)]).toHaveLength(readPageCount(text));
+    expect(extractTextLines(pdf)).toEqual(source);
+    expect(pointsAtXref(pdf)).toBe(true);
+  });
   it('keeps accents, line breaks and parentheses on one page', () => {
     const pdf = buildSimplePdf(['Sesión de fuerza (ñ)', '¿Listo?\nSegunda línea']);
     const text = pdf.toString('latin1');

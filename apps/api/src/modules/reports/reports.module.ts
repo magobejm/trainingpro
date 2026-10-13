@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CoachesModule } from '../coaches/coaches.module';
 import { ExportWeeklyPdfUseCase } from './application/use-cases/export-weekly-pdf.usecase';
 import { AuthModule } from '../auth/auth.module';
 import { GetWeeklyReportUseCase } from './application/use-cases/get-weekly-report.usecase';
@@ -12,7 +13,7 @@ import { ReportExportsController } from './presentation/controllers/report-expor
 import { ReportsController } from './presentation/controllers/reports.controller';
 
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, CoachesModule],
   controllers: [ReportsController, ReportExportsController],
   providers: [
     ExportWeeklyPdfUseCase,

@@ -4,6 +4,7 @@ import { colors, fontSize, radius, space } from '@trainerpro/ui';
 export const styles = StyleSheet.create({
   body: { flex: 1, flexDirection: 'row' },
   bodyCompact: { flexDirection: 'column' },
+  bodyStacked: { flexGrow: 0, flexShrink: 0 },
   cardMd: { width: 'calc(50% - 12px)' as unknown as number },
   cardSm: { width: '100%' },
   headerCompact: {
@@ -165,6 +166,7 @@ export const styles = StyleSheet.create({
   mainContent: { flex: 1 },
   mainContentInner: { padding: space.xl },
   root: { backgroundColor: colors.surfaceMuted, flex: 1 },
+  rootStacked: { flexGrow: 0, flexShrink: 0 },
   searchContainer: {
     width: 240,
   },

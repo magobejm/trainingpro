@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { ClientCardRow, EmptyState, Select, TextField, useBreakpoint } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
@@ -132,7 +132,6 @@ function DirectoryHeader(props: {
   const stacked = useBreakpoint() === 'sm';
   return (
     <View style={styles.headerRow}>
-      <Text style={styles.title}>{props.t('coach.clients.section.title')}</Text>
       <View style={[styles.filtersRow, stacked && styles.filtersRowStacked]}>
         <SearchInput onChangeText={props.onSearchValueChange} stacked={stacked} t={props.t} value={props.searchValue} />
         <Select

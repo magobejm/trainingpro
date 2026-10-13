@@ -45,7 +45,7 @@ import { Button, EmptyState, IconButton, TextField, Select, colors as tk, useBre
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
 const EMPTY_FILTER = '';
-const SIDEBAR_STACKED_HEIGHT = 340;
+const SIDEBAR_STACKED_HEIGHT = 520;
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 type ViewMode = 'all' | 'coachOnly';
 type SidebarProps = {

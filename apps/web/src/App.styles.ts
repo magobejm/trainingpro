@@ -91,6 +91,8 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.shell,
     flex: 1,
     minHeight: 0,
+    // @ts-expect-error web-only
+    overflowY: 'auto',
   },
   logoutButton: {
     alignItems: 'center',
@@ -114,7 +116,6 @@ export const styles = StyleSheet.create({
     marginBottom: space.xs,
     position: 'relative',
     overflow: 'hidden',
-    // @ts-expect-error web-only
     transitionDuration: '300ms',
     transitionProperty: 'background-color',
   },
@@ -170,6 +171,7 @@ export const styles = StyleSheet.create({
   },
   navList: {
     flex: 1,
+    minHeight: 0,
     overflowY: 'auto',
     gap: space.sm,
     marginTop: space.xl,
@@ -189,6 +191,7 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.nav,
     borderColor: COLORS.navBorder,
     borderRightWidth: 1,
+    height: '100%',
     width: 290,
     padding: space.xl,
   },

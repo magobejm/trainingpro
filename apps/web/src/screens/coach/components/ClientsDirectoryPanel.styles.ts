@@ -42,9 +42,4 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     minWidth: 160,
   },
-  title: {
-    color: colors.text,
-    fontSize: fontSize.xxxl,
-    fontWeight: '800',
-  },
 });

@@ -283,6 +283,7 @@ function LibrarySidebarFilters({ st }: { st: LibraryScreenState }) {
 }
 
 export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
+  const stacked = useBreakpoint() === 'sm';
   const status = QueryResult({
     emptyMessage: st.t('coach.library.list.emptySubtitle'),
     emptyTitle: st.t('coach.library.list.emptyTitle'),
@@ -293,33 +294,37 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
     itemCount: st.exercises?.length ?? 0,
     onRetry: st.refetchList,
   });
+  const grid = status ?? (
+    <View style={styles.cardGrid}>
+      {(st.exercises ?? []).map((item) => (
+        <ExerciseCard
+          key={`${item.kind}-${item.id}`}
+          item={item}
+          hovered={st.hoveredCard === item.id}
+          setHovered={(h) => st.setHoveredCard(h ? item.id : null)}
+          onDetail={() => {
+            st.setItemForDetail(item);
+            st.setDetailVisible(true);
+          }}
+          onEdit={() => {
+            st.setItemToEdit(item);
+            st.setIsModalVisible(true);
+          }}
+          onDelete={() => {
+            st.setDeleteError(null);
+            st.setPendingDelete({ id: item.id, kind: item.kind });
+          }}
+          deletionDisabled={st.deletingId === item.id}
+        />
+      ))}
+    </View>
+  );
+  if (stacked) {
+    return <View style={styles.mainContentInner}>{grid}</View>;
+  }
   return (
     <ScrollView style={styles.mainContent} contentContainerStyle={styles.mainContentInner}>
-      {status ?? (
-        <View style={styles.cardGrid}>
-          {(st.exercises ?? []).map((item) => (
-            <ExerciseCard
-              key={`${item.kind}-${item.id}`}
-              item={item}
-              hovered={st.hoveredCard === item.id}
-              setHovered={(h) => st.setHoveredCard(h ? item.id : null)}
-              onDetail={() => {
-                st.setItemForDetail(item);
-                st.setDetailVisible(true);
-              }}
-              onEdit={() => {
-                st.setItemToEdit(item);
-                st.setIsModalVisible(true);
-              }}
-              onDelete={() => {
-                st.setDeleteError(null);
-                st.setPendingDelete({ id: item.id, kind: item.kind });
-              }}
-              deletionDisabled={st.deletingId === item.id}
-            />
-          ))}
-        </View>
-      )}
+      {grid}
     </ScrollView>
   );
 }

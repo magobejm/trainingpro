@@ -43,7 +43,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   panel: {
+    height: '100%',
     maxWidth: '85%',
+    overflow: 'hidden',
     width: DRAWER_WIDTH,
   },
 });

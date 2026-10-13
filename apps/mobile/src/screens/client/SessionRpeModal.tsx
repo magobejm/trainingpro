@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
 import { completeRpeValue, sanitizeRpeInput } from './effort-input.utils';
@@ -31,7 +41,10 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
 
   return (
     <Modal animationType={'fade'} onRequestClose={props.onClose} transparent visible={props.visible}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
+        style={styles.backdrop}
+      >
         <View style={styles.sheet}>
           <Pressable onPress={props.onClose} style={styles.closeBtn}>
             <Text style={styles.closeText}>{'✕'}</Text>
@@ -45,7 +58,12 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
               <Text style={styles.subtitle}>{t('mobile.client.rpe.subtitle')}</Text>
             </View>
           </View>
-          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.scroll}
+            keyboardShouldPersistTaps={'handled'}
+            showsVerticalScrollIndicator={false}
+            style={styles.scrollView}
+          >
             <SessionRpeCard draft={draft} onChange={setDraft} />
           </ScrollView>
           <Pressable
@@ -59,7 +77,7 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
             <Text style={styles.saveText}>{t('mobile.client.rpe.save')}</Text>
           </Pressable>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
@@ -85,8 +103,10 @@ function SessionRpeCard(props: { draft: string; onChange: (value: string) => voi
         </Pressable>
         <View style={styles.valueWrap}>
           <TextInput
+            accessibilityLabel={t('mobile.client.rpe.question')}
             keyboardType={'decimal-pad'}
             onChangeText={(value) => props.onChange(sanitizeRpeInput(value))}
+            selectTextOnFocus
             style={styles.value}
             value={props.draft}
           />
@@ -112,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: LIGHT.overlay,
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 12,
   },
   band: { borderRadius: 12, borderWidth: 1, marginBottom: 12, paddingHorizontal: 10, paddingVertical: 10 },
   bandHint: { fontWeight: '500', opacity: 0.9 },
@@ -122,7 +142,7 @@ const styles = StyleSheet.create({
     borderColor: LIGHT.indigoSoft,
     borderRadius: LIGHT.radiusLg,
     borderWidth: 1,
-    padding: 16,
+    padding: 12,
   },
   closeBtn: {
     alignItems: 'center',
@@ -160,20 +180,23 @@ const styles = StyleSheet.create({
   saveBtnDisabled: { opacity: 0.45 },
   saveText: { color: LIGHT.textOnNavy, fontSize: 14, fontWeight: '800' },
   scroll: { paddingBottom: 8 },
+  scrollView: { flexGrow: 0, flexShrink: 1 },
   sheet: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,
     borderRadius: 32,
     borderWidth: 1,
+    flexShrink: 1,
     maxHeight: '90%',
-    padding: 24,
+    maxWidth: 480,
+    padding: 16,
     width: '100%',
   },
   stepBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.indigoSoft,
     borderRadius: 12,
-    height: 40,
+    height: 48,
     justifyContent: 'center',
     width: 48,
   },
@@ -184,9 +207,10 @@ const styles = StyleSheet.create({
     color: LIGHT.textStrong,
     fontSize: 32,
     fontWeight: '900',
-    minWidth: 72,
+    height: 52,
     padding: 0,
     textAlign: 'center',
+    width: 80,
   },
   valueMax: { color: LIGHT.indigo, fontSize: 14, fontWeight: '800' },
   valueRow: {
@@ -198,7 +222,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 12,
-    padding: 12,
+    padding: 8,
   },
   valueWrap: { alignItems: 'center' },
 });

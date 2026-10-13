@@ -72,7 +72,7 @@ export function drawerStyle(visible: boolean): React.CSSProperties {
     background: colors.surface,
     borderLeft: `1px solid ${colors.border}`,
     borderRadius: '24px 0 0 24px',
-    boxShadow: '-12px 0 36px rgba(15,23,42,0.2)',
+    boxShadow: '-12px 0 36px var(--tp-shadowColor)',
     display: 'flex',
     flexDirection: 'column',
     gap: '8px',
@@ -93,7 +93,7 @@ export const menuStyle: React.CSSProperties = {
   background: colors.surface,
   border: `1px solid ${colors.border}`,
   borderRadius: radius.md,
-  boxShadow: '0 8px 18px rgba(15,23,42,0.12)',
+  boxShadow: '0 8px 18px var(--tp-shadowColor)',
   minWidth: 180,
   position: 'absolute',
   right: 36,
@@ -108,7 +108,7 @@ export const menuStyleTop: React.CSSProperties = {
 };
 
 export const backdropStyle: React.CSSProperties = {
-  background: 'rgba(10,18,35,0.42)',
+  background: 'var(--tp-overlay)',
   bottom: 0,
   left: 0,
   position: 'fixed',

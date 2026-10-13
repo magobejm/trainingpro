@@ -1,13 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { classifyQueryStatus, type QueryStatus, type QueryStatusInput } from '../data/classify-query-status';
 import { FAILURE_KINDS, readCopy } from './async-status.copy';
 import { requestSignIn } from '../data/session-end';
 import { Button, colors, EmptyState, fontSize, SkeletonList, space, type SkeletonVariant } from '@trainerpro/ui';
 import { EmptyIllustration, type EmptyIllustrationKind } from './EmptyIllustrations';
-
-const SPINNER_COLOR = colors.primary;
 
 type AsyncStatusProps = {
   emptyActionLabel?: string;
@@ -17,6 +15,7 @@ type AsyncStatusProps = {
   kind: Exclude<QueryStatus, 'ready'>;
   messageOverride?: string;
   onEmptyAction?: () => void;
+  onClearFilters?: () => void;
   onRetry?: () => void;
   skeleton?: SkeletonVariant;
   titleOverride?: string;
@@ -28,6 +27,7 @@ type QueryResultProps = QueryStatusInput & {
   emptyMessage?: string;
   emptyTitle: string;
   onEmptyAction?: () => void;
+  onClearFilters?: () => void;
   onRetry?: () => void;
   skeleton?: SkeletonVariant;
 };
@@ -45,6 +45,7 @@ export function QueryResult(props: QueryResultProps): React.JSX.Element | null {
       emptyTitle={props.emptyTitle}
       kind={kind}
       onEmptyAction={props.onEmptyAction}
+      onClearFilters={props.onClearFilters}
       onRetry={props.onRetry}
       skeleton={props.skeleton}
     />
@@ -54,21 +55,20 @@ export function QueryResult(props: QueryResultProps): React.JSX.Element | null {
 export function AsyncStatus(props: AsyncStatusProps): React.JSX.Element {
   const { t } = useTranslation();
   const copy = readCopy(props, t);
-  if (props.kind === 'loading' && props.skeleton) return <LoadingSkeleton label={copy.title} variant={props.skeleton} />;
-  if ((props.kind === 'empty' || props.kind === 'noResults') && props.emptyIllustration) {
+  if (props.kind === 'loading') return <LoadingState label={copy.title} variant={props.skeleton ?? 'panel'} />;
+  if (props.kind === 'empty' || props.kind === 'noResults') {
     return (
       <IllustratedEmpty
         copy={copy}
-        emptyActionLabel={props.kind === 'empty' ? props.emptyActionLabel : undefined}
-        emptyIllustration={props.emptyIllustration}
-        onEmptyAction={props.kind === 'empty' ? props.onEmptyAction : undefined}
+        emptyActionLabel={props.kind === 'empty' ? props.emptyActionLabel : t('common.clearFilters')}
+        emptyIllustration={props.emptyIllustration ?? 'generic'}
+        onEmptyAction={props.kind === 'empty' ? props.onEmptyAction : props.onClearFilters}
       />
     );
   }
-  const role = props.kind === 'loading' ? 'progressbar' : FAILURE_KINDS.has(props.kind) ? 'alert' : 'text';
+  const role = FAILURE_KINDS.has(props.kind) ? 'alert' : 'text';
   return (
     <View accessibilityLabel={copy.title} accessibilityRole={role} style={styles.panel}>
-      {props.kind === 'loading' ? <ActivityIndicator color={SPINNER_COLOR} /> : null}
       <Text style={styles.title}>{copy.title}</Text>
       {copy.message ? <Text style={styles.message}>{copy.message}</Text> : null}
       <StatusAction kind={props.kind} label={copy.action} onRetry={props.onRetry} />
@@ -76,10 +76,10 @@ export function AsyncStatus(props: AsyncStatusProps): React.JSX.Element {
   );
 }
 
-function LoadingSkeleton(props: { label: string; variant: SkeletonVariant }): React.JSX.Element {
+export function LoadingState(props: { label: string; variant?: SkeletonVariant }): React.JSX.Element {
   return (
     <View accessibilityLabel={props.label} accessibilityRole="progressbar" style={styles.panel}>
-      <SkeletonList variant={props.variant} />
+      <SkeletonList variant={props.variant ?? 'panel'} />
     </View>
   );
 }

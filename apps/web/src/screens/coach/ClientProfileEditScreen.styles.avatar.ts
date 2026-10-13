@@ -12,7 +12,7 @@ export const avatarStyles = {
   },
   avatarOverlay: {
     alignItems: 'center',
-    backgroundColor: 'rgba(9, 18, 33, 0.4)',
+    backgroundColor: 'var(--tp-overlay)',
     bottom: 0,
     justifyContent: 'center',
     left: 0,
@@ -22,7 +22,7 @@ export const avatarStyles = {
     zIndex: 3,
   },
   avatarOverlayPlus: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: fontSize.xxxl,
     fontWeight: '700',
     lineHeight: 38,

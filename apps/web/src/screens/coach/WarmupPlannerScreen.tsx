@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { getLayoutStyle1, getLayoutStyle2 } from './WarmupPlannerScreen.layout-styles';
 
 import { WebBox } from '@trainerpro/ui';
@@ -237,7 +238,7 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
         />
       )}
       {vm.orderedBlocks.length === 0 ? (
-        <EmptyState
+        <EmptyState icon={<EmptyIllustration kind={'library'} />}
           actionLabel={vm.isReadOnly ? undefined : `+ ${vm.t('coach.routine.addExercise')}`}
           message={vm.t('coach.warmupPlanner.emptyGroup')}
           onAction={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')}

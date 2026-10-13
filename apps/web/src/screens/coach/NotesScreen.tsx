@@ -126,6 +126,9 @@ export function NotesScreen(): React.JSX.Element {
       </ScrollView>
       <HistorySidebar
         stacked={stacked}
+        notesQuery={vm.notesQuery}
+        onClearClient={() => vm.setSelectedClient(null)}
+        onCreateNote={() => document.getElementById(GENERAL_NOTE_FIELD)?.focus()}
         dateFrom={vm.dateFrom}
         dateTo={vm.dateTo}
         displayedNotes={vm.displayedNotes}
@@ -207,7 +210,8 @@ function useNotesScreenModel() {
   const [editContent, setEditContent] = useState('');
   const clients = useClientsQuery().data ?? [];
   const objectives = useClientObjectivesQuery().data ?? [];
-  const notes = useNotesQuery().data ?? [];
+  const notesQuery = useNotesQuery();
+  const notes = notesQuery.data ?? [];
   const createNoteMutation = useCreateNoteMutation();
   const updateNoteMutation = useUpdateNoteMutation();
   const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
@@ -242,6 +246,7 @@ function useNotesScreenModel() {
     dateFrom: filters.dateFrom,
     dateTo: filters.dateTo,
     displayedNotes: history.displayedNotes,
+    notesQuery,
     requestDeleteNote: history.requestDeleteNote,
     editContent,
     editingNote,

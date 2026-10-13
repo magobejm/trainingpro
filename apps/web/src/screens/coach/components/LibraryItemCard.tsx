@@ -47,9 +47,9 @@ export function LibraryItemCard(props: Props): React.JSX.Element {
   const equipment = props.equipment;
 
   return (
-    <Pressable onPress={props.onToggle} style={[styles.card, props.deleting && styles.deletingCard]}>
+    <Pressable {...{ dataSet: { 'interactive-card': 'true' } }} onPress={props.onToggle} style={[styles.card, props.deleting && styles.deletingCard]}>
       <CardImage imageUrl={imageUrl} name={props.name} scope={props.scope} t={props.t} />
-      <View style={styles.content}>
+      <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.content}>
         <Text numberOfLines={1} style={styles.name}>
           {props.name}
         </Text>

@@ -1,3 +1,4 @@
+import { LoadingState } from '../../../components/AsyncStatus';
 import { getLayoutStyle1 } from './ProgressRoutineFilter.layout-styles';
 import { WebBox, WebText } from '@trainerpro/ui';
 import { Button } from '@trainerpro/ui';
@@ -89,7 +90,7 @@ function SessionDayPicker({
   return (
     <WebBox style={secondaryBlock}>
       <WebText style={secondaryLabel}>{t('coach.progress.filter.day.placeholder')}</WebText>
-      {isLoading && <WebText style={muted}>{t('coach.progress.loading')}</WebText>}
+      {isLoading && <LoadingState label={t('coach.progress.loading')} variant="rows" />}
       {!isLoading && performedDays.length === 0 && (
         <WebText style={muted}>{t('coach.progress.filter.day.noPerformed')}</WebText>
       )}

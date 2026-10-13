@@ -175,7 +175,7 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
   },
   tabButtonLabelActive: {
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   title: {
     color: colors.text,

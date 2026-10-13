@@ -7,9 +7,11 @@ const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
   '[role="button"]:not([aria-disabled="true"])',
   'a[href]',
+  '[tabindex]:not([tabindex="-1"]):not([aria-disabled="true"])',
 ].join(', ');
 
 type Focusable = { focus: () => void };
+const dialogStack: symbol[] = [];
 
 export function restoreFocus(previous: Focusable | null): void {
   previous?.focus();
@@ -49,13 +51,17 @@ export function useDialogFocus(visible: boolean, containerRef: RefObject<View | 
   const previousRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!visible || typeof document === 'undefined') return undefined;
+    const dialogId = Symbol('dialog');
+    dialogStack.push(dialogId);
     const active = document.activeElement;
     previousRef.current = active instanceof HTMLElement ? active : null;
     const frame = requestAnimationFrame(() => {
+      if (dialogStack[dialogStack.length - 1] !== dialogId) return;
       const root = readHost(containerRef.current);
       if (root) focusFirstField(root);
     });
     const onKeyDown = (event: KeyboardEvent) => {
+      if (dialogStack[dialogStack.length - 1] !== dialogId) return;
       const root = readHost(containerRef.current);
       if (root) keepTabInside(event, root);
     };
@@ -63,14 +69,19 @@ export function useDialogFocus(visible: boolean, containerRef: RefObject<View | 
     return () => {
       cancelAnimationFrame(frame);
       document.removeEventListener('keydown', onKeyDown);
-      restoreFocus(previousRef.current);
+      const wasTop = dialogStack[dialogStack.length - 1] === dialogId;
+      const index = dialogStack.indexOf(dialogId);
+      if (index >= 0) dialogStack.splice(index, 1);
+      if (wasTop && previousRef.current?.isConnected) restoreFocus(previousRef.current);
       previousRef.current = null;
     };
   }, [containerRef, visible]);
 }
 
 function listFocusable(root: HTMLElement): HTMLElement[] {
-  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)];
+  return [...root.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
+    (element) => !element.closest('[hidden], [inert]') && element.getClientRects().length > 0,
+  );
 }
 
 function readHost(node: unknown): HTMLElement | null {

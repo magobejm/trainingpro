@@ -13,7 +13,7 @@ import { TagMultiSelect, type TagMultiSelectOption } from './components/TagMulti
 import { Button, IconButton, TextField, colors, useBreakpoint, useReducedMotion } from '@trainerpro/ui';
 
 const C_BLUE = colors.primary;
-const C_WHITE = colors.surface;
+const C_WHITE = colors.onPrimary;
 const REMODE_CVR = 'cover' as const;
 const REMODE_CNT = 'contain' as const;
 
@@ -165,6 +165,7 @@ export function ExerciseCard(props: ExerciseCardProps) {
   const bp = useBreakpoint();
   return (
     <Pressable
+      {...{ dataSet: { 'interactive-card': reduced ? 'reduced' : 'true' } }}
       style={[
         styles.card,
         bp === 'md' && styles.cardMd,
@@ -181,10 +182,10 @@ export function ExerciseCard(props: ExerciseCardProps) {
         <Image
           resizeMode={REMODE_CNT}
           source={{ uri: imageUrl }}
-          style={[styles.cardImageInner, hovered && styles.cardImageInnerHovered]}
+          style={[styles.cardImageInner, hovered && !reduced && styles.cardImageInnerHovered]}
         />
       </View>
-      <View style={styles.cardContent}>
+      <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.cardContent}>
         <Text numberOfLines={1} style={styles.cardTitle}>
           {item.name}
         </Text>
@@ -302,10 +303,11 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
     itemCount: st.exercises?.length ?? 0,
     onEmptyAction: canCreate ? () => st.setIsModalVisible(true) : undefined,
     onRetry: st.refetchList,
+    onClearFilters: () => { st.clearAllFilters(); st.setSearch(''); },
     skeleton: 'cards',
   });
   const grid = status ?? (
-    <View style={styles.cardGrid}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.cardGrid}>
       {(st.exercises ?? []).map((item) => (
         <ExerciseCard
           key={`${item.kind}-${item.id}`}

@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
+import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text } from 'react-native';
@@ -21,10 +23,10 @@ export function CreatedMealsScreen(props: Props): React.JSX.Element {
       <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{t('coach.nutrition.meals.title')}</Text>
       <Button label={t('coach.nutrition.meals.create')} onPress={props.onCreate} style={styles.ctaButton} />
-      {mealsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {mealsQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {mealsQuery.isError ? <EmptyState title={t('coach.nutrition.error')} /> : null}
       {meals.length === 0 && !mealsQuery.isLoading ? (
-        <EmptyState
+        <EmptyState icon={<EmptyIllustration kind={'library'} />}
           actionLabel={t('coach.nutrition.meals.create')}
           onAction={props.onCreate}
           title={t('coach.nutrition.meals.empty')}

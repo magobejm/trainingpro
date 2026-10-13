@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useEffect } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import {
@@ -114,7 +115,7 @@ function BuilderTemplateList(props: ViewModel): React.JSX.Element {
     <View style={[styles.card, { marginTop: space.xl }]}>
       <Text style={styles.label}>{props.t('coach.builder.list.title')}</Text>
       {props.templates.length === 0 ? (
-        <EmptyState title={props.t('coach.builder.list.empty')} />
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.builder.list.empty')} />
       ) : (
         <View style={styles.templateList}>
           {props.templates.map((tpl) => (
@@ -159,7 +160,7 @@ function TemplateListItem({ props, tpl }: { props: ViewModel; tpl: ViewModel['te
 
 function SelectedExerciseList(props: ViewModel): React.JSX.Element {
   if (props.selected.length === 0) {
-    return <EmptyState title={props.t('coach.builder.emptySelected')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.builder.emptySelected')} />;
   }
   return (
     <View style={styles.selectedList}>

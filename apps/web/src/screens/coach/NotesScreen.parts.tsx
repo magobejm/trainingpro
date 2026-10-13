@@ -1,3 +1,5 @@
+import { QueryResult } from '../../components/AsyncStatus';
+import type { useNotesQuery } from '../../data/hooks/useNotesQuery';
 import { WebBox } from '@trainerpro/ui';
 import {
   getLayoutStyle1,
@@ -27,8 +29,7 @@ import { Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { Clock } from 'lucide-react';
 import type { ClientData, NoteData } from './notes-screen.types';
 import { formatNoteDate } from './notes-screen.utils';
-import { Button, DateTimeField, EmptyState, IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
-import { EmptyIllustration } from '../../components/EmptyIllustrations';
+import { Button, DateTimeField, IconButton, colors as tk, fontSize, radius, space } from '@trainerpro/ui';
 export {
   DeleteConfirmModal,
   EditNoteModal,
@@ -62,7 +63,7 @@ function HistoryNoteRow({ note, onEdit, onDelete, t }: HistoryNoteRowProps): Rea
   const layoutStyle9 = getLayoutStyle8;
   const layoutStyle10 = getLayoutStyle9;
   return (
-    <View style={layoutStyle1}>
+    <View {...{ dataSet: { 'density-row': 'true' } }} style={layoutStyle1}>
       <View style={layoutStyle2}>
         <View style={layoutStyle3}>
           <Text style={layoutStyle4}>{badgeLabel}</Text>
@@ -203,6 +204,9 @@ function HistoryFilterChip(props: { active: boolean; label: string; onPress: () 
 const HISTORY_STACKED_HEIGHT = 560;
 export type HistorySidebarProps = {
   stacked?: boolean;
+  notesQuery: ReturnType<typeof useNotesQuery>;
+  onCreateNote: () => void;
+  onClearClient: () => void;
   displayedNotes: NoteData[];
   historyFilter: 'all' | 'general' | 'client';
   setHistoryFilter: (f: 'all' | 'general' | 'client') => void;
@@ -220,18 +224,24 @@ export type HistorySidebarProps = {
 // eslint-disable-next-line max-lines-per-function
 export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
   const { displayedNotes, showAllHistory, t } = props;
-  const historyList =
-    displayedNotes.length === 0 ? (
-      <EmptyState
-        icon={<EmptyIllustration kind={'notes'} />}
-        message={t('coach.notes.history.emptyInvite')}
-        title={t('coach.notes.history.empty')}
-      />
-    ) : (
-      displayedNotes.map((note: NoteData) => (
-        <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />
-      ))
-    );
+  const filtered = Boolean(props.dateFrom || props.dateTo || props.historyFilter !== 'all' || props.selectedClient);
+  const historyList = QueryResult({
+    emptyIllustration: 'notes',
+    emptyTitle: t('coach.notes.history.empty'),
+    emptyMessage: t('coach.notes.history.emptyInvite'),
+    emptyActionLabel: t('coach.notes.private.title'),
+    onEmptyAction: props.onCreateNote,
+    skeleton: 'rows',
+    isLoading: props.notesQuery.isLoading,
+    isError: props.notesQuery.isError,
+    error: props.notesQuery.error,
+    itemCount: displayedNotes.length,
+    hasActiveFilter: filtered,
+    onRetry: () => void props.notesQuery.refetch(),
+    onClearFilters: () => { props.setDateFrom(''); props.setDateTo(''); props.setHistoryFilter('all'); props.setShowAllHistory(true); props.onClearClient(); },
+  }) ?? displayedNotes.map((note: NoteData) => (
+    <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />
+  ));
   const layoutStyle19 = getLayoutStyle19(
     props.stacked ? '100%' : 380,
     props.stacked ? HISTORY_STACKED_HEIGHT : undefined,
@@ -255,7 +265,7 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
         t={t}
       />
       {Platform.OS === 'web' ? (
-        <WebBox style={historyScrollStyle}>{historyList}</WebBox>
+        <WebBox data-density-list={'true'} style={historyScrollStyle}>{historyList}</WebBox>
       ) : (
         <ScrollView style={layoutStyle20} contentContainerStyle={layoutStyle21}>
           {historyList}

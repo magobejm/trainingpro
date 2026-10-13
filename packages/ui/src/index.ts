@@ -12,6 +12,10 @@ export { BarsChart, type BarsChartPoint } from './components/Charts';
 export { SummaryStrip, type SummaryStripItem } from './components/Charts';
 export {
   colors,
+  lightColors,
+  darkTheme,
+  brandAccents,
+  paletteForWeb,
   fontFamily,
   fontSize,
   lightTheme,
@@ -20,6 +24,8 @@ export {
   space,
   themes,
   type ColorToken,
+  type BrandAccent,
+  type ColorPalette,
   type Theme,
   type ThemeName,
 } from './theme/tokens';

@@ -152,7 +152,7 @@ const st = {
   labelText: {
     fontSize: fontSize.xs,
     fontWeight: '700' as const,
-    color: colors.surface,
+    color: colors.onPrimary,
     textTransform: 'uppercase' as const,
   },
   noteArea: { flex: 1 },

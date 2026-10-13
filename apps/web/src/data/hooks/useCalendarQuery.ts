@@ -5,6 +5,8 @@ import { normalizePlanTemplateId } from '../normalize-plan-template-id';
 import { useAuthStore } from '../../store/auth.store';
 import type { SessionProgressCategory } from '../types/session-progress';
 import type { CalendarEventData } from '../../screens/coach/calendar-screen.types';
+import { calendarStoredColor } from '../calendar-stored-color';
+import { lightColors } from '@trainerpro/ui';
 
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -63,7 +65,7 @@ export function useCreateCalendarEventMutation() {
     mutationFn: async (input: CreateCalendarEventInput) => {
       if (!auth) throw new Error('Not authenticated');
       const api = createApiClient(auth);
-      const response = await api.post<CalendarEventData>('/calendar', input);
+      const response = await api.post<CalendarEventData>('/calendar', { ...input, color: calendarStoredColor(input.color) });
       return {
         ...response,
         date: new Date(response.date),
@@ -85,7 +87,10 @@ export function useUpdateCalendarEventMutation() {
     mutationFn: async ({ eventId, input }: { eventId: string; input: UpdateCalendarEventInput }) => {
       if (!auth) throw new Error('Not authenticated');
       const api = createApiClient(auth);
-      const response = await api.patch<CalendarEventData>(`/calendar/${eventId}`, input);
+      const response = await api.patch<CalendarEventData>(`/calendar/${eventId}`, {
+        ...input,
+        color: calendarStoredColor(input.color),
+      });
       return {
         ...response,
         date: new Date(response.date),
@@ -194,7 +199,7 @@ export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefi
         title: day.title,
         dayIndex: day.dayIndex,
         exerciseCount: countRoutineDayExercises(day),
-        color: '#dbeafe',
+        color: lightColors.primarySoft,
         categories: inferRoutineDayCategories(day as Parameters<typeof inferRoutineDayCategories>[0]),
       })) as RoutineDayCard[];
     },

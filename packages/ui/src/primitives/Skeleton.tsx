@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     // @ts-expect-error web-only
     animationDuration: '1400ms',
     animationIterationCount: 'infinite',
-    animationName: 'trainerpro-skeleton',
+    animationKeyframes: { '0%': { opacity: 0.5 }, '50%': { opacity: 1 }, '100%': { opacity: 0.5 } },
     animationTimingFunction: 'ease-in-out',
   },
 });

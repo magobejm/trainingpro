@@ -1,8 +1,8 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { LoadingState } from '../../../../components/AsyncStatus';
 import type { WarmupTemplateView } from '../../../../data/hooks/useWarmupTemplates';
 import { WarmupExerciseList } from './WarmupExerciseList';
-import { Modal, colors, fontSize, space } from '@trainerpro/ui';
+import { Modal } from '@trainerpro/ui';
 
 type Props = {
   template: null | WarmupTemplateView;
@@ -23,15 +23,8 @@ export function WarmupTemplateDetailModal({ template, onClose, t, visible }: Pro
       {template ? (
         <WarmupExerciseList items={template.items} groups={template.groups} />
       ) : (
-        <View style={st.loading}>
-          <Text style={st.loadingText}>{t('common.loading')}</Text>
-        </View>
+        <LoadingState label={t('common.loading')} variant="rows" />
       )}
     </Modal>
   );
 }
-
-const st = {
-  loading: { padding: space.xl, alignItems: 'center' as const },
-  loadingText: { fontSize: fontSize.sm, color: colors.textMuted },
-};

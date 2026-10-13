@@ -1,3 +1,4 @@
+import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -19,7 +20,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
   const meal = mealsQuery.data?.find((item) => item.id === props.mealId);
 
   if (mealsQuery.isLoading) {
-    return <EmptyState title={t('coach.nutrition.loading')} />;
+    return <LoadingState label={t('coach.nutrition.loading')} />;
   }
   if (!meal) {
     return (

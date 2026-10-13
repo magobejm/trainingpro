@@ -192,7 +192,7 @@ export const getLayoutStyle22: NativeStyle = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: tk.border,
     backgroundColor: tk.surface,
-    shadowColor: tk.text,
+    shadowColor: tk.shadowColor,
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,

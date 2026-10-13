@@ -90,10 +90,10 @@ export function scrollRail(node: HTMLDivElement | null, amount: number): void {
 
 export const envelopeStyle: React.CSSProperties = {
   alignItems: 'center',
-  background: '#eff6ff',
-  border: '1px solid #bfdbfe',
+  background: 'var(--tp-primarySoft)',
+  border: '1px solid var(--tp-primaryBorder)',
   borderRadius: 10,
-  color: '#1d4ed8',
+  color: 'var(--tp-primaryHover)',
   cursor: 'pointer',
   display: 'flex',
   fontSize: 12,
@@ -110,11 +110,11 @@ export const draggablePhotoStyle: React.CSSProperties = {
 };
 
 export const dateInputStyle: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #1c74e9',
+  background: 'var(--tp-surface)',
+  border: '1px solid var(--tp-primary)',
   borderRadius: 8,
   boxSizing: 'border-box',
-  color: '#0f172a',
+  color: 'var(--tp-text)',
   display: 'block',
   fontSize: 12,
   marginTop: 6,
@@ -127,7 +127,7 @@ export const dateInputStyle: React.CSSProperties = {
 export const galleryBackdropStyle: React.CSSProperties = {
   alignItems: 'center',
   backdropFilter: 'blur(6px)',
-  background: 'rgba(9, 16, 28, 0.74)',
+  background: 'var(--tp-overlay)',
   bottom: 0,
   display: 'flex',
   justifyContent: 'center',
@@ -139,9 +139,9 @@ export const galleryBackdropStyle: React.CSSProperties = {
 };
 
 export const galleryContainerStyle: React.CSSProperties = {
-  background: '#020617',
+  background: 'var(--tp-surfaceInverse)',
   borderRadius: 16,
-  boxShadow: '0 24px 70px rgba(0,0,0,0.5)',
+  boxShadow: '0 24px 70px var(--tp-shadowColor)',
   maxWidth: 'min(92vw, 980px)',
   padding: 16,
   width: '92vw',
@@ -149,14 +149,14 @@ export const galleryContainerStyle: React.CSSProperties = {
 
 export const galleryTopRowStyle: React.CSSProperties = {
   alignItems: 'center',
-  color: '#e2e8f0',
+  color: 'var(--tp-textInverse)',
   display: 'flex',
   justifyContent: 'space-between',
   marginBottom: 10,
 };
 
 export const galleryCounterStyle: React.CSSProperties = {
-  color: '#e2e8f0',
+  color: 'var(--tp-textInverse)',
   fontSize: 11,
   fontWeight: 700,
   letterSpacing: 1,
@@ -165,7 +165,7 @@ export const galleryCounterStyle: React.CSSProperties = {
 export const galleryCloseStyle: React.CSSProperties = {
   background: 'transparent',
   border: 0,
-  color: '#f8fafc',
+  color: 'var(--tp-textInverse)',
   cursor: 'pointer',
   fontSize: 24,
   height: 30,
@@ -183,7 +183,7 @@ export const galleryBodyStyle: React.CSSProperties = {
 export const galleryNavStyle: React.CSSProperties = {
   background: 'transparent',
   border: 0,
-  color: '#94a3b8',
+  color: 'var(--tp-textInverseMuted)',
   cursor: 'pointer',
   fontSize: 34,
   fontWeight: 300,
@@ -257,10 +257,10 @@ export const carouselRailStyle: React.CSSProperties = {
 };
 
 export const carouselArrowStyle: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #d1dbe8',
+  background: 'var(--tp-surface)',
+  border: '1px solid var(--tp-border)',
   borderRadius: 999,
-  color: '#1e3a8a',
+  color: 'var(--tp-primaryHover)',
   cursor: 'pointer',
   fontSize: 22,
   height: 32,

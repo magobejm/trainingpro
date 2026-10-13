@@ -3,6 +3,7 @@ import type { CalendarEventData } from './calendar-screen.types';
 import { legacyCalendarBackgrounds } from '@trainerpro/ui';
 import type { CalendarColor } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
+import { calendarStoredColor } from '../../data/calendar-stored-color';
 
 export type CalendarCell = { day: number; dateStr: string; isCurrentMonth: boolean };
 
@@ -53,7 +54,10 @@ export function formatCalendarDate(date: Date): string {
 
 export function getColorForHex(hex: string): CalendarColor {
   const background = legacyCalendarBackgrounds[hex] ?? hex;
-  return CALENDAR_COLORS.find((c) => c.bg === background) ?? (CALENDAR_COLORS[0] as CalendarColor);
+  return (
+    CALENDAR_COLORS.find((c) => calendarStoredColor(c.bg) === calendarStoredColor(background)) ??
+    (CALENDAR_COLORS[0] as CalendarColor)
+  );
 }
 
 export const MONTH_NAMES_ES = [

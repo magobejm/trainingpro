@@ -84,7 +84,7 @@ export interface ErrorBannerProps {
 }
 
 const ICON_COLOR_DANGER = colors.danger;
-const ICON_COLOR_WHITE = colors.surface;
+const ICON_COLOR_WHITE = colors.onPrimary;
 
 export function ErrorBanner({ message, t, onClose }: ErrorBannerProps) {
   return (

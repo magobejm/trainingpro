@@ -1,6 +1,7 @@
+import { EmptyIllustration } from '../../../../components/EmptyIllustrations';
+import { LoadingState } from '../../../../components/AsyncStatus';
 import React from 'react';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   Pressable,
@@ -121,8 +122,8 @@ interface BodyProps {
 }
 
 export const PickerBody = (p: BodyProps) => {
-  if (p.isLoading) return <ActivityIndicator style={s.loader} />;
-  if (!p.items.length) return <EmptyState title={p.t('coach.routine.picker.empty')} />;
+  if (p.isLoading) return <LoadingState label={p.t('common.loading')} variant="rows" />;
+  if (!p.items.length) return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={p.t('coach.routine.picker.empty')} />;
   const renderItem: ListRenderItem<LibraryItem> = ({ item }) => (
     <PickerCard
       blockType={p.blockType}

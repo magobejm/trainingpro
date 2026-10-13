@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, space } from '../theme/tokens';
+import { useTheme } from '../theme/ThemeProvider';
 import { Button } from './Button';
 
 export type EmptyStateProps = {
@@ -12,11 +13,12 @@ export type EmptyStateProps = {
 };
 
 export function EmptyState(props: EmptyStateProps): React.JSX.Element {
+  const theme = useTheme();
   return (
     <View style={styles.root}>
       {props.icon ? <View style={styles.icon}>{props.icon}</View> : null}
-      <Text style={styles.title}>{props.title}</Text>
-      {props.message ? <Text style={styles.message}>{props.message}</Text> : null}
+      <Text style={[styles.title, { color: theme.colors.text }]}>{props.title}</Text>
+      {props.message ? <Text style={[styles.message, { color: theme.colors.textMuted }]}>{props.message}</Text> : null}
       {props.actionLabel && props.onAction ? (
         <Button label={props.actionLabel} onPress={props.onAction} style={styles.action} />
       ) : null}

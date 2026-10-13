@@ -14,7 +14,7 @@ type Props = {
 export function FoodLibraryRow(props: Props): React.JSX.Element {
   const scopeKey = readScopeKey(props.item.scope);
   return (
-    <View style={styles.row}>
+    <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.row}>
       <View style={styles.header}>
         <View style={styles.titleBox}>
           <Text style={styles.title}>{props.item.name}</Text>

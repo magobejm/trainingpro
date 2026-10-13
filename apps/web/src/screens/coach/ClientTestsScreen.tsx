@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
+import { LoadingState } from '../../components/AsyncStatus';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -151,9 +153,9 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
         ))}
       </ScrollView>
 
-      {props.isLoading ? <Text style={styles.empty}>{props.t('coach.tests.loading')}</Text> : null}
+      {props.isLoading ? <LoadingState label={props.t('coach.tests.loading')} variant="cards" /> : null}
       {!props.isLoading && props.viewMode === 'catalog' && items.length === 0 ? (
-        <EmptyState title={props.t('coach.tests.empty')} />
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.tests.empty')} />
       ) : null}
 
       {props.viewMode === 'completed' ? <CompletedTestList rows={completedRows} t={props.t} /> : null}
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   empty: {
     color: colors.textMuted,

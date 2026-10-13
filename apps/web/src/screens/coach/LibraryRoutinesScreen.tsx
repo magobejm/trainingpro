@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, TextInput, View, type ViewStyle } from 'react-native';
-import { Button, EmptyState, IconButton, useBreakpoint } from '@trainerpro/ui';
+import { Button, EmptyState, IconButton, useBreakpoint, useReducedMotion } from '@trainerpro/ui';
 import { C, ss } from './LibraryRoutinesScreen.styles';
 import { Trophy, Activity, Pencil, Trash2, Search, Plus, UserPlus } from 'lucide-react';
 import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
@@ -45,6 +45,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
         <RoutineGrid
           clientId={vm.clientId}
           hasActiveFilter={vm.query.trim().length > 0}
+          onClearFilters={() => vm.setQuery('')}
           items={vm.filteredRoutines}
           mediaMap={vm.mediaMap}
           onAssign={vm.onAssignRoutine}
@@ -61,6 +62,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
       ) : (
         <WarmupGrid
           hasActiveFilter={vm.query.trim().length > 0}
+          onClearFilters={() => vm.setQuery('')}
           items={vm.filteredWarmups}
           mediaMap={vm.mediaMap}
           onCreate={vm.onCreateWarmup}
@@ -155,6 +157,7 @@ function TabBar({ tab, setTab, t }: { tab: Tab; setTab: (v: Tab) => void; t: T }
 function RoutineGrid(props: {
   clientId: string | null;
   hasActiveFilter: boolean;
+  onClearFilters: () => void;
   items: RoutineTemplateView[];
   mediaMap: MediaMap;
   onAssign: (tpl: RoutineTemplateView) => void;
@@ -172,7 +175,7 @@ function RoutineGrid(props: {
     return (
       <EmptyState
         actionLabel={props.t('coach.routineLib.createRoutine')}
-        icon={<EmptyIllustration kind={'generic'} />}
+        icon={<EmptyIllustration kind={'library'} />}
         message={props.t('coach.routineLib.emptyInvite')}
         onAction={props.onCreate}
         title={props.t('coach.routineLib.emptyRoutines')}
@@ -180,21 +183,22 @@ function RoutineGrid(props: {
     );
   }
   const status = QueryResult({
-    emptyIllustration: 'generic',
+    emptyIllustration: 'library',
     emptyTitle: props.t('coach.routineLib.emptyRoutines'),
-    skeleton: 'rows',
+    skeleton: 'cards',
     error: props.queryError,
     hasActiveFilter: props.hasActiveFilter,
     isError: props.queryFailed,
     isLoading: props.queryLoading,
     itemCount: props.items.length,
     onRetry: props.onRetry,
+    onClearFilters: props.onClearFilters,
   });
   if (status) {
     return status;
   }
   return (
-    <View style={ss.grid}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={ss.grid}>
       {props.items.map((tpl) => (
         <RoutineCard
           clientId={props.clientId}
@@ -214,6 +218,7 @@ function RoutineGrid(props: {
 
 function WarmupGrid(props: {
   hasActiveFilter: boolean;
+  onClearFilters: () => void;
   items: WarmupTemplateView[];
   mediaMap: MediaMap;
   onCreate: () => void;
@@ -230,7 +235,7 @@ function WarmupGrid(props: {
     return (
       <EmptyState
         actionLabel={props.t('coach.routineLib.createWarmup')}
-        icon={<EmptyIllustration kind={'generic'} />}
+        icon={<EmptyIllustration kind={'library'} />}
         message={props.t('coach.routineLib.emptyWarmupsHint')}
         onAction={props.onCreate}
         title={props.t('coach.routineLib.emptyWarmups')}
@@ -238,21 +243,22 @@ function WarmupGrid(props: {
     );
   }
   const status = QueryResult({
-    emptyIllustration: 'generic',
+    emptyIllustration: 'library',
     emptyTitle: props.t('coach.routineLib.emptyWarmups'),
-    skeleton: 'rows',
+    skeleton: 'cards',
     error: props.queryError,
     hasActiveFilter: props.hasActiveFilter,
     isError: props.queryFailed,
     isLoading: props.queryLoading,
     itemCount: props.items.length,
     onRetry: props.onRetry,
+    onClearFilters: props.onClearFilters,
   });
   if (status) {
     return status;
   }
   return (
-    <View style={ss.grid}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={ss.grid}>
       {props.items.map((tpl) => (
         <WarmupCard
           key={tpl.id}
@@ -282,10 +288,12 @@ function RoutineCard(props: {
 }) {
   const { tpl, t } = props;
   const bp = useBreakpoint();
+  const reduced = useReducedMotion();
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
     <Pressable
+      {...{ dataSet: { 'interactive-card': reduced ? 'reduced' : 'true' } }}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       onPress={() => props.onView(tpl)}
@@ -299,8 +307,8 @@ function RoutineCard(props: {
         onDelete={() => props.onDelete(tpl.id)}
         t={t}
       />
-      <CardImage hovered={hovered} mediaUrl={props.mediaUrl} />
-      <View style={ss.cardBody}>
+      <CardImage hovered={hovered && !reduced} mediaUrl={props.mediaUrl} />
+      <View {...{ dataSet: { 'density-row': 'true' } }} style={ss.cardBody}>
         <Text style={ss.cardName}>{tpl.name}</Text>
         <View style={ss.cardMeta}>
           <Text style={ss.cardMetaBlue}>{t('coach.routine.list.days', { count: tpl.days.length })}</Text>
@@ -323,10 +331,12 @@ function WarmupCard(props: {
 }) {
   const { tpl, t } = props;
   const bp = useBreakpoint();
+  const reduced = useReducedMotion();
   const canEdit = tpl.scope !== 'GLOBAL';
   const [hovered, setHovered] = useState(false);
   return (
     <Pressable
+      {...{ dataSet: { 'interactive-card': reduced ? 'reduced' : 'true' } }}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
       onPress={() => props.onView(tpl)}
@@ -339,8 +349,8 @@ function WarmupCard(props: {
         onDelete={() => props.onDelete(tpl.id)}
         t={t}
       />
-      <CardImage hovered={hovered} mediaUrl={props.mediaUrl} />
-      <View style={ss.cardBody}>
+      <CardImage hovered={hovered && !reduced} mediaUrl={props.mediaUrl} />
+      <View {...{ dataSet: { 'density-row': 'true' } }} style={ss.cardBody}>
         <Text style={ss.cardName}>{tpl.name}</Text>
         <Text style={ss.cardMetaGray}>{t('coach.warmupPlanner.blocksCount', { count: tpl.items.length })}</Text>
       </View>

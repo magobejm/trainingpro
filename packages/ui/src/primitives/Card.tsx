@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Platform, Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../theme/motion';
+import { useTheme } from '../theme/ThemeProvider';
 import { colors, radius, shadow, space } from '../theme/tokens';
 
 export type CardProps = {
   children: React.ReactNode;
   elevated?: boolean;
   interactive?: boolean;
+  densityRow?: boolean;
   padded?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
@@ -15,9 +17,12 @@ export type CardProps = {
 export function Card(props: CardProps): React.JSX.Element {
   const { padded = true } = props;
   const reduced = useReducedMotion();
+  const theme = useTheme();
   const [hovered, setHovered] = useState(false);
   const style = [
     styles.base,
+    Platform.OS !== 'web' ? { backgroundColor: theme.colors.surface, borderColor: theme.colors.border } : null,
+    props.interactive && !reduced && Platform.OS === 'web' ? motionStyle : null,
     padded ? styles.padded : null,
     props.elevated ? styles.elevated : null,
     props.interactive && !reduced && hovered ? styles.lift : null,
@@ -25,13 +30,19 @@ export function Card(props: CardProps): React.JSX.Element {
   ];
   if (!props.interactive) {
     return (
-      <View style={style} testID={props.testID}>
+      <View {...(props.densityRow ? { dataSet: { 'density-row': 'true' } } : {})} style={style} testID={props.testID}>
         {props.children}
       </View>
     );
   }
   return (
-    <Pressable onHoverIn={() => setHovered(true)} onHoverOut={() => setHovered(false)} style={style} testID={props.testID}>
+    <Pressable
+      {...(props.densityRow ? { dataSet: { 'density-row': 'true' } } : {})}
+      onHoverIn={() => setHovered(true)}
+      onHoverOut={() => setHovered(false)}
+      style={style}
+      testID={props.testID}
+    >
       {props.children}
     </Pressable>
   );
@@ -50,11 +61,10 @@ const styles = StyleSheet.create({
   lift: {
     transform: [{ translateY: -2 }],
     ...shadow.md,
-    // @ts-expect-error web-only
-    transitionDuration: '150ms',
-    transitionProperty: 'transform, box-shadow',
   },
   padded: {
     padding: space.lg,
   },
 });
+
+const motionStyle = { transitionDuration: '150ms', transitionProperty: 'transform, box-shadow' } as ViewStyle;

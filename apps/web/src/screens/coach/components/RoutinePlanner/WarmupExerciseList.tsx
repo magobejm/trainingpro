@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../../components/EmptyIllustrations';
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -65,7 +66,7 @@ export function WarmupExerciseList({ items, groups }: Props): React.JSX.Element 
   });
 
   if (elements.length === 0) {
-    return <EmptyState title={t('coach.routine.day.noExercises')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.routine.day.noExercises')} />;
   }
 
   return (

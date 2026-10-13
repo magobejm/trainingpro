@@ -47,9 +47,9 @@ function ClientAvatar({ item }: { item: ClientCardItem }): React.JSX.Element {
 }
 export function ClientCardRow(props: Props): React.JSX.Element {
   return (
-    <View style={styles.row}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.row}>
       {props.items.map((item) => (
-        <Card interactive key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
+        <Card interactive densityRow key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={item.statusDot ? `${item.title}. ${item.statusDot.reason}` : item.title}

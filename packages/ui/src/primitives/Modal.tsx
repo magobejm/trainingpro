@@ -40,7 +40,7 @@ export function Modal(props: ModalProps): React.JSX.Element {
   const revealed = reduced || entered;
   const Body = scroll ? ScrollView : View;
   return (
-    <NativeModal animationType="fade" onRequestClose={props.onClose} transparent visible={props.visible}>
+    <NativeModal animationType={reduced ? 'none' : 'fade'} onRequestClose={props.onClose} transparent visible={props.visible}>
       <View style={styles.overlay}>
         {props.dismissOnOverlay ? (
           <Pressable

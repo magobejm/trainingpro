@@ -30,11 +30,11 @@ interface BlockHeaderProps {
 
 const tagColors: Record<BlockType, { bg: string; text: string }> = {
   cardio: { bg: colors.primaryBorder, text: colors.primary },
-  isometric: { bg: '#fce7f3', text: '#be185d' },
+  isometric: { bg: 'var(--tp-chartPinkSoft)', text: 'var(--tp-chartPink)' },
   plio: { bg: colors.warningSoft, text: colors.warning },
   sport: { bg: colors.background, text: colors.textMuted },
-  strength: { bg: '#f3e8ff', text: '#9333ea' },
-  mobility: { bg: '#ecfccb', text: colors.success },
+  strength: { bg: 'var(--tp-chartPurpleSoft)', text: 'var(--tp-chartPurple)' },
+  mobility: { bg: 'var(--tp-successSoft)', text: colors.success },
 };
 const DRAG_HANDLE_ICON = '⠿';
 

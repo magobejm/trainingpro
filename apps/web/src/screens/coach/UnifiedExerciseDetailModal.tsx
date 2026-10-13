@@ -71,7 +71,7 @@ function HeroMedia({
         <View style={s.playOverlay} pointerEvents="box-none">
           <Pressable style={s.playBtn} onPress={() => setPlayingYT(true)}>
             {/* eslint-disable-next-line no-restricted-syntax */}
-            <Play size={16} fill={colors.surface} color={colors.surface} />
+            <Play size={16} fill={colors.surface} color={colors.onPrimary} />
             <Text style={s.playBtnText}>{t('coach.library.actions.playTutorial')}</Text>
           </Pressable>
         </View>

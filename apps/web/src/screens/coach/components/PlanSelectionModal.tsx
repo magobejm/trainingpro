@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
+import { LoadingState } from '../../../components/AsyncStatus';
 import React, { useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useRoutineTemplatesQuery } from '../../../data/hooks/useRoutineTemplates';
@@ -95,8 +97,8 @@ function PlanListContent({
   onClose: () => void;
   t: (k: string) => string;
 }) {
-  if (isLoading) return <Text style={styles.loading}>{t('common.loading')}</Text>;
-  if (filtered.length === 0) return <EmptyState title={t('coach.plans.selection.empty')} />;
+  if (isLoading) return <LoadingState label={t('common.loading')} variant="rows" />;
+  if (filtered.length === 0) return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={t('coach.plans.selection.empty')} />;
   return (
     <FlatList
       data={filtered}

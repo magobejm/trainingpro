@@ -12,7 +12,7 @@ export function SkeletonList(props: { variant: SkeletonVariant }): React.JSX.Ele
   if (props.variant === 'panel') return <Skeleton height={180} radius={radius.lg} />;
   if (props.variant === 'rows') {
     return (
-      <View style={styles.stack}>
+      <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.stack}>
         {Array.from({ length: ROW_COUNT }, (_, index) => (
           <SkeletonRow key={index} />
         ))}
@@ -20,7 +20,7 @@ export function SkeletonList(props: { variant: SkeletonVariant }): React.JSX.Ele
     );
   }
   return (
-    <View style={styles.grid}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.grid}>
       {Array.from({ length: CARD_COUNT }, (_, index) => (
         <SkeletonCard key={index} />
       ))}
@@ -30,7 +30,7 @@ export function SkeletonList(props: { variant: SkeletonVariant }): React.JSX.Ele
 
 function SkeletonCard(): React.JSX.Element {
   return (
-    <View style={styles.card}>
+    <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.card}>
       <Skeleton height={96} radius={radius.md} />
       <Skeleton height={14} width="70%" />
       <Skeleton height={12} width="45%" />
@@ -40,7 +40,7 @@ function SkeletonCard(): React.JSX.Element {
 
 function SkeletonRow(): React.JSX.Element {
   return (
-    <View style={styles.row}>
+    <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.row}>
       <Skeleton height={40} radius={radius.pill} width={40} />
       <View style={styles.lines}>
         <Skeleton height={14} width="55%" />

@@ -120,7 +120,7 @@ export const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.3)',
+    backgroundColor: 'var(--tp-imageOverlaySoft)',
   },
   biomechBlock: {
     // Left empty or removed border since it's a card now

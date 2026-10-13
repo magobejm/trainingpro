@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 12, 20, 0.2)',
+    backgroundColor: 'var(--tp-overlay)',
   },
   image: {
     width: '100%' as DimensionValue,
@@ -64,13 +64,13 @@ const styles = StyleSheet.create({
     left: 12,
   },
   categoryBadge: {
-    backgroundColor: 'rgba(30, 41, 59, 0.7)',
+    backgroundColor: 'var(--tp-imageOverlay)',
     borderRadius: radius.sm,
     paddingHorizontal: space.md,
     paddingVertical: space.xs,
   },
   badgeText: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: fontSize.xs,
     fontWeight: '700',
   },

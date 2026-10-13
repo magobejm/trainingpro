@@ -14,13 +14,13 @@ export interface SelectOption {
 
 export const MODAL_THEME = {
   colors: {
-    background: '#ffffff',
-    surface: '#f6f9ff',
-    primary: '#1c74e9',
-    text: '#111418',
-    textSecondary: '#5e7088',
-    border: '#d4e0ef',
-    danger: '#d92d20',
+    background: 'var(--tp-surface)',
+    surface: 'var(--tp-background)',
+    primary: 'var(--tp-primary)',
+    text: 'var(--tp-text)',
+    textSecondary: 'var(--tp-textMuted)',
+    border: 'var(--tp-border)',
+    danger: 'var(--tp-danger)',
   },
   borderRadius: {
     md: 10,

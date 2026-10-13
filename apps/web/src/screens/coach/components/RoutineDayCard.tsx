@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import React, { useState } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import type { TFunction } from 'i18next';
@@ -207,7 +208,7 @@ interface DayBlocksContentProps {
 function DayBlocksContent(props: DayBlocksContentProps) {
   const { day, readOnly, t } = props;
   if (day.blocks.length === 0) {
-    return <EmptyState title={t('coach.routine.day.noExercises')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.routine.day.noExercises')} />;
   }
 
   const groups = day.groups ?? [];
@@ -302,7 +303,7 @@ function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: (
         right: 0,
         bottom: 0,
         zIndex: 10,
-        backgroundColor: selected ? 'rgba(59,130,246,0.12)' : 'rgba(0,0,0,0.02)',
+        backgroundColor: selected ? 'var(--tp-primarySoft)' : 'var(--tp-surfaceMuted)',
         borderRadius: radius.md,
         borderWidth: selected ? 2 : 1,
         borderColor: selected ? colors.primary : colors.primaryBorder,

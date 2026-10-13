@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
+import { LoadingState } from '../../../components/AsyncStatus';
 import { colors } from '@trainerpro/ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,8 +41,8 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
         </Pressable>
       </View>
       <Text style={styles.sectionTitle}>{t('coach.nutrition.plans.saved')}</Text>
-      {plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
-      {plans.length === 0 && !plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.plans.empty')} /> : null}
+      {plansQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
+      {plans.length === 0 && !plansQuery.isLoading ? <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.plans.empty')} /> : null}
       {plans.map((plan) => (
         <Pressable key={plan.id} onPress={() => props.onOpenPlan(plan.id, plan.type)} style={styles.card}>
           <Text style={styles.cardTitle}>{plan.name}</Text>

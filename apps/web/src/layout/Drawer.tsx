@@ -3,7 +3,6 @@ import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { colors, useDialogFocus, useReducedMotion } from '@trainerpro/ui';
 
 const DRAWER_WIDTH = 290;
-const FADE = 'fade' as const;
 const DIALOG = 'dialog' as const;
 
 /** Panel lateral que se abre sobre el contenido en móvil (menú ☰). Esc o pulsar fuera lo cierra. */
@@ -36,7 +35,7 @@ export function Drawer(props: {
   }, [props.visible]);
   const revealed = reduced || entered;
   return (
-    <Modal animationType={reduced ? FADE : 'none'} onRequestClose={props.onClose} transparent visible={props.visible}>
+    <Modal animationType={'none'} onRequestClose={props.onClose} transparent visible={props.visible}>
       <View style={[styles.overlay, styles.motion, { opacity: revealed ? 1 : 0 }]}>
         <View
           ref={panelRef}

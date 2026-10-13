@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../../components/EmptyIllustrations';
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { EmptyState, Select } from '@trainerpro/ui';
@@ -47,7 +48,7 @@ function renderObjectivesCard(
       </View>
       <Text style={s.objectiveSelectLabel}>{props.t('coach.routine.objectives.selectLabel')}</Text>
       {props.objectiveOptions.length === 0 ? (
-        <EmptyState title={props.t('coach.routine.objectives.empty')} />
+        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.routine.objectives.empty')} />
       ) : (
         <>
           {!props.isReadOnly && (

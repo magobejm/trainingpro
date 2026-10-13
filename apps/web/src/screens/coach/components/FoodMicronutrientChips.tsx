@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   label: {
     color: colors.textMuted,

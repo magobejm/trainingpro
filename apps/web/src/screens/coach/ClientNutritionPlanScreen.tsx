@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
+import { LoadingState } from '../../components/AsyncStatus';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -58,7 +60,7 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
           onPress={() => setPlanType('ESTRUCTURADO')}
         />
       </View>
-      {plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {plansQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {setup ? (
         <View style={styles.macroRow}>
           <View style={styles.macroBar}>
@@ -87,11 +89,11 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
           <Button label={t('coach.nutrition.checkpoints.open')} onPress={() => setCheckpointPlan(activePlan)} />
         </>
       ) : null}
-      {!activePlan && !plansQuery.isLoading ? <EmptyState title={t('coach.nutrition.client.empty')} /> : null}
+      {!activePlan && !plansQuery.isLoading ? <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} /> : null}
       <Text style={styles.sectionTitle}>{t('coach.nutrition.client.libraryTitle')}</Text>
-      {templatesQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {templatesQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {templates.length === 0 && !templatesQuery.isLoading ? (
-        <EmptyState title={t('coach.nutrition.client.libraryEmpty')} />
+        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.libraryEmpty')} />
       ) : null}
       {templates.map((plan) => (
         <View key={plan.id} style={styles.card}>
@@ -146,7 +148,7 @@ function FreePlanReadOnly(props: {
 }): React.JSX.Element {
   const content = (props.content as FreePlanContent | undefined) ?? { columns: {} };
   const columns = Object.entries(content.columns ?? {});
-  if (columns.length === 0) return <EmptyState title={props.t('coach.nutrition.client.noContent')} />;
+  if (columns.length === 0) return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
   return (
     <>
       {columns.map(([column, items]) => (
@@ -168,7 +170,7 @@ function StructuredPlanReadOnly(props: {
   t: (key: string, params?: Record<string, number | string>) => string;
 }): React.JSX.Element {
   const content = (props.content as StructuredPlanContent | undefined) ?? { weeks: [] };
-  if (content.weeks.length === 0) return <EmptyState title={props.t('coach.nutrition.client.noContent')} />;
+  if (content.weeks.length === 0) return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
   return (
     <>
       {content.weeks.map((week) => (

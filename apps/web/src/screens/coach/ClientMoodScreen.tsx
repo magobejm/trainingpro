@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
+import { LoadingState } from '../../components/AsyncStatus';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -69,14 +71,14 @@ function ClientMoodView(props: ViewModel): React.JSX.Element {
 
 function renderBody(props: ViewModel): React.JSX.Element {
   if (props.isLoading) {
-    return <EmptyState title={props.t('coach.mood.loading')} />;
+    return <LoadingState label={props.t('coach.mood.loading')} />;
   }
   if (props.isError || !props.wellness) {
     return <EmptyState title={props.t('coach.mood.error')} />;
   }
   const isEmpty = props.wellness.summary.sessionsWithWellness === 0 && props.wellness.summary.reportsCount === 0;
   if (isEmpty) {
-    return <EmptyState title={props.t('coach.mood.empty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} />;
   }
   return <WellnessBody t={props.t} wellness={props.wellness} />;
 }
@@ -119,7 +121,7 @@ function SessionList(props: { sessions: ClientWellnessSession[]; t: ViewModel['t
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.sessions')}</Text>
-      {withData.length === 0 ? <EmptyState title={props.t('coach.mood.empty')} /> : null}
+      {withData.length === 0 ? <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} /> : null}
       {withData.map((session) => (
         <View key={session.id} style={styles.card}>
           <Text style={styles.cardTitle}>{session.planDayTitle ?? formatDateLabel(session.sessionDate)}</Text>
@@ -140,7 +142,7 @@ function WeeklyList(props: { reports: ClientWellnessWeeklyReport[]; t: ViewModel
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.weeklyReports')}</Text>
-      {props.reports.length === 0 ? <EmptyState title={props.t('coach.mood.empty')} /> : null}
+      {props.reports.length === 0 ? <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} /> : null}
       {props.reports.map((report) => (
         <View key={report.id} style={styles.card}>
           <Text style={styles.cardTitle}>{props.t('coach.mood.weeklyReport.weekOf', { date: report.weekStartDate })}</Text>

@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -222,9 +223,10 @@ function renderList(props: ViewModel): React.JSX.Element {
     props.activeTypeFilter !== 'all' ||
     props.activeCategoryFilter !== 'all';
   if (!props.listQuery.isLoading && !props.listQuery.isError && !filtered && items.length === 0) {
-    return <EmptyState message={props.t('coach.library.emptyHint')} title={props.t('coach.library.empty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'library'} />} actionLabel={props.t('coach.library.list.emptyAction')} onAction={props.onOpenCreateModal} message={props.t('coach.library.emptyHint')} title={props.t('coach.library.empty')} />;
   }
   const status = QueryResult({
+    emptyIllustration: 'library',
     emptyTitle: props.t('coach.library.empty'),
     skeleton: 'rows',
     error: props.listQuery.error,
@@ -233,12 +235,13 @@ function renderList(props: ViewModel): React.JSX.Element {
     isLoading: props.listQuery.isLoading,
     itemCount: items.length,
     onRetry: () => void props.listQuery.refetch(),
+    onClearFilters: () => { props.setQuery(''); props.onSelectCategoryFilter('all'); props.onSelectTypeFilter('all'); props.onSelectUnitFilter('all'); },
   });
   if (status) {
     return status;
   }
   return (
-    <View style={styles.list}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.list}>
       {items.map((item) => (
         <FoodLibraryRow
           expanded={props.expandedId === item.id}

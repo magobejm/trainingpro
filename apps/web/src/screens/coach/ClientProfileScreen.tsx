@@ -1,3 +1,4 @@
+import { LoadingState } from '../../components/AsyncStatus';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -306,7 +307,7 @@ type ViewModel = ReturnType<typeof useClientProfileModel>;
 
 function ClientProfileView(props: { vm: ViewModel }): React.JSX.Element {
   if (props.vm.query.isLoading) {
-    return <Message text={props.vm.t('coach.clientProfile.loading')} />;
+    return <LoadingState label={props.vm.t('coach.clientProfile.loading')} />;
   }
   if (props.vm.query.isError || !props.vm.query.data) {
     return <Message text={props.vm.t('coach.clientProfile.error')} />;

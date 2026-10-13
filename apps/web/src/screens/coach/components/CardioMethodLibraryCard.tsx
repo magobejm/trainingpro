@@ -41,7 +41,7 @@ export function CardioMethodLibraryCard(props: Props): React.JSX.Element {
   const imageUrl = getFullUrl(props.item.media?.url);
 
   return (
-    <Pressable onPress={props.onPress} style={styles.card}>
+    <Pressable {...{ dataSet: { 'interactive-card': 'true' } }} onPress={props.onPress} style={styles.card}>
       <View style={styles.imageContainer}>
         <Image
           blurRadius={IMAGE_BLUR_RADIUS}
@@ -55,7 +55,7 @@ export function CardioMethodLibraryCard(props: Props): React.JSX.Element {
         <Image resizeMode="contain" source={{ uri: imageUrl }} style={styles.image} />
       </View>
 
-      <View style={styles.content}>
+      <View {...{ dataSet: { 'density-row': 'true' } }} style={styles.content}>
         <Text numberOfLines={1} style={styles.title}>
           {props.item.name}
         </Text>
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 12, 20, 0.2)',
+    backgroundColor: 'var(--tp-overlay)',
   },
   image: {
     width: '100%' as DimensionValue,

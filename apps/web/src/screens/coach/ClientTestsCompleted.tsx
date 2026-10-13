@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ClientPhysicalTestAssignmentView, TestInputs } from '../../data/hooks/usePhysicalTests';
@@ -44,7 +45,7 @@ export function buildCompletedRows(
 
 export function CompletedTestList(props: { rows: CompletedTestRow[]; t: Translate }): React.JSX.Element {
   if (props.rows.length === 0) {
-    return <EmptyState title={props.t('coach.tests.completed.empty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.tests.completed.empty')} />;
   }
   return (
     <View style={styles.list}>
@@ -66,7 +67,7 @@ export function CompletedTestList(props: { rows: CompletedTestRow[]; t: Translat
 function classificationTint(classification: string): string {
   const value = classification.toLowerCase();
   if (value.includes('pobre') || value.includes('debajo')) return colors.danger;
-  if (value.includes('regular')) return '#c2410c';
+  if (value.includes('regular')) return 'var(--tp-warning)';
   if (value.includes('medio') || value.includes('media') || value.includes('normal')) return colors.warning;
   if (value.includes('excelente') || value.includes('superior') || value.includes('élite') || value.includes('elite')) {
     return colors.success;

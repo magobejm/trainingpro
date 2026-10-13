@@ -161,13 +161,13 @@ export const styles = StyleSheet.create({
   },
   headerTagSecondary: {
     maxWidth: '100%',
-    backgroundColor: '#fff7ed',
+    backgroundColor: 'var(--tp-warningSoft)',
     borderRadius: radius.md,
     paddingHorizontal: space.md,
     paddingVertical: space.sm,
   },
   headerTagTextSecondary: {
-    color: '#c2410c',
+    color: 'var(--tp-warning)',
     fontSize: fontSize.xs,
     fontWeight: '800',
     letterSpacing: 0.5,

@@ -203,18 +203,18 @@ const styles = StyleSheet.create({
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 12, 20, 0.2)',
+    backgroundColor: 'var(--tp-overlay)',
   },
   playButton: {
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'var(--tp-imageOverlay)',
     borderRadius: 40,
     height: 80,
     justifyContent: 'center',
     width: 80,
   },
   playIcon: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: fontSize.xxxl,
     marginLeft: space.xs, // Center adjustment for play icon
   },

@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     minHeight: 320,
     minWidth: 290,
     padding: space.xl,
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.05,
     shadowRadius: 20,

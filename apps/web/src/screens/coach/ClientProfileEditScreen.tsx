@@ -1,3 +1,4 @@
+import { LoadingState } from '../../components/AsyncStatus';
 import React, { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { Button, EmptyState, useToast } from '@trainerpro/ui';
@@ -28,7 +29,7 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 export function ClientProfileEditScreen(props: Props): React.JSX.Element {
   const { i18n, t } = useTranslation();
   const vm = useClientProfileEditState(props.clientId, i18n.language, t);
-  if (vm.query.isLoading) return <EmptyState title={t('coach.clientProfile.loading')} />;
+  if (vm.query.isLoading) return <LoadingState label={t('coach.clientProfile.loading')} />;
   if (vm.query.isError || !vm.query.data) return <EmptyState title={t('coach.clientProfile.error')} />;
   return <EditScreenContent onBack={props.onBack} onArchived={props.onArchived} t={t} vm={vm} />;
 }

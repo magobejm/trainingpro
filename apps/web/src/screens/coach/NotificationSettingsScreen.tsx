@@ -51,7 +51,7 @@ function NotificationSettingsView(props: ViewModel) {
     <View style={styles.page}>
       <Text style={styles.title}>{props.t('coach.notifications.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.notifications.subtitle')}</Text>
-      {status ?? <Card style={styles.list}>{renderRows(TOPIC_KEYS, preferences, props)}</Card>}
+      {status ?? <View {...{ dataSet: { 'density-list': 'true' } }}><Card style={styles.list}>{renderRows(TOPIC_KEYS, preferences, props)}</Card></View>}
     </View>
   );
 }
@@ -64,7 +64,7 @@ function renderRows(
   return topics.map((topic) => {
     const enabled = preferences.find((item) => item.topic === topic)?.enabled ?? false;
     return (
-      <View key={topic} style={styles.row}>
+      <View {...{ dataSet: { 'density-row': 'true' } }} key={topic} style={styles.row}>
         <Text style={styles.rowLabel}>{labelForTopic(topic, props.t)}</Text>
         <Button
           loading={props.mutation.isPending && props.mutation.variables?.topic === topic}

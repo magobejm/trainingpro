@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { PhysicalTestView } from '../../data/hooks/usePhysicalTests';
@@ -42,7 +43,7 @@ export function TestTablesModal(props: Props): React.JSX.Element {
         {tables.length > 0 ? (
           tables.map((table, index) => renderTable(table, index))
         ) : (
-          <EmptyState title={props.t('coach.tests.tables.fallback')} />
+          <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.tests.tables.fallback')} />
         )}
       </View>
     </Modal>

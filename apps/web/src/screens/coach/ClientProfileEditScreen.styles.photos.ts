@@ -23,7 +23,7 @@ export const photoStyles = {
   },
   photoOverlay: {
     alignItems: 'center',
-    backgroundColor: 'rgba(7, 15, 30, 0.4)',
+    backgroundColor: 'var(--tp-overlay)',
     bottom: 0,
     justifyContent: 'center',
     left: 0,
@@ -32,7 +32,7 @@ export const photoStyles = {
     top: 0,
   },
   photoOverlayIcon: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: fontSize.xl,
     fontWeight: '700',
   },

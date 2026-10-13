@@ -12,6 +12,7 @@ export type ButtonProps = {
   loading?: boolean;
   onPress: () => void;
   size?: 'md' | 'sm';
+  selected?: boolean;
   style?: StyleProp<ViewStyle>;
   testID?: string;
   variant?: ButtonVariant;
@@ -29,6 +30,7 @@ export function Button(props: ButtonProps): React.JSX.Element {
       accessibilityRole="button"
       aria-busy={Boolean(props.loading)}
       aria-disabled={inactive}
+      aria-pressed={props.selected}
       disabled={inactive}
       onPress={props.onPress}
       style={(state) => {

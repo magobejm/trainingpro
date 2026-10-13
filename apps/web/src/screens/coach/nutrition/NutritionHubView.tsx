@@ -1,8 +1,9 @@
+import { QueryResult } from '../../../components/AsyncStatus';
 import { colors } from '@trainerpro/ui';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { EmptyState, SearchBar } from '@trainerpro/ui';
+import { SearchBar } from '@trainerpro/ui';
 import { Apple, ClipboardList } from 'lucide-react';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
 import { styles } from './nutrition.styles';
@@ -47,8 +48,12 @@ export function NutritionHubView(props: Props): React.JSX.Element {
           placeholder={t('coach.nutrition.hub.foodSearchPlaceholder')}
           value={props.query}
         />
-        {foodsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
-        {foods.length === 0 && !foodsQuery.isLoading ? <EmptyState title={t('coach.nutrition.hub.noFoods')} /> : null}
+        <QueryResult
+          emptyIllustration={'library'} emptyTitle={t('coach.nutrition.hub.noFoods')}
+          hasActiveFilter={Boolean(props.query.trim())} itemCount={foods.length}
+          isLoading={foodsQuery.isLoading} isError={foodsQuery.isError} error={foodsQuery.error}
+          onRetry={() => void foodsQuery.refetch()} onClearFilters={() => props.onQueryChange('')} skeleton={'rows'}
+        />
         {foods.slice(0, 12).map((food) => (
           <Pressable key={food.id} onPress={() => props.onOpenFoodDetail(food.id)} style={styles.listItem}>
             <Text style={styles.cardTitle}>{food.name}</Text>

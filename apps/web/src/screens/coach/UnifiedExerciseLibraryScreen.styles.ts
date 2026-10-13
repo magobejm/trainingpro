@@ -21,7 +21,7 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   cardTag: {
-    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    backgroundColor: 'var(--tp-primarySoft)',
     borderRadius: radius.sm,
     paddingHorizontal: space.sm,
     paddingVertical: 2,
@@ -72,7 +72,7 @@ export const styles = StyleSheet.create({
   cardTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
   categoryIcon: {
     alignItems: 'center',
-    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+    backgroundColor: 'var(--tp-primarySoft)',
     borderRadius: radius.md,
     height: 28,
     justifyContent: 'center',
@@ -89,7 +89,7 @@ export const styles = StyleSheet.create({
     paddingVertical: space.sm,
   },
   categoryRowActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.06)',
+    backgroundColor: 'var(--tp-primarySoft)',
   },
   chip: {
     backgroundColor: colors.background,
@@ -169,7 +169,7 @@ export const styles = StyleSheet.create({
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 12, 20, 0.2)',
+    backgroundColor: 'var(--tp-overlay)',
   },
   loadingText: { color: colors.textMuted, fontSize: fontSize.sm, paddingVertical: space.xxxl },
   mainContent: { flex: 1 },

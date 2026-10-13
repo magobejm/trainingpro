@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -274,7 +275,7 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
             variant="secondary"
           />
         ) : null}
-        <EmptyState message={t('coach.progress.empty.subtitle')} title={t('coach.progress.empty.title')} />
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} message={t('coach.progress.empty.subtitle')} title={t('coach.progress.empty.title')} />
       </View>
     );
   }

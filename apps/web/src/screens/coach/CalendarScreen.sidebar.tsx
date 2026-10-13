@@ -364,8 +364,8 @@ function RoutineDayItem({
           {CALENDAR_COLORS.map((c) => {
             const layoutStyle30 = getLayoutStyle30(
               c.bg,
-              day.color === c.bg ? 2 : 1,
-              day.color === c.bg ? tk.text : c.border,
+              colorObj.bg === c.bg ? 2 : 1,
+              colorObj.bg === c.bg ? tk.text : c.border,
             );
             return (
               <IconButton

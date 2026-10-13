@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { LoadingState } from './components/AsyncStatus';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { Navigate } from 'react-router';
 import { useBreakpoint } from '@trainerpro/ui';
 import './i18n';
@@ -230,7 +231,7 @@ function ShellContentArea(props: ShellViewProps): React.JSX.Element {
         title={props.t(resolveRouteTitleKey(props.route))}
       />
       <View style={styles.contentBody}>
-        <React.Suspense fallback={<Text style={styles.logoutLabel}>{'…'}</Text>}>
+        <React.Suspense fallback={<LoadingState label={props.t('common.loading')} />}>
           {resolveRouteScreen(props.route, props.activeRole, props.goTo)}
         </React.Suspense>
       </View>

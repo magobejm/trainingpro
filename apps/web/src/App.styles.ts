@@ -4,10 +4,10 @@ import { colors, fontSize, radius, space } from '@trainerpro/ui';
 const COLORS = {
   accent: colors.primary,
   bg: colors.surfaceMuted,
-  nav: colors.text,
-  navBorder: colors.text,
+  nav: colors.surfaceInverse,
+  navBorder: colors.surfaceInverse,
   shell: colors.surfaceMuted,
-  textMuted: colors.textMuted,
+  textMuted: colors.textInverseMuted,
   textActive: colors.border,
   textDefault: colors.border,
   white: colors.surface,
@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
     opacity: 0.4,
   },
   navGroupTitle: {
-    color: colors.textMuted,
+    color: colors.textInverseMuted,
     fontSize: fontSize.xs,
     fontWeight: '700',
     letterSpacing: 0.8,
@@ -151,7 +151,7 @@ export const styles = StyleSheet.create({
     transitionProperty: 'color',
   },
   navLabelHovered: {
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   navLabelActive: {
     color: colors.onPrimary, // blue-400

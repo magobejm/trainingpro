@@ -151,7 +151,7 @@ function formatDate(date: Date): string {
 
 const styles = StyleSheet.create({
   day: { alignItems: 'center', width: '14.28%' },
-  daySelected: { backgroundColor: colors.primary, borderRadius: radius.lg, color: colors.surface, overflow: 'hidden' },
+  daySelected: { backgroundColor: colors.primary, borderRadius: radius.lg, color: colors.onPrimary, overflow: 'hidden' },
   dayText: { color: colors.text, fontSize: fontSize.sm, paddingVertical: space.sm, textAlign: 'center', width: 28 },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   monthLabel: { color: colors.text, fontSize: fontSize.md, fontWeight: '700', textTransform: 'capitalize' },

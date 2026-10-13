@@ -70,7 +70,7 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
   chipLabelActive: {
-    color: colors.surface,
+    color: colors.onPrimary,
   },
   column: {
     backgroundColor: colors.surface,

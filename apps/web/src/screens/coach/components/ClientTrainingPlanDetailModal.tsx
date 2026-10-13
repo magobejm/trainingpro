@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import React from 'react';
 import { Button, EmptyState, Modal } from '@trainerpro/ui';
 import type { RoutineTemplateView } from '../../../data/hooks/useRoutineTemplates';
@@ -24,7 +25,7 @@ export function ClientTrainingPlanDetailModal(props: Props): React.JSX.Element {
       {props.routine ? (
         <RoutineDetail routine={props.routine} t={props.t} />
       ) : (
-        <EmptyState title={props.t('coach.clientProfile.trainingPlan.modalEmpty')} />
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.clientProfile.trainingPlan.modalEmpty')} />
       )}
     </Modal>
   );

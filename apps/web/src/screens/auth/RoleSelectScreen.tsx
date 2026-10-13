@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
+import { LoadingState } from '../../components/AsyncStatus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -52,13 +54,13 @@ function RoleSelectCard(props: RoleSelectCardProps): React.JSX.Element {
 
 function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
   if (props.isLoading) {
-    return <EmptyState title={props.t('auth.roleSelect.loading')} />;
+    return <LoadingState label={props.t('auth.roleSelect.loading')} />;
   }
   if (props.hasError) {
     return <EmptyState title={props.t('auth.roleSelect.error')} />;
   }
   if (!props.hasRoles) {
-    return <EmptyState title={props.t('auth.roleSelect.empty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('auth.roleSelect.empty')} />;
   }
   return (
     <View style={styles.list}>

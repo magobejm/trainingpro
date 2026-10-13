@@ -1,3 +1,4 @@
+import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -35,7 +36,7 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
       title={t('coach.progress.sessionDetail.title')}
       visible={Boolean(props.sessionId)}
     >
-      {query.isLoading ? <Text style={styles.muted}>{t('coach.progress.loading')}</Text> : null}
+      {query.isLoading ? <LoadingState label={t('coach.progress.loading')} /> : null}
       <View>
         {(query.data?.items ?? []).map((item) => {
           const rows = comparePlannedAndLogged(item);

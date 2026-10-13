@@ -124,7 +124,7 @@ function IncidentList(props: ViewModel) {
     onRetry: props.onRetry,
   });
   if (status) return status;
-  return <View style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
+  return <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
 }
 
 function renderIncidentCard(
@@ -140,7 +140,7 @@ function renderIncidentCard(
   },
 ) {
   return (
-    <Card key={incident.id} style={styles.card}>
+    <Card densityRow key={incident.id} style={styles.card}>
       <Text style={styles.incidentTitle}>{`${incident.severity} · ${incident.status}`}</Text>
       <Text style={styles.meta}>{new Date(incident.createdAt).toLocaleDateString()}</Text>
       <Text style={styles.description}>{incident.description}</Text>

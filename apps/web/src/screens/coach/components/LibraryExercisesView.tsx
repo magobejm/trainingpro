@@ -181,12 +181,13 @@ function renderList(props: Props): React.JSX.Element {
     isLoading: props.listLoading,
     itemCount: props.items.length,
     onRetry: props.onRetryList,
+    onClearFilters: () => { props.setQuery(''); props.onSelectFilter('all'); },
   });
   if (status) {
     return status;
   }
   return (
-    <View style={gridStyles.grid}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={gridStyles.grid}>
       {props.deleteError ? <Text style={styles.error}>{props.deleteError}</Text> : null}
       {props.items.map((item) => (
         <View key={item.id} style={gridStyles.gridItem}>

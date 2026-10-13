@@ -36,7 +36,7 @@ export const formStyles = {
     minWidth: 260,
   },
   actionLabel: {
-    color: colors.surface,
+    color: colors.onPrimary,
     fontSize: fontSize.xs,
     fontWeight: '800',
   },

@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { StyleSheet } from 'react-native';
 import {
   getLayoutStyle1,
@@ -238,7 +239,7 @@ function ClientEditorCard(props: { vm: ClientSectionViewModel }): React.JSX.Elem
 function ClientEmptyState(props: { vm: ClientSectionViewModel }): React.JSX.Element {
   return (
     <View style={clientEmptyStateStyle}>
-      <EmptyState title={props.vm.t('coach.notes.client.selectPrompt')} />
+      <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.vm.t('coach.notes.client.selectPrompt')} />
     </View>
   );
 }
@@ -266,7 +267,7 @@ function clientCardStyle(selected: boolean) {
     borderColor: selected ? colors.primary : colors.border,
     marginBottom: space.md,
     overflow: 'hidden' as const,
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 4,

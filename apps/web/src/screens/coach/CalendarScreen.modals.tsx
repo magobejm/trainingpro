@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import {
   getLayoutStyle1,
   getLayoutStyle2,
@@ -19,7 +20,7 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { FileText, Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
+import { Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { formatCalendarDate, calendarEventColor } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
@@ -51,7 +52,7 @@ function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventList
   return (
     <View>
       {dayEvents.length === 0 && (
-        <EmptyState icon={<FileText color={tk.border} size={32} />} title={t('coach.calendar.empty')} />
+        <EmptyState icon={<EmptyIllustration kind={'calendar'} />} title={t('coach.calendar.empty')} />
       )}
       {dayEvents.map((ev) => (
         <EventRow

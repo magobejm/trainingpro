@@ -16,7 +16,7 @@ export const s = StyleSheet.create({
     borderRadius: radius.lg,
     padding: space.lg,
     gap: space.md,
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
@@ -210,7 +210,7 @@ export const s = StyleSheet.create({
     borderRadius: radius.md,
     backgroundColor: colors.primary,
   },
-  blockTypeBtnText: { color: colors.surface, fontSize: fontSize.xs, fontWeight: '600' },
+  blockTypeBtnText: { color: colors.onPrimary, fontSize: fontSize.xs, fontWeight: '600' },
 
   // Save
   saveBtn: {
@@ -219,7 +219,7 @@ export const s = StyleSheet.create({
     paddingVertical: space.lg,
     alignItems: 'center',
   },
-  saveBtnText: { color: colors.surface, fontWeight: '700', fontSize: fontSize.md },
+  saveBtnText: { color: colors.onPrimary, fontWeight: '700', fontSize: fontSize.md },
 
   // Template list
   templateItem: {
@@ -234,7 +234,7 @@ export const s = StyleSheet.create({
   templateBadge: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-    color: colors.surface,
+    color: colors.onPrimary,
     backgroundColor: colors.borderStrong,
     paddingHorizontal: space.sm,
     paddingVertical: 2,
@@ -324,7 +324,7 @@ export const s = StyleSheet.create({
   dayCardOuter: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,

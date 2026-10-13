@@ -210,6 +210,7 @@ function LibraryCategoryList<T extends Item, F extends Record<string, string>>({
     isLoading: itemsQuery.isLoading || Boolean(catalogQuery?.isLoading),
     itemCount: items.length,
     hasActiveFilter: Boolean(query.trim()) || activeFilter !== 'all',
+    onClearFilters: () => { vm.setQuery(''); vm.setActiveFilter('all'); },
     onRetry: () => {
       void itemsQuery.refetch();
       void catalogQuery?.refetch();
@@ -235,7 +236,7 @@ function LibraryCategoryList<T extends Item, F extends Record<string, string>>({
         />
       ) : (
         (status ?? (
-          <View style={styles.grid}>
+          <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.grid}>
             {items.map((item) => (
               <View key={item.id} style={styles.gridItem}>
                 <LibraryItemCard

@@ -48,6 +48,7 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
       isLoading: props.clientsLoading,
       itemCount: vm.items.length,
       onRetry: props.onRetry,
+      onClearFilters: () => { props.onSearchValueChange(''); props.onObjectiveFilterChange('ALL'); },
       skeleton: 'cards',
     })
   );

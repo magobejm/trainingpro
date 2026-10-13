@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   },
   imageShade: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(7, 12, 20, 0.3)',
+    backgroundColor: 'var(--tp-overlay)',
   },
   image: {
     width: '100%' as DimensionValue,

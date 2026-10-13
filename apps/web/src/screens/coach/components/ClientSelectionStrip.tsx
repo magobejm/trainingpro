@@ -1,7 +1,10 @@
+import { useTranslation } from 'react-i18next';
+import { LoadingState } from '../../../components/AsyncStatus';
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import React, { useRef } from 'react';
 import { PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { ClientRowCard } from './ClientRowCard';
-import { colors, fontSize, space, useBreakpoint } from '@trainerpro/ui';
+import { colors, EmptyState, fontSize, space, useBreakpoint } from '@trainerpro/ui';
 const DIR_LEFT = 'left' as const;
 const DIR_RIGHT = 'right' as const;
 
@@ -28,11 +31,12 @@ type Props = {
 };
 
 export function ClientSelectionStrip(props: Props): React.JSX.Element {
+  const { t } = useTranslation();
   if (props.loading) {
-    return <Text style={styles.info}>{props.emptyLabel}</Text>;
+    return <LoadingState label={t('common.loading')} variant="cards" />;
   }
   if (props.items.length === 0) {
-    return <Text style={styles.info}>{props.emptyLabel}</Text>;
+    return <EmptyState icon={<EmptyIllustration kind={'clients'} />} title={props.emptyLabel} />;
   }
   return <HorizontalList {...props} />;
 }

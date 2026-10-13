@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { backdropStyle, drawerStyle, styles } from './ClientProfileSectionsBoard.styles';
@@ -55,7 +56,7 @@ function DrawerBody(props: {
   t: Props['t'];
 }): React.JSX.Element {
   if (props.archived.length === 0) {
-    return <EmptyState title={props.t('coach.clientProfile.sections.archivedEmpty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.clientProfile.sections.archivedEmpty')} />;
   }
   return <View style={styles.drawerList}>{props.archived.map((item) => renderRow(item, props))}</View>;
 }

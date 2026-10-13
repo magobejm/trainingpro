@@ -51,7 +51,7 @@ export const ss = StyleSheet.create({
     backgroundColor: C.card,
     borderRadius: radius.lg,
     overflow: 'hidden',
-    shadowColor: colors.text,
+    shadowColor: colors.shadowColor,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
@@ -74,7 +74,7 @@ export const ss = StyleSheet.create({
     alignItems: 'center',
   },
   imgBackdrop: { ...StyleSheet.absoluteFillObject },
-  imgShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(7,12,20,0.2)' },
+  imgShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'var(--tp-overlay)' },
   imgInner: {
     width: '100%',
     height: '100%',

@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../../../components/EmptyIllustrations';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -51,7 +52,7 @@ function PickerSheet(props: Props): React.JSX.Element {
         value={query}
       />
       {sortedFiltered.length === 0 ? (
-        <EmptyState title={props.t('coach.routine.warmupTemplatePicker.noMatches')} />
+        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.routine.warmupTemplatePicker.noMatches')} />
       ) : (
         sortedFiltered.map((template) => (
           <TemplateRow key={template.id} onSelect={props.onSelect} t={props.t} template={template} />

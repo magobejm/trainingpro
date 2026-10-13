@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: MODAL_THEME.borderRadius.md,
     borderBottomRightRadius: MODAL_THEME.borderRadius.md,
     zIndex: 1000,
-    boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+    boxShadow: '0 8px 16px var(--tp-shadowColor)',
     maxHeight: 250,
     overflow: 'hidden',
   } as ViewStyle,
@@ -229,6 +229,6 @@ const styles = StyleSheet.create({
   multiSelectDoneText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-    color: colors.surface,
+    color: colors.onPrimary,
   },
 });

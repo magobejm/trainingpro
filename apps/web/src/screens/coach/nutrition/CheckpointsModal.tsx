@@ -1,3 +1,5 @@
+import { EmptyIllustration } from '../../../components/EmptyIllustrations';
+import { LoadingState } from '../../../components/AsyncStatus';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -51,9 +53,9 @@ export function CheckpointsModal(props: Props): React.JSX.Element | null {
       visible={props.visible}
     >
       <TextField label={t('coach.nutrition.checkpoints.note')} multiline onChangeText={setNote} value={note} />
-      {checkpointsQuery.isLoading ? <EmptyState title={t('coach.nutrition.loading')} /> : null}
+      {checkpointsQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {checkpoints.length === 0 && !checkpointsQuery.isLoading ? (
-        <EmptyState title={t('coach.nutrition.checkpoints.empty')} />
+        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.checkpoints.empty')} />
       ) : null}
       {checkpoints.map((checkpoint) => (
         <View key={checkpoint.id} style={styles.listItem}>

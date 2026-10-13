@@ -1,3 +1,4 @@
+import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -210,7 +211,7 @@ function ActiveList(props: {
 }): React.JSX.Element {
   if (props.items.length === 0) {
     return (
-      <EmptyState
+      <EmptyState icon={<EmptyIllustration kind={'generic'} />}
         actionLabel={props.t('admin.coaches.create')}
         onAction={props.onCreate}
         title={props.t('admin.coaches.empty')}
@@ -238,7 +239,7 @@ function ArchivedList(props: {
   t: (key: string) => string;
 }): React.JSX.Element {
   if (props.items.length === 0) {
-    return <EmptyState title={props.t('admin.coaches.archivedEmpty')} />;
+    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('admin.coaches.archivedEmpty')} />;
   }
   return (
     <View style={styles.list}>

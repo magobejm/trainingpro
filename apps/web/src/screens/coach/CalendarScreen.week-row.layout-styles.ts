@@ -36,7 +36,7 @@ export function getLayoutStyle4(value1: React.CSSProperties['outline']): React.C
 
 export const getLayoutStyle5: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(7, 1fr)',
+  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
   flex: 1,
   minWidth: 0,
 };

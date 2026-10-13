@@ -20,6 +20,7 @@ export function getLayoutStyle3(
     borderRight: `1px solid ${tk.border}`,
     borderBottom: `1px solid ${tk.border}`,
     minHeight: 110,
+    minWidth: 0,
     padding: '6px 4px',
     backgroundColor: value1,
     cursor: value2,
@@ -63,6 +64,7 @@ export const getLayoutStyle7: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: 2,
+  minWidth: 0,
 };
 
 export const getLayoutStyle8: React.CSSProperties = {
@@ -102,6 +104,8 @@ export function getLayoutStyle11(
     fontSize: fontSize.sm,
     fontWeight: 500,
     overflow: 'hidden',
+    width: '100%',
+    minWidth: 0,
     maxWidth: '100%',
     cursor: value4,
     opacity: value5,
@@ -117,5 +121,7 @@ export const getLayoutStyle12: React.CSSProperties = {
 export const getLayoutStyle13: React.CSSProperties = {
   fontSize: fontSize.xs,
   fontWeight: 600,
-  whiteSpace: 'normal',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
 };

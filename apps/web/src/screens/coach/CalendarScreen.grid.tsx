@@ -15,7 +15,7 @@ import {
   getLayoutStyle13,
 } from './CalendarScreen.grid.layout-styles';
 
-import { WebBox, WebText } from '@trainerpro/ui';
+import { Tooltip, WebBox, WebText } from '@trainerpro/ui';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -157,7 +157,7 @@ export function CalendarDayCell({
       onMouseEnter={() => setIsCellHover(true)}
       onMouseLeave={() => setIsCellHover(false)}
       onClick={onDayClick}
-      style={layoutStyle3}
+      style={isCellHover ? { ...layoutStyle3, zIndex: 4 } : layoutStyle3}
     >
       <WebBox style={layoutStyle4}>
         <WebBox style={layoutStyle5}>
@@ -288,6 +288,7 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
     e.dataTransfer.setData('calendarEventId', event.id);
     e.dataTransfer.effectAllowed = 'move';
   }
+  const fullText = [displayText, ...statusLines].join(' · ');
   const layoutStyle11 = getLayoutStyle11(
     colorObj.bg,
     colorObj.text,
@@ -297,20 +298,19 @@ function EventChip({ event, muted = false }: { event: CalendarEventData; muted?:
   );
   const layoutStyle12 = getLayoutStyle12;
   return (
-    <WebBox
-      draggable={event.type !== 'physical_test'}
-      onDragStart={event.type === 'physical_test' ? undefined : handleDragStart}
-      style={layoutStyle11}
-    >
-      <WebBox style={layoutStyle12}>{displayText}</WebBox>
-      {statusLines.map((line) => {
-        const layoutStyle13 = getLayoutStyle13;
-        return (
-          <WebBox key={line} style={layoutStyle13}>
+    <Tooltip fill label={fullText}>
+      <WebBox
+        draggable={event.type !== 'physical_test'}
+        onDragStart={event.type === 'physical_test' ? undefined : handleDragStart}
+        style={layoutStyle11}
+      >
+        <WebBox style={layoutStyle12}>{displayText}</WebBox>
+        {statusLines.map((line) => (
+          <WebBox key={line} style={getLayoutStyle13}>
             {line}
           </WebBox>
-        );
-      })}
-    </WebBox>
+        ))}
+      </WebBox>
+    </Tooltip>
   );
 }

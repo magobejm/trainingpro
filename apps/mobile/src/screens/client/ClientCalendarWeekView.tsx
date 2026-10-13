@@ -4,9 +4,11 @@ import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import type { ClientCalendarSummary } from '../../data/hooks/useClientCalendar';
 import { LIGHT } from '../../theme/light';
-import { CallRequest, ClientNoteEditor } from './ClientCalendarDayDetail';
+import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
+import { ClientNoteEditor } from './ClientCalendarDayDetail';
+import { CalendarCallPanel } from './ClientCalendarCallPanel';
 import { KpiStrip } from './ClientCalendarKpiStrip';
-import type { DayData } from './client-calendar.helpers';
+import { weekDayLabel, type DayData } from './client-calendar.helpers';
 import { CalendarWorkoutList } from './ClientCalendarWorkouts';
 
 const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -26,11 +28,12 @@ type Props = {
 
 export function CalendarWeekView(props: Props): React.JSX.Element {
   const { t } = useTranslation();
-  const [notesOpen, setNotesOpen] = useState(false);
-  const [callOpen, setCallOpen] = useState(false);
+  const dateKey = formatKey(props.selectedDate);
+  const [notesOpen, toggleNotes] = useRememberedOpen(dateKey, Boolean(props.data?.clientNote));
+  const [callOpen, toggleCall] = useRememberedOpen(dateKey, Boolean(props.data?.call));
   const monthName = t(`client.calendar.month.${String(props.selectedDate.getMonth() + 1)}`);
   const dateLabel = `${monthName} ${String(props.selectedDate.getDate())}`;
-  const note = props.data?.coachNotes?.[0] ?? '';
+  const coachNotes = props.data?.coachNotes ?? [];
 
   return (
     <View style={styles.stack}>
@@ -48,15 +51,18 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
             <Text style={styles.testChipText}>{props.data.physicalTest.name}</Text>
           </Pressable>
         ) : null}
-        {props.data?.call ? (
-          <Text style={styles.meta}>{t('client.calendar.detail.callWith', { time: props.data.call.time })}</Text>
-        ) : null}
       </View>
 
-      <View style={styles.noteCard}>
-        <Text style={styles.noteTitle}>{t('client.calendar.detail.todayNotes')}</Text>
-        <Text style={styles.noteBody}>{note || t('client.calendar.detail.noCoachNotes')}</Text>
-      </View>
+      {props.data?.scheduledCall ? (
+        <InfoCard
+          color={CALL_COLOR}
+          lines={[t('client.calendar.detail.callWith', { time: props.data.scheduledCall.time })]}
+          title={t('client.calendar.detail.callScheduled')}
+        />
+      ) : null}
+      {coachNotes.length > 0 ? (
+        <InfoCard color={COACH_NOTE_COLOR} lines={coachNotes} title={t('client.calendar.detail.coachNotes')} />
+      ) : null}
 
       <View style={styles.weekRow}>
         {props.week.map((date, index) => (
@@ -65,7 +71,11 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
             isSelected={sameDay(date, props.selectedDate)}
             isToday={formatKey(date) === props.todayStr}
             key={formatKey(date)}
-            label={weekLabel(props.dayData.get(formatKey(date)), t)}
+            label={weekDayLabel(
+              props.dayData.get(formatKey(date)),
+              t('client.calendar.chip.rest'),
+              t('client.calendar.week.note'),
+            )}
             letter={t(`client.calendar.weekday.${WEEKDAY_KEYS[index]}`)}
             onPress={() => props.onSelectDate(date)}
           />
@@ -75,16 +85,33 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
       {props.summary ? <KpiStrip data={props.summary} /> : null}
 
       <Text style={styles.panelHint}>{t('client.calendar.detail.panelsHint')}</Text>
-      <Pressable onPress={() => setNotesOpen((open) => !open)} style={styles.panelHeader}>
+      <Pressable onPress={toggleNotes} style={styles.panelHeader}>
         <Text style={styles.panelTitle}>{t('client.calendar.detail.myNotes')}</Text>
       </Pressable>
-      {notesOpen ? (
-        <ClientNoteEditor dateStr={formatKey(props.selectedDate)} initial={props.data?.clientNote ?? ''} />
-      ) : null}
-      <Pressable onPress={() => setCallOpen((open) => !open)} style={styles.panelHeader}>
-        <Text style={styles.panelTitle}>{t('client.calendar.detail.scheduleCall')}</Text>
+      {notesOpen ? <ClientNoteEditor dateStr={dateKey} initial={props.data?.clientNote ?? ''} /> : null}
+      <Pressable onPress={toggleCall} style={styles.panelHeader}>
+        <Text style={styles.panelTitle}>
+          {t(
+            props.data?.call?.status === 'pending'
+              ? 'client.calendar.detail.pendingCall'
+              : 'client.calendar.detail.scheduleCall',
+          )}
+        </Text>
       </Pressable>
-      {callOpen ? <CallRequest dateStr={formatKey(props.selectedDate)} /> : null}
+      {callOpen ? <CalendarCallPanel call={props.data?.call ?? null} dateStr={dateKey} /> : null}
+    </View>
+  );
+}
+
+function InfoCard(props: { color: string; lines: string[]; title: string }): React.JSX.Element {
+  return (
+    <View style={[styles.infoCard, { backgroundColor: props.color }]}>
+      <Text style={styles.infoTitle}>{props.title}</Text>
+      {props.lines.map((line, index) => (
+        <Text key={`${line}-${String(index)}`} style={styles.infoBody}>
+          {line}
+        </Text>
+      ))}
     </View>
   );
 }
@@ -111,10 +138,11 @@ function WeekDay(props: {
   );
 }
 
-function weekLabel(data: DayData | undefined, t: (key: string) => string): string {
-  const titles = (data?.workouts ?? []).map((workout) => workout.title).filter(Boolean);
-  if (titles.length === 0) return t('client.calendar.chip.rest');
-  return titles.join(' · ');
+function useRememberedOpen(key: string, fallback: boolean): [boolean, () => void] {
+  const [choice, setChoice] = useState<{ key: string; open: boolean } | null>(null);
+  const open = choice?.key === key ? choice.open : fallback;
+  const toggle = () => setChoice({ key, open: !open });
+  return [open, toggle];
 }
 
 function sameDay(a: Date, b: Date): boolean {
@@ -138,18 +166,10 @@ const styles = StyleSheet.create({
     padding: 18,
   },
   hint: { color: LIGHT.accentDark, fontSize: 13 },
+  infoBody: { color: '#f8fafc', fontSize: 15, fontWeight: '600', lineHeight: 22 },
+  infoCard: { borderRadius: 16, gap: 6, paddingHorizontal: 16, paddingVertical: 14 },
+  infoTitle: { color: '#f8fafc', fontSize: 12, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase' },
   kicker: { color: LIGHT.accent, fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
-  meta: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '600' },
-  noteBody: { color: LIGHT.textStrong, fontSize: 13, lineHeight: 18 },
-  noteCard: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#1e3a8a33',
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 6,
-    padding: 14,
-  },
-  noteTitle: { color: '#172554', fontSize: 12, fontWeight: '800', letterSpacing: 0.4, textTransform: 'uppercase' },
   panelHeader: { backgroundColor: LIGHT.bgCard, borderColor: LIGHT.border, borderRadius: 14, borderWidth: 1, padding: 12 },
   panelHint: { color: LIGHT.textMuted, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   panelTitle: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '800' },

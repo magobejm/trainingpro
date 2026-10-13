@@ -9,11 +9,15 @@ export type ClientCalendarEvent = {
   title: string | null;
   content: string | null;
   time: string | null;
+  callStatus?: 'accepted' | 'pending';
   color: string | null;
+  initiatedBy?: 'CLIENT' | 'COACH';
   isCompleted?: boolean;
+  lastProposedBy?: 'CLIENT' | 'COACH';
   originDate?: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
+  proposalId?: string;
   scheduleId?: string;
 };
 
@@ -86,6 +90,21 @@ export function useCreateCallProposalMutation() {
     mutationFn: (input: { date: string; time: string }) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post('/calls/proposals', input);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
+    },
+  });
+}
+
+export function useCancelCallProposalMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (proposalId: string) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post(`/calls/proposals/${proposalId}/cancel`, {});
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });

@@ -11,6 +11,14 @@ export type DayWorkout = {
   title: string;
 };
 
+export type DayCall = {
+  initiatedBy: 'CLIENT' | 'COACH' | null;
+  lastProposedBy: 'CLIENT' | 'COACH' | null;
+  proposalId: string | null;
+  status: 'accepted' | 'pending';
+  time: string;
+};
+
 export type DayData = {
   hasCompleted: boolean;
   hasPlanned: boolean;
@@ -23,7 +31,8 @@ export type DayData = {
   shift: WorkoutShift | null;
   workoutColor: string | null;
   coachNotes: string[];
-  call: { time: string } | null;
+  call: DayCall | null;
+  scheduledCall: DayCall | null;
   clientNote: string | null;
   planDayId: string | null;
   physicalTest: { done: boolean; name: string; scheduleId: string } | null;
@@ -96,9 +105,42 @@ export function dayChips(data: DayData | undefined): DayChip[] {
   const chips: DayChip[] = [];
   if (data?.physicalTest) chips.push({ kind: 'test', text: data.physicalTest.name });
   chips.push(...workoutChips(data));
-  if (data?.call || data?.hasMeeting) chips.push({ kind: 'call', text: data.call?.time ?? '' });
+  if (data?.call || data?.scheduledCall || data?.hasMeeting) {
+    chips.push({ kind: 'call', text: callChipText(data) });
+  }
   if ((data?.coachNotes.length ?? 0) > 0 || data?.clientNote) chips.push({ kind: 'notes', text: '' });
   return chips;
+}
+
+export function weekDayLabel(data: DayData | undefined, restLabel: string, noteLabel: string): string {
+  const titles = (data?.workouts ?? []).map((workout) => workout.title).filter(Boolean);
+  const parts = [titles.length > 0 ? titles.join(' · ') : restLabel];
+  if ((data?.coachNotes.length ?? 0) > 0 || data?.clientNote) parts.push(noteLabel);
+  for (const time of callTimes(data)) parts.push(time);
+  return parts.join(' · ');
+}
+
+function callTimes(data: DayData | undefined): string[] {
+  const times: string[] = [];
+  if (data?.scheduledCall?.time) times.push(data.scheduledCall.time);
+  if (data?.call?.time && data.call.time !== data.scheduledCall?.time) times.push(data.call.time);
+  return times;
+}
+
+function callChipText(data: DayData | undefined): string {
+  return callTimes(data).join(' · ');
+}
+
+/** Avisos del día en curso: notas y llamadas, incluida la ya agendada. */
+export function todayAttentionCount(events: ClientCalendarEvent[], today: Date): number {
+  const key = toDateStr(today);
+  const todays = events.filter((event) => event.date.slice(0, 10) === key);
+  let count = 0;
+  if (todays.some((event) => event.type === 'client_note' && event.content)) count += 1;
+  if (todays.some((event) => event.type === 'note' && event.content)) count += 1;
+  if (todays.some((event) => event.type === 'call' && event.callStatus === 'pending')) count += 1;
+  if (todays.some((event) => event.type === 'call' && event.callStatus !== 'pending' && event.time)) count += 1;
+  return count;
 }
 
 export const MOOD_EMOJI: Record<number, string> = {
@@ -122,6 +164,7 @@ function emptyDay(): DayData {
     physicalTest: null,
     planDayId: null,
     planDayTitle: null,
+    scheduledCall: null,
     sessionId: null,
     sessionStatus: null,
     shift: null,
@@ -152,7 +195,7 @@ function applyEvent(day: DayData, event: ClientCalendarEvent, dateStr: string): 
     };
   }
   if (event.type === 'note' && event.content) day.coachNotes.push(event.content);
-  if (event.type === 'call' && event.time) day.call = { time: event.time };
+  if (event.type === 'call' && event.time) rememberCall(day, event);
   if (event.type === 'client_note' && event.content) day.clientNote = event.content;
   if (event.type === 'reminder') day.hasMeeting = true;
 }
@@ -201,6 +244,26 @@ function mergeWorkout(item: DayWorkout, workout: DayWorkout): void {
     item.shift = workout.shift;
     item.originDate = workout.originDate;
   }
+}
+
+function rememberCall(day: DayData, event: ClientCalendarEvent): void {
+  const call = callFromEvent(event);
+  if (call.status === 'accepted') day.scheduledCall = call;
+  if (keepsCall(day, event)) day.call = call;
+}
+
+function keepsCall(day: DayData, event: ClientCalendarEvent): boolean {
+  return day.call?.status !== 'pending' || event.callStatus === 'pending';
+}
+
+function callFromEvent(event: ClientCalendarEvent): DayCall {
+  return {
+    initiatedBy: event.initiatedBy ?? null,
+    lastProposedBy: event.lastProposedBy ?? null,
+    proposalId: event.proposalId ?? null,
+    status: event.callStatus === 'pending' ? 'pending' : 'accepted',
+    time: event.time ?? '',
+  };
 }
 
 function workoutChips(data: DayData | undefined): DayChip[] {

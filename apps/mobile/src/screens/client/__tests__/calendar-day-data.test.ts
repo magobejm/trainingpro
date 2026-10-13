@@ -1,4 +1,11 @@
-import { buildMonthGrid, dayChips, mergeDayData, type DayData } from '../client-calendar.helpers';
+import {
+  buildMonthGrid,
+  dayChips,
+  mergeDayData,
+  todayAttentionCount,
+  weekDayLabel,
+  type DayData,
+} from '../client-calendar.helpers';
 import { callTimeOptions } from '../calendar-fixed-colors';
 import type { ClientCalendarEvent } from '../../../data/hooks/useClientCalendar';
 
@@ -31,7 +38,14 @@ describe('mergeDayData', () => {
     const day = map.get('2026-10-20');
     expect(day?.workoutColor).toBe('#dbeafe');
     expect(day?.coachNotes).toEqual(['Descansa bien']);
-    expect(day?.call).toEqual({ time: '17:15' });
+    expect(day?.call).toEqual({
+      initiatedBy: null,
+      lastProposedBy: null,
+      proposalId: null,
+      status: 'accepted',
+      time: '17:15',
+    });
+    expect(day?.scheduledCall?.time).toBe('17:15');
     expect(day?.clientNote).toBe('Molestia en la rodilla');
   });
 
@@ -65,6 +79,7 @@ describe('dayChips', () => {
     sessionId: null,
     sessionStatus: null,
     shift: null,
+    scheduledCall: null,
     workoutColor: null,
     workouts: [],
   };
@@ -73,7 +88,7 @@ describe('dayChips', () => {
     expect(
       dayChips({
         ...base,
-        call: { time: '18:00' },
+        call: { initiatedBy: null, lastProposedBy: null, proposalId: null, status: 'accepted', time: '18:00' },
         coachNotes: ['Hidratación'],
         hasPlanned: true,
         physicalTest: { done: false, name: 'Cooper', scheduleId: 's1' },
@@ -109,6 +124,55 @@ describe('dayChips', () => {
     const chips = dayChips(map.get('2026-10-20'));
     expect(chips.map((chip) => chip.text)).toEqual(['Pierna', 'Empuje', '']);
     expect(chips[2]?.extra).toBe(1);
+  });
+});
+
+describe('week notes and calls', () => {
+  it('keeps a pending call ahead of an accepted one and labels the week day', () => {
+    const map = mergeDayData(
+      [
+        event({ id: 'accepted', time: '09:00', type: 'call' }),
+        event({
+          callStatus: 'pending',
+          id: 'proposal-1',
+          initiatedBy: 'COACH',
+          lastProposedBy: 'COACH',
+          proposalId: 'proposal-1',
+          time: '17:15',
+          type: 'call',
+        }),
+        event({ content: 'Descansa', id: 'note-1', type: 'note' }),
+      ],
+      [],
+    );
+    const day = map.get('2026-10-20');
+    expect(day?.call?.status).toBe('pending');
+    expect(day?.call?.proposalId).toBe('proposal-1');
+    expect(day?.scheduledCall?.time).toBe('09:00');
+    expect(weekDayLabel(day, 'Descanso', 'Nota')).toBe('Descanso · Nota · 09:00 · 17:15');
+  });
+
+  it('counts only today and includes a scheduled call', () => {
+    const events = [
+      event({ content: 'Mia', date: '2026-10-13', id: 'mine', type: 'client_note' }),
+      event({ content: 'Suya', date: '2026-10-13', id: 'coach', type: 'note' }),
+      event({
+        callStatus: 'pending',
+        date: '2026-10-13',
+        id: 'proposal-2',
+        initiatedBy: 'COACH',
+        lastProposedBy: 'COACH',
+        proposalId: 'proposal-2',
+        time: '09:00',
+        type: 'call',
+      }),
+      event({ callStatus: 'accepted', date: '2026-10-13', id: 'accepted', time: '10:00', type: 'call' }),
+      event({ content: 'Viernes', date: '2026-10-16', id: 'later-note', type: 'note' }),
+      event({ date: '2026-10-18', id: 'later-call', time: '10:00', type: 'call' }),
+    ];
+    expect(todayAttentionCount(events, new Date(2026, 9, 13))).toBe(4);
+    expect(todayAttentionCount(events, new Date(2026, 9, 16))).toBe(1);
+    expect(todayAttentionCount(events, new Date(2026, 9, 14))).toBe(0);
   });
 });
 

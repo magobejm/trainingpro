@@ -7,16 +7,19 @@ import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/ph
 export type ClientCalendarEvent = {
   id: string;
   type: string;
-  callStatus?: 'accepted';
+  callStatus?: 'accepted' | 'pending';
   date: Date;
   title: string | null;
   content: string | null;
   time: string | null;
   color: string | null;
+  initiatedBy?: 'CLIENT' | 'COACH';
   isCompleted: boolean;
+  lastProposedBy?: 'CLIENT' | 'COACH';
   originDate: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
+  proposalId?: string;
   scheduleId?: string;
 };
 
@@ -56,6 +59,7 @@ export class ListClientCalendarUseCase {
     });
     const completed = await this.loadCompletedDays(client.id, input);
     const notes = await this.loadClientNotes(client.id, input);
+    const pending = await this.loadPendingProposals(client.id, input);
     const tests = await this.physicalTests.listScheduleCalendarRows({
       clientId: client.id,
       dateFrom: input.dateFrom,
@@ -92,8 +96,35 @@ export class ListClientCalendarUseCase {
           planDayTitle: r.planDay?.title,
         })),
         ...notes,
+        ...pending,
       ],
     };
+  }
+
+  /** Una propuesta aún sin aceptar se muestra para poder responderla desde el calendario. */
+  private async loadPendingProposals(clientId: string, input: ListClientCalendarInput): Promise<ClientCalendarEvent[]> {
+    const rows = await this.prisma.callProposal.findMany({
+      where: { clientId, date: { gte: input.dateFrom, lte: input.dateTo }, status: 'pending' },
+      select: { date: true, id: true, initiatedBy: true, lastProposedBy: true, proposedTime: true },
+      orderBy: { date: 'asc' },
+    });
+    return rows.map((row) => ({
+      callStatus: 'pending' as const,
+      color: null,
+      content: null,
+      date: row.date,
+      id: row.id,
+      initiatedBy: row.initiatedBy,
+      isCompleted: false,
+      lastProposedBy: row.lastProposedBy,
+      originDate: null,
+      planDayId: null,
+      planDayTitle: undefined,
+      proposalId: row.id,
+      time: row.proposedTime,
+      title: null,
+      type: 'call',
+    }));
   }
 
   /** Notas privadas del cliente: solo salen en su propio calendario. */

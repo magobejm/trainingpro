@@ -5,6 +5,7 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { CreateCallProposalUseCase } from '../../application/use-cases/create-call-proposal.usecase';
+import { ManageCallProposalUseCase } from '../../application/use-cases/manage-call-proposal.usecase';
 import { RespondCallProposalUseCase } from '../../application/use-cases/respond-call-proposal.usecase';
 import { CounterCallProposalDto, ProposalIdParamDto } from '../dto/counter-call-proposal.dto';
 import { CreateCallProposalDto } from '../dto/create-call-proposal.dto';
@@ -15,6 +16,7 @@ import { CreateCallProposalDto } from '../dto/create-call-proposal.dto';
 export class CallsController {
   constructor(
     private readonly createCallProposalUseCase: CreateCallProposalUseCase,
+    private readonly manageCallProposalUseCase: ManageCallProposalUseCase,
     private readonly respondCallProposalUseCase: RespondCallProposalUseCase,
   ) {}
 
@@ -31,5 +33,10 @@ export class CallsController {
   @Post('proposals/:proposalId/counter')
   counter(@Param() params: ProposalIdParamDto, @Body() body: CounterCallProposalDto, @Req() request: HttpAuthRequest) {
     return this.respondCallProposalUseCase.counter(readAuthContext(request), params.proposalId, body.time);
+  }
+
+  @Post('proposals/:proposalId/cancel')
+  cancel(@Param() params: ProposalIdParamDto, @Req() request: HttpAuthRequest) {
+    return this.manageCallProposalUseCase.cancel(readAuthContext(request), params.proposalId);
   }
 }

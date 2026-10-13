@@ -4,7 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientMeQuery, resolveDisplayName } from '../../data/hooks/useClientMeQuery';
 import { useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
-import { getWeekDateRange, resolveRoutineWeekSchedule } from '../../screens/client/routine-schedule.utils';
+import { buildMonthGrid, todayAttentionCount } from '../../screens/client/client-calendar.helpers';
+import { resolveRoutineWeekSchedule } from '../../screens/client/routine-schedule.utils';
 import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
@@ -23,8 +24,13 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
   const { data: client } = useClientMeQuery();
   const { data: routine } = useClientRoutineQuery();
   const today = useMemo(() => new Date(), []);
-  const weekRange = useMemo(() => getWeekDateRange(today), [today]);
-  const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
+  const month = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today]);
+  const monthGrid = useMemo(() => buildMonthGrid(month), [month]);
+  const calendarQuery = useClientCalendarEventsQuery(monthGrid[0]?.dateStr ?? '', monthGrid.at(-1)?.dateStr ?? '');
+  const attention = useMemo(
+    () => todayAttentionCount(calendarQuery.data?.data ?? [], today),
+    [calendarQuery.data?.data, today],
+  );
   const schedule = useMemo(() => {
     if (!routine) return null;
     return resolveRoutineWeekSchedule(routine.planDays, calendarQuery.data?.data ?? [], today);
@@ -66,7 +72,14 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
               <Text style={s.todayCardDate}>{dateLabel}</Text>
               <Text style={s.todayCardFocus}>{focusLabel}</Text>
             </View>
-            <Text style={s.todayCardIcon}>{'📅'}</Text>
+            <View style={s.todayCardIconWrap}>
+              <Text style={s.todayCardIcon}>{'📅'}</Text>
+              {attention > 0 ? (
+                <View accessibilityLabel={t('client.calendar.attention', { count: attention })} style={s.todayBadge}>
+                  <Text style={s.todayBadgeText}>{String(attention)}</Text>
+                </View>
+              ) : null}
+            </View>
           </View>
         </Pressable>
       </View>

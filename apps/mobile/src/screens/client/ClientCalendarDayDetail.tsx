@@ -5,15 +5,9 @@ import '../../i18n';
 import type { DayData } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
 import { CalendarWorkoutList } from './ClientCalendarWorkouts';
-import {
-  CALL_COLOR,
-  CALL_REQUEST_COLOR,
-  CLIENT_NOTE_COLOR,
-  COACH_NOTE_COLOR,
-  QUICK_CALL_TIMES,
-} from './calendar-fixed-colors';
-import { CallTimeSelect } from './CallTimeSelect';
-import { useCreateCallProposalMutation, useSaveClientDayNoteMutation } from '../../data/hooks/useClientCalendar';
+import { CLIENT_NOTE_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
+import { CalendarCallPanel } from './ClientCalendarCallPanel';
+import { useSaveClientDayNoteMutation } from '../../data/hooks/useClientCalendar';
 import { LIGHT } from '../../theme/light';
 
 type DayDetailModalProps = {
@@ -70,9 +64,8 @@ export function DayDetailModal({
           />
           {moodEmoji ? <Text style={styles.mood}>{moodEmoji}</Text> : null}
           <CoachNotes notes={data?.coachNotes ?? []} />
-          {data?.call ? <CallBlock time={data.call.time} /> : null}
           <ClientNoteEditor dateStr={dateStr} initial={data?.clientNote ?? ''} />
-          <CallRequest dateStr={dateStr} />
+          <CalendarCallPanel call={data?.call ?? null} dateStr={dateStr} scheduledCall={data?.scheduledCall ?? null} />
         </ScrollView>
         <Pressable onPress={onClose} style={styles.btnPrimary}>
           <Text style={styles.btnPrimaryText}>{t('client.calendar.detail.close')}</Text>
@@ -97,66 +90,40 @@ function CoachNotes(props: { notes: string[] }): React.JSX.Element | null {
   );
 }
 
-function CallBlock(props: { time: string }): React.JSX.Element {
-  const { t } = useTranslation();
-  return (
-    <View style={[styles.block, { backgroundColor: CALL_COLOR }]}>
-      <Text style={styles.blockTitle}>{t('client.calendar.detail.callScheduled')}</Text>
-      <Text style={styles.blockText}>{t('client.calendar.detail.callWith', { time: props.time })}</Text>
-    </View>
-  );
-}
-
 export function ClientNoteEditor(props: { dateStr: string; initial: string }): React.JSX.Element {
   const { t } = useTranslation();
-  const [content, setContent] = useState(props.initial);
-  const [saved, setSaved] = useState(false);
+  const [draft, setDraft] = useState({ date: props.dateStr, dirty: false, saved: false, text: props.initial });
+  if (draft.date !== props.dateStr) {
+    setDraft({ date: props.dateStr, dirty: false, saved: false, text: props.initial });
+  } else if (!draft.dirty && draft.text !== props.initial) {
+    setDraft({ ...draft, text: props.initial });
+  }
+  const content = draft.date === props.dateStr ? draft.text : props.initial;
+  const saved = draft.date === props.dateStr && draft.saved;
   const save = useSaveClientDayNoteMutation();
   return (
     <View style={[styles.block, { backgroundColor: CLIENT_NOTE_COLOR }]}>
       <Text style={styles.blockTitle}>{t('client.calendar.detail.myNotes')}</Text>
       <TextInput
         multiline
-        onChangeText={setContent}
+        onChangeText={(text) => setDraft({ date: props.dateStr, dirty: true, saved: false, text })}
         placeholder={t('client.calendar.detail.myNotesPlaceholder')}
         placeholderTextColor={PLACEHOLDER_NOTE}
         style={styles.noteInput}
         value={content}
       />
       <Pressable
-        onPress={() => save.mutate({ content, date: props.dateStr }, { onSuccess: () => setSaved(true) })}
+        onPress={() =>
+          save.mutate(
+            { content, date: props.dateStr },
+            { onSuccess: () => setDraft({ date: props.dateStr, dirty: true, saved: true, text: content }) },
+          )
+        }
         style={styles.blockButton}
       >
         <Text style={styles.blockButtonText}>{t('client.calendar.detail.saveNote')}</Text>
       </Pressable>
       {saved ? <Text style={styles.blockText}>{t('client.calendar.detail.noteSaved')}</Text> : null}
-    </View>
-  );
-}
-
-export function CallRequest(props: { dateStr: string }): React.JSX.Element {
-  const { t } = useTranslation();
-  const [time, setTime] = useState('17:15');
-  const [sent, setSent] = useState(false);
-  const propose = useCreateCallProposalMutation();
-  return (
-    <View style={[styles.block, { backgroundColor: CALL_REQUEST_COLOR }]}>
-      <Text style={styles.blockTitle}>{t('client.calendar.detail.scheduleCall')}</Text>
-      <View style={styles.chips}>
-        {QUICK_CALL_TIMES.map((option) => (
-          <Pressable key={option} onPress={() => setTime(option)} style={styles.chip}>
-            <Text style={styles.chipText}>{option}</Text>
-          </Pressable>
-        ))}
-      </View>
-      <CallTimeSelect onChange={setTime} value={time} />
-      <Pressable
-        onPress={() => propose.mutate({ date: props.dateStr, time }, { onSuccess: () => setSent(true) })}
-        style={styles.blockButton}
-      >
-        <Text style={styles.blockButtonText}>{t('client.calendar.detail.sendToCoach')}</Text>
-      </Pressable>
-      {sent ? <Text style={styles.blockText}>{t('client.calendar.detail.callSent', { time })}</Text> : null}
     </View>
   );
 }

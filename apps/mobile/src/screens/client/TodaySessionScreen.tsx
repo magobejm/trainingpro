@@ -3,6 +3,7 @@ import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { ApiClientError } from '../../data/api-client';
+import type { EnqueueResult } from '../../data/hooks/useSessionDraft';
 import { useSessionQuery, sessionWritePath } from '../../data/hooks/useTodaySession';
 import { applyPendingOps } from '../../data/offline/apply-pending';
 import type {
@@ -44,12 +45,12 @@ type TodaySessionBodyProps = {
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
-  onLogInterval: (input: LogIntervalMutationInput) => Promise<void> | void;
-  onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<void> | void;
-  onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<void> | void;
-  onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<void> | void;
-  onLogSet: (input: LogSetMutationInput) => Promise<void> | void;
-  onLogSport: (input: LogSportMutationInput) => Promise<void> | void;
+  onLogInterval: (input: LogIntervalMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
+  onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
+  onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
+  onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
+  onLogSet: (input: LogSetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
+  onLogSport: (input: LogSportMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
   onAdjustRest: (endAt: number, lastSeenAt: number) => void;
   onClose: () => void;
   onCloseExercise: () => void;
@@ -91,7 +92,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
               finishedExerciseIds={props.finishedExerciseIds}
               session={props.session}
               onClose={props.onClose}
-              onSelectExercise={props.isCompleted ? () => {} : props.onSelectExercise}
+              onSelectExercise={props.onSelectExercise}
               onFinishDay={props.onFinishDay}
               workoutElapsed={props.workoutElapsed}
             />
@@ -99,10 +100,11 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
         ) : null}
       </View>
 
-      {props.selectedExercise && props.isRunning ? (
+      {props.selectedExercise && (props.isRunning || props.isCompleted) ? (
         <ActiveExerciseScreen
           exerciseGroup={props.exerciseGroup.length > 0 ? props.exerciseGroup : [props.selectedExercise]}
           item={props.selectedExercise}
+          readOnly={props.isCompleted}
           restState={props.restState}
           sessionId={props.sessionId}
           visible

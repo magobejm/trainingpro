@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import type { DayData } from './client-calendar.helpers';
+import type { DayData, PlanDayView } from './client-calendar.helpers';
 import { MOOD_EMOJI } from './client-calendar.helpers';
 import { CalendarWorkoutList } from './ClientCalendarWorkouts';
 import { CLIENT_NOTE_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
@@ -14,7 +14,7 @@ type DayDetailModalProps = {
   data: DayData | undefined;
   dateStr: string;
   onClose: () => void;
-  onOpenPlanDay?: (planDayId: string) => void;
+  onOpenPlanDay?: (planDayId: string, view: PlanDayView) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest?: (scheduleId: string) => void;
   exerciseCountFor: (planDayId: string | null) => number | null;
@@ -59,7 +59,7 @@ export function DayDetailModal({
           <CalendarWorkoutList
             data={data}
             exerciseCountFor={exerciseCountFor}
-            onOpenPlanDay={(planDayId) => onOpenPlanDay?.(planDayId)}
+            onOpenPlanDay={(planDayId, view) => onOpenPlanDay?.(planDayId, view)}
             onOpenSession={onOpenSession}
           />
           {moodEmoji ? <Text style={styles.mood}>{moodEmoji}</Text> : null}

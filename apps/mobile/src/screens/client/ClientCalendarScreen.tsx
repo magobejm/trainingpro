@@ -11,13 +11,13 @@ import { useClientRoutineQuery, type ClientRoutineDay } from '../../data/hooks/u
 import { DayDetailModal } from './ClientCalendarDayDetail';
 import { MonthGrid, MonthHeader } from './ClientCalendarGrid';
 import { CalendarWeekView } from './ClientCalendarWeekView';
-import { buildMonthGrid, mergeDayData, toDateStr, type DayData } from './client-calendar.helpers';
+import { buildMonthGrid, mergeDayData, toDateStr, type DayData, type PlanDayView } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
 import { SCREEN } from '../../theme/sessionStyles';
 
 type Props = {
   onClose: () => void;
-  onOpenPlanDay?: (day: ClientRoutineDay) => void;
+  onOpenPlanDay?: (day: ClientRoutineDay, view?: PlanDayView) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest?: (scheduleId: string) => void;
 };
@@ -56,9 +56,9 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
     setShowMonth(true);
   }, [selectedDate]);
   const openPlanDay = useCallback(
-    (planDayId: string | null | undefined) => {
+    (planDayId: string | null | undefined, view?: PlanDayView) => {
       const day = findPlanDay(planDays, planDayId);
-      if (day) onOpenPlanDay?.(day);
+      if (day) onOpenPlanDay?.(day, view);
     },
     [onOpenPlanDay, planDays],
   );
@@ -92,6 +92,7 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
             dayData={dayData}
             exerciseCountFor={countFor}
             onOpenPlanDay={openPlanDay}
+            onOpenSession={onOpenSession}
             onOpenTest={(scheduleId) => onOpenTest?.(scheduleId)}
             onSelectDate={setSelectedDate}
             selectedDate={selectedDate}
@@ -119,7 +120,7 @@ function DayPopup(props: {
   data: DayData | undefined;
   dateStr: string | null;
   onClose: () => void;
-  onOpenPlanDay: (planDayId: string | null | undefined) => void;
+  onOpenPlanDay: (planDayId: string | null | undefined, view?: PlanDayView) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest?: (scheduleId: string) => void;
 }): React.JSX.Element | null {
@@ -130,9 +131,9 @@ function DayPopup(props: {
       dateStr={props.dateStr}
       exerciseCountFor={props.countFor}
       onClose={props.onClose}
-      onOpenPlanDay={(planDayId) => {
+      onOpenPlanDay={(planDayId, view) => {
         props.onClose();
-        props.onOpenPlanDay(planDayId);
+        props.onOpenPlanDay(planDayId, view);
       }}
       onOpenSession={props.onOpenSession}
       onOpenTest={(scheduleId) => {

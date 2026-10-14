@@ -182,7 +182,9 @@ function useClearFinishedSession(
 ): void {
   useEffect(() => {
     if (!hydrated || status !== 'COMPLETED' || !hasEntry) return;
-    useSessionTimersStore.getState().clearSession(sessionId);
+    const entry = useSessionTimersStore.getState().bySession[sessionId];
+    if (!entry?.rest && (entry?.completedRestKeys.length ?? 0) === 0) return;
+    useSessionTimersStore.getState().patchSession(sessionId, { completedRestKeys: [], rest: null });
   }, [hasEntry, hydrated, sessionId, status]);
 }
 

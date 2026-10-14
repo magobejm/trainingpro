@@ -3,13 +3,13 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { weekdayName } from '@trainerpro/shared';
 import '../../i18n';
-import type { DayData, DayWorkout } from './client-calendar.helpers';
+import type { DayData, DayWorkout, PlanDayView } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
 
 type Props = {
   data: DayData | undefined;
   exerciseCountFor: (planDayId: string | null) => number | null;
-  onOpenPlanDay: (planDayId: string) => void;
+  onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession?: (sessionId: string) => void;
 };
 
@@ -44,7 +44,7 @@ export function CalendarWorkoutList(props: Props): React.JSX.Element {
 function WorkoutRow(props: {
   count: number | null;
   language: string;
-  onOpenPlanDay: (planDayId: string) => void;
+  onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession?: (sessionId: string) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   workout: DayWorkout;
@@ -55,7 +55,12 @@ function WorkoutRow(props: {
       <Pressable
         disabled={!props.workout.planDayId}
         onPress={() => {
-          if (props.workout.planDayId) props.onOpenPlanDay(props.workout.planDayId);
+          if (props.workout.planDayId) {
+            props.onOpenPlanDay(props.workout.planDayId, {
+              performed: props.workout.done,
+              sessionId: props.workout.sessionId,
+            });
+          }
         }}
       >
         <Text style={styles.title}>{title}</Text>
@@ -69,7 +74,7 @@ function WorkoutRow(props: {
         ) : null}
         <WorkoutStatus language={props.language} t={props.t} workout={props.workout} />
       </Pressable>
-      {props.workout.sessionId && props.onOpenSession ? (
+      {props.workout.done && props.workout.sessionId && props.onOpenSession ? (
         <Pressable onPress={() => props.onOpenSession?.(props.workout.sessionId!)} style={styles.sessionButton}>
           <Text style={styles.sessionButtonText}>{props.t('client.calendar.detail.viewSession')}</Text>
         </Pressable>
@@ -104,12 +109,14 @@ const styles = StyleSheet.create({
   meta: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '600' },
   row: { gap: 6 },
   sessionButton: {
+    alignItems: 'center',
     alignSelf: 'flex-start',
     backgroundColor: LIGHT.accentSoft,
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: 14,
   },
-  sessionButtonText: { color: LIGHT.accentDark, fontSize: 12, fontWeight: '700' },
+  sessionButtonText: { color: LIGHT.accentDark, fontSize: 15, fontWeight: '700' },
   title: { color: LIGHT.textStrong, fontSize: 22, fontWeight: '800' },
 });

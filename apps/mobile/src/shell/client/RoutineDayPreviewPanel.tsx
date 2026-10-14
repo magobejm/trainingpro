@@ -17,6 +17,7 @@ import {
   resolveDayStartGate,
   resolveRoutineWeekSchedule,
 } from '../../screens/client/routine-schedule.utils';
+import type { PlanDayView } from '../../screens/client/client-calendar.helpers';
 import { ConfirmModal } from '../../theme/ConfirmModal';
 import { s } from './client-shell.styles';
 
@@ -24,6 +25,7 @@ type RoutineDayPreviewPanelProps = {
   day: ClientRoutineDay;
   onClose: () => void;
   onOpenSession: (sessionId: string) => void;
+  view?: PlanDayView | null;
 };
 
 /* eslint-disable max-lines-per-function -- preview start gates day-change confirm against calendar and session state. */
@@ -62,8 +64,9 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
     [calendarQuery.isLoading, resolvedDay.id, schedule, sessions],
   );
 
-  const todaySession = sessions.find((session) => session.planDayId === resolvedDay.id) ?? null;
-  const isCompleted = todaySession?.status === 'COMPLETED';
+  const todaySession = props.view ? null : (sessions.find((session) => session.planDayId === resolvedDay.id) ?? null);
+  const viewedSessionId = props.view?.performed ? props.view.sessionId : null;
+  const isCompleted = props.view ? Boolean(viewedSessionId) : todaySession?.status === 'COMPLETED';
   const isInProgress = todaySession?.status === 'IN_PROGRESS';
 
   const startLabel = useMemo(() => {
@@ -99,6 +102,11 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   );
 
   const handleStart = useCallback(() => {
+    const sessionId = viewedSessionId ?? (isCompleted ? todaySession?.id : null);
+    if (isCompleted && sessionId) {
+      props.onOpenSession(sessionId);
+      return;
+    }
     if (startGate === 'blocked') return;
     if (startGate === 'resume' && todaySession) {
       props.onOpenSession(todaySession.id);
@@ -109,7 +117,7 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
       return;
     }
     runEnsureSession(false);
-  }, [props.onOpenSession, runEnsureSession, startGate, todaySession]);
+  }, [isCompleted, props.onOpenSession, runEnsureSession, startGate, todaySession, viewedSessionId]);
 
   const handleConfirmDayChange = useCallback(() => {
     setDayChangeOpen(false);
@@ -135,9 +143,9 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
         mode={'preview'}
         onClose={props.onClose}
         onStart={handleStart}
-        startDisabled={isCompleted || calendarQuery.isLoading}
+        startDisabled={(!isCompleted && startGate === 'blocked') || calendarQuery.isLoading}
         startError={startError}
-        startLabel={startLabel}
+        startLabel={isCompleted ? t('client.calendar.detail.viewSession') : startLabel}
         startPending={ensureMutation.isPending}
       />
       <ConfirmModal

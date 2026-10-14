@@ -143,6 +143,11 @@ export function todayAttentionCount(events: ClientCalendarEvent[], today: Date):
   return count;
 }
 
+export type PlanDayView = {
+  performed: boolean;
+  sessionId: string | null;
+};
+
 export const MOOD_EMOJI: Record<number, string> = {
   1: '😫',
   2: '😟',

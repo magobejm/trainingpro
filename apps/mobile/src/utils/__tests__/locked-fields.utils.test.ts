@@ -16,9 +16,9 @@ describe('locked-fields.utils', () => {
 
   it('filters active session columns using web-to-mobile mapping', () => {
     const columns: SetColumn[] = [
-      { key: 'reps', label: 'Reps' },
-      { key: 'weight', label: 'Peso' },
-      { key: 'rpe', label: 'RPE' },
+      { key: 'reps', labelKey: 'mobile.client.history.reps' },
+      { key: 'weight', labelKey: 'mobile.client.history.weight' },
+      { key: 'rpe', labelKey: 'mobile.client.history.rpe' },
     ];
 
     expect(filterActiveSetColumns(columns, ['weightKg']).map((column) => column.key)).toEqual(['reps', 'rpe']);

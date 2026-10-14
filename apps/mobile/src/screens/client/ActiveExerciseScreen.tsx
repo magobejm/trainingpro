@@ -1,8 +1,8 @@
-/* eslint-disable max-lines, max-lines-per-function -- unified active exercise matrix with inline set editors and modals. */
-import React, { useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import React, { useRef, useState } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import type { EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type {
   LogIntervalMutationInput,
   LogIsometricSetMutationInput,
@@ -17,39 +17,47 @@ import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
 import { showToast } from '../../shell/client/feedback';
 import {
-  buildClearPayload,
-  buildLogPayload,
   elapsedRestSeconds,
   formatSessionRepRange,
   getRestSeconds,
   getSetColumns,
-  getSetCount,
   getSourceExerciseId,
   getStrengthSessionItemId,
-  readActualValue,
   readSessionYoutubeUrl,
   readTargetValue,
-  resolveSetSave,
   restWasRecorded,
   setWasLogged,
+  type LogPayload,
   type SetColumn,
   type SetFieldKey,
+  type SetRowState,
 } from './active-exercise.helpers';
+import { browseOrSave, setDraftMatchesLogged } from './active-exercise.save';
+import { useActiveSetDraft } from './active-exercise.draft';
+import { useActiveSetSave } from './active-exercise.session';
 import { useRestCountdown } from '../../features/timers/useRestCountdown';
 import { CircularCountdown } from './CircularCountdown';
 import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
-import { formatRestLabel } from './session-completion.utils';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
 import { RestTimerOverlay } from './RestTimerOverlay';
-import type { RestState } from './session-rest.types';
-import { sanitizeRirInput, sanitizeRpeInput } from './effort-input.utils';
 import { RomScaleModal } from './RomScaleModal';
-import { isRomScaleValue } from './rom-scale.utils';
+import type { RestState } from './session-rest.types';
+import {
+  CurrentSetFields,
+  ExerciseActionBar,
+  IndicationsBanner,
+  SessionFooter,
+  SetChipRow,
+  SetRestControl,
+} from './ActiveExerciseSetPanel';
+
+type LogResult = Promise<EnqueueResult | 'missing' | void> | void;
 
 type ActiveExerciseScreenProps = {
   exerciseGroup: SessionItem[];
   item: SessionItem;
+  readOnly?: boolean;
   sessionId: string;
   visible: boolean;
   workoutElapsed?: string;
@@ -61,19 +69,407 @@ type ActiveExerciseScreenProps = {
   onFinishExercise: (itemId: string) => void;
   onNavigateExercise: (item: SessionItem) => void;
   onRestFinish: () => void;
-  onLogInterval: (input: LogIntervalMutationInput) => Promise<void> | void;
-  onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<void> | void;
-  onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<void> | void;
-  onLogPlioSet: (input: LogPlioSetMutationInput) => Promise<void> | void;
-  onLogSet: (input: LogSetMutationInput) => Promise<void> | void;
-  onLogSport: (input: LogSportMutationInput) => Promise<void> | void;
+  onLogInterval: (input: LogIntervalMutationInput) => LogResult;
+  onLogIsometricSet: (input: LogIsometricSetMutationInput) => LogResult;
+  onLogMobilitySet: (input: LogMobilitySetMutationInput) => LogResult;
+  onLogPlioSet: (input: LogPlioSetMutationInput) => LogResult;
+  onLogSet: (input: LogSetMutationInput) => LogResult;
+  onLogSport: (input: LogSportMutationInput) => LogResult;
   onStartRest: (setKey: string, seconds: number) => void;
   restState: RestState | null;
 };
 
-type RomState = { setIndex: number } | null;
+export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JSX.Element {
+  const draft = useActiveSetDraft(props.item);
+  const save = useActiveSetSave(props.item, draft.drafts, draft.setCount, (body) => sendLoggedSet(props, body));
+  return <ActiveExerciseFrame draft={draft} save={save} screen={props} />;
+}
 
-function emptyRow(): Record<SetFieldKey, string> {
+function ActiveExerciseFrame(props: {
+  draft: ReturnType<typeof useActiveSetDraft>;
+  save: ReturnType<typeof useActiveSetSave>;
+  screen: ActiveExerciseScreenProps;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  const screen = props.screen;
+  const scrollRef = useRef<ScrollView>(null);
+  const finishedRestKey = useRef<string | null>(null);
+  const [showComment, setShowComment] = useState(false);
+  const [showNotes, setShowNotes] = useState(false);
+  const [showPrevious, setShowPrevious] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
+  const setIndex = props.draft.setIndex;
+  const view = readSetView(screen.item, setIndex, props.draft.drafts[setIndex], props.save.restSeconds.current[setIndex]);
+  const remaining = useRestCountdown(screen.restState, screen.onAdjustRest, () => {
+    completeRest(screen, props.save, finishedRestKey);
+  });
+  const youtubeUrl = readSessionYoutubeUrl(screen.item);
+
+  return (
+    <Modal animationType={'slide'} onRequestClose={screen.onClose} visible={screen.visible}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
+        <ExerciseChrome
+          indication={view.indication}
+          onOpenComment={() => setShowComment(true)}
+          onOpenNotes={() => setShowNotes(true)}
+          onOpenVideo={() => openVideo(youtubeUrl, setShowVideo, t)}
+          onSelectSet={props.draft.setCurrentSet}
+          saved={savedFlags(screen, props.draft)}
+          screen={screen}
+          setIndex={setIndex}
+          t={t}
+          total={props.draft.setCount}
+        />
+        <ScrollView
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps={'handled'}
+          ref={scrollRef}
+        >
+          <CurrentSetCard
+            columns={view.columns}
+            onFocus={(node) => scrollFieldIntoView(scrollRef.current, node)}
+            onOpenHistory={() => setShowPrevious(true)}
+            onOpenRom={() => props.draft.setRomSet(setIndex)}
+            readOnly={screen.readOnly}
+            remaining={remaining}
+            screen={screen}
+            setIndex={setIndex}
+            setKey={view.setKey}
+            t={t}
+            targets={view.targets}
+            total={props.draft.setCount}
+            values={props.draft.drafts[setIndex] ?? {}}
+            onChange={props.draft.updateField}
+          />
+        </ScrollView>
+        <SessionFooter
+          busy={props.save.busy}
+          canGoBack={setIndex > 1}
+          clean={view.clean}
+          finishing={props.save.finishing}
+          last={setIndex >= props.draft.setCount}
+          onFinish={() => void props.save.finishExercise(() => screen.onFinishExercise(screen.item.id))}
+          onPrevious={() => props.draft.setCurrentSet(setIndex - 1)}
+          onSave={() => browseOrSave(props, setIndex, screen.readOnly === true)}
+          readOnly={screen.readOnly}
+          t={t}
+        />
+        <ExerciseOverlays
+          draft={props.draft}
+          onCloseComment={() => setShowComment(false)}
+          onCloseNotes={() => setShowNotes(false)}
+          onClosePrevious={() => setShowPrevious(false)}
+          onCloseVideo={() => setShowVideo(false)}
+          screen={screen}
+          showComment={showComment}
+          showNotes={showNotes}
+          showPrevious={showPrevious}
+          showVideo={showVideo}
+          youtubeUrl={youtubeUrl}
+        />
+        {screen.restState?.expanded ? (
+          <RestTimerOverlay
+            onFinish={() => completeRest(screen, props.save, finishedRestKey)}
+            onHide={screen.onCollapseRest}
+            remaining={remaining ?? 0}
+            totalSeconds={screen.restState.seconds}
+            visible
+          />
+        ) : null}
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+function CurrentSetCard(props: {
+  columns: SetColumn[];
+  onChange: (key: SetFieldKey, value: string) => void;
+  onFocus: (node: number) => void;
+  onOpenHistory: () => void;
+  onOpenRom: () => void;
+  readOnly?: boolean;
+  remaining: number | null;
+  screen: ActiveExerciseScreenProps;
+  setIndex: number;
+  setKey: string;
+  t: TFunction;
+  targets: Record<string, string>;
+  total: number;
+  values: Partial<Record<SetFieldKey, string>>;
+}): React.JSX.Element {
+  const restSeconds = getRestSeconds(props.screen.item, props.setIndex);
+  const active = props.screen.restState?.setKey === props.setKey;
+  const markedDone = props.screen.completedRestKeys.includes(props.setKey);
+  const restDone = markedDone || restWasRecorded(props.screen.item, props.setIndex);
+  return (
+    <View style={styles.setCard}>
+      <View style={styles.setHeader}>
+        <Text style={styles.setTitle}>
+          {props.t('mobile.client.session.setPosition', { current: props.setIndex, total: props.total })}
+        </Text>
+        {restSeconds > 0 ? (
+          <SetRestControl
+            active={active}
+            completed={restDone}
+            countdown={<RestCountdown remaining={props.remaining} total={restSeconds} />}
+            disabled={props.readOnly === true || (props.screen.restState != null && !active)}
+            onExpand={props.screen.onExpandRest}
+            onStart={() => props.screen.onStartRest(props.setKey, restSeconds)}
+            remaining={active ? props.remaining : null}
+            restSeconds={restSeconds}
+            t={props.t}
+          />
+        ) : null}
+      </View>
+      <CurrentSetFields
+        columns={props.columns}
+        draft={props.values}
+        onChange={props.onChange}
+        onFocus={props.onFocus}
+        onOpenRom={props.onOpenRom}
+        readOnly={props.readOnly}
+        t={props.t}
+        targets={props.targets}
+      />
+      {props.screen.item.type === 'strength' ? (
+        <Pressable
+          accessibilityLabel={props.t('mobile.client.session.previousDays')}
+          accessibilityRole={'button'}
+          onPress={props.onOpenHistory}
+          style={styles.historyLink}
+        >
+          <Text style={styles.historyText}>{props.t('mobile.client.session.previousDays')}</Text>
+        </Pressable>
+      ) : null}
+      {props.screen.workoutElapsed ? <Text style={styles.timer}>{props.screen.workoutElapsed}</Text> : null}
+    </View>
+  );
+}
+
+function RestCountdown(props: { remaining: number | null; total: number }): React.JSX.Element {
+  return <CircularCountdown remaining={props.remaining ?? 0} size={40} strokeWidth={4} totalSeconds={props.total} />;
+}
+
+function ExerciseChrome(props: {
+  indication: string;
+  onOpenComment: () => void;
+  onOpenNotes: () => void;
+  onOpenVideo: () => void;
+  onSelectSet: (setIndex: number) => void;
+  saved: boolean[];
+  screen: ActiveExerciseScreenProps;
+  setIndex: number;
+  t: TFunction;
+  total: number;
+}): React.JSX.Element {
+  return (
+    <>
+      <ExerciseHeader
+        group={props.screen.exerciseGroup}
+        item={props.screen.item}
+        onClose={props.screen.onClose}
+        onNavigate={props.screen.onNavigateExercise}
+        t={props.t}
+      />
+      {props.indication ? <IndicationsBanner onPress={props.onOpenNotes} t={props.t} text={props.indication} /> : null}
+      <ExerciseActionBar
+        onOpenComment={props.onOpenComment}
+        onOpenNotes={props.onOpenNotes}
+        onOpenVideo={props.onOpenVideo}
+        t={props.t}
+      />
+      <SetChipRow
+        current={props.setIndex}
+        onSelect={props.onSelectSet}
+        saved={props.saved}
+        t={props.t}
+        total={props.total}
+      />
+    </>
+  );
+}
+
+function ExerciseHeader(props: {
+  group: SessionItem[];
+  item: SessionItem;
+  onClose: () => void;
+  onNavigate: (item: SessionItem) => void;
+  t: (key: string) => string;
+}): React.JSX.Element {
+  const index = props.group.findIndex((entry) => entry.id === props.item.id);
+  const repsRange = formatSessionRepRange(props.item);
+  return (
+    <View style={styles.header}>
+      <Pressable
+        accessibilityLabel={props.t('mobile.client.back')}
+        accessibilityRole={'button'}
+        onPress={props.onClose}
+        style={styles.backBtn}
+      >
+        <Text style={SESSION.backArrow}>{'←'}</Text>
+      </Pressable>
+      <View style={styles.titleWrap}>
+        {props.group.length > 1 ? (
+          <Pressable
+            accessibilityLabel={props.t('mobile.client.session.previousExercise')}
+            accessibilityRole={'button'}
+            accessibilityState={{ disabled: index <= 0 }}
+            disabled={index <= 0}
+            onPress={() => props.onNavigate(props.group[index - 1]!)}
+            style={styles.navBtn}
+          >
+            <Text style={[styles.navArrow, index <= 0 && styles.navDisabled]}>{'‹'}</Text>
+          </Pressable>
+        ) : null}
+        <View style={styles.titleBlock}>
+          <Text numberOfLines={2} style={styles.title}>
+            {props.item.displayName}
+          </Text>
+          {repsRange ? (
+            <Text style={styles.repRange}>{`${props.t('mobile.client.session.repRange')} ${repsRange}`}</Text>
+          ) : null}
+        </View>
+        {props.group.length > 1 ? (
+          <Pressable
+            accessibilityLabel={props.t('mobile.client.session.nextExercise')}
+            accessibilityRole={'button'}
+            accessibilityState={{ disabled: index >= props.group.length - 1 }}
+            disabled={index >= props.group.length - 1}
+            onPress={() => props.onNavigate(props.group[index + 1]!)}
+            style={styles.navBtn}
+          >
+            <Text style={[styles.navArrow, index >= props.group.length - 1 && styles.navDisabled]}>{'›'}</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function ExerciseOverlays(props: {
+  draft: ReturnType<typeof useActiveSetDraft>;
+  onCloseComment: () => void;
+  onCloseNotes: () => void;
+  onClosePrevious: () => void;
+  onCloseVideo: () => void;
+  screen: ActiveExerciseScreenProps;
+  showComment: boolean;
+  showNotes: boolean;
+  showPrevious: boolean;
+  showVideo: boolean;
+  youtubeUrl: null | string;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  const romIndex = props.draft.romSet ?? props.draft.setIndex;
+  return (
+    <>
+      <RomScaleModal
+        onClose={() => props.draft.setRomSet(null)}
+        onSave={props.draft.saveRom}
+        value={props.draft.drafts[romIndex]?.rom ?? ''}
+        visible={props.draft.romSet != null}
+      />
+      <YouTubeVideoModal
+        onClose={props.onCloseVideo}
+        title={props.screen.item.displayName}
+        visible={props.showVideo}
+        youtubeUrl={props.youtubeUrl}
+      />
+      <ExerciseCommentModal
+        exerciseName={props.screen.item.displayName}
+        onClose={props.onCloseComment}
+        routineDayLabel={t('client.today.title')}
+        sessionId={props.screen.sessionId}
+        sessionItemId={getStrengthSessionItemId(props.screen.item)}
+        visible={props.showComment}
+      />
+      {props.showNotes ? (
+        <Modal animationType={'fade'} onRequestClose={props.onCloseNotes} transparent visible>
+          <Pressable onPress={props.onCloseNotes} style={styles.notesOverlay}>
+            <View style={styles.notesCard}>
+              <ExerciseNotesPanel
+                coachInstructions={props.screen.item.coachInstructions}
+                trainerNote={props.screen.item.notes}
+              />
+            </View>
+          </Pressable>
+        </Modal>
+      ) : null}
+      <PreviousDaysOverlay
+        exerciseName={props.screen.item.displayName}
+        onClose={props.onClosePrevious}
+        sessionId={props.screen.sessionId}
+        sourceExerciseId={getSourceExerciseId(props.screen.item)}
+        visible={props.showPrevious}
+      />
+    </>
+  );
+}
+
+function completeRest(
+  screen: ActiveExerciseScreenProps,
+  save: ReturnType<typeof useActiveSetSave>,
+  finishedRestKey: React.MutableRefObject<string | null>,
+): void {
+  const rest = screen.restState;
+  if (!rest) return;
+  const restKey = `${rest.setKey}:${rest.endAt}`;
+  if (finishedRestKey.current === restKey) return;
+  finishedRestKey.current = restKey;
+  const setIndex = Number(rest.setKey.split(':').at(-1));
+  if (Number.isInteger(setIndex) && setIndex > 0) {
+    save.rememberRest(setIndex, elapsedRestSeconds(rest.endAt, rest.seconds));
+    if (setWasLogged(screen.item, setIndex)) void save.run([setIndex]);
+  }
+  screen.onRestFinish();
+}
+
+function savedFlags(screen: ActiveExerciseScreenProps, draft: ReturnType<typeof useActiveSetDraft>): boolean[] {
+  return Array.from({ length: draft.setCount }, (_, index) => {
+    const setIndex = index + 1;
+    const values = draft.drafts[setIndex];
+    return values != null && setWasLogged(screen.item, setIndex) && setDraftMatchesLogged(screen.item, setIndex, values);
+  });
+}
+
+function readSetView(item: SessionItem, setIndex: number, draft: SetRowState | undefined, restSeconds?: number) {
+  const columns = getSetColumns(item);
+  return {
+    clean: setDraftMatchesLogged(item, setIndex, draft ?? emptyVisibleDraft(), restSeconds),
+    columns,
+    indication: item.coachInstructions?.trim() || item.notes?.trim() || '',
+    setKey: `${item.id}:${setIndex}`,
+    targets: Object.fromEntries(columns.map((column) => [column.key, readTargetValue(item, setIndex, column.key)])),
+  };
+}
+
+function sendLoggedSet(props: ActiveExerciseScreenProps, body: LogPayload): LogResult {
+  if ('sessionItemId' in body) return props.onLogSet(body);
+  if ('sessionPlioBlockId' in body) return props.onLogPlioSet(body);
+  if ('sessionMobilityBlockId' in body) return props.onLogMobilitySet(body);
+  if ('sessionIsometricBlockId' in body) return props.onLogIsometricSet(body);
+  if ('sessionCardioBlockId' in body) return props.onLogInterval(body);
+  if ('sessionSportBlockId' in body) return props.onLogSport(body);
+  return Promise.resolve('missing');
+}
+
+function openVideo(url: null | string, open: (value: boolean) => void, t: (key: string) => string): void {
+  if (!url) {
+    showToast(t('mobile.client.exercise.videoEmpty'));
+    return;
+  }
+  open(true);
+}
+
+function scrollFieldIntoView(scroll: ScrollView | null, node: number): void {
+  const responder = scroll?.getScrollResponder?.() as {
+    scrollResponderScrollNativeHandleToKeyboard?: (nodeHandle: number, offset: number, preventNegative?: boolean) => void;
+  } | null;
+  responder?.scrollResponderScrollNativeHandleToKeyboard?.(node, 96, true);
+}
+
+function emptyVisibleDraft() {
   return {
     distance: '',
     duration: '',
@@ -83,696 +479,37 @@ function emptyRow(): Record<SetFieldKey, string> {
     reps: '',
     rest: '',
     rir: '',
-    rpe: '',
     rom: '',
+    rpe: '',
     weight: '',
   };
 }
 
-export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JSX.Element {
-  const { t } = useTranslation();
-  const [showComment, setShowComment] = useState(false);
-  const [showNotes, setShowNotes] = useState(false);
-  const [showPrevious, setShowPrevious] = useState(false);
-  const [showVideo, setShowVideo] = useState(false);
-  const [romState, setRomState] = useState<RomState>(null);
-  const [draftValues, setDraftValues] = useState<Record<number, Record<SetFieldKey, string>>>({});
-  const [finishing, setFinishing] = useState(false);
-  const recordedRestRef = useRef<Record<number, number>>({});
-  const finishedRestKey = useRef<string | null>(null);
-
-  const groupIndex = props.exerciseGroup.findIndex((entry) => entry.id === props.item.id);
-  const setCount = getSetCount(props.item);
-  const columns = getSetColumns(props.item);
-
-  useEffect(() => {
-    const next: Record<number, Record<SetFieldKey, string>> = {};
-    for (let setIndex = 1; setIndex <= setCount; setIndex += 1) {
-      const row: Record<SetFieldKey, string> = {
-        distance: readActualValue(props.item, setIndex, 'distance'),
-        duration: readActualValue(props.item, setIndex, 'duration'),
-        fcMaxPct: readActualValue(props.item, setIndex, 'fcMaxPct'),
-        fcReservePct: readActualValue(props.item, setIndex, 'fcReservePct'),
-        heartRate: readActualValue(props.item, setIndex, 'heartRate'),
-        reps: readActualValue(props.item, setIndex, 'reps'),
-        rest: readActualValue(props.item, setIndex, 'rest'),
-        rir: readActualValue(props.item, setIndex, 'rir'),
-        rpe: readActualValue(props.item, setIndex, 'rpe'),
-        rom: readActualValue(props.item, setIndex, 'rom'),
-        weight: readActualValue(props.item, setIndex, 'weight'),
-      };
-      next[setIndex] = row;
-    }
-    setDraftValues(next);
-  }, [props.item, setCount]);
-
-  useEffect(() => {
-    setShowVideo(false);
-  }, [props.item.id]);
-
-  const saveSet = (setIndex: number, restOverride?: number): Promise<void> => {
-    const values = draftValues[setIndex];
-    if (!values) return Promise.resolve();
-    const restSecondsDone = restOverride ?? recordedRestRef.current[setIndex];
-    const payload = buildLogPayload(props.item, setIndex, values, restSecondsDone);
-    const action = resolveSetSave(payload, setWasLogged(props.item, setIndex));
-    if (action === 'skip') return Promise.resolve();
-    const body = action === 'delete' ? buildClearPayload(props.item, setIndex) : payload;
-    if (!body) return Promise.resolve();
-    if ('sessionItemId' in body) return Promise.resolve(props.onLogSet(body));
-    if ('sessionPlioBlockId' in body) return Promise.resolve(props.onLogPlioSet(body));
-    if ('sessionMobilityBlockId' in body) return Promise.resolve(props.onLogMobilitySet(body));
-    if ('sessionIsometricBlockId' in body) return Promise.resolve(props.onLogIsometricSet(body));
-    if ('sessionCardioBlockId' in body) return Promise.resolve(props.onLogInterval(body));
-    if ('sessionSportBlockId' in body) return Promise.resolve(props.onLogSport(body));
-    return Promise.resolve();
-  };
-
-  const handleSaveSet = (setIndex: number) => {
-    void saveSet(setIndex);
-  };
-
-  const handleRestComplete = () => {
-    const rest = props.restState;
-    if (!rest) return;
-    const restKey = `${rest.setKey}:${rest.endAt}`;
-    if (finishedRestKey.current === restKey) return;
-    finishedRestKey.current = restKey;
-    const setIndex = Number(rest.setKey.split(':').at(-1));
-    const elapsed = elapsedRestSeconds(rest.endAt, rest.seconds);
-    if (Number.isInteger(setIndex) && setIndex > 0) {
-      recordedRestRef.current = { ...recordedRestRef.current, [setIndex]: elapsed };
-      if (setWasLogged(props.item, setIndex)) void saveSet(setIndex, elapsed);
-    }
-    props.onRestFinish();
-  };
-  const remaining = useRestCountdown(props.restState, props.onAdjustRest, handleRestComplete);
-
-  const handleFinishExercise = async () => {
-    if (finishing) return;
-    setFinishing(true);
-    try {
-      const pending: Array<Promise<void>> = [];
-      for (let setIndex = 1; setIndex <= setCount; setIndex += 1) {
-        pending.push(saveSet(setIndex));
-      }
-      await Promise.all(pending);
-      props.onFinishExercise(props.item.id);
-    } catch {
-      setFinishing(false);
-    }
-  };
-
-  const handleRomSave = (value: string) => {
-    if (!romState) return;
-    setDraftValues((current) => ({
-      ...current,
-      [romState.setIndex]: {
-        ...(current[romState.setIndex] ?? emptyRow()),
-        rom: value,
-      },
-    }));
-    setRomState(null);
-  };
-
-  const navigateGroup = (direction: -1 | 1) => {
-    const next = props.exerciseGroup[groupIndex + direction];
-    if (next) props.onNavigateExercise(next);
-  };
-
-  const repsRange = formatSessionRepRange(props.item);
-  const youtubeUrl = readSessionYoutubeUrl(props.item);
-
-  const handleOpenVideo = () => {
-    if (!youtubeUrl) {
-      showToast(t('mobile.client.exercise.videoEmpty'));
-      return;
-    }
-    setShowVideo(true);
-  };
-
-  return (
-    <Modal visible={props.visible} animationType={'slide'} onRequestClose={props.onClose}>
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Pressable style={SESSION.backBtn} onPress={props.onClose}>
-            <Text style={SESSION.backArrow}>{'←'}</Text>
-          </Pressable>
-          <View style={styles.titleWrap}>
-            {props.exerciseGroup.length > 1 ? (
-              <Pressable disabled={groupIndex <= 0} onPress={() => navigateGroup(-1)} style={styles.navBtn}>
-                <Text style={[styles.navArrow, groupIndex <= 0 && styles.navDisabled]}>{'‹'}</Text>
-              </Pressable>
-            ) : null}
-            <Text numberOfLines={2} style={styles.title}>
-              {props.item.displayName}
-            </Text>
-            {props.exerciseGroup.length > 1 ? (
-              <Pressable
-                disabled={groupIndex >= props.exerciseGroup.length - 1}
-                onPress={() => navigateGroup(1)}
-                style={styles.navBtn}
-              >
-                <Text style={[styles.navArrow, groupIndex >= props.exerciseGroup.length - 1 && styles.navDisabled]}>
-                  {'›'}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-        </View>
-
-        {repsRange ? (
-          <Text style={styles.repRange}>
-            {t('mobile.client.session.repRange')} <Text style={styles.repRangeValue}>{repsRange}</Text>
-          </Text>
-        ) : null}
-
-        <ExerciseActionBar
-          onOpenComment={() => setShowComment(true)}
-          onOpenNotes={() => setShowNotes(true)}
-          onOpenVideo={handleOpenVideo}
-        />
-
-        <ScrollView contentContainerStyle={styles.scroll}>
-          {Array.from({ length: setCount }, (_, index) => {
-            const setIndex = index + 1;
-            const setKey = `${props.item.id}:${setIndex}`;
-            const restDone = props.completedRestKeys.includes(setKey) || restWasRecorded(props.item, setIndex);
-            const restSeconds = getRestSeconds(props.item, setIndex);
-            const isActiveRest = props.restState?.setKey === setKey;
-            const restLocked = props.restState != null && props.restState.setKey !== setKey;
-            return (
-              <View key={setKey} style={styles.setCard}>
-                <View style={styles.setHeader}>
-                  <View style={styles.setHeaderLeft}>
-                    <Text style={styles.setTitle}>{`${t('client.today.set')} ${setIndex}`}</Text>
-                  </View>
-                  {restSeconds > 0 ? (
-                    <SetRestButton
-                      active={isActiveRest}
-                      completed={restDone}
-                      disabled={restLocked}
-                      remaining={isActiveRest ? remaining : null}
-                      restSeconds={restSeconds}
-                      onExpand={props.onExpandRest}
-                      onStart={() => props.onStartRest(setKey, restSeconds)}
-                    />
-                  ) : null}
-                </View>
-                <View style={styles.grid}>
-                  {columns.map((column) => (
-                    <SetColumnCell
-                      column={column}
-                      draft={draftValues[setIndex]?.[column.key] ?? ''}
-                      key={`${setIndex}-${column.key}`}
-                      onChange={(value) =>
-                        setDraftValues((current) => ({
-                          ...current,
-                          [setIndex]: {
-                            ...(current[setIndex] ?? emptyRow()),
-                            [column.key]: value,
-                          },
-                        }))
-                      }
-                      onOpenRom={() => setRomState({ setIndex })}
-                      target={readTargetValue(props.item, setIndex, column.key)}
-                    />
-                  ))}
-                </View>
-                <View style={styles.setFooter}>
-                  <Pressable style={styles.saveBtn} onPress={() => handleSaveSet(setIndex)}>
-                    <Text style={styles.saveBtnText}>{t('mobile.client.session.saveSet')}</Text>
-                  </Pressable>
-                </View>
-              </View>
-            );
-          })}
-        </ScrollView>
-
-        <View style={styles.footer}>
-          {props.item.type === 'strength' ? (
-            <Pressable onPress={() => setShowPrevious(true)}>
-              <Text style={styles.footerLink}>{t('mobile.client.session.previousDays')}</Text>
-            </Pressable>
-          ) : (
-            <View style={styles.footerSpacer} />
-          )}
-          <Pressable disabled={finishing} style={styles.finishBtn} onPress={() => void handleFinishExercise()}>
-            <Text style={styles.finishBtnText}>{t('mobile.client.session.finishExercise')}</Text>
-          </Pressable>
-          {props.workoutElapsed ? (
-            <View style={styles.footerTimer}>
-              <View style={styles.footerDot} />
-              <Text style={styles.footerTimerText}>{props.workoutElapsed}</Text>
-            </View>
-          ) : (
-            <View style={styles.footerSpacer} />
-          )}
-        </View>
-
-        <RomScaleModal
-          value={draftValues[romState?.setIndex ?? 1]?.rom ?? ''}
-          visible={romState != null}
-          onClose={() => setRomState(null)}
-          onSave={handleRomSave}
-        />
-        <YouTubeVideoModal
-          title={props.item.displayName}
-          visible={showVideo}
-          youtubeUrl={youtubeUrl}
-          onClose={() => setShowVideo(false)}
-        />
-        <ExerciseCommentModal
-          exerciseName={props.item.displayName}
-          routineDayLabel={t('client.today.title')}
-          sessionId={props.sessionId}
-          sessionItemId={getStrengthSessionItemId(props.item)}
-          visible={showComment}
-          onClose={() => setShowComment(false)}
-        />
-        {showNotes ? (
-          <Modal transparent animationType={'fade'} visible onRequestClose={() => setShowNotes(false)}>
-            <Pressable style={styles.notesOverlay} onPress={() => setShowNotes(false)}>
-              <View style={styles.notesCard}>
-                <ExerciseNotesPanel coachInstructions={props.item.coachInstructions} trainerNote={props.item.notes} />
-              </View>
-            </Pressable>
-          </Modal>
-        ) : null}
-        <PreviousDaysOverlay
-          sessionId={props.sessionId}
-          exerciseName={props.item.displayName}
-          sourceExerciseId={getSourceExerciseId(props.item)}
-          visible={showPrevious}
-          onClose={() => setShowPrevious(false)}
-        />
-        {props.restState?.expanded ? (
-          <RestTimerOverlay
-            remaining={remaining ?? 0}
-            totalSeconds={props.restState.seconds}
-            visible
-            onHide={props.onCollapseRest}
-            onFinish={handleRestComplete}
-          />
-        ) : null}
-      </View>
-    </Modal>
-  );
-}
-
-function SetRestButton(props: {
-  active: boolean;
-  completed: boolean;
-  disabled: boolean;
-  remaining: number | null;
-  restSeconds: number;
-  onExpand: () => void;
-  onStart: () => void;
-}): React.JSX.Element {
-  const { t } = useTranslation();
-
-  if (props.completed) {
-    return (
-      <View style={[styles.restBtn, styles.restBtnDone]}>
-        <Text style={[styles.restBtnText, styles.restBtnTextDone]}>{t('mobile.client.rest.completed')}</Text>
-      </View>
-    );
-  }
-
-  if (props.active && props.remaining != null) {
-    return (
-      <Pressable onPress={props.onExpand} style={styles.restBtnCircle}>
-        <CircularCountdown remaining={props.remaining} size={56} strokeWidth={5} totalSeconds={props.restSeconds} />
-      </Pressable>
-    );
-  }
-
-  return (
-    <Pressable disabled={props.disabled} onPress={props.onStart} style={styles.restBtn}>
-      <Text style={styles.restBtnText}>{`${t('client.today.restTimer')} ${formatRestLabel(props.restSeconds)}`}</Text>
-    </Pressable>
-  );
-}
-
-function SetColumnCell(props: {
-  column: SetColumn;
-  draft: string;
-  onChange: (value: string) => void;
-  onOpenRom: () => void;
-  target: string;
-}): React.JSX.Element {
-  const { t } = useTranslation();
-  const isRpe = props.column.scale === 'rpe';
-  const isRir = props.column.scale === 'rir';
-  const isRom = props.column.scale === 'rom';
-  const romLabel = isRomScaleValue(props.draft) ? t(`mobile.client.exercise.rom.${props.draft}`) : props.draft;
-  const onChangeText = (value: string) => {
-    if (isRpe) {
-      props.onChange(sanitizeRpeInput(value));
-      return;
-    }
-    if (isRir) {
-      props.onChange(sanitizeRirInput(value));
-      return;
-    }
-    props.onChange(value);
-  };
-  return (
-    <View style={styles.column}>
-      <Text style={styles.columnLabel}>{props.column.label}</Text>
-      <Text style={styles.targetValue}>{props.target}</Text>
-      {isRom ? (
-        <Pressable style={styles.scaleInput} onPress={props.onOpenRom}>
-          <Text style={styles.scaleInputText}>{romLabel || '-'}</Text>
-        </Pressable>
-      ) : props.column.key === 'reps' && props.column.label === '—' ? (
-        <Text style={styles.scaleInputText}>{'—'}</Text>
-      ) : (
-        <TextInput
-          keyboardType={isRpe ? 'decimal-pad' : isRir ? 'number-pad' : 'numeric'}
-          onChangeText={onChangeText}
-          style={styles.input}
-          value={props.draft}
-        />
-      )}
-    </View>
-  );
-}
-
-function ExerciseActionBar(props: {
-  onOpenComment: () => void;
-  onOpenNotes: () => void;
-  onOpenVideo: () => void;
-}): React.JSX.Element {
-  const { t } = useTranslation();
-  return (
-    <View style={styles.actionBar}>
-      <ExerciseActionButton
-        icon={<CommentGlyph />}
-        iconBg={LIGHT.accent}
-        label={t('mobile.client.comment.title')}
-        labelColor={LIGHT.accentDark}
-        surface={'#dbeafe'}
-        onPress={props.onOpenComment}
-      />
-      <ExerciseActionButton
-        icon={<VideoGlyph />}
-        iconBg={LIGHT.redBg}
-        label={t('mobile.client.exercise.video')}
-        labelColor={'#b91c1c'}
-        surface={'#fee2e2'}
-        onPress={props.onOpenVideo}
-      />
-      <ExerciseActionButton
-        icon={<NotesGlyph />}
-        iconBg={LIGHT.orange}
-        label={t('mobile.client.exercise.indications')}
-        labelColor={'#c2410c'}
-        surface={'#ffedd5'}
-        onPress={props.onOpenNotes}
-      />
-    </View>
-  );
-}
-
-function ExerciseActionButton(props: {
-  icon: React.ReactNode;
-  iconBg: string;
-  label: string;
-  labelColor: string;
-  surface: string;
-  onPress: () => void;
-}): React.JSX.Element {
-  return (
-    <Pressable onPress={props.onPress} style={[styles.actionCard, { backgroundColor: props.surface }]}>
-      <View style={[styles.actionIcon, { backgroundColor: props.iconBg }]}>{props.icon}</View>
-      <Text numberOfLines={1} style={[styles.actionLabel, { color: props.labelColor }]}>
-        {props.label}
-      </Text>
-    </Pressable>
-  );
-}
-
-function CommentGlyph(): React.JSX.Element {
-  return (
-    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
-      <Path d={'M5 4h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4 4v-4H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z'} fill={'#ffffff'} />
-    </Svg>
-  );
-}
-
-function VideoGlyph(): React.JSX.Element {
-  return (
-    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
-      <Path d={'M8 6.5v11l10-5.5L8 6.5z'} fill={'#ffffff'} />
-    </Svg>
-  );
-}
-
-function NotesGlyph(): React.JSX.Element {
-  return (
-    <Svg fill={'none'} height={18} viewBox={'0 0 24 24'} width={18}>
-      <Path d={'M7 3h8l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z'} fill={'#ffffff'} />
-      <Path d={'M15 3v5h5'} stroke={'#fb923c'} strokeWidth={1.6} />
-    </Svg>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: LIGHT.bgSoft,
-    flex: 1,
-  },
-  header: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-    padding: 16,
-  },
-  titleWrap: {
-    alignItems: 'center',
-    flex: 1,
-    flexDirection: 'row',
-    gap: 4,
-    justifyContent: 'center',
-  },
-  title: {
-    color: LIGHT.textStrong,
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
-  navBtn: {
-    padding: 4,
-  },
-  navArrow: {
-    color: LIGHT.accent,
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  navDisabled: {
-    opacity: 0.3,
-  },
-  actionBar: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-  },
-  actionCard: {
-    alignItems: 'center',
-    borderRadius: LIGHT.radiusLg,
-    flex: 1,
-    gap: 6,
-    paddingHorizontal: 8,
-    paddingVertical: 10,
-  },
-  actionIcon: {
-    alignItems: 'center',
-    borderRadius: 14,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-  actionLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  repRange: {
-    color: LIGHT.textMuted,
-    fontSize: 14,
-    paddingHorizontal: 16,
-  },
-  repRangeValue: {
-    color: LIGHT.textStrong,
-    fontWeight: '700',
-  },
-  scroll: {
-    gap: 12,
-    padding: 16,
-    paddingBottom: 100,
-  },
+  container: { backgroundColor: LIGHT.bgSoft, flex: 1 },
+  header: { alignItems: 'center', flexDirection: 'row', gap: 8, padding: 16 },
+  backBtn: { ...SESSION.backBtn, height: 48, width: 48 },
+  titleWrap: { alignItems: 'center', flex: 1, flexDirection: 'row', gap: 4 },
+  titleBlock: { flex: 1 },
+  title: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '800', textAlign: 'center' },
+  repRange: { color: LIGHT.textMuted, fontSize: 13, textAlign: 'center' },
+  navBtn: { alignItems: 'center', height: 48, justifyContent: 'center', width: 48 },
+  navArrow: { color: LIGHT.accent, fontSize: 28, fontWeight: '700' },
+  navDisabled: { opacity: 0.3 },
+  scroll: { padding: 16, paddingBottom: 24 },
   setCard: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,
     borderRadius: LIGHT.radius2xl,
     borderWidth: 1,
+    gap: 12,
     padding: 16,
   },
-  setHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  setHeaderLeft: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 8,
-  },
-  setTitle: {
-    color: LIGHT.textStrong,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  grid: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  column: {
-    flex: 1,
-  },
-  columnLabel: {
-    color: LIGHT.accentMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 4,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-  },
-  targetValue: {
-    color: LIGHT.textStrong,
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 6,
-    textAlign: 'center',
-  },
-  input: {
-    ...SESSION.input,
-    fontSize: 16,
-    minHeight: 44,
-  },
-  scaleInput: {
-    ...SESSION.input,
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  scaleInputText: {
-    color: LIGHT.textStrong,
-    fontSize: 16,
-    fontWeight: '700',
-    textAlign: 'center',
-  },
-  setFooter: {
-    marginTop: 12,
-  },
-  saveBtn: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.accentSoft,
-    borderRadius: LIGHT.radiusMd,
-    paddingVertical: 10,
-  },
-  saveBtnText: {
-    color: LIGHT.accentDark,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  restBtn: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.emeraldSoft,
-    borderRadius: LIGHT.radiusFull,
-    flexDirection: 'row',
-    gap: 6,
-    minWidth: 112,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  restBtnCircle: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  restBtnDone: {
-    backgroundColor: LIGHT.bgSoft,
-  },
-  restBtnText: {
-    color: LIGHT.success,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  restBtnTextDone: {
-    color: LIGHT.textMuted,
-  },
-  footer: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.bgCard,
-    borderTopColor: LIGHT.border,
-    borderTopWidth: 1,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  footerLink: {
-    color: LIGHT.accent,
-    fontSize: 13,
-    fontWeight: '700',
-    width: 90,
-  },
-  footerSpacer: {
-    width: 90,
-  },
-  finishBtn: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.accent,
-    borderRadius: LIGHT.radiusMd,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-  },
-  finishBtnText: {
-    color: LIGHT.textOnNavy,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  footerTimer: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 6,
-    width: 90,
-  },
-  footerDot: {
-    backgroundColor: LIGHT.emerald,
-    borderRadius: 4,
-    height: 8,
-    width: 8,
-  },
-  footerTimerText: {
-    color: LIGHT.textStrong,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  notesOverlay: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.overlay,
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  notesCard: {
-    backgroundColor: LIGHT.bgCard,
-    borderRadius: LIGHT.radiusXl,
-    maxHeight: '70%',
-    padding: 16,
-    width: '100%',
-  },
+  setHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  setTitle: { color: LIGHT.textStrong, flex: 1, fontSize: 16, fontWeight: '800' },
+  historyLink: { justifyContent: 'center', minHeight: 48 },
+  historyText: { color: LIGHT.accent, fontSize: 14, fontWeight: '700' },
+  timer: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
+  notesOverlay: { alignItems: 'center', backgroundColor: LIGHT.overlay, flex: 1, justifyContent: 'center', padding: 24 },
+  notesCard: { backgroundColor: LIGHT.bgCard, borderRadius: LIGHT.radiusXl, maxHeight: '70%', padding: 16, width: '100%' },
 });

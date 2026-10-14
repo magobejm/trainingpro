@@ -31,7 +31,7 @@ export type SetFieldKey =
 
 export type SetColumn = {
   key: SetFieldKey;
-  label: string;
+  labelKey: string;
   scale?: 'none' | 'rpe' | 'rir' | 'rom';
 };
 
@@ -69,16 +69,16 @@ export function getSetColumns(item: SessionItem): SetColumn[] {
 }
 
 const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
-  reps: { key: 'reps', label: 'Reps' },
-  weightKg: { key: 'weight', label: 'Peso' },
-  rpe: { key: 'rpe', label: 'RPE', scale: 'rpe' },
-  fcMaxPct: { key: 'fcMaxPct', label: '%FC máx' },
-  durationSeconds: { key: 'duration', label: 'Duración' },
-  heartRate: { key: 'heartRate', label: 'Pulsaciones' },
-  rir: { key: 'rir', label: 'RIR', scale: 'rir' },
-  fcReservePct: { key: 'fcReservePct', label: '%FC res' },
-  rom: { key: 'rom', label: 'ROM', scale: 'rom' },
-  restSeconds: { key: 'rest', label: 'Descanso' },
+  reps: { key: 'reps', labelKey: 'mobile.client.history.reps' },
+  weightKg: { key: 'weight', labelKey: 'mobile.client.history.weight' },
+  rpe: { key: 'rpe', labelKey: 'mobile.client.history.rpe', scale: 'rpe' },
+  fcMaxPct: { key: 'fcMaxPct', labelKey: 'mobile.client.history.fcMaxPct' },
+  durationSeconds: { key: 'duration', labelKey: 'mobile.client.history.duration' },
+  heartRate: { key: 'heartRate', labelKey: 'mobile.client.history.heartRate' },
+  rir: { key: 'rir', labelKey: 'mobile.client.history.rir', scale: 'rir' },
+  fcReservePct: { key: 'fcReservePct', labelKey: 'mobile.client.history.fcReservePct' },
+  rom: { key: 'rom', labelKey: 'mobile.client.history.rom', scale: 'rom' },
+  restSeconds: { key: 'rest', labelKey: 'mobile.client.history.rest' },
 };
 
 function getBaseSetColumns(item: SessionItem): SetColumn[] {
@@ -205,6 +205,27 @@ export function elapsedRestSeconds(endAt: number, totalSeconds: number, now = Da
   return Math.max(0, totalSeconds - remaining);
 }
 
+export function readLoggedRestSeconds(item: SessionItem, setIndex: number): number | undefined {
+  const value = readRestSeconds(item, setIndex);
+  return value != null && value > 0 ? value : undefined;
+}
+
+function readRestSeconds(item: SessionItem, setIndex: number): null | number | undefined {
+  switch (item.type) {
+    case 'strength':
+    case 'plio':
+    case 'mobility':
+    case 'isometric':
+      return item.logs.find((entry) => entry.setIndex === setIndex)?.restSecondsDone;
+    case 'cardio':
+      return item.intervalLogs.find((entry) => entry.intervalIndex === setIndex)?.restSecondsDone;
+    case 'sport':
+      return (item.setLogs ?? []).find((entry) => entry.setIndex === setIndex)?.restSecondsDone;
+    default:
+      return undefined;
+  }
+}
+
 export function restWasRecorded(item: SessionItem, setIndex: number): boolean {
   switch (item.type) {
     case 'strength':
@@ -256,7 +277,7 @@ function lockedOrDraftText(
   return trimmed || null;
 }
 
-type LogPayload =
+export type LogPayload =
   | LogIntervalMutationInput
   | LogIsometricSetMutationInput
   | LogMobilitySetMutationInput

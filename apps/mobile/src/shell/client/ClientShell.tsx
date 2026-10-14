@@ -16,6 +16,7 @@ import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
 import { RoutineScreen } from '../../screens/client/RoutineScreen';
 import { ScheduledTestScreen } from '../../screens/client/ScheduledTestScreen';
 import { RoutineDayPreviewPanel } from './RoutineDayPreviewPanel';
+import type { PlanDayView } from '../../screens/client/client-calendar.helpers';
 import { BottomNav, type TabId } from '../../theme/primitives';
 import { SPRING, type MoreMenuId, type OverlayId, type ProgressMode } from './client-shell.constants';
 import { s } from './client-shell.styles';
@@ -34,12 +35,13 @@ type ShellState = {
   overlay: OverlayId;
   progressMode: ProgressMode;
   selectedDay: ClientRoutineDay | null;
+  selectedDayView: PlanDayView | null;
   selectedScheduleId: string | null;
   slideX: Animated.Value;
   closeOverlay: () => void;
   finishSessionToList: () => void;
   openChatWithDraft: (message: string) => void;
-  openDay: (day: ClientRoutineDay) => void;
+  openDay: (day: ClientRoutineDay, view?: PlanDayView | null) => void;
   openOverlay: (id: OverlayId) => void;
   openScheduledTest: (scheduleId: string) => void;
   openProgress: (mode: ProgressMode) => void;
@@ -56,6 +58,7 @@ function useShellState(): ShellState {
   const [activeTab, setActiveTab] = useState<TabId>('home');
   const [overlay, setOverlay] = useState<OverlayId>(null);
   const [selectedDay, setSelectedDay] = useState<ClientRoutineDay | null>(null);
+  const [selectedDayView, setSelectedDayView] = useState<PlanDayView | null>(null);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string | null>(null);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [progressMode, setProgressMode] = useState<ProgressMode>('progress');
@@ -72,6 +75,7 @@ function useShellState(): ShellState {
       setOverlay(null);
       setProgressMode('progress');
       setSelectedDay(null);
+      setSelectedDayView(null);
       setSelectedScheduleId(null);
       setActiveSessionId(null);
       listOriginRef.current = null;
@@ -106,6 +110,7 @@ function useShellState(): ShellState {
     }
     if (current === 'routineDay') {
       setSelectedDay(null);
+      setSelectedDayView(null);
       if (listOriginRef.current) {
         setOverlay(listOriginRef.current);
         return;
@@ -128,6 +133,7 @@ function useShellState(): ShellState {
   const finishSessionToList = useCallback(() => {
     setActiveSessionId(null);
     setSelectedDay(null);
+    setSelectedDayView(null);
     if (listOriginRef.current) {
       setOverlay(listOriginRef.current);
       return;
@@ -145,11 +151,12 @@ function useShellState(): ShellState {
   );
 
   const openDay = useCallback(
-    (day: ClientRoutineDay) => {
+    (day: ClientRoutineDay, view?: PlanDayView | null) => {
       if (isListOverlay(overlayRef.current)) {
         listOriginRef.current = overlayRef.current;
       }
       setSelectedDay(day);
+      setSelectedDayView(view ?? null);
       setOverlay('routineDay');
       Animated.spring(slideX, { toValue: 0, ...SPRING }).start();
     },
@@ -204,6 +211,7 @@ function useShellState(): ShellState {
     overlay,
     progressMode,
     selectedDay,
+    selectedDayView,
     selectedScheduleId,
     setActiveTab,
     slideX,
@@ -283,7 +291,12 @@ export function ClientShell(): React.JSX.Element {
       )}
       {st.overlay === 'routineDay' && st.selectedDay !== null && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <RoutineDayPreviewPanel day={st.selectedDay} onClose={st.closeOverlay} onOpenSession={st.openSession} />
+          <RoutineDayPreviewPanel
+            day={st.selectedDay}
+            onClose={st.closeOverlay}
+            onOpenSession={st.openSession}
+            view={st.selectedDayView}
+          />
         </Animated.View>
       )}
       {st.overlay === 'session' && st.activeSessionId !== null && (

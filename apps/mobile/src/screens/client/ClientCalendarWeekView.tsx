@@ -8,7 +8,7 @@ import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
 import { ClientNoteEditor } from './ClientCalendarDayDetail';
 import { CalendarCallPanel } from './ClientCalendarCallPanel';
 import { KpiStrip } from './ClientCalendarKpiStrip';
-import { weekDayLabel, type DayData } from './client-calendar.helpers';
+import { weekDayLabel, type DayData, type PlanDayView } from './client-calendar.helpers';
 import { CalendarWorkoutList } from './ClientCalendarWorkouts';
 
 const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
@@ -17,7 +17,8 @@ type Props = {
   data: DayData | undefined;
   dayData: Map<string, DayData>;
   exerciseCountFor: (planDayId: string | null) => number | null;
-  onOpenPlanDay: (planDayId: string) => void;
+  onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
+  onOpenSession: (sessionId: string) => void;
   onOpenTest: (scheduleId: string) => void;
   onSelectDate: (date: Date) => void;
   selectedDate: Date;
@@ -44,6 +45,7 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
             data={props.data}
             exerciseCountFor={props.exerciseCountFor}
             onOpenPlanDay={props.onOpenPlanDay}
+            onOpenSession={props.onOpenSession}
           />
         </View>
         {props.data?.physicalTest ? (

@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
 import type { SessionView } from '@trainerpro/shared';
 import {
   type LogIntervalMutationInput,
@@ -12,7 +11,6 @@ import {
 } from '../../data/hooks/useTodaySession';
 import { useSessionDraft, type EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type { SessionOpInput } from '../../data/offline/session-draft';
-import { showToast } from '../../shell/client/feedback';
 import { finishSessionWithRpePayload, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -20,10 +18,9 @@ type Enqueue = (session: SessionView, input: SessionOpInput) => Promise<EnqueueR
 
 export function useOfflineSessionActions(sessionId: string, session: SessionView | null, revision: number) {
   const queue = useSessionDraft(sessionId, revision);
-  const { t } = useTranslation();
   const save = useCallback(
-    (input: SessionOpInput) => saveSessionOp(queue.enqueue, session, t, input),
-    [queue.enqueue, session, t],
+    (input: SessionOpInput) => saveSessionOp(queue.enqueue, session, input),
+    [queue.enqueue, session],
   );
   const enqueueFinish = useCallback(
     (sessionRpe: number) => enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe),
@@ -60,14 +57,10 @@ export async function notifyFinishedSession(
 async function saveSessionOp(
   enqueue: Enqueue,
   session: SessionView | null,
-  t: Translate,
   input: SessionOpInput,
-): Promise<void> {
-  if (!session) return;
-  const outcome = await enqueue(session, input);
-  if (outcome === 'conflict') return;
-  const key = outcome === 'pending' ? 'mobile.client.sync.savedOffline' : 'mobile.client.sync.saved';
-  showToast(t(key));
+): Promise<EnqueueResult | 'missing'> {
+  if (!session) return 'missing';
+  return enqueue(session, input);
 }
 
 function enqueueSessionFinish(

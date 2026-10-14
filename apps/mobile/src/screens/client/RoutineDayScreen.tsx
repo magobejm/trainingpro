@@ -118,9 +118,11 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
                       </View>
                     ) : null}
                   </View>
-                  {complete ? (
+                  {complete || isFinished ? (
                     <View style={styles.editBtn}>
-                      <Text style={styles.editBtnText}>{t('mobile.client.exercise.edit')}</Text>
+                      <Text style={styles.editBtnText}>
+                        {t(isFinished ? 'mobile.client.exercise.view' : 'mobile.client.exercise.edit')}
+                      </Text>
                     </View>
                   ) : (
                     <Text style={styles.chevron}>{'›'}</Text>

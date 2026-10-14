@@ -41,6 +41,7 @@ export const getLayoutStyle5: NativeStyle = StyleSheet.create({
   value: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: space.sm,
     backgroundColor: tk.surfaceMuted,
     borderWidth: 1,
     borderColor: tk.border,
@@ -53,6 +54,7 @@ export const getLayoutStyle5: NativeStyle = StyleSheet.create({
 export const getLayoutStyle6: NativeStyle = StyleSheet.create({
   value: {
     flex: 1,
+    minWidth: 0,
   },
 }).value;
 

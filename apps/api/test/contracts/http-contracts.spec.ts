@@ -65,7 +65,11 @@ describe('HTTP route inventory', () => {
 
   it('records roles, filters and pagination without inventing pages', () => {
     expect(route(routes, 'get', '/health')?.auth).toBe(false);
-    expect(route(routes, 'get', '/clients')).toMatchObject({ filters: [], pagination: [], roles: ['coach'] });
+    expect(route(routes, 'get', '/clients')).toMatchObject({
+      filters: ['objective', 'search', 'sort'],
+      pagination: ['cursor', 'limit'],
+      roles: ['coach'],
+    });
     expect(route(routes, 'get', '/plans/templates/strength')?.filters).toEqual(['summary']);
     expect(route(routes, 'get', '/sessions/{sessionId}')?.roles).toEqual(['coach', 'client']);
     expect(route(routes, 'get', '/chat/messages')).toMatchObject({

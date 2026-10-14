@@ -1,6 +1,7 @@
 import { QueryResult } from '../../components/AsyncStatus';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormatDate } from '../../i18n/useFormatDate';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
@@ -124,7 +125,12 @@ function IncidentList(props: ViewModel) {
     onRetry: props.onRetry,
   });
   if (status) return status;
-  return <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.stack}>{props.incidents.map((incident) => renderIncidentCard(props, incident))}</View>;
+  const format = useFormatDate();
+  return (
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.stack}>
+      {props.incidents.map((incident) => renderIncidentCard(props, incident, format))}
+    </View>
+  );
 }
 
 function renderIncidentCard(
@@ -138,11 +144,12 @@ function renderIncidentCard(
     status: string;
     tag: null | string;
   },
+  format: (value: string) => string,
 ) {
   return (
     <Card densityRow key={incident.id} style={styles.card}>
       <Text style={styles.incidentTitle}>{`${incident.severity} · ${incident.status}`}</Text>
-      <Text style={styles.meta}>{new Date(incident.createdAt).toLocaleDateString()}</Text>
+      <Text style={styles.meta}>{format(incident.createdAt)}</Text>
       <Text style={styles.description}>{incident.description}</Text>
       <Text style={styles.meta}>{incident.tag ?? props.t('coach.incidents.noTag')}</Text>
       <Text style={styles.meta}>{incident.coachResponse ?? props.t('coach.incidents.noResponse')}</Text>

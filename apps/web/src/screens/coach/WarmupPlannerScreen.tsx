@@ -1,12 +1,12 @@
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
-import { getLayoutStyle1, getLayoutStyle2 } from './WarmupPlannerScreen.layout-styles';
+import { getLayoutStyle1 } from './WarmupPlannerScreen.layout-styles';
 
 import { WebBox } from '@trainerpro/ui';
 /* eslint-disable max-lines-per-function */
 /* eslint-disable max-lines-per-function */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react';
 import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType, DraftDay } from './RoutinePlanner.types';
@@ -27,7 +27,8 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { saveTemplate } from '../../layout/template-save';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
-import { Button, colors, EmptyState, fontSize, space } from '@trainerpro/ui';
+import { Button, colors, EmptyState, space } from '@trainerpro/ui';
+import { SelectionOverlay, WarmupGroupModeBar } from './WarmupPlannerScreen.overlays';
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 type Props = {
   onRouteChange: (route: ShellRoute) => void;
@@ -238,7 +239,8 @@ function WarmupBlocksCard({ vm }: { vm: VM }): React.JSX.Element {
         />
       )}
       {vm.orderedBlocks.length === 0 ? (
-        <EmptyState icon={<EmptyIllustration kind={'library'} />}
+        <EmptyState
+          icon={<EmptyIllustration kind={'library'} />}
           actionLabel={vm.isReadOnly ? undefined : `+ ${vm.t('coach.routine.addExercise')}`}
           message={vm.t('coach.warmupPlanner.emptyGroup')}
           onAction={() => vm.setPickerType(WARMUP_BLOCK_TYPES[0] ?? 'strength')}
@@ -363,60 +365,3 @@ function WarmupBlocksContent({ vm }: { vm: VM }): React.JSX.Element {
   });
   return <>{elements}</>;
 }
-function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: () => void }) {
-  const layoutStyle2 = getLayoutStyle2(
-    selected ? colors.primarySoft : colors.surfaceMuted,
-    selected ? 2 : 1,
-    selected ? colors.primary : colors.primaryBorder,
-    selected ? 'solid' : 'dashed',
-  );
-  return <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={layoutStyle2} />;
-}
-interface WarmupGroupModeBarProps {
-  groupMode: 'CIRCUIT' | 'SUPERSET' | null;
-  selectedCount: number;
-  t: VM['t'];
-  onStartCircuit: () => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-}
-function WarmupGroupModeBar({ groupMode, selectedCount, t, onStartCircuit, onCancel, onConfirm }: WarmupGroupModeBarProps) {
-  if (!groupMode) {
-    return (
-      <View style={gbs.bar}>
-        <Button label={t('coach.routine.group.addCircuit')} onPress={onStartCircuit} size="sm" variant="secondary" />
-      </View>
-    );
-  }
-  return (
-    <View style={[gbs.bar, gbs.activeBar]}>
-      <Text style={gbs.hint}>
-        {t('coach.routine.group.selectHint', { label: t('coach.routine.group.circuit'), count: selectedCount })}
-      </Text>
-      <View style={gbs.spacer} />
-      <Button label={t('coach.routine.delete.cancel')} onPress={onCancel} size="sm" variant="secondary" />
-      {selectedCount >= 2 && (
-        <Button
-          label={t('coach.routine.group.create', { label: t('coach.routine.group.circuit') })}
-          onPress={onConfirm}
-          size="sm"
-        />
-      )}
-    </View>
-  );
-}
-const gbs = {
-  bar: {
-    flexDirection: 'row' as const,
-    alignItems: 'center' as const,
-    gap: space.sm,
-    paddingHorizontal: space.lg,
-    paddingVertical: space.sm,
-    backgroundColor: colors.surfaceMuted,
-    borderTopWidth: 1,
-    borderTopColor: colors.background,
-  },
-  activeBar: { backgroundColor: colors.primarySoft },
-  hint: { fontSize: fontSize.xs, color: colors.textMuted },
-  spacer: { flex: 1 },
-};

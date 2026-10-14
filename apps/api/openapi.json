@@ -467,6 +467,16 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": ["items"],
@@ -3936,9 +3946,56 @@
     },
     "/clients": {
       "get": {
-        "description": "Lista los clientes del entrenador. No pagina.",
+        "description": "Lista los clientes del entrenador. Sin limit devuelve la lista completa; con limit añade nextCursor.",
         "operationId": "listClients",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "Búsqueda por nombre",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro de objetivo",
+            "in": "query",
+            "name": "objective",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Orden",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "enum": ["activity", "name"],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -3987,7 +4044,7 @@
                 }
               }
             },
-            "description": "Lista los clientes del entrenador. No pagina."
+            "description": "Lista los clientes del entrenador. Sin limit devuelve la lista completa; con limit añade nextCursor."
           },
           "401": {
             "content": {
@@ -4018,9 +4075,9 @@
         ],
         "summary": "GET /clients",
         "x-controller": "ClientsController",
-        "x-filters": [],
+        "x-filters": ["objective", "search", "sort"],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       },
       "post": {
@@ -8276,7 +8333,107 @@
     "/library/exercises/all": {
       "get": {
         "operationId": "get_library_exercises_all",
-        "parameters": [],
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "baseCategory",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "cardioTypeIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "equipmentIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "isometricTypeIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "mobilityTypeIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "muscleGroupIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "plioTypeIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "sportTypeIds",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Respuesta correcta"
@@ -8310,9 +8467,19 @@
         ],
         "summary": "GET /library/exercises/all",
         "x-controller": "LibraryUnifiedController",
-        "x-filters": [],
+        "x-filters": [
+          "baseCategory",
+          "cardioTypeIds",
+          "equipmentIds",
+          "isometricTypeIds",
+          "mobilityTypeIds",
+          "muscleGroupIds",
+          "plioTypeIds",
+          "search",
+          "sportTypeIds"
+        ],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       }
     },
@@ -8585,6 +8752,24 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -8622,7 +8807,7 @@
         "x-controller": "LibraryFoodController",
         "x-filters": ["foodCategory", "foodType", "query", "servingUnit"],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       },
       "post": {
@@ -9953,7 +10138,34 @@
           {
             "description": "Filtro",
             "in": "query",
+            "name": "scope",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
             "name": "type",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
             "required": false,
             "schema": {
               "type": "string"
@@ -9993,9 +10205,9 @@
         ],
         "summary": "GET /notes",
         "x-controller": "NotesController",
-        "x-filters": ["clientId", "dateFrom", "dateTo", "type"],
+        "x-filters": ["clientId", "dateFrom", "dateTo", "scope", "type"],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       },
       "post": {
@@ -11424,7 +11636,34 @@
           {
             "description": "Filtro",
             "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
             "name": "summary",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
             "required": false,
             "schema": {
               "type": "string"
@@ -11464,9 +11703,9 @@
         ],
         "summary": "GET /plans/templates/routines",
         "x-controller": "PlansRoutineController",
-        "x-filters": ["summary"],
+        "x-filters": ["search", "summary"],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       },
       "post": {
@@ -12060,7 +12299,34 @@
           {
             "description": "Filtro",
             "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
             "name": "summary",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
             "required": false,
             "schema": {
               "type": "string"
@@ -12100,9 +12366,9 @@
         ],
         "summary": "GET /plans/templates/warmups",
         "x-controller": "PlansWarmupController",
-        "x-filters": ["summary"],
+        "x-filters": ["search", "summary"],
         "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       },
       "post": {

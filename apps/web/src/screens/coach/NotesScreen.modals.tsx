@@ -1,6 +1,7 @@
 import { getLayoutStyle1, getLayoutStyle2 } from './NotesScreen.modals.layout-styles';
 
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Check } from 'lucide-react';
 import type { NoteData } from './notes-screen.types';
@@ -60,6 +61,7 @@ function EditNoteModalBody(props: {
   );
 }
 function EditNoteMetaBadge(props: { editingNote: NoteData | null; t: TFunc }): React.JSX.Element | null {
+  const { i18n } = useTranslation();
   const note = props.editingNote;
   if (!note) {
     return null;
@@ -72,7 +74,7 @@ function EditNoteMetaBadge(props: { editingNote: NoteData | null; t: TFunc }): R
           {readEditBadgeLabel(note, props.t)}
         </Text>
       </View>
-      <Text style={layoutStyle1}>{formatNoteDate(note.createdAt, props.t)}</Text>
+      <Text style={layoutStyle1}>{formatNoteDate(note.createdAt, props.t, i18n.language)}</Text>
     </View>
   );
 }

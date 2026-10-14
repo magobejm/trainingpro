@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import type { ListClientsQuery } from '../../domain/list-clients.query';
 import type { Client } from '../../domain/client';
 import { CLIENTS_REPOSITORY, type ClientsRepositoryPort } from '../../domain/clients-repository.port';
 
@@ -10,7 +11,7 @@ export class ListClientsUseCase {
     private readonly repository: ClientsRepositoryPort,
   ) {}
 
-  execute(context: AuthContext): Promise<Client[]> {
-    return this.repository.listClientsByCoach(context);
+  execute(context: AuthContext, query?: ListClientsQuery): Promise<Client[]> {
+    return query ? this.repository.listClientsByCoach(context, query) : this.repository.listClientsByCoach(context);
   }
 }

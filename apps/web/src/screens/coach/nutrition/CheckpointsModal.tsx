@@ -2,6 +2,7 @@ import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import { LoadingState } from '../../../components/AsyncStatus';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormatDate } from '../../../i18n/useFormatDate';
 import { Text, View } from 'react-native';
 import { useCreateCheckpointMutation, useNutritionCheckpointsQuery } from '../../../data/hooks/useNutrition';
 import type { NutritionPlan } from './nutrition.types';
@@ -16,6 +17,7 @@ type Props = {
 
 export function CheckpointsModal(props: Props): React.JSX.Element | null {
   const { t } = useTranslation();
+  const format = useFormatDate();
   const checkpointsQuery = useNutritionCheckpointsQuery(props.plan.id);
   const createMutation = useCreateCheckpointMutation();
   const [note, setNote] = useState('');
@@ -59,7 +61,7 @@ export function CheckpointsModal(props: Props): React.JSX.Element | null {
       ) : null}
       {checkpoints.map((checkpoint) => (
         <View key={checkpoint.id} style={styles.listItem}>
-          <Text style={styles.cardTitle}>{new Date(checkpoint.createdAt).toLocaleDateString()}</Text>
+          <Text style={styles.cardTitle}>{format(checkpoint.createdAt)}</Text>
           {checkpoint.note ? <Text style={styles.cardMuted}>{checkpoint.note}</Text> : null}
         </View>
       ))}

@@ -3,19 +3,10 @@ import React from 'react';
 type AdminRoute = 'admin.coaches' | 'admin.subscription';
 type CoachRoute =
   | 'coach.clients'
-  | 'coach.library.cardio'
-  | 'coach.library.exercises'
   | 'coach.library.unified'
   | 'coach.library.foods'
   | 'coach.library.routines'
   | 'coach.library.warmups'
-  | 'coach.library.isometrics'
-  | 'coach.library.plyometrics'
-  | 'coach.library.mobility'
-  | 'coach.library.sports'
-  | 'coach.builder.cardio'
-  | 'coach.builder.diet'
-  | 'coach.builder.strength'
   | 'coach.routine.planner'
   | 'coach.warmup.planner'
   | 'coach.progress'
@@ -33,19 +24,10 @@ export const SHELL_ROUTES: readonly ShellRoute[] = [
   'admin.coaches',
   'admin.subscription',
   'coach.clients',
-  'coach.library.cardio',
-  'coach.library.exercises',
   'coach.library.unified',
   'coach.library.foods',
   'coach.library.routines',
   'coach.library.warmups',
-  'coach.library.isometrics',
-  'coach.library.plyometrics',
-  'coach.library.mobility',
-  'coach.library.sports',
-  'coach.builder.cardio',
-  'coach.builder.diet',
-  'coach.builder.strength',
   'coach.routine.planner',
   'coach.warmup.planner',
   'coach.progress',
@@ -82,10 +64,8 @@ export function readPersistedRoute(): null | ShellRoute {
     return null;
   }
   const route = window.localStorage.getItem(SHELL_ROUTE_STORAGE_KEY);
-  if (!route || !isShellRoute(route)) {
-    return null;
-  }
-  return route;
+  if (!route) return null;
+  return isShellRoute(route) ? route : redirectLegacyRoute(route);
 }
 
 export function persistRoute(route: ShellRoute): void {
@@ -97,4 +77,20 @@ export function persistRoute(route: ShellRoute): void {
 
 function isShellRoute(route: string): route is ShellRoute {
   return (SHELL_ROUTES as readonly string[]).includes(route);
+}
+
+const LEGACY_ROUTES: Record<string, ShellRoute> = {
+  'coach.builder.cardio': 'coach.routine.planner',
+  'coach.builder.diet': 'coach.routine.planner',
+  'coach.builder.strength': 'coach.routine.planner',
+  'coach.library.cardio': 'coach.library.unified',
+  'coach.library.exercises': 'coach.library.unified',
+  'coach.library.isometrics': 'coach.library.unified',
+  'coach.library.mobility': 'coach.library.unified',
+  'coach.library.plyometrics': 'coach.library.unified',
+  'coach.library.sports': 'coach.library.unified',
+};
+
+export function redirectLegacyRoute(route: string): ShellRoute | null {
+  return LEGACY_ROUTES[route] ?? null;
 }

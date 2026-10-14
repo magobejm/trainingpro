@@ -1,5 +1,5 @@
 import { QueryResult } from '../../components/AsyncStatus';
-import type { useNotesQuery } from '../../data/hooks/useNotesQuery';
+import { useTranslation } from 'react-i18next';
 import { WebBox } from '@trainerpro/ui';
 import {
   getLayoutStyle1,
@@ -48,7 +48,8 @@ type HistoryNoteRowProps = {
   t: TFunc;
 };
 function HistoryNoteRow({ note, onEdit, onDelete, t }: HistoryNoteRowProps): React.JSX.Element {
-  const fmt = (d: Date) => formatNoteDate(d, t);
+  const { i18n } = useTranslation();
+  const fmt = (d: Date) => formatNoteDate(d, t, i18n.language);
   const badgeLabel =
     note.type === 'general'
       ? t('coach.notes.history.myNotes')
@@ -204,7 +205,12 @@ function HistoryFilterChip(props: { active: boolean; label: string; onPress: () 
 const HISTORY_STACKED_HEIGHT = 560;
 export type HistorySidebarProps = {
   stacked?: boolean;
-  notesQuery: ReturnType<typeof useNotesQuery>;
+  notesQuery: {
+    error: unknown;
+    isError: boolean;
+    isLoading: boolean;
+    refetch: () => unknown;
+  };
   onCreateNote: () => void;
   onClearClient: () => void;
   displayedNotes: NoteData[];
@@ -225,23 +231,31 @@ export type HistorySidebarProps = {
 export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
   const { displayedNotes, showAllHistory, t } = props;
   const filtered = Boolean(props.dateFrom || props.dateTo || props.historyFilter !== 'all' || props.selectedClient);
-  const historyList = QueryResult({
-    emptyIllustration: 'notes',
-    emptyTitle: t('coach.notes.history.empty'),
-    emptyMessage: t('coach.notes.history.emptyInvite'),
-    emptyActionLabel: t('coach.notes.private.title'),
-    onEmptyAction: props.onCreateNote,
-    skeleton: 'rows',
-    isLoading: props.notesQuery.isLoading,
-    isError: props.notesQuery.isError,
-    error: props.notesQuery.error,
-    itemCount: displayedNotes.length,
-    hasActiveFilter: filtered,
-    onRetry: () => void props.notesQuery.refetch(),
-    onClearFilters: () => { props.setDateFrom(''); props.setDateTo(''); props.setHistoryFilter('all'); props.setShowAllHistory(true); props.onClearClient(); },
-  }) ?? displayedNotes.map((note: NoteData) => (
-    <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />
-  ));
+  const historyList =
+    QueryResult({
+      emptyIllustration: 'notes',
+      emptyTitle: t('coach.notes.history.empty'),
+      emptyMessage: t('coach.notes.history.emptyInvite'),
+      emptyActionLabel: t('coach.notes.private.title'),
+      onEmptyAction: props.onCreateNote,
+      skeleton: 'rows',
+      isLoading: props.notesQuery.isLoading,
+      isError: props.notesQuery.isError,
+      error: props.notesQuery.error,
+      itemCount: displayedNotes.length,
+      hasActiveFilter: filtered,
+      onRetry: () => void props.notesQuery.refetch(),
+      onClearFilters: () => {
+        props.setDateFrom('');
+        props.setDateTo('');
+        props.setHistoryFilter('all');
+        props.setShowAllHistory(true);
+        props.onClearClient();
+      },
+    }) ??
+    displayedNotes.map((note: NoteData) => (
+      <HistoryNoteRow key={note.id} note={note} onDelete={props.onDeleteNote} onEdit={props.onEditNote} t={t} />
+    ));
   const layoutStyle19 = getLayoutStyle19(
     props.stacked ? '100%' : 380,
     props.stacked ? HISTORY_STACKED_HEIGHT : undefined,
@@ -265,7 +279,9 @@ export function HistorySidebar(props: HistorySidebarProps): React.JSX.Element {
         t={t}
       />
       {Platform.OS === 'web' ? (
-        <WebBox data-density-list={'true'} style={historyScrollStyle}>{historyList}</WebBox>
+        <WebBox data-density-list={'true'} style={historyScrollStyle}>
+          {historyList}
+        </WebBox>
       ) : (
         <ScrollView style={layoutStyle20} contentContainerStyle={layoutStyle21}>
           {historyList}

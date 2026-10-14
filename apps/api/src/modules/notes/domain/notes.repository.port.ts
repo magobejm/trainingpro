@@ -15,6 +15,8 @@ export type ListNotesQuery = {
   clientId?: string;
   dateFrom?: Date;
   dateTo?: Date;
+  cursor?: string;
+  limit?: number;
 };
 
 export type CoachNoteEntity = {

@@ -1,5 +1,6 @@
 import type { jsPDF } from 'jspdf';
-import { brandAccents } from '@trainerpro/ui';
+import { formatDate } from '@trainerpro/shared';
+import { brandAccents, lightColors } from '@trainerpro/ui';
 import type { PdfDocument, PdfSection } from './pdf-model';
 import { drawChart, drawHeatmap } from './pdf-chart';
 
@@ -39,7 +40,7 @@ function room(pdf: jsPDF, cursor: Cursor, height: number): void {
 function paragraph(pdf: jsPDF, cursor: Cursor, text: string, size = 10, bold = false): void {
   pdf.setFont('helvetica', bold ? 'bold' : 'normal');
   pdf.setFontSize(size);
-  pdf.setTextColor('#172033');
+  pdf.setTextColor(lightColors.text);
   const lines = pdf.splitTextToSize(pdfText(text), WIDTH) as string[];
   for (const line of lines) {
     room(pdf, cursor, 6);
@@ -81,13 +82,13 @@ function tableChunks(table: NonNullable<PdfSection['table']>): NonNullable<PdfSe
 }
 
 function decorate(pdf: jsPDF, input: PdfDocument, logo: Uint8Array | null, accent: string): void {
-  const date = (input.generatedAt ?? new Date()).toLocaleDateString();
+  const date = formatDate(input.generatedAt ?? new Date(), input.locale ?? 'es');
   const pages = pdf.getNumberOfPages();
   for (let page = 1; page <= pages; page++) {
     pdf.setPage(page);
     pdf.setFont('helvetica', 'bold');
     pdf.setFontSize(14);
-    pdf.setTextColor('#172033');
+    pdf.setTextColor(lightColors.text);
     const title = pdf.splitTextToSize(pdfText(input.title), logo ? WIDTH - 25 : WIDTH) as string[];
     pdf.text(title.slice(0, 2), LEFT, 15);
     if (logo) {
@@ -103,7 +104,7 @@ function decorate(pdf: jsPDF, input: PdfDocument, logo: Uint8Array | null, accen
     pdf.setLineWidth(0.7);
     pdf.line(LEFT, 33, 194, 33);
     pdf.setFontSize(8);
-    pdf.setTextColor('#526175');
+    pdf.setTextColor(lightColors.textMuted);
     pdf.text(pdfText(`${input.labels.generated}: ${date}`), LEFT, 288);
     pdf.text(pdfText(`${input.labels.page} ${page} / ${pages}`), 194, 288, { align: 'right' });
   }
@@ -143,9 +144,9 @@ export async function buildPdf(input: PdfDocument): Promise<jsPDF> {
         margin: { top: TOP, bottom: 20, left: LEFT, right: LEFT },
         head: [table.columns.map(pdfText)],
         body: table.rows.map((row) => row.map(pdfText)),
-        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.3, overflow: 'linebreak', textColor: '#172033' },
-        headStyles: { fillColor: accent, textColor: '#ffffff' },
-        alternateRowStyles: { fillColor: '#f3f5f8' },
+        styles: { font: 'helvetica', fontSize: 9, cellPadding: 2.3, overflow: 'linebreak', textColor: lightColors.text },
+        headStyles: { fillColor: accent, textColor: lightColors.onPrimary },
+        alternateRowStyles: { fillColor: lightColors.surfaceMuted },
         rowPageBreak: 'avoid',
         showHead: 'everyPage',
       });

@@ -75,7 +75,7 @@ export class NotesRepositoryPrisma implements INotesRepository {
           select: { firstName: true, lastName: true },
         },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
     });
     return rows.map(
       (r: {

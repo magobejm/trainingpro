@@ -1,7 +1,7 @@
 import { fixedColorFor } from './calendar-fixed-colors';
-import type { CalendarEventData } from './calendar-screen.types';
+import { formatDate } from '@trainerpro/shared';
 import { legacyCalendarBackgrounds } from '@trainerpro/ui';
-import type { CalendarColor } from './calendar-screen.types';
+import type { CalendarColor, CalendarEventData } from './calendar-screen.types';
 import { CALENDAR_COLORS } from './calendar-screen.types';
 import { calendarStoredColor } from '../../data/calendar-stored-color';
 
@@ -48,8 +48,8 @@ export function gridRangeDates(year: number, month: number): { dateFrom: string;
   return { dateFrom: cells[0]!.dateStr, dateTo: cells[cells.length - 1]!.dateStr };
 }
 
-export function formatCalendarDate(date: Date): string {
-  return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+export function formatCalendarDate(date: Date, locale = 'es'): string {
+  return formatDate(date, locale);
 }
 
 export function getColorForHex(hex: string): CalendarColor {

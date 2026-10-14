@@ -3,12 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../../data/api-client';
 import { useAuth } from '../../data/hooks/library-mutations.helpers';
-import {
-  useAllCatalogsQuery,
-  useUnifiedExercisesQuery,
-  UnifiedExerciseItem,
-  UnifiedExercisesFilter,
-} from '../../data/hooks/useUnifiedLibraryQuery';
+import { useAllCatalogsQuery, UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
+import { useUnifiedExercisesPagedQuery } from '../../data/hooks/usePagedResources';
+import { loadNextPage } from '../../data/hooks/usePagedList';
 import { useDeleteExerciseMutation, useDeleteCardioMethodMutation } from '../../data/hooks/useLibraryMutations';
 import {
   useDeleteIsometricExerciseMutation,
@@ -90,8 +87,8 @@ export function useLibraryScreenState() {
     return result;
   }, [expandedCategory, selectedCategoryFilters, selectedEquipment, search]);
 
-  const exercisesQuery = useUnifiedExercisesQuery(filter);
-  const exercises = exercisesQuery.data;
+  const exercisesQuery = useUnifiedExercisesPagedQuery(filter);
+  const exercises = exercisesQuery.items;
   const isLoading = exercisesQuery.isLoading;
   const hasActiveFilters = Object.values(selectedCategoryFilters).some((s) => s.size > 0) || selectedEquipment.size > 0;
   const defaultCategory =
@@ -204,6 +201,7 @@ export function useLibraryScreenState() {
     toggleCategoryItem,
     toggleEquipment,
     defaultCategory,
+    onMainScroll: (event: Parameters<typeof loadNextPage>[0]) => loadNextPage(event, exercisesQuery),
   };
 }
 export type LibraryScreenState = ReturnType<typeof useLibraryScreenState>;

@@ -179,9 +179,15 @@ function contractDetail(operationId: string): ContractDetail {
 function clientsDetail(): ContractDetail {
   return {
     badRequest: false,
-    description: 'Lista los clientes del entrenador. No pagina.',
+    description: 'Lista los clientes del entrenador. Sin limit devuelve la lista completa; con limit añade nextCursor.',
     example: clientListExample,
-    parameters: [],
+    parameters: [
+      parameter('query', 'search', false, { type: 'string' }, 'Búsqueda por nombre'),
+      parameter('query', 'objective', false, { type: 'string' }, 'Filtro de objetivo'),
+      parameter('query', 'sort', false, { enum: ['activity', 'name'], type: 'string' }, 'Orden'),
+      parameter('query', 'limit', false, { type: 'integer' }, 'Paginación'),
+      parameter('query', 'cursor', false, { type: 'string' }, 'Paginación'),
+    ],
     schema: 'ClientListResponse',
   };
 }

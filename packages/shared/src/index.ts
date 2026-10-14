@@ -62,6 +62,7 @@ export {
 } from './password-recovery';
 export { physicalTestFields, type PhysicalTestFieldKey } from './physical-test-fields';
 export { weekdayName, workoutShift, type WorkoutShift } from './workout-shift';
+export { formatDate } from './format-date';
 export type { ExerciseHistoryEntry, ExerciseHistorySet } from './exercise-history';
 
 export * from './client-plan/types';

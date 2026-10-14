@@ -1,7 +1,7 @@
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { View } from 'react-native';
 import '../../i18n';
 import { useProgressRouteClient, useProgressSelection } from './progress/useProgressListState';
 import { useExerciseProgressQuery } from '../../data/hooks/useExerciseProgressQuery';
@@ -9,14 +9,9 @@ import { useExercisePrQuery } from '../../data/hooks/useExercisePrQuery';
 import { useSessionProgressQuery } from '../../data/hooks/useSessionProgressQuery';
 import { useMicrocycleProgressQuery } from '../../data/hooks/useMicrocycleProgressQuery';
 import { useClientRoutineDaysQuery } from '../../data/hooks/useCalendarQuery';
-import { QueryResult } from '../../components/AsyncStatus';
-import { Breadcrumbs } from '../../layout/Breadcrumbs';
+
 import { buildClientCrumbs } from '../../layout/crumbs';
-import { MetricDetailModal } from './progress/MetricDetailModal';
-import { CalendarRangeModal } from './progress/CalendarRangeModal';
-import { ProgressExerciseFilter } from './progress/ProgressExerciseFilter';
-import { ProgressRoutineFilter } from './progress/ProgressRoutineFilter';
-import { SessionDetailModal } from './progress/SessionDetailModal';
+
 import {
   STRENGTH_VARIABLES,
   CARDIO_VARIABLES,
@@ -30,15 +25,10 @@ import {
 } from './progress/progress-screen.variables';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import type { AnalysisMode, DateRange, VariableDef } from './progress/progress-screen.types';
-import { Button, EmptyState, colors, fontSize, space } from '@trainerpro/ui';
+import { Button, EmptyState } from '@trainerpro/ui';
 
-import { ProgressFilters } from './progress/ProgressFilters';
-import { KpiGrid } from './progress/KpiGrid';
-import { MetricChart } from './progress/MetricChart';
-import { InsightsPanel } from './progress/InsightsPanel';
-import { ConsistencyHeatmap } from './progress/ConsistencyHeatmap';
 import { buildKpis } from './progress/build-kpis';
-import { ProgressPdfButton } from '../../features/pdf/ProgressPdfButton';
+import { ProgressView, styles } from './ProgressScreen.view';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -291,201 +281,53 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
   ];
 
   return (
-    <ScrollView contentContainerStyle={styles.page}>
-      {props.onRouteChange ? (
-        <Button
-          label={`← ${t('common.back')}`}
-          onPress={goBackToClients}
-          size="sm"
-          style={styles.backButton}
-          variant="secondary"
-        />
-      ) : null}
-      {/* Breadcrumb */}
-      <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={progressCrumbs} />
-      <Text style={styles.subtitle}>{t('coach.progress.client.subtitle')}</Text>
-      <ProgressPdfButton
-        clientId={clientId}
-        clientName={clientDisplayName ?? ''}
-        disabled={
-          !hasSelection ||
-          !chartPoints.length ||
-          isLoading ||
-          activeProgressQuery.isError ||
-          activeProgressQuery.isFetching ||
-          (mode === 'exercise' && (exercisePrQuery.isPending || exercisePrQuery.isError || exercisePrQuery.isFetching)) ||
-          (mode !== 'exercise' &&
-            Boolean(selectedTemplateId) &&
-            (routineDaysQuery.isPending || routineDaysQuery.isError || routineDaysQuery.isFetching))
-        }
-        mode={mode}
-        range={range}
-        exerciseName={selectedExerciseName}
-        templateId={selectedTemplateId}
-        dayIndex={selectedDayIndex}
-        dayName={routineDaysQuery.data?.find((day) => day.dayIndex === selectedDayIndex)?.title}
-        category={selectedCategory}
-        variables={activeVars}
-        points={chartPoints}
-        kpis={kpis}
-        t={t}
-      />
-      <ConsistencyHeatmap clientId={clientId} t={t} />
-
-      <ProgressFilters
-        mode={mode}
-        onModeChange={handleModeChange}
-        weeksPreset={weeksPreset}
-        customRange={customRange}
-        onPreset={(weeks) => {
-          setWeeksPreset(weeks);
-          setCustomRange(null);
-        }}
-        onCustom={() => setShowCalendarModal(true)}
-        variables={hasSelection ? currentVars : []}
-        activeVarIds={activeVarIds}
-        onToggle={toggleVar}
-        t={t}
-      >
-        {/* Filters */}
-        {mode === 'exercise' ? (
-          <ProgressExerciseFilter
-            clientId={clientId}
-            from={range.from}
-            to={range.to}
-            selected={selectedExercise}
-            onSelect={(ex) => {
-              setSelectedExercise(ex);
-              const vars = getVarsForType(ex?.type ?? 'strength');
-              setActiveVarIds(new Set(vars.slice(0, 2).map((v) => v.id)));
-            }}
-            t={t}
-          />
-        ) : (
-          <ProgressRoutineFilter
-            clientId={clientId}
-            from={range.from}
-            to={range.to}
-            selectedId={selectedTemplateId}
-            onSelect={(id) => {
-              setSelectedTemplateId(id);
-              setSelectedDayIndex(null);
-              setSelectedCategory(null);
-            }}
-            showDaySelector={mode === 'session'}
-            selectedDayIndex={selectedDayIndex}
-            onDaySelect={(idx) => {
-              setSelectedDayIndex(idx);
-              if (idx === null) setSelectedCategory(null);
-            }}
-            selectedCategory={selectedCategory}
-            onCategorySelect={setSelectedCategory}
-            showCategorySelector={mode === 'microcycle'}
-            t={t}
-          />
-        )}
-
-        {mode === 'microcycle' && microcycleQuery.data != null && !microcycleQuery.isLoading && (
-          <Text style={styles.microcycleMeta}>
-            {t('coach.progress.microcycle.cycleDays', { days: microcycleQuery.data.cycleDays })}
-          </Text>
-        )}
-      </ProgressFilters>
-
-      {/* KPIs */}
-      {hasSelection && chartPoints.length > 0 && <KpiGrid items={kpis} t={t} />}
-
-      {!hasSelection && <ProgressEmptyState t={t} />}
-      {hasSelection ? (
-        <QueryResult
-          emptyTitle={t('coach.progress.empty')}
-          skeleton={'panel'}
-          error={activeProgressQuery.error}
-          isError={activeProgressQuery.isError}
-          isLoading={isLoading}
-          itemCount={chartPoints.length}
-          onRetry={() => void activeProgressQuery.refetch()}
-        />
-      ) : null}
-      {hasSelection && !activeProgressQuery.isError && !isLoading && chartPoints.length > 0 && (
-        <View style={styles.chartsGrid}>
-          {activeVars.map((v) => (
-            <MetricChart
-              key={v.id}
-              variable={v}
-              data={chartPoints}
-              xKey={mode === 'microcycle' ? 'weekStart' : 'sessionDate'}
-              onExpand={() => openDetail(v)}
-              t={t}
-            />
-          ))}
-        </View>
-      )}
-
-      {/* Insights */}
-      {hasSelection && chartPoints.length > 0 && (
-        <InsightsPanel clientId={clientId ?? undefined} mode={mode} points={chartPoints} t={t} />
-      )}
-
-      {/* Modals */}
-      <MetricDetailModal
-        visible={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
-        variable={detailVariable}
-        exerciseName={selectedExerciseName}
-        data={exerciseQuery.data ?? []}
-      />
-      {mode === 'session' && (sessionQuery.data ?? []).length > 0 ? (
-        <View style={styles.variablesRow}>
-          {(sessionQuery.data ?? []).map((point) => (
-            <Button
-              key={point.sessionId}
-              label={`${point.sessionDate} · ${t('coach.progress.sessionDetail.open')}`}
-              onPress={() => setDetailSessionId(point.sessionId)}
-              size="sm"
-              variant="secondary"
-            />
-          ))}
-        </View>
-      ) : null}
-
-      <SessionDetailModal onClose={() => setDetailSessionId(null)} sessionId={detailSessionId} />
-      <CalendarRangeModal
-        visible={showCalendarModal}
-        range={range}
-        onConfirm={(r) => setCustomRange(r)}
-        onClose={() => setShowCalendarModal(false)}
-      />
-    </ScrollView>
-  );
-}
-
-function ProgressEmptyState({ t }: { t: (k: string) => string }) {
-  return (
-    <EmptyState
-      icon={<Text style={styles.emptyIcon}>{t('coach.progress.empty.icon')}</Text>}
-      message={t('coach.progress.empty.subtitle')}
-      title={t('coach.progress.empty.title')}
+    <ProgressView
+      activeProgressQuery={activeProgressQuery}
+      activeVarIds={activeVarIds}
+      activeVars={activeVars}
+      chartPoints={chartPoints}
+      clientDisplayName={clientDisplayName}
+      clientId={clientId}
+      currentVars={currentVars}
+      customRange={customRange}
+      detailSessionId={detailSessionId}
+      detailVariable={detailVariable}
+      exercisePrQuery={exercisePrQuery}
+      exerciseQuery={exerciseQuery}
+      getVarsForType={getVarsForType}
+      goBackToClients={goBackToClients}
+      handleModeChange={handleModeChange}
+      hasSelection={hasSelection}
+      isLoading={isLoading}
+      kpis={kpis}
+      microcycleQuery={microcycleQuery}
+      mode={mode}
+      openDetail={openDetail}
+      progressCrumbs={progressCrumbs}
+      range={range}
+      routineDaysQuery={routineDaysQuery}
+      screen={props}
+      selectedCategory={selectedCategory}
+      selectedDayIndex={selectedDayIndex}
+      selectedExercise={selectedExercise}
+      selectedExerciseName={selectedExerciseName}
+      selectedTemplateId={selectedTemplateId}
+      sessionQuery={sessionQuery}
+      setActiveVarIds={setActiveVarIds}
+      setCustomRange={setCustomRange}
+      setDetailSessionId={setDetailSessionId}
+      setSelectedCategory={setSelectedCategory}
+      setSelectedDayIndex={setSelectedDayIndex}
+      setSelectedExercise={setSelectedExercise}
+      setSelectedTemplateId={setSelectedTemplateId}
+      setShowCalendarModal={setShowCalendarModal}
+      setShowDetailModal={setShowDetailModal}
+      setWeeksPreset={setWeeksPreset}
+      showCalendarModal={showCalendarModal}
+      showDetailModal={showDetailModal}
+      t={t}
+      toggleVar={toggleVar}
+      weeksPreset={weeksPreset}
     />
   );
 }
-
-const styles = StyleSheet.create({
-  chartsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg, width: '100%' },
-  page: { backgroundColor: colors.background, padding: space.xl, gap: space.lg, minHeight: '100%' },
-  backButton: { alignSelf: 'flex-start' },
-  backButtonCentered: { alignSelf: 'center' },
-  breadcrumb: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' },
-  breadcrumbClient: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' },
-  breadcrumbSep: { color: colors.textMuted, fontSize: fontSize.sm, marginHorizontal: space.xs },
-  breadcrumbTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '900' },
-  subtitle: { color: colors.textMuted, fontSize: fontSize.sm, width: '100%' },
-  microcycleMeta: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700', width: '100%' },
-  scrollRow: { maxWidth: '100%', flexGrow: 0 },
-  topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, alignItems: 'center' },
-  variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  loading: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
-  noData: { color: colors.textMuted, fontSize: fontSize.sm, textAlign: 'center', paddingVertical: space.xl },
-  emptyWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, gap: space.md },
-  emptyIcon: { fontSize: 48 },
-});

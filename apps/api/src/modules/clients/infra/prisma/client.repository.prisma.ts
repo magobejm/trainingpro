@@ -19,6 +19,7 @@ import { mapClientRoutineNeats } from '../../domain/map-client-routine-neats';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import { assertAssignableTrainingPlan } from '../../domain/training-plan-assignment';
 import type { Client } from '../../domain/client';
+import { selectClients, type ListClientsQuery } from '../../domain/list-clients.query';
 import type { ClientObjective } from '../../domain/client-objective';
 import type { ClientsRepositoryPort } from '../../domain/clients-repository.port';
 import { listClientManagementSections, replaceClientManagementSections } from './client-management-sections.prisma';
@@ -153,7 +154,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     });
   }
 
-  async listClientsByCoach(context: AuthContext): Promise<Client[]> {
+  async listClientsByCoach(context: AuthContext, query?: ListClientsQuery): Promise<Client[]> {
     const membership = await resolveCoachMembership(context, this.prisma);
     const clients = await this.prisma.client.findMany({
       include: CLIENT_LIST_INCLUDE,
@@ -168,7 +169,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       readLastClientActivities(this.prisma, clientIds),
       readClientStatusFacts(this.prisma, clientIds),
     ]);
-    return clients.map((row) => {
+    const mapped = clients.map((row) => {
       const lastActivityAt = activity.get(row.id) ?? null;
       return {
         ...mapClient({ ...row, progressPhotos: [] }),
@@ -176,6 +177,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
         status: statusForClient({ facts: statusFacts.get(row.id), hasPlan: Boolean(row.trainingPlanId), lastActivityAt }),
       };
     });
+    return selectClients(mapped, query);
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

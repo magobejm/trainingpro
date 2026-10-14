@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate } from '@trainerpro/shared';
 
 export type ProgressPhoto = {
   archived?: boolean;
@@ -78,9 +79,7 @@ export function daysSince(dateIso: string): number {
 }
 
 export function formatPhotoDate(dateIso: string, locale: string, fallback: string): string {
-  const date = new Date(dateIso);
-  if (Number.isNaN(date.getTime())) return fallback;
-  return date.toLocaleDateString(locale);
+  return formatDate(dateIso, locale) || fallback;
 }
 
 export function scrollRail(node: HTMLDivElement | null, amount: number): void {

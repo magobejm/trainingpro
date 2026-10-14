@@ -4,11 +4,9 @@ import { ClientCardRow, EmptyState, Select, TextField, useBreakpoint } from '@tr
 import { QueryResult } from '../../../components/AsyncStatus';
 import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import type { ClientView } from '../../../data/hooks/useClientsQuery';
-import { matchesSearch } from '../../../utils/normalize-search';
 import type { ClientSelectorItem } from './ClientSelectionStrip';
 import { clientStatusDot } from '../client-card-items';
-import { sortClients, type ClientSort } from '../clients-sort';
-import { useListContext } from '../../../layout/useListContext';
+import type { ClientSort } from '../clients-sort';
 import { styles } from './ClientsDirectoryPanel.styles';
 
 type Props = {
@@ -16,11 +14,14 @@ type Props = {
   clientsError: unknown;
   clientsLoading: boolean;
   objectiveFilter: string;
+  objectiveOptions?: Array<{ label: string; value: string }>;
   onObjectiveFilterChange: (nextValue: string) => void;
   onCreateClient?: () => void;
+  onOrderChange: (order: ClientSort) => void;
   onRetry: () => void;
   onSearchValueChange: (nextValue: string) => void;
   onSelectClient: (clientId: string) => void;
+  order: ClientSort;
   searchValue: string;
   selectedClientId: string;
   t: (key: string) => string;
@@ -48,7 +49,10 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
       isLoading: props.clientsLoading,
       itemCount: vm.items.length,
       onRetry: props.onRetry,
-      onClearFilters: () => { props.onSearchValueChange(''); props.onObjectiveFilterChange('ALL'); },
+      onClearFilters: () => {
+        props.onSearchValueChange('');
+        props.onObjectiveFilterChange('ALL');
+      },
       skeleton: 'cards',
     })
   );
@@ -73,15 +77,11 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
 }
 
 function useDirectoryModel(props: Props) {
-  const [order, setOrder] = useListContext<ClientSort>('clients.sort', 'name');
-  const objectives = readObjectiveOptions(props.clients, props.t);
-  const items = useMemo(
-    () => buildClientCards(sortClients(props.clients, order), props.searchValue, props.objectiveFilter, props.t),
-    [props.clients, props.objectiveFilter, props.searchValue, props.t, order],
-  );
+  const objectives = props.objectiveOptions ?? readObjectiveOptions(props.clients, props.t);
+  const items = useMemo(() => props.clients.map((client) => toCard(client, props.t)), [props.clients, props.t]);
   return {
-    order,
-    setOrder,
+    order: props.order,
+    setOrder: props.onOrderChange,
     emptyLabel: props.t('coach.clients.empty'),
     items,
     objectiveFilter: props.objectiveFilter,
@@ -201,24 +201,6 @@ function ObjectiveSelect(props: {
 function statusFor(clients: ClientView[], clientId: string, t: Props['t']) {
   const client = clients.find((item) => item.id === clientId);
   return client ? clientStatusDot(client, t) : undefined;
-}
-
-function buildClientCards(
-  clients: ClientView[],
-  searchValue: string,
-  objectiveFilter: string,
-  t: (key: string) => string,
-): ClientSelectorItem[] {
-  const search = searchValue.trim();
-  return clients.filter((item) => matchesClient(item, search, objectiveFilter)).map((item) => toCard(item, t));
-}
-
-function matchesClient(client: ClientView, search: string, objectiveFilter: string): boolean {
-  const fullName = `${client.firstName} ${client.lastName}`.trim();
-  const objective = (client.objective ?? '').trim();
-  const nameMatches = matchesSearch(fullName, search);
-  const matchesObjective = objectiveFilter === 'ALL' || objective === objectiveFilter;
-  return nameMatches && matchesObjective;
 }
 
 function toCard(client: ClientView, t: (key: string) => string): ClientSelectorItem {

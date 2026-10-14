@@ -74,5 +74,56 @@ module.exports = {
         ],
       },
     },
+    {
+      files: ['apps/web/src/**/*.{ts,tsx}'],
+      excludedFiles: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+      rules: {
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: "JSXText[value=/\\S+/]",
+            message: 'Use i18n keys, no literal strings in JSX text.',
+          },
+          {
+            selector: [
+              "JSXAttribute[value.type='Literal']",
+              ":not([name.name='testID'])",
+              ":not([name.name='accessibilityLabel'])",
+              ":not([name.name='aria-label'])",
+              ":not([name.name='accessibilityRole'])",
+              ":not([name.name='variant'])",
+              ":not([name.name='size'])",
+              ":not([name.name='tone'])",
+            ].join(''),
+            message: 'Use i18n keys for string props (except testID, labels, and accessibilityRole).',
+          },
+          {
+            selector: "Literal[value=/^#[0-9a-fA-F]{3,8}$/]",
+            message: 'Usa un token de packages/ui/src/theme en lugar de un color hexadecimal.',
+          },
+        ],
+      },
+    },
+    {
+      files: ['packages/ui/src/**/*.{ts,tsx,js,jsx}'],
+      excludedFiles: ['packages/ui/src/theme/**'],
+      rules: {
+        'no-restricted-syntax': [
+          'error',
+          {
+            selector: "CallExpression[callee.property.name='get']",
+            message: 'No network API client calls in packages/ui.',
+          },
+          {
+            selector: "CallExpression[callee.property.name='post']",
+            message: 'No network API client calls in packages/ui.',
+          },
+          {
+            selector: "Literal[value=/^#[0-9a-fA-F]{3,8}$/]",
+            message: 'Usa un token de packages/ui/src/theme en lugar de un color hexadecimal.',
+          },
+        ],
+      },
+    },
   ],
 };

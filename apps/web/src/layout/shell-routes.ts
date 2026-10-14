@@ -12,22 +12,13 @@ export type ParsedShellPath = {
 export const SHELL_PATHS: Record<ShellRoute, string> = {
   'admin.coaches': '/admin/coaches',
   'admin.subscription': '/admin/subscription',
-  'coach.builder.cardio': '/coach/builder/cardio',
-  'coach.builder.diet': '/coach/builder/diet',
-  'coach.builder.strength': '/coach/builder/strength',
   'coach.calendar': '/coach/calendar',
   'coach.chat': '/coach/chat',
   'coach.clients': '/coach/clients',
   'coach.evaluator': '/coach/evaluator',
   'coach.incidents': '/coach/incidents',
-  'coach.library.cardio': '/coach/library/cardio',
-  'coach.library.exercises': '/coach/library/strength',
   'coach.library.foods': '/coach/library/foods',
-  'coach.library.isometrics': '/coach/library/isometrics',
-  'coach.library.mobility': '/coach/library/mobility',
-  'coach.library.plyometrics': '/coach/library/plyometrics',
   'coach.library.routines': '/coach/library/routines',
-  'coach.library.sports': '/coach/library/sports',
   'coach.library.unified': '/coach/library/exercises',
   'coach.library.warmups': '/coach/library/warmups',
   'coach.notes': '/coach/notes',
@@ -65,10 +56,24 @@ export function clientPath(clientId: string, mode: ClientMode | null): string {
 /** Interpreta una dirección; devuelve null si no es una pantalla conocida. */
 export function parseShellPath(pathname: string): ParsedShellPath | null {
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  const legacy = LEGACY_PATHS[path];
+  if (legacy) return { clientId: null, clientMode: null, route: legacy };
   const fixed = ROUTE_BY_PATH.get(path);
   if (fixed) return { clientId: null, clientMode: null, route: fixed };
   return parseClientPath(path);
 }
+
+const LEGACY_PATHS: Record<string, ShellRoute> = {
+  '/coach/builder/cardio': 'coach.routine.planner',
+  '/coach/builder/diet': 'coach.routine.planner',
+  '/coach/builder/strength': 'coach.routine.planner',
+  '/coach/library/cardio': 'coach.library.unified',
+  '/coach/library/isometrics': 'coach.library.unified',
+  '/coach/library/mobility': 'coach.library.unified',
+  '/coach/library/plyometrics': 'coach.library.unified',
+  '/coach/library/sports': 'coach.library.unified',
+  '/coach/library/strength': 'coach.library.unified',
+};
 
 function parseClientPath(path: string): ParsedShellPath | null {
   if (!path.startsWith(`${CLIENTS_BASE}/`)) return null;

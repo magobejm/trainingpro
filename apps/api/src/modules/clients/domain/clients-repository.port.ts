@@ -5,6 +5,7 @@ import type { ClientObjective } from './client-objective';
 import type { ClientProgressPhoto } from './client-progress-photo';
 import type { ClientRoutine, ClientRoutineDay } from './client-routine';
 import type { ClientUpdateInput } from './client-update.input';
+import type { ListClientsQuery } from './list-clients.query';
 import type { Client } from './client';
 
 export type ClientsRepositoryPort = {
@@ -21,7 +22,7 @@ export type ClientsRepositoryPort = {
   getClientManagementSections: (context: AuthContext, clientId: string) => Promise<ClientManagementSection[]>;
   listProgressPhotos: (context: AuthContext, clientId: string) => Promise<ClientProgressPhoto[]>;
   listObjectives: () => Promise<ClientObjective[]>;
-  listClientsByCoach: (context: AuthContext) => Promise<Client[]>;
+  listClientsByCoach: (context: AuthContext, query?: ListClientsQuery) => Promise<Client[]>;
   saveClientManagementSections: (
     context: AuthContext,
     clientId: string,

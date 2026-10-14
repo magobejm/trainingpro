@@ -5,7 +5,8 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, EmptyState, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
-import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
+import { useFoodsPagedQuery } from '../../data/hooks/usePagedResources';
+import { loadNextPage } from '../../data/hooks/usePagedList';
 import { QueryResult } from '../../components/AsyncStatus';
 import { FoodLibraryRow } from './components/FoodLibraryRow';
 import { FoodMicronutrientChips } from './components/FoodMicronutrientChips';
@@ -45,7 +46,7 @@ function useFoodsViewModel() {
   const state = useFoodState();
   const [expandedId, setExpandedId] = useState('');
   const form = useFoodCreateForm();
-  const listQuery = useLibraryFoodsQuery({
+  const listQuery = useFoodsPagedQuery({
     query: state.query,
     servingUnit: state.activeUnitFilter === 'all' ? undefined : state.activeUnitFilter,
     foodType: state.activeTypeFilter === 'all' ? undefined : state.activeTypeFilter,
@@ -149,7 +150,11 @@ type ViewModel = ReturnType<typeof useFoodsViewModel>;
 
 function LibraryFoodsView(props: ViewModel): React.JSX.Element {
   return (
-    <ScrollView contentContainerStyle={styles.page}>
+    <ScrollView
+      contentContainerStyle={styles.page}
+      onScroll={(event) => loadNextPage(event, props.listQuery)}
+      scrollEventThrottle={200}
+    >
       <Text style={styles.title}>{props.t('coach.library.foods.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.library.foods.subtitle')}</Text>
       {renderSearchCard(props)}
@@ -216,14 +221,22 @@ function renderSearchCard(props: ViewModel): React.JSX.Element {
 }
 
 function renderList(props: ViewModel): React.JSX.Element {
-  const items = props.listQuery.data ?? [];
+  const items = props.listQuery.items;
   const filtered =
     props.query.trim().length > 0 ||
     props.activeUnitFilter !== 'all' ||
     props.activeTypeFilter !== 'all' ||
     props.activeCategoryFilter !== 'all';
   if (!props.listQuery.isLoading && !props.listQuery.isError && !filtered && items.length === 0) {
-    return <EmptyState icon={<EmptyIllustration kind={'library'} />} actionLabel={props.t('coach.library.list.emptyAction')} onAction={props.onOpenCreateModal} message={props.t('coach.library.emptyHint')} title={props.t('coach.library.empty')} />;
+    return (
+      <EmptyState
+        icon={<EmptyIllustration kind={'library'} />}
+        actionLabel={props.t('coach.library.list.emptyAction')}
+        onAction={props.onOpenCreateModal}
+        message={props.t('coach.library.emptyHint')}
+        title={props.t('coach.library.empty')}
+      />
+    );
   }
   const status = QueryResult({
     emptyIllustration: 'library',
@@ -235,7 +248,12 @@ function renderList(props: ViewModel): React.JSX.Element {
     isLoading: props.listQuery.isLoading,
     itemCount: items.length,
     onRetry: () => void props.listQuery.refetch(),
-    onClearFilters: () => { props.setQuery(''); props.onSelectCategoryFilter('all'); props.onSelectTypeFilter('all'); props.onSelectUnitFilter('all'); },
+    onClearFilters: () => {
+      props.setQuery('');
+      props.onSelectCategoryFilter('all');
+      props.onSelectTypeFilter('all');
+      props.onSelectUnitFilter('all');
+    },
   });
   if (status) {
     return status;

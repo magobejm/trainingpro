@@ -1,9 +1,13 @@
 ﻿import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { LibraryItemScope, Role } from '@prisma/client';
+import { z } from 'zod';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 import { matchesSearch } from '../../../common/text/normalize-search';
+import { pageByName } from '../../../common/pagination/page-by-name';
+import { pageFieldsSchema, withNextCursor } from '../../../common/pagination/page-query';
 import { coachOrGlobal } from '../domain/library-scope';
 import { LibrarySeedService } from './library-seed.service';
+import { updateStrengthExercise } from './library-unified.update';
 
 export type UnifiedCategory = 'strength' | 'cardio' | 'plio' | 'warmup' | 'sport' | 'isometric';
 
@@ -95,7 +99,10 @@ export class LibraryUnifiedService {
     if (!cat || cat === 'isometricTypes')
       await this.fetchIsometric(results, toArr(filters.isometricTypeIds), coachMembershipId);
     if (!cat || cat === 'sportTypes') await this.fetchSports(results, st, coachMembershipId);
-    return { items: results.filter((r) => matchesSearch(r.name, filters.search)) };
+    const filtered = results.filter((row) => matchesSearch(row.name, filters.search));
+    const pageQuery = z.object(pageFieldsSchema).parse({ cursor: filters.cursor, limit: filters.limit });
+    const page = pageByName(filtered, pageQuery);
+    return withNextCursor({ items: page.items }, page.nextCursor);
   }
 
   private async readCoachMembershipId(subject: string): Promise<string> {
@@ -485,20 +492,8 @@ export class LibraryUnifiedService {
     }
   }
 
-  private async updateStrength(id: string, base: Row, dto: UnifiedExerciseDto) {
-    await this.prisma.exerciseMuscleGroupAssignment.deleteMany({ where: { exerciseId: id } });
-    return this.prisma.exercise.update({
-      where: { id },
-      data: {
-        ...base,
-        equipmentId: dto.equipmentId,
-        movementPatternId: dto.movementPatternId,
-        anatomicalPlaneId: dto.anatomicalPlaneId,
-        instructions: dto.instructions,
-        coachInstructions: dto.coachInstructions,
-        muscleGroups: { create: (dto.muscleGroupIds ?? []).map((mgId) => ({ muscleGroupId: mgId })) },
-      },
-    });
+  private updateStrength(id: string, base: Row, dto: UnifiedExerciseDto) {
+    return updateStrengthExercise(this.prisma, id, base, dto);
   }
 
   async seedBiomechanics() {

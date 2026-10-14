@@ -1,9 +1,4 @@
 import {
-  getLayoutStyle1,
-  getLayoutStyle2,
-  getLayoutStyle3,
-  getLayoutStyle4,
-  getLayoutStyle5,
   getLayoutStyle6,
   getLayoutStyle7,
   getLayoutStyle8,
@@ -14,17 +9,13 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
-import { Lock } from 'lucide-react';
 import '../../i18n';
 import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
-import {
-  useCreateNoteMutation,
-  useDeleteNoteMutation,
-  useNotesQuery,
-  useUpdateNoteMutation,
-} from '../../data/hooks/useNotesQuery';
+import { useCreateNoteMutation, useDeleteNoteMutation, useUpdateNoteMutation } from '../../data/hooks/useNotesQuery';
+import { useNotesPagedQuery } from '../../data/hooks/usePagedResources';
+import { loadNextPage } from '../../data/hooks/usePagedList';
 import type { ClientData, NoteData } from './notes-screen.types';
-import { filterAndSortNotes } from './notes-screen.utils';
+import { notesListQuery } from './notes-screen.utils';
 import { matchesSearch } from '../../utils/normalize-search';
 import { LIST_KEYS, readRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
@@ -32,51 +23,8 @@ import { EditNoteModal, HistorySidebar } from './NotesScreen.parts';
 import { useDeferredDelete } from '../../layout/useDeferredDelete';
 import { useQuickCreateStore } from '../../store/quickCreate.store';
 import { ClientNoteSection } from './NotesScreen.client-section';
-import { Button, TextField, colors, space, useBreakpoint, useToast } from '@trainerpro/ui';
-const GENERAL_NOTE_FIELD = 'coach-notes-general';
-type GeneralNoteSectionProps = {
-  focusGeneral?: boolean;
-  value: string;
-  onChange: (v: string) => void;
-  isSaving?: boolean;
-  onSave: () => void;
-  t: (k: string) => string;
-};
-function GeneralNoteSection(props: GeneralNoteSectionProps): React.JSX.Element {
-  const { focusGeneral, value, onChange, isSaving, onSave, t } = props;
-  const layoutStyle1 = getLayoutStyle1;
-  const layoutStyle2 = getLayoutStyle2;
-  const layoutStyle3 = getLayoutStyle3;
-  const layoutStyle4 = getLayoutStyle4;
-  const layoutStyle5 = getLayoutStyle5;
-  return (
-    <View style={layoutStyle1}>
-      <View style={layoutStyle2}>
-        <View style={layoutStyle3}>
-          <Lock color={colors.textMuted} size={20} />
-        </View>
-        <Text style={layoutStyle4}>{t('coach.notes.private.title')}</Text>
-      </View>
-      <View style={generalCardStyle}>
-        <View style={layoutStyle5}>
-          <TextField
-            accessibilityLabel={t('coach.notes.private.title')}
-            autoFocus={focusGeneral}
-            multiline
-            nativeID={GENERAL_NOTE_FIELD}
-            numberOfLines={8}
-            onChangeText={onChange}
-            placeholder={t('coach.notes.private.placeholder')}
-            value={value}
-          />
-        </View>
-        <View style={generalFooterStyle}>
-          <Button label={t('coach.notes.save')} loading={isSaving} onPress={onSave} />
-        </View>
-      </View>
-    </View>
-  );
-}
+import { GeneralNoteSection, GENERAL_NOTE_FIELD } from './NotesScreen.general';
+import { colors, space, useBreakpoint, useToast } from '@trainerpro/ui';
 export function NotesScreen(): React.JSX.Element {
   const vm = useNotesScreenModel();
   const focusGeneral = useFocusGeneralNote();
@@ -91,6 +39,8 @@ export function NotesScreen(): React.JSX.Element {
   return (
     <View style={stacked ? stackedRootStyle : screenRootStyle}>
       <ScrollView
+        onScroll={(event) => loadNextPage(event, vm.notesQuery)}
+        scrollEventThrottle={200}
         style={stacked ? { ...stackedContentStyle, padding: bp === 'sm' ? space.lg : space.xl } : desktopContentStyle}
         contentContainerStyle={layoutStyle6}
       >
@@ -169,26 +119,10 @@ function useFocusGeneralNote(): boolean {
   }, [focusGeneral]);
   return focusGeneral;
 }
-function useDisplayedNotes(
-  notes: NoteData[],
-  filters: NotesFilters,
-  selectedClient: ClientData | null,
-  t: (key: string, options?: { name: string }) => string,
-) {
+function useDisplayedNotes(notes: NoteData[], t: (key: string, options?: { name: string }) => string) {
   const deferred = useDeferredDelete();
   const deleteNoteMutation = useDeleteNoteMutation();
-  const displayedNotes = useMemo(
-    () =>
-      filterAndSortNotes(
-        notes,
-        filters.historyFilter,
-        selectedClient,
-        filters.dateFrom,
-        filters.dateTo,
-        filters.showAllHistory,
-      ).filter((note) => !deferred.pending.has(note.id)),
-    [deferred.pending, filters, notes, selectedClient],
-  );
+  const displayedNotes = useMemo(() => notes.filter((note) => !deferred.pending.has(note.id)), [deferred.pending, notes]);
   const requestDeleteNote = (note: NoteData) => {
     const name = note.content.trim().slice(0, 40) || t('coach.notes.title');
     deferred.schedule({
@@ -210,12 +144,12 @@ function useNotesScreenModel() {
   const [editContent, setEditContent] = useState('');
   const clients = useClientsQuery().data ?? [];
   const objectives = useClientObjectivesQuery().data ?? [];
-  const notesQuery = useNotesQuery();
-  const notes = notesQuery.data ?? [];
+  const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
+  const notesQuery = useNotesPagedQuery(notesListQuery({ ...filters, selectedClientId: selectedClient?.id ?? '' }));
+  const notes = notesQuery.items;
   const createNoteMutation = useCreateNoteMutation();
   const updateNoteMutation = useUpdateNoteMutation();
-  const selectedClient = clients.find((client) => client.id === filters.selectedClientId) ?? null;
-  const history = useDisplayedNotes(notes, filters, selectedClient, t);
+  const history = useDisplayedNotes(notes, t);
   const filteredClients = useMemo(
     () =>
       clients.filter((client) => {
@@ -398,17 +332,3 @@ const stackedRootStyle = {
 };
 const desktopContentStyle = { flex: 1, minHeight: 0, padding: space.xl };
 const stackedContentStyle = { flexGrow: 0, flexShrink: 0, padding: space.xl };
-const generalCardStyle = {
-  backgroundColor: colors.surface,
-  borderRadius: 16,
-  borderWidth: 1,
-  borderColor: colors.border,
-  overflow: 'hidden' as const,
-};
-const generalFooterStyle = {
-  padding: space.lg,
-  borderTopWidth: 1,
-  borderColor: colors.border,
-  flexDirection: 'row' as const,
-  justifyContent: 'flex-end' as const,
-};

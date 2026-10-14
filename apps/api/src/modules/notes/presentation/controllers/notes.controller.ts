@@ -31,10 +31,14 @@ export class NotesController {
 
   @Get()
   async list(@Query() query: ListNotesQueryDto, @Req() request: HttpAuthRequest) {
+    const parsed = ListNotesQueryDto.schema.parse(query);
     const parsedQuery = {
-      ...query,
-      dateFrom: query.dateFrom ? new Date(query.dateFrom) : undefined,
-      dateTo: query.dateTo ? new Date(query.dateTo) : undefined,
+      clientId: parsed.clientId,
+      cursor: parsed.cursor,
+      dateFrom: parsed.dateFrom ? new Date(parsed.dateFrom) : undefined,
+      dateTo: parsed.dateTo ? new Date(parsed.dateTo) : undefined,
+      limit: parsed.limit,
+      type: parsed.type ?? parsed.scope,
     };
     return this.listNotesUseCase.execute(readAuthContext(request), parsedQuery);
   }

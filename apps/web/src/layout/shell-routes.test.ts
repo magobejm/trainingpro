@@ -74,7 +74,27 @@ describe('client addresses', () => {
   });
 });
 
-describe('parseShellPath', () => {
+describe('legacy addresses', () => {
+  it.each([
+    '/coach/library/strength',
+    '/coach/library/cardio',
+    '/coach/library/isometrics',
+    '/coach/library/plyometrics',
+    '/coach/library/mobility',
+    '/coach/library/sports',
+  ])('sends %s to the unified library', (path) => {
+    expect(parseShellPath(path)?.route).toBe('coach.library.unified');
+  });
+
+  it.each(['/coach/builder/strength', '/coach/builder/cardio', '/coach/builder/diet'])(
+    'sends %s to the routine planner',
+    (path) => {
+      expect(parseShellPath(path)?.route).toBe('coach.routine.planner');
+    },
+  );
+});
+
+describe('unknown addresses', () => {
   it('ignores a trailing slash', () => {
     expect(parseShellPath('/coach/notes/')?.route).toBe('coach.notes');
   });

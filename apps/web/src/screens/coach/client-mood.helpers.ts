@@ -1,3 +1,5 @@
+import { formatDate } from '@trainerpro/shared';
+
 const WELLNESS_RANGE_DAYS = 84;
 
 export function buildDefaultWellnessRange(): { dateFrom: string; dateTo: string } {
@@ -12,9 +14,8 @@ export function formatScore(value: null | number): string {
   return String(value);
 }
 
-export function formatDateLabel(dateStr: string): string {
-  const date = new Date(`${dateStr}T12:00:00`);
-  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', weekday: 'short' });
+export function formatDateLabel(dateStr: string, locale = 'es'): string {
+  return formatDate(`${dateStr}T12:00:00`, locale);
 }
 
 export function hasWellnessData(session: {

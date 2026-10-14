@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Button, colors, fontSize, space } from '@trainerpro/ui';
 import { useBranding } from '../../data/hooks/useBranding';
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export function ProgressPdfButton(props: Props): React.JSX.Element {
+  const { i18n } = useTranslation();
   const branding = useBranding();
   const now = new Date();
   const consistencyRange = heatmapRange(now);
@@ -65,6 +67,7 @@ export function ProgressPdfButton(props: Props): React.JSX.Element {
             t: props.t,
             branding: branding.data,
             clientName: props.clientName,
+            locale: i18n.language,
             mode: props.mode,
             range: { ...props.range },
             selection,

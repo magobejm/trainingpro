@@ -2,23 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
-import {
-  useDeleteRoutineTemplateMutation,
-  useRoutineTemplatesQuery,
-  type RoutineTemplateView,
-} from '../../data/hooks/useRoutineTemplates';
-import {
-  useDeleteWarmupTemplateMutation,
-  useWarmupTemplatesQuery,
-  type WarmupTemplateView,
-} from '../../data/hooks/useWarmupTemplates';
+import { useDeleteRoutineTemplateMutation, type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
+import { useDeleteWarmupTemplateMutation, type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { useUnifiedExercisesQuery } from '../../data/hooks/useUnifiedLibraryQuery';
+import { useRoutineTemplatesPagedQuery, useWarmupTemplatesPagedQuery } from '../../data/hooks/usePagedResources';
+import { loadNextPage } from '../../data/hooks/usePagedList';
 import { LIST_KEYS, readRouteClientId, writeRouteClientId } from '../../layout/list-context';
 import { useListContext, useRouteClient } from '../../layout/useListContext';
 import { useCalendarContextStore } from '../../store/calendarContext.store';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useWarmupPlannerContextStore } from '../../store/warmupPlannerContext.store';
-import { matchesSearch } from '../../utils/normalize-search';
 import { archiveFutureWorkouts, type RoutineAssignOptions } from './routine-handoff';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 
@@ -32,9 +25,9 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<RoutineLibraryTab>('routines');
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const catalogs = useLibraryCatalogs();
-  const routines = catalogs.routinesQuery.data ?? [];
-  const warmups = catalogs.warmupsQuery.data ?? [];
+  const catalogs = useLibraryCatalogs(query);
+  const routines = catalogs.routinesQuery.items;
+  const warmups = catalogs.warmupsQuery.items;
   const clientId = useLibraryAssignmentClient();
   const openForEdit = useRoutinePlannerContextStore((s) => s.openForEdit);
   const openForView = useRoutinePlannerContextStore((s) => s.openForView);
@@ -46,8 +39,6 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   const queryClient = useQueryClient();
   const deleteRoutine = useDeleteRoutineTemplateMutation();
   const deleteWarmup = useDeleteWarmupTemplateMutation();
-  const filteredRoutines = useFiltered(routines, query);
-  const filteredWarmups = useFiltered(warmups, query);
   const pendingName = useMemo(() => {
     const all = [...routines, ...warmups] as Array<{ id: string; name: string }>;
     return all.find((item) => item.id === pendingDeleteId)?.name ?? '';
@@ -65,9 +56,11 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
     assignTemplate,
     clientId,
     deleteError,
-    filteredRoutines,
-    filteredWarmups,
+    filteredRoutines: routines,
+    filteredWarmups: warmups,
     mediaMap: catalogs.mediaMap,
+    onListScroll: (event: Parameters<typeof loadNextPage>[0]) =>
+      loadNextPage(event, tab === 'warmups' ? catalogs.warmupsQuery : catalogs.routinesQuery),
     onAssignRoutine: (tpl: RoutineTemplateView) => setAssignTemplate(tpl),
     onCloseAssign: () => setAssignTemplate(null),
     onConfirmAssign: bindConfirmAssign(assignRoutine, clearRoutine, assignTemplate?.id ?? '', onRouteChange, queryClient),
@@ -120,9 +113,9 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   };
 }
 
-function useLibraryCatalogs() {
-  const routinesQuery = useRoutineTemplatesQuery();
-  const warmupsQuery = useWarmupTemplatesQuery();
+function useLibraryCatalogs(query: string) {
+  const routinesQuery = useRoutineTemplatesPagedQuery(query);
+  const warmupsQuery = useWarmupTemplatesPagedQuery(query);
   const exercisesQuery = useUnifiedExercisesQuery({});
   const mediaMap = useMemo<MediaMap>(
     () => Object.fromEntries((exercisesQuery.data ?? []).map((item) => [item.id, item.mediaUrl])),
@@ -152,13 +145,6 @@ function useLibraryAssignmentClient(): string | null {
   }, [clientId, prepare]);
   useRouteClient(clientId ?? '');
   return clientId;
-}
-
-function useFiltered<T extends { name: string }>(items: T[], query: string): T[] {
-  return useMemo(() => {
-    const sorted = [...items].sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }));
-    return sorted.filter((item) => matchesSearch(item.name, query));
-  }, [items, query]);
 }
 
 function bindConfirmAssign(

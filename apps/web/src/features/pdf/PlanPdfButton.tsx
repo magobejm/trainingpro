@@ -42,7 +42,7 @@ export function NutritionPdfButton(
 }
 
 function PlanPdfButton(props: CommonProps & { title: string; sections: () => PdfSection[] }): React.JSX.Element {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const branding = useBranding();
   const document = async (): Promise<PdfDocument> => {
     const snapshot = structuredClone(props.sections());
@@ -55,6 +55,7 @@ function PlanPdfButton(props: CommonProps & { title: string; sections: () => Pdf
       draft: props.isDraft,
       sections: snapshot,
       branding: fresh.data,
+      locale: i18n.language,
       labels: { generated: t('pdf.generated'), draft: t('pdf.draft'), page: t('pdf.page') },
     };
   };

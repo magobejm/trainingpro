@@ -5,6 +5,7 @@ import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { LibraryUnifiedService, UnifiedExerciseDto } from '../../application/library-unified.service';
+import { ListUnifiedExercisesQueryDto } from '../dto/list-unified-exercises-query.dto';
 
 @Controller('library')
 @UseGuards(AuthGuard, RolesGuard)
@@ -18,8 +19,9 @@ export class LibraryUnifiedController {
   }
 
   @Get('exercises/all')
-  async listAllExercises(@Query() filters: Record<string, string>, @Req() req: HttpAuthRequest) {
-    return this.service.listAllExercises(readAuthContext(req).subject, filters);
+  async listAllExercises(@Query() filters: ListUnifiedExercisesQueryDto, @Req() req: HttpAuthRequest) {
+    const parsed = ListUnifiedExercisesQueryDto.schema.parse(filters);
+    return this.service.listAllExercises(readAuthContext(req).subject, toFilterRecord(parsed));
   }
 
   @Post('exercises/unified')
@@ -46,4 +48,10 @@ export class LibraryUnifiedController {
   async seedSportsLibrary() {
     return this.service.seedSportsLibrary();
   }
+}
+
+function toFilterRecord(query: { [key: string]: string | number | undefined }): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(query).flatMap(([key, value]) => (value === undefined ? [] : [[key, String(value)]])),
+  );
 }

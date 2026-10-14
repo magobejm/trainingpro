@@ -13,12 +13,15 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
+import { pageByName } from '../../../../common/pagination/page-by-name';
+import { withNextCursor } from '../../../../common/pagination/page-query';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { WarmupTemplatesService } from '../../application/services/warmup-templates.service';
 import { PlanTemplateIdParamDto } from '../dto/plan-template-id-param.dto';
+import { ListPlanTemplatesQueryDto } from '../dto/list-plan-templates-query.dto';
 import { UpsertWarmupTemplateDto } from '../dto/upsert-warmup-template.dto';
 
 @Controller('plans/templates/warmups')
@@ -36,10 +39,12 @@ export class PlansWarmupController {
   }
 
   @Get()
-  async list(@Req() request: HttpAuthRequest, @Query('summary') summary?: string) {
+  async list(@Req() request: HttpAuthRequest, @Query() query: ListPlanTemplatesQueryDto) {
     const auth = readAuthContext(request);
-    const items = await this.service.list(auth, { summary: summary === 'true' });
-    return { items: items.map(mapOutput) };
+    const parsed = ListPlanTemplatesQueryDto.schema.parse(query);
+    const items = await this.service.list(auth, { summary: parsed.summary === 'true' });
+    const page = pageByName(items as Array<{ id: string; name: string }>, parsed);
+    return withNextCursor({ items: page.items.map(mapOutput) }, page.nextCursor);
   }
 
   @Get(':templateId')

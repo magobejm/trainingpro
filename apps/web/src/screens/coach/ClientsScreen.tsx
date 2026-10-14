@@ -4,7 +4,10 @@ import { ScrollView, Text, View } from 'react-native';
 import { Button, useBreakpoint } from '@trainerpro/ui';
 import '../../i18n';
 import { useCreateClientMutation } from '../../data/hooks/useClientMutations';
-import { useClientObjectivesQuery, useClientsQuery } from '../../data/hooks/useClientsQuery';
+import { useClientByIdQuery, useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
+import { useClientsPagedQuery } from '../../data/hooks/usePagedResources';
+import { loadNextPage } from '../../data/hooks/usePagedList';
+import type { ClientSort } from './clients-sort';
 import { styles } from './clients-screen.styles';
 import { ClientNutritionPlanScreen } from './ClientNutritionPlanScreen';
 import { ClientProfileScreen } from './ClientProfileScreen';
@@ -20,10 +23,9 @@ import { useClientCreateForm } from './useClientCreateForm';
 import { useLocation, useNavigate } from 'react-router';
 import { LIST_KEYS } from '../../layout/list-context';
 import { useListContext } from '../../layout/useListContext';
-import { Breadcrumbs } from '../../layout/Breadcrumbs';
-import { buildClientCrumbs, type ClientCrumbMode } from '../../layout/crumbs';
 import { SHELL_PATHS } from '../../layout/shell-routes';
 import { clientsScreenPath, readClientsLocation, type ScreenMode } from './clients-location';
+import { CrumbBar } from './ClientsScreen.crumbs';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useQuickCreateStore } from '../../store/quickCreate.store';
 import { OnboardingCard } from '../../components/OnboardingGuide';
@@ -51,9 +53,11 @@ export function ClientsScreen(props: Props): React.JSX.Element {
 
 function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const { t } = useTranslation();
-  const refs = useClientsDataRefs();
   const state = useClientsViewState();
-  const consumeClientId = useRoutinePlannerContextStore((state) => state.consumeClientId);
+  const [order, setOrder] = useListContext<ClientSort>('clients.sort', 'name');
+  const refs = useClientsDataRefs(state, order);
+  const detail = useClientByIdQuery(state.selectedClientId);
+  const consumeClientId = useRoutinePlannerContextStore((store) => store.consumeClientId);
   const quickIntent = useQuickCreateStore((current) => current.intent);
   useEffect(() => {
     if (quickIntent !== 'client') return;
@@ -62,34 +66,35 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   }, [quickIntent, refs.form]);
   useEffect(() => {
     const clientIdFromPlanner = consumeClientId();
-    if (clientIdFromPlanner) {
-      state.open(clientIdFromPlanner, 'profile', true);
-      return;
-    }
+    if (clientIdFromPlanner) state.open(clientIdFromPlanner, 'profile', true);
   }, [consumeClientId]);
-  const selectedClientName = resolveSelectedClientName(refs.clientsQuery.data ?? [], state.selectedClientId);
-  const selectedClient = resolveSelectedClient(refs.clientsQuery.data ?? [], state.selectedClientId);
-  return buildClientsViewModel(refs, selectedClientName, selectedClient, state, onRouteChange, t);
+  const selected = detail.data ?? null;
+  return buildClientsViewModel(refs, selected, state, onRouteChange, t, order, setOrder);
 }
 
 function buildClientsViewModel(
   refs: ReturnType<typeof useClientsDataRefs>,
-  selectedClientName: string,
   selectedClient: null | SelectedClient,
   state: ReturnType<typeof useClientsViewState>,
   onRouteChange: Props['onRouteChange'],
   t: ReturnType<typeof useTranslation>['t'],
+  order: ClientSort,
+  onOrderChange: (order: ClientSort) => void,
 ) {
   const actions = readViewModelActions(state);
+  const selectedClientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}`.trim() : '';
   return {
     ...refs.form,
-    clients: refs.clientsQuery.data ?? [],
+    clients: refs.clientsQuery.items,
     clientsError: refs.clientsQuery.error,
     clientsLoading: refs.clientsQuery.isLoading,
-    onRetryClients: () => void refs.clientsQuery.refetch(),
     objectiveOptions: refs.objectiveOptions,
+    onListScroll: (event: Parameters<typeof loadNextPage>[0]) => loadNextPage(event, refs.clientsQuery),
+    onRetryClients: () => void refs.clientsQuery.refetch(),
     ...actions,
     onRouteChange,
+    order,
+    onOrderChange,
     screenMode: state.screenMode,
     selectedClient,
     selectedClientId: state.selectedClientId,
@@ -116,8 +121,12 @@ function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
   };
 }
 
-function useClientsDataRefs() {
-  const clientsQuery = useClientsQuery();
+function useClientsDataRefs(state: ReturnType<typeof useClientsViewState>, order: ClientSort) {
+  const clientsQuery = useClientsPagedQuery({
+    objective: state.objectiveFilter === 'ALL' ? undefined : state.objectiveFilter,
+    search: state.searchValue,
+    sort: order,
+  });
   const objectivesQuery = useClientObjectivesQuery();
   const createMutation = useCreateClientMutation();
   const objectiveOptions = objectivesQuery.data ?? [];
@@ -152,27 +161,23 @@ function emptyClientsContext(): ClientsListContext {
   return { objectiveFilter: 'ALL', searchValue: '' };
 }
 
-function resolveSelectedClientName(
-  clients: Array<{ firstName: string; id: string; lastName: string }>,
-  selectedClientId: string,
-): string {
-  const selected = clients.find((item) => item.id === selectedClientId);
-  if (!selected) {
-    return '';
-  }
-  return `${selected.firstName} ${selected.lastName}`.trim();
+function objectiveChoices(options: Array<{ label: string }>, t: (key: string) => string) {
+  return [
+    { label: t('coach.clients.filters.allObjectives'), value: 'ALL' },
+    ...options.map((item) => ({ label: item.label, value: item.label })),
+  ];
 }
 
-function resolveSelectedClient(clients: SelectedClient[], selectedClientId: string) {
-  return clients.find((item) => item.id === selectedClientId) ?? null;
-}
-
-type ViewProps = ReturnType<typeof useClientsViewModel>;
+export type ViewProps = ReturnType<typeof useClientsViewModel>;
 
 function ClientsView(props: ViewProps): React.JSX.Element {
   const compact = useBreakpoint() !== 'lg';
   return (
-    <ScrollView contentContainerStyle={compact ? [styles.page, styles.pageCompact] : styles.page}>
+    <ScrollView
+      contentContainerStyle={compact ? [styles.page, styles.pageCompact] : styles.page}
+      onScroll={props.onListScroll}
+      scrollEventThrottle={200}
+    >
       <View style={styles.container}>
         {renderMainContent(props)}
         <CreateClientDialog props={props} />
@@ -206,11 +211,14 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
           clientsError={props.clientsError}
           clientsLoading={props.clientsLoading}
           objectiveFilter={props.objectiveFilter}
+          objectiveOptions={objectiveChoices(props.objectiveOptions, props.t)}
           onObjectiveFilterChange={props.onObjectiveFilterChange}
           onCreateClient={props.onOpenModal}
+          onOrderChange={props.onOrderChange}
           onRetry={props.onRetryClients}
           onSearchValueChange={props.onSearchValueChange}
           onSelectClient={props.onSelectClient}
+          order={props.order}
           searchValue={props.searchValue}
           selectedClientId={props.selectedClientId}
           t={props.t}
@@ -381,22 +389,5 @@ function renderProfilePage(props: ViewProps): React.JSX.Element {
       />
       <View style={styles.profileCard}>{editing ? renderProfileEdit(props) : renderProfile(props)}</View>
     </>
-  );
-}
-
-/** Botón "Volver" y migas de pan (Clientes › Nombre › Pantalla) con enlaces a cada nivel. */
-function CrumbBar(props: { mode: ClientCrumbMode; onBack: () => void; view: ViewProps }): React.JSX.Element {
-  const { t } = props.view;
-  const crumbs = buildClientCrumbs({
-    clientId: props.view.selectedClientId,
-    clientName: props.view.selectedClientName,
-    mode: props.mode,
-    t,
-  });
-  return (
-    <View style={styles.breadcrumbCard}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" variant="secondary" />
-      <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={crumbs} />
-    </View>
   );
 }

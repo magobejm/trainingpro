@@ -30,9 +30,15 @@ export function useShellRouter(role: Role): {
   const allowed = isPathAllowedForRole(location.pathname, role);
   const parsed = allowed ? parseShellPath(location.pathname) : null;
   const route = parsed?.route ?? null;
+  const canonical = parsed ? routeToPath(parsed.route, { clientId: parsed.clientId, clientMode: parsed.clientMode }) : null;
   useEffect(() => {
     if (route) persistRoute(route);
   }, [route]);
+  useEffect(() => {
+    if (!canonical) return;
+    const current = location.pathname.length > 1 ? location.pathname.replace(/\/+$/, '') : location.pathname;
+    if (current !== canonical) navigate({ pathname: canonical, search: location.search }, { replace: true });
+  }, [canonical, location.pathname, location.search, navigate]);
   const goTo = useCallback(
     (target: ShellRoute, options?: GoToOptions) => {
       const clientId = options?.withClient === false ? null : resolveClientForRoute(target);

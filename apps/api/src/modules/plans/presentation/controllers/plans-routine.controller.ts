@@ -14,6 +14,8 @@ import {
 } from '@nestjs/common';
 import { PlanOwnershipGuard } from '../guards/plan-ownership.guard';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
+import { pageByName } from '../../../../common/pagination/page-by-name';
+import { withNextCursor } from '../../../../common/pagination/page-query';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
@@ -25,6 +27,7 @@ import { ListRoutineTemplatesUseCase } from '../../application/use-cases/list-ro
 import { GetRoutineTemplateUseCase } from '../../application/use-cases/get-routine-template.usecase';
 import { UpdateRoutineTemplateUseCase } from '../../application/use-cases/update-routine-template.usecase';
 import { PlanTemplateIdParamDto } from '../dto/plan-template-id-param.dto';
+import { ListPlanTemplatesQueryDto } from '../dto/list-plan-templates-query.dto';
 import { UpsertRoutineTemplateDto } from '../dto/upsert-routine-template.dto';
 
 @Controller('plans/templates/routines')
@@ -55,10 +58,17 @@ export class PlansRoutineController {
   }
 
   @Get()
-  async list(@Req() request: HttpAuthRequest, @Query('summary') summary?: string) {
+  async list(@Req() request: HttpAuthRequest, @Query() query: ListPlanTemplatesQueryDto) {
     const auth = readAuthContext(request);
-    const items = await this.listUseCase.execute(auth, { summary: summary === 'true' });
-    return { items: items.map(mapOutput) };
+    const parsed = ListPlanTemplatesQueryDto.schema.parse(query);
+    const items = (await this.listUseCase.execute(auth, { summary: parsed.summary === 'true' })) as Array<{
+      createdAt: Date;
+      id: string;
+      name: string;
+      updatedAt: Date;
+    }>;
+    const page = pageByName(items, parsed);
+    return withNextCursor({ items: page.items.map(mapOutput) }, page.nextCursor);
   }
 
   @Get(':templateId')

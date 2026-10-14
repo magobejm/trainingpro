@@ -117,15 +117,18 @@ function KpiStrip(props: { summary: ClientWellnessSummary; t: ViewModel['t'] }):
 }
 
 function SessionList(props: { sessions: ClientWellnessSession[]; t: ViewModel['t'] }): React.JSX.Element {
+  const { i18n } = useTranslation();
   const withData = props.sessions.filter(hasWellnessData);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.sessions')}</Text>
-      {withData.length === 0 ? <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} /> : null}
+      {withData.length === 0 ? (
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} />
+      ) : null}
       {withData.map((session) => (
         <View key={session.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{session.planDayTitle ?? formatDateLabel(session.sessionDate)}</Text>
-          <Text style={styles.cardMeta}>{formatDateLabel(session.sessionDate)}</Text>
+          <Text style={styles.cardTitle}>{session.planDayTitle ?? formatDateLabel(session.sessionDate, i18n.language)}</Text>
+          <Text style={styles.cardMeta}>{formatDateLabel(session.sessionDate, i18n.language)}</Text>
           <View style={styles.metrics}>
             <Metric label={props.t('coach.mood.fields.motivation')} value={formatScore(session.preMotivation)} />
             <Metric label={props.t('coach.mood.fields.recovery')} value={formatScore(session.preRecovery)} />
@@ -142,7 +145,9 @@ function WeeklyList(props: { reports: ClientWellnessWeeklyReport[]; t: ViewModel
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{props.t('coach.mood.sections.weeklyReports')}</Text>
-      {props.reports.length === 0 ? <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} /> : null}
+      {props.reports.length === 0 ? (
+        <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} />
+      ) : null}
       {props.reports.map((report) => (
         <View key={report.id} style={styles.card}>
           <Text style={styles.cardTitle}>{props.t('coach.mood.weeklyReport.weekOf', { date: report.weekStartDate })}</Text>

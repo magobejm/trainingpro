@@ -19,10 +19,11 @@ import {
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormatDate } from '../../i18n/useFormatDate';
 import { Text, View } from 'react-native';
 import { Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
-import { formatCalendarDate, calendarEventColor } from './calendar-screen.utils';
+import { calendarEventColor } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
 import { Button, EmptyState, IconButton, Modal, colors as tk } from '@trainerpro/ui';
 const VARIANT_SECONDARY = 'secondary' as const;
@@ -76,13 +77,14 @@ export function DayDetailModal({
   onEditEvent,
   t,
 }: DayModalProps): React.JSX.Element {
+  const format = useFormatDate();
   const date = new Date(dateStr + 'T12:00:00');
   const layoutStyle1 = getLayoutStyle1;
   const layoutStyle2 = getLayoutStyle2;
   const layoutStyle3 = getLayoutStyle3;
   const layoutStyle4 = getLayoutStyle4;
   return (
-    <Modal closeLabel={t('common.close')} onClose={onClose} size={MODAL_SIZE} title={formatCalendarDate(date)} visible>
+    <Modal closeLabel={t('common.close')} onClose={onClose} size={MODAL_SIZE} title={format(date)} visible>
       <Text style={layoutStyle1}>
         {dayEvents.length} {t('coach.calendar.day.events')}
       </Text>

@@ -29,11 +29,11 @@ export function drawChart(
   const right = x + width - 4;
   pdf.setFontSize(8);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor('#526175');
+  pdf.setTextColor(lightColors.textMuted);
   for (let tick = 0; tick <= 4; tick++) {
     const level = min + ((max - min) * tick) / 4;
     const py = bottom - ((bottom - top) * tick) / 4;
-    pdf.setDrawColor('#dde3eb');
+    pdf.setDrawColor(lightColors.border);
     pdf.setLineWidth(0.15);
     pdf.line(left, py, right, py);
     pdf.text(String(Math.round(level * 10) / 10), left - 2, py + 1, { align: 'right' });
@@ -77,7 +77,7 @@ export function drawHeatmap(
     }),
   );
   pdf.setFontSize(8);
-  pdf.setTextColor('#526175');
+  pdf.setTextColor(lightColors.textMuted);
   pdf.text(weeks[0]?.[0]?.date ?? '', x, y + 36);
   pdf.text(weeks.at(-1)?.at(-1)?.date ?? '', x + 170, y + 36, { align: 'right' });
 }

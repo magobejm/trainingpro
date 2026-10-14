@@ -10,12 +10,10 @@ import {
   useUploadClientAvatarMutation,
 } from '../../data/hooks/useClientMutations';
 import { useClientByIdQuery, useClientObjectivesQuery } from '../../data/hooks/useClientsQuery';
-import { EditClientProfileModal } from './components/EditClientProfileModal';
 import { ClientProfileNoteModal } from './components/ClientProfileNoteModal';
-import { ClientProfileSummary } from './components/ClientProfileSummary';
 import { ClientProfileSectionsBoard } from './components/ClientProfileSectionsBoard';
-import { emptyForm, toForm, toUpdateInput, type ClientForm } from './client-profile.form';
-import { type FormErrors, validateClientProfileForm } from './client-profile.validation';
+import { emptyForm, toForm, type ClientForm } from './client-profile.form';
+import { type FormErrors } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { writeRouteClientId } from '../../layout/list-context';
@@ -23,13 +21,7 @@ import { useProgressContextStore } from '../../store/progressContext.store';
 import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useDeferredDelete } from '../../layout/useDeferredDelete';
-import {
-  archiveClient,
-  assignRandomAvatar,
-  clearFieldErrorAndSetValue,
-  resetClientPassword,
-  uploadAvatarFromPicker,
-} from './ClientProfileScreen.actions';
+import { ProfileEditModal, SummarySection } from './ClientProfileScreen.sections';
 
 type Props = {
   clientId: string;
@@ -303,7 +295,7 @@ function readObjectiveOptions(
   return list;
 }
 
-type ViewModel = ReturnType<typeof useClientProfileModel>;
+export type ViewModel = ReturnType<typeof useClientProfileModel>;
 
 function ClientProfileView(props: { vm: ViewModel }): React.JSX.Element {
   if (props.vm.query.isLoading) {
@@ -348,55 +340,4 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       />
     </View>
   );
-}
-
-function SummarySection(props: { vm: ViewModel }): React.JSX.Element {
-  return (
-    <View style={styles.summaryCard}>
-      <ClientProfileSummary
-        client={props.vm.query.data!}
-        onEdit={props.vm.onOpenEdit}
-        t={props.vm.t}
-        weightDraftKg={props.vm.form.weightKg}
-      />
-      {props.vm.saveSuccess ? <Text style={styles.success}>{props.vm.t('coach.clientProfile.saved')}</Text> : null}
-    </View>
-  );
-}
-
-function ProfileEditModal(props: { vm: ViewModel }): React.JSX.Element {
-  return (
-    <EditClientProfileModal
-      avatarUrl={props.vm.query.data?.avatarUrl ?? null}
-      errors={props.vm.errors}
-      form={props.vm.form}
-      isArchiving={props.vm.archiveMutation.isPending}
-      isResettingPassword={props.vm.resetPasswordMutation.isPending}
-      isSaving={props.vm.isSaving}
-      isUploading={props.vm.uploadAvatarMutation.isPending}
-      onArchive={() => void archiveClient(props.vm)}
-      onChange={(key, value) => clearFieldErrorAndSetValue(props.vm.setErrors, props.vm.setForm, key, value)}
-      onClose={() => props.vm.setEditing(false)}
-      onPickRandomAvatar={() => void assignRandomAvatar(props.vm)}
-      onResetPassword={() => void resetClientPassword(props.vm)}
-      onSave={() => void saveProfile(props.vm)}
-      onUploadAvatar={() => void uploadAvatarFromPicker(props.vm)}
-      objectiveOptions={props.vm.objectiveOptions}
-      resetPassword={props.vm.resetPassword}
-      saveError={props.vm.saveError}
-      t={props.vm.t}
-      visible={props.vm.editing}
-    />
-  );
-}
-
-async function saveProfile(vm: ViewModel): Promise<void> {
-  const errors = validateClientProfileForm(vm.form, vm.t);
-  if (Object.keys(errors).length > 0) {
-    vm.setErrors(errors);
-    return;
-  }
-  await vm.updateMutation.mutateAsync(toUpdateInput(vm.form));
-  vm.setErrors({});
-  vm.setEditing(false);
 }

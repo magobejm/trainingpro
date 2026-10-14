@@ -37,41 +37,14 @@ const CoachesScreen = React.lazy(() =>
 const SubscriptionScreen = React.lazy(() =>
   import('./screens/admin/SubscriptionScreen').then((mod) => ({ default: mod.SubscriptionScreen })),
 );
-const LibraryCardioMethodsScreen = React.lazy(() =>
-  import('./screens/coach/LibraryCardioMethodsScreen').then((mod) => ({ default: mod.LibraryCardioMethodsScreen })),
-);
-const LibraryExercisesScreen = React.lazy(() =>
-  import('./screens/coach/LibraryExercisesScreen').then((mod) => ({ default: mod.LibraryExercisesScreen })),
-);
 const LibraryFoodsScreen = React.lazy(() =>
   import('./screens/coach/LibraryFoodsScreen').then((mod) => ({ default: mod.LibraryFoodsScreen })),
 );
 const LibraryRoutinesScreen = React.lazy(() =>
   import('./screens/coach/LibraryRoutinesScreen').then((mod) => ({ default: mod.LibraryRoutinesScreen })),
 );
-const LibraryIsometricScreen = React.lazy(() =>
-  import('./screens/coach/LibraryIsometricScreen').then((mod) => ({ default: mod.LibraryIsometricScreen })),
-);
-const LibraryPlioScreen = React.lazy(() =>
-  import('./screens/coach/LibraryPlioScreen').then((mod) => ({ default: mod.LibraryPlioScreen })),
-);
-const LibraryMobilityScreen = React.lazy(() =>
-  import('./screens/coach/LibraryMobilityScreen').then((mod) => ({ default: mod.LibraryMobilityScreen })),
-);
-const LibrarySportsScreen = React.lazy(() =>
-  import('./screens/coach/LibrarySportsScreen').then((mod) => ({ default: mod.LibrarySportsScreen })),
-);
 const UnifiedExerciseLibraryScreen = React.lazy(() =>
   import('./screens/coach/UnifiedExerciseLibraryScreen').then((mod) => ({ default: mod.UnifiedExerciseLibraryScreen })),
-);
-const PlanBuilderCardioScreen = React.lazy(() =>
-  import('./screens/coach/PlanBuilderCardioScreen').then((mod) => ({ default: mod.PlanBuilderCardioScreen })),
-);
-const PlanBuilderDietScreen = React.lazy(() =>
-  import('./screens/coach/PlanBuilderDietScreen').then((mod) => ({ default: mod.PlanBuilderDietScreen })),
-);
-const PlanBuilderStrengthScreen = React.lazy(() =>
-  import('./screens/coach/PlanBuilderStrengthScreen').then((mod) => ({ default: mod.PlanBuilderStrengthScreen })),
 );
 const ProgressScreen = React.lazy(() =>
   import('./screens/coach/ProgressScreen').then((mod) => ({ default: mod.ProgressScreen })),
@@ -258,10 +231,7 @@ function resolveRouteScreen(
 }
 
 function resolveCoachRouteScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): React.JSX.Element {
-  const coachScreen =
-    resolveCoachLibraryScreen(route, setRoute) ??
-    resolveCoachBuilderScreen(route) ??
-    resolveCoachMonitoringScreen(route, setRoute);
+  const coachScreen = resolveCoachLibraryScreen(route, setRoute) ?? resolveCoachMonitoringScreen(route, setRoute);
   return coachScreen ?? <ClientsScreen onRouteChange={setRoute} />;
 }
 
@@ -269,24 +239,11 @@ const WARMUPS_TAB = 'warmups';
 
 function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
   if (route === 'coach.library.unified') return <UnifiedExerciseLibraryScreen />;
-  if (route === 'coach.library.exercises') return <LibraryExercisesScreen />;
-  if (route === 'coach.library.cardio') return <LibraryCardioMethodsScreen />;
   if (route === 'coach.library.foods') return <LibraryFoodsScreen />;
   if (route === 'coach.library.routines') return <LibraryRoutinesScreen onRouteChange={setRoute} />;
   if (route === 'coach.library.warmups') return <LibraryRoutinesScreen defaultTab={WARMUPS_TAB} onRouteChange={setRoute} />;
-  if (route === 'coach.library.isometrics') return <LibraryIsometricScreen />;
-  if (route === 'coach.library.plyometrics') return <LibraryPlioScreen />;
-  if (route === 'coach.library.mobility') return <LibraryMobilityScreen />;
-  if (route === 'coach.library.sports') return <LibrarySportsScreen />;
   if (route === 'coach.routine.planner') return <RoutinePlannerScreen onRouteChange={setRoute} />;
   if (route === 'coach.warmup.planner') return <WarmupPlannerScreen onRouteChange={setRoute} />;
-  return null;
-}
-
-function resolveCoachBuilderScreen(route: ShellRoute): null | React.JSX.Element {
-  if (route === 'coach.builder.strength') return <PlanBuilderStrengthScreen />;
-  if (route === 'coach.builder.cardio') return <PlanBuilderCardioScreen />;
-  if (route === 'coach.builder.diet') return <PlanBuilderDietScreen />;
   return null;
 }
 

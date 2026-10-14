@@ -1,8 +1,9 @@
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useFormatDate } from '../../i18n/useFormatDate';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { Button, EmptyState, Modal, TextField, useToast } from '@trainerpro/ui';
+import { Button, EmptyState, useToast } from '@trainerpro/ui';
 import '../../i18n';
 import {
   useArchiveCoachMutation,
@@ -13,7 +14,8 @@ import {
 } from '../../data/hooks/useCoachMutations';
 import { useArchivedCoachesQuery, useCoachesQuery, type CoachView } from '../../data/hooks/useCoachesQuery';
 import { styles } from './CoachesScreen.styles';
-import { MONO_FONT_PROPS } from '../../layout/font-props';
+
+import { CreateCoachModal, readInitials, readStatusLabel, readToggleLabel, ResultBanner } from './CoachesScreen.modal';
 
 type Tab = 'active' | 'archived';
 
@@ -211,7 +213,8 @@ function ActiveList(props: {
 }): React.JSX.Element {
   if (props.items.length === 0) {
     return (
-      <EmptyState icon={<EmptyIllustration kind={'generic'} />}
+      <EmptyState
+        icon={<EmptyIllustration kind={'generic'} />}
         actionLabel={props.t('admin.coaches.create')}
         onAction={props.onCreate}
         title={props.t('admin.coaches.empty')}
@@ -288,7 +291,8 @@ function ArchivedCoachRow(props: {
   onRestore: (coachMembershipId: string) => void;
   t: (key: string) => string;
 }): React.JSX.Element {
-  const archivedDate = props.coach.archivedAt ? new Date(props.coach.archivedAt).toLocaleDateString() : '';
+  const format = useFormatDate();
+  const archivedDate = props.coach.archivedAt ? format(props.coach.archivedAt) : '';
   return (
     <View style={[styles.row, styles.rowArchived]}>
       <View style={styles.rowIdentity}>
@@ -320,117 +324,4 @@ function AvatarBadge(props: { label: string; muted?: boolean }): React.JSX.Eleme
       <Text style={[styles.avatarLabel, props.muted && styles.avatarLabelMuted]}>{readInitials(props.label)}</Text>
     </View>
   );
-}
-
-function CreateCoachModal(props: {
-  isLoading: boolean;
-  onClose: () => void;
-  onSubmit: (email: string) => void;
-  t: (key: string) => string;
-  visible: boolean;
-}): React.JSX.Element {
-  const [email, setEmail] = useState('');
-
-  const handleSubmit = () => {
-    const trimmed = email.trim();
-    if (!trimmed) return;
-    props.onSubmit(trimmed);
-    setEmail('');
-  };
-
-  const handleClose = () => {
-    setEmail('');
-    props.onClose();
-  };
-
-  const canSubmit = email.trim().length > 0;
-  return (
-    <Modal
-      closeLabel={props.t('common.close')}
-      footer={
-        <>
-          <Button label={props.t('admin.coaches.createModal.cancel')} onPress={handleClose} variant="secondary" />
-          <Button
-            disabled={!canSubmit}
-            label={
-              props.isLoading ? props.t('admin.coaches.createModal.loading') : props.t('admin.coaches.createModal.submit')
-            }
-            loading={props.isLoading}
-            onPress={handleSubmit}
-          />
-        </>
-      }
-      onClose={handleClose}
-      size="sm"
-      title={props.t('admin.coaches.createModal.title')}
-      visible={props.visible}
-    >
-      <TextField
-        autoCapitalize={'none'}
-        autoComplete={'email'}
-        keyboardType={'email-address'}
-        label={props.t('admin.coaches.createModal.emailPlaceholder')}
-        onChangeText={setEmail}
-        value={email}
-      />
-    </Modal>
-  );
-}
-
-function ResultBanner(props: {
-  onClose: () => void;
-  onCopyPassword: (password: string) => void;
-  passwordCopied: boolean;
-  result: CreateCoachResult;
-  t: (key: string) => string;
-}): React.JSX.Element {
-  const { temporaryPassword, userCreated } = props.result.credentials;
-  return (
-    <View style={styles.resultBanner}>
-      <View style={styles.resultContent}>
-        {userCreated && temporaryPassword ? (
-          <>
-            <Text style={styles.resultText}>{props.t('admin.coaches.createModal.successWithPassword')}</Text>
-            <Text {...MONO_FONT_PROPS} style={styles.resultPassword}>
-              {temporaryPassword}
-            </Text>
-            <Button
-              label={
-                props.passwordCopied
-                  ? props.t('admin.coaches.createModal.passwordCopied')
-                  : props.t('admin.coaches.createModal.copyPassword')
-              }
-              onPress={() => props.onCopyPassword(temporaryPassword)}
-              size="sm"
-              style={styles.copyButton}
-              variant="secondary"
-            />
-          </>
-        ) : (
-          <Text style={styles.resultText}>{props.t('admin.coaches.createModal.success')}</Text>
-        )}
-      </View>
-      <Button
-        label={props.t('admin.coaches.createModal.dismiss')}
-        onPress={props.onClose}
-        size="sm"
-        style={styles.resultClose}
-        variant="ghost"
-      />
-    </View>
-  );
-}
-
-function readInitials(email: string): string {
-  const token = email.split('@')[0] ?? '';
-  const [a, b] = token.replace(/[^a-zA-Z]/g, '').toUpperCase();
-  return `${a ?? 'C'}${b ?? 'O'}`;
-}
-
-function readStatusLabel(isActive: boolean, t: (key: string) => string): string {
-  return isActive ? t('admin.coaches.status.active') : t('admin.coaches.status.inactive');
-}
-
-function readToggleLabel(isActive: boolean, t: (key: string) => string): string {
-  return isActive ? t('admin.coaches.deactivate') : t('admin.coaches.activate');
 }

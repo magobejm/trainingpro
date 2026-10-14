@@ -18,6 +18,7 @@ type ProgressSnapshot = {
   recordsRange: DateRange;
   heatmapRange: DateRange;
   heatmap: HeatmapModel;
+  locale?: string;
 };
 
 export function progressDocument(input: ProgressSnapshot): PdfDocument {
@@ -80,6 +81,7 @@ export function progressDocument(input: ProgressSnapshot): PdfDocument {
     clientName: input.clientName,
     branding: input.branding ? { ...input.branding } : undefined,
     generatedAt: new Date(),
+    locale: input.locale ?? 'es',
     sections,
     labels: { generated: t('pdf.generated'), draft: t('pdf.draft'), page: t('pdf.page') },
   };

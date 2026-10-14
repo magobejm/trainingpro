@@ -14,6 +14,7 @@ export type PdfDocument = {
   clientName?: string;
   draft?: boolean;
   generatedAt?: Date;
+  locale?: string;
   branding?: CoachBranding;
   sections: PdfSection[];
   labels: { generated: string; draft: string; page: string };

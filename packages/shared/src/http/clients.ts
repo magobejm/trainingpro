@@ -83,6 +83,7 @@ export const clientViewSchema = z
 
 export const clientListResponseSchema = z
   .object({
+    nextCursor: z.string().nullable().optional(),
     items: z.array(clientViewSchema),
   })
   .strict();

@@ -303,7 +303,10 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
     itemCount: st.exercises?.length ?? 0,
     onEmptyAction: canCreate ? () => st.setIsModalVisible(true) : undefined,
     onRetry: st.refetchList,
-    onClearFilters: () => { st.clearAllFilters(); st.setSearch(''); },
+    onClearFilters: () => {
+      st.clearAllFilters();
+      st.setSearch('');
+    },
     skeleton: 'cards',
   });
   const grid = status ?? (
@@ -332,7 +335,12 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
     return <View style={styles.mainContentInner}>{grid}</View>;
   }
   return (
-    <ScrollView style={styles.mainContent} contentContainerStyle={styles.mainContentInner}>
+    <ScrollView
+      contentContainerStyle={styles.mainContentInner}
+      onScroll={st.onMainScroll}
+      scrollEventThrottle={200}
+      style={styles.mainContent}
+    >
       {grid}
     </ScrollView>
   );

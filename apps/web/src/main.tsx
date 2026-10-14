@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import './i18n';
 import { App } from './App';
+import { RouteErrorScreen } from './components/RouteErrorScreen';
 import { createQueryClient } from './data/query-client';
 import { AppearanceProvider, bootstrapAppearance } from './theme/AppearanceProvider';
 import './theme/appearance.css';
@@ -15,7 +16,7 @@ bootstrapAppearance();
 
 const queryClient = createQueryClient();
 // Una sola ruta comodín: App decide qué pantalla toca según la dirección (ver layout/shell-routes.ts).
-const router = createBrowserRouter([{ element: <App />, path: '*' }]);
+const router = createBrowserRouter([{ element: <App />, errorElement: <RouteErrorScreen />, path: '*' }]);
 
 function Root(): React.JSX.Element {
   const { t } = useTranslation();

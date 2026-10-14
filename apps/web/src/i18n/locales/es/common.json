@@ -1,4 +1,10 @@
 {
+  "routeError.module.title": "No hemos podido cargar esta pantalla",
+  "routeError.module.message": "Puede que la aplicación se haya actualizado o que haya fallado la conexión. Comprueba tu conexión y recarga para volver a intentarlo.",
+  "routeError.generic.title": "Algo no ha salido bien",
+  "routeError.generic.message": "No hemos podido abrir esta pantalla. Recarga la aplicación para volver a intentarlo.",
+  "routeError.reload": "Recargar aplicación",
+  "routeError.reload.note": "Los cambios sin guardar podrían perderse al recargar.",
   "app.title": "FitCoach",
   "app.brand.subtitle": "Gestión Fitness",
   "app.nav.logout": "Cerrar sesión",

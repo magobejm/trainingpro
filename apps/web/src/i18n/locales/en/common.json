@@ -1,4 +1,10 @@
 {
+  "routeError.module.title": "We could not load this screen",
+  "routeError.module.message": "The app may have been updated or the connection may have failed. Check your connection and reload to try again.",
+  "routeError.generic.title": "Something went wrong",
+  "routeError.generic.message": "We could not open this screen. Reload the app to try again.",
+  "routeError.reload": "Reload app",
+  "routeError.reload.note": "Unsaved changes may be lost when you reload.",
   "app.title": "FitCoach",
   "app.brand.subtitle": "Fitness Management",
   "app.nav.logout": "Sign out",

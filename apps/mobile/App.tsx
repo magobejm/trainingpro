@@ -8,9 +8,12 @@ import { createQueryClient } from './src/data/query-client';
 import { useNotificationNavigation } from './src/data/use-notification-navigation';
 import { usePushRegistration } from './src/data/use-push-registration';
 import { startSessionSync } from './src/data/session-sync';
+import { useRecoveryLinks } from './src/data/recovery-links';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
+import { ResetPasswordScreen } from './src/screens/auth/ResetPasswordScreen';
 import { RoleSelectScreen } from './src/screens/auth/RoleSelectScreen';
 import { useAuthStore } from './src/store/auth.store';
+import { usePasswordRecoveryStore } from './src/store/password-recovery.store';
 import { ClientShell } from './src/shell/client/ClientShell';
 import { CoachShell } from './src/shell/coach/CoachShell';
 
@@ -54,11 +57,16 @@ function MobileRoot(): React.JSX.Element {
   const activeRole = useAuthStore((state) => state.activeRole);
   const roles = useAuthStore((state) => state.availableRoles);
   const status = useAuthStore((state) => state.status);
+  const recoveryPhase = usePasswordRecoveryStore((state) => state.phase);
+  useRecoveryLinks();
   useMeQuery();
   usePushRegistration();
   useNotificationNavigation();
   if (status === 'restoring') {
     return <LoadingBody />;
+  }
+  if (recoveryPhase !== 'none') {
+    return <ResetPasswordScreen />;
   }
   if (!accessToken) {
     return <LoginScreen />;

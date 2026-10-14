@@ -1,9 +1,20 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
+import { usePasswordRecoveryStore } from '../store/password-recovery.store';
 import { getSupabaseClient } from './supabase-client';
 import { decideSessionTransition, sessionTransitionClearsUserData, type SessionTransition } from './session-transition';
 
 export { decideSessionTransition, sessionTransitionClearsUserData, type SessionTransition };
+
+export type RecoverySessionAction = 'apply' | 'finish-restore' | 'hold';
+
+/** Mientras el enlace de recuperación está abierto, esa sesión no entra en la app. */
+export function recoverySessionAction(phase: string, event: string, status: string): RecoverySessionAction {
+  if (phase === 'none' || event === 'SIGNED_OUT') {
+    return 'apply';
+  }
+  return status === 'restoring' ? 'finish-restore' : 'hold';
+}
 
 type StoredSession = {
   access_token: string;
@@ -40,6 +51,14 @@ export function startSessionSync(queryClient: QueryClient): () => void {
 }
 
 function applyStoredSession(queryClient: QueryClient, event: string, session: StoredSession): void {
+  const action = recoverySessionAction(usePasswordRecoveryStore.getState().phase, event, useAuthStore.getState().status);
+  if (action === 'hold') {
+    return;
+  }
+  if (action === 'finish-restore') {
+    useAuthStore.getState().resetSession();
+    return;
+  }
   const previousUserId = useAuthStore.getState().userId;
   const userId = session?.user.id ?? null;
   const accessToken = session?.access_token ?? null;

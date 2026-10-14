@@ -2,6 +2,7 @@
   "expo": {
     "name": "Trainer Pro Mobile",
     "slug": "trainer-pro-mobile",
+    "scheme": "trainerpro",
     "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",

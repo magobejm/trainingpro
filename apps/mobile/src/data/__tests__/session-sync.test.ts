@@ -1,4 +1,21 @@
+import { recoverySessionAction } from '../session-sync';
 import { decideSessionTransition, sessionTransitionClearsUserData } from '../session-transition';
+
+describe('recoverySessionAction', () => {
+  it('keeps a recovery session out of the app', () => {
+    expect(recoverySessionAction('ready', 'SIGNED_IN', 'signedOut')).toBe('hold');
+    expect(recoverySessionAction('invalid', 'INITIAL_SESSION', 'signedIn')).toBe('hold');
+  });
+
+  it('leaves the restoring state without adopting the recovery session', () => {
+    expect(recoverySessionAction('ready', 'INITIAL_SESSION', 'restoring')).toBe('finish-restore');
+  });
+
+  it('still applies a sign-out and a normal session', () => {
+    expect(recoverySessionAction('ready', 'SIGNED_OUT', 'signedIn')).toBe('apply');
+    expect(recoverySessionAction('none', 'SIGNED_IN', 'signedOut')).toBe('apply');
+  });
+});
 
 describe('decideSessionTransition', () => {
   it('treats the first login as signed in', () => {

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import '../../i18n';
-import { useLoginMutation } from '../../data/hooks/useAuthMutations';
+import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
+import { usePasswordRecoveryStore } from '../../store/password-recovery.store';
 import { LIGHT } from '../../theme/light';
+import { isValidEmail, readResetNotice, type ResetNotice } from './login-form.logic';
 
 const EMAIL_PROPS = {
   autoCapitalize: 'none' as const,
@@ -22,13 +24,42 @@ function useLoginViewModel() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
   const loginMutation = useLoginMutation();
+  const resetMutation = usePasswordResetMutation();
+  const passwordUpdated = usePasswordRecoveryStore((state) => state.passwordUpdated);
   const onLogin = (): void => {
     loginMutation.mutate({ email, password });
   };
+  const onForgotPassword = (): void => {
+    if (resetMutation.isPending || !isValidEmail(email)) {
+      setEmailError(isValidEmail(email) ? null : t('auth.login.email.invalid'));
+      return;
+    }
+    setEmailError(null);
+    resetMutation.mutate(email.trim());
+  };
+  const changeEmail = (value: string): void => {
+    setEmail(value);
+    setEmailError(null);
+  };
   const error = mapErrorMessage(loginMutation.error, t('auth.login.error'));
-  const isLoading = loginMutation.isPending;
-  return { t, email, password, error, isLoading, onLogin, setEmail, setPassword };
+  const resetNotice = passwordUpdated
+    ? { isError: false, text: t('auth.reset.updated') }
+    : readResetNotice(resetMutation, t);
+  return {
+    t,
+    email,
+    emailError,
+    password,
+    error,
+    isLoading: loginMutation.isPending,
+    onForgotPassword,
+    onLogin,
+    resetNotice,
+    setEmail: changeEmail,
+    setPassword,
+  };
 }
 
 function mapErrorMessage(caught: unknown, fallback: string): string | null {
@@ -64,6 +95,7 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
           style={styles.input}
           value={props.email}
         />
+        {props.emailError ? <Text style={styles.error}>{props.emailError}</Text> : null}
         <Text style={styles.fieldLabel}>{props.t('auth.login.password.placeholder')}</Text>
         <TextInput
           onChangeText={props.setPassword}
@@ -74,12 +106,20 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
           value={props.password}
         />
         {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
+        {props.resetNotice ? <ResetNoticeText notice={props.resetNotice} /> : null}
         <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onLogin} style={styles.button}>
           {renderSubmitContent(props.isLoading, props.t('auth.login.submit'))}
+        </Pressable>
+        <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onForgotPassword}>
+          <Text style={styles.forgot}>{props.t('auth.login.forgot')}</Text>
         </Pressable>
       </View>
     </View>
   );
+}
+
+function ResetNoticeText(props: { notice: ResetNotice }): React.JSX.Element {
+  return <Text style={props.notice.isError ? styles.error : styles.notice}>{props.notice.text}</Text>;
 }
 
 function renderSubmitContent(isLoading: boolean, label: string): React.JSX.Element {
@@ -160,6 +200,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
     marginTop: 4,
+  },
+  forgot: {
+    color: LIGHT.accent,
+    fontSize: 14,
+    fontWeight: '700',
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  notice: {
+    color: LIGHT.textMuted,
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
   },
   input: {
     backgroundColor: LIGHT.bgSoft,

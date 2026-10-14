@@ -38,6 +38,7 @@ import { MetricChart } from './progress/MetricChart';
 import { InsightsPanel } from './progress/InsightsPanel';
 import { ConsistencyHeatmap } from './progress/ConsistencyHeatmap';
 import { buildKpis } from './progress/build-kpis';
+import { ProgressPdfButton } from '../../features/pdf/ProgressPdfButton';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -275,7 +276,11 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
             variant="secondary"
           />
         ) : null}
-        <EmptyState icon={<EmptyIllustration kind={'generic'} />} message={t('coach.progress.empty.subtitle')} title={t('coach.progress.empty.title')} />
+        <EmptyState
+          icon={<EmptyIllustration kind={'generic'} />}
+          message={t('coach.progress.empty.subtitle')}
+          title={t('coach.progress.empty.title')}
+        />
       </View>
     );
   }
@@ -299,6 +304,32 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
       {/* Breadcrumb */}
       <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={progressCrumbs} />
       <Text style={styles.subtitle}>{t('coach.progress.client.subtitle')}</Text>
+      <ProgressPdfButton
+        clientId={clientId}
+        clientName={clientDisplayName ?? ''}
+        disabled={
+          !hasSelection ||
+          !chartPoints.length ||
+          isLoading ||
+          activeProgressQuery.isError ||
+          activeProgressQuery.isFetching ||
+          (mode === 'exercise' && (exercisePrQuery.isPending || exercisePrQuery.isError || exercisePrQuery.isFetching)) ||
+          (mode !== 'exercise' &&
+            Boolean(selectedTemplateId) &&
+            (routineDaysQuery.isPending || routineDaysQuery.isError || routineDaysQuery.isFetching))
+        }
+        mode={mode}
+        range={range}
+        exerciseName={selectedExerciseName}
+        templateId={selectedTemplateId}
+        dayIndex={selectedDayIndex}
+        dayName={routineDaysQuery.data?.find((day) => day.dayIndex === selectedDayIndex)?.title}
+        category={selectedCategory}
+        variables={activeVars}
+        points={chartPoints}
+        kpis={kpis}
+        t={t}
+      />
       <ConsistencyHeatmap clientId={clientId} t={t} />
 
       <ProgressFilters

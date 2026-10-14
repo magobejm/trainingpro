@@ -1,3 +1,4 @@
+import { NutritionPlanActions } from '../../../features/client-preview/NutritionPlanActions';
 import { getLayoutStyle1 } from './BuildStructuredPlanScreen.layout-styles';
 
 import React, { useEffect, useState } from 'react';
@@ -28,17 +29,36 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
   const [content, setContent] = useState<StructuredPlanContent>(defaultContent());
   const toast = useToast();
   const saving = createMutation.isPending || updateMutation.isPending;
-  useEffect(() => {
-    if (!props.planId) return;
-    const plan = plansQuery.data?.find((item) => item.id === props.planId);
-    if (plan?.content) setContent(readContent(plan.content));
-  }, [plansQuery.data, props.planId]);
+  useHydrateContent(props.planId, plansQuery.data, setContent);
   const meals = mealsQuery.data ?? [];
+  const savedPlan = plansQuery.data?.find((item) => item.id === props.planId);
+  const isDraft =
+    !props.planId ||
+    Boolean(
+      savedPlan &&
+      (JSON.stringify(content) !== JSON.stringify(readContent(savedPlan.content)) ||
+        props.planName !== savedPlan.name ||
+        JSON.stringify(props.setupData) !== JSON.stringify(savedPlan.setupData)),
+    );
+  const previewPlan = {
+    name: props.planName,
+    type: 'ESTRUCTURADO' as const,
+    content,
+    setupData: props.setupData,
+    description: savedPlan?.description,
+  };
+  const previewDisabled = Boolean(props.planId && (plansQuery.isLoading || plansQuery.isError || !savedPlan));
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
       <Text style={styles.headerTitle}>{props.planName}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildStructured.subtitle')}</Text>
+      <NutritionPlanActions
+        plan={previewPlan}
+        meals={meals}
+        isDraft={isDraft}
+        disabled={previewDisabled || mealsQuery.isLoading || mealsQuery.isError}
+      />
       {content.weeks.map((week, weekIndex) => (
         <View key={week.id} style={styles.card}>
           <Text style={styles.cardTitle}>{week.label}</Text>
@@ -96,6 +116,17 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
       />
     </ScrollView>
   );
+}
+function useHydrateContent(
+  planId: string | undefined,
+  plans: Array<{ id: string; content: unknown }> | undefined,
+  setContent: React.Dispatch<React.SetStateAction<StructuredPlanContent>>,
+): void {
+  useEffect(() => {
+    if (!planId) return;
+    const plan = plans?.find((item) => item.id === planId);
+    if (plan?.content) setContent(readContent(plan.content));
+  }, [plans, planId, setContent]);
 }
 function defaultContent(): StructuredPlanContent {
   return {

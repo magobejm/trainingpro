@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { CoachOnboardingService } from './application/coach-onboarding.service';
+import { CoachOnboardingController } from './presentation/controllers/coach-onboarding.controller';
 import { FilesModule } from '../files/files.module';
 import { CoachBrandingService } from './application/coach-branding.service';
 import { CoachBrandingController } from './presentation/controllers/coach-branding.controller';
@@ -17,9 +19,10 @@ import { CoachesAdminController } from './presentation/controllers/coaches-admin
 
 @Module({
   imports: [AuthModule, FilesModule],
-  controllers: [CoachesAdminController, CoachBrandingController],
+  controllers: [CoachesAdminController, CoachBrandingController, CoachOnboardingController],
   exports: [CoachBrandingService],
   providers: [
+    CoachOnboardingService,
     CoachBrandingService,
     ActivateCoachUseCase,
     ArchiveCoachUseCase,

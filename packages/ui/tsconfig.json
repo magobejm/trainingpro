@@ -3,7 +3,11 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "types": ["react", "react-native"],
-    "rootDir": "src"
+    "rootDir": "..",
+    "baseUrl": ".",
+    "paths": {
+      "@trainerpro/shared": ["../shared/src/index.ts"]
+    }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

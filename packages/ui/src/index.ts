@@ -55,3 +55,11 @@ export { WebBox, WebText, DateTimeField } from './primitives/WebLayout';
 export { webShadow } from './theme/tokens';
 
 export { legacyCalendarBackgrounds } from './theme/tokens';
+
+export { ClientNutritionMacrosCard, ClientNutritionMealGroups } from './client-plan/ClientNutritionContent';
+
+export { ClientExerciseCard } from './client-plan/ClientExerciseCard';
+
+export { ClientRoutineDayContent } from './client-plan/ClientRoutineDayContent';
+
+export { LIGHT as clientPlanLight } from './client-plan/light';

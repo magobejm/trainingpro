@@ -1,17 +1,11 @@
+import { ClientNutritionMacrosCard, ClientNutritionMealGroups } from '@trainerpro/ui';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { useClientNutritionQuery, type ClientNutrition, type NutritionPlan } from '../../data/hooks/useClientNutrition';
+import { useClientNutritionQuery, type NutritionPlan } from '../../data/hooks/useClientNutrition';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
-import { ConsiderationBadges } from './ConsiderationBadges';
-import {
-  buildMealGroups,
-  hasNutritionPlanData,
-  readSetupData,
-  type MealCategoryGroup,
-  type PlanSetupData,
-} from './nutrition-plan.helpers';
+import { buildMealGroups, hasNutritionPlanData, readSetupData } from './nutrition-plan.helpers';
 import { LIGHT } from '../../theme/light';
 import { SCREEN } from '../../theme/sessionStyles';
 
@@ -94,9 +88,9 @@ function renderBody(
       {showToggle ? <PlanToggle active={resolvedTab} onChange={setActiveTab} t={t} /> : null}
       {activePlan.name ? <Text style={styles.planName}>{activePlan.name}</Text> : null}
       {activePlan.description ? <Text style={styles.planDescription}>{activePlan.description}</Text> : null}
-      {setup ? <MacrosCard setup={setup} t={t} /> : null}
+      {setup ? <ClientNutritionMacrosCard setup={setup} t={t} /> : null}
       {mealGroups.length > 0 ? (
-        <MealGroupsList foods={query.data?.foods} groups={mealGroups} meals={query.data?.meals} t={t} />
+        <ClientNutritionMealGroups foods={query.data?.foods} groups={mealGroups} meals={query.data?.meals} t={t} />
       ) : (
         <View style={styles.center}>
           <Text style={styles.empty}>{t('client.nutrition.noMeals')}</Text>
@@ -132,100 +126,6 @@ function PlanToggle({
       </Pressable>
     </View>
   );
-}
-
-function MacrosCard({ setup, t }: { setup: PlanSetupData; t: (key: string) => string }): React.JSX.Element {
-  return (
-    <View style={styles.macrosCard}>
-      <Text style={styles.macrosTitle}>{t('client.nutrition.macrosTitle')}</Text>
-      <View style={styles.macrosRow}>
-        {setup.tdee != null ? (
-          <MacroPill label={t('client.nutrition.tdee')} value={`${Math.round(setup.tdee)} kcal`} />
-        ) : null}
-        {setup.targetCalories != null ? (
-          <MacroPill label={t('client.nutrition.target')} value={`${Math.round(setup.targetCalories)} kcal`} />
-        ) : null}
-      </View>
-      <View style={styles.macrosRow}>
-        {setup.proteinG != null ? (
-          <MacroPill label={t('client.nutrition.protein')} value={`${setup.proteinG} g`} accent={LIGHT.indigo} />
-        ) : null}
-        {setup.carbsG != null ? (
-          <MacroPill label={t('client.nutrition.carbs')} value={`${setup.carbsG} g`} accent={LIGHT.accent} />
-        ) : null}
-        {setup.fatG != null ? (
-          <MacroPill label={t('client.nutrition.fat')} value={`${setup.fatG} g`} accent={LIGHT.orange} />
-        ) : null}
-      </View>
-    </View>
-  );
-}
-
-function MacroPill({
-  accent = LIGHT.bgNavy,
-  label,
-  value,
-}: {
-  accent?: string;
-  label: string;
-  value: string;
-}): React.JSX.Element {
-  return (
-    <View style={[styles.macroPill, { borderColor: accent }]}>
-      <Text style={styles.macroLabel}>{label}</Text>
-      <Text style={styles.macroValue}>{value}</Text>
-    </View>
-  );
-}
-
-function MealGroupsList({
-  foods,
-  groups,
-  meals,
-  t,
-}: {
-  foods?: ClientNutrition['foods'];
-  groups: MealCategoryGroup[];
-  meals?: ClientNutrition['meals'];
-  t: (key: string, options?: Record<string, unknown>) => string;
-}): React.JSX.Element {
-  return (
-    <View style={styles.mealsSection}>
-      <Text style={styles.sectionTitle}>{t('client.nutrition.mealsTitle')}</Text>
-      {groups.map((group) => (
-        <View key={group.category} style={styles.categoryCard}>
-          <Text style={styles.categoryTitle}>{formatCategoryLabel(group.category, t)}</Text>
-          {group.items.map((item, index) => (
-            <View key={`${group.category}-${index}`} style={styles.mealRow}>
-              <Text style={styles.mealName}>{item.label}</Text>
-              {item.sublabel ? <Text style={styles.mealMeta}>{item.sublabel}</Text> : null}
-              <ConsiderationBadges items={lookupConsiderations(item, meals, foods)} t={t} />
-            </View>
-          ))}
-        </View>
-      ))}
-    </View>
-  );
-}
-
-function lookupConsiderations(
-  item: MealCategoryGroup['items'][number],
-  meals: ClientNutrition['meals'],
-  foods: ClientNutrition['foods'],
-) {
-  if (item.mealId) {
-    return meals?.find((meal) => meal.id === item.mealId)?.considerations ?? [];
-  }
-  if (item.foodId) {
-    return foods?.find((food) => food.id === item.foodId)?.considerations ?? [];
-  }
-  return [];
-}
-
-function formatCategoryLabel(category: string, t: (key: string) => string): string {
-  const key = `client.nutrition.category.${category}`;
-  const translated = t(key);
-  return translated === key ? category : translated;
 }
 
 const styles = StyleSheet.create({

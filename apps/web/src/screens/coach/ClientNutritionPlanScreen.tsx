@@ -1,9 +1,16 @@
+import { ClientPreviewButton, NutritionClientPreview } from '../../features/client-preview/ClientPreview';
+import { NutritionPdfButton } from '../../features/pdf/PlanPdfButton';
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { LoadingState } from '../../components/AsyncStatus';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useAssignPlanMutation, useClientNutritionPlansQuery, useNutritionPlansQuery } from '../../data/hooks/useNutrition';
+import {
+  useAssignPlanMutation,
+  useClientNutritionPlansQuery,
+  useNutritionPlansQuery,
+  useNutritionMealsQuery,
+} from '../../data/hooks/useNutrition';
 import { CheckpointsModal } from './nutrition/CheckpointsModal';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
 import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
@@ -23,6 +30,7 @@ type Props = {
 export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const plansQuery = useClientNutritionPlansQuery(props.clientId);
+  const mealsQuery = useNutritionMealsQuery();
   const templatesQuery = useNutritionPlansQuery();
   const assignMutation = useAssignPlanMutation();
   const toast = useToast();
@@ -84,12 +92,26 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
       {activePlan ? (
         <>
           <Text style={styles.sectionTitle}>{activePlan.name}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <ClientPreviewButton isDraft={false}>
+              <NutritionClientPreview plan={activePlan} meals={mealsQuery.data} />
+            </ClientPreviewButton>
+            <NutritionPdfButton
+              plan={activePlan}
+              meals={mealsQuery.data ?? []}
+              isDraft={false}
+              clientName={props.clientName}
+              disabled={mealsQuery.isLoading || mealsQuery.isError}
+            />
+          </View>
           {planType === 'LIBRE' ? <FreePlanReadOnly content={activePlan.content} t={t} /> : null}
           {planType === 'ESTRUCTURADO' ? <StructuredPlanReadOnly content={activePlan.content} t={t} /> : null}
           <Button label={t('coach.nutrition.checkpoints.open')} onPress={() => setCheckpointPlan(activePlan)} />
         </>
       ) : null}
-      {!activePlan && !plansQuery.isLoading ? <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} /> : null}
+      {!activePlan && !plansQuery.isLoading ? (
+        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} />
+      ) : null}
       <Text style={styles.sectionTitle}>{t('coach.nutrition.client.libraryTitle')}</Text>
       {templatesQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {templates.length === 0 && !templatesQuery.isLoading ? (
@@ -148,7 +170,8 @@ function FreePlanReadOnly(props: {
 }): React.JSX.Element {
   const content = (props.content as FreePlanContent | undefined) ?? { columns: {} };
   const columns = Object.entries(content.columns ?? {});
-  if (columns.length === 0) return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
+  if (columns.length === 0)
+    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
   return (
     <>
       {columns.map(([column, items]) => (
@@ -170,7 +193,8 @@ function StructuredPlanReadOnly(props: {
   t: (key: string, params?: Record<string, number | string>) => string;
 }): React.JSX.Element {
   const content = (props.content as StructuredPlanContent | undefined) ?? { weeks: [] };
-  if (content.weeks.length === 0) return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
+  if (content.weeks.length === 0)
+    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
   return (
     <>
       {content.weeks.map((week) => (

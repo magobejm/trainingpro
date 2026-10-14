@@ -1,3 +1,6 @@
+import { ClientPreviewButton } from '../../../../features/client-preview/ClientPreview';
+import { RoutineDraftPreview } from '../../../../features/client-preview/RoutineDraftPreview';
+import { RoutinePdfButton } from '../../../../features/pdf/PlanPdfButton';
 import React, { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react';
@@ -58,6 +61,7 @@ interface LayoutProps {
   onSave: (name: string) => Promise<void>;
   onSaveAndAssign: (name: string, clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
   saveDisabled?: boolean;
+  isDraft?: boolean;
   statusNode?: React.ReactNode;
   onAssignOnly?: (clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
   templates: RoutineTemplateView[];
@@ -158,7 +162,16 @@ function RoutineFooterSection(props: LayoutProps) {
   const showAssign = viewOnlyMode || isGlobal;
   return (
     <>
-      <View style={s.saveBar}>
+      <View style={[s.saveBar, { flexDirection: 'row', flexWrap: 'wrap', gap: 8 }]}>
+        <ClientPreviewButton isDraft={Boolean(props.isDraft)} disabled={props.saveDisabled}>
+          <RoutineDraftPreview draft={draftState.draft} />
+        </ClientPreviewButton>
+        <RoutinePdfButton
+          draft={draftState.draft}
+          isDraft={Boolean(props.isDraft)}
+          clientName={props.clientContextName ?? undefined}
+          disabled={props.saveDisabled}
+        />
         <Button
           disabled={props.saveDisabled}
           label={showAssign ? t('coach.routine.assign') : t('coach.routine.save')}

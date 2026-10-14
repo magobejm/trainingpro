@@ -279,6 +279,7 @@ function buildLayoutModel(params: {
     onSave: params.onSave,
     onSaveAndAssign: params.onSaveAndAssign,
     saveDisabled: params.isSaving,
+    isDraft: !params.uiState.editingId || params.work.isDirty,
     statusNode: <UnsavedStatus t={params.t} work={params.work} />,
     t: params.t,
     templates: params.templates,

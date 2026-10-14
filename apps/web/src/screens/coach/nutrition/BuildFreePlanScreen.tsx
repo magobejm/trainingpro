@@ -1,3 +1,4 @@
+import { NutritionPlanActions } from '../../../features/client-preview/NutritionPlanActions';
 import { getLayoutStyle1 } from './BuildFreePlanScreen.layout-styles';
 
 import React, { useEffect, useState } from 'react';
@@ -35,6 +36,23 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
     if (plan?.content) setContent(readContent(plan.content));
   }, [plansQuery.data, props.planId]);
   const meals = mealsQuery.data ?? [];
+  const savedPlan = plansQuery.data?.find((item) => item.id === props.planId);
+  const isDraft =
+    !props.planId ||
+    Boolean(
+      savedPlan &&
+      (JSON.stringify(content) !== JSON.stringify(readContent(savedPlan.content)) ||
+        props.planName !== savedPlan.name ||
+        JSON.stringify(props.setupData) !== JSON.stringify(savedPlan.setupData)),
+    );
+  const previewPlan = {
+    name: props.planName,
+    type: 'LIBRE' as const,
+    content,
+    setupData: props.setupData,
+    description: savedPlan?.description,
+  };
+  const previewDisabled = Boolean(props.planId && (plansQuery.isLoading || plansQuery.isError || !savedPlan));
   const layoutStyle1 = getLayoutStyle1;
   return (
     <ScrollView contentContainerStyle={styles.container} horizontal>
@@ -42,6 +60,12 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
         <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
         <Text style={styles.headerTitle}>{props.planName}</Text>
         <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildFree.subtitle')}</Text>
+        <NutritionPlanActions
+          plan={previewPlan}
+          meals={meals}
+          isDraft={isDraft}
+          disabled={previewDisabled || mealsQuery.isLoading || mealsQuery.isError}
+        />
         <ScrollView horizontal contentContainerStyle={styles.horizontalScroll}>
           {FREE_PLAN_COLUMNS.map((column) => (
             <View key={column} style={styles.column}>

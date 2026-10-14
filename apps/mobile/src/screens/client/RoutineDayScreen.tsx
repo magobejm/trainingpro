@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
+import { ClientRoutineDayContent } from '@trainerpro/ui';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay, ClientRoutineExercise } from '../../data/hooks/useClientRoutineQuery';
@@ -45,38 +46,18 @@ export function RoutineDayScreen(props: RoutineDayScreenProps): React.JSX.Elemen
 
 function PreviewDay(props: PreviewProps): React.JSX.Element {
   const { t } = useTranslation();
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
-
-  const toggleExpanded = (exerciseId: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(exerciseId)) {
-        next.delete(exerciseId);
-      } else {
-        next.add(exerciseId);
-      }
-      return next;
-    });
-  };
-  const blocks = useMemo(() => buildExerciseBlocks(props.day.exercises), [props.day.exercises]);
 
   return (
     <View style={s.sidePanel}>
       <OverlayBackHeader onClose={props.onClose} />
       <ScrollView contentContainerStyle={[s.panelContent, styles.scrollBottom]}>
-        <DayHeader count={props.day.exercises.length} title={props.day.title} />
-        {blocks.map((block) => (
-          <ExerciseBlockContainer block={block} key={block.exercises.map((e) => e.id).join('-')}>
-            {block.exercises.map((exercise) => (
-              <ExerciseCard
-                key={exercise.id}
-                exercise={exercise}
-                expanded={expandedIds.has(exercise.id)}
-                onToggle={() => toggleExpanded(exercise.id)}
-              />
-            ))}
-          </ExerciseBlockContainer>
-        ))}
+        <ClientRoutineDayContent
+          day={props.day}
+          t={t}
+          renderExercise={(exercise, expanded, onToggle) => (
+            <ExerciseCard exercise={exercise} expanded={expanded} onToggle={onToggle} />
+          )}
+        />
         <PrimaryButton
           disabled={props.startDisabled || props.startPending}
           label={props.startPending ? t('mobile.shell.loading') : (props.startLabel ?? t('mobile.client.day.startTraining'))}
@@ -160,17 +141,6 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
           />
         )}
       </ScrollView>
-    </View>
-  );
-}
-
-function DayHeader(props: { count: number; title: string }): React.JSX.Element {
-  return (
-    <View style={styles.dayHeader}>
-      <Text style={styles.dayTitle}>{props.title}</Text>
-      <View style={s.dayExPill}>
-        <Text style={s.dayExPillText}>{`${props.count} ejer`}</Text>
-      </View>
     </View>
   );
 }

@@ -6,5 +6,8 @@
     "lint": "pnpm exec eslint src --ext .ts,.tsx",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
     "build": "pnpm exec tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@trainerpro/shared": "workspace:*"
   }
 }

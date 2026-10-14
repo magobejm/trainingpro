@@ -26,6 +26,7 @@ import { SHELL_PATHS } from '../../layout/shell-routes';
 import { clientsScreenPath, readClientsLocation, type ScreenMode } from './clients-location';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useQuickCreateStore } from '../../store/quickCreate.store';
+import { OnboardingCard } from '../../components/OnboardingGuide';
 
 const MODE_NUTRITION = 'nutrition' as const;
 const MODE_MOOD = 'mood' as const;
@@ -196,6 +197,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
   return (
     <>
       <Header count={props.clients.length} t={props.t} />
+      <OnboardingCard />
       <View style={styles.formCard}>{renderCta(props)}</View>
       {renderCreateResult(props)}
       <View style={styles.listCard}>

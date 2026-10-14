@@ -5,6 +5,8 @@ import { Button, IconButton, Modal, TextField, useToast } from '@trainerpro/ui';
 import { useUserSettings } from '../data/hooks/useUserSettings';
 import { styles } from './SidebarUserPanel.styles';
 import { AppearanceSettings } from './AppearanceSettings';
+import { OnboardingUserEntry } from '../components/OnboardingGuide';
+import { useRefreshOnboardingAfterMutation } from '../data/hooks/useOnboarding';
 
 const GEAR_GLYPH = '\u2699\uFE0F';
 const VARIANT_SECONDARY = 'secondary' as const;
@@ -20,6 +22,7 @@ type Props = {
 };
 
 export function SidebarUserPanel(props: Props): React.JSX.Element {
+  useRefreshOnboardingAfterMutation();
   const vm = useSidebarUserPanelModel(props.email, props.fallbackName);
   return <SidebarUserPanelView {...vm} compact={props.compact} t={props.t} />;
 }
@@ -118,6 +121,7 @@ function EditProfileModal(props: ViewModel): React.JSX.Element {
         <AvatarEditor {...props} />
         <ProfileFields {...props} />
         <AppearanceSettings />
+        <OnboardingUserEntry onNavigate={props.onClose} />
       </View>
     </Modal>
   );

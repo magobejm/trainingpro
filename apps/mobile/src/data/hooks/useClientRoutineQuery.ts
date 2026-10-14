@@ -3,65 +3,14 @@ import { useAuthStore } from '../../store/auth.store';
 import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { handleUnauthorized } from '../auth-service';
 
-export type ClientRoutineSet = {
-  advancedTechnique: null | string;
-  durationSeconds?: null | number;
-  fcMaxPct?: null | number;
-  fcReservePct?: null | number;
-  heartRate?: null | number;
-  note: null | string;
-  reps?: null | number;
-  restSeconds?: null | number;
-  rir?: null | number;
-  rom?: null | string;
-  rpe?: null | number;
-  setIndex: number;
-  weightKg?: null | number;
-};
-
-export type ClientRoutineExercise = {
-  coachInstructions: null | string;
-  displayName: string;
-  lockedFields?: string[];
-  mediaUrl: null | string;
-  youtubeUrl: null | string;
-  groupId: null | string;
-  groupType: 'CIRCUIT' | 'SUPERSET' | null;
-  id: string;
-  notes: null | string;
-  repsMax: null | number;
-  repsMin: null | number;
-  restSeconds: null | number;
-  sets: ClientRoutineSet[];
-  setsPlanned: null | number;
-  sortOrder: number;
-  targetRir: null | number;
-  targetRpe: null | number;
-  type: 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport' | 'strength';
-};
-
-export type ClientRoutineDay = {
-  dayIndex: number;
-  exercises: ClientRoutineExercise[];
-  id: string;
-  notes: null | string;
-  title: string;
-};
-
-export type ClientRoutineNeat = {
-  description: null | string;
-  id: string;
-  title: string;
-};
-
-export type ClientRoutine = {
-  expectedCompletionDays: null | number;
-  id: string;
-  name: string;
-  neats?: ClientRoutineNeat[];
-  objectives: string[];
-  planDays: ClientRoutineDay[];
-};
+import type { ClientRoutine, ClientRoutineDay } from '@trainerpro/shared';
+export type {
+  ClientRoutine,
+  ClientRoutineDay,
+  ClientRoutineExercise,
+  ClientRoutineSet,
+  ClientRoutineNeat,
+} from '@trainerpro/shared';
 
 export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);

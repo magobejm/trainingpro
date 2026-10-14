@@ -38,7 +38,7 @@ describe('frozen session', () => {
     const existing = sessionRow({ archivedAt: null, planDayId: 'day-1', status: SessionStatus.IN_PROGRESS });
     const saved = await ensure(existing, 'day-2');
     expect(saved.result).toEqual({ id: 'created' });
-    expect(saved.loadTemplate).toHaveBeenCalled();
+    expect(saved.loadTemplate).toHaveBeenCalledWith(saved.tx);
     expect(saved.create).toHaveBeenCalled();
     expect(saved.update).not.toHaveBeenCalled();
   });
@@ -92,5 +92,5 @@ async function ensure(existing: ReturnType<typeof sessionRow>, planDayId: string
     { id: 'membership', organizationId: 'org' },
     loadTemplate,
   );
-  return { create, deleteMany, loadTemplate, result, update };
+  return { create, deleteMany, loadTemplate, result, tx, update };
 }

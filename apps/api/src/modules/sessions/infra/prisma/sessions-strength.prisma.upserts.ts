@@ -1,4 +1,4 @@
-import { LibraryItemScope, TemplateKind } from '@prisma/client';
+import { LibraryItemScope, Prisma, TemplateKind } from '@prisma/client';
 import { writeOrUpdate } from '../../../../common/prisma/unique-violation';
 import {
   isometricSetHasData,
@@ -213,7 +213,7 @@ const PLAN_BLOCK_SETS_INCLUDE = {
   orderBy: { setIndex: 'asc' as const },
 };
 
-export function readWorkoutTemplate(prisma: PrismaService, templateId: string, coachMembershipId: string) {
+export function readWorkoutTemplate(prisma: Prisma.TransactionClient, templateId: string, coachMembershipId: string) {
   return prisma.planTemplate.findFirst({
     where: {
       archivedAt: null,

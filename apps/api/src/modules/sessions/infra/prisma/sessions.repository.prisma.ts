@@ -1,5 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
-import { Role, SessionStatus } from '@prisma/client';
+import { Prisma, Role, SessionStatus } from '@prisma/client';
 import { buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { exerciseHistoryQuery, mapExerciseHistory } from './exercise-history';
@@ -101,8 +101,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     input: EnsureSessionInput,
     membership: CoachMembership,
   ): Promise<SessionInstance> {
-    const row = await persistEnsuredSession(this.prisma, context, input, membership, () =>
-      this.readTemplateSnapshot(input.templateId, membership.id, input.planDayId),
+    const row = await persistEnsuredSession(this.prisma, context, input, membership, (tx) =>
+      this.readTemplateSnapshot(tx, input.templateId, membership.id, input.planDayId),
     );
     return mapSessionWithGroups(this.prisma, row);
   }
@@ -314,8 +314,13 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return row;
   }
 
-  private async readTemplateSnapshot(templateId: string, coachMembershipId: string, planDayId?: string | null) {
-    const row = await readWorkoutTemplate(this.prisma, templateId, coachMembershipId);
+  private async readTemplateSnapshot(
+    db: Prisma.TransactionClient,
+    templateId: string,
+    coachMembershipId: string,
+    planDayId?: string | null,
+  ) {
+    const row = await readWorkoutTemplate(db, templateId, coachMembershipId);
     if (!row) {
       throw new NotFoundException('Template not found');
     }

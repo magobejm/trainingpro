@@ -38,7 +38,7 @@ export async function persistEnsuredSession(
   context: AuthContext,
   input: EnsureSessionInput,
   membership: Membership,
-  loadTemplate: () => Promise<TemplateWrite>,
+  loadTemplate: (tx: Prisma.TransactionClient) => Promise<TemplateWrite>,
 ) {
   return prisma.$transaction(async (tx) => {
     const existing = await findExistingSession(tx, input);
@@ -48,7 +48,7 @@ export async function persistEnsuredSession(
     if (existing && !existing.archivedAt && !shouldReplacePendingSession(existing, input.planDayId)) {
       return existing;
     }
-    const template = await loadTemplate();
+    const template = await loadTemplate(tx);
     if (existing && shouldRewrite(existing, input.planDayId)) {
       await clearSessionChildren(tx, existing.id);
       return tx.sessionInstance.update({

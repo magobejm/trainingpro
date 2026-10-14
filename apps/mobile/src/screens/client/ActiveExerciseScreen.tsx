@@ -360,6 +360,8 @@ export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JS
           </Modal>
         ) : null}
         <PreviousDaysOverlay
+          sessionId={props.sessionId}
+          exerciseName={props.item.displayName}
           sourceExerciseId={getSourceExerciseId(props.item)}
           visible={showPrevious}
           onClose={() => setShowPrevious(false)}

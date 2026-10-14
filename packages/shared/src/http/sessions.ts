@@ -88,6 +88,7 @@ const plioItemSchema = z
     sortOrder: z.number(),
     targetRpe: nullableNumber,
     type: z.literal('plio'),
+    sourceExerciseId: nullableString.optional(),
     workSeconds: z.number(),
     youtubeUrl: nullableString,
   })
@@ -121,6 +122,7 @@ const mobilityItemSchema = z
     sortOrder: z.number(),
     targetRpe: nullableNumber,
     type: z.literal('mobility'),
+    sourceExerciseId: nullableString.optional(),
     workSeconds: z.number(),
     youtubeUrl: nullableString,
   })
@@ -153,6 +155,7 @@ const isometricItemSchema = z
     sortOrder: z.number(),
     targetRpe: nullableNumber,
     type: z.literal('isometric'),
+    sourceExerciseId: nullableString.optional(),
     youtubeUrl: nullableString,
   })
   .strict();
@@ -199,6 +202,7 @@ const sportItemSchema = z
     sortOrder: z.number(),
     targetRpe: nullableNumber,
     type: z.literal('sport'),
+    sourceExerciseId: nullableString.optional(),
     youtubeUrl: nullableString,
   })
   .strict();
@@ -232,6 +236,7 @@ const cardioItemSchema = z
     targetDistanceMeters: nullableNumber,
     targetRpe: nullableNumber,
     type: z.literal('cardio'),
+    sourceExerciseId: nullableString.optional(),
     workSeconds: z.number(),
     youtubeUrl: nullableString,
   })

@@ -1,3 +1,4 @@
+import type { ExerciseHistoryEntry } from '@trainerpro/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   CardioSessionItem,
@@ -95,13 +96,7 @@ export type LogIntervalMutationInput = {
   sessionCardioBlockId: string;
 };
 
-export type ExerciseHistoryEntry = {
-  effortRir: null | number;
-  effortRpe: null | number;
-  repsDone: null | number;
-  sessionDate: string;
-  weightDoneKg: null | number;
-};
+export type { ExerciseHistoryEntry } from '@trainerpro/shared';
 
 export type LogSetMutationInput = {
   effortRir?: null | number;
@@ -244,12 +239,12 @@ export function useLogIntervalMutation(sessionId: string) {
   });
 }
 
-export function useExerciseHistoryQuery(sourceExerciseId: null | string) {
+export function useExerciseHistoryQuery(sourceExerciseId: null | string, sessionId: string, visible: boolean) {
   const auth = useAuth();
   return useQuery({
-    enabled: Boolean(auth) && Boolean(sourceExerciseId),
-    queryFn: () => fetchExerciseHistory(auth, sourceExerciseId!),
-    queryKey: ['exerciseHistory', sourceExerciseId, auth?.accessToken],
+    enabled: visible && Boolean(auth) && Boolean(sourceExerciseId),
+    queryFn: () => fetchExerciseHistory(auth, sourceExerciseId!, sessionId),
+    queryKey: ['exerciseHistory', sourceExerciseId, sessionId, auth?.accessToken],
   });
 }
 
@@ -336,11 +331,14 @@ async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string):
 async function fetchExerciseHistory(
   auth: ReturnType<typeof useAuth>,
   sourceExerciseId: string,
+  sessionId: string,
 ): Promise<ExerciseHistoryEntry[]> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).get<ExerciseHistoryEntry[]>(`/clients/me/exercises/${sourceExerciseId}/history?limit=3`);
+  return createApiClient(auth).get<ExerciseHistoryEntry[]>(
+    `/clients/me/exercises/${sourceExerciseId}/history?limit=5&excludeSessionId=${encodeURIComponent(sessionId)}`,
+  );
 }
 
 async function logPlioSet(auth: ReturnType<typeof useAuth>, sessionId: string, input: LogPlioSetMutationInput) {

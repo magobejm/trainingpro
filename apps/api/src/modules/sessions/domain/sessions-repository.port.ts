@@ -31,7 +31,12 @@ export interface SessionsRepositoryPort {
   ensureCardioSession(context: AuthContext, input: EnsureCardioSessionInput): Promise<CardioSessionInstance>;
   ensureSession(context: AuthContext, input: EnsureSessionInput): Promise<SessionInstance>;
   ensureSessionForClient(context: AuthContext, input: EnsureSessionForClientInput): Promise<SessionInstance>;
-  findExerciseHistory(clientId: string, sourceExerciseId: string, limit: number): Promise<ExerciseHistoryEntry[]>;
+  findExerciseHistory(
+    clientId: string,
+    sourceExerciseId: string,
+    limit: number,
+    excludeSessionId?: string,
+  ): Promise<ExerciseHistoryEntry[]>;
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance>;
   finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance>;
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null>;

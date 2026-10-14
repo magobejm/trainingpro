@@ -410,7 +410,7 @@ export function getStrengthSessionItemId(item: SessionItem): null | string {
 }
 
 export function getSourceExerciseId(item: SessionItem): null | string {
-  return item.type === 'strength' ? item.sourceExerciseId : null;
+  return item.sourceExerciseId ?? null;
 }
 
 export function readSessionYoutubeUrl(item: SessionItem): null | string {

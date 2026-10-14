@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Inject, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -66,11 +66,18 @@ export class ClientSelfController {
   async getExerciseHistory(
     @Param('sourceExerciseId') sourceExerciseId: string,
     @Query('limit') limit: string | undefined,
+    @Query('excludeSessionId', new ParseUUIDPipe({ optional: true })) excludeSessionId: string | undefined,
     @Req() request: HttpAuthRequest,
   ) {
     const context = readAuthContext(request);
-    const parsedLimit = limit ? Math.max(1, Math.min(10, Number(limit))) : 3;
-    const entries = await this.getClientExerciseHistoryUseCase.execute(context, sourceExerciseId, parsedLimit);
+    const value = Number(limit);
+    const parsedLimit = Number.isFinite(value) && value > 0 ? Math.max(1, Math.min(10, Math.floor(value))) : 5;
+    const entries = await this.getClientExerciseHistoryUseCase.execute(
+      context,
+      sourceExerciseId,
+      parsedLimit,
+      excludeSessionId,
+    );
     return entries.map((e) => ({
       ...e,
       sessionDate: e.sessionDate.toISOString().slice(0, 10),

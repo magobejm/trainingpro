@@ -13,7 +13,12 @@ export class GetClientExerciseHistoryUseCase {
     private readonly sessionsRepository: SessionsRepositoryPort,
   ) {}
 
-  async execute(context: AuthContext, sourceExerciseId: string, limit = 3): Promise<ExerciseHistoryEntry[]> {
+  async execute(
+    context: AuthContext,
+    sourceExerciseId: string,
+    limit = 5,
+    excludeSessionId?: string,
+  ): Promise<ExerciseHistoryEntry[]> {
     const email = context.email;
     if (!email) {
       throw new NotFoundException('Client profile not found');
@@ -22,6 +27,6 @@ export class GetClientExerciseHistoryUseCase {
     if (!client) {
       throw new NotFoundException('Client profile not found');
     }
-    return this.sessionsRepository.findExerciseHistory(client.id, sourceExerciseId, limit);
+    return this.sessionsRepository.findExerciseHistory(client.id, sourceExerciseId, limit, excludeSessionId);
   }
 }

@@ -2,7 +2,7 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Role, SessionStatus } from '@prisma/client';
 import { buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import { toRpeNumber } from '../../../../common/plan/rpe-number';
+import { exerciseHistoryQuery, mapExerciseHistory } from './exercise-history';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
@@ -111,37 +111,16 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return this.cardioRepository.finishCardioSession(context, input);
   }
 
-  async findExerciseHistory(clientId: string, sourceExerciseId: string, limit: number): Promise<ExerciseHistoryEntry[]> {
-    const rows = await this.prisma.setLog.findMany({
-      where: {
-        session: { archivedAt: null, clientId, status: 'COMPLETED' },
-        sessionItem: { archivedAt: null, sourceExerciseId },
-      },
-      orderBy: [{ session: { sessionDate: 'desc' } }, { setIndex: 'desc' }],
-      select: {
-        effortRir: true,
-        effortRpe: true,
-        repsDone: true,
-        setIndex: true,
-        session: { select: { sessionDate: true } },
-        weightDoneKg: true,
-      },
-      take: limit * 10,
-    });
-    const byDate = new Map<string, ExerciseHistoryEntry>();
-    for (const r of rows) {
-      const key = r.session.sessionDate.toISOString();
-      if (!byDate.has(key)) {
-        byDate.set(key, {
-          effortRir: r.effortRir,
-          effortRpe: toRpeNumber(r.effortRpe),
-          repsDone: r.repsDone,
-          sessionDate: r.session.sessionDate,
-          weightDoneKg: r.weightDoneKg ? Number(r.weightDoneKg) : null,
-        });
-      }
-    }
-    return [...byDate.values()].slice(0, limit);
+  async findExerciseHistory(
+    clientId: string,
+    sourceExerciseId: string,
+    limit: number,
+    excludeSessionId?: string,
+  ): Promise<ExerciseHistoryEntry[]> {
+    const rows = await this.prisma.sessionInstance.findMany(
+      exerciseHistoryQuery(clientId, sourceExerciseId, limit, excludeSessionId),
+    );
+    return rows.map(mapExerciseHistory);
   }
 
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {

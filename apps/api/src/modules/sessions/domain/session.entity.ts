@@ -53,12 +53,8 @@ export type SessionStrengthItem = {
   youtubeUrl: null | string;
 };
 
-export type ExerciseHistoryEntry = {
-  effortRir: null | number;
-  effortRpe: null | number;
-  repsDone: null | number;
+export type ExerciseHistoryEntry = Omit<import('@trainerpro/shared').ExerciseHistoryEntry, 'sessionDate'> & {
   sessionDate: Date;
-  weightDoneKg: null | number;
 };
 
 export type SessionPlioSetLog = {
@@ -114,6 +110,7 @@ export type SessionSportSetLog = {
 
 export type SessionPlioItem = {
   type: 'plio';
+  sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
   groupId: null | string;
@@ -133,6 +130,7 @@ export type SessionPlioItem = {
 
 export type SessionMobilityItem = {
   type: 'mobility';
+  sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
   groupId: null | string;
@@ -152,6 +150,7 @@ export type SessionMobilityItem = {
 
 export type SessionIsometricItem = {
   type: 'isometric';
+  sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
   groupId: null | string;
@@ -170,6 +169,7 @@ export type SessionIsometricItem = {
 
 export type SessionSportItem = {
   type: 'sport';
+  sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
   durationMinutes: number;
@@ -206,6 +206,7 @@ export type SessionIntervalLog = {
 
 export type CardioSessionItem = {
   type: 'cardio';
+  sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
   groupId: null | string;

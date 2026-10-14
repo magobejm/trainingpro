@@ -74,6 +74,7 @@ export function mapSession(
 
   const plioItems: SessionPlioItem[] = row.plioBlocks.map((b) => ({
     type: 'plio' as const,
+    sourceExerciseId: b.sourcePlioExerciseId,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
@@ -102,6 +103,7 @@ export function mapSession(
 
   const mobilityItems: SessionMobilityItem[] = row.mobilityBlocks.map((b) => ({
     type: 'mobility' as const,
+    sourceExerciseId: b.sourceMobilityExerciseId,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
@@ -130,6 +132,7 @@ export function mapSession(
 
   const isometricItems: SessionIsometricItem[] = row.isometricBlocks.map((b) => ({
     type: 'isometric' as const,
+    sourceExerciseId: b.sourceIsometricExerciseId,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     ...readGroup(b.sortOrder),
@@ -166,6 +169,7 @@ export function mapSession(
       : null;
     return {
       type: 'sport' as const,
+      sourceExerciseId: b.sourceSportId,
       coachInstructions: b.coachInstructions,
       displayName: b.displayName,
       durationMinutes: b.durationMinutes,
@@ -199,6 +203,7 @@ export function mapSession(
 
   const cardioItems: CardioSessionItem[] = row.cardioBlocks.map((b) => ({
     type: 'cardio' as const,
+    sourceExerciseId: b.sourceCardioMethodId,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
     ...readGroup(b.sortOrder),

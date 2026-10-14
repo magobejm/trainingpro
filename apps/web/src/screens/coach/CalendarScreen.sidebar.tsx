@@ -184,7 +184,7 @@ function SidebarClientRow({
             <Text style={layoutStyle14} numberOfLines={1}>
               {client.firstName} {client.lastName}
             </Text>
-            {statusDot ? <StatusDot reason={statusDot.reason} tone={statusDot.tone} /> : null}
+            {statusDot ? <StatusDot align={'center'} reason={statusDot.reason} tone={statusDot.tone} /> : null}
           </View>
           {objective && (
             <Text style={layoutStyle15} numberOfLines={1}>

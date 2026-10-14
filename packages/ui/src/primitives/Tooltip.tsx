@@ -6,7 +6,12 @@ const POINTER_NONE = 'none' as const;
 const bubbleWidth = { width: 'max-content' } as unknown as ViewProps['style'];
 
 /** Texto que aparece al pasar el ratón o al enfocar, y que el lector de pantalla lee siempre. */
-export function Tooltip(props: { children: React.ReactNode; fill?: boolean; label: string }): React.JSX.Element {
+export function Tooltip(props: {
+  align?: 'center' | 'left' | 'right';
+  children: React.ReactNode;
+  fill?: boolean;
+  label: string;
+}): React.JSX.Element {
   const [open, setOpen] = useState(false);
   const hover = {
     onBlur: () => setOpen(false),
@@ -18,7 +23,15 @@ export function Tooltip(props: { children: React.ReactNode; fill?: boolean; labe
     <View accessibilityLabel={props.label} style={props.fill ? [styles.host, styles.fill] : styles.host} {...hover}>
       {props.children}
       {open ? (
-        <View pointerEvents={POINTER_NONE} style={[styles.bubble, bubbleWidth]}>
+        <View
+          pointerEvents={POINTER_NONE}
+          style={[
+            styles.bubble,
+            props.align === 'center' ? styles.alignCenter : null,
+            props.align === 'right' ? styles.alignRight : null,
+            bubbleWidth,
+          ]}
+        >
           <Text style={styles.text}>{props.label}</Text>
         </View>
       ) : null}
@@ -40,6 +53,8 @@ const styles = StyleSheet.create({
     zIndex: 20,
     ...shadow.md,
   },
+  alignRight: { left: 'auto', right: 0 },
+  alignCenter: { left: '50%', transform: [{ translateX: '-50%' }] },
   fill: { maxWidth: '100%', minWidth: 0, width: '100%' },
   host: {
     position: 'relative',

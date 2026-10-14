@@ -14,9 +14,13 @@ const DOT_COLOR: Record<BadgeTone, string> = {
 };
 
 /** Punto de color con el motivo en un aviso al pasar el ratón. */
-export function StatusDot(props: { reason: string; tone: BadgeTone }): React.JSX.Element {
+export function StatusDot(props: {
+  align?: 'center' | 'left' | 'right';
+  reason: string;
+  tone: BadgeTone;
+}): React.JSX.Element {
   return (
-    <Tooltip label={props.reason}>
+    <Tooltip align={props.align ?? 'center'} label={props.reason}>
       <View style={[styles.dot, { backgroundColor: DOT_COLOR[props.tone] }]} />
     </Tooltip>
   );

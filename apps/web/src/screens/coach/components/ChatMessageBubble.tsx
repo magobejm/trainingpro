@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   bubbleCoach: {
     alignSelf: 'flex-end',
-    backgroundColor: colors.primaryBorder,
+    backgroundColor: colors.successSoft,
   },
   bubbleText: {
     color: colors.text,

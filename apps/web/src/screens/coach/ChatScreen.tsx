@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
@@ -117,9 +117,33 @@ function ChatView(props: ViewModel) {
         retentionSubtitle={props.t('coach.chat.retention.subtitle')}
       />
       {renderClientStrip(props)}
-      {renderMessagesPanel(props)}
-      <ChatComposer {...props} />
+      <ChatConversation {...props} />
     </ScrollView>
+  );
+}
+
+function ChatConversation(props: ViewModel): React.JSX.Element {
+  const selectedClient = props.clientItems.find((client) => client.id === props.clientId);
+  const initials = selectedClient?.title
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+  return (
+    <View style={styles.conversationFrame}>
+      <View style={styles.conversationHeader}>
+        <View style={styles.conversationAvatar}>
+          <Text style={styles.conversationInitials}>{initials || '·'}</Text>
+        </View>
+        <Text numberOfLines={1} style={styles.conversationName}>
+          {selectedClient?.title ?? props.t('coach.chat.title')}
+        </Text>
+      </View>
+      <ChatMessagesPanel {...props} />
+      <ChatComposer {...props} />
+    </View>
   );
 }
 
@@ -165,11 +189,18 @@ function renderClientStrip(props: ViewModel): React.JSX.Element {
   return <ClientCardRow items={props.clientItems} onItemPress={props.setClientId} selectedId={props.clientId} />;
 }
 
-function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
+function ChatMessagesPanel(props: ViewModel): React.JSX.Element | null {
+  const scrollRef = useRef<ScrollView>(null);
+  const messages = props.messagesQuery.data ?? [];
+  const lastMessageId = messages[messages.length - 1]?.id ?? '';
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
+    return () => cancelAnimationFrame(frame);
+  }, [lastMessageId, messages.length, props.threadId]);
+
   if (props.clientsQuery.isLoading || props.clientsQuery.isError || props.clientItems.length === 0) {
     return null;
   }
-  const messages = props.messagesQuery.data ?? [];
   const waitingForThread = props.clientId.length > 0 && props.threadId.length === 0 && !props.threadQuery.isError;
   const status = QueryResult({
     emptyTitle: props.t('coach.chat.empty'),
@@ -187,11 +218,14 @@ function renderMessagesPanel(props: ViewModel): React.JSX.Element | null {
     return status;
   }
   return (
-    <View style={styles.messages}>
-      {messages.map((message) => (
-        <ChatMessageBubble key={message.id} message={message} />
-      ))}
-    </View>
+    <ScrollView
+      contentContainerStyle={styles.messages}
+      keyboardShouldPersistTaps={'handled'}
+      ref={scrollRef}
+      style={styles.messagesViewport}
+    >
+      {status ?? messages.map((message) => <ChatMessageBubble key={message.id} message={message} />)}
+    </ScrollView>
   );
 }
 
@@ -201,6 +235,42 @@ const styles = StyleSheet.create({
     fontSize: fontSize.xs,
     fontWeight: '700',
   },
+  conversationAvatar: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.pill,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  conversationFrame: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    overflow: 'hidden',
+    width: '100%',
+  },
+  conversationHeader: {
+    alignItems: 'center',
+    backgroundColor: colors.chartTeal,
+    flexDirection: 'row',
+    gap: space.md,
+    minHeight: 64,
+    paddingHorizontal: space.lg,
+    paddingVertical: space.sm,
+  },
+  conversationInitials: {
+    color: colors.chartTeal,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+  },
+  conversationName: {
+    color: colors.onPrimary,
+    flex: 1,
+    fontSize: fontSize.md,
+    fontWeight: '700',
+  },
   error: {
     color: colors.danger,
     fontSize: fontSize.xs,
@@ -208,21 +278,24 @@ const styles = StyleSheet.create({
   },
   inputPanel: {
     backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
     gap: space.sm,
     padding: space.md,
     width: '100%',
   },
   messages: {
-    backgroundColor: colors.surfaceMuted,
-    borderColor: colors.border,
-    borderRadius: radius.lg,
-    borderWidth: 1,
+    flexGrow: 1,
     gap: space.sm,
-    minHeight: 260,
+    justifyContent: 'flex-end',
     padding: space.md,
+    width: '100%',
+  },
+  messagesViewport: {
+    backgroundColor: colors.background,
+    height: 420,
+    maxHeight: 520,
+    minHeight: 260,
     width: '100%',
   },
   page: {

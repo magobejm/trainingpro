@@ -19,6 +19,7 @@ export function Card(props: CardProps): React.JSX.Element {
   const reduced = useReducedMotion();
   const theme = useTheme();
   const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
   const style = [
     styles.base,
     Platform.OS !== 'web' ? { backgroundColor: theme.colors.surface, borderColor: theme.colors.border } : null,
@@ -26,6 +27,7 @@ export function Card(props: CardProps): React.JSX.Element {
     padded ? styles.padded : null,
     props.elevated ? styles.elevated : null,
     props.interactive && !reduced && hovered ? styles.lift : null,
+    props.interactive && (hovered || focused) ? styles.foreground : null,
     props.style,
   ];
   if (!props.interactive) {
@@ -40,6 +42,8 @@ export function Card(props: CardProps): React.JSX.Element {
       {...(props.densityRow ? { dataSet: { 'density-row': 'true' } } : {})}
       onHoverIn={() => setHovered(true)}
       onHoverOut={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={style}
       testID={props.testID}
     >
@@ -57,6 +61,9 @@ const styles = StyleSheet.create({
   },
   elevated: {
     ...shadow.md,
+  },
+  foreground: {
+    zIndex: 1,
   },
   lift: {
     transform: [{ translateY: -2 }],

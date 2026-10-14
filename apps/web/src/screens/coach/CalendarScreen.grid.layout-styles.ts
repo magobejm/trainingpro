@@ -104,6 +104,7 @@ export function getLayoutStyle11(
     fontSize: fontSize.sm,
     fontWeight: 500,
     overflow: 'hidden',
+    boxSizing: 'border-box',
     width: '100%',
     minWidth: 0,
     maxWidth: '100%',

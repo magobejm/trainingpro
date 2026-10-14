@@ -1,15 +1,15 @@
 /* eslint-disable max-lines-per-function */
 import React, { useState } from 'react';
-import { Image, View } from 'react-native';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { s } from '../RoutinePlanner.styles';
-import type { BlockType, DraftBlock } from '../RoutinePlanner.types';
+import type { DraftBlock } from '../RoutinePlanner.types';
 import { MoveMenu } from './RoutineBlockCard/MoveMenu';
 import { BlockFields } from './RoutineBlockCard/BlockFields';
 import { BlockNotesModal } from './RoutineBlockCard/BlockNotesModal';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
 import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
-import { resolvePlaceholder } from './RoutinePlanner/ExercisePickerModal.utils';
+import { RoutineBlockImage } from './RoutineBlockCard/RoutineBlockImage';
 
 interface RoutineBlockCardProps {
   block: DraftBlock;
@@ -97,7 +97,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
           )}
           <View style={s.blockBodyRow}>
             <View style={s.blockImageCol}>
-              <BlockImage blockType={props.block.type} />
+              <RoutineBlockImage block={props.block} />
             </View>
             <View style={s.blockBodyFieldsWrap}>
               <BlockFields
@@ -124,16 +124,6 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
         t={t}
         visible={state.showNotesModal}
       />
-    </View>
-  );
-}
-
-const RESIZE_MODE_COVER = 'cover' as const;
-
-function BlockImage({ blockType }: { blockType: BlockType }) {
-  return (
-    <View style={s.blockImageWrap}>
-      <Image resizeMode={RESIZE_MODE_COVER} source={{ uri: resolvePlaceholder(blockType) }} style={s.blockBodyImage} />
     </View>
   );
 }

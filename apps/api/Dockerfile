@@ -36,4 +36,5 @@ COPY --from=build /app/packages/shared ./packages/shared
 COPY --from=build /app/prisma ./prisma
 WORKDIR /app/apps/api
 EXPOSE 8080
-CMD ["node", "dist/main.js"]
+# Node rejects the TypeScript entry of @trainerpro/shared. tsx is hoisted to /app/node_modules.
+CMD ["node", "--import", "tsx", "dist/main.js"]

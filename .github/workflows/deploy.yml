@@ -186,6 +186,7 @@ jobs:
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
+          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Export web bundle
         working-directory: apps/mobile
@@ -215,6 +216,7 @@ jobs:
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest
+          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
       - name: Allow EAS to archive the repo via git
         run: git config protocol.file.allow always

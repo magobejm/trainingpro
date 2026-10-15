@@ -9,7 +9,7 @@ export class ListChatMessagesUseCase {
     private readonly chatRepository: ChatRepositoryPort,
   ) {}
 
-  execute(context: AuthContext, threadId: string, before?: Date) {
-    return this.chatRepository.listMessagesByThread(context, threadId, before);
+  execute(context: AuthContext, threadId: string, before?: Date, beforeId?: string) {
+    return this.chatRepository.listMessagesByThread(context, threadId, before, beforeId);
   }
 }

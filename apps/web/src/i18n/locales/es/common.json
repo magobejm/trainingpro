@@ -1737,5 +1737,16 @@
   "client.notes.trainerNote": "Nota del entrenador",
   "coach.clientPreview.missingWarmup": "Calentamiento no disponible: {{name}}. Revisa su referencia.",
   "client.planning.exercisesCount_one": "{{count}} ejercicio",
-  "client.planning.exercisesCount_other": "{{count}} ejercicios"
+  "client.planning.exercisesCount_other": "{{count}} ejercicios",
+  "chat.history.loading": "Cargando mensajes anteriores…",
+  "chat.history.start": "Inicio del historial disponible",
+  "chat.history.more": "Sube para cargar mensajes anteriores",
+  "chat.history.error": "No se pudieron cargar los mensajes anteriores.",
+  "chat.history.retry": "Reintentar",
+  "chat.history.newMessages": "{{count}} mensajes nuevos",
+  "chat.history.newMessages_one": "{{count}} mensaje nuevo",
+  "chat.history.newMessages_other": "{{count}} mensajes nuevos",
+  "chat.history.refreshError": "No se han podido actualizar los mensajes.",
+  "chat.history.empty": "No hay mensajes todavía.",
+  "chat.history.today": "Hoy"
 }

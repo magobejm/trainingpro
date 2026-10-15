@@ -31,7 +31,12 @@ export class ChatController {
   listMessages(@Query() query: ListChatMessagesQueryDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const parsed = ListChatMessagesQueryDto.schema.parse(query);
-    return this.listMessagesUseCase.execute(auth, parsed.threadId, parsed.before ? new Date(parsed.before) : undefined);
+    return this.listMessagesUseCase.execute(
+      auth,
+      parsed.threadId,
+      parsed.before ? new Date(parsed.before) : undefined,
+      parsed.beforeId,
+    );
   }
 
   @Post('messages')

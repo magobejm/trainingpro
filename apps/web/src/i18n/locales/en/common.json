@@ -1737,5 +1737,16 @@
   "client.notes.trainerNote": "Trainer note",
   "coach.clientPreview.missingWarmup": "Warm-up unavailable: {{name}}. Review its reference.",
   "client.planning.exercisesCount_one": "{{count}} exercise",
-  "client.planning.exercisesCount_other": "{{count}} exercises"
+  "client.planning.exercisesCount_other": "{{count}} exercises",
+  "chat.history.loading": "Loading earlier messages…",
+  "chat.history.start": "Start of available history",
+  "chat.history.more": "Scroll up to load earlier messages",
+  "chat.history.error": "Earlier messages could not be loaded.",
+  "chat.history.retry": "Retry",
+  "chat.history.newMessages": "{{count}} new messages",
+  "chat.history.newMessages_one": "{{count}} new message",
+  "chat.history.newMessages_other": "{{count}} new messages",
+  "chat.history.refreshError": "Messages could not be refreshed.",
+  "chat.history.empty": "No messages yet.",
+  "chat.history.today": "Today"
 }

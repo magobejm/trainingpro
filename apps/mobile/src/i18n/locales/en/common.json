@@ -824,5 +824,16 @@
   "client.physicalTests.form.saving": "Saving...",
   "client.physicalTests.form.ageRequired": "Enter a valid age",
   "client.physicalTests.form.submitError": "Could not save result",
-  "client.chat.call.cancelledTitle": "Call invitation cancelled"
+  "client.chat.call.cancelledTitle": "Call invitation cancelled",
+  "chat.history.loading": "Loading earlier messages…",
+  "chat.history.start": "Start of available history",
+  "chat.history.more": "Scroll up to load earlier messages",
+  "chat.history.error": "Earlier messages could not be loaded.",
+  "chat.history.retry": "Retry",
+  "chat.history.newMessages": "{{count}} new messages",
+  "chat.history.newMessages_one": "{{count}} new message",
+  "chat.history.newMessages_other": "{{count}} new messages",
+  "chat.history.refreshError": "Messages could not be refreshed.",
+  "chat.history.empty": "No messages yet.",
+  "chat.history.today": "Today"
 }

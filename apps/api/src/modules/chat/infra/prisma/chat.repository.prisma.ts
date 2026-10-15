@@ -2,7 +2,6 @@ import { BadRequestException, ForbiddenException, Injectable, NotFoundException 
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import { ascendingByCreatedAt } from '../../domain/chat-message-page';
 import { CHAT_PAGE_SIZE } from '../../domain/chat.constants';
 import type { ChatRepositoryPort, ResolveChatThreadInput, SendChatMessageInput } from '../../domain/chat.repository.port';
 import { ChatMessagePolicy } from '../../domain/policies/chat-message.policy';
@@ -19,15 +18,25 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
     private readonly threadAccess: ChatThreadAccessService,
   ) {}
 
-  async listMessagesByThread(context: AuthContext, threadId: string, before?: Date) {
+  async listMessagesByThread(context: AuthContext, threadId: string, before?: Date, beforeId?: string) {
     await this.threadAccess.assertAccess(context, threadId);
+    if (beforeId) {
+      const cursor = await this.prisma.chatMessage.findFirst({
+        where: { id: beforeId, threadId },
+        select: { id: true },
+      });
+      if (!cursor) {
+        throw new NotFoundException('Chat message cursor not found');
+      }
+    }
     const rows = await this.prisma.chatMessage.findMany({
-      where: { threadId, ...(before ? { createdAt: { lt: before } } : {}) },
-      orderBy: { createdAt: 'desc' },
+      where: { threadId, ...(!beforeId && before ? { createdAt: { lt: before } } : {}) },
+      ...(beforeId ? { cursor: { id: beforeId }, skip: 1 } : {}),
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: CHAT_PAGE_SIZE,
       include: { attachments: true, callProposal: true },
     });
-    return ascendingByCreatedAt(rows).map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
+    return [...rows].reverse().map((row) => mapChatMessage(row, (path) => this.mediaUrls.sign(path)));
   }
 
   async resolveThread(context: AuthContext, input: ResolveChatThreadInput) {

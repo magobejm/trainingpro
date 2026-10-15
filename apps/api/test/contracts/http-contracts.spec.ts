@@ -44,6 +44,7 @@ describe('HTTP contract examples', () => {
 
   it('accepts the request examples', () => {
     ListChatMessagesQueryDto.schema.parse({ threadId: THREAD_ID });
+    ListChatMessagesQueryDto.schema.parse({ threadId: THREAD_ID, beforeId: chatMessagesExample[0]!.id });
     SessionIdParamDto.schema.parse({ sessionId: sessionExample.id });
     expect(strengthPlanListExample.items).toHaveLength(1);
   });
@@ -73,7 +74,7 @@ describe('HTTP route inventory', () => {
     expect(route(routes, 'get', '/plans/templates/strength')?.filters).toEqual(['summary']);
     expect(route(routes, 'get', '/sessions/{sessionId}')?.roles).toEqual(['coach', 'client']);
     expect(route(routes, 'get', '/chat/messages')).toMatchObject({
-      filters: ['before', 'threadId'],
+      filters: ['before', 'beforeId', 'threadId'],
       pagination: [],
       roles: ['coach', 'client'],
     });

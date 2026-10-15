@@ -37,15 +37,7 @@ export function useThreadQuery(clientId?: string) {
   });
 }
 
-export function useChatMessagesQuery(threadId: string) {
-  const auth = useAuth();
-  return useQuery({
-    enabled: Boolean(auth) && threadId.length > 0,
-    queryFn: () => createApiClient(auth!).get<ChatMessage[]>(`/chat/messages?threadId=${threadId}`),
-    queryKey: ['chat-messages', auth?.activeRole, threadId],
-    refetchInterval: Boolean(auth) && threadId.length > 0 ? 10_000 : false,
-  });
-}
+export { useChatHistoryQuery as useChatMessagesQuery } from './useChatHistoryQuery';
 
 export function useSendChatMessageMutation(threadId: string) {
   const auth = useAuth();

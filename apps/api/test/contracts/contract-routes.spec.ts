@@ -43,6 +43,32 @@ describe('contract routes', () => {
     await app.close();
   });
 
+  it('passes both supported chat cursors through HTTP without changing the response', async () => {
+    const execute = jest.fn(async () => []);
+    const app = await createChatApp(execute);
+    try {
+      const before = '2026-10-01T10:00:00.000Z';
+      const beforeId = chatMessagesExample[0]!.id;
+      await request(app.getHttpServer())
+        .get('/chat/messages')
+        .query({ threadId: THREAD_ID, before, beforeId })
+        .expect(200, []);
+      expect(execute).toHaveBeenCalledWith(
+        expect.objectContaining({ activeRole: 'coach' }),
+        THREAD_ID,
+        new Date(before),
+        beforeId,
+      );
+      await request(app.getHttpServer())
+        .get('/chat/messages')
+        .query({ threadId: THREAD_ID, beforeId: 'invalid' })
+        .expect(400);
+      expect(execute).toHaveBeenCalledTimes(1);
+    } finally {
+      await app.close();
+    }
+  });
+
   it('returns chat messages for a coach', async () => {
     expect(Reflect.getMetadata(ROLES_METADATA_KEY, ChatController)).toEqual(['coach', 'client']);
     const app = await createChatApp();

@@ -105,10 +105,12 @@ export async function createSessionApp(): Promise<INestApplication> {
   ]);
 }
 
-export async function createChatApp(): Promise<INestApplication> {
+export async function createChatApp(
+  execute: ListChatMessagesUseCase['execute'] = async () => [chatMessageFixture()],
+): Promise<INestApplication> {
   return compile(ChatController, [
     ...stub(ResolveChatThreadUseCase, SendChatMessageUseCase),
-    { provide: ListChatMessagesUseCase, useValue: { execute: async () => [chatMessageFixture()] } },
+    { provide: ListChatMessagesUseCase, useValue: { execute } },
   ]);
 }
 

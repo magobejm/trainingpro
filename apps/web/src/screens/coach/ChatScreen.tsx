@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
@@ -10,7 +10,7 @@ import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/Att
 import { clientCardItems } from './client-card-items';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
-import { ChatMessageBubble } from './components/ChatMessageBubble';
+import { ChatHistoryPanel } from '../../features/chat/ChatHistoryPanel';
 
 export function ChatScreen(): React.JSX.Element {
   const vm = useChatViewModel();
@@ -29,9 +29,7 @@ function useChatViewModel() {
   const threadId = threadQuery.data?.id ?? '';
   const messagesQuery = useChatMessagesQuery(threadId);
   const clientItems = useMemo(() => clientCardItems(clientsQuery.data ?? [], t), [clientsQuery.data, t]);
-  const composer = useMessageComposer(threadId, t);
   return {
-    ...composer,
     clientId,
     clientItems,
     clientsQuery,
@@ -58,6 +56,7 @@ function useDefaultClient(
 function useMessageComposer(threadId: string, t: (key: string) => string) {
   const sendMessage = useSendChatMessageMutation(threadId);
   const [text, setText] = useState('');
+  const [sentVersion, setSentVersion] = useState(0);
   const [error, setError] = useState('');
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
   const canSend = useMemo(() => canSendMessage(text, attachments, threadId), [attachments, text, threadId]);
@@ -65,6 +64,7 @@ function useMessageComposer(threadId: string, t: (key: string) => string) {
   const onSend = () =>
     sendChatMessage(canSend, sendMessage, {
       attachments,
+      onSent: () => setSentVersion((value) => value + 1),
       setAttachments,
       setError,
       setText,
@@ -72,7 +72,7 @@ function useMessageComposer(threadId: string, t: (key: string) => string) {
       text,
     });
   const sending = sendMessage.isPending;
-  return { attachments, canSend, error, onAttach, onSend, sending, setError, setText, text };
+  return { attachments, canSend, error, onAttach, onSend, sending, setError, setText, text, sentVersion };
 }
 
 async function sendChatMessage(
@@ -80,6 +80,7 @@ async function sendChatMessage(
   mutation: ReturnType<typeof useSendChatMessageMutation>,
   state: {
     attachments: AttachmentDraft[];
+    onSent: () => void;
     setAttachments: (value: AttachmentDraft[]) => void;
     setError: (value: string) => void;
     setText: (value: string) => void;
@@ -95,6 +96,7 @@ async function sendChatMessage(
     state.setText('');
     state.setAttachments([]);
     state.setError('');
+    state.onSent();
   } catch {
     state.setError(state.t('coach.chat.error'));
   }
@@ -105,9 +107,10 @@ function canSendMessage(text: string, attachments: AttachmentDraft[], threadId: 
   return (hasText || attachments.length > 0) && threadId.length > 0;
 }
 
-type ViewModel = ReturnType<typeof useChatViewModel>;
+type ChatModel = ReturnType<typeof useChatViewModel>;
+type ViewModel = ChatModel & ReturnType<typeof useMessageComposer>;
 
-function ChatView(props: ViewModel) {
+function ChatView(props: ChatModel) {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <ChatHeader
@@ -117,11 +120,15 @@ function ChatView(props: ViewModel) {
         retentionSubtitle={props.t('coach.chat.retention.subtitle')}
       />
       {renderClientStrip(props)}
-      <ChatConversation {...props} />
+      <ChatConversationContainer key={props.threadId} {...props} />
     </ScrollView>
   );
 }
 
+function ChatConversationContainer(props: ChatModel): React.JSX.Element {
+  const composer = useMessageComposer(props.threadId, props.t);
+  return <ChatConversation {...props} {...composer} />;
+}
 function ChatConversation(props: ViewModel): React.JSX.Element {
   const selectedClient = props.clientItems.find((client) => client.id === props.clientId);
   const initials = selectedClient?.title
@@ -173,7 +180,7 @@ function ChatComposer(props: ViewModel) {
   );
 }
 
-function renderClientStrip(props: ViewModel): React.JSX.Element {
+function renderClientStrip(props: ChatModel): React.JSX.Element {
   const status = QueryResult({
     emptyTitle: props.t('coach.clients.empty'),
     skeleton: 'rows',
@@ -190,13 +197,7 @@ function renderClientStrip(props: ViewModel): React.JSX.Element {
 }
 
 function ChatMessagesPanel(props: ViewModel): React.JSX.Element | null {
-  const scrollRef = useRef<ScrollView>(null);
   const messages = props.messagesQuery.data ?? [];
-  const lastMessageId = messages[messages.length - 1]?.id ?? '';
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: false }));
-    return () => cancelAnimationFrame(frame);
-  }, [lastMessageId, messages.length, props.threadId]);
 
   if (props.clientsQuery.isLoading || props.clientsQuery.isError || props.clientItems.length === 0) {
     return null;
@@ -208,7 +209,7 @@ function ChatMessagesPanel(props: ViewModel): React.JSX.Element | null {
     error: props.threadQuery.error ?? props.messagesQuery.error,
     isError: props.threadQuery.isError || props.messagesQuery.isError,
     isLoading: props.threadQuery.isLoading || props.messagesQuery.isLoading || waitingForThread,
-    itemCount: messages.length,
+    itemCount: messages.length || (!props.messagesQuery.isLoading && !props.messagesQuery.isError ? 1 : 0),
     onRetry: () => {
       void props.threadQuery.refetch();
       void props.messagesQuery.refetch();
@@ -217,16 +218,7 @@ function ChatMessagesPanel(props: ViewModel): React.JSX.Element | null {
   if (status) {
     return status;
   }
-  return (
-    <ScrollView
-      contentContainerStyle={styles.messages}
-      keyboardShouldPersistTaps={'handled'}
-      ref={scrollRef}
-      style={styles.messagesViewport}
-    >
-      {status ?? messages.map((message) => <ChatMessageBubble key={message.id} message={message} />)}
-    </ScrollView>
-  );
+  return <ChatHistoryPanel key={props.threadId} query={props.messagesQuery} sentVersion={props.sentVersion} t={props.t} />;
 }
 
 const styles = StyleSheet.create({

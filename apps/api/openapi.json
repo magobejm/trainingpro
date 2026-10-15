@@ -3833,7 +3833,7 @@
         ],
         "summary": "GET /chat/messages",
         "x-controller": "ChatController",
-        "x-filters": ["before", "threadId"],
+        "x-filters": ["before", "beforeId", "threadId"],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]

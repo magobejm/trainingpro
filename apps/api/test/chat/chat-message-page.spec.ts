@@ -13,6 +13,10 @@ describe('chat message page order', () => {
 });
 
 describe('chat before cursor', () => {
+  test('accepts beforeId UUID and rejects malformed ids', () => {
+    expect(ListChatMessagesQueryDto.schema.safeParse({ threadId, beforeId: threadId }).success).toBe(true);
+    expect(ListChatMessagesQueryDto.schema.safeParse({ threadId, beforeId: 'bad' }).success).toBe(false);
+  });
   test('accepts an offset datetime and rejects a date without time', () => {
     const accepted = ListChatMessagesQueryDto.schema.safeParse({ before: '2026-03-01T00:00:00.000Z', threadId });
     const rejected = ListChatMessagesQueryDto.schema.safeParse({ before: '2026-03-01', threadId });

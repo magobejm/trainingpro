@@ -70,3 +70,14 @@ export * from './client-plan/types';
 export * from './client-plan/nutrition';
 export * from './client-plan/exercise-groups';
 export * from './client-plan/routine-sets';
+
+export {
+  CHAT_HISTORY_PAGE_SIZE,
+  compareChatMessages,
+  emptyChatHistory,
+  fetchChatRecent,
+  mergeChatHistory,
+  mergeChatMessages,
+  type ChatHistory,
+  type FetchChatPage,
+} from './chat-history';

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Banner } from '@trainerpro/ui';
 import '../../i18n';
 import {
@@ -15,6 +15,7 @@ import { CALL_COLOR, CALL_REQUEST_COLOR } from '../client/calendar-fixed-colors'
 import { CallTimeSelect } from '../client/CallTimeSelect';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { LIGHT } from '../../theme/light';
+import { ChatHistoryList } from './ChatHistoryList';
 
 type ChatScreenProps = {
   clientId?: string;
@@ -23,27 +24,47 @@ type ChatScreenProps = {
 };
 
 export function ChatScreen(props: ChatScreenProps): React.JSX.Element {
-  const vm = useChatViewModel(props.initialMessage, props.clientId);
+  const threadQuery = useThreadQuery(props.clientId);
+  const threadId = threadQuery.data?.id;
+  if (!threadId) return <ThreadStatus embedded={props.embedded} query={threadQuery} />;
+  return <ConversationChat key={threadId} {...props} threadId={threadId} />;
+}
+
+function ConversationChat(props: ChatScreenProps & { threadId: string }): React.JSX.Element {
+  const vm = useChatViewModel(props.threadId, props.initialMessage);
   return <ChatView embedded={props.embedded} {...vm} />;
 }
 
-function useChatViewModel(initialMessage?: string, clientId?: string) {
+function useChatViewModel(threadId: string, initialMessage?: string) {
   const { t } = useTranslation();
-  const threadId = useThreadId(clientId);
   const messagesQuery = useChatMessagesQuery(threadId);
   const composer = useMessageComposer(threadId, t, initialMessage);
   return { ...composer, messagesQuery, t, threadId };
 }
 
-function useThreadId(clientId?: string): string {
-  const threadQuery = useThreadQuery(clientId);
-  return threadQuery.data?.id ?? '';
+function ThreadStatus(props: { embedded?: boolean; query: ReturnType<typeof useThreadQuery> }) {
+  const { t } = useTranslation();
+  return (
+    <View style={[styles.page, props.embedded && styles.pageEmbedded]}>
+      {props.query.isError ? (
+        <View>
+          <Text style={styles.error}>{t('chat.history.refreshError')}</Text>
+          <Pressable accessibilityRole={'button'} onPress={() => void props.query.refetch()}>
+            <Text style={styles.error}>{t('chat.history.retry')}</Text>
+          </Pressable>
+        </View>
+      ) : (
+        <ActivityIndicator color={LIGHT.accent} />
+      )}
+    </View>
+  );
 }
 
 function useMessageComposer(threadId: string, t: (key: string) => string, initialMessage?: string) {
   const sendMessage = useSendChatMessageMutation(threadId);
   const [text, setText] = useState(initialMessage ?? '');
   const [error, setError] = useState('');
+  const [sentVersion, setSentVersion] = useState(0);
   const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
   useEffect(() => {
     if (initialMessage) setText(initialMessage);
@@ -56,10 +77,11 @@ function useMessageComposer(threadId: string, t: (key: string) => string, initia
       setAttachments,
       setError,
       setText,
+      onSent: () => setSentVersion((version) => version + 1),
       t,
       text,
     });
-  return { attachments, canSend, error, onAttach, onSend, setError, setText, text };
+  return { attachments, canSend, error, onAttach, onSend, sentVersion, setError, setText, text };
 }
 
 async function sendChatMessage(
@@ -72,6 +94,7 @@ async function sendChatMessage(
     setText: (value: string) => void;
     t: (key: string) => string;
     text: string;
+    onSent: () => void;
   },
 ): Promise<void> {
   if (!canSend) return;
@@ -80,6 +103,7 @@ async function sendChatMessage(
     state.setText('');
     state.setAttachments([]);
     state.setError('');
+    state.onSent();
   } catch {
     state.setError(state.t('client.chat.error'));
   }
@@ -119,12 +143,11 @@ function ChatView(props: ViewModel) {
           title={props.t('client.chat.title')}
         />
       )}
-      <ScrollView contentContainerStyle={styles.messagesScroll} style={styles.messagesArea}>
-        <View style={styles.todayPill}>
-          <Text style={styles.todayPillText}>{props.t('mobile.client.chat.today')}</Text>
-        </View>
-        <View style={styles.messages}>{renderMessages(props.messagesQuery.data ?? [], props.t)}</View>
-      </ScrollView>
+      <ChatHistoryList
+        query={props.messagesQuery}
+        renderMessage={(message) => <MessageBubble message={message} />}
+        sentVersion={props.sentVersion}
+      />
       <ChatComposer {...props} embedded={props.embedded} />
     </>
   );
@@ -132,7 +155,7 @@ function ChatView(props: ViewModel) {
   if (props.embedded) {
     return <View style={[styles.page, styles.pageEmbedded]}>{content}</View>;
   }
-  return <ScrollView contentContainerStyle={styles.page}>{content}</ScrollView>;
+  return <View style={styles.page}>{content}</View>;
 }
 
 function ChatHeader(props: { retentionTitle: string; subtitle: string; title: string }) {
@@ -170,13 +193,6 @@ function ChatComposer(props: ViewModel & { embedded?: boolean }) {
       </Pressable>
     </View>
   );
-}
-
-function renderMessages(messages: ChatMessage[], t: (key: string) => string) {
-  if (messages.length === 0) {
-    return <Text style={styles.empty}>{t('client.chat.empty')}</Text>;
-  }
-  return messages.map((message) => <MessageBubble key={message.id} message={message} />);
 }
 
 function MessageBubble(props: { message: ChatMessage }) {
@@ -285,7 +301,8 @@ const styles = StyleSheet.create({
   page: {
     backgroundColor: LIGHT.bgSoft,
     gap: 10,
-    minHeight: '100%',
+    flex: 1,
+    minHeight: 0,
     padding: 14,
   },
   pageEmbedded: {
@@ -313,22 +330,6 @@ const styles = StyleSheet.create({
   },
   embeddedCoachName: { color: LIGHT.textOnNavy, fontSize: 16, fontWeight: '800' },
   embeddedOnline: { color: LIGHT.emeraldSoft, fontSize: 12, fontWeight: '500' },
-  messagesArea: { flex: 1 },
-  messagesScroll: { gap: 8, padding: 16, paddingBottom: 8 },
-  todayPill: {
-    alignSelf: 'center',
-    backgroundColor: LIGHT.accentSoft,
-    borderRadius: LIGHT.radiusSm,
-    marginBottom: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-  },
-  todayPillText: {
-    color: LIGHT.accent,
-    fontSize: 11,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
   attachmentImage: { borderRadius: 8, height: 140, marginTop: 6, width: 180 },
   attachmentItem: { color: LIGHT.textMuted, fontSize: 11, fontWeight: '600' },
   attachmentLink: { color: LIGHT.accent, fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
@@ -352,7 +353,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   bubbleText: { color: LIGHT.textStrong, fontSize: 15 },
-  empty: { color: LIGHT.textMuted, fontSize: 13 },
   error: { color: LIGHT.error, fontSize: 12, fontWeight: '700' },
   inputPanel: {
     backgroundColor: LIGHT.bg,
@@ -372,7 +372,6 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   inputRow: { alignItems: 'flex-end', flexDirection: 'row' },
-  messages: { gap: 8, width: '100%' },
   sendButton: {
     alignItems: 'center',
     alignSelf: 'flex-end',

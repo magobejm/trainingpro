@@ -1,3 +1,31 @@
+import { sessionOutcome, type SessionOutcome } from '@trainerpro/shared';
+
+export type WorkoutMark = {
+  outcome: SessionOutcome;
+  sessionId: string;
+  skipReason: string | null;
+};
+
+export type SessionOutcomeRow = {
+  clientId: string;
+  id: string;
+  isCompleted: boolean;
+  isIncomplete: boolean;
+  planDayId: string | null;
+  sessionDate: Date;
+  skipReason: string | null;
+  skippedAt: Date | null;
+  status: string;
+};
+
+const OUTCOME_RANK: Record<SessionOutcome, number> = {
+  done: 4,
+  incomplete: 3,
+  in_progress: 2,
+  pending: 0,
+  skipped: 1,
+};
+
 export function completedDayKey(clientId: string | null, date: Date): string {
   return `${clientId ?? ''}|${date.toISOString().slice(0, 10)}`;
 }
@@ -20,4 +48,51 @@ export function isWorkoutCompleted(
 ): boolean {
   if (planDayId) return keys.has(completedWorkoutKey(clientId, date, planDayId));
   return keys.has(completedDayKey(clientId, date));
+}
+
+export function indexSessionOutcomes(rows: SessionOutcomeRow[]): {
+  done: Set<string>;
+  marks: Map<string, WorkoutMark>;
+} {
+  const done = new Set<string>();
+  const marks = new Map<string, WorkoutMark>();
+  for (const row of rows) rememberIndexedSession(done, marks, row);
+  return { done, marks };
+}
+
+export function readWorkoutMark(
+  marks: Map<string, WorkoutMark>,
+  clientId: string | null,
+  date: Date,
+  planDayId: string | null,
+): WorkoutMark | null {
+  const key = planDayId ? completedWorkoutKey(clientId, date, planDayId) : completedDayKey(clientId, date);
+  return marks.get(key) ?? null;
+}
+
+export function workoutEventFields(mark: WorkoutMark | null): {
+  isCompleted: boolean;
+  outcome: SessionOutcome;
+  sessionId: string | null;
+  skipReason: string | null;
+} {
+  return {
+    isCompleted: mark?.outcome === 'done',
+    outcome: mark?.outcome ?? 'pending',
+    sessionId: mark?.sessionId ?? null,
+    skipReason: mark?.skipReason ?? null,
+  };
+}
+
+function rememberIndexedSession(done: Set<string>, marks: Map<string, WorkoutMark>, row: SessionOutcomeRow): void {
+  const outcome = sessionOutcome(row);
+  const mark = { outcome, sessionId: row.id, skipReason: row.skipReason };
+  if (row.planDayId) putMark(marks, completedWorkoutKey(row.clientId, row.sessionDate, row.planDayId), mark);
+  putMark(marks, completedDayKey(row.clientId, row.sessionDate), mark);
+  if (outcome === 'done') rememberCompletedSession(done, row.clientId, row.sessionDate, row.planDayId);
+}
+
+function putMark(marks: Map<string, WorkoutMark>, key: string, mark: WorkoutMark): void {
+  const current = marks.get(key);
+  if (!current || OUTCOME_RANK[mark.outcome] >= OUTCOME_RANK[current.outcome]) marks.set(key, mark);
 }

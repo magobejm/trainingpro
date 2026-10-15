@@ -58,6 +58,7 @@ export function DayDetailModal({
           ) : null}
           <CalendarWorkoutList
             data={data}
+            dateStr={dateStr}
             exerciseCountFor={exerciseCountFor}
             onOpenPlanDay={(planDayId, view) => onOpenPlanDay?.(planDayId, view)}
             onOpenSession={onOpenSession}

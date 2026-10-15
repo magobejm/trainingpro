@@ -78,6 +78,8 @@ describe('HTTP route inventory', () => {
       roles: ['coach', 'client'],
     });
     expect(route(routes, 'get', '/clients/me/exercises/{sourceExerciseId}/history')?.pagination).toEqual(['limit']);
+    expect(route(routes, 'post', '/clients/me/sessions/skip')?.roles).toEqual(['client']);
+    expect(route(routes, 'delete', '/clients/me/sessions/{sessionId}/skip')?.roles).toEqual(['client']);
     expect(routes.length).toBeGreaterThan(40);
   });
 

@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import type { SessionOutcome } from '@trainerpro/shared';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import { isWorkoutCompleted, rememberCompletedSession } from '../../../calendar/domain/completed-workout';
+import { indexSessionOutcomes, readWorkoutMark, workoutEventFields } from '../../../calendar/domain/completed-workout';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 
 export type ClientCalendarEvent = {
@@ -17,6 +19,9 @@ export type ClientCalendarEvent = {
   isCompleted: boolean;
   lastProposedBy?: 'CLIENT' | 'COACH';
   originDate: string | null;
+  outcome?: SessionOutcome;
+  sessionId?: string | null;
+  skipReason?: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
   proposalId?: string;
@@ -57,7 +62,7 @@ export class ListClientCalendarUseCase {
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'desc' }],
     });
-    const completed = await this.loadCompletedDays(client.id, input);
+    const marks = await this.loadWorkoutMarks(client.id, input);
     const notes = await this.loadClientNotes(client.id, input);
     const pending = await this.loadPendingProposals(client.id, input);
     const tests = await this.physicalTests.listScheduleCalendarRows({
@@ -81,20 +86,25 @@ export class ListClientCalendarUseCase {
           title: test.testName,
           type: 'physical_test',
         })),
-        ...rows.map((r) => ({
-          id: r.id,
-          type: r.type,
-          ...(r.type === 'call' ? { callStatus: 'accepted' as const } : {}),
-          date: r.date,
-          title: r.title,
-          content: r.content,
-          time: r.time,
-          color: r.color,
-          isCompleted: r.type === 'workout' && isWorkoutCompleted(completed, client.id, r.date, r.planDayId),
-          originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
-          planDayId: r.planDayId,
-          planDayTitle: r.planDay?.title,
-        })),
+        ...rows.map((r) => {
+          const workout =
+            r.type === 'workout' ? workoutEventFields(readWorkoutMark(marks, client.id, r.date, r.planDayId)) : null;
+          return {
+            id: r.id,
+            type: r.type,
+            ...(r.type === 'call' ? { callStatus: 'accepted' as const } : {}),
+            date: r.date,
+            title: r.title,
+            content: r.content,
+            time: r.time,
+            color: r.color,
+            isCompleted: workout?.isCompleted ?? false,
+            originDate: r.originDate ? r.originDate.toISOString().slice(0, 10) : null,
+            planDayId: r.planDayId,
+            planDayTitle: r.planDay?.title,
+            ...(workout ?? {}),
+          };
+        }),
         ...notes,
         ...pending,
       ],
@@ -150,19 +160,26 @@ export class ListClientCalendarUseCase {
     }));
   }
 
-  private async loadCompletedDays(clientId: string, input: ListClientCalendarInput): Promise<Set<string>> {
+  private async loadWorkoutMarks(clientId: string, input: ListClientCalendarInput) {
+    await closeStaleSessions(this.prisma, { clientId });
     const rows = await this.prisma.sessionInstance.findMany({
+      select: {
+        id: true,
+        isCompleted: true,
+        isIncomplete: true,
+        planDayId: true,
+        sessionDate: true,
+        skipReason: true,
+        skippedAt: true,
+        status: true,
+      },
       where: {
         archivedAt: null,
         clientId,
-        isCompleted: true,
         sessionDate: { gte: input.dateFrom, lte: input.dateTo },
       },
-      select: { planDayId: true, sessionDate: true },
     });
-    const keys = new Set<string>();
-    for (const row of rows) rememberCompletedSession(keys, clientId, row.sessionDate, row.planDayId);
-    return keys;
+    return indexSessionOutcomes(rows.map((row) => ({ ...row, clientId }))).marks;
   }
 
   private async resolveClient(context: AuthContext) {

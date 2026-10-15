@@ -43,6 +43,7 @@ export function CalendarWeekView(props: Props): React.JSX.Element {
           <Text style={styles.kicker}>{dateLabel}</Text>
           <CalendarWorkoutList
             data={props.data}
+            dateStr={formatKey(props.selectedDate)}
             exerciseCountFor={props.exerciseCountFor}
             onOpenPlanDay={props.onOpenPlanDay}
             onOpenSession={props.onOpenSession}

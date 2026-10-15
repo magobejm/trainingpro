@@ -4,10 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { weekdayName } from '@trainerpro/shared';
 import '../../i18n';
 import type { DayData, DayWorkout, PlanDayView } from './client-calendar.helpers';
+import { WorkoutSkipActions } from './client-calendar-skip';
+import { formatLocalDate } from './routine-schedule.utils';
 import { LIGHT } from '../../theme/light';
 
 type Props = {
   data: DayData | undefined;
+  dateStr: string;
   exerciseCountFor: (planDayId: string | null) => number | null;
   onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession?: (sessionId: string) => void;
@@ -29,11 +32,13 @@ export function CalendarWorkoutList(props: Props): React.JSX.Element {
       {workouts.map((workout, index) => (
         <WorkoutRow
           count={props.exerciseCountFor(workout.planDayId)}
+          dateStr={props.dateStr}
           key={`${workout.planDayId ?? 'workout'}-${String(index)}`}
           language={i18n.language}
           onOpenPlanDay={props.onOpenPlanDay}
           onOpenSession={props.onOpenSession}
           t={t}
+          todayStr={formatLocalDate(new Date())}
           workout={workout}
         />
       ))}
@@ -43,10 +48,12 @@ export function CalendarWorkoutList(props: Props): React.JSX.Element {
 
 function WorkoutRow(props: {
   count: number | null;
+  dateStr: string;
   language: string;
   onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession?: (sessionId: string) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
+  todayStr: string;
   workout: DayWorkout;
 }): React.JSX.Element {
   const title = props.workout.title || props.t('client.calendar.chip.workout');
@@ -57,8 +64,10 @@ function WorkoutRow(props: {
         onPress={() => {
           if (props.workout.planDayId) {
             props.onOpenPlanDay(props.workout.planDayId, {
+              outcome: props.workout.outcome,
               performed: props.workout.done,
               sessionId: props.workout.sessionId,
+              skipReason: props.workout.skipReason,
             });
           }
         }}
@@ -74,6 +83,13 @@ function WorkoutRow(props: {
         ) : null}
         <WorkoutStatus language={props.language} t={props.t} workout={props.workout} />
       </Pressable>
+      <WorkoutSkipActions
+        dateStr={props.dateStr}
+        onOpenSession={props.onOpenSession}
+        t={props.t}
+        todayStr={props.todayStr}
+        workout={props.workout}
+      />
       {props.workout.done && props.workout.sessionId && props.onOpenSession ? (
         <Pressable onPress={() => props.onOpenSession?.(props.workout.sessionId!)} style={styles.sessionButton}>
           <Text style={styles.sessionButtonText}>{props.t('client.calendar.detail.viewSession')}</Text>
@@ -83,15 +99,28 @@ function WorkoutRow(props: {
   );
 }
 
+function statusLabel(outcome: DayWorkout['outcome'], t: Translate): string | null {
+  if (outcome === 'done') return t('client.calendar.workout.done');
+  if (outcome === 'incomplete') return t('client.calendar.workout.incomplete');
+  if (outcome === 'skipped') return t('client.calendar.workout.skipped');
+  return null;
+}
+
+type Translate = (key: string, options?: Record<string, unknown>) => string;
+
 function WorkoutStatus(props: {
   language: string;
   t: (key: string, options?: Record<string, unknown>) => string;
   workout: DayWorkout;
 }): React.JSX.Element | null {
-  if (!props.workout.done) return null;
+  const label = statusLabel(props.workout.outcome, props.t);
+  if (!label && !props.workout.skipReason) return null;
   return (
     <View>
-      <Text style={styles.meta}>{props.t('client.calendar.workout.done')}</Text>
+      {label ? <Text style={styles.meta}>{label}</Text> : null}
+      {props.workout.outcome === 'skipped' && props.workout.skipReason ? (
+        <Text style={styles.meta}>{props.workout.skipReason}</Text>
+      ) : null}
       {props.workout.shift && props.workout.originDate ? (
         <Text style={styles.meta}>
           {props.t(`client.calendar.workout.${props.workout.shift}`, {

@@ -37,6 +37,7 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
       visible={Boolean(props.sessionId)}
     >
       {query.isLoading ? <LoadingState label={t('coach.progress.loading')} /> : null}
+      {query.data?.isIncomplete ? <Text style={styles.notice}>{t('coach.progress.sessionDetail.incomplete')}</Text> : null}
       <View>
         {(query.data?.items ?? []).map((item) => {
           const rows = comparePlannedAndLogged(item);
@@ -56,7 +57,7 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
                 <View key={row.setIndex} style={styles.tableRow}>
                   <Text style={styles.cell}>{row.setIndex}</Text>
                   {row.cells.map((cell) => (
-                    <ComparedValueCell cell={cell} key={cell.key} />
+                    <ComparedValueCell cell={cell} incomplete={query.data?.isIncomplete === true} key={cell.key} />
                   ))}
                 </View>
               ))}
@@ -68,14 +69,14 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
   );
 }
 
-function ComparedValueCell(props: { cell: ComparedCell }): React.JSX.Element {
-  return (
-    <Text style={[styles.cell, props.cell.differs && styles.differs]}>{`${props.cell.planned} / ${props.cell.done}`}</Text>
-  );
+function ComparedValueCell(props: { cell: ComparedCell; incomplete: boolean }): React.JSX.Element {
+  const done = props.incomplete && props.cell.done === '-' ? '—' : props.cell.done;
+  return <Text style={[styles.cell, props.cell.differs && styles.differs]}>{`${props.cell.planned} / ${done}`}</Text>;
 }
 
 const styles = StyleSheet.create({
   block: { marginBottom: space.lg },
+  notice: { color: colors.textMuted, fontSize: fontSize.sm, marginBottom: space.md },
   blockTitle: { fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
   cell: { flex: 1, fontSize: fontSize.xs },
   differs: { color: colors.warning, fontWeight: '700' },

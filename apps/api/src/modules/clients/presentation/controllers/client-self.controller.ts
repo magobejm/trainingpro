@@ -1,4 +1,18 @@
-import { Body, Controller, Get, Inject, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  Inject,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -15,12 +29,19 @@ import { GetClientPlanDayUseCase } from '../../application/use-cases/get-client-
 import { GetClientRoutineUseCase } from '../../application/use-cases/get-client-routine.usecase';
 import { ListClientCalendarUseCase } from '../../application/use-cases/list-client-calendar.usecase';
 import { ListClientSessionsUseCase } from '../../application/use-cases/list-client-sessions.usecase';
+import {
+  SkipClientSessionUseCase,
+  UndoClientSessionSkipUseCase,
+} from '../../application/use-cases/skip-client-session.usecase';
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { SaveClientDayNoteUseCase } from '../../application/use-cases/save-client-day-note.usecase';
 import type { ClientRoutine } from '../../domain/client-routine';
 import { ClientCalendarQueryDto, ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientDayNoteParamDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
 import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dto';
+import { SkipClientSessionDto } from '../dto/skip-client-session.dto';
+import { SessionIdParamDto } from '../../../sessions/presentation/dto/session-id-param.dto';
+import { readTimezoneOffset } from '../../../sessions/presentation/read-timezone-offset';
 import { mapClientOutput } from './clients.controller.mappers';
 
 @Controller('clients')
@@ -38,6 +59,8 @@ export class ClientSelfController {
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
+    private readonly skipClientSessionUseCase: SkipClientSessionUseCase,
+    private readonly undoClientSessionSkipUseCase: UndoClientSessionSkipUseCase,
     @Inject(FILE_STORAGE)
     private readonly storage: FileStoragePort,
     private readonly mediaUrls: PrivateMediaUrlSigner,
@@ -108,7 +131,11 @@ export class ClientSelfController {
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),
     });
-    return rows.map((r) => ({ ...r, sessionDate: r.sessionDate.toISOString().slice(0, 10) }));
+    return rows.map((r) => ({
+      ...r,
+      sessionDate: r.sessionDate.toISOString().slice(0, 10),
+      skippedAt: r.skippedAt ? r.skippedAt.toISOString() : null,
+    }));
   }
 
   @Get('me/calendar-summary')
@@ -129,6 +156,25 @@ export class ClientSelfController {
       dateFrom: new Date(dateFrom),
       dateTo: new Date(dateTo),
     });
+  }
+
+  @Post('me/sessions/skip')
+  async skipMySession(
+    @Body() body: SkipClientSessionDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    return this.skipClientSessionUseCase.execute(readAuthContext(request), {
+      offsetMinutes: readTimezoneOffset(timezoneOffset),
+      planDayId: body.planDayId,
+      reason: body.reason,
+      sessionDate: new Date(body.sessionDate),
+    });
+  }
+
+  @Delete('me/sessions/:sessionId/skip')
+  async undoMySessionSkip(@Param() params: SessionIdParamDto, @Req() request: HttpAuthRequest) {
+    return this.undoClientSessionSkipUseCase.execute(readAuthContext(request), params.sessionId);
   }
 
   @Post('me/sessions/ensure')

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 
@@ -14,6 +14,9 @@ export type ClientCalendarEvent = {
   initiatedBy?: 'CLIENT' | 'COACH';
   isCompleted?: boolean;
   lastProposedBy?: 'CLIENT' | 'COACH';
+  outcome?: 'done' | 'incomplete' | 'in_progress' | 'pending' | 'skipped';
+  sessionId?: string | null;
+  skipReason?: string | null;
   originDate?: string | null;
   planDayId: string | null;
   planDayTitle: string | undefined;
@@ -27,6 +30,9 @@ export type ClientSessionSummary = {
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';
   isCompleted: boolean;
   isIncomplete: boolean;
+  outcome?: 'done' | 'incomplete' | 'in_progress' | 'pending' | 'skipped';
+  skipReason?: string | null;
+  skippedAt?: string | null;
   planDayId: string | null;
   planDayIndex: number | null;
   planDayTitle: string | null;
@@ -83,6 +89,32 @@ export function useSaveClientDayNoteMutation() {
   });
 }
 
+export function useSkipClientSessionMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { planDayId: string; reason?: string; sessionDate: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).post('/clients/me/sessions/skip', input, {
+        'x-timezone-offset': String(new Date().getTimezoneOffset()),
+      });
+    },
+    onSuccess: () => invalidateCalendar(queryClient),
+  });
+}
+
+export function useUndoSkipClientSessionMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).delete(`/clients/me/sessions/${sessionId}/skip`);
+    },
+    onSuccess: () => invalidateCalendar(queryClient),
+  });
+}
+
 export function useCreateCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -111,6 +143,12 @@ export function useCancelCallProposalMutation() {
       void queryClient.invalidateQueries({ queryKey: ['chat-messages'] });
     },
   });
+}
+
+function invalidateCalendar(queryClient: QueryClient): void {
+  void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+  void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'sessions'] });
+  void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar-summary'] });
 }
 
 function useAuth() {

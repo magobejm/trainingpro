@@ -4,7 +4,9 @@ import { useAuthStore } from '../../store/auth.store';
 import type { SessionCompareItem } from '../../screens/coach/progress/session-compare.helpers';
 
 export type CoachSessionDetail = {
+  finishedAt: string | null;
   id: string;
+  isIncomplete: boolean;
   items: SessionCompareItem[];
   sessionDate: string;
   status: 'COMPLETED' | 'IN_PROGRESS' | 'PENDING';

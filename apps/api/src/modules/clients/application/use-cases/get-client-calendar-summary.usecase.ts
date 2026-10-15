@@ -1,12 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 
 export type ClientCalendarSummary = {
   completedDays: number;
   currentStreakWeeks: number;
   avgMotivation: number | null;
 };
+
+export function countsAsDoneSession(row: { isCompleted: boolean; isIncomplete: boolean }): boolean {
+  return row.isCompleted && !row.isIncomplete;
+}
 
 type GetClientCalendarSummaryInput = {
   dateFrom: Date;
@@ -19,11 +24,12 @@ export class GetClientCalendarSummaryUseCase {
 
   async execute(context: AuthContext, input: GetClientCalendarSummaryInput): Promise<ClientCalendarSummary> {
     const client = await this.resolveClient(context);
+    await closeStaleSessions(this.prisma, { clientId: client.id });
     const [rangeRows, streakRows] = await Promise.all([
       this.queryRange(client.id, input.dateFrom, input.dateTo),
       this.queryStreakSessions(client.id),
     ]);
-    const completedRows = rangeRows.filter((r) => r.isCompleted);
+    const completedRows = rangeRows.filter((r) => countsAsDoneSession(r));
     const completedDays = completedRows.length;
     const motivations = completedRows.filter((r) => r.preMotivation !== null).map((r) => r.preMotivation!);
     const avgMotivation = motivations.length > 0 ? motivations.reduce((a, b) => a + b, 0) / motivations.length : null;
@@ -34,7 +40,7 @@ export class GetClientCalendarSummaryUseCase {
   private async queryRange(clientId: string, dateFrom: Date, dateTo: Date) {
     return this.prisma.sessionInstance.findMany({
       where: { clientId, archivedAt: null, sessionDate: { gte: dateFrom, lte: dateTo } },
-      select: { isCompleted: true, preMotivation: true },
+      select: { isCompleted: true, isIncomplete: true, preMotivation: true },
     });
   }
 
@@ -42,7 +48,7 @@ export class GetClientCalendarSummaryUseCase {
     const since = new Date();
     since.setDate(since.getDate() - 365);
     return this.prisma.sessionInstance.findMany({
-      where: { clientId, archivedAt: null, isCompleted: true, sessionDate: { gte: since } },
+      where: { clientId, archivedAt: null, isCompleted: true, isIncomplete: false, sessionDate: { gte: since } },
       select: { sessionDate: true },
       orderBy: { sessionDate: 'desc' },
     });

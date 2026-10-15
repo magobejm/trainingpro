@@ -1327,6 +1327,8 @@ model SessionInstance {
   finishedAt            DateTime?             @map("finished_at") @db.Timestamptz(6)
   isCompleted           Boolean               @default(false) @map("is_completed")
   isIncomplete          Boolean               @default(false) @map("is_incomplete")
+  skippedAt             DateTime?             @map("skipped_at") @db.Timestamptz(6)
+  skipReason            String?               @map("skip_reason") @db.VarChar(280)
   finishComment         String?               @map("finish_comment")
   status                SessionStatus         @default(PENDING)
   startMode             SessionStartMode?     @map("start_mode")

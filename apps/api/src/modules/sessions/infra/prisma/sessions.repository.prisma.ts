@@ -30,6 +30,7 @@ import type {
 } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import { finishIfOpen } from './session-concurrency';
+import { closeStaleSessions } from './session-stale';
 import { persistEnsuredSession } from './session-ensure';
 import {
   assertSessionMutable,
@@ -156,6 +157,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   async getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null> {
+    await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: sessionInclude(),
@@ -261,6 +263,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
         preFatigue: input.preFatigue ?? null,
         preMotivation: input.preMotivation ?? null,
         preRecovery: input.preRecovery ?? null,
+        skipReason: null,
+        skippedAt: null,
         startMode: input.startMode ?? null,
         startedAt: new Date(),
         status: SessionStatus.IN_PROGRESS,
@@ -304,6 +308,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   private async readSessionForMutation(sessionId: string) {
+    await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: sessionInclude(),

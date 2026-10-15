@@ -1,13 +1,15 @@
-import { workoutShift, type WorkoutShift } from '@trainerpro/shared';
+import { sessionOutcome, workoutShift, type SessionOutcome, type WorkoutShift } from '@trainerpro/shared';
 import type { ClientCalendarEvent, ClientSessionSummary } from '../../data/hooks/useClientCalendar';
 
 export type DayWorkout = {
   color: string | null;
   done: boolean;
   originDate: string | null;
+  outcome: SessionOutcome;
   planDayId: string | null;
   sessionId: string | null;
   shift: WorkoutShift | null;
+  skipReason: string | null;
   title: string;
 };
 
@@ -144,8 +146,10 @@ export function todayAttentionCount(events: ClientCalendarEvent[], today: Date):
 }
 
 export type PlanDayView = {
+  outcome: SessionOutcome;
   performed: boolean;
   sessionId: string | null;
+  skipReason: string | null;
 };
 
 export const MOOD_EMOJI: Record<number, string> = {
@@ -179,13 +183,16 @@ function emptyDay(): DayData {
 }
 
 function workoutFromSession(session: ClientSessionSummary): DayWorkout {
+  const outcome = session.outcome ?? sessionOutcome(session);
   return {
     color: null,
-    done: session.isCompleted,
+    done: outcome === 'done',
     originDate: null,
+    outcome,
     planDayId: session.planDayId,
     sessionId: session.id,
     shift: null,
+    skipReason: session.skipReason ?? null,
     title: session.planDayTitle ?? '',
   };
 }
@@ -206,14 +213,17 @@ function applyEvent(day: DayData, event: ClientCalendarEvent, dateStr: string): 
 }
 
 function workoutFromEvent(event: ClientCalendarEvent, dateStr: string): DayWorkout {
-  const shift = event.isCompleted ? workoutShift(dateStr, event.originDate) : null;
+  const outcome = event.outcome ?? (event.isCompleted ? 'done' : 'pending');
+  const shift = outcome === 'done' ? workoutShift(dateStr, event.originDate) : null;
   return {
     color: event.color,
-    done: Boolean(event.isCompleted),
+    done: outcome === 'done',
     originDate: shift ? (event.originDate ?? null) : null,
+    outcome,
     planDayId: event.planDayId,
-    sessionId: null,
+    sessionId: event.sessionId ?? null,
     shift,
+    skipReason: event.skipReason ?? null,
     title: (event.planDayTitle ?? event.title ?? '').trim(),
   };
 }
@@ -234,13 +244,25 @@ function addWorkout(day: DayData, workout: DayWorkout): void {
   day.originDate = shifted?.originDate ?? null;
 }
 
+function outcomeRank(outcome: SessionOutcome): number {
+  if (outcome === 'done') return 4;
+  if (outcome === 'incomplete') return 3;
+  if (outcome === 'in_progress') return 2;
+  if (outcome === 'skipped') return 1;
+  return 0;
+}
+
 function sameWorkout(item: DayWorkout, workout: DayWorkout): boolean {
   if (workout.planDayId && item.planDayId) return item.planDayId === workout.planDayId;
   return Boolean(workout.title) && item.title === workout.title;
 }
 
 function mergeWorkout(item: DayWorkout, workout: DayWorkout): void {
-  if (workout.done) item.done = true;
+  if (outcomeRank(workout.outcome) >= outcomeRank(item.outcome)) {
+    item.done = workout.outcome === 'done';
+    item.outcome = workout.outcome;
+    item.skipReason = workout.skipReason;
+  }
   if (workout.sessionId) item.sessionId = workout.sessionId;
   if (workout.title) item.title = workout.title;
   if (workout.planDayId) item.planDayId = workout.planDayId;

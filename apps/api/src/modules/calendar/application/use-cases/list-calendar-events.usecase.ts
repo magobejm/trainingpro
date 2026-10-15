@@ -3,6 +3,7 @@ import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import {
   CALENDAR_REPOSITORY,
   type CalendarEventEntity,
@@ -10,7 +11,7 @@ import {
   type ListCalendarEventsQuery,
 } from '../../domain/calendar.repository.port';
 import { pendingProposalAsEvent, withCallStatus } from '../../domain/call-status';
-import { isWorkoutCompleted, rememberCompletedSession } from '../../domain/completed-workout';
+import { indexSessionOutcomes, readWorkoutMark, workoutEventFields } from '../../domain/completed-workout';
 
 @Injectable()
 export class ListCalendarEventsUseCase {
@@ -27,16 +28,20 @@ export class ListCalendarEventsUseCase {
     }
     const membership = await this.readCoachMembership(context.subject);
     const events = await this.calendarRepository.list(membership.id, query);
-    const completed = await this.loadCompletedDays(membership.id, query);
+    const marks = await this.loadWorkoutMarks(membership.id, query);
     const pending = await this.loadPendingProposals(membership.id, query);
     const tests = query.coachOnly ? [] : await this.loadPhysicalTests(membership.id, query);
     return {
       data: [
-        ...events.map((event) => ({
-          ...withCallStatus(event),
-          isCompleted:
-            event.type === 'workout' && isWorkoutCompleted(completed, event.clientId, event.date, event.planDayId),
-        })),
+        ...events.map((event) => {
+          const mark = readWorkoutMark(marks, event.clientId, event.date, event.planDayId);
+          const workout = event.type === 'workout' ? workoutEventFields(mark) : null;
+          return {
+            ...withCallStatus(event),
+            isCompleted: workout ? workout.isCompleted : Boolean(event.isCompleted),
+            ...(workout ?? {}),
+          };
+        }),
         ...pending,
         ...tests,
       ],
@@ -103,20 +108,28 @@ export class ListCalendarEventsUseCase {
     );
   }
 
-  private async loadCompletedDays(coachMembershipId: string, query: ListCalendarEventsQuery): Promise<Set<string>> {
+  private async loadWorkoutMarks(coachMembershipId: string, query: ListCalendarEventsQuery) {
+    await closeStaleSessions(this.prisma, { clientId: query.clientId, coachMembershipId });
     const rows = await this.prisma.sessionInstance.findMany({
+      select: {
+        clientId: true,
+        id: true,
+        isCompleted: true,
+        isIncomplete: true,
+        planDayId: true,
+        sessionDate: true,
+        skipReason: true,
+        skippedAt: true,
+        status: true,
+      },
       where: {
         archivedAt: null,
         coachMembershipId,
-        isCompleted: true,
         sessionDate: { gte: query.dateFrom, lte: query.dateTo },
         ...(query.clientId ? { clientId: query.clientId } : {}),
       },
-      select: { clientId: true, planDayId: true, sessionDate: true },
     });
-    const keys = new Set<string>();
-    for (const row of rows) rememberCompletedSession(keys, row.clientId, row.sessionDate, row.planDayId);
-    return keys;
+    return indexSessionOutcomes(rows).marks;
   }
 
   private async readCoachMembership(subject: string) {

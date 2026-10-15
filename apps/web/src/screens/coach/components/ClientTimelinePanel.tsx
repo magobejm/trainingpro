@@ -64,8 +64,22 @@ function itemLabel(item: ClientTimelineItem, t: Translate): string {
   const kind = t(`coach.timeline.kind.${item.kind}`);
   if (item.kind === 'chat') return `${kind}: ${t('coach.timeline.messages', { count: item.detail ?? '0' })}`;
   if (item.kind === 'incident' && item.detail === 'reviewed') return `${t('coach.timeline.reviewed')}: ${item.title}`;
-  const extra = item.detail && item.detail !== 'reviewed' ? ` · ${item.detail}` : '';
+  const extra = timelineDetail(item.detail, t);
   return item.title ? `${kind}: ${item.title}${extra}` : kind;
+}
+
+function timelineDetail(detail: string | null, t: Translate): string {
+  if (!detail || detail === 'reviewed') return '';
+  const [head, ...rest] = detail.split(' · ');
+  if (!head) return '';
+  const label = translatedDetail(head, t);
+  return ` · ${[label, ...rest].join(' · ')}`;
+}
+
+function translatedDetail(head: string, t: Translate): string {
+  if (head === 'incomplete') return t('coach.timeline.incomplete');
+  if (head === 'skipped') return t('coach.timeline.skipped');
+  return head;
 }
 
 const styles = StyleSheet.create({

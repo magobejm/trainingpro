@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { isDayChangeConfirmationRequired } from '../../data/api-client';
 import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
-import { useClientCalendarSessionsQuery } from '../../data/hooks/useClientCalendar';
+import { useClientCalendarSessionsQuery, useUndoSkipClientSessionMutation } from '../../data/hooks/useClientCalendar';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { useClientPlanDayQuery, useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
 import { useEnsureClientSessionMutation } from '../../data/hooks/useTodaySession';
@@ -33,6 +33,7 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const ensureMutation = useEnsureClientSessionMutation();
+  const undoSkip = useUndoSkipClientSessionMutation();
   const today = useMemo(() => new Date(), []);
   const todayStr = formatLocalDate(today);
   const moveWindow = useMemo(() => getMoveWindowRange(today), [today]);
@@ -65,8 +66,9 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   );
 
   const todaySession = props.view ? null : (sessions.find((session) => session.planDayId === resolvedDay.id) ?? null);
-  const viewedSessionId = props.view?.performed ? props.view.sessionId : null;
-  const isCompleted = props.view ? Boolean(viewedSessionId) : todaySession?.status === 'COMPLETED';
+  const viewedSessionId = reviewSessionId(props.view, todaySession);
+  const isCompleted = Boolean(viewedSessionId);
+  const skippedId = skipSessionId(props.view, todaySession);
   const isInProgress = todaySession?.status === 'IN_PROGRESS';
 
   const startLabel = useMemo(() => {
@@ -146,7 +148,10 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
         startDisabled={(!isCompleted && startGate === 'blocked') || calendarQuery.isLoading}
         startError={startError}
         startLabel={isCompleted ? t('client.calendar.detail.viewSession') : startLabel}
+        notice={skippedId ? skipNotice(props.view, todaySession, t) : null}
+        onUndoSkip={skippedId ? () => undoSkip.mutate(skippedId) : undefined}
         startPending={ensureMutation.isPending}
+        undoLabel={t('client.calendar.workout.willDo')}
       />
       <ConfirmModal
         cancelLabel={t('mobile.client.dayChange.cancel')}
@@ -167,4 +172,26 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
       />
     </>
   );
+}
+
+function reviewSessionId(view: PlanDayView | null | undefined, today: { id: string; status: string } | null): string | null {
+  if (!view) return today?.status === 'COMPLETED' ? today.id : null;
+  if (view.outcome === 'done' || view.outcome === 'incomplete') return view.sessionId;
+  return null;
+}
+
+function skipSessionId(view: PlanDayView | null | undefined, today: { id: string; outcome?: string } | null): string | null {
+  if (view?.outcome === 'skipped') return view.sessionId;
+  if (!view && today?.outcome === 'skipped') return today.id;
+  return null;
+}
+
+function skipNotice(
+  view: PlanDayView | null | undefined,
+  today: { skipReason?: string | null } | null,
+  t: (key: string) => string,
+): string {
+  const reason = view?.skipReason ?? today?.skipReason ?? null;
+  const title = t('client.calendar.workout.skipped');
+  return reason ? `${title}. ${reason}` : title;
 }

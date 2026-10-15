@@ -9,6 +9,7 @@ import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/card
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
 import type { FinishSessionInput } from '../../domain/session.input';
 import { finishIfOpen } from './session-concurrency';
+import { closeStaleSessions } from './session-stale';
 import {
   assertCardioSessionMutable,
   cardioSessionInclude,
@@ -62,6 +63,7 @@ export class SessionsCardioRepositoryPrisma {
   }
 
   async getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
+    await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
@@ -94,6 +96,8 @@ export class SessionsCardioRepositoryPrisma {
       where: { id: session.id, startedAt: null },
       data: {
         ...buildUpdateAuditFields(context),
+        skipReason: null,
+        skippedAt: null,
         startedAt: new Date(),
         status: SessionStatus.IN_PROGRESS,
       },
@@ -152,6 +156,7 @@ export class SessionsCardioRepositoryPrisma {
   }
 
   private async readCardioSessionForMutation(sessionId: string) {
+    await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),

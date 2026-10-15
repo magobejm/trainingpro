@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { sessionOutcome, type SessionOutcome } from '@trainerpro/shared';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 
 export type ClientSessionSummary = {
   id: string;
@@ -13,8 +15,11 @@ export type ClientSessionSummary = {
   planDayTitle: string | null;
   preMotivation: number | null;
   postMood: number | null;
+  outcome: SessionOutcome;
   postFatigue: number | null;
   postPain: number | null;
+  skipReason: string | null;
+  skippedAt: Date | null;
 };
 
 type ListClientSessionsInput = {
@@ -28,6 +33,7 @@ export class ListClientSessionsUseCase {
 
   async execute(context: AuthContext, input: ListClientSessionsInput): Promise<ClientSessionSummary[]> {
     const client = await this.resolveClient(context);
+    await closeStaleSessions(this.prisma, { clientId: client.id });
     const rows = await this.prisma.sessionInstance.findMany({
       where: {
         clientId: client.id,
@@ -47,6 +53,8 @@ export class ListClientSessionsUseCase {
         postMood: true,
         postFatigue: true,
         postPain: true,
+        skipReason: true,
+        skippedAt: true,
       },
       orderBy: [{ sessionDate: 'asc' }],
     });
@@ -61,8 +69,11 @@ export class ListClientSessionsUseCase {
       planDayTitle: r.planDayTitle,
       preMotivation: r.preMotivation,
       postMood: r.postMood,
+      outcome: sessionOutcome(r),
       postFatigue: r.postFatigue,
       postPain: r.postPain,
+      skipReason: r.skipReason,
+      skippedAt: r.skippedAt,
     }));
   }
 

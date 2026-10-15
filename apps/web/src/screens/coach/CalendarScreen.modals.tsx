@@ -17,7 +17,7 @@ import {
   getLayoutStyle15,
 } from './CalendarScreen.modals.layout-styles';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '../../i18n/useFormatDate';
 import { Text, View } from 'react-native';
@@ -25,6 +25,7 @@ import { Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { calendarEventColor } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
+import { SessionDetailModal } from './progress/SessionDetailModal';
 import { Button, EmptyState, IconButton, Modal, colors as tk } from '@trainerpro/ui';
 const VARIANT_SECONDARY = 'secondary' as const;
 const TONE_DANGER = 'danger' as const;
@@ -47,9 +48,10 @@ type DayEventListProps = {
   dayEvents: CalendarEventData[];
   onDeleteEvent: (id: string) => void;
   onEditEvent?: (ev: CalendarEventData) => void;
+  onViewSession: (sessionId: string) => void;
   t: TFunc;
 };
-function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventListProps): React.JSX.Element {
+function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, onViewSession, t }: DayEventListProps): React.JSX.Element {
   return (
     <View>
       {dayEvents.length === 0 && (
@@ -61,6 +63,7 @@ function DayEventList({ dayEvents, onDeleteEvent, onEditEvent, t }: DayEventList
           event={ev}
           onDelete={() => onDeleteEvent(ev.id)}
           onEdit={onEditEvent ? () => onEditEvent(ev) : undefined}
+          onViewSession={onViewSession}
           t={t}
         />
       ))}
@@ -77,6 +80,7 @@ export function DayDetailModal({
   onEditEvent,
   t,
 }: DayModalProps): React.JSX.Element {
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const format = useFormatDate();
   const date = new Date(dateStr + 'T12:00:00');
   const layoutStyle1 = getLayoutStyle1;
@@ -104,7 +108,14 @@ export function DayDetailModal({
           variant={VARIANT_SECONDARY}
         />
       </View>
-      <DayEventList dayEvents={dayEvents} onDeleteEvent={onDeleteEvent} onEditEvent={onEditEvent} t={t} />
+      <DayEventList
+        dayEvents={dayEvents}
+        onDeleteEvent={onDeleteEvent}
+        onEditEvent={onEditEvent}
+        onViewSession={setSessionId}
+        t={t}
+      />
+      <SessionDetailModal onClose={() => setSessionId(null)} sessionId={sessionId} />
     </Modal>
   );
 }
@@ -112,9 +123,10 @@ type EventRowProps = {
   event: CalendarEventData;
   onDelete: () => void;
   onEdit?: () => void;
+  onViewSession: (sessionId: string) => void;
   t: TFunc;
 };
-function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Element {
+function EventRow({ event, onDelete, onEdit, onViewSession, t }: EventRowProps): React.JSX.Element {
   const { i18n } = useTranslation();
   const colorObj = calendarEventColor(event);
   const typeLabel = t(`coach.calendar.type.${event.type}`);
@@ -155,6 +167,7 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
         })}
       </View>
       <View style={layoutStyle15}>
+        <ViewSessionButton event={event} onViewSession={onViewSession} t={t} />
         {event.type !== 'workout' && event.type !== 'physical_test' && onEdit != null && (
           <IconButton
             accessibilityLabel={t('coach.calendar.event.edit')}
@@ -172,5 +185,23 @@ function EventRow({ event, onDelete, onEdit, t }: EventRowProps): React.JSX.Elem
         />
       </View>
     </View>
+  );
+}
+
+function ViewSessionButton(props: {
+  event: CalendarEventData;
+  onViewSession: (sessionId: string) => void;
+  t: TFunc;
+}): React.JSX.Element | null {
+  const sessionId = props.event.sessionId;
+  const open = props.event.outcome === 'done' || props.event.outcome === 'incomplete';
+  if (!open || !sessionId) return null;
+  return (
+    <Button
+      label={props.t('coach.calendar.workout.viewSession')}
+      onPress={() => props.onViewSession(sessionId)}
+      size={'sm'}
+      variant={VARIANT_SECONDARY}
+    />
   );
 }

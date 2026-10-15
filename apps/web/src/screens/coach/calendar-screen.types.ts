@@ -17,6 +17,9 @@ export type CalendarEventData = {
   color: string | null;
   isCompleted?: boolean;
   originDate?: string | null;
+  outcome?: 'done' | 'incomplete' | 'in_progress' | 'pending' | 'skipped';
+  sessionId?: string | null;
+  skipReason?: string | null;
   planDayId: string | null;
   planDayTitle?: string;
   scheduleId?: string;

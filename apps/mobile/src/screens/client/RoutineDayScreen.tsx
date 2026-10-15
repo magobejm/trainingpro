@@ -15,12 +15,15 @@ import { isListedExerciseDone } from './session-completion.utils';
 type PreviewProps = {
   day: ClientRoutineDay;
   mode: 'preview';
+  notice?: string | null;
   onClose: () => void;
   onStart: () => void;
+  onUndoSkip?: () => void;
   startDisabled?: boolean;
   startLabel?: string;
   startPending?: boolean;
   startError?: boolean;
+  undoLabel?: string;
 };
 
 type ActiveProps = {
@@ -58,6 +61,8 @@ function PreviewDay(props: PreviewProps): React.JSX.Element {
             <ExerciseCard exercise={exercise} expanded={expanded} onToggle={onToggle} />
           )}
         />
+        {props.notice ? <Text style={styles.notice}>{props.notice}</Text> : null}
+        {props.onUndoSkip ? <PrimaryButton label={props.undoLabel ?? ''} onPress={props.onUndoSkip} /> : null}
         <PrimaryButton
           disabled={props.startDisabled || props.startPending}
           label={props.startPending ? t('mobile.shell.loading') : (props.startLabel ?? t('mobile.client.day.startTraining'))}
@@ -170,6 +175,7 @@ const styles = StyleSheet.create({
   scrollBottom: {
     paddingBottom: 80,
   },
+  notice: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '700' },
   dayHeader: {
     alignItems: 'baseline',
     flexDirection: 'row',

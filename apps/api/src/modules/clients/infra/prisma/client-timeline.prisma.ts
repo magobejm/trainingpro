@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import {
   isBeforeCursor,
   pageTimeline,
@@ -16,6 +17,7 @@ export async function readClientTimeline(
   input: { cursor: TimelineCursor; limit: number },
 ): Promise<TimelinePage> {
   const take = input.limit + 1;
+  await closeStaleSessions(prisma, { clientId });
   const sources = await Promise.all([
     readSessions(prisma, clientId, input.cursor, take),
     readNotes(prisma, clientId, input.cursor, take),
@@ -38,10 +40,22 @@ async function readSessions(
 ): Promise<TimelineDraft[]> {
   const rows = await prisma.sessionInstance.findMany({
     orderBy: [{ sessionDate: 'desc' }, { id: 'desc' }],
-    select: { id: true, isIncomplete: true, planDayTitle: true, sessionDate: true, sessionRpe: true },
+    select: {
+      id: true,
+      isCompleted: true,
+      isIncomplete: true,
+      planDayTitle: true,
+      sessionDate: true,
+      sessionRpe: true,
+      skipReason: true,
+      skippedAt: true,
+    },
     take,
     where: {
-      AND: [{ archivedAt: null, clientId, OR: [{ isCompleted: true }, { isIncomplete: true }] }, sessionCursor(cursor)],
+      AND: [
+        { archivedAt: null, clientId, OR: [{ isCompleted: true }, { isIncomplete: true }, { skippedAt: { not: null } }] },
+        sessionCursor(cursor),
+      ],
     },
   });
   const tonnage = await readTonnage(
@@ -49,7 +63,7 @@ async function readSessions(
     rows.map((row) => row.id),
   );
   return rows.map((row) => ({
-    detail: sessionDetail(row.sessionRpe, tonnage.get(row.id) ?? null, row.isIncomplete),
+    detail: sessionDetail(row, tonnage.get(row.id) ?? null),
     id: row.id,
     kind: 'session',
     occurredAt: row.sessionDate.toISOString(),
@@ -205,10 +219,21 @@ async function readTonnage(prisma: PrismaService, sessionIds: string[]): Promise
   return totals;
 }
 
-function sessionDetail(rpe: { toString(): string } | null, tonnage: number | null, incomplete: boolean): string | null {
+function sessionDetail(
+  row: {
+    isCompleted: boolean;
+    isIncomplete: boolean;
+    sessionRpe: { toString(): string } | null;
+    skipReason: string | null;
+    skippedAt: Date | null;
+  },
+  tonnage: number | null,
+): string | null {
+  const mode = row.isIncomplete ? 'incomplete' : !row.isCompleted && row.skippedAt ? 'skipped' : null;
   const parts = [
-    incomplete ? 'incomplete' : null,
-    rpe === null ? null : `RPE ${rpe.toString()}`,
+    mode,
+    mode === 'skipped' ? row.skipReason : null,
+    row.sessionRpe === null ? null : `RPE ${row.sessionRpe.toString()}`,
     tonnage && tonnage > 0 ? `${Math.round(tonnage)} kg` : null,
   ].filter((part): part is string => Boolean(part));
   return parts.length ? parts.join(' · ') : null;

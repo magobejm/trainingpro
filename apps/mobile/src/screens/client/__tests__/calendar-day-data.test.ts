@@ -94,7 +94,17 @@ describe('dayChips', () => {
         physicalTest: { done: false, name: 'Cooper', scheduleId: 's1' },
         planDayTitle: 'Pull',
         workouts: [
-          { color: null, done: false, originDate: null, planDayId: null, sessionId: null, shift: null, title: 'Pull' },
+          {
+            color: null,
+            done: false,
+            originDate: null,
+            outcome: 'pending',
+            planDayId: null,
+            sessionId: null,
+            shift: null,
+            skipReason: null,
+            title: 'Pull',
+          },
         ],
       }).map((chip) => chip.kind),
     ).toEqual(['test', 'workout', 'call', 'notes']);
@@ -103,6 +113,28 @@ describe('dayChips', () => {
   it('shows a rest day when there is no workout', () => {
     expect(dayChips({ ...base, clientNote: 'Bien' }).map((chip) => chip.kind)).toEqual(['rest', 'notes']);
     expect(dayChips(undefined).map((chip) => chip.kind)).toEqual(['rest']);
+  });
+
+  it('keeps a skipped workout undone and an incomplete one reviewable', () => {
+    const skipped = mergeDayData(
+      [
+        event({
+          outcome: 'skipped',
+          planDayId: 'day-1',
+          planDayTitle: 'Pierna',
+          sessionId: 'session-1',
+          skipReason: 'viaje',
+        }),
+      ],
+      [],
+    ).get('2026-10-20')?.workouts[0];
+    const incomplete = mergeDayData(
+      [event({ outcome: 'incomplete', planDayId: 'day-2', planDayTitle: 'Empuje', sessionId: 'session-2' })],
+      [],
+    ).get('2026-10-20')?.workouts[0];
+    expect(skipped).toMatchObject({ done: false, outcome: 'skipped', sessionId: 'session-1', skipReason: 'viaje' });
+    expect(incomplete).toMatchObject({ done: false, outcome: 'incomplete', sessionId: 'session-2' });
+    expect(mergeDayData([event({ isCompleted: true, planDayId: 'day-3' })], []).get('2026-10-20')?.hasCompleted).toBe(true);
   });
 
   it('shows the planned workout name before the session is logged', () => {

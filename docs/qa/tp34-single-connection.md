@@ -1,0 +1,9 @@
+# TP-34 · Concurrencia con una conexión
+
+`apps/api/test/sessions/single-connection.postgres.spec.ts` ejecuta los repositorios y la exportación PDF reales sobre PostgreSQL. Crea datos propios y los elimina al terminar. Todas las operaciones simultáneas comparten un único `PrismaClient` configurado con `connection_limit=1` y `pool_timeout=10`; la prueba comprueba además que dos consultas reciben el mismo identificador de conexión PostgreSQL.
+
+La prueba cubre dos creaciones concurrentes de la misma sesión, dos inicios, dos registros de la misma serie, asignación con sustitución de calendario y exportación PDF. Comprueba que queda una sesión y una serie, que el inicio conserva un estado coherente y que asignación y archivado se aplican juntos. Otro caso cambia el estado de la sesión después de la vista previa: la asignación devuelve `ROUTINE_HANDOFF_CHANGED` y no modifica ni la rutina ni el calendario. Un tercer caso confirma una asignación válida mientras se exportan dos PDF.
+
+Cada operación escribe en el resultado de Jest una línea `[TP-34]` con `operation`, `durationMs` y `outcome`. Los errores incluyen `cause` con el código de conflicto, el código Prisma o el mensaje. En la ejecución local del 16 de octubre de 2026, la tanda simultánea tardó 73 ms en asignar, 136–174 ms en iniciar, 212–244 ms en registrar y 270 ms en exportar. La asignación obsoleta devolvió `ROUTINE_HANDOFF_CHANGED` en 36 ms; la exportación concurrente terminó en 53 ms. Estos tiempos son diagnósticos, no umbrales de rendimiento.
+
+Se ejecuta en el trabajo de PostgreSQL de CI mediante `pnpm --filter @trainerpro/api test:session-transitions`, después de aplicar migraciones. Fuera de CI requiere `TEST_SESSION_DATABASE_URL` hacia un PostgreSQL local con el esquema migrado. La suite rechaza una URL cuyo host no sea local.

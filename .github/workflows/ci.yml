@@ -59,7 +59,7 @@ jobs:
       - run: pnpm --filter @trainerpro/api db:generate
       - run: pnpm --filter @trainerpro/api db:migrate:deploy
       - run: pnpm --filter @trainerpro/api db:migrate:status
-      - name: Test atomic session transitions on PostgreSQL
+      - name: Test session transitions and single-connection workflows on PostgreSQL
         env:
           TEST_SESSION_DATABASE_URL: ${{ env.DATABASE_URL }}
         run: pnpm --filter @trainerpro/api test:session-transitions

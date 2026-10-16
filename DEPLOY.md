@@ -18,7 +18,7 @@ Coste objetivo: <2 USD/mes con tráfico bajo.
 1. Crear proyecto en https://supabase.com → región `eu-west-*`.
 2. **Database → Connection string**:
    - Copiar `URI` puerto **5432** → este es `DIRECT_URL` (para `prisma migrate`).
-   - Copiar `Transaction pooler` puerto **6543** + `?pgbouncer=true&connection_limit=1` → este es `DATABASE_URL` (runtime API).
+   - Copiar `Transaction pooler` puerto **6543** + `?pgbouncer=true&connection_limit=1` → este es `DATABASE_URL` (runtime API). CI comprueba los flujos simultáneos de asignación, sesiones y exportación con ese mismo límite; véase [TP-34](docs/qa/tp34-single-connection.md).
 3. **Project Settings → API**:
    - Copiar `URL` → `SUPABASE_URL`.
    - Copiar `service_role` secret → `SUPABASE_SERVICE_ROLE_KEY` (mantener oculto).

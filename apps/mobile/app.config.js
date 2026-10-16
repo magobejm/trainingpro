@@ -8,6 +8,7 @@ const LAN_BUILD = process.env.TRAINERPRO_LAN_BUILD === '1';
 module.exports = () => {
   const expo = structuredClone(appJson.expo);
   applyGoogleServices(expo);
+  expo.plugins = [...(expo.plugins ?? []).filter((plugin) => plugin !== 'expo-video'), 'expo-video'];
   if (!LAN_BUILD) {
     return { expo };
   }

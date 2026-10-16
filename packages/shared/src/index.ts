@@ -81,3 +81,36 @@ export {
   type ChatHistory,
   type FetchChatPage,
 } from './chat-history';
+
+export * from './coach-routine-contract';
+export * from './coach-warmup-contract';
+export * from './coach-planner';
+
+export type {
+  NutritionConsideration as CoachNutritionConsideration,
+  MealIngredient as CoachMealIngredient,
+  NutritionMeal as CoachNutritionMeal,
+  NutritionCheckpoint as CoachNutritionCheckpoint,
+  NutritionPlanType as CoachNutritionPlanType,
+  NutritionPlan as CoachNutritionPlan,
+  MealWriteInput as CoachMealWriteInput,
+  PlanWriteInput as CoachPlanWriteInput,
+  CheckpointWriteInput as CoachCheckpointWriteInput,
+  TdeeFormula as CoachTdeeFormula,
+  ActivityLevel as CoachActivityLevel,
+  PlanSetupData as CoachPlanSetupData,
+  FreePlanItem as CoachFreePlanItem,
+  FreePlanContent as CoachFreePlanContent,
+  StructuredDayMeal as CoachStructuredDayMeal,
+  StructuredDay as CoachStructuredDay,
+  StructuredWeek as CoachStructuredWeek,
+  StructuredPlanContent as CoachStructuredPlanContent,
+} from './nutrition/types';
+export { MEAL_CATEGORIES, FREE_PLAN_COLUMNS } from './nutrition/types';
+export {
+  calculateBmr,
+  calculateTdee,
+  calculateMacros,
+  buildPlanSetupData,
+  readSetupData as readCoachNutritionSetupData,
+} from './nutrition/calculations';

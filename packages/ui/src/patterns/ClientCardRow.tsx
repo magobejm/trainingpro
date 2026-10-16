@@ -17,13 +17,15 @@ export type ClientCardItem = {
   statusTone?: BadgeTone;
 };
 type Props = {
+  vertical?: boolean;
+  palette?: { background: string; text: string; muted: string; border: string; accent: string; soft: string };
   actionLabel?: string;
   items: ClientCardItem[];
   onActionPress?: (clientId: string) => void;
   onItemPress: (clientId: string) => void;
   selectedId?: string;
 };
-function ClientAvatar({ item }: { item: ClientCardItem }): React.JSX.Element {
+function ClientAvatar({ item, palette }: { item: ClientCardItem; palette?: Props['palette'] }): React.JSX.Element {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const initials = item.title
     .trim()
@@ -40,29 +42,43 @@ function ClientAvatar({ item }: { item: ClientCardItem }): React.JSX.Element {
       style={styles.avatar}
     />
   ) : (
-    <View style={styles.initials}>
-      <Text style={styles.initialsText}>{initials}</Text>
+    <View style={[styles.initials, palette && { backgroundColor: palette.soft }]}>
+      <Text style={[styles.initialsText, palette && { color: palette.accent }]}>{initials}</Text>
     </View>
   );
 }
 export function ClientCardRow(props: Props): React.JSX.Element {
   return (
-    <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.row}>
+    <View {...{ dataSet: { 'density-list': 'true' } }} style={[styles.row, props.vertical && styles.vertical]}>
       {props.items.map((item) => (
-        <Card interactive densityRow key={item.id} style={[styles.card, props.selectedId === item.id && styles.selected]}>
+        <Card
+          interactive
+          densityRow
+          key={item.id}
+          style={[
+            styles.card,
+            props.vertical && styles.fullCard,
+            props.palette && { backgroundColor: props.palette.background, borderColor: props.palette.border },
+            props.selectedId === item.id && styles.selected,
+          ]}
+        >
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={item.statusDot ? `${item.title}. ${item.statusDot.reason}` : item.title}
             onPress={() => props.onItemPress(item.id)}
             style={styles.content}
           >
-            <ClientAvatar item={item} />
+            <ClientAvatar item={item} palette={props.palette} />
             <View style={styles.titleRow}>
-              <Text style={styles.title}>{item.title}</Text>
+              <Text style={[styles.title, props.palette && { color: props.palette.text }]}>{item.title}</Text>
               {item.statusDot ? <StatusDot reason={item.statusDot.reason} tone={item.statusDot.tone} /> : null}
             </View>
-            <Text style={styles.subtitle}>{item.objective ?? item.subtitle}</Text>
-            {item.objective ? <Text style={styles.subtitle}>{item.subtitle}</Text> : null}
+            <Text style={[styles.subtitle, props.palette && { color: props.palette.muted }]}>
+              {item.objective ?? item.subtitle}
+            </Text>
+            {item.objective ? (
+              <Text style={[styles.subtitle, props.palette && { color: props.palette.muted }]}>{item.subtitle}</Text>
+            ) : null}
             {item.statusLabel ? <Badge label={item.statusLabel} tone={item.statusTone ?? 'neutral'} /> : null}
           </Pressable>
           {props.actionLabel && props.onActionPress ? (
@@ -74,6 +90,8 @@ export function ClientCardRow(props: Props): React.JSX.Element {
   );
 }
 const styles = StyleSheet.create({
+  vertical: { flexDirection: 'column', width: '100%' },
+  fullCard: { flexBasis: 'auto', flexGrow: 0, maxWidth: '100%', width: '100%' },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   card: { flexGrow: 1, flexBasis: 240, maxWidth: 360, gap: space.md },
   selected: { borderColor: colors.primary },

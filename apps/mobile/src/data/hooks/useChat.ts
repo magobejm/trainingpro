@@ -1,5 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatCallProposal, ChatMessage } from '@trainerpro/shared';
+import { useToast } from '@trainerpro/ui';
+import { useTranslation } from 'react-i18next';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -31,9 +33,9 @@ export function useThreadQuery(clientId?: string) {
   const auth = useAuth();
   const path = clientId ? `/chat/thread?clientId=${encodeURIComponent(clientId)}` : '/chat/thread';
   return useQuery({
-    enabled: Boolean(auth),
+    enabled: Boolean(auth) && (auth?.activeRole !== 'coach' || Boolean(clientId)),
     queryFn: () => createApiClient(auth!).get<{ id: string }>(path),
-    queryKey: ['chat-thread', auth?.activeRole, clientId ?? 'self'],
+    queryKey: ['chat-thread', auth?.activeRole, auth?.userId, clientId ?? 'self'],
   });
 }
 
@@ -42,7 +44,11 @@ export { useChatHistoryQuery as useChatMessagesQuery } from './useChatHistoryQue
 export function useSendChatMessageMutation(threadId: string) {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
   return useMutation({
+    networkMode: 'always',
+    retry: false,
     mutationFn: (input: Omit<SendChatInput, 'threadId'>) => {
       if (!auth) {
         throw new Error('Missing authenticated context');
@@ -52,19 +58,28 @@ export function useSendChatMessageMutation(threadId: string) {
     onSuccess: () => {
       const queryKey = ['chat-messages', auth?.activeRole, threadId];
       void queryClient.invalidateQueries({ queryKey });
+      toast.success(t('coachWorkspace.saved', { defaultValue: 'Guardado' }));
     },
+    onError: (error: Error) => toast.error(error.message),
   });
 }
 
 function refreshChat(queryClient: ReturnType<typeof useQueryClient>, auth: ReturnType<typeof useAuth>) {
   void queryClient.invalidateQueries({ queryKey: ['chat-messages', auth?.activeRole] });
   void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+  void queryClient.invalidateQueries({ queryKey: ['coach'] });
 }
 
 export function useAcceptCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
   return useMutation({
+    networkMode: 'always',
+    retry: false,
+    onSuccess: () => toast.success(t('coachWorkspace.saved', { defaultValue: 'Guardado' })),
+    onError: (error: Error) => toast.error(error.message),
     mutationFn: (proposalId: string) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${proposalId}/accept`, {});
@@ -76,7 +91,13 @@ export function useAcceptCallProposalMutation() {
 export function useCounterCallProposalMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const { t } = useTranslation();
   return useMutation({
+    networkMode: 'always',
+    retry: false,
+    onSuccess: () => toast.success(t('coachWorkspace.saved', { defaultValue: 'Guardado' })),
+    onError: (error: Error) => toast.error(error.message),
     mutationFn: (input: { proposalId: string; time: string }) => {
       if (!auth) throw new Error('Missing authenticated context');
       return createApiClient(auth).post(`/calls/proposals/${input.proposalId}/counter`, { time: input.time });
@@ -151,8 +172,9 @@ export function useUploadPolicyMutation() {
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
+  const userId = useAuthStore((state) => state.userId);
   if (!accessToken || !activeRole) {
     return null;
   }
-  return { accessToken, activeRole };
+  return { accessToken, activeRole, userId };
 }

@@ -54,6 +54,7 @@ export class PhysicalTestsService {
       inputs,
       physicalTestId,
       recordedByMembershipId: membership.id,
+      scheduleId: body.scheduleId,
     });
   }
 

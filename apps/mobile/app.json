@@ -3,7 +3,7 @@
     "name": "Trainer Pro Mobile",
     "slug": "trainer-pro-mobile",
     "scheme": "trainerpro",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "platforms": ["ios", "android", "web"],

@@ -1,3 +1,7 @@
+import { HealthController } from '../../src/modules/health/presentation/health.controller';
+import { routineHandoffPreviewSchema, routineHandoffSchema, clearFutureWorkoutsSchema } from '@trainerpro/shared';
+import { routineHandoffExample } from '../../contracts/examples';
+import { UpdateClientDto } from '../../src/modules/clients/presentation/dto/update-client.dto';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -114,3 +118,30 @@ function readBaseline(): OpenApiDocument | null {
     return null;
   }
 }
+
+describe('routine handoff contracts', () => {
+  it('declares simulation support without changing the health status', () => {
+    expect(new HealthController().getHealth()).toEqual({ status: 'ok', capabilities: { routineHandoffPreview: true } });
+  });
+  it('validates the preview example and legacy/dry-run requests', () => {
+    expect(routineHandoffPreviewSchema.parse(routineHandoffExample)).toEqual(routineHandoffExample);
+    const request = { clientId: routineHandoffExample.clientId, from: routineHandoffExample.from };
+    expect(clearFutureWorkoutsSchema.parse(request)).toEqual(request);
+    expect(clearFutureWorkoutsSchema.parse({ ...request, dryRun: true })).toEqual({ ...request, dryRun: true });
+  });
+  it('preserves the optional handoff in client updates and rejects invalid signatures', () => {
+    const input = {
+      trainingPlanId: routineHandoffExample.currentRoutineId,
+      routineHandoff: {
+        from: routineHandoffExample.from,
+        mode: 'replace',
+        expectedSignature: routineHandoffExample.signature,
+      },
+    };
+    expect(UpdateClientDto.schema.parse(input)).toEqual(input);
+    expect(routineHandoffSchema.safeParse({ ...input.routineHandoff, expectedSignature: 'invalid' }).success).toBe(false);
+    expect(
+      clearFutureWorkoutsSchema.safeParse({ clientId: routineHandoffExample.clientId, from: 'not-a-date' }).success,
+    ).toBe(false);
+  });
+});

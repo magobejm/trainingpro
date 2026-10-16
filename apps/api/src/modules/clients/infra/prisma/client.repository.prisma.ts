@@ -1,6 +1,7 @@
+import { applyRoutineHandoff, handoffTransaction } from '../../../calendar/infra/prisma/routine-handoff.prisma';
 import { readLastClientActivities } from './client-last-activity.prisma';
 import { readClientStatusFacts, statusForClient } from './client-status.prisma';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {
   buildArchiveAuditFields,
@@ -206,7 +207,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
 
   async updateClient(context: AuthContext, clientId: string, input: ClientUpdateInput): Promise<Client> {
     const membership = await resolveCoachMembership(context, this.prisma);
-    const updated = await this.prisma.$transaction(async (tx) => {
+    const run = async (tx: Prisma.TransactionClient) => {
       const client = await readActiveClient(tx, membership, clientId);
       if (typeof input.trainingPlanId === 'string') {
         const plan = await tx.planTemplate.findFirst({
@@ -214,6 +215,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           select: { coachMembershipId: true, scope: true },
         });
         assertAssignableTrainingPlan(plan, membership.id);
+      }
+      if (input.routineHandoff) {
+        if (!input.trainingPlanId) throw new ConflictException('A routine is required for handoff');
+        await applyRoutineHandoff(tx, membership.id, clientId, input.routineHandoff);
       }
       const payload = normalizeUpdateInput(input);
       if (input.trainingPlanId !== undefined) {
@@ -235,7 +240,8 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           ...CLIENT_WITH_RELATIONS_INCLUDE,
         },
       });
-    });
+    };
+    const updated = input.routineHandoff ? await handoffTransaction(this.prisma, run) : await this.prisma.$transaction(run);
     return mapClient(updated);
   }
 

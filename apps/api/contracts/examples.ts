@@ -168,3 +168,31 @@ export const chatMessagesExample = [
     threadId: THREAD_ID,
   },
 ];
+
+export const routineHandoffExample = {
+  clientId: '11111111-1111-4111-8111-111111111111',
+  from: '2026-10-16',
+  currentRoutineId: '44444444-4444-4444-8444-444444444444',
+  signature: 'a'.repeat(64),
+  removable: [
+    {
+      id: 'pending-workout',
+      type: 'workout',
+      date: '2030-01-01',
+      planDayId: null,
+      title: 'Fuerza',
+      updatedAt: '2026-10-16T00:00:00.000Z',
+    },
+  ],
+  preserved: [
+    {
+      id: 'started-workout',
+      type: 'workout',
+      date: '2026-10-16',
+      planDayId: null,
+      title: 'Movilidad',
+      updatedAt: '2026-10-16T00:00:00.000Z',
+      reason: 'started',
+    },
+  ],
+};

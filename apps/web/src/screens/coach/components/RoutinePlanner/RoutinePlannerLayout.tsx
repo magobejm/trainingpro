@@ -59,11 +59,15 @@ interface LayoutProps {
     lastAddedBlockId: string | null;
   };
   onSave: (name: string) => Promise<void>;
-  onSaveAndAssign: (name: string, clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
+  onSaveAndAssign: (
+    name: string,
+    clientId: string,
+    options?: import('../../routine-handoff').RoutineAssignOptions,
+  ) => Promise<void>;
   saveDisabled?: boolean;
   isDraft?: boolean;
   statusNode?: React.ReactNode;
-  onAssignOnly?: (clientId: string, options?: { clearFutureFrom?: string }) => Promise<void>;
+  onAssignOnly?: (clientId: string, options?: import('../../routine-handoff').RoutineAssignOptions) => Promise<void>;
   templates: RoutineTemplateView[];
   deleteMutation: {
     isPending: boolean;

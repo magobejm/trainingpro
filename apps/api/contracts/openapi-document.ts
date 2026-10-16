@@ -1,3 +1,6 @@
+import { clearFutureWorkoutsSchema, routineHandoffPreviewSchema, clientViewSchema } from '@trainerpro/shared';
+import { UpdateClientDto } from '../src/modules/clients/presentation/dto/update-client.dto';
+import { routineHandoffExample } from './examples';
 import {
   chatMessageListSchema,
   clientListResponseSchema,
@@ -18,6 +21,7 @@ export function buildOpenApiDocument(routes: RouteRecord[]) {
   return {
     components: {
       schemas: {
+        RoutineHandoffPreview: toJsonSchema(routineHandoffPreviewSchema),
         ChatMessageList: toJsonSchema(chatMessageListSchema),
         ClientListResponse: toJsonSchema(clientListResponseSchema),
         HttpError: toJsonSchema(httpErrorSchema),
@@ -125,6 +129,24 @@ function operationId(method: string, path: string): string {
 }
 
 function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  if (route.method === 'get' && route.path === '/health')
+    return {
+      ...operation,
+      responses: {
+        '200': {
+          description: 'Service health and supported capabilities',
+          content: {
+            'application/json': {
+              schema: toJsonSchema(
+                z.object({ status: z.string(), capabilities: z.object({ routineHandoffPreview: z.boolean() }) }),
+              ),
+            },
+          },
+        },
+      },
+    };
+  if (route.method === 'post' && route.path === '/calendar/clear-future-workouts') return handoffOperation(operation);
+  if (route.method === 'patch' && route.path === '/clients/{clientId}') return handoffClientOperation(operation);
   const contract = contractedRoute(route.method, route.path);
   if (!contract) {
     return operation;
@@ -232,5 +254,46 @@ function chatDetail(): ContractDetail {
       ),
     ],
     schema: 'ChatMessageList',
+  };
+}
+
+function handoffOperation(operation: JsonSchema): JsonSchema {
+  return {
+    ...operation,
+    description:
+      'dryRun=true returns the full future workout impact without writes. Otherwise archives only unprotected workouts.',
+    requestBody: { required: true, content: { 'application/json': { schema: toJsonSchema(clearFutureWorkoutsSchema) } } },
+    responses: {
+      ...(operation.responses as JsonSchema),
+      '200': {
+        description: 'Simulation or archive result',
+        content: {
+          'application/json': {
+            schema: {
+              oneOf: [
+                toJsonSchema(z.object({ archived: z.number().int() })),
+                { $ref: '#/components/schemas/RoutineHandoffPreview' },
+              ],
+            },
+            examples: { preview: { value: routineHandoffExample }, legacy: { value: { archived: 1 } } },
+          },
+        },
+      },
+      '400': errorResponse('Invalid request'),
+    },
+  };
+}
+function handoffClientOperation(operation: JsonSchema): JsonSchema {
+  return {
+    ...operation,
+    description:
+      'Optionally validates routineHandoff.expectedSignature and assigns/clears workouts atomically. A changed preview returns 409 with code ROUTINE_HANDOFF_CHANGED and no writes.',
+    requestBody: { required: true, content: { 'application/json': { schema: toJsonSchema(UpdateClientDto.schema) } } },
+    responses: {
+      ...(operation.responses as JsonSchema),
+      '200': { description: 'Updated client', content: { 'application/json': { schema: toJsonSchema(clientViewSchema) } } },
+      '400': errorResponse('Invalid request'),
+      '409': errorResponse('Planning changed; review the updated preview'),
+    },
   };
 }

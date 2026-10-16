@@ -31,7 +31,7 @@ export function useRoutinePlannerMutations(
   setActiveDay: (i: number) => void,
   setSuccess: (v: boolean) => void,
   t: (k: string) => string,
-  onAfterSave?: (templateId: string) => Promise<void> | void,
+  onAfterSave?: (templateId: string, name?: string) => Promise<void> | void,
   dayPrefixKey = 'coach.routine.dayPrefix',
   session?: SaveSession,
 ) {
@@ -107,7 +107,7 @@ interface SaveProps {
   setActiveDay: (i: number) => void;
   setSuccess: (v: boolean) => void;
   t: (k: string) => string;
-  onAfterSave?: (templateId: string) => Promise<void> | void;
+  onAfterSave?: (templateId: string, name?: string) => Promise<void> | void;
   dayPrefixKey: string;
   session?: SaveSession;
 }
@@ -119,7 +119,7 @@ function useOnSave(props: SaveProps) {
       const savedId = await props.onSaveCore(name);
       const empty = createEmptyDraft(t, dayPrefixKey);
       session?.release(empty);
-      await props.onAfterSave?.(savedId);
+      await props.onAfterSave?.(savedId, name);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
       setDraft(empty);

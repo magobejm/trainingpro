@@ -1,6 +1,5 @@
 import { useMutationFeedback } from '../../data/hooks/useFeedbackMutation';
 import React, { useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
@@ -23,7 +22,6 @@ import { UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
 import { useRoutinePlannerUIState } from './useRoutinePlannerUIState';
 import { useRoutineHandoffPrompt } from './RoutineHandoffDialog';
-import { archiveFutureWorkouts } from './routine-handoff';
 import {
   buildAssignOnly,
   buildLayoutModel,
@@ -146,11 +144,9 @@ function usePlannerSaveModel(
   const assignMutation = useAssignRoutineMutation();
   useMutationFeedback(assignMutation);
   useMutationFeedback(updateClientMutation);
-  const queryClient = useQueryClient();
   const clients = useClientsQuery().data ?? [];
   const handoff = useRoutineHandoffPrompt(t);
-  const archive = (targetId: string, from: string) => archiveFutureWorkouts(queryClient, targetId, from);
-  const ports: HandoffPorts = { archive, ask: handoff.ask, clients };
+  const ports: HandoffPorts = { ask: handoff.ask, clients, routineName: draftState.draft.name };
   const { deleteMutation, isSaving, onSave, onSaveCore, retrySave } = useRoutineSaveHandler(
     clearInitialTemplate,
     clientId,
@@ -162,17 +158,8 @@ function usePlannerSaveModel(
     work,
     ports,
   );
-  const onSaveAndAssign = buildSaveAndAssign(
-    onSaveCore,
-    assignMutation,
-    draftState,
-    uiState,
-    t,
-    onRouteChange,
-    work,
-    archive,
-  );
-  const onAssignOnly = buildAssignOnly(assignMutation, uiState, draftState, onRouteChange, archive);
+  const onSaveAndAssign = buildSaveAndAssign(onSaveCore, assignMutation, draftState, uiState, t, onRouteChange, work);
+  const onAssignOnly = buildAssignOnly(assignMutation, uiState, draftState, onRouteChange);
   return {
     deleteMutation,
     handoffDialog: handoff.dialog,

@@ -4,13 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../../utils/normalize-search';
 import { useRoutineHandoffPrompt } from '../../RoutineHandoffDialog';
-import {
-  chooseRoutineHandoff,
-  isSameAssignedRoutine,
-  loadClientCalendarEvents,
-  localCalendarDay,
-  type RoutineAssignOptions,
-} from '../../routine-handoff';
+import { isSameAssignedRoutine, type RoutineAssignOptions } from '../../routine-handoff';
 import { Button, Modal, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const SCROLL_KEYBOARD_TAPS = 'handled' as const;
@@ -117,55 +111,28 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const selectedClient = clients.find((client) => client.id === selectedClientId);
   const alreadyAssigned = clientHasSameRoutine(selectedClient, templateId);
 
-  async function resolveHandoff(clientId: string): Promise<RoutineAssignOptions | null> {
-    const client = clients.find((item) => item.id === clientId);
-    const outcome = await chooseRoutineHandoff({
-      ask: handoff.ask,
-      hasOtherRoutine: Boolean(client?.trainingPlanId || client?.trainingPlan),
-      loadPending: (from, to) => loadClientCalendarEvents(clientId, from, to),
-      sameRoutine: clientHasSameRoutine(client, templateId),
-      today: localCalendarDay(),
-    });
-    if (outcome === 'cancel' || outcome === 'same') return null;
-    return outcome === 'replace' ? { clearFutureFrom: localCalendarDay() } : {};
-  }
-
-  async function handleSaveAndAssign() {
-    if (!selectedClientId || alreadyAssigned) return;
+  async function reviewAndAssign(save: boolean) {
+    if (!selectedClientId || alreadyAssigned || isSaving) return;
     markNameTouched();
-    const options = await resolveHandoff(selectedClientId);
-    if (!options) return;
     setSaveError(null);
     setIsSaving(true);
     try {
-      await onSaveAndAssign(name, selectedClientId, options);
-      onClose();
-    } catch (err) {
-      if (isVersionConflict(err)) return;
-      const raw = (err as { message?: string })?.message ?? '';
-      setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
+      const confirmed = await handoff.ask({
+        clientId: selectedClientId,
+        clientName: selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : '',
+        routineName: name,
+        submit: async (options) => {
+          if (save) await onSaveAndAssign(name, selectedClientId, options);
+          else await onAssignOnly?.(selectedClientId, options);
+        },
+      });
+      if (confirmed) onClose();
     } finally {
       setIsSaving(false);
     }
   }
-
-  async function handleAssignOnly() {
-    if (!selectedClientId || !onAssignOnly || alreadyAssigned) return;
-    const options = await resolveHandoff(selectedClientId);
-    if (!options) return;
-    setSaveError(null);
-    setIsSaving(true);
-    try {
-      await onAssignOnly(selectedClientId, options);
-      onClose();
-    } catch (err) {
-      if (isVersionConflict(err)) return;
-      const raw = (err as { message?: string })?.message ?? '';
-      setSaveError(raw || t('coach.routine.saveModal.saveErrorFallback'));
-    } finally {
-      setIsSaving(false);
-    }
-  }
+  const handleSaveAndAssign = () => reviewAndAssign(true);
+  const handleAssignOnly = () => reviewAndAssign(false);
 
   if (!visible) return null;
 
@@ -195,80 +162,82 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   );
 
   return (
-    <Modal
-      closeLabel={t('common.close')}
-      dismissOnOverlay
-      footer={footer}
-      onClose={onClose}
-      scroll={false}
-      title={isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
-      visible={visible}
-    >
-      <ScrollView
-        contentContainerStyle={styles.bodyContent}
-        keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
-        showsVerticalScrollIndicator={false}
-        style={styles.body}
+    <>
+      <Modal
+        closeLabel={t('common.close')}
+        dismissOnOverlay
+        footer={footer}
+        onClose={onClose}
+        scroll={false}
+        title={isGlobal ? t('coach.routine.saveModal.assignOnlyTitle') : t('coach.routine.saveModal.title')}
+        visible={visible && !handoff.isOpen}
       >
-        {alreadyAssigned || saveError ? (
-          <View style={styles.errorBanner}>
-            <Text style={styles.errorBannerText}>
-              {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
-            </Text>
-          </View>
-        ) : null}
-        {!isGlobal && (
-          <TextField
-            error={nameError}
-            label={t('coach.routine.saveModal.name')}
-            onBlur={() => setNameTouched(true)}
-            onChangeText={setName}
-            placeholder={t('coach.routine.saveModal.namePlaceholder')}
-            required
-            value={name}
-          />
-        )}
-        <View style={styles.field}>
-          <TextField
-            label={t('coach.routine.saveModal.assignClient')}
-            onChangeText={setSearch}
-            placeholder={t('coach.routine.saveModal.searchClient')}
-            value={search}
-          />
-          {objectives.length > 0 && (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              style={styles.objectiveFilterRow}
-              contentContainerStyle={styles.objectiveFilterContent}
-            >
-              {objectives.map((obj) => {
-                const active = selectedObjectiveId === obj.id;
-                return (
-                  <Pressable
-                    key={obj.id}
-                    onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
-                    style={[styles.objectiveChip, active && styles.objectiveChipActive]}
-                  >
-                    <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-          <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
-          {filtered.map((client) => (
-            <ClientRow
-              client={client}
-              isSelected={client.id === selectedClientId}
-              key={client.id}
-              onPress={() => setSelectedClientId((prev) => (prev === client.id ? null : client.id))}
+        <ScrollView
+          contentContainerStyle={styles.bodyContent}
+          keyboardShouldPersistTaps={SCROLL_KEYBOARD_TAPS}
+          showsVerticalScrollIndicator={false}
+          style={styles.body}
+        >
+          {alreadyAssigned || saveError ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorBannerText}>
+                {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
+              </Text>
+            </View>
+          ) : null}
+          {!isGlobal && (
+            <TextField
+              error={nameError}
+              label={t('coach.routine.saveModal.name')}
+              onBlur={() => setNameTouched(true)}
+              onChangeText={setName}
+              placeholder={t('coach.routine.saveModal.namePlaceholder')}
+              required
+              value={name}
             />
-          ))}
-        </View>
-      </ScrollView>
+          )}
+          <View style={styles.field}>
+            <TextField
+              label={t('coach.routine.saveModal.assignClient')}
+              onChangeText={setSearch}
+              placeholder={t('coach.routine.saveModal.searchClient')}
+              value={search}
+            />
+            {objectives.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.objectiveFilterRow}
+                contentContainerStyle={styles.objectiveFilterContent}
+              >
+                {objectives.map((obj) => {
+                  const active = selectedObjectiveId === obj.id;
+                  return (
+                    <Pressable
+                      key={obj.id}
+                      onPress={() => setSelectedObjectiveId(active ? null : obj.id)}
+                      style={[styles.objectiveChip, active && styles.objectiveChipActive]}
+                    >
+                      <Text style={[styles.objectiveChipText, active && styles.objectiveChipTextActive]}>{obj.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+            <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
+            {filtered.map((client) => (
+              <ClientRow
+                client={client}
+                isSelected={client.id === selectedClientId}
+                key={client.id}
+                onPress={() => setSelectedClientId((prev) => (prev === client.id ? null : client.id))}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </Modal>
       {handoff.dialog}
-    </Modal>
+    </>
   );
 }
 

@@ -1,3 +1,4 @@
+import { routineHandoffSchema, type RoutineHandoff } from '@trainerpro/shared';
 import { z } from 'zod';
 
 function coerceTrainingPlanId(val: unknown): unknown {
@@ -17,6 +18,7 @@ function coerceTrainingPlanId(val: unknown): unknown {
 
 export class UpdateClientDto {
   static schema = z.object({
+    routineHandoff: routineHandoffSchema.optional(),
     allergies: z.string().max(2000).nullable().optional(),
     avatarUrl: z.string().url().max(500).nullable().optional(),
     birthDate: z.string().date().nullable().optional(),
@@ -47,6 +49,7 @@ export class UpdateClientDto {
     weightKg: z.number().min(20).max(400).nullable().optional(),
   });
 
+  routineHandoff?: RoutineHandoff;
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: null | string;

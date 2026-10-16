@@ -1,3 +1,4 @@
+import type { RoutineHandoff } from '@trainerpro/shared';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { normalizePlanTemplateId } from '../normalize-plan-template-id';
@@ -29,6 +30,7 @@ export type CreateClientInput = {
 
 export type UpdateClientInput = Partial<CreateClientInput> & {
   trainingPlanId?: string | null;
+  routineHandoff?: RoutineHandoff;
 };
 
 export type CreateClientProgressPhotoInput = {
@@ -77,6 +79,10 @@ export function useUpdateClientMutation(clientId: string) {
         syncAvatarInCache(queryClient, clientId, input.avatarUrl);
       }
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
+      if (input.trainingPlanId !== undefined) {
+        void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+        void queryClient.invalidateQueries({ queryKey: ['routine-templates'] });
+      }
       void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
     },
   });
@@ -86,12 +92,21 @@ export function useAssignRoutineMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ clientId, templateId }: { clientId: string; templateId: string }) =>
-      updateClient(auth, clientId, { trainingPlanId: templateId }),
+    mutationFn: ({
+      clientId,
+      templateId,
+      routineHandoff,
+    }: {
+      clientId: string;
+      templateId: string;
+      routineHandoff?: RoutineHandoff;
+    }) => updateClient(auth, clientId, { trainingPlanId: templateId, routineHandoff }),
     onSuccess: (_data, { clientId, templateId }) => {
       const trainingPlanId = normalizePlanTemplateId(String(templateId)) ?? templateId;
       syncClientInCache(queryClient, clientId, { trainingPlanId });
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['routine-templates'] });
       void queryClient.invalidateQueries({ queryKey: ['clients', 'detail', clientId] });
     },
   });

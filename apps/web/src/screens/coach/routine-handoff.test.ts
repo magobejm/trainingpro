@@ -1,71 +1,66 @@
 import { describe, expect, it, vi } from 'vitest';
-import { chooseRoutineHandoff, hasPendingWorkoutFromToday } from './routine-handoff';
+import { assignClientRoutine, isSameAssignedRoutine, localCalendarDay } from './routine-handoff';
+import { isHandoffConflict } from './useRoutineHandoffReview';
+import { ApiClientError } from '../../data/api-client';
 
-const today = '2026-10-08';
-
-describe('hasPendingWorkoutFromToday', () => {
-  it('ignores notes, past workouts and a completed day', () => {
-    expect(
-      hasPendingWorkoutFromToday(
-        [
-          { type: 'note', date: '2026-10-20' },
-          { type: 'workout', date: '2026-10-01', isCompleted: false },
-          { type: 'workout', date: '2026-10-08', isCompleted: true },
-        ],
-        today,
-      ),
-    ).toBe(false);
+const options = { routineHandoff: { mode: 'replace' as const, from: '2026-10-16', expectedSignature: 'a'.repeat(64) } };
+function setup() {
+  return {
+    clientId: 'client',
+    clientName: 'Ana',
+    routineName: 'Fuerza',
+    sameRoutine: false,
+    assign: vi.fn().mockResolvedValue(undefined),
+    openCalendar: vi.fn(),
+    ask: vi.fn().mockResolvedValue(false),
+  };
+}
+describe('routine handoff', () => {
+  it('cancel does not assign or navigate', async () => {
+    const input = setup();
+    await assignClientRoutine(input);
+    expect(input.ask).toHaveBeenCalledWith(
+      expect.objectContaining({ clientId: 'client', clientName: 'Ana', routineName: 'Fuerza' }),
+    );
+    expect(input.assign).not.toHaveBeenCalled();
+    expect(input.openCalendar).not.toHaveBeenCalled();
   });
-});
-
-describe('chooseRoutineHandoff', () => {
-  it('asks and replaces when another routine still has a pending workout', async () => {
-    const ask = vi.fn().mockResolvedValue('replace');
-    const outcome = await chooseRoutineHandoff({
-      ask,
-      hasOtherRoutine: true,
-      loadPending: async () => [{ type: 'workout', date: '2026-10-15', isCompleted: false }],
-      sameRoutine: false,
-      today,
+  it('submits the reviewed signature and only navigates after success', async () => {
+    const input = setup();
+    input.ask.mockImplementation(async (request) => {
+      await request.submit(options);
+      return true;
     });
-    expect(outcome).toBe('replace');
-    expect(ask).toHaveBeenCalledOnce();
+    await assignClientRoutine(input);
+    expect(input.assign).toHaveBeenCalledWith(options);
+    expect(input.openCalendar).toHaveBeenCalledOnce();
   });
-
-  it('assigns without asking when nothing is planned ahead', async () => {
-    const ask = vi.fn();
-    const outcome = await chooseRoutineHandoff({
-      ask,
-      hasOtherRoutine: true,
-      loadPending: async () => [{ type: 'workout', date: '2026-10-01', isCompleted: false }],
-      sameRoutine: false,
-      today,
-    });
-    expect(outcome).toBe('assign');
-    expect(ask).not.toHaveBeenCalled();
+  it('opens the same routine without reassigning', async () => {
+    const input = { ...setup(), sameRoutine: true };
+    await assignClientRoutine(input);
+    expect(input.ask).not.toHaveBeenCalled();
+    expect(input.assign).not.toHaveBeenCalled();
+    expect(input.openCalendar).toHaveBeenCalledOnce();
   });
-
-  it('cancels without assigning', async () => {
-    const outcome = await chooseRoutineHandoff({
-      ask: async () => 'cancel',
-      hasOtherRoutine: true,
-      loadPending: async () => [{ type: 'workout', date: '2026-10-15' }],
-      sameRoutine: false,
-      today,
+  it('does not navigate after a failed confirmation', async () => {
+    const input = setup();
+    input.assign.mockRejectedValue(new Error('offline'));
+    input.ask.mockImplementation(async (request) => {
+      await request.submit(options);
+      return true;
     });
-    expect(outcome).toBe('cancel');
+    await expect(assignClientRoutine(input)).rejects.toThrow('offline');
+    expect(input.openCalendar).not.toHaveBeenCalled();
   });
-
-  it('keeps the same routine without asking', async () => {
-    const ask = vi.fn();
-    const outcome = await chooseRoutineHandoff({
-      ask,
-      hasOtherRoutine: true,
-      loadPending: async () => [{ type: 'workout', date: '2026-10-15' }],
-      sameRoutine: true,
-      today,
-    });
-    expect(outcome).toBe('same');
-    expect(ask).not.toHaveBeenCalled();
+  it('recognizes only handoff conflicts for automatic preview refresh', () => {
+    expect(isHandoffConflict(new ApiClientError('changed', 409, undefined, 'ROUTINE_HANDOFF_CHANGED'))).toBe(true);
+    expect(isHandoffConflict(new ApiClientError('other conflict', 409))).toBe(false);
+    expect(isHandoffConflict(new ApiClientError('network', 500))).toBe(false);
+  });
+  it('normalizes IDs and uses a local day boundary', () => {
+    expect(isSameAssignedRoutine('ABCDEF1234567890ABCDEF1234567890', null, 'abcdef12-3456-7890-abcd-ef1234567890')).toBe(
+      true,
+    );
+    expect(localCalendarDay(new Date(2026, 9, 16, 23, 59))).toBe('2026-10-16');
   });
 });

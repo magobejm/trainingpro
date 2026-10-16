@@ -515,6 +515,128 @@
         "required": ["error", "message", "statusCode"],
         "type": "object"
       },
+      "RoutineHandoffPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "clientId": {
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "currentRoutineId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "from": {
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "preserved": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "planDayId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reason": {
+                  "enum": ["started", "completed", "incomplete"],
+                  "type": "string"
+                },
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "type", "date", "planDayId", "title", "updatedAt", "reason"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "removable": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "date": {
+                  "format": "date",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                  "type": "string"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "planDayId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "type": {
+                  "type": "string"
+                },
+                "updatedAt": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "type", "date", "planDayId", "title", "updatedAt"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "signature": {
+            "type": "string"
+          }
+        },
+        "required": ["clientId", "from", "currentRoutineId", "removable", "preserved", "signature"],
+        "type": "object"
+      },
       "SessionView": {
         "additionalProperties": false,
         "properties": {
@@ -3357,22 +3479,108 @@
     },
     "/calendar/clear-future-workouts": {
       "post": {
+        "description": "dryRun=true returns the full future workout impact without writes. Otherwise archives only unprotected workouts.",
         "operationId": "post_calendar_clear_future_workouts",
         "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "clientId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
+                  "dryRun": {
+                    "type": "boolean"
+                  },
+                  "from": {
+                    "format": "date",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                    "type": "string"
+                  }
+                },
+                "required": ["clientId", "from"],
                 "type": "object"
               }
             }
           },
-          "description": "ClearFutureWorkoutsDto",
           "required": true
         },
         "responses": {
           "200": {
-            "description": "Respuesta correcta"
+            "content": {
+              "application/json": {
+                "examples": {
+                  "legacy": {
+                    "value": {
+                      "archived": 1
+                    }
+                  },
+                  "preview": {
+                    "value": {
+                      "clientId": "11111111-1111-4111-8111-111111111111",
+                      "currentRoutineId": "44444444-4444-4444-8444-444444444444",
+                      "from": "2026-10-16",
+                      "preserved": [
+                        {
+                          "date": "2026-10-16",
+                          "id": "started-workout",
+                          "planDayId": null,
+                          "reason": "started",
+                          "title": "Movilidad",
+                          "type": "workout",
+                          "updatedAt": "2026-10-16T00:00:00.000Z"
+                        }
+                      ],
+                      "removable": [
+                        {
+                          "date": "2030-01-01",
+                          "id": "pending-workout",
+                          "planDayId": null,
+                          "title": "Fuerza",
+                          "type": "workout",
+                          "updatedAt": "2026-10-16T00:00:00.000Z"
+                        }
+                      ],
+                      "signature": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    }
+                  }
+                },
+                "schema": {
+                  "oneOf": [
+                    {
+                      "additionalProperties": false,
+                      "properties": {
+                        "archived": {
+                          "maximum": 9007199254740991,
+                          "minimum": -9007199254740991,
+                          "type": "integer"
+                        }
+                      },
+                      "required": ["archived"],
+                      "type": "object"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RoutineHandoffPreview"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Simulation or archive result"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Invalid request"
           },
           "401": {
             "content": {
@@ -5495,6 +5703,7 @@
         "x-roles": ["coach"]
       },
       "patch": {
+        "description": "Optionally validates routineHandoff.expectedSignature and assigns/clears workouts atomically. A changed preview returns 409 with code ROUTINE_HANDOFF_CHANGED and no writes.",
         "operationId": "patch_clients_clientId",
         "parameters": [
           {
@@ -5510,16 +5719,610 @@
           "content": {
             "application/json": {
               "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "allergies": {
+                    "anyOf": [
+                      {
+                        "maxLength": 2000,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "avatarUrl": {
+                    "anyOf": [
+                      {
+                        "format": "uri",
+                        "maxLength": 500,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "birthDate": {
+                    "anyOf": [
+                      {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "considerations": {
+                    "anyOf": [
+                      {
+                        "maxLength": 2000,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "email": {
+                    "format": "email",
+                    "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+                    "type": "string"
+                  },
+                  "fcMax": {
+                    "anyOf": [
+                      {
+                        "maximum": 250,
+                        "minimum": 80,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fcRest": {
+                    "anyOf": [
+                      {
+                        "maximum": 160,
+                        "minimum": 30,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "firstName": {
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "fitnessLevel": {
+                    "anyOf": [
+                      {
+                        "maxLength": 30,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "heightCm": {
+                    "anyOf": [
+                      {
+                        "maximum": 260,
+                        "minimum": 80,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "hipCm": {
+                    "anyOf": [
+                      {
+                        "maximum": 220,
+                        "minimum": 40,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "injuries": {
+                    "anyOf": [
+                      {
+                        "maxLength": 2000,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "lastName": {
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "notes": {
+                    "anyOf": [
+                      {
+                        "maxLength": 2000,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "objectiveId": {
+                    "anyOf": [
+                      {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "phone": {
+                    "anyOf": [
+                      {
+                        "maxLength": 30,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "routineHandoff": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "expectedSignature": {
+                        "pattern": "^[a-f0-9]{64}$",
+                        "type": "string"
+                      },
+                      "from": {
+                        "format": "date",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                        "type": "string"
+                      },
+                      "mode": {
+                        "enum": ["continue", "replace"],
+                        "type": "string"
+                      }
+                    },
+                    "required": ["mode", "from", "expectedSignature"],
+                    "type": "object"
+                  },
+                  "secondaryObjectives": {
+                    "items": {
+                      "maxLength": 80,
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "maxItems": 12,
+                    "type": "array"
+                  },
+                  "sex": {
+                    "anyOf": [
+                      {
+                        "maxLength": 30,
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "trainingPlanId": {
+                    "anyOf": [
+                      {
+                        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "waistCm": {
+                    "anyOf": [
+                      {
+                        "maximum": 220,
+                        "minimum": 40,
+                        "type": "integer"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "weightKg": {
+                    "anyOf": [
+                      {
+                        "maximum": 400,
+                        "minimum": 20,
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
                 "type": "object"
               }
             }
           },
-          "description": "UpdateClientDto",
           "required": true
         },
         "responses": {
           "200": {
-            "description": "Respuesta correcta"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "allergies": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "avatarUrl": {
+                      "type": "string"
+                    },
+                    "birthDate": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "coachMembershipId": {
+                      "type": "string"
+                    },
+                    "considerations": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "fcMax": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fcRest": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "firstName": {
+                      "type": "string"
+                    },
+                    "fitnessLevel": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "heightCm": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "hipCm": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "injuries": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastActivityAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lastName": {
+                      "type": "string"
+                    },
+                    "notes": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "objective": {
+                      "type": "string"
+                    },
+                    "objectiveId": {
+                      "type": "string"
+                    },
+                    "objectiveOptions": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "code": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "isDefault": {
+                            "type": "boolean"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "sortOrder": {
+                            "type": "number"
+                          }
+                        },
+                        "required": ["code", "id", "isDefault", "label", "sortOrder"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "organizationId": {
+                      "type": "string"
+                    },
+                    "phone": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "progressPhotos": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "archived": {
+                            "type": "boolean"
+                          },
+                          "clientId": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "id": {
+                            "type": "string"
+                          },
+                          "imagePath": {
+                            "type": "string"
+                          },
+                          "imageUrl": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["archived", "clientId", "createdAt", "id", "imagePath", "imageUrl", "updatedAt"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "secondaryObjectives": {
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "sex": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "level": {
+                          "enum": ["amber", "green", "none", "red"],
+                          "type": "string"
+                        },
+                        "reasons": {
+                          "items": {
+                            "additionalProperties": false,
+                            "properties": {
+                              "adherencePercent": {
+                                "type": "number"
+                              },
+                              "code": {
+                                "enum": ["adherence_low", "inactive", "incident_open", "incident_severe", "mood_low"],
+                                "type": "string"
+                              },
+                              "days": {
+                                "type": "number"
+                              },
+                              "mood": {
+                                "type": "number"
+                              }
+                            },
+                            "required": ["code"],
+                            "type": "object"
+                          },
+                          "type": "array"
+                        }
+                      },
+                      "required": ["level", "reasons"],
+                      "type": "object"
+                    },
+                    "trainingPlan": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": ["id", "name"],
+                      "type": "object"
+                    },
+                    "trainingPlanId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "waistCm": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "weightKg": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "allergies",
+                    "avatarUrl",
+                    "birthDate",
+                    "coachMembershipId",
+                    "considerations",
+                    "createdAt",
+                    "email",
+                    "fcMax",
+                    "fcRest",
+                    "firstName",
+                    "fitnessLevel",
+                    "heightCm",
+                    "hipCm",
+                    "id",
+                    "injuries",
+                    "lastName",
+                    "notes",
+                    "objective",
+                    "objectiveId",
+                    "organizationId",
+                    "phone",
+                    "progressPhotos",
+                    "secondaryObjectives",
+                    "sex",
+                    "trainingPlanId",
+                    "updatedAt",
+                    "waistCm",
+                    "weightKg"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Updated client"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Invalid request"
           },
           "401": {
             "content": {
@@ -5540,6 +6343,16 @@
               }
             },
             "description": "Rol o permiso no permitido"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Planning changed; review the updated preview"
           }
         },
         "security": [
@@ -7378,7 +8191,31 @@
         "parameters": [],
         "responses": {
           "200": {
-            "description": "Respuesta correcta"
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "capabilities": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "routineHandoffPreview": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": ["routineHandoffPreview"],
+                      "type": "object"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["status", "capabilities"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Service health and supported capabilities"
           }
         },
         "summary": "GET /health",

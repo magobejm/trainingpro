@@ -1,4 +1,6 @@
+import type { RoutineHandoff } from '@trainerpro/shared';
 export type ClientUpdateInput = {
+  routineHandoff?: RoutineHandoff;
   allergies?: null | string;
   avatarUrl?: null | string;
   birthDate?: Date | null;

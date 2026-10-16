@@ -835,5 +835,7 @@
   "chat.history.newMessages_other": "{{count}} mensajes nuevos",
   "chat.history.refreshError": "No se han podido actualizar los mensajes.",
   "chat.history.empty": "No hay mensajes todavía.",
-  "chat.history.today": "Hoy"
+  "chat.history.today": "Hoy",
+  "client.calendar.workout.changed": "El entrenamiento ha cambiado o ya se ha iniciado. Hemos actualizado el calendario.",
+  "client.calendar.workout.saveError": "No se pudo guardar el cambio. Revisa la conexión y vuelve a intentarlo."
 }

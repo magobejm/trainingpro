@@ -9,7 +9,6 @@ import { buildPlanDayLockedFieldsLookup } from '../../../../common/plan/read-loc
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
-import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import { attachSessionYoutubeUrls, buildSessionYoutubeLookup } from '../../domain/session-youtube.mapper';
 import type {
   CardioSessionItem,
@@ -414,7 +413,7 @@ const PLAN_DAY_GROUP_BLOCKS_INCLUDE = {
 } as const;
 
 export async function loadPlanDayGroupLookup(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   planDayId: null | string | undefined,
 ): Promise<Map<number, ExerciseGroupFields>> {
   const lookups = await loadPlanDayLookups(prisma, planDayId);
@@ -422,7 +421,7 @@ export async function loadPlanDayGroupLookup(
 }
 
 async function loadPlanDayLookups(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   planDayId: null | string | undefined,
 ): Promise<{
   groupLookup: Map<number, ExerciseGroupFields>;
@@ -447,7 +446,7 @@ async function loadPlanDayLookups(
 }
 
 export async function mapSessionWithGroups(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): Promise<SessionInstance> {
   const { groupLookup, lockedFieldsLookup, plannedSetsLookup } = await loadPlanDayLookups(prisma, row.planDayId);
@@ -461,7 +460,7 @@ function uniqueIds(values: Array<null | string | undefined>): string[] {
 }
 
 async function loadSessionYoutubeLookup(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): Promise<Map<string, string>> {
   const exerciseIds = uniqueIds(row.items.map((item) => item.sourceExerciseId));

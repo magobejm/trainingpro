@@ -29,11 +29,11 @@ export function CalendarWorkoutList(props: Props): React.JSX.Element {
   }
   return (
     <View style={styles.block}>
-      {workouts.map((workout, index) => (
+      {workouts.map((workout) => (
         <WorkoutRow
           count={props.exerciseCountFor(workout.planDayId)}
           dateStr={props.dateStr}
-          key={`${workout.planDayId ?? 'workout'}-${String(index)}`}
+          key={`${props.dateStr}:${workout.planDayId ?? workout.sessionId ?? workout.title}`}
           language={i18n.language}
           onOpenPlanDay={props.onOpenPlanDay}
           onOpenSession={props.onOpenSession}

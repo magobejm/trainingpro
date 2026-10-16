@@ -51,6 +51,7 @@
     "test": "pnpm exec jest --config jest.config.cjs --runInBand",
     "test:contracts": "pnpm exec jest --config jest.config.cjs --runInBand test/contracts",
     "typecheck": "pnpm exec tsc -p tsconfig.json --noEmit",
-    "build": "pnpm exec tsc -p tsconfig.build.json"
+    "build": "pnpm exec tsc -p tsconfig.build.json",
+    "test:session-transitions": "pnpm exec jest --config jest.config.cjs --runInBand test/sessions/session-transitions.postgres.spec.ts"
   }
 }

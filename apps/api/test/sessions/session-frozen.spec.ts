@@ -59,8 +59,10 @@ async function ensure(existing: ReturnType<typeof sessionRow>, planDayId: string
   const update = jest.fn();
   const create = jest.fn().mockResolvedValue({ id: 'created' });
   const tx = {
+    $queryRaw: async () => [],
     sessionCardioBlock: { deleteMany },
     sessionInstance: {
+      findUnique: async () => existing,
       create,
       findFirst: async (query: { where: { planDayId?: string | null } }) => {
         if (query.where.planDayId === existing.planDayId) return existing;

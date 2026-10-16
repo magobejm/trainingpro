@@ -31,6 +31,7 @@ import type {
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import { finishIfOpen } from './session-concurrency';
 import { closeStaleSessions } from './session-stale';
+import { withLockedSession } from './session-lock';
 import { persistEnsuredSession } from './session-ensure';
 import {
   assertSessionMutable,
@@ -125,31 +126,35 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    const row = await finishIfOpen(
-      session,
-      input,
-      async () => {
-        const updated = await this.prisma.sessionInstance.updateMany({
-          where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
-          data: {
-            ...buildUpdateAuditFields(context),
-            finishComment: normalizeText(input.comment),
-            finishedAt: new Date(),
-            isCompleted: true,
-            isIncomplete: input.isIncomplete,
-            postFatigue: input.postFatigue ?? null,
-            postMood: input.postMood ?? null,
-            postPain: input.postPain ?? null,
-            sessionRpe: input.sessionRpe ?? null,
-            status: SessionStatus.COMPLETED,
-          },
-        });
-        return updated.count;
-      },
-      () => this.readSessionForMutation(input.sessionId),
-    );
-    return mapSessionWithGroups(this.prisma, row);
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      if (session.skippedAt) throw new BadRequestException('Session marked as skipped');
+      const row = await finishIfOpen(
+        session,
+        input,
+        async () => {
+          const updated = await db.sessionInstance.updateMany({
+            where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
+            data: {
+              ...buildUpdateAuditFields(context),
+              finishComment: normalizeText(input.comment),
+              finishedAt: new Date(),
+              isCompleted: true,
+              isIncomplete: input.isIncomplete,
+              postFatigue: input.postFatigue ?? null,
+              postMood: input.postMood ?? null,
+              postPain: input.postPain ?? null,
+              sessionRpe: input.sessionRpe ?? null,
+              status: SessionStatus.COMPLETED,
+            },
+          });
+          return updated.count;
+        },
+        () => this.readSessionForMutation(input.sessionId, db),
+      );
+      return mapSessionWithGroups(db, row);
+    });
   }
 
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
@@ -171,80 +176,98 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   async logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<null | SessionPlioSetLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const block = await this.prisma.sessionPlioBlock.findFirst({
-      where: { archivedAt: null, id: input.sessionPlioBlockId, sessionId: input.sessionId },
-      select: { id: true },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const block = await db.sessionPlioBlock.findFirst({
+        where: { archivedAt: null, id: input.sessionPlioBlockId, sessionId: input.sessionId },
+        select: { id: true },
+      });
+      if (!block) throw new NotFoundException('Plio block not found');
+      const row = await upsertPlioSetLog(db, input, block.id);
+      void context;
+      return row ? mapPlioSetLog(row) : null;
     });
-    if (!block) throw new NotFoundException('Plio block not found');
-    const row = await upsertPlioSetLog(this.prisma, input, block.id);
-    void context;
-    return row ? mapPlioSetLog(row) : null;
   }
 
   async logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const block = await this.prisma.sessionMobilityBlock.findFirst({
-      where: { archivedAt: null, id: input.sessionMobilityBlockId, sessionId: input.sessionId },
-      select: { id: true },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const block = await db.sessionMobilityBlock.findFirst({
+        where: { archivedAt: null, id: input.sessionMobilityBlockId, sessionId: input.sessionId },
+        select: { id: true },
+      });
+      if (!block) throw new NotFoundException('Mobility block not found');
+      const row = await upsertMobilitySetLog(db, input, block.id);
+      void context;
+      return row ? mapMobilitySetLog(row) : null;
     });
-    if (!block) throw new NotFoundException('Mobility block not found');
-    const row = await upsertMobilitySetLog(this.prisma, input, block.id);
-    void context;
-    return row ? mapMobilitySetLog(row) : null;
   }
 
   async logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const block = await this.prisma.sessionIsometricBlock.findFirst({
-      where: { archivedAt: null, id: input.sessionIsometricBlockId, sessionId: input.sessionId },
-      select: { id: true },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const block = await db.sessionIsometricBlock.findFirst({
+        where: { archivedAt: null, id: input.sessionIsometricBlockId, sessionId: input.sessionId },
+        select: { id: true },
+      });
+      if (!block) throw new NotFoundException('Isometric block not found');
+      const row = await upsertIsometricSetLog(db, input, block.id);
+      void context;
+      return row ? mapIsometricSetLog(row) : null;
     });
-    if (!block) throw new NotFoundException('Isometric block not found');
-    const row = await upsertIsometricSetLog(this.prisma, input, block.id);
-    void context;
-    return row ? mapIsometricSetLog(row) : null;
   }
 
   async logSport(context: AuthContext, input: LogSportInput): Promise<null | SessionSportLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const block = await this.prisma.sessionSportBlock.findFirst({
-      where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
-      select: { id: true },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const block = await db.sessionSportBlock.findFirst({
+        where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
+        select: { id: true },
+      });
+      if (!block) throw new NotFoundException('Sport block not found');
+      const row = await upsertSportLog(db, input, block.id);
+      void context;
+      return row ? mapSportLog(row) : null;
     });
-    if (!block) throw new NotFoundException('Sport block not found');
-    const row = await upsertSportLog(this.prisma, input, block.id);
-    void context;
-    return row ? mapSportLog(row) : null;
   }
 
   async logSportSet(context: AuthContext, input: LogSportSetInput): Promise<null | SessionSportSetLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const block = await this.prisma.sessionSportBlock.findFirst({
-      where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
-      select: { id: true },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const block = await db.sessionSportBlock.findFirst({
+        where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
+        select: { id: true },
+      });
+      if (!block) throw new NotFoundException('Sport block not found');
+      const row = await upsertSportSetLog(db, input, block.id);
+      void context;
+      return row ? mapSportSetLog(row) : null;
     });
-    if (!block) throw new NotFoundException('Sport block not found');
-    const row = await upsertSportSetLog(this.prisma, input, block.id);
-    void context;
-    return row ? mapSportSetLog(row) : null;
   }
 
   async logSet(context: AuthContext, input: LogSetInput): Promise<null | SessionSetLog> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    assertSessionMutable(session.status);
-    const item = await this.readSessionItem(input.sessionId, input.sessionItemId);
-    if (!item) {
-      throw new NotFoundException('Session item not found');
-    }
-    const row = await upsertSetLog(this.prisma, input, item.id);
-    void context;
-    return row ? mapSetLog(row) : null;
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      assertSessionMutable(session.status, session.skippedAt);
+      const item = await this.readSessionItem(input.sessionId, input.sessionItemId, db);
+      if (!item) {
+        throw new NotFoundException('Session item not found');
+      }
+      const row = await upsertSetLog(db, input, item.id);
+      void context;
+      return row ? mapSetLog(row) : null;
+    });
   }
 
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance> {
@@ -252,30 +275,33 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   async startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance> {
-    const session = await this.readSessionForMutation(input.sessionId);
-    if (session.startedAt || session.status === SessionStatus.COMPLETED) {
-      return mapSessionWithGroups(this.prisma, session);
-    }
-    const claimed = await this.prisma.sessionInstance.updateMany({
-      where: { id: session.id, startedAt: null },
-      data: {
-        ...buildUpdateAuditFields(context),
-        preFatigue: input.preFatigue ?? null,
-        preMotivation: input.preMotivation ?? null,
-        preRecovery: input.preRecovery ?? null,
-        skipReason: null,
-        skippedAt: null,
-        startMode: input.startMode ?? null,
-        startedAt: new Date(),
-        status: SessionStatus.IN_PROGRESS,
-      },
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readSessionForMutation(input.sessionId, db);
+      if (session.startedAt || session.status === SessionStatus.COMPLETED) {
+        return mapSessionWithGroups(db, session);
+      }
+      const claimed = await db.sessionInstance.updateMany({
+        where: { id: session.id, archivedAt: null, status: SessionStatus.PENDING, startedAt: null },
+        data: {
+          ...buildUpdateAuditFields(context),
+          preFatigue: input.preFatigue ?? null,
+          preMotivation: input.preMotivation ?? null,
+          preRecovery: input.preRecovery ?? null,
+          skipReason: null,
+          skippedAt: null,
+          startMode: input.startMode ?? null,
+          startedAt: new Date(),
+          status: SessionStatus.IN_PROGRESS,
+        },
+      });
+      const current =
+        claimed.count > 0
+          ? await db.sessionInstance.findFirst({ where: { id: session.id }, include: sessionInclude() })
+          : await this.readSessionForMutation(input.sessionId, db);
+      if (!current) throw new NotFoundException('Session not found');
+      return mapSessionWithGroups(db, current);
     });
-    const current =
-      claimed.count > 0
-        ? await this.prisma.sessionInstance.findFirst({ where: { id: session.id }, include: sessionInclude() })
-        : await this.readSessionForMutation(input.sessionId);
-    if (!current) throw new NotFoundException('Session not found');
-    return mapSessionWithGroups(this.prisma, current);
   }
 
   private async canCoachAccessSession(context: AuthContext, sessionId: string) {
@@ -307,9 +333,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return Boolean(row);
   }
 
-  private async readSessionForMutation(sessionId: string) {
-    await closeStaleSessions(this.prisma, { sessionId });
-    const row = await this.prisma.sessionInstance.findFirst({
+  private async readSessionForMutation(sessionId: string, db: Prisma.TransactionClient) {
+    const row = await db.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: sessionInclude(),
     });
@@ -392,8 +417,8 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return membership;
   }
 
-  private readSessionItem(sessionId: string, sessionItemId: string) {
-    return this.prisma.sessionStrengthItem.findFirst({
+  private readSessionItem(sessionId: string, sessionItemId: string, db: Prisma.TransactionClient) {
+    return db.sessionStrengthItem.findFirst({
       where: { archivedAt: null, id: sessionItemId, sessionId },
       select: { id: true },
     });

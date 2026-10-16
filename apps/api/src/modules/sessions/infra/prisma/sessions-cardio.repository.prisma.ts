@@ -10,6 +10,7 @@ import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/ca
 import type { FinishSessionInput } from '../../domain/session.input';
 import { finishIfOpen } from './session-concurrency';
 import { closeStaleSessions } from './session-stale';
+import { withLockedSession } from './session-lock';
 import {
   assertCardioSessionMutable,
   cardioSessionInclude,
@@ -38,28 +39,32 @@ export class SessionsCardioRepositoryPrisma {
   }
 
   async finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
-    const session = await this.readCardioSessionForMutation(input.sessionId);
-    const row = await finishIfOpen(
-      session,
-      input,
-      async () => {
-        const updated = await this.prisma.sessionInstance.updateMany({
-          where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
-          data: {
-            ...buildUpdateAuditFields(context),
-            finishComment: normalizeText(input.comment),
-            finishedAt: new Date(),
-            isCompleted: true,
-            isIncomplete: input.isIncomplete,
-            sessionRpe: input.sessionRpe ?? null,
-            status: SessionStatus.COMPLETED,
-          },
-        });
-        return updated.count;
-      },
-      () => this.readCardioSessionForMutation(input.sessionId),
-    );
-    return mapCardioSession(row);
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readCardioSessionForMutation(input.sessionId, db);
+      if (session.skippedAt) throw new BadRequestException('Session marked as skipped');
+      const row = await finishIfOpen(
+        session,
+        input,
+        async () => {
+          const updated = await db.sessionInstance.updateMany({
+            where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
+            data: {
+              ...buildUpdateAuditFields(context),
+              finishComment: normalizeText(input.comment),
+              finishedAt: new Date(),
+              isCompleted: true,
+              isIncomplete: input.isIncomplete,
+              sessionRpe: input.sessionRpe ?? null,
+              status: SessionStatus.COMPLETED,
+            },
+          });
+          return updated.count;
+        },
+        () => this.readCardioSessionForMutation(input.sessionId, db),
+      );
+      return mapCardioSession(row);
+    });
   }
 
   async getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
@@ -76,40 +81,46 @@ export class SessionsCardioRepositoryPrisma {
   }
 
   async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
-    const session = await this.readCardioSessionForMutation(input.sessionId);
-    assertCardioSessionMutable(session.status);
-    const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId);
-    if (!block) {
-      throw new NotFoundException('Session cardio block not found');
-    }
-    const row = await this.upsertIntervalLog(input, block.id);
-    void context;
-    return row ? mapCardioIntervalLog(row) : null;
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readCardioSessionForMutation(input.sessionId, db);
+      assertCardioSessionMutable(session.status, session.skippedAt);
+      const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId, db);
+      if (!block) {
+        throw new NotFoundException('Session cardio block not found');
+      }
+      const row = await this.upsertIntervalLog(input, block.id, db);
+      void context;
+      return row ? mapCardioIntervalLog(row) : null;
+    });
   }
 
   async startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance> {
-    const session = await this.readCardioSessionForMutation(sessionId);
-    if (session.startedAt || session.status === SessionStatus.COMPLETED) {
-      return mapCardioSession(session);
-    }
-    const claimed = await this.prisma.sessionInstance.updateMany({
-      where: { id: session.id, startedAt: null },
-      data: {
-        ...buildUpdateAuditFields(context),
-        skipReason: null,
-        skippedAt: null,
-        startedAt: new Date(),
-        status: SessionStatus.IN_PROGRESS,
-      },
+    await closeStaleSessions(this.prisma, { sessionId: sessionId });
+    return withLockedSession(this.prisma, sessionId, async (db) => {
+      const session = await this.readCardioSessionForMutation(sessionId, db);
+      if (session.startedAt || session.status === SessionStatus.COMPLETED) {
+        return mapCardioSession(session);
+      }
+      const claimed = await db.sessionInstance.updateMany({
+        where: { id: session.id, archivedAt: null, status: SessionStatus.PENDING, startedAt: null },
+        data: {
+          ...buildUpdateAuditFields(context),
+          skipReason: null,
+          skippedAt: null,
+          startedAt: new Date(),
+          status: SessionStatus.IN_PROGRESS,
+        },
+      });
+      const current =
+        claimed.count > 0
+          ? await db.sessionInstance.findFirst({ where: { id: session.id }, include: cardioSessionInclude() })
+          : await this.readCardioSessionForMutation(sessionId, db);
+      if (!current || current.template.kind !== TemplateKind.CARDIO) {
+        throw new NotFoundException('Cardio session not found');
+      }
+      return mapCardioSession(current);
     });
-    const current =
-      claimed.count > 0
-        ? await this.prisma.sessionInstance.findFirst({ where: { id: session.id }, include: cardioSessionInclude() })
-        : await this.readCardioSessionForMutation(sessionId);
-    if (!current || current.template.kind !== TemplateKind.CARDIO) {
-      throw new NotFoundException('Cardio session not found');
-    }
-    return mapCardioSession(current);
   }
 
   private async writeCardioSession(
@@ -155,9 +166,8 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(existing);
   }
 
-  private async readCardioSessionForMutation(sessionId: string) {
-    await closeStaleSessions(this.prisma, { sessionId });
-    const row = await this.prisma.sessionInstance.findFirst({
+  private async readCardioSessionForMutation(sessionId: string, db: Prisma.TransactionClient) {
+    const row = await db.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
     });
@@ -203,8 +213,8 @@ export class SessionsCardioRepositoryPrisma {
     return membership;
   }
 
-  private readSessionCardioBlock(sessionId: string, sessionCardioBlockId: string) {
-    return this.prisma.sessionCardioBlock.findFirst({
+  private readSessionCardioBlock(sessionId: string, sessionCardioBlockId: string, db: Prisma.TransactionClient) {
+    return db.sessionCardioBlock.findFirst({
       where: { archivedAt: null, id: sessionCardioBlockId, sessionId },
       select: { id: true },
     });
@@ -237,9 +247,9 @@ export class SessionsCardioRepositoryPrisma {
     });
   }
 
-  private async upsertIntervalLog(input: LogIntervalInput, sessionCardioBlockId: string) {
+  private async upsertIntervalLog(input: LogIntervalInput, sessionCardioBlockId: string, db: Prisma.TransactionClient) {
     if (!cardioIntervalHasData(input)) {
-      await this.prisma.intervalLog.deleteMany({
+      await db.intervalLog.deleteMany({
         where: { intervalIndex: input.intervalIndex, sessionCardioBlockId },
       });
       return null;
@@ -259,7 +269,7 @@ export class SessionsCardioRepositoryPrisma {
     };
     return writeOrUpdate(
       () =>
-        this.prisma.intervalLog.upsert({
+        db.intervalLog.upsert({
           where,
           create: {
             ...update,
@@ -270,7 +280,7 @@ export class SessionsCardioRepositoryPrisma {
           },
           update,
         }),
-      () => this.prisma.intervalLog.update({ where, data: update }),
+      () => db.intervalLog.update({ where, data: update }),
     );
   }
 }

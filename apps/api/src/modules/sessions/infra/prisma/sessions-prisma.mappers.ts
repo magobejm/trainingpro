@@ -86,7 +86,8 @@ export type TemplateSportSnapshot = {
   targetRpe: null | number;
 };
 
-export function assertSessionMutable(status: SessionStatus): void {
+export function assertSessionMutable(status: SessionStatus, skippedAt?: Date | null): void {
+  if (skippedAt) throw new BadRequestException('Session marked as skipped');
   if (status === SessionStatus.COMPLETED) {
     throw new BadRequestException('Session already completed');
   }

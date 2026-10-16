@@ -5,6 +5,7 @@ import { createOrReread } from '../../../../common/prisma/unique-violation';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { EnsureSessionInput } from '../../domain/session.input';
 import { shouldReplacePendingSession } from './session-concurrency';
+import { lockSession } from './session-lock';
 import {
   mapSessionIsometricCreate,
   mapSessionItemCreate,
@@ -41,7 +42,11 @@ export async function persistEnsuredSession(
   loadTemplate: (tx: Prisma.TransactionClient) => Promise<TemplateWrite>,
 ) {
   return prisma.$transaction(async (tx) => {
-    const existing = await findExistingSession(tx, input);
+    let existing = await findExistingSession(tx, input);
+    if (existing) {
+      await lockSession(tx, existing.id);
+      existing = await tx.sessionInstance.findUnique({ where: { id: existing.id }, include: sessionInclude() });
+    }
     if (existing && isStartedSession(existing)) {
       return existing;
     }

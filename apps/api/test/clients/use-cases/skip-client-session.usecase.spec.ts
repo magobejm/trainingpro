@@ -34,6 +34,29 @@ describe('SkipClientSessionUseCase', () => {
     expect(updates).toEqual([]);
   });
 
+  it('rejects a skip when start wins after ensure returned a pending snapshot', async () => {
+    const db = {
+      $queryRaw: async () => [],
+      $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(db),
+      sessionInstance: {
+        update: jest.fn().mockResolvedValue({ id: 'session-1' }),
+        updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+      },
+    } as unknown as PrismaService;
+    const useCase = new SkipClientSessionUseCase(clients(), sessions({ startedAt: null, status: 'PENDING' }), db);
+    await expect(
+      useCase.execute(
+        context,
+        {
+          offsetMinutes: 0,
+          planDayId: PLAN_DAY,
+          sessionDate: new Date('2026-10-14'),
+        },
+        now,
+      ),
+    ).rejects.toBeInstanceOf(ConflictException);
+  });
+
   it('marks a pending workout and stores the optional reason', async () => {
     const updates: SkipUpdate[] = [];
     const useCase = new SkipClientSessionUseCase(
@@ -58,6 +81,13 @@ describe('UndoClientSessionSkipUseCase', () => {
     const useCase = new UndoClientSessionSkipUseCase(undoPrisma({ startedAt: null, status: 'PENDING' }, updates));
     await expect(useCase.execute(context, 'session-1')).resolves.toEqual({ id: 'session-1' });
     expect(updates[0]?.data).toEqual({ skipReason: null, skippedAt: null });
+  });
+
+  it('rejects undo when start wins after its pending snapshot was read', async () => {
+    const db = undoPrisma({ startedAt: null, status: 'PENDING' }, []);
+    db.sessionInstance.updateMany = jest.fn().mockResolvedValue({ count: 0 });
+    const useCase = new UndoClientSessionSkipUseCase(db);
+    await expect(useCase.execute(context, 'session-1')).rejects.toBeInstanceOf(ConflictException);
   });
 
   it('refuses to undo a session that already started', async () => {
@@ -100,14 +130,17 @@ function sessions(row: { startedAt: Date | null; status: 'IN_PROGRESS' | 'PENDIN
 }
 
 function prisma(updates: SkipUpdate[]): PrismaService {
-  return {
+  const db = {
+    $queryRaw: async () => [],
+    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(db),
     sessionInstance: {
-      update: async (args: { data: { skipReason: string | null; skippedAt: Date } }) => {
+      updateMany: async (args: { data: { skipReason: string | null; skippedAt: Date } }) => {
         updates.push(args);
-        return { id: 'session-1' };
+        return { count: 1 };
       },
     },
-  } as unknown as PrismaService;
+  };
+  return db as unknown as PrismaService;
 }
 
 function undoPrisma(
@@ -118,9 +151,9 @@ function undoPrisma(
     client: { findFirst: async () => ({ id: 'client' }) },
     sessionInstance: {
       findFirst: async () => ({ id: 'session-1', ...row }),
-      update: async (args: { data: { skipReason: null; skippedAt: null } }) => {
+      updateMany: async (args: { data: { skipReason: null; skippedAt: null } }) => {
         updates.push(args);
-        return { id: 'session-1' };
+        return { count: 1 };
       },
     },
   } as unknown as PrismaService;

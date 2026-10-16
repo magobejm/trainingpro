@@ -24,7 +24,7 @@ describe('closeStaleSessions', () => {
     expect(updates).toEqual([
       expect.objectContaining({
         data: expect.objectContaining({ finishedAt: startedAt, isCompleted: true, isIncomplete: true, status: 'COMPLETED' }),
-        where: { id: 'session-1', status: 'IN_PROGRESS' },
+        where: expect.objectContaining({ id: 'session-1', status: 'IN_PROGRESS' }),
       }),
     ]);
   });
@@ -37,6 +37,21 @@ describe('closeStaleSessions', () => {
     await closeStaleSessions(prisma, { clientId: 'client' }, now);
     expect(updates).toEqual([]);
   });
+
+  it.each(['setLog', 'intervalLog', 'plioSetLog', 'mobilitySetLog', 'isometricSetLog', 'sportSessionLog', 'sportSetLog'])(
+    'rechecks %s saved after candidate selection but before the close acquires its lock',
+    async (model) => {
+      const now = new Date('2026-10-15T12:00:00.000Z');
+      const { prisma, updates } = harness(new Date(now.getTime() - 8 * HOUR));
+      const db = prisma as unknown as Record<string, unknown>;
+      db.$transaction = async (run: (tx: unknown) => Promise<unknown>) => {
+        db[model] = { findMany: async () => [{ sessionId: 'session-1', updatedAt: now }] };
+        return run(db);
+      };
+      await closeStaleSessions(prisma, { clientId: 'client' }, now);
+      expect(updates).toEqual([]);
+    },
+  );
 
   it('stops the clock at the last saved set', async () => {
     const now = new Date('2026-10-15T12:00:00.000Z');
@@ -54,6 +69,8 @@ describe('startSession skip mark', () => {
     const captured: Array<Record<string, unknown>> = [];
     let reads = 0;
     const prisma = {
+      $queryRaw: async () => [{ id: 'session-1' }],
+      $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
       sessionInstance: {
         findFirst: async () => {
           reads += 1;
@@ -80,11 +97,14 @@ type CloseUpdate = {
 function harness(startedAt: Date, logs: Array<{ sessionId: string; updatedAt: Date }> = []) {
   const updates: CloseUpdate[] = [];
   const prisma = {
+    $queryRaw: async () => [{ id: 'session-1' }],
+    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
     intervalLog: { findMany: async () => [] },
     isometricSetLog: { findMany: async () => [] },
     mobilitySetLog: { findMany: async () => [] },
     plioSetLog: { findMany: async () => [] },
     sessionInstance: {
+      findFirst: async () => ({ id: 'session-1', startedAt, status: 'IN_PROGRESS' }),
       findMany: async (args: { where: { startedAt: { lte: Date } } }) =>
         startedAt <= args.where.startedAt.lte ? [{ id: 'session-1', startedAt }] : [],
       updateMany: async (args: CloseUpdate) => {

@@ -24,7 +24,8 @@ export type CardioTemplateBlockSnapshot = {
   workSeconds: number;
 };
 
-export function assertCardioSessionMutable(status: SessionStatus): void {
+export function assertCardioSessionMutable(status: SessionStatus, skippedAt?: Date | null): void {
+  if (skippedAt) throw new BadRequestException('Session marked as skipped');
   if (status === SessionStatus.COMPLETED) {
     throw new BadRequestException('Session already completed');
   }

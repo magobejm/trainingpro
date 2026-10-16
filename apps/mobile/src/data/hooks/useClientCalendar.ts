@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
+import { refreshCalendarOnSkipConflict } from '../client-session-skip-error';
 
 export type ClientCalendarEvent = {
   id: string;
@@ -100,6 +101,7 @@ export function useSkipClientSessionMutation() {
       });
     },
     onSuccess: () => invalidateCalendar(queryClient),
+    onError: (error) => refreshCalendarOnSkipConflict(error, () => invalidateCalendar(queryClient)),
   });
 }
 
@@ -112,6 +114,7 @@ export function useUndoSkipClientSessionMutation() {
       return createApiClient(auth).delete(`/clients/me/sessions/${sessionId}/skip`);
     },
     onSuccess: () => invalidateCalendar(queryClient),
+    onError: (error) => refreshCalendarOnSkipConflict(error, () => invalidateCalendar(queryClient)),
   });
 }
 

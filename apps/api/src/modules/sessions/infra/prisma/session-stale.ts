@@ -1,52 +1,43 @@
+import type { Prisma } from '@prisma/client';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import { withLockedSession } from './session-lock';
 
 export const STALE_SESSION_MS = 6 * 60 * 60 * 1000;
+type StaleScope = { clientId?: string; coachMembershipId?: string; sessionId?: string };
 
-type StaleScope = {
-  clientId?: string;
-  coachMembershipId?: string;
-  sessionId?: string;
-};
-
-type OpenSession = { id: string; startedAt: Date | null };
-
-/** Cierra como incompletas las sesiones en curso cuya última serie tiene más de 6 horas. */
+/** Candidate reads are advisory; state and activity are reloaded under the session lock. */
 export async function closeStaleSessions(prisma: PrismaService, scope: StaleScope, now = new Date()): Promise<void> {
   if (!scope.clientId && !scope.coachMembershipId && !scope.sessionId) return;
   const cutoff = new Date(now.getTime() - STALE_SESSION_MS);
-  const open = await prisma.sessionInstance.findMany({
-    select: { id: true, startedAt: true },
-    where: {
-      archivedAt: null,
-      startedAt: { lte: cutoff },
-      status: 'IN_PROGRESS',
-      ...(scope.clientId ? { clientId: scope.clientId } : {}),
-      ...(scope.coachMembershipId ? { coachMembershipId: scope.coachMembershipId } : {}),
-      ...(scope.sessionId ? { id: scope.sessionId } : {}),
-    },
-  });
-  const stale = await staleSessions(prisma, open, cutoff);
-  await Promise.all(stale.map((row) => closeOne(prisma, row)));
+  const where = {
+    archivedAt: null,
+    startedAt: { lte: cutoff },
+    status: 'IN_PROGRESS' as const,
+    ...(scope.clientId ? { clientId: scope.clientId } : {}),
+    ...(scope.coachMembershipId ? { coachMembershipId: scope.coachMembershipId } : {}),
+    ...(scope.sessionId ? { id: scope.sessionId } : {}),
+  };
+  const candidates = await prisma.sessionInstance.findMany({ select: { id: true }, where });
+  // Keep transactions short and hold only one session lock at a time.
+  for (const candidate of candidates) {
+    await withLockedSession(prisma, candidate.id, async (tx) => {
+      const current = await tx.sessionInstance.findFirst({
+        select: { id: true, startedAt: true },
+        where: { ...where, id: candidate.id },
+      });
+      if (!current?.startedAt) return;
+      const activity = await latestActivity(tx, [current.id]);
+      const finishedAt = activity.get(current.id) ?? current.startedAt;
+      if (finishedAt > cutoff) return;
+      await tx.sessionInstance.updateMany({
+        data: { finishedAt, isCompleted: true, isIncomplete: true, status: 'COMPLETED' },
+        where: { ...where, id: current.id },
+      });
+    });
+  }
 }
 
-async function staleSessions(
-  prisma: PrismaService,
-  open: OpenSession[],
-  cutoff: Date,
-): Promise<Array<{ finishedAt: Date; id: string }>> {
-  if (open.length === 0) return [];
-  const activity = await latestActivity(
-    prisma,
-    open.map((row) => row.id),
-  );
-  return open.flatMap((row) => {
-    const finishedAt = activity.get(row.id) ?? row.startedAt;
-    if (!finishedAt || finishedAt.getTime() > cutoff.getTime()) return [];
-    return [{ finishedAt, id: row.id }];
-  });
-}
-
-async function latestActivity(prisma: PrismaService, sessionIds: string[]): Promise<Map<string, Date>> {
+async function latestActivity(prisma: Prisma.TransactionClient, sessionIds: string[]): Promise<Map<string, Date>> {
   const select = { sessionId: true, updatedAt: true } as const;
   const where = { sessionId: { in: sessionIds } };
   const lists = await Promise.all([
@@ -64,11 +55,4 @@ async function latestActivity(prisma: PrismaService, sessionIds: string[]): Prom
     if (!current || row.updatedAt > current) latest.set(row.sessionId, row.updatedAt);
   }
   return latest;
-}
-
-function closeOne(prisma: PrismaService, row: { finishedAt: Date; id: string }): Promise<unknown> {
-  return prisma.sessionInstance.updateMany({
-    data: { finishedAt: row.finishedAt, isCompleted: true, isIncomplete: true, status: 'COMPLETED' },
-    where: { id: row.id, status: 'IN_PROGRESS' },
-  });
 }

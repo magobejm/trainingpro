@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
+import { withLockedSession } from '../../../sessions/infra/prisma/session-lock';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../../sessions/domain/sessions-repository.port';
 import { CLIENTS_REPOSITORY, type ClientsRepositoryPort } from '../../domain/clients-repository.port';
@@ -36,10 +37,26 @@ export class SkipClientSessionUseCase {
     if (session.status !== 'PENDING' || session.startedAt) {
       throw new ConflictException('Session already started');
     }
-    await this.prisma.sessionInstance.update({
-      data: { skipReason: cleanReason(input.reason), skippedAt: now },
-      where: { id: session.id },
-    });
+    const updated = await withLockedSession(this.prisma, session.id, (tx) =>
+      tx.sessionInstance.updateMany({
+        data: { skipReason: cleanReason(input.reason), skippedAt: now },
+        where: {
+          id: session.id,
+          clientId: client.id,
+          archivedAt: null,
+          status: 'PENDING',
+          startedAt: null,
+          logs: { none: {} },
+          intervalLogs: { none: {} },
+          plioLogs: { none: {} },
+          mobilityLogs: { none: {} },
+          isometricLogs: { none: {} },
+          sportLogs: { none: {} },
+          sportSetLogs: { none: {} },
+        },
+      }),
+    );
+    if (updated.count === 0) throw new ConflictException('Session already started or has recorded activity');
     return { id: session.id };
   }
 
@@ -78,10 +95,11 @@ export class UndoClientSessionSkipUseCase {
     if (session.status !== 'PENDING' || session.startedAt) {
       throw new ConflictException('Session already started');
     }
-    await this.prisma.sessionInstance.update({
+    const updated = await this.prisma.sessionInstance.updateMany({
       data: { skipReason: null, skippedAt: null },
-      where: { id: session.id },
+      where: { id: session.id, clientId: client.id, archivedAt: null, status: 'PENDING', startedAt: null },
     });
+    if (updated.count === 0) throw new ConflictException('Session already started');
     return { id: session.id };
   }
 

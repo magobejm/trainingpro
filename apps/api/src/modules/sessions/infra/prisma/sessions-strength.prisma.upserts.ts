@@ -8,7 +8,6 @@ import {
   sportSetHasData,
   strengthSetHasData,
 } from '../../../../common/performed-set';
-import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type {
   LogIsometricSetInput,
   LogMobilitySetInput,
@@ -19,7 +18,7 @@ import type {
 } from '../../domain/session.input';
 import { toDecimal } from './sessions-strength.prisma.helpers';
 
-export async function upsertSetLog(prisma: PrismaService, input: LogSetInput, sessionItemId: string) {
+export async function upsertSetLog(prisma: Prisma.TransactionClient, input: LogSetInput, sessionItemId: string) {
   if (!strengthSetHasData(input)) {
     await prisma.setLog.deleteMany({ where: { sessionItemId, setIndex: input.setIndex } });
     return null;
@@ -48,7 +47,11 @@ export async function upsertSetLog(prisma: PrismaService, input: LogSetInput, se
   return writeOrUpdate(save, save);
 }
 
-export async function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetInput, sessionPlioBlockId: string) {
+export async function upsertPlioSetLog(
+  prisma: Prisma.TransactionClient,
+  input: LogPlioSetInput,
+  sessionPlioBlockId: string,
+) {
   if (!plioSetHasData(input)) {
     await prisma.plioSetLog.deleteMany({ where: { sessionPlioBlockId, setIndex: input.setIndex } });
     return null;
@@ -78,7 +81,7 @@ export async function upsertPlioSetLog(prisma: PrismaService, input: LogPlioSetI
 }
 
 export async function upsertMobilitySetLog(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   input: LogMobilitySetInput,
   sessionMobilityBlockId: string,
 ) {
@@ -111,7 +114,7 @@ export async function upsertMobilitySetLog(
 }
 
 export async function upsertIsometricSetLog(
-  prisma: PrismaService,
+  prisma: Prisma.TransactionClient,
   input: LogIsometricSetInput,
   sessionIsometricBlockId: string,
 ) {
@@ -141,7 +144,7 @@ export async function upsertIsometricSetLog(
   return writeOrUpdate(save, save);
 }
 
-export async function upsertSportLog(prisma: PrismaService, input: LogSportInput, sessionSportBlockId: string) {
+export async function upsertSportLog(prisma: Prisma.TransactionClient, input: LogSportInput, sessionSportBlockId: string) {
   if (!sportLogHasData(input)) {
     await prisma.sportSessionLog.deleteMany({ where: { sessionSportBlockId } });
     return null;
@@ -165,7 +168,11 @@ export async function upsertSportLog(prisma: PrismaService, input: LogSportInput
   return writeOrUpdate(save, save);
 }
 
-export async function upsertSportSetLog(prisma: PrismaService, input: LogSportSetInput, sessionSportBlockId: string) {
+export async function upsertSportSetLog(
+  prisma: Prisma.TransactionClient,
+  input: LogSportSetInput,
+  sessionSportBlockId: string,
+) {
   if (!sportSetHasData(input)) {
     await prisma.sportSetLog.deleteMany({ where: { sessionSportBlockId, setIndex: input.setIndex } });
     return null;

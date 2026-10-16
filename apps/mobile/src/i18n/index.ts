@@ -2,10 +2,11 @@ import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import enCommon from './locales/en/common.json';
 import esCommon from './locales/es/common.json';
+import { coachWorkspaceLocale } from './coach-workspace.locale';
 
 const resources = {
-  en: { common: enCommon },
-  es: { common: esCommon },
+  en: { common: { ...enCommon, ...coachWorkspaceLocale('en') } },
+  es: { common: { ...esCommon, ...coachWorkspaceLocale('es') } },
 } as const;
 
 const UI_LANGUAGE = 'es';

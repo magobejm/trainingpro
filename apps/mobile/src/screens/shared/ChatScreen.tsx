@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Banner } from '@trainerpro/ui';
@@ -15,16 +15,29 @@ import { CALL_COLOR, CALL_REQUEST_COLOR } from '../client/calendar-fixed-colors'
 import { CallTimeSelect } from '../client/CallTimeSelect';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { LIGHT } from '../../theme/light';
+import { useAuthStore } from '../../store/auth.store';
+import { useCoachDraft } from '../../data/hooks/useCoachDraft';
+import { canRespondToCall, isOwnChatMessage } from '../coach/coach-client-model';
+import { useCoachCopy } from '../coach/coach-copy';
 import { ChatHistoryList } from './ChatHistoryList';
 
 type ChatScreenProps = {
   clientId?: string;
   embedded?: boolean;
   initialMessage?: string;
+  interlocutorName?: string;
 };
 
 export function ChatScreen(props: ChatScreenProps): React.JSX.Element {
   const threadQuery = useThreadQuery(props.clientId);
+  const role = useAuthStore((state) => state.activeRole);
+  const c = useCoachCopy();
+  if (role === 'coach' && !props.clientId)
+    return (
+      <View style={styles.page}>
+        <Text style={styles.title}>{c('noClient')}</Text>
+      </View>
+    );
   const threadId = threadQuery.data?.id;
   if (!threadId) return <ThreadStatus embedded={props.embedded} query={threadQuery} />;
   return <ConversationChat key={threadId} {...props} threadId={threadId} />;
@@ -32,7 +45,7 @@ export function ChatScreen(props: ChatScreenProps): React.JSX.Element {
 
 function ConversationChat(props: ChatScreenProps & { threadId: string }): React.JSX.Element {
   const vm = useChatViewModel(props.threadId, props.initialMessage);
-  return <ChatView embedded={props.embedded} {...vm} />;
+  return <ChatView embedded={props.embedded} interlocutorName={props.interlocutorName} {...vm} />;
 }
 
 function useChatViewModel(threadId: string, initialMessage?: string) {
@@ -62,21 +75,37 @@ function ThreadStatus(props: { embedded?: boolean; query: ReturnType<typeof useT
 
 function useMessageComposer(threadId: string, t: (key: string) => string, initialMessage?: string) {
   const sendMessage = useSendChatMessageMutation(threadId);
-  const [text, setText] = useState(initialMessage ?? '');
+  const draft = useCoachDraft<{ text: string; attachments: AttachmentDraft[] }>('chat:' + threadId, {
+    text: '',
+    attachments: [],
+  });
+  const text = draft.value.text;
+  const setText = (value: string) => draft.setValue((current) => ({ ...current, text: value }));
+  const attachments = draft.value.attachments;
+  const setAttachments = (value: AttachmentDraft[] | ((current: AttachmentDraft[]) => AttachmentDraft[])) =>
+    draft.setValue((current) => ({
+      ...current,
+      attachments: typeof value === 'function' ? value(current.attachments) : value,
+    }));
   const [error, setError] = useState('');
   const [sentVersion, setSentVersion] = useState(0);
-  const [attachments, setAttachments] = useState<AttachmentDraft[]>([]);
+  const seededMessage = useRef<string | undefined>(undefined);
+
   useEffect(() => {
-    if (initialMessage) setText(initialMessage);
-  }, [initialMessage]);
-  const canSend = useMemo(() => canSendMessage(text, attachments, threadId), [attachments, text, threadId]);
+    if (!draft.ready || !initialMessage || seededMessage.current === initialMessage) return;
+    seededMessage.current = initialMessage;
+    if (!text.trim()) setText(initialMessage);
+  }, [initialMessage, draft.ready]);
+  const canSend = useMemo(
+    () => canSendMessage(text, attachments, threadId) && draft.ready && !sendMessage.isPending,
+    [attachments, text, threadId, draft.ready, sendMessage.isPending],
+  );
   const onAttach = (attachment: AttachmentDraft) => setAttachments((current) => [...current, attachment]);
   const onSend = () =>
     sendChatMessage(canSend, sendMessage, {
       attachments,
-      setAttachments,
+      clearDraft: () => draft.clear(),
       setError,
-      setText,
       onSent: () => setSentVersion((version) => version + 1),
       t,
       text,
@@ -89,9 +118,8 @@ async function sendChatMessage(
   mutation: ReturnType<typeof useSendChatMessageMutation>,
   state: {
     attachments: AttachmentDraft[];
-    setAttachments: (value: AttachmentDraft[]) => void;
+    clearDraft: () => Promise<void>;
     setError: (value: string) => void;
-    setText: (value: string) => void;
     t: (key: string) => string;
     text: string;
     onSent: () => void;
@@ -100,10 +128,9 @@ async function sendChatMessage(
   if (!canSend) return;
   try {
     await mutation.mutateAsync({ attachments: state.attachments, text: state.text });
-    state.setText('');
-    state.setAttachments([]);
     state.setError('');
     state.onSent();
+    await state.clearDraft();
   } catch {
     state.setError(state.t('client.chat.error'));
   }
@@ -114,7 +141,7 @@ function canSendMessage(text: string, attachments: AttachmentDraft[], threadId: 
   return (hasText || attachments.length > 0) && threadId.length > 0;
 }
 
-type ViewModel = ReturnType<typeof useChatViewModel> & { embedded?: boolean };
+type ViewModel = ReturnType<typeof useChatViewModel> & { embedded?: boolean; interlocutorName?: string };
 
 function ChatView(props: ViewModel) {
   if (props.threadId && props.messagesQuery.isLoading) {
@@ -132,7 +159,7 @@ function ChatView(props: ViewModel) {
             <Text style={{ fontSize: 24 }}>{'👤'}</Text>
           </View>
           <View>
-            <Text style={styles.embeddedCoachName}>{props.t('mobile.client.chat.coach')}</Text>
+            <Text style={styles.embeddedCoachName}>{props.interlocutorName ?? props.t('mobile.client.chat.coach')}</Text>
             <Text style={styles.embeddedOnline}>{props.t('mobile.client.chat.online')}</Text>
           </View>
         </View>
@@ -140,7 +167,7 @@ function ChatView(props: ViewModel) {
         <ChatHeader
           retentionTitle={props.t('client.chat.retention.title')}
           subtitle={props.t('client.chat.retention.subtitle')}
-          title={props.t('client.chat.title')}
+          title={props.interlocutorName ?? props.t('client.chat.title')}
         />
       )}
       <ChatHistoryList
@@ -188,7 +215,12 @@ function ChatComposer(props: ViewModel & { embedded?: boolean }) {
         </Text>
       ))}
       {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
-      <Pressable onPress={props.onSend} style={styles.sendButton}>
+      <Pressable
+        accessibilityRole="button"
+        disabled={!props.canSend}
+        onPress={props.onSend}
+        style={[styles.sendButton, !props.canSend && styles.disabled]}
+      >
         <Text style={styles.sendLabel}>{props.t('client.chat.send')}</Text>
       </Pressable>
     </View>
@@ -196,10 +228,11 @@ function ChatComposer(props: ViewModel & { embedded?: boolean }) {
 }
 
 function MessageBubble(props: { message: ChatMessage }) {
+  const role = useAuthStore((state) => state.activeRole);
   if (props.message.callProposal && !props.message.text) {
     return <CallProposalCard proposal={props.message.callProposal} />;
   }
-  const isClient = props.message.senderRole === 'CLIENT';
+  const isClient = isOwnChatMessage(role, props.message.senderRole);
   return (
     <View style={[styles.bubble, isClient ? styles.bubbleClient : styles.bubbleCoach]}>
       {props.message.text ? <Text style={styles.bubbleText}>{props.message.text}</Text> : null}
@@ -214,7 +247,8 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
   const { t } = useTranslation();
   const proposal = props.proposal;
   const tone = proposal.initiatedBy === 'CLIENT' ? CALL_REQUEST_COLOR : CALL_COLOR;
-  const canRespond = proposal.status === 'pending' && proposal.lastProposedBy !== 'CLIENT';
+  const role = useAuthStore((state) => state.activeRole);
+  const canRespond = canRespondToCall(role, proposal);
   const accepted = proposal.status === 'accepted';
   const cancelled = proposal.status === 'cancelled';
   const [countering, setCountering] = useState(false);
@@ -241,14 +275,25 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
           who: t(proposal.lastProposedBy === 'COACH' ? 'client.chat.call.coach' : 'client.chat.call.client'),
         })}
       </Text>
-      {canRespond ? <CallButton label={t('client.chat.call.accept')} onPress={() => accept.mutate(proposal.id)} /> : null}
+      {canRespond ? (
+        <CallButton
+          disabled={accept.isPending || counter.isPending}
+          label={t('client.chat.call.accept')}
+          onPress={() => accept.mutate(proposal.id)}
+        />
+      ) : null}
       {canRespond && !countering ? (
-        <CallButton label={t('client.chat.call.counter')} onPress={() => setCountering(true)} />
+        <CallButton
+          disabled={accept.isPending || counter.isPending}
+          label={t('client.chat.call.counter')}
+          onPress={() => setCountering(true)}
+        />
       ) : null}
       {countering && canRespond ? (
         <View>
           <CallTimeSelect onChange={setTime} value={time} />
           <CallButton
+            disabled={accept.isPending || counter.isPending}
             label={t('client.chat.call.sendCounter')}
             onPress={() => counter.mutate({ proposalId: proposal.id, time }, { onSuccess: () => setCountering(false) })}
           />
@@ -258,9 +303,14 @@ function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callPropos
   );
 }
 
-function CallButton(props: { label: string; onPress: () => void }): React.JSX.Element {
+function CallButton(props: { label: string; onPress: () => void; disabled?: boolean }): React.JSX.Element {
   return (
-    <Pressable onPress={props.onPress} style={styles.callButton}>
+    <Pressable
+      accessibilityRole="button"
+      disabled={props.disabled}
+      onPress={props.onPress}
+      style={[styles.callButton, props.disabled && styles.disabled]}
+    >
       <Text style={styles.callButtonText}>{props.label}</Text>
     </Pressable>
   );
@@ -293,6 +343,7 @@ function openAttachment(url: string): void {
 const CALL_TEXT = '#f8fafc';
 
 const styles = StyleSheet.create({
+  disabled: { opacity: 0.5 },
   callButton: { backgroundColor: '#ffffff22', borderRadius: 10, marginTop: 8, paddingVertical: 8 },
   callButtonText: { color: CALL_TEXT, fontSize: 12, fontWeight: '700', textAlign: 'center' },
   callCard: { alignSelf: 'stretch', borderRadius: 14, marginVertical: 4, padding: 12 },
@@ -379,7 +430,8 @@ const styles = StyleSheet.create({
     borderRadius: LIGHT.radiusFull,
     height: 44,
     justifyContent: 'center',
-    width: 44,
+    minWidth: 80,
+    paddingHorizontal: 12,
   },
   sendLabel: { color: LIGHT.textOnNavy, fontSize: 13, fontWeight: '800' },
   textInput: {

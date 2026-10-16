@@ -114,32 +114,30 @@ export function BackHeader(props: { onBack: () => void; title?: string }): React
 
 export type TabId = 'chat' | 'home' | 'more';
 
-export function BottomNav(props: {
-  active: TabId;
-  onChange: (tab: TabId) => void;
-  labels: { chat: string; home: string; more: string };
+export function BottomNav<T extends string = TabId>(props: {
+  active: T;
+  onChange: (tab: T) => void;
+  labels: Record<T, string>;
+  items?: Array<{ id: T; icon: React.ReactNode }>;
 }): React.JSX.Element {
   return (
-    <View style={ps.bottomNavWrap}>
+    <View style={[ps.bottomNavWrap, props.items && ps.coachBottomNav]}>
       <View style={ps.bottomNav}>
-        <NavItem
-          active={props.active === 'chat'}
-          icon={<IconChat color={props.active === 'chat' ? LIGHT.accentDark : LIGHT.accentMuted} />}
-          label={props.labels.chat}
-          onPress={() => props.onChange('chat')}
-        />
-        <NavItem
-          active={props.active === 'home'}
-          icon={<IconHome color={props.active === 'home' ? LIGHT.accentDark : LIGHT.accentMuted} />}
-          label={props.labels.home}
-          onPress={() => props.onChange('home')}
-        />
-        <NavItem
-          active={props.active === 'more'}
-          icon={<IconMenu color={props.active === 'more' ? LIGHT.accentDark : LIGHT.accentMuted} />}
-          label={props.labels.more}
-          onPress={() => props.onChange('more')}
-        />
+        {(
+          props.items ?? [
+            { id: 'chat' as T, icon: <IconChat color={props.active === 'chat' ? LIGHT.accentDark : LIGHT.accentMuted} /> },
+            { id: 'home' as T, icon: <IconHome color={props.active === 'home' ? LIGHT.accentDark : LIGHT.accentMuted} /> },
+            { id: 'more' as T, icon: <IconMenu color={props.active === 'more' ? LIGHT.accentDark : LIGHT.accentMuted} /> },
+          ]
+        ).map((item) => (
+          <NavItem
+            key={item.id}
+            active={props.active === item.id}
+            icon={item.icon}
+            label={props.labels[item.id]}
+            onPress={() => props.onChange(item.id)}
+          />
+        ))}
       </View>
     </View>
   );
@@ -147,7 +145,12 @@ export function BottomNav(props: {
 
 function NavItem(props: { icon: React.ReactNode; label: string; active: boolean; onPress: () => void }): React.JSX.Element {
   return (
-    <Pressable onPress={props.onPress} style={ps.navItem}>
+    <Pressable
+      accessibilityRole="tab"
+      accessibilityState={{ selected: props.active }}
+      onPress={props.onPress}
+      style={ps.navItem}
+    >
       {props.icon}
       <Text style={[ps.navLabel, props.active && ps.navLabelActive]}>{props.label}</Text>
     </Pressable>
@@ -347,7 +350,15 @@ const ps = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  navItem: { alignItems: 'center', gap: 4, minWidth: 60, padding: 4 },
+  coachBottomNav: {
+    position: 'relative',
+    backgroundColor: LIGHT.bgCard,
+    borderTopColor: LIGHT.border,
+    borderTopWidth: 1,
+    paddingHorizontal: 8,
+    paddingTop: 10,
+  },
+  navItem: { alignItems: 'center', gap: 4, minWidth: 44, minHeight: 44, padding: 4 },
   navLabel: { color: LIGHT.accentMuted, fontSize: 10, fontWeight: '600' },
   navLabelActive: { color: LIGHT.accentDark },
   modalOverlay: {

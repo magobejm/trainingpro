@@ -1,3 +1,4 @@
+import { clearCoachDrafts } from './coach-draft-storage';
 import type { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
 import { usePasswordRecoveryStore } from '../store/password-recovery.store';
@@ -82,5 +83,6 @@ function signOutLocally(queryClient: QueryClient): void {
 }
 
 function clearUserData(queryClient: QueryClient): void {
+  void clearCoachDrafts().catch(() => undefined);
   queryClient.clear();
 }

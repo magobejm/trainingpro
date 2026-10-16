@@ -17,7 +17,7 @@ import {
   getLayoutStyle15,
 } from './CalendarScreen.modals.layout-styles';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '../../i18n/useFormatDate';
 import { Text, View } from 'react-native';
@@ -25,6 +25,7 @@ import { Pencil, Plus, StickyNote, Trash2 } from 'lucide-react';
 import type { CalendarEventData } from './calendar-screen.types';
 import { calendarEventColor } from './calendar-screen.utils';
 import { workoutStatusLines } from './calendar-workout-label';
+import { ActionConfirmModal } from './components/ActionConfirmModal';
 import { SessionDetailModal } from './progress/SessionDetailModal';
 import { Button, EmptyState, IconButton, Modal, colors as tk } from '@trainerpro/ui';
 const VARIANT_SECONDARY = 'secondary' as const;
@@ -40,7 +41,7 @@ type DayModalProps = {
   onClose: () => void;
   onAddNote: () => void;
   onAddReminder: () => void;
-  onDeleteEvent: (eventId: string) => void;
+  onDeleteEvent: (eventId: string) => Promise<void>;
   onEditEvent?: (event: CalendarEventData) => void;
   t: TFunc;
 };
@@ -81,12 +82,51 @@ export function DayDetailModal({
   t,
 }: DayModalProps): React.JSX.Element {
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(false);
+  const deletingRef = useRef(false);
+  const confirmDelete = async () => {
+    if (!deleteId || deletingRef.current) return;
+    deletingRef.current = true;
+    setDeleting(true);
+    setDeleteError(false);
+    try {
+      await onDeleteEvent(deleteId);
+      setDeleteId(null);
+    } catch {
+      setDeleteError(true);
+    } finally {
+      deletingRef.current = false;
+      setDeleting(false);
+    }
+  };
   const format = useFormatDate();
   const date = new Date(dateStr + 'T12:00:00');
   const layoutStyle1 = getLayoutStyle1;
   const layoutStyle2 = getLayoutStyle2;
   const layoutStyle3 = getLayoutStyle3;
   const layoutStyle4 = getLayoutStyle4;
+  if (deleteId) {
+    const event = dayEvents.find((item) => item.id === deleteId);
+    return (
+      <ActionConfirmModal
+        visible
+        title={t('coach.calendar.event.deleteTitle')}
+        message={t('coach.calendar.event.deleteMessage', {
+          name: event?.title || event?.planDayTitle || t(`coach.calendar.type.${event?.type ?? 'workout'}`),
+        })}
+        cancelLabel={t('app.user.modal.cancel')}
+        confirmLabel={t('coach.calendar.event.delete')}
+        isLoading={deleting}
+        errorMessage={deleteError ? t('coach.calendar.event.deleteError') : null}
+        onCancel={() => {
+          if (!deletingRef.current) setDeleteId(null);
+        }}
+        onConfirm={() => void confirmDelete()}
+      />
+    );
+  }
   return (
     <Modal closeLabel={t('common.close')} onClose={onClose} size={MODAL_SIZE} title={format(date)} visible>
       <Text style={layoutStyle1}>
@@ -110,7 +150,10 @@ export function DayDetailModal({
       </View>
       <DayEventList
         dayEvents={dayEvents}
-        onDeleteEvent={onDeleteEvent}
+        onDeleteEvent={(id) => {
+          setDeleteError(false);
+          setDeleteId(id);
+        }}
         onEditEvent={onEditEvent}
         onViewSession={setSessionId}
         t={t}

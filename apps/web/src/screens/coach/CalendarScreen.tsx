@@ -101,13 +101,13 @@ function useCalendarLogic() {
     setMonth(month);
   };
   const handleDayClick = (dateStr: string) => setModal({ type: 'day', dateStr });
-  const handleDeleteEvent = (eventId: string) => {
+  const handleDeleteEvent = async (eventId: string) => {
     const event = events.find((item) => item.id === eventId);
     if (event?.type === 'physical_test' && event.clientId) {
-      archiveSchedule.mutate({ clientId: event.clientId, scheduleId: event.scheduleId ?? event.id });
+      await archiveSchedule.mutateAsync({ clientId: event.clientId, scheduleId: event.scheduleId ?? event.id });
       return;
     }
-    deleteEvent.mutate(eventId);
+    await deleteEvent.mutateAsync(eventId);
   };
   const handleMoveEvent = (eventId: string, d: string) => updateEvent.mutate({ eventId, input: { date: d } });
   const handleMoveWeek = createWeekMoveHandler(updateEvent, events);
@@ -196,7 +196,7 @@ type CalendarModalsProps = {
   clientName: string | undefined;
   createIsPending: boolean;
   updateIsPending: boolean;
-  onDeleteEvent: (id: string) => void;
+  onDeleteEvent: (id: string) => Promise<void>;
   onEditEvent: (event: CalendarEventData) => void;
   onSaveNote: (data: { title: string; content: string; color: string }) => void;
   onSaveReminder: (data: { date?: string; content: string; time: string; color: string }) => void;

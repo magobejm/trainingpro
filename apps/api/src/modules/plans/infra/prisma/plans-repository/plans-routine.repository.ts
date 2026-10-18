@@ -15,6 +15,8 @@ import { makePlanSummary } from './plans-summary.helper';
 import { PlansBaseRepository } from './plans-base.repository';
 import { isUniqueViolation } from '../../../../../common/prisma/unique-violation';
 import { advanceTemplateVersion } from '../../../application/template-version';
+import { completeQueryPage, queryPageWindow } from '../../../../../common/pagination/page-query';
+import { normalizeSearch } from '../../../../../common/text/normalize-search';
 
 type RoutineMetadataRow = {
   expected_completion_days: null | number;
@@ -97,8 +99,12 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     return mapRoutineTemplate(row, metadataByTemplate.get(row.id));
   }
 
-  async listRoutineTemplates(ctx: AuthContext, opts?: { summary?: boolean }) {
+  async listRoutineTemplates(
+    ctx: AuthContext,
+    opts?: { cursor?: string; limit?: number; search?: string; summary?: boolean },
+  ) {
     const m = await this.resolveCoachMembership(ctx);
+    if (opts?.limit) return this.listRoutineTemplatesPage(ctx, m.id, { ...opts, limit: opts.limit });
     const rows = await this.prisma.planTemplate.findMany({
       include: opts?.summary ? undefined : routineTemplateInclude(),
       orderBy: [{ name: 'asc' }],
@@ -114,6 +120,73 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       const hydrated = r as unknown as Parameters<typeof mapRoutineTemplate>[0];
       return mapRoutineTemplate(hydrated, metadataByTemplate.get(r.id));
     });
+  }
+
+  private async listRoutineTemplatesPage(
+    ctx: AuthContext,
+    membershipId: string,
+    opts: { cursor?: string; limit: number; search?: string; summary?: boolean },
+  ) {
+    const { after: cursor, take } = queryPageWindow(opts);
+    const clauses = [
+      Prisma.sql`archived_at IS NULL`,
+      Prisma.sql`kind = 'ROUTINE'`,
+      Prisma.sql`(scope = 'GLOBAL' OR (scope = 'COACH' AND coach_membership_id = ${membershipId}::uuid))`,
+    ];
+    const needle = opts.search ? normalizeSearch(opts.search) : undefined;
+    if (needle) clauses.push(Prisma.sql`normalize_search(name) LIKE ${`%${needle}%`}`);
+    if (cursor)
+      clauses.push(Prisma.sql`(
+      normalize_search(name) COLLATE "C" > ${cursor.sort} COLLATE "C" OR
+      (normalize_search(name) COLLATE "C" = ${cursor.sort} COLLATE "C" AND
+        id::text COLLATE "C" > ${cursor.id} COLLATE "C")
+    )`);
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        const candidates = await tx.$queryRaw<Array<{ id: string; sort: string }>>(Prisma.sql`
+        SELECT id::text AS id, normalize_search(name) AS sort FROM plan_template
+        WHERE ${Prisma.join(clauses, ' AND ')}
+        ORDER BY normalize_search(name) COLLATE "C" ASC, id::text COLLATE "C" ASC
+        LIMIT ${take!}
+      `);
+        const page = completeQueryPage(candidates, opts, {
+          direction: 'asc',
+          id: (row) => row.id,
+          sort: (row) => row.sort,
+        });
+        const visible = page.items;
+        if (!visible.length) return { items: [], nextCursor: null };
+        const rows = await tx.planTemplate.findMany({
+          include: opts.summary ? undefined : routineTemplateInclude(),
+          where: { id: { in: visible.map((row) => row.id) } },
+        });
+        const metadataByTemplate = await this.loadRoutineMetadata(
+          visible.map((row) => row.id),
+          tx,
+        );
+        const byId = new Map(
+          rows.map((row) => [
+            row.id,
+            opts.summary
+              ? makePlanSummary(row)
+              : mapRoutineTemplate(
+                  row as unknown as Parameters<typeof mapRoutineTemplate>[0],
+                  metadataByTemplate.get(row.id),
+                ),
+          ]),
+        );
+        const items = visible.flatMap(({ id }) => {
+          const value = byId.get(id);
+          return value ? [value] : [];
+        });
+        return {
+          items,
+          nextCursor: page.nextCursor ?? null,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
   }
 
   async updateRoutineTemplate(ctx: AuthContext, id: string, input: RoutineTemplateWriteInput) {
@@ -296,17 +369,23 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     return map.get(clientId) ?? null;
   }
 
-  private async loadRoutineMetadata(templateIds: string[]): Promise<Map<string, RoutineTemplateMetadata>> {
+  private async loadRoutineMetadata(
+    templateIds: string[],
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<Map<string, RoutineTemplateMetadata>> {
     if (templateIds.length === 0) {
       return new Map();
     }
-    const rows = await this.queryRoutineMetadata(templateIds);
+    const rows = await this.queryRoutineMetadata(templateIds, client);
     return this.groupRoutineMetadata(rows, templateIds);
   }
 
-  private queryRoutineMetadata(templateIds: string[]): Promise<RoutineMetadataRow[]> {
+  private queryRoutineMetadata(
+    templateIds: string[],
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
+  ): Promise<RoutineMetadataRow[]> {
     const idsAsSql = templateIds.map((id) => Prisma.sql`${id}::uuid`);
-    return this.prisma.$queryRaw<RoutineMetadataRow[]>(Prisma.sql`
+    return client.$queryRaw<RoutineMetadataRow[]>(Prisma.sql`
       SELECT
         pt.id AS template_id,
         pt.expected_completion_days,

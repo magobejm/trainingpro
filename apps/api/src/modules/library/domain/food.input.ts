@@ -1,8 +1,10 @@
 export type FoodFilter = {
+  cursor?: string;
   foodCategory?: string;
   foodType?: string;
   query?: string;
   servingUnit?: string;
+  limit?: number;
 };
 
 export type FoodWriteInput = {

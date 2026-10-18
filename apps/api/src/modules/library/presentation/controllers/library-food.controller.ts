@@ -1,7 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
-import { slicePage, withNextCursor } from '../../../../common/pagination/page-query';
-import { normalizeSearch } from '../../../../common/text/normalize-search';
+import { withNextCursor } from '../../../../common/pagination/page-query';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
@@ -31,12 +30,9 @@ export class LibraryFoodController {
   async listFoods(@Query() query: ListFoodsQueryDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const parsed = ListFoodsQueryDto.schema.parse(query);
-    const items = await this.listFoodsUseCase.execute(auth, parsed);
-    const page = slicePage(items, parsed, {
-      direction: 'asc',
-      id: (item) => item.id,
-      sort: (item) => normalizeSearch(item.name),
-    });
+    const page = parsed.limit
+      ? await this.listFoodsUseCase.executePage(auth, parsed)
+      : { items: await this.listFoodsUseCase.execute(auth, parsed), nextCursor: undefined };
     return withNextCursor({ items: page.items.map(toFoodOutput) }, page.nextCursor);
   }
 

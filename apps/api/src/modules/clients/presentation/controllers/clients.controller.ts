@@ -16,8 +16,7 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
-import { slicePage, withNextCursor } from '../../../../common/pagination/page-query';
-import { normalizeSearch } from '../../../../common/text/normalize-search';
+import { withNextCursor } from '../../../../common/pagination/page-query';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
@@ -53,7 +52,6 @@ import { UpdateClientProgressPhotoStatusDto } from '../dto/update-client-progres
 import { UpdateClientManagementSectionsDto } from '../dto/update-client-management-sections.dto';
 import { UpdateClientDto } from '../dto/update-client.dto';
 import { ClientOwnershipGuard } from '../guards/client-ownership.guard';
-import type { Client } from '../../domain/client';
 import {
   mapClientOutput,
   mapCreateDto,
@@ -114,12 +112,9 @@ export class ClientsController {
   async list(@Query() query: ListClientsQueryDto, @Req() request: HttpAuthRequest) {
     const auth = readAuthContext(request);
     const parsed = ListClientsQueryDto.schema.parse(query);
-    const clients = await this.listClientsUseCase.execute(auth, parsed);
-    const page = slicePage(clients, parsed, {
-      direction: parsed.sort === 'activity' ? 'desc' : 'asc',
-      id: (client) => client.id,
-      sort: (client) => clientSortKey(client, parsed.sort),
-    });
+    const page = parsed.limit
+      ? await this.listClientsUseCase.executePage(auth, { ...parsed, limit: parsed.limit })
+      : { items: await this.listClientsUseCase.execute(auth, parsed), nextCursor: undefined };
     return withNextCursor(
       { items: page.items.map((client) => mapClientOutput(client, this.storedFiles())) },
       page.nextCursor,
@@ -289,9 +284,4 @@ export class ClientsController {
     await this.archiveClientUseCase.execute(auth, params.clientId);
     return { status: 'archived' };
   }
-}
-
-function clientSortKey(client: Client, sort?: 'activity' | 'name'): string {
-  if (sort === 'activity') return client.lastActivityAt ? client.lastActivityAt.toISOString() : '';
-  return normalizeSearch(`${client.firstName} ${client.lastName}`);
 }

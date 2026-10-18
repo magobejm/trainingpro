@@ -61,14 +61,17 @@ export class PlansRoutineController {
   async list(@Req() request: HttpAuthRequest, @Query() query: ListPlanTemplatesQueryDto) {
     const auth = readAuthContext(request);
     const parsed = ListPlanTemplatesQueryDto.schema.parse(query);
-    const items = (await this.listUseCase.execute(auth, { summary: parsed.summary === 'true' })) as Array<{
-      createdAt: Date;
-      id: string;
-      name: string;
-      updatedAt: Date;
-    }>;
-    const page = pageByName(items, parsed);
-    return withNextCursor({ items: page.items.map(mapOutput) }, page.nextCursor);
+    const result = await this.listUseCase.execute(auth, {
+      cursor: parsed.cursor,
+      limit: parsed.limit,
+      search: parsed.search,
+      summary: parsed.summary === 'true',
+    });
+    if (Array.isArray(result)) {
+      const page = pageByName(result as Array<{ id: string; name: string }>, parsed);
+      return { items: page.items.map(mapOutput) };
+    }
+    return withNextCursor({ items: result.items.map(mapOutput) }, result.nextCursor);
   }
 
   @Get(':templateId')

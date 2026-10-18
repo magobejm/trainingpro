@@ -25,7 +25,10 @@ export interface PlansRepositoryPort {
   canCoachAccessTemplate(coachSupabaseUid: string, templateId: string): Promise<boolean>;
   createRoutineTemplate(context: AuthContext, input: RoutineTemplateWriteInput): Promise<unknown>;
   getRoutineTemplateById(context: AuthContext, templateId: string): Promise<unknown>;
-  listRoutineTemplates(context: AuthContext, options?: { summary?: boolean }): Promise<unknown[]>;
+  listRoutineTemplates(
+    context: AuthContext,
+    options?: { cursor?: string; limit?: number; search?: string; summary?: boolean },
+  ): Promise<unknown[] | { items: unknown[]; nextCursor: string | null }>;
   updateRoutineTemplate(context: AuthContext, templateId: string, input: RoutineTemplateWriteInput): Promise<unknown>;
   deleteRoutineTemplate(context: AuthContext, templateId: string): Promise<void>;
   listRoutineObjectives(): Promise<

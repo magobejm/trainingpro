@@ -7,6 +7,7 @@ import type { ClientRoutine, ClientRoutineDay } from './client-routine';
 import type { ClientUpdateInput } from './client-update.input';
 import type { ListClientsQuery } from './list-clients.query';
 import type { Client } from './client';
+import type { PageSlice } from '../../../common/pagination/page-query';
 
 export type ClientsRepositoryPort = {
   findClientByEmail: (email: string) => Promise<Client | null>;
@@ -23,6 +24,7 @@ export type ClientsRepositoryPort = {
   listProgressPhotos: (context: AuthContext, clientId: string) => Promise<ClientProgressPhoto[]>;
   listObjectives: () => Promise<ClientObjective[]>;
   listClientsByCoach: (context: AuthContext, query?: ListClientsQuery) => Promise<Client[]>;
+  listClientsPage: (context: AuthContext, query: ListClientsQuery & { limit: number }) => Promise<PageSlice<Client>>;
   saveClientManagementSections: (
     context: AuthContext,
     clientId: string,

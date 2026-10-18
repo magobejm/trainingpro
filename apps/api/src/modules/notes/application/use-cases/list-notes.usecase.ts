@@ -1,7 +1,7 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
-import { slicePage, withNextCursor } from '../../../../common/pagination/page-query';
+import { withNextCursor } from '../../../../common/pagination/page-query';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { NOTES_REPOSITORY, type INotesRepository, type ListNotesQuery } from '../../domain/notes.repository.port';
 
@@ -18,12 +18,9 @@ export class ListNotesUseCase {
       throw new ForbiddenException('Only coach can list notes');
     }
     const membership = await this.readCoachMembership(context.subject);
-    const notes = await this.notesRepository.list(membership.id, query);
-    const page = slicePage(notes, query, {
-      direction: 'desc',
-      id: (note) => note.id,
-      sort: (note) => note.createdAt.toISOString(),
-    });
+    const page = query.limit
+      ? await this.notesRepository.listPage(membership.id, query)
+      : { items: await this.notesRepository.list(membership.id, query), nextCursor: undefined };
     return withNextCursor({ data: page.items }, page.nextCursor);
   }
 

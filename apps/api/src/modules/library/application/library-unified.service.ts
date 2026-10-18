@@ -1,10 +1,10 @@
 ﻿import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { LibraryItemScope, Role } from '@prisma/client';
+/* eslint-disable max-lines */
+import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
 import { PrismaService } from '../../../common/prisma/prisma.service';
-import { matchesSearch } from '../../../common/text/normalize-search';
-import { pageByName } from '../../../common/pagination/page-by-name';
-import { pageFieldsSchema, withNextCursor } from '../../../common/pagination/page-query';
+import { matchesSearch, normalizeSearch } from '../../../common/text/normalize-search';
+import { completeQueryPage, pageFieldsSchema, queryPageWindow, withNextCursor } from '../../../common/pagination/page-query';
 import { coachOrGlobal } from '../domain/library-scope';
 import { LibrarySeedService } from './library-seed.service';
 import { updateStrengthExercise } from './library-unified.update';
@@ -32,6 +32,13 @@ export interface UnifiedExerciseDto {
 type IdList = string[] | undefined;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Row = any;
+
+function parseIds(value?: string): string[] | undefined {
+  return value
+    ?.split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
 
 @Injectable()
 export class LibraryUnifiedService {
@@ -90,6 +97,10 @@ export class LibraryUnifiedService {
       mt = toArr(filters.mobilityTypeIds);
     const st = toArr(filters.sportTypeIds),
       eq = toArr(filters.equipmentIds);
+    const pageQuery = z.object(pageFieldsSchema).parse({ cursor: filters.cursor, limit: filters.limit });
+    if (pageQuery.limit) {
+      return this.listExercisePage(coachMembershipId, filters, { mg, ct, pt, mt, st, eq }, pageQuery);
+    }
     const results: Row[] = [];
     const cat = filters.baseCategory;
     if (!cat || cat === 'muscleGroups') await this.fetchExercises(results, mg, eq, coachMembershipId);
@@ -100,9 +111,141 @@ export class LibraryUnifiedService {
       await this.fetchIsometric(results, toArr(filters.isometricTypeIds), coachMembershipId);
     if (!cat || cat === 'sportTypes') await this.fetchSports(results, st, coachMembershipId);
     const filtered = results.filter((row) => matchesSearch(row.name, filters.search));
-    const pageQuery = z.object(pageFieldsSchema).parse({ cursor: filters.cursor, limit: filters.limit });
-    const page = pageByName(filtered, pageQuery);
-    return withNextCursor({ items: page.items }, page.nextCursor);
+    return withNextCursor({ items: filtered }, undefined);
+  }
+
+  private async listExercisePage(
+    coachMembershipId: string,
+    filters: Record<string, string>,
+    ids: { mg?: string[]; ct?: string[]; pt?: string[]; mt?: string[]; st?: string[]; eq?: string[] },
+    page: { cursor?: string; limit?: number },
+  ) {
+    const parts = this.exercisePageParts(coachMembershipId, filters, ids);
+    if (!parts.length) return { items: [], nextCursor: null };
+    const clauses = this.exercisePageClauses(filters, page);
+    const where = clauses.length ? Prisma.sql`WHERE ${Prisma.join(clauses, ' AND ')}` : Prisma.empty;
+    const { take } = queryPageWindow(page);
+    const candidates = await this.prisma.$queryRaw<Array<{ id: string; sort: string; kind: string }>>(Prisma.sql`
+      WITH all_items AS (${Prisma.join(parts, ' UNION ALL ')})
+      SELECT id::text AS id, sort, kind FROM all_items ${where}
+      ORDER BY sort COLLATE "C" ASC, id::text COLLATE "C" ASC, kind COLLATE "C" ASC
+      LIMIT ${take!}
+    `);
+    const candidatePage = completeQueryPage(candidates, page, {
+      direction: 'asc',
+      id: (item) => `${item.id}:${item.kind}`,
+      sort: (item) => item.sort,
+    });
+    return this.hydrateExercisePage(candidatePage.items, candidatePage.nextCursor, coachMembershipId, ids, filters);
+  }
+
+  private exercisePageParts(
+    coachMembershipId: string,
+    filters: Record<string, string>,
+    ids: { mg?: string[]; ct?: string[]; pt?: string[]; mt?: string[]; st?: string[]; eq?: string[] },
+  ): Prisma.Sql[] {
+    const parts: Prisma.Sql[] = [];
+    const scope = Prisma.sql`archived_at IS NULL AND (
+      scope = 'GLOBAL' OR (scope = 'COACH' AND coach_membership_id = ${coachMembershipId}::uuid)
+    )`;
+    const inIds = (column: string, values?: string[]) =>
+      values?.length
+        ? Prisma.sql`AND ${Prisma.raw(column)} IN (${Prisma.join(values.map((id) => Prisma.sql`${id}::uuid`))})`
+        : Prisma.empty;
+    const selected = (key: string) => !filters.baseCategory || filters.baseCategory === key;
+    if (selected('muscleGroups'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'exercise'::text AS kind
+      FROM exercise e WHERE ${scope} ${inIds('e.equipment_id', ids.eq)}
+      ${
+        ids.mg?.length
+          ? Prisma.sql`AND EXISTS (
+        SELECT 1 FROM exercise_muscle_group_assignment m WHERE m.exercise_id = e.id
+        AND m.muscle_group_id IN (${Prisma.join(ids.mg.map((id) => Prisma.sql`${id}::uuid`))})
+      )`
+          : Prisma.empty
+      }`);
+    if (selected('cardioMethodTypes'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'cardio'::text AS kind
+      FROM cardio_method e WHERE ${scope} ${inIds('e.equipment_id', ids.eq)} ${inIds('e.method_type_id', ids.ct)}
+    `);
+    if (selected('plioTypes'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'plio'::text AS kind
+      FROM plio_exercise e WHERE ${scope} ${inIds('e.equipment_id', ids.eq)} ${inIds('e.plio_type_id', ids.pt)}
+    `);
+    if (selected('mobilityTypes'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'warmup'::text AS kind
+      FROM mobility_exercise e WHERE ${scope} ${inIds('e.mobility_type_id', ids.mt)}
+    `);
+    if (selected('isometricTypes'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'isometric'::text AS kind
+      FROM isometric_exercise e WHERE ${scope} ${inIds('e.isometric_type_id', parseIds(filters.isometricTypeIds))}
+    `);
+    if (selected('sportTypes'))
+      parts.push(Prisma.sql`
+      SELECT e.id, normalize_search(e.name) AS sort, 'sport'::text AS kind
+      FROM sport e WHERE ${scope} ${inIds('e.sport_type_id', ids.st)}
+    `);
+    return parts;
+  }
+
+  private exercisePageClauses(filters: Record<string, string>, page: { cursor?: string; limit?: number }): Prisma.Sql[] {
+    const clauses: Prisma.Sql[] = [];
+    const needle = filters.search ? normalizeSearch(filters.search) : undefined;
+    if (needle) clauses.push(Prisma.sql`sort LIKE ${`%${needle}%`}`);
+    const { after: cursor } = queryPageWindow(page);
+    if (cursor) {
+      const separator = cursor.id.lastIndexOf(':');
+      const cursorKind = separator >= 0 ? cursor.id.slice(separator + 1) : null;
+      const cursorId = separator >= 0 ? cursor.id.slice(0, separator) : cursor.id;
+      clauses.push(
+        cursorKind
+          ? Prisma.sql`(
+            sort COLLATE "C" > ${cursor.sort} COLLATE "C" OR
+            (sort COLLATE "C" = ${cursor.sort} COLLATE "C" AND
+              (id::text COLLATE "C", kind COLLATE "C") > (${cursorId} COLLATE "C", ${cursorKind} COLLATE "C"))
+          )`
+          : Prisma.sql`(
+            sort COLLATE "C" > ${cursor.sort} COLLATE "C" OR
+            (sort COLLATE "C" = ${cursor.sort} COLLATE "C" AND id::text COLLATE "C" > ${cursor.id} COLLATE "C")
+          )`,
+      );
+    }
+    return clauses;
+  }
+
+  private async hydrateExercisePage(
+    visible: Array<{ id: string; sort: string; kind: string }>,
+    nextCursor: string | null | undefined,
+    coachMembershipId: string,
+    ids: { mg?: string[]; ct?: string[]; pt?: string[]; mt?: string[]; st?: string[]; eq?: string[] },
+    filters: Record<string, string>,
+  ) {
+    const byKind = new Map<string, string[]>();
+    for (const row of visible) byKind.set(row.kind, [...(byKind.get(row.kind) ?? []), row.id]);
+    const result: Row[] = [];
+    await Promise.all([
+      byKind.has('exercise') && this.fetchExercises(result, ids.mg, ids.eq, coachMembershipId, byKind.get('exercise')),
+      byKind.has('cardio') && this.fetchCardio(result, ids.ct, ids.eq, coachMembershipId, byKind.get('cardio')),
+      byKind.has('plio') && this.fetchPlio(result, ids.pt, ids.eq, coachMembershipId, byKind.get('plio')),
+      byKind.has('warmup') && this.fetchMobility(result, ids.mt, coachMembershipId, byKind.get('warmup')),
+      byKind.has('isometric') &&
+        this.fetchIsometric(result, parseIds(filters.isometricTypeIds), coachMembershipId, byKind.get('isometric')),
+      byKind.has('sport') && this.fetchSports(result, ids.st, coachMembershipId, byKind.get('sport')),
+    ]);
+    const byKey = new Map(result.map((row) => [`${row.kind}:${row.id}`, row]));
+    const items = visible.flatMap(({ id, kind }) => {
+      const item = byKey.get(`${kind}:${id}`);
+      return item ? [item] : [];
+    });
+    return {
+      items,
+      nextCursor: nextCursor ?? null,
+    };
   }
 
   private async readCoachMembershipId(subject: string): Promise<string> {
@@ -114,10 +257,11 @@ export class LibraryUnifiedService {
     return membership.id;
   }
 
-  private async fetchExercises(res: Row[], mg: IdList, eq: IdList, coachMembershipId: string) {
+  private async fetchExercises(res: Row[], mg: IdList, eq: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.exercise.findMany({
       where: {
         ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
         ...(mg && { muscleGroups: { some: { muscleGroupId: { in: mg } } } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -161,10 +305,11 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchCardio(res: Row[], ct: IdList, eq: IdList, coachMembershipId: string) {
+  private async fetchCardio(res: Row[], ct: IdList, eq: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.cardioMethod.findMany({
       where: {
         ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
         ...(ct && { methodTypeId: { in: ct } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -199,10 +344,11 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchPlio(res: Row[], pt: IdList, eq: IdList, coachMembershipId: string) {
+  private async fetchPlio(res: Row[], pt: IdList, eq: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.plioExercise.findMany({
       where: {
         ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
         ...(pt && { plioTypeId: { in: pt } }),
         ...(eq && { equipmentId: { in: eq } }),
       },
@@ -232,9 +378,13 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchMobility(res: Row[], mt: IdList, coachMembershipId: string) {
+  private async fetchMobility(res: Row[], mt: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.mobilityExercise.findMany({
-      where: { ...coachOrGlobal(coachMembershipId), ...(mt && { mobilityTypeId: { in: mt } }) },
+      where: {
+        ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
+        ...(mt && { mobilityTypeId: { in: mt } }),
+      },
       include: { mobilityTypeRefRel: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });
@@ -264,10 +414,11 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchIsometric(res: Row[], it: IdList, coachMembershipId: string) {
+  private async fetchIsometric(res: Row[], it: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.isometricExercise.findMany({
       where: {
         ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
         ...(it && { isometricTypeId: { in: it } }),
       },
       include: { isometricTypeRef: true, equipmentRef: true, movementPatternRef: true, anatomicalPlaneRef: true },
@@ -296,9 +447,13 @@ export class LibraryUnifiedService {
     );
   }
 
-  private async fetchSports(res: Row[], st: IdList, coachMembershipId: string) {
+  private async fetchSports(res: Row[], st: IdList, coachMembershipId: string, ids?: string[]) {
     const data = await this.prisma.sport.findMany({
-      where: { ...coachOrGlobal(coachMembershipId), ...(st && { sportTypeId: { in: st } }) },
+      where: {
+        ...coachOrGlobal(coachMembershipId),
+        ...(ids && { id: { in: ids } }),
+        ...(st && { sportTypeId: { in: st } }),
+      },
       include: { sportTypeRef: true, movementPatternRef: true, anatomicalPlaneRef: true, equipmentRef: true },
       orderBy: { name: 'asc' },
     });

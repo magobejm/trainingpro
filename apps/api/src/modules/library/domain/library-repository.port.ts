@@ -14,28 +14,17 @@ import type { IsometricExerciseLibraryItem } from './entities/isometric-exercise
 import type { PlioExerciseLibraryItem } from './entities/plio-exercise-library-item';
 import type { MobilityExerciseLibraryItem } from './entities/mobility-exercise-library-item';
 import type { SportLibraryItem } from './entities/sport-library-item';
+import type { PageSlice } from '../../../common/pagination/page-query';
 
 export const LIBRARY_REPOSITORY = Symbol('LIBRARY_REPOSITORY');
 
 export interface LibraryRepositoryPort {
-  createCardioMethod(
-    context: AuthContext,
-    input: CardioMethodWriteInput,
-  ): Promise<CardioMethodLibraryItem>;
+  createCardioMethod(context: AuthContext, input: CardioMethodWriteInput): Promise<CardioMethodLibraryItem>;
   createExercise(context: AuthContext, input: ExerciseWriteInput): Promise<ExerciseLibraryItem>;
   createFood(context: AuthContext, input: FoodWriteInput): Promise<FoodLibraryItem>;
-  createIsometricExercise(
-    context: AuthContext,
-    input: IsometricExerciseWriteInput,
-  ): Promise<IsometricExerciseLibraryItem>;
-  createPlioExercise(
-    context: AuthContext,
-    input: PlioExerciseWriteInput,
-  ): Promise<PlioExerciseLibraryItem>;
-  createMobilityExercise(
-    context: AuthContext,
-    input: MobilityExerciseWriteInput,
-  ): Promise<MobilityExerciseLibraryItem>;
+  createIsometricExercise(context: AuthContext, input: IsometricExerciseWriteInput): Promise<IsometricExerciseLibraryItem>;
+  createPlioExercise(context: AuthContext, input: PlioExerciseWriteInput): Promise<PlioExerciseLibraryItem>;
+  createMobilityExercise(context: AuthContext, input: MobilityExerciseWriteInput): Promise<MobilityExerciseLibraryItem>;
   createSport(context: AuthContext, input: SportWriteInput): Promise<SportLibraryItem>;
   deleteCardioMethod(context: AuthContext, itemId: string): Promise<void>;
   deleteExercise(context: AuthContext, itemId: string): Promise<void>;
@@ -45,44 +34,25 @@ export interface LibraryRepositoryPort {
   deleteMobilityExercise(context: AuthContext, itemId: string): Promise<void>;
   deleteSport(context: AuthContext, itemId: string): Promise<void>;
   listCardioMethodTypes(): Promise<LibraryCatalogItem[]>;
-  listCardioMethods(
-    context: AuthContext,
-    filter: CardioMethodFilter,
-  ): Promise<CardioMethodLibraryItem[]>;
+  listCardioMethods(context: AuthContext, filter: CardioMethodFilter): Promise<CardioMethodLibraryItem[]>;
   listMobilityTypes(context: AuthContext): Promise<LibraryCatalogItem[]>;
   listExerciseMuscleGroups(): Promise<LibraryCatalogItem[]>;
   listExercises(context: AuthContext, filter: ExerciseFilter): Promise<ExerciseLibraryItem[]>;
   listFoods(context: AuthContext, filter: FoodFilter): Promise<FoodLibraryItem[]>;
-  listIsometricExercises(
-    context: AuthContext,
-    filter: IsometricExerciseFilter,
-  ): Promise<IsometricExerciseLibraryItem[]>;
+  listFoodsPage(context: AuthContext, filter: FoodFilter): Promise<PageSlice<FoodLibraryItem>>;
+  listIsometricExercises(context: AuthContext, filter: IsometricExerciseFilter): Promise<IsometricExerciseLibraryItem[]>;
   listIsometricTypes(context: AuthContext): Promise<LibraryCatalogItem[]>;
-  listPlioExercises(
-    context: AuthContext,
-    filter: PlioExerciseFilter,
-  ): Promise<PlioExerciseLibraryItem[]>;
+  listPlioExercises(context: AuthContext, filter: PlioExerciseFilter): Promise<PlioExerciseLibraryItem[]>;
   listPlioTypes(context: AuthContext): Promise<LibraryCatalogItem[]>;
-  listMobilityExercises(
-    context: AuthContext,
-    filter: MobilityExerciseFilter,
-  ): Promise<MobilityExerciseLibraryItem[]>;
+  listMobilityExercises(context: AuthContext, filter: MobilityExerciseFilter): Promise<MobilityExerciseLibraryItem[]>;
   listSports(context: AuthContext, query?: string): Promise<SportLibraryItem[]>;
   updateCardioMethod(
     context: AuthContext,
     itemId: string,
     input: Partial<CardioMethodWriteInput>,
   ): Promise<CardioMethodLibraryItem>;
-  updateExercise(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<ExerciseWriteInput>,
-  ): Promise<ExerciseLibraryItem>;
-  updateFood(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<FoodWriteInput>,
-  ): Promise<FoodLibraryItem>;
+  updateExercise(context: AuthContext, itemId: string, input: Partial<ExerciseWriteInput>): Promise<ExerciseLibraryItem>;
+  updateFood(context: AuthContext, itemId: string, input: Partial<FoodWriteInput>): Promise<FoodLibraryItem>;
   updateIsometricExercise(
     context: AuthContext,
     itemId: string,
@@ -98,9 +68,5 @@ export interface LibraryRepositoryPort {
     itemId: string,
     input: Partial<MobilityExerciseWriteInput>,
   ): Promise<MobilityExerciseLibraryItem>;
-  updateSport(
-    context: AuthContext,
-    itemId: string,
-    input: Partial<SportWriteInput>,
-  ): Promise<SportLibraryItem>;
+  updateSport(context: AuthContext, itemId: string, input: Partial<SportWriteInput>): Promise<SportLibraryItem>;
 }

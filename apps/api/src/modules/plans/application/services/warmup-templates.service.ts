@@ -4,9 +4,12 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { assertExpectedTemplateVersion } from '../template-save.policy';
 import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import { Role } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { UpsertWarmupTemplateDto } from '../../presentation/dto/upsert-warmup-template.dto';
+import { completeQueryPage, queryPageWindow } from '../../../../common/pagination/page-query';
+import { normalizeSearch } from '../../../../common/text/normalize-search';
 
 type Input = {
   clientSaveId?: string;
@@ -69,8 +72,9 @@ export class WarmupTemplatesService {
     );
   }
 
-  async list(context: AuthContext, options?: { summary?: boolean }) {
+  async list(context: AuthContext, options?: { cursor?: string; limit?: number; search?: string; summary?: boolean }) {
     const membership = await this.resolveCoachMembership(context);
+    if (options?.limit) return this.listPage(membership.id, { ...options, limit: options.limit });
     const rows = await this.prisma.$queryRawUnsafe<TemplateRow[]>(
       `SELECT
         id,
@@ -105,6 +109,72 @@ export class WarmupTemplatesService {
       groups: (groupsByTemplate.get(row.id) ?? []).map(stripTemplateId),
       items: (itemsByTemplate.get(row.id) ?? []).map(stripTemplateId),
     }));
+  }
+
+  private async listPage(
+    membershipId: string,
+    options: { cursor?: string; limit: number; search?: string; summary?: boolean },
+  ) {
+    const { after: cursor, take } = queryPageWindow(options);
+    const clauses = [
+      Prisma.sql`archived_at IS NULL`,
+      Prisma.sql`is_revision = false`,
+      Prisma.sql`(coach_membership_id = ${membershipId}::uuid OR scope = 'GLOBAL')`,
+    ];
+    const needle = options.search ? normalizeSearch(options.search) : undefined;
+    if (needle) clauses.push(Prisma.sql`normalize_search(name) LIKE ${`%${needle}%`}`);
+    if (cursor)
+      clauses.push(Prisma.sql`(
+      normalize_search(name) COLLATE "C" > ${cursor.sort} COLLATE "C" OR
+      (normalize_search(name) COLLATE "C" = ${cursor.sort} COLLATE "C" AND
+        id::text COLLATE "C" > ${cursor.id} COLLATE "C")
+    )`);
+    return this.prisma.$transaction(
+      async (tx) => {
+        const candidates = await tx.$queryRaw<Array<{ id: string; sort: string }>>(Prisma.sql`
+        SELECT id::text AS id, normalize_search(name) AS sort FROM warmup_template
+        WHERE ${Prisma.join(clauses, ' AND ')}
+        ORDER BY normalize_search(name) COLLATE "C" ASC, id::text COLLATE "C" ASC
+        LIMIT ${take!}
+      `);
+        const page = completeQueryPage(candidates, options, {
+          direction: 'asc',
+          id: (row) => row.id,
+          sort: (row) => row.sort,
+        });
+        const visible = page.items;
+        if (!visible.length) return { items: [], nextCursor: null };
+        const templateIds = visible.map(({ id }) => id);
+        const rows = await tx.$queryRaw<TemplateRow[]>(Prisma.sql`
+        SELECT id, coach_membership_id AS "coachMembershipId", name, scope,
+          template_version AS "templateVersion", created_at AS "createdAt", updated_at AS "updatedAt"
+        FROM warmup_template WHERE id IN (${Prisma.join(templateIds.map((id) => Prisma.sql`${id}::uuid`))})
+      `);
+        const byId = new Map(rows.map((row) => [row.id, row]));
+        let items: Array<Record<string, unknown>> = visible.flatMap(({ id }) => {
+          const row = byId.get(id);
+          return row ? [{ ...row, items: [], ...(options.summary ? {} : { groups: [] }) }] : [];
+        });
+        if (!options.summary && items.length) {
+          const [details, groups] = await this.loadDetailsForMany(templateIds, tx);
+          const itemsByTemplate = groupBy(details, 'templateId');
+          const groupsByTemplate = groupBy(groups, 'templateId');
+          items = items.map((row) => {
+            const id = row.id as string;
+            return {
+              ...row,
+              groups: (groupsByTemplate.get(id) ?? []).map(stripTemplateId),
+              items: (itemsByTemplate.get(id) ?? []).map(stripTemplateId),
+            };
+          });
+        }
+        return {
+          items,
+          nextCursor: page.nextCursor ?? null,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
   }
 
   async getOne(context: AuthContext, templateId: string) {
@@ -189,9 +259,10 @@ export class WarmupTemplatesService {
 
   private loadDetailsForMany(
     templateIds: string[],
+    client: Prisma.TransactionClient | PrismaService = this.prisma,
   ): Promise<[Array<Record<string, unknown>>, Array<Record<string, unknown>>]> {
     return Promise.all([
-      this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      client.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT
           template_id AS "templateId",
           block_type AS "blockType",
@@ -220,7 +291,7 @@ export class WarmupTemplatesService {
         ORDER BY template_id, sort_order ASC`,
         templateIds,
       ),
-      this.prisma.$queryRawUnsafe<Array<Record<string, unknown>>>(
+      client.$queryRawUnsafe<Array<Record<string, unknown>>>(
         `SELECT
           template_id AS "templateId",
           id,

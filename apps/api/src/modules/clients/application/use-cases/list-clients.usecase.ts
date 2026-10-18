@@ -14,4 +14,8 @@ export class ListClientsUseCase {
   execute(context: AuthContext, query?: ListClientsQuery): Promise<Client[]> {
     return query ? this.repository.listClientsByCoach(context, query) : this.repository.listClientsByCoach(context);
   }
+
+  executePage(context: AuthContext, query: ListClientsQuery & { limit: number }) {
+    return this.repository.listClientsPage(context, query);
+  }
 }

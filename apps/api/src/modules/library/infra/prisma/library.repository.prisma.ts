@@ -164,6 +164,10 @@ export class LibraryRepositoryPrisma extends LibraryBaseRepository implements Li
     return this.foodRepo.listFoods(context, filter);
   }
 
+  async listFoodsPage(context: AuthContext, filter: FoodFilter) {
+    return this.foodRepo.listFoodsPage(context, filter);
+  }
+
   async listIsometricExercises(context: AuthContext, filter: IsometricExerciseFilter) {
     return this.specializedRepo.listIsometricExercises(context, filter);
   }

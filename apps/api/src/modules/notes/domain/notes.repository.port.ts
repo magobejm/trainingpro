@@ -1,3 +1,5 @@
+import type { PageSlice } from '../../../common/pagination/page-query';
+
 export const NOTES_REPOSITORY = Symbol('NOTES_REPOSITORY');
 
 export type CreateNoteInput = {
@@ -34,6 +36,7 @@ export interface INotesRepository {
   create(coachMembershipId: string, input: CreateNoteInput): Promise<CoachNoteEntity>;
   findById(id: string, coachMembershipId: string): Promise<CoachNoteEntity | null>;
   list(coachMembershipId: string, query: ListNotesQuery): Promise<CoachNoteEntity[]>;
+  listPage(coachMembershipId: string, query: ListNotesQuery): Promise<PageSlice<CoachNoteEntity>>;
   update(id: string, coachMembershipId: string, input: UpdateNoteInput): Promise<CoachNoteEntity>;
   delete(id: string, coachMembershipId: string): Promise<void>;
 }

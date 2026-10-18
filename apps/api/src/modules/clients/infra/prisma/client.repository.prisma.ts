@@ -16,6 +16,8 @@ import {
 } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { completeQueryPage, queryPageWindow, type PageSlice } from '../../../../common/pagination/page-query';
+import { normalizeSearch } from '../../../../common/text/normalize-search';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
@@ -187,6 +189,112 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       };
     });
     return selectClients(mapped, query);
+  }
+
+  async listClientsPage(context: AuthContext, query: ListClientsQuery & { limit: number }): Promise<PageSlice<Client>> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    const { after: cursor, take } = queryPageWindow(query);
+    const activitySort = query.sort === 'activity';
+    const filters = [Prisma.sql`archived_at IS NULL`, Prisma.sql`coach_membership_id = ${membership.id}::uuid`];
+    if (query.objective && query.objective !== 'ALL') filters.push(Prisma.sql`objective_label = ${query.objective}`);
+    const needle = query.search ? normalizeSearch(query.search) : undefined;
+    if (needle) filters.push(Prisma.sql`name_sort LIKE ${`%${needle}%`}`);
+    if (cursor) {
+      if (activitySort) {
+        filters.push(
+          cursor.sort
+            ? Prisma.sql`activity_sort IS NOT NULL AND (
+              activity_sort COLLATE "C" < ${cursor.sort} COLLATE "C" OR
+              (activity_sort COLLATE "C" = ${cursor.sort} COLLATE "C" AND
+                client_id::text COLLATE "C" < ${cursor.id} COLLATE "C")
+            )`
+            : Prisma.sql`activity_sort IS NULL AND client_id::text COLLATE "C" < ${cursor.id} COLLATE "C"`,
+        );
+      } else {
+        filters.push(Prisma.sql`(name_sort COLLATE "C" > ${cursor.sort} COLLATE "C" OR
+          (name_sort COLLATE "C" = ${cursor.sort} COLLATE "C" AND client_id::text COLLATE "C" > ${cursor.id} COLLATE "C"))`);
+      }
+    }
+
+    return this.prisma.$transaction(
+      async (tx) => {
+        const candidates = await tx.$queryRaw<Array<{ id: string; sort: string }>>(Prisma.sql`
+        WITH activity AS (
+          SELECT client_id,
+            MAX(COALESCE(finished_at, session_date::timestamp AT TIME ZONE 'UTC')) AS last_activity
+          FROM session_instance
+          WHERE archived_at IS NULL AND is_completed = true AND client_id IN (
+            SELECT id FROM client WHERE archived_at IS NULL AND coach_membership_id = ${membership.id}::uuid
+          )
+          GROUP BY client_id
+        ), eligible AS (
+          SELECT c.id AS client_id,
+            c.archived_at,
+            c.coach_membership_id,
+            o.label AS objective_label,
+            normalize_search(concat_ws(' ', c.first_name, c.last_name)) AS name_sort,
+            CASE WHEN activity.last_activity IS NULL THEN NULL ELSE
+              to_char(date_trunc('milliseconds', activity.last_activity AT TIME ZONE 'UTC'), 'YYYY-MM-DD"T"HH24:MI:SS.MS"Z"')
+            END AS activity_sort
+          FROM client c
+          JOIN client_objective o ON o.id = c.objective_id
+          LEFT JOIN activity ON activity.client_id = c.id
+        )
+        SELECT client_id::text AS id,
+          ${activitySort ? Prisma.sql`COALESCE(activity_sort, '')` : Prisma.sql`name_sort`} AS sort
+        FROM eligible
+        WHERE ${Prisma.join(filters, ' AND ')}
+        ORDER BY ${
+          activitySort
+            ? Prisma.sql`activity_sort COLLATE "C" DESC NULLS LAST, client_id::text COLLATE "C" DESC`
+            : Prisma.sql`name_sort COLLATE "C" ASC, client_id::text COLLATE "C" ASC`
+        }
+        LIMIT ${take!}
+      `);
+        const page = completeQueryPage(candidates, query, {
+          direction: activitySort ? 'desc' : 'asc',
+          id: (client) => client.id,
+          sort: (client) => client.sort,
+        });
+        const visible = page.items;
+        if (!visible.length) return { items: [], nextCursor: null };
+        const clientIds = visible.map(({ id }) => id);
+        const rows = await tx.client.findMany({
+          include: CLIENT_LIST_INCLUDE,
+          where: { id: { in: clientIds }, archivedAt: null, coachMembershipId: membership.id },
+        });
+        const [activity, statusFacts] = await Promise.all([
+          readLastClientActivities(tx as unknown as PrismaService, clientIds),
+          readClientStatusFacts(tx as unknown as PrismaService, clientIds),
+        ]);
+        const byId = new Map(
+          rows.map((row) => {
+            const lastActivityAt = activity.get(row.id) ?? null;
+            return [
+              row.id,
+              {
+                ...mapClient({ ...row, progressPhotos: [] }),
+                lastActivityAt,
+                status: statusForClient({
+                  facts: statusFacts.get(row.id),
+                  hasPlan: Boolean(row.trainingPlanId),
+                  lastActivityAt,
+                }),
+              } satisfies Client,
+            ];
+          }),
+        );
+        const items = visible.flatMap(({ id }) => {
+          const client = byId.get(id);
+          return client ? [client] : [];
+        });
+        return {
+          items,
+          nextCursor: page.nextCursor ?? null,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

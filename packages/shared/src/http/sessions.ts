@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { clientRoutineWarmupSchema } from '../client-plan/warmup-schema';
 
 const nullableNumber = z.number().nullable();
 const nullableString = z.string().nullable();
@@ -253,6 +254,8 @@ export const sessionItemSchema = z.discriminatedUnion('type', [
 
 export const sessionViewSchema = z
   .object({
+    warmups: z.array(clientRoutineWarmupSchema).optional(),
+    dayTitle: z.string().optional(),
     clientId: z.string(),
     finishComment: nullableString,
     finishedAt: nullableString,

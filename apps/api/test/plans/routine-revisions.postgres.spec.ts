@@ -4,6 +4,10 @@ import { PlansRoutineRepository } from '../../src/modules/plans/infra/prisma/pla
 import { ClientRepositoryPrisma } from '../../src/modules/clients/infra/prisma/client.repository.prisma';
 import type { PrismaService } from '../../src/common/prisma/prisma.service';
 import { ClearFutureWorkoutsUseCase } from '../../src/modules/calendar/application/use-cases/clear-future-workouts.usecase';
+import {
+  mapSessionWithGroups,
+  sessionInclude,
+} from '../../src/modules/sessions/infra/prisma/sessions-strength.prisma.helpers';
 
 const postgres = process.env.TEST_SESSION_DATABASE_URL ? describe : describe.skip;
 // eslint-disable-next-line max-lines-per-function
@@ -129,7 +133,21 @@ postgres('immutable assigned routine revisions', () => {
       data: {
         name: 'Original warmup',
         coachMembershipId: fixture.member.id,
-        items: { create: { blockType: 'strength', displayName: 'Warm up', repsMin: 5 } },
+        items: {
+          create: {
+            blockType: 'strength',
+            displayName: 'Warm up',
+            exerciseLibraryId: exercise.id,
+            repsMin: 5,
+            setsPlanned: 2,
+            metadataJson: {
+              sets: [
+                { setIndex: 0, reps: 8, weightKg: 10 },
+                { setIndex: 1, reps: 6, weightKg: 12 },
+              ],
+            },
+          },
+        },
       },
     });
     const day = await db.planDay.create({
@@ -155,6 +173,26 @@ postgres('immutable assigned routine revisions', () => {
       expect(reference.warmupTemplate.name).toBe('Original warmup');
       const applied = await clients.findClientRoutineByEmail(fixture.client.email);
       expect(applied?.planDays[0]?.exercises[0]?.coachInstructions).toBe('Original instructions');
+      const warmups = applied?.planDays[0]?.warmups;
+      expect(warmups?.[0]?.name).toBe('Original warmup');
+      expect(warmups?.[0]?.exercises[0]).toMatchObject({
+        displayName: 'Warm up',
+        coachInstructions: 'Original instructions',
+        setsPlanned: 2,
+      });
+      expect(warmups?.[0]?.exercises[0]?.sets.map((set) => set.reps)).toEqual([8, 6]);
+      const created = await fixture.create(new Date());
+      await db.sessionInstance.update({
+        where: { id: created.id },
+        data: { planDayId: day.id, planDayIndex: 1, planDayTitle: 'Original' },
+      });
+      const row = await db.sessionInstance.findUniqueOrThrow({ where: { id: created.id }, include: sessionInclude() });
+      const session = await mapSessionWithGroups(db, row);
+      expect(session.warmups).toEqual(warmups);
+      expect(session.items).toHaveLength(1);
+      expect(await db.setLog.count({ where: { sessionItem: { sessionId: created.id } } })).toBe(0);
+      await db.planDay.update({ where: { id: day.id }, data: { archivedAt: new Date() } });
+      expect((await mapSessionWithGroups(db, row)).warmups).toEqual(warmups);
     } finally {
       await db.planDayWarmup.deleteMany({ where: { planDayId: day.id } });
       await db.warmupTemplate.deleteMany({ where: { coachMembershipId: fixture.member.id } });

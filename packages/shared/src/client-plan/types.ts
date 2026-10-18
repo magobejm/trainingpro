@@ -36,11 +36,19 @@ export type ClientRoutineExercise = {
 };
 
 export type ClientRoutineDay = {
+  warmups?: ClientRoutineWarmup[];
   dayIndex: number;
   exercises: ClientRoutineExercise[];
   id: string;
   notes: null | string;
   title: string;
+};
+
+export type ClientRoutineWarmup = {
+  id: string;
+  name: string;
+  description: string | null;
+  exercises: ClientRoutineExercise[];
 };
 
 export type ClientRoutineNeat = {

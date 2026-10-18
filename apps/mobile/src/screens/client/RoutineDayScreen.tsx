@@ -11,6 +11,8 @@ import { PrimaryButton } from '../../theme/primitives';
 import { ExerciseCard } from './ExerciseCard';
 import { buildExerciseBlocks } from './exercise-group.utils';
 import { isListedExerciseDone } from './session-completion.utils';
+import { WorkoutWarmups, RoutineBlock, warmupExerciseCount } from './WorkoutWarmups';
+import type { ClientRoutineWarmup } from '@trainerpro/shared';
 
 type PreviewProps = {
   day: ClientRoutineDay;
@@ -27,6 +29,7 @@ type PreviewProps = {
 };
 
 type ActiveProps = {
+  warmups?: ClientRoutineWarmup[];
   dayTitle: string;
   exercises: SessionItem[];
   finishedExerciseIds?: ReadonlySet<string>;
@@ -54,13 +57,28 @@ function PreviewDay(props: PreviewProps): React.JSX.Element {
     <View style={s.sidePanel}>
       <OverlayBackHeader onClose={props.onClose} />
       <ScrollView contentContainerStyle={[s.panelContent, styles.scrollBottom]}>
-        <ClientRoutineDayContent
-          day={props.day}
-          t={t}
-          renderExercise={(exercise, expanded, onToggle) => (
-            <ExerciseCard exercise={exercise} expanded={expanded} onToggle={onToggle} />
-          )}
-        />
+        {warmupExerciseCount(props.day.warmups) ? (
+          <View style={styles.activeHeader}>
+            <Text style={styles.activeTitle}>{props.day.title}</Text>
+            <Text style={s.dayExPillText}>
+              {t('mobile.client.warmup.summary', {
+                routine: props.day.exercises.length,
+                warmup: warmupExerciseCount(props.day.warmups),
+              })}
+            </Text>
+          </View>
+        ) : null}
+        <WorkoutWarmups warmups={props.day.warmups} />
+        <RoutineBlock warmups={props.day.warmups} count={props.day.exercises.length}>
+          <ClientRoutineDayContent
+            day={props.day}
+            showHeader={!warmupExerciseCount(props.day.warmups)}
+            t={t}
+            renderExercise={(exercise, expanded, onToggle) => (
+              <ExerciseCard exercise={exercise} expanded={expanded} onToggle={onToggle} />
+            )}
+          />
+        </RoutineBlock>
         {props.notice ? <Text style={styles.notice}>{props.notice}</Text> : null}
         {props.onUndoSkip ? <PrimaryButton label={props.undoLabel ?? ''} onPress={props.onUndoSkip} /> : null}
         <PrimaryButton
@@ -100,43 +118,53 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
               </View>
             ) : null}
             <View style={s.dayExPill}>
-              <Text style={s.dayExPillText}>{t('client.planning.exercisesCount', { count: props.exercises.length })}</Text>
+              <Text style={s.dayExPillText}>
+                {warmupExerciseCount(props.warmups)
+                  ? t('mobile.client.warmup.summary', {
+                      routine: props.exercises.length,
+                      warmup: warmupExerciseCount(props.warmups),
+                    })
+                  : t('client.planning.exercisesCount', { count: props.exercises.length })}
+              </Text>
             </View>
           </View>
         </View>
-        {blocks.map((block) => (
-          <ExerciseBlockContainer block={block} key={block.exercises.map((e) => e.id).join('-')}>
-            {block.exercises.map((exercise) => {
-              const complete = isListedExerciseDone(exercise, props.finishedExerciseIds);
-              const group = block.exercises;
-              return (
-                <Pressable
-                  key={exercise.id}
-                  onPress={() => props.onSelectExercise(exercise, group)}
-                  style={[styles.activeRow, complete && styles.activeRowDone]}
-                >
-                  <View style={styles.activeRowLeft}>
-                    <Text style={styles.activeRowName}>{exercise.displayName}</Text>
-                    {complete ? (
-                      <View style={styles.donePill}>
-                        <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
-                      </View>
-                    ) : null}
-                  </View>
-                  {complete || isFinished ? (
-                    <View style={styles.editBtn}>
-                      <Text style={styles.editBtnText}>
-                        {t(isFinished ? 'mobile.client.exercise.view' : 'mobile.client.exercise.edit')}
-                      </Text>
+        <WorkoutWarmups warmups={props.warmups} active />
+        <RoutineBlock warmups={props.warmups} count={props.exercises.length} active>
+          {blocks.map((block) => (
+            <ExerciseBlockContainer block={block} key={block.exercises.map((e) => e.id).join('-')}>
+              {block.exercises.map((exercise) => {
+                const complete = isListedExerciseDone(exercise, props.finishedExerciseIds);
+                const group = block.exercises;
+                return (
+                  <Pressable
+                    key={exercise.id}
+                    onPress={() => props.onSelectExercise(exercise, group)}
+                    style={[styles.activeRow, complete && styles.activeRowDone]}
+                  >
+                    <View style={styles.activeRowLeft}>
+                      <Text style={styles.activeRowName}>{exercise.displayName}</Text>
+                      {complete ? (
+                        <View style={styles.donePill}>
+                          <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+                        </View>
+                      ) : null}
                     </View>
-                  ) : (
-                    <Text style={styles.chevron}>{'›'}</Text>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ExerciseBlockContainer>
-        ))}
+                    {complete || isFinished ? (
+                      <View style={styles.editBtn}>
+                        <Text style={styles.editBtnText}>
+                          {t(isFinished ? 'mobile.client.exercise.view' : 'mobile.client.exercise.edit')}
+                        </Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.chevron}>{'›'}</Text>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </ExerciseBlockContainer>
+          ))}
+        </RoutineBlock>
         {!isFinished ? (
           <PrimaryButton label={t('mobile.client.session.finishDay')} onPress={props.onFinishDay} variant={'danger'} />
         ) : (

@@ -109,6 +109,7 @@ export const strengthPlanSummaryExample = {
 };
 
 export const sessionExample = {
+  warmups: [],
   clientId: CLIENT_ID,
   finishComment: null,
   finishedAt: null,

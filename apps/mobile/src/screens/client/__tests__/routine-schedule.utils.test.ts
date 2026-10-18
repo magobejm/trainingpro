@@ -78,7 +78,8 @@ describe('routine-schedule.utils calendar matching', () => {
 
     expect(schedule.mode).toBe('calendar');
     if (schedule.mode !== 'calendar') return;
-    expect(schedule.today?.planDayId).toBe('day-2');
+    expect(schedule.today?.planDayId).toBe('legacy-day');
+    expect(schedule.today?.routineDay).toBeNull();
     expect(schedule.today?.title).toBe('Legacy Day 2');
     expect(schedule.isRestDay).toBe(false);
     expect(schedule.otherDays).toHaveLength(1);

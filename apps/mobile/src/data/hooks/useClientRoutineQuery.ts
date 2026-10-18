@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery, useQueries, type UseQueryResult } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { handleUnauthorized } from '../auth-service';
@@ -54,4 +54,19 @@ export function useClientPlanDayQuery(planDayId: string | null): UseQueryResult<
     refetchOnMount: 'always',
     staleTime: 0,
   });
+}
+
+/** Calendar entries can retain a day from an older assigned revision. */
+export function useScheduledPlanDays(ids: string[]): ClientRoutineDay[] {
+  const accessToken = useAuthStore((state) => state.accessToken);
+  return useQueries({
+    queries: [...new Set(ids)].map((id) => ({
+      enabled: Boolean(accessToken),
+      queryKey: ['clients', 'me', 'plan-days', id, accessToken],
+      queryFn: () =>
+        createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientRoutineDay>(
+          `/clients/me/plan-days/${id}`,
+        ),
+    })),
+  }).flatMap((query) => (query.data ? [query.data] : []));
 }

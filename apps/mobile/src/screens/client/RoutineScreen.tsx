@@ -8,6 +8,8 @@ import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { s } from '../../shell/client/client-shell.styles';
 import { LIGHT } from '../../theme/light';
 import { ClientNeatSection } from './ClientNeatSection';
+import { WarmupBadge, warmupStyles } from './WorkoutWarmups';
+import { useScheduledPlanDays } from '../../data/hooks/useClientRoutineQuery';
 import {
   formatLocalDate,
   formatScheduledDateLabel,
@@ -32,12 +34,17 @@ export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScree
   const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
   const schedulesQuery = usePhysicalTestSchedulesQuery(todayStr, todayStr);
+  const historicalDays = useScheduledPlanDays(
+    (calendarQuery.data?.data ?? []).flatMap((event) =>
+      event.planDayId && !routine?.planDays.some((day) => day.id === event.planDayId) ? [event.planDayId] : [],
+    ),
+  );
   const todayTest = schedulesQuery.data?.[0] ?? null;
 
   const schedule = useMemo(() => {
     if (!routine) return null;
-    return resolveRoutineWeekSchedule(routine.planDays, calendarQuery.data?.data ?? [], today);
-  }, [calendarQuery.data?.data, routine, today]);
+    return resolveRoutineWeekSchedule([...routine.planDays, ...historicalDays], calendarQuery.data?.data ?? [], today);
+  }, [calendarQuery.data?.data, historicalDays, routine, today]);
 
   const completedPlanDayIds = useMemo(() => {
     const ids = new Set<string>();
@@ -236,7 +243,10 @@ function ScheduledWorkoutCard(props: {
       style={[s.dayCard, props.isActive && s.dayCardActive, props.isDone && styles.dayCardDone]}
     >
       <View style={s.dayInfo}>
-        <Text style={s.dayName}>{props.workout.title}</Text>
+        <View style={warmupStyles.nameRow}>
+          <Text style={s.dayName}>{props.workout.title}</Text>
+          <WarmupBadge warmups={props.workout.routineDay?.warmups} />
+        </View>
         <Text style={styles.daySubtitle}>{props.subtitle}</Text>
       </View>
       <View style={styles.dayRight}>
@@ -269,7 +279,10 @@ function RoutineDayCard(props: {
       style={[s.dayCard, props.isActive && s.dayCardActive, props.isDone && styles.dayCardDone]}
     >
       <View style={s.dayInfo}>
-        <Text style={s.dayName}>{props.day.title}</Text>
+        <View style={warmupStyles.nameRow}>
+          <Text style={s.dayName}>{props.day.title}</Text>
+          <WarmupBadge warmups={props.day.warmups} />
+        </View>
         <Text style={styles.daySubtitle}>{props.subtitle ?? `Día ${props.day.dayIndex}`}</Text>
       </View>
       <View style={styles.dayRight}>

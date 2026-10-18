@@ -36,6 +36,7 @@ export type ClientRoutineExercise = {
 };
 
 export type ClientRoutineDay = {
+  warmups?: import('@trainerpro/shared').ClientRoutineWarmup[];
   dayIndex: number;
   exercises: ClientRoutineExercise[];
   id: string;

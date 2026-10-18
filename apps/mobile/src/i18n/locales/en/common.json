@@ -837,5 +837,18 @@
   "chat.history.empty": "No messages yet.",
   "chat.history.today": "Today",
   "client.calendar.workout.changed": "The workout has changed or already started. The calendar has been refreshed.",
-  "client.calendar.workout.saveError": "Could not save the change. Check your connection and try again."
+  "client.calendar.workout.saveError": "Could not save the change. Check your connection and try again.",
+  "mobile.client.warmup.title": "Warm-up",
+  "mobile.client.warmup.badge_one": "Warm-up · {{count}} exercise",
+  "mobile.client.warmup.count_one": "{{count}} exercise",
+  "mobile.client.warmup.badge": "Warm-up · {{count}} exercises",
+  "mobile.client.warmup.count": "{{count}} exercises",
+  "mobile.client.warmup.subtitle": "Preparation and activation",
+  "mobile.client.warmup.instructionsOnly": "Coach instructions. Browse freely; results are not recorded.",
+  "mobile.client.warmup.routine": "Workout",
+  "mobile.client.warmup.routineSubtitle": "Main training blocks",
+  "mobile.client.warmup.summary": "{{routine}} workout · {{warmup}} warm-up",
+  "mobile.client.warmup.close": "Back to workout",
+  "mobile.client.warmup.previous": "Previous",
+  "mobile.client.warmup.next": "Next"
 }

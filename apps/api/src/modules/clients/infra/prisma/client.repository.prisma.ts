@@ -1,3 +1,4 @@
+import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
 import { applyRoutineHandoff, handoffTransaction } from '../../../calendar/infra/prisma/routine-handoff.prisma';
 import {
   attachRevisionInstructions,
@@ -330,6 +331,7 @@ const LIBRARY_SPORT_SELECT = {
 } as const;
 
 const PLAN_DAY_CONTENT_INCLUDE = {
+  warmups: CLIENT_WARMUPS_INCLUDE,
   exercises: {
     where: { archivedAt: null },
     orderBy: { sortOrder: 'asc' as const },
@@ -410,6 +412,10 @@ async function loadClientRoutine(
   });
   if (!plan) return null;
   await attachRevisionInstructions(prisma, planId, revision?.version ?? plan.templateVersion, plan.days);
+  const warmupsByDay = await Promise.all(plan.days.map((day) => mapClientWarmups(prisma, day.warmups)));
+  plan.days.forEach((day, index) => {
+    (day as PlanDay & { clientWarmups?: unknown }).clientWarmups ??= warmupsByDay[index];
+  });
   const snapshot = revision?.content as
     | { expectedCompletionDays?: number; neats?: typeof plan.neats; objectives?: { label: string }[] }
     | undefined;
@@ -423,7 +429,7 @@ async function loadClientRoutine(
   };
 }
 
-type AccessiblePlanDay = PlanDay & { templateId: string };
+type AccessiblePlanDay = PlanDay & { templateId: string; clientWarmups?: unknown };
 
 async function loadAccessibleClientPlanDay(
   prisma: PrismaService,
@@ -470,11 +476,17 @@ async function loadAccessibleClientPlanDay(
   }
 
   await attachRevisionInstructions(prisma, planDay.templateId, planDay.revisionVersion, [planDay]);
-  return { ...planDay, templateId: planDay.templateId };
+  return {
+    ...planDay,
+    clientWarmups:
+      (planDay as PlanDay & { clientWarmups?: unknown }).clientWarmups ?? (await mapClientWarmups(prisma, planDay.warmups)),
+    templateId: planDay.templateId,
+  };
 }
 
 function mapPlanDay(day: PlanDay): ClientRoutine['planDays'][number] {
   return {
+    warmups: (day as PlanDay & { clientWarmups?: import('@trainerpro/shared').ClientRoutineWarmup[] }).clientWarmups ?? [],
     dayIndex: day.dayIndex,
     id: day.id,
     notes: day.notes ?? null,

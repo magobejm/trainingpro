@@ -97,6 +97,7 @@ export function planTemplateFixture(): PlanTemplate {
 
 export function sessionFixture(): SessionInstance {
   return {
+    warmups: [],
     clientId: CLIENT_ID,
     finishComment: null,
     finishedAt: null,

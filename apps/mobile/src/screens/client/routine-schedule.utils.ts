@@ -61,7 +61,7 @@ function parseDayIndexFromCalendarTitle(title: string): number | null {
 function resolvePlanDayFromCalendarEvent(event: ClientCalendarEvent, planDays: ClientRoutineDay[]): ClientRoutineDay | null {
   if (event.planDayId) {
     const byId = planDays.find((day) => day.id === event.planDayId);
-    if (byId) return byId;
+    return byId ?? null;
   }
 
   const title = resolveWorkoutTitle(event).trim();

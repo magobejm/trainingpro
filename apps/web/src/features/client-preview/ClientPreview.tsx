@@ -70,6 +70,7 @@ export function RoutineClientPreview({ routine }: { routine: ClientRoutine }): R
           <ClientRoutineDayContent
             key={day.id}
             day={day}
+            showWarmups
             t={t}
             renderExercise={(exercise, expanded, toggle) => (
               <PreviewExercise key={exercise.id} exercise={exercise} expanded={expanded} toggle={toggle} />
@@ -97,9 +98,19 @@ export function RoutineClientPreview({ routine }: { routine: ClientRoutine }): R
           {routine.planDays.map((item) => (
             <Pressable accessibilityRole="button" key={item.id} onPress={() => setDayId(item.id)} style={styles.card}>
               <Text style={styles.heading}>{item.title || t('coach.clientPreview.empty')}</Text>
-              <Text style={styles.body}>
-                {t('client.planning.exercisesCount', { count: item.exercises.length })} {'›'}
-              </Text>
+              <View style={styles.dayCounts}>
+                <Text style={styles.body}>{t('client.planning.exercisesCount', { count: item.exercises.length })}</Text>
+                {item.warmups?.length ? (
+                  <View style={styles.warmupBadge}>
+                    <Text style={styles.warmupBadgeText}>
+                      {t('mobile.client.warmup.badge', {
+                        count: item.warmups.reduce((count, warmup) => count + warmup.exercises.length, 0),
+                      })}
+                    </Text>
+                  </View>
+                ) : null}
+                <Text style={styles.body}>{'›'}</Text>
+              </View>
             </Pressable>
           ))}
           {routine.neats?.length ? (
@@ -239,6 +250,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   body: { color: LIGHT.textMuted, fontSize: 13, lineHeight: 20 },
+  dayCounts: { alignItems: 'center', flexDirection: 'row', gap: 8 },
+  warmupBadge: { borderColor: LIGHT.accentSoft, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
+  warmupBadgeText: { color: LIGHT.accentDark, fontSize: 10, fontWeight: '600' },
   action: { paddingVertical: 12, marginBottom: 8 },
   actionText: { color: LIGHT.accent, fontSize: 14, fontWeight: '700' },
   image: { height: '100%', width: '100%' },

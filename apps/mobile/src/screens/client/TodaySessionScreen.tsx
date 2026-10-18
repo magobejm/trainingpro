@@ -87,10 +87,11 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           <>
             <RoutineDayScreen
               mode={'active'}
-              dayTitle={props.t('client.today.title')}
+              dayTitle={props.session.dayTitle ?? props.t('client.today.title')}
               exercises={props.session.items}
               finishedExerciseIds={props.finishedExerciseIds}
               session={props.session}
+              warmups={props.session.warmups}
               onClose={props.onClose}
               onSelectExercise={props.onSelectExercise}
               onFinishDay={props.onFinishDay}

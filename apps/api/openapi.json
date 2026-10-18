@@ -941,6 +941,9 @@
           "clientId": {
             "type": "string"
           },
+          "dayTitle": {
+            "type": "string"
+          },
           "finishComment": {
             "anyOf": [
               {
@@ -3231,6 +3234,333 @@
           },
           "templateVersion": {
             "type": "number"
+          },
+          "warmups": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "description": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "exercises": {
+                  "items": {
+                    "additionalProperties": false,
+                    "properties": {
+                      "coachInstructions": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "displayName": {
+                        "type": "string"
+                      },
+                      "groupId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "groupType": {
+                        "anyOf": [
+                          {
+                            "enum": ["CIRCUIT", "SUPERSET"],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "id": {
+                        "type": "string"
+                      },
+                      "lockedFields": {
+                        "items": {
+                          "type": "string"
+                        },
+                        "type": "array"
+                      },
+                      "mediaUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "notes": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "repsMax": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "repsMin": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "restSeconds": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sets": {
+                        "items": {
+                          "additionalProperties": false,
+                          "properties": {
+                            "advancedTechnique": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "durationSeconds": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fcMaxPct": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fcReservePct": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "heartRate": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "note": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "reps": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "restSeconds": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "rir": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "rom": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "rpe": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "setIndex": {
+                              "type": "number"
+                            },
+                            "weightKg": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": ["setIndex", "advancedTechnique", "note"],
+                          "type": "object"
+                        },
+                        "type": "array"
+                      },
+                      "setsPlanned": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "sortOrder": {
+                        "type": "number"
+                      },
+                      "targetRir": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "targetRpe": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "type": {
+                        "enum": ["strength", "cardio", "plio", "mobility", "isometric", "sport"],
+                        "type": "string"
+                      },
+                      "youtubeUrl": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "displayName",
+                      "type",
+                      "sortOrder",
+                      "groupId",
+                      "groupType",
+                      "coachInstructions",
+                      "notes",
+                      "mediaUrl",
+                      "youtubeUrl",
+                      "repsMin",
+                      "repsMax",
+                      "setsPlanned",
+                      "restSeconds",
+                      "targetRir",
+                      "targetRpe",
+                      "sets"
+                    ],
+                    "type": "object"
+                  },
+                  "type": "array"
+                },
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": ["id", "name", "description", "exercises"],
+              "type": "object"
+            },
+            "type": "array"
           }
         },
         "required": [
@@ -15522,7 +15852,8 @@
                   "startedAt": "2026-10-09T08:00:00.000Z",
                   "status": "IN_PROGRESS",
                   "templateId": "55555555-5555-4555-8555-555555555555",
-                  "templateVersion": 1
+                  "templateVersion": 1,
+                  "warmups": []
                 },
                 "schema": {
                   "$ref": "#/components/schemas/SessionView"

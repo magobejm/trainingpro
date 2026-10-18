@@ -1,5 +1,5 @@
 import { useFeedbackMutation } from './useFeedbackMutation';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 import { decodeUserKey } from '../../theme/appearance.logic';
@@ -81,6 +81,19 @@ export function useWarmupTemplateQuery(templateId?: string) {
     enabled: Boolean(auth && templateId),
     queryKey: ['warmup-template-detail', decodeUserKey(auth?.accessToken ?? null), auth?.activeRole, templateId],
     queryFn: () => createApiClient(auth!).get<WarmupTemplateView>(`/plans/templates/warmups/${templateId}`),
+  });
+}
+
+export function useWarmupTemplatesByIds(templateIds: string[]) {
+  const auth = useAuth();
+  const userKey = decodeUserKey(auth?.accessToken ?? null);
+  const ids = [...new Set(templateIds.filter(Boolean))];
+  return useQueries({
+    queries: ids.map((templateId) => ({
+      enabled: Boolean(auth),
+      queryKey: ['warmup-template-detail', userKey, auth?.activeRole, templateId],
+      queryFn: () => createApiClient(auth!).get<WarmupTemplateView>(`/plans/templates/warmups/${templateId}`),
+    })),
   });
 }
 

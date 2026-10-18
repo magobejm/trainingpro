@@ -837,5 +837,18 @@
   "chat.history.empty": "No hay mensajes todavía.",
   "chat.history.today": "Hoy",
   "client.calendar.workout.changed": "El entrenamiento ha cambiado o ya se ha iniciado. Hemos actualizado el calendario.",
-  "client.calendar.workout.saveError": "No se pudo guardar el cambio. Revisa la conexión y vuelve a intentarlo."
+  "client.calendar.workout.saveError": "No se pudo guardar el cambio. Revisa la conexión y vuelve a intentarlo.",
+  "mobile.client.warmup.title": "Calentamiento",
+  "mobile.client.warmup.badge_one": "Calentamiento · {{count}} ejercicio",
+  "mobile.client.warmup.count_one": "{{count}} ejercicio",
+  "mobile.client.warmup.badge": "Calentamiento · {{count}} ejercicios",
+  "mobile.client.warmup.count": "{{count}} ejercicios",
+  "mobile.client.warmup.subtitle": "Preparación y activación",
+  "mobile.client.warmup.instructionsOnly": "Indicaciones del entrenador. Consulta libre, sin registro de resultados.",
+  "mobile.client.warmup.routine": "Rutina",
+  "mobile.client.warmup.routineSubtitle": "Bloques de trabajo principal",
+  "mobile.client.warmup.summary": "{{routine}} rutina · {{warmup}} calentamiento",
+  "mobile.client.warmup.close": "Volver al entrenamiento",
+  "mobile.client.warmup.previous": "Anterior",
+  "mobile.client.warmup.next": "Siguiente"
 }

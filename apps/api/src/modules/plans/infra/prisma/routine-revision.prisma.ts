@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma } from '@prisma/client';
+import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
 import { mapRoutineTemplate, routineTemplateInclude } from './plans-routine.prisma.helpers';
 
 type Tx = Prisma.TransactionClient;
@@ -22,9 +23,11 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
   include.routineObjectives = { include: { objective: true } };
   for (const [key, relation] of Object.entries(blockLibraries)) include.days.include[key].include[relation] = true;
   include.days.include.warmups = {
-    orderBy: { sortOrder: 'asc' },
+    ...CLIENT_WARMUPS_INCLUDE,
     include: {
-      warmupTemplate: { include: { items: { orderBy: { sortOrder: 'asc' } }, groups: { orderBy: { sortOrder: 'asc' } } } },
+      warmupTemplate: {
+        include: { ...CLIENT_WARMUPS_INCLUDE.include.warmupTemplate.include, groups: { orderBy: { sortOrder: 'asc' } } },
+      },
     },
   };
   const row: any = await tx.planTemplate.findUniqueOrThrow({ where: { id: templateId }, include });
@@ -34,7 +37,9 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
     objectiveIds: row.routineObjectives.map((item: any) => item.objectiveId),
     objectives: row.routineObjectives.map((item: any) => item.objective),
   });
+  const clientWarmups = await Promise.all(row.days.map((day: any) => mapClientWarmups(tx, day.warmups)));
   mapped.days.forEach((day: any, index: number) => {
+    day.clientWarmups = clientWarmups[index];
     const source = row.days[index];
     const groups = new Map(
       source.exerciseGroups.map((group: any) => [
@@ -55,7 +60,14 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
       return {
         ...template,
         items: template.items.map((item: any) => ({
-          ...copyFields(item, ['groupId']),
+          ...copyFields(item, [
+            'groupId',
+            'group',
+            'libraryExercise',
+            'libraryCardioMethod',
+            'libraryPlioExercise',
+            'libraryMobilityExercise',
+          ]),
           group: groups.get(item.groupId) ?? null,
         })),
       };
@@ -134,6 +146,7 @@ export async function attachRevisionInstructions(tx: Tx, templateId: string, ver
   for (const day of days) {
     const saved = content?.days?.find((item) => item.dayIndex === day.dayIndex);
     if (!saved) continue;
+    if (saved.clientWarmups) day.clientWarmups = saved.clientWarmups;
     for (const [key, relation] of Object.entries(blockLibraries))
       (day[key] ?? []).forEach((block: any, index: number) => {
         block[relation] = { ...block[relation], coachInstructions: saved[key]?.[index]?.coachInstructions ?? null };

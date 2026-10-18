@@ -15,7 +15,9 @@ export function mapCardioTemplate(
 ): PlanCardioTemplate {
   return {
     createdAt: row.createdAt,
-    days: row.days.map(mapCardioDay),
+    days: row.days
+      .filter((day) => day.revisionVersion == null || day.revisionVersion === row.templateVersion)
+      .map(mapCardioDay),
     id: row.id,
     name: row.name,
     templateVersion: row.templateVersion,

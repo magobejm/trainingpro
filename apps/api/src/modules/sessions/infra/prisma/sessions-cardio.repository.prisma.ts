@@ -11,6 +11,7 @@ import type { FinishSessionInput } from '../../domain/session.input';
 import { finishIfOpen } from './session-concurrency';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
+import { attachRevisionInstructions } from '../../../plans/infra/prisma/routine-revision.prisma';
 import {
   assertCardioSessionMutable,
   cardioSessionInclude,
@@ -134,7 +135,17 @@ export class SessionsCardioRepositoryPrisma {
       include: cardioSessionInclude(),
     });
     if (existing) return existing;
-    const template = await this.readCardioTemplateSnapshot(input.templateId, membership.id);
+    const client = await tx.client.findUnique({
+      where: { id: input.clientId },
+      include: { activeRoutineAssignment: { include: { revision: true } } },
+    });
+    const revision = client?.activeRoutineAssignment?.revision;
+    const template = await this.readCardioTemplateSnapshot(
+      tx,
+      input.templateId,
+      membership.id,
+      revision?.templateId === input.templateId ? revision.version : undefined,
+    );
     return createOrReread(
       () =>
         tx.sessionInstance.create({
@@ -177,12 +188,18 @@ export class SessionsCardioRepositoryPrisma {
     return row;
   }
 
-  private async readCardioTemplateSnapshot(templateId: string, coachMembershipId: string) {
-    const row = await this.readCardioTemplate(templateId, coachMembershipId);
+  private async readCardioTemplateSnapshot(
+    tx: Prisma.TransactionClient,
+    templateId: string,
+    coachMembershipId: string,
+    version?: number,
+  ) {
+    const row = await this.readCardioTemplate(tx, templateId, coachMembershipId);
     if (!row) {
       throw new NotFoundException('Cardio template not found');
     }
-    const firstDay = row.days[0];
+    await attachRevisionInstructions(tx, templateId, version ?? row.templateVersion, row.days);
+    const firstDay = row.days.find((day) => day.revisionVersion === (version ?? row.templateVersion));
     if (!firstDay) {
       throw new BadRequestException('Template has no days');
     }
@@ -193,7 +210,7 @@ export class SessionsCardioRepositoryPrisma {
     return {
       blocks,
       id: row.id,
-      templateVersion: row.templateVersion,
+      templateVersion: version ?? row.templateVersion,
     };
   }
 
@@ -220,8 +237,8 @@ export class SessionsCardioRepositoryPrisma {
     });
   }
 
-  private readCardioTemplate(templateId: string, coachMembershipId: string) {
-    return this.prisma.planTemplate.findFirst({
+  private readCardioTemplate(tx: Prisma.TransactionClient, templateId: string, coachMembershipId: string) {
+    return tx.planTemplate.findFirst({
       where: {
         archivedAt: null,
         coachMembershipId,

@@ -94,13 +94,12 @@ export class PlansStrengthRepository extends PlansBaseRepository {
       });
       if (!cur) throw new NotFoundException('Plan template not found');
       await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
-      await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
         data: {
           ...buildUpdateAuditFields(ctx),
           name: input.name.trim(),
-          days: { create: input.days.map(mapDayCreate) },
+          days: { create: input.days.map((day) => ({ ...mapDayCreate(day), revisionVersion: cur.templateVersion + 1 })) },
         },
         include: templateInclude(),
       });

@@ -1,14 +1,17 @@
 import { createHash } from 'node:crypto';
-import { ConflictException } from '@nestjs/common';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { partitionRoutineWorkouts, type RoutineHandoff, type RoutineHandoffPreview } from '@trainerpro/shared';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import { compareRoutineContent, normalizeRoutineContent } from '@trainerpro/shared';
+import { readRoutineContent } from '../../../plans/infra/prisma/routine-revision.prisma';
 
 export async function readHandoffPreview(
   tx: Prisma.TransactionClient,
   coachMembershipId: string,
   clientId: string,
   from: string,
+  candidateTemplateId?: string,
 ): Promise<RoutineHandoffPreview> {
   const client = await tx.client.findFirstOrThrow({
     where: { id: clientId, coachMembershipId, archivedAt: null },
@@ -51,9 +54,55 @@ export async function readHandoffPreview(
     from,
   );
   const snapshot = { clientId, from, currentRoutineId: client.trainingPlanId, ...partition };
+  let review = {};
+  let reviewedContent: unknown;
+  if (candidateTemplateId) {
+    const candidate = await tx.planTemplate.findFirst({
+      where: { id: candidateTemplateId, archivedAt: null, OR: [{ coachMembershipId }, { scope: 'GLOBAL' }] },
+    });
+    if (!candidate) throw new ForbiddenException('Routine not accessible');
+    const current = await tx.client.findUniqueOrThrow({
+      where: { id: clientId },
+      include: { activeRoutineAssignment: { include: { revision: true } } },
+    });
+    const assignment = current.activeRoutineAssignment;
+    const applied = assignment?.revision;
+    const oldContent =
+      applied?.content ?? (client.trainingPlanId ? await readRoutineContent(tx, client.trainingPlanId) : null);
+    const candidateContent = await readRoutineContent(tx, candidateTemplateId);
+    const old = oldContent as { name?: string; templateVersion?: number } | null;
+    review = {
+      appliedRoutine: old
+        ? {
+            name: applied?.name ?? old.name ?? '',
+            templateId: client.trainingPlanId!,
+            version: applied?.version ?? old.templateVersion ?? 1,
+            initial: assignment?.initial ?? true,
+            appliedAt: assignment?.appliedAt.toISOString() ?? null,
+          }
+        : null,
+      candidateRoutine: { name: candidate.name, templateId: candidate.id, version: candidate.templateVersion },
+      comparison: compareRoutineContent(oldContent, candidateContent),
+    };
+    reviewedContent = {
+      assignmentIdentity:
+        assignment && !assignment.initial
+          ? assignment.id
+          : client.trainingPlanId
+            ? `initial:${client.trainingPlanId}:${applied?.version ?? old?.templateVersion ?? 1}`
+            : null,
+      // PostgreSQL JSONB reorders object keys. Hash canonical content so freezing a
+      // legacy assignment cannot invalidate an otherwise identical review.
+      oldContent: normalizeRoutineContent(oldContent),
+      candidateContent: normalizeRoutineContent(candidateContent),
+      candidateTemplateId,
+      version: candidate.templateVersion,
+      updatedAt: candidate.updatedAt,
+    };
+  }
   // Include session identity/status even when the displayed protection reason is unchanged.
-  const signature = createHash('sha256').update(JSON.stringify({ snapshot, sessions })).digest('hex');
-  return { ...snapshot, signature };
+  const signature = createHash('sha256').update(JSON.stringify({ snapshot, sessions, reviewedContent })).digest('hex');
+  return { ...snapshot, signature, ...review };
 }
 
 export async function lockHandoffRows(tx: Prisma.TransactionClient, clientId: string) {
@@ -73,7 +122,7 @@ export async function applyRoutineHandoff(
   handoff: RoutineHandoff,
 ) {
   await lockHandoffRows(tx, clientId);
-  const preview = await readHandoffPreview(tx, coachMembershipId, clientId, handoff.from);
+  const preview = await readHandoffPreview(tx, coachMembershipId, clientId, handoff.from, handoff.candidateTemplateId);
   if (preview.signature !== handoff.expectedSignature) {
     throw new ConflictException({
       code: 'ROUTINE_HANDOFF_CHANGED',

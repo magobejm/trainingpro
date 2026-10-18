@@ -213,6 +213,7 @@ model Client {
   lastName              String                    @map("last_name") @db.VarChar(80)
   objectiveId           String                    @map("objective_id") @db.Uuid
   trainingPlanId        String?                   @map("training_plan_id") @db.Uuid
+  activeRoutineAssignmentId String?                @unique @map("active_routine_assignment_id") @db.Uuid
   notes                 String?
   considerations        String?
   phone                 String?                   @db.VarChar(30)
@@ -238,6 +239,8 @@ model Client {
   coachMembership       OrganizationMember        @relation("coach_managed_clients", fields: [coachMembershipId], references: [id], onDelete: Restrict)
   objectiveRef          ClientObjective           @relation(fields: [objectiveId], references: [id], onDelete: Restrict)
   trainingPlan          PlanTemplate?             @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
+  activeRoutineAssignment RoutineAssignment?      @relation("active_routine_assignment", fields: [activeRoutineAssignmentId], references: [id], onDelete: SetNull)
+  routineAssignments    RoutineAssignment[]       @relation("client_routine_history")
   managementSections    ClientManagementSection[]
   progressPhotos        ClientProgressPhoto[]
   sessions              SessionInstance[]
@@ -768,12 +771,41 @@ model PlanTemplate {
   neats                  PlanTemplateNeat[]
   sessions               SessionInstance[]
   assignedClients        Client[]
+  revisions              RoutineRevision[]
 
   @@index([scope, archivedAt], map: "idx_plan_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_plan_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_plan_template_org_archived")
   @@unique([coachMembershipId, clientSaveId], map: "uq_plan_template_coach_client_save")
   @@map("plan_template")
+}
+
+model RoutineRevision {
+  id          String   @id @default(uuid()) @db.Uuid
+  templateId  String   @map("template_id") @db.Uuid
+  version     Int
+  name        String   @db.VarChar(120)
+  content     Json
+  initial     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  template    PlanTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  assignments RoutineAssignment[]
+  @@unique([templateId, version])
+  @@map("routine_revision")
+}
+
+model RoutineAssignment {
+  id          String   @id @default(uuid()) @db.Uuid
+  clientId    String   @map("client_id") @db.Uuid
+  revisionId  String   @map("revision_id") @db.Uuid
+  appliedBy   String   @map("applied_by") @db.Uuid
+  initial     Boolean  @default(false)
+  appliedAt   DateTime @default(now()) @map("applied_at") @db.Timestamptz(6)
+  client      Client   @relation("client_routine_history", fields: [clientId], references: [id], onDelete: Cascade)
+  activeFor   Client?  @relation("active_routine_assignment")
+  revision    RoutineRevision @relation(fields: [revisionId], references: [id], onDelete: Restrict)
+  @@index([clientId, appliedAt])
+  @@map("routine_assignment")
 }
 
 model PlanTemplateNeat {
@@ -824,6 +856,7 @@ model WarmupTemplate {
   coachMembershipId String?              @map("coach_membership_id") @db.Uuid
   name              String               @db.VarChar(120)
   templateVersion   Int                  @default(1) @map("template_version")
+  isRevision        Boolean              @default(false) @map("is_revision")
   clientSaveId      String?              @map("client_save_id") @db.Uuid
   archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
   createdBy         String?              @map("created_by") @db.Uuid
@@ -885,6 +918,7 @@ model PlanDay {
   id                 String                 @id @default(uuid()) @db.Uuid
   templateId         String                 @map("template_id") @db.Uuid
   dayIndex           Int                    @map("day_index")
+  revisionVersion    Int                    @default(1) @map("revision_version")
   title              String                 @db.VarChar(120)
   notes              String?                @db.Text
   notesTitle         String?                @map("notes_title") @db.VarChar(120)
@@ -903,7 +937,7 @@ model PlanDay {
   calendarEvents     CalendarEvent[]
   sessions           SessionInstance[]
 
-  @@unique([templateId, dayIndex], map: "uq_plan_day_template_index")
+  @@unique([templateId, revisionVersion, dayIndex], map: "uq_plan_day_template_revision_index")
   @@index([templateId, archivedAt], map: "idx_plan_day_template_archived")
   @@map("plan_day")
 }

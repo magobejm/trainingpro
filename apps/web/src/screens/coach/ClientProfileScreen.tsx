@@ -22,6 +22,7 @@ import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useDeferredDelete } from '../../layout/useDeferredDelete';
 import { ProfileEditModal, SummarySection } from './ClientProfileScreen.sections';
+import { RoutineAssignmentHistory } from './RoutineAssignmentHistory';
 
 type Props = {
   clientId: string;
@@ -315,6 +316,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
   return (
     <View style={styles.page}>
       <SummarySection vm={props.vm} />
+      <RoutineAssignmentHistory clientId={props.vm.query.data!.id} />
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}

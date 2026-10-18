@@ -4,6 +4,7 @@ import { advanceTemplateVersion } from '../../src/modules/plans/application/temp
 describe('template version claim', () => {
   it('returns 409 with the current version when the expected version lost the race', async () => {
     const tx = {
+      $queryRaw: async () => [],
       planTemplate: {
         findFirst: async () => ({ templateVersion: 4 }),
         updateMany: async () => ({ count: 0 }),

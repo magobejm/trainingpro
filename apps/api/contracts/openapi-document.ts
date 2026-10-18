@@ -1,4 +1,10 @@
-import { clearFutureWorkoutsSchema, routineHandoffPreviewSchema, clientViewSchema } from '@trainerpro/shared';
+import {
+  clearFutureWorkoutsSchema,
+  routineHandoffPreviewSchema,
+  clientViewSchema,
+  routineAssignmentListSchema,
+  routineAssignmentDetailSchema,
+} from '@trainerpro/shared';
 import { UpdateClientDto } from '../src/modules/clients/presentation/dto/update-client.dto';
 import { routineHandoffExample } from './examples';
 import {
@@ -22,6 +28,8 @@ export function buildOpenApiDocument(routes: RouteRecord[]) {
     components: {
       schemas: {
         RoutineHandoffPreview: toJsonSchema(routineHandoffPreviewSchema),
+        RoutineAssignmentList: toJsonSchema(routineAssignmentListSchema),
+        RoutineAssignmentDetail: toJsonSchema(routineAssignmentDetailSchema),
         ChatMessageList: toJsonSchema(chatMessageListSchema),
         ClientListResponse: toJsonSchema(clientListResponseSchema),
         HttpError: toJsonSchema(httpErrorSchema),
@@ -129,6 +137,21 @@ function operationId(method: string, path: string): string {
 }
 
 function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  if (route.method === 'get' && route.path.includes('/routine-assignments')) {
+    const schema = route.path.endsWith('/current')
+      ? toJsonSchema(z.record(z.string(), z.unknown()).nullable())
+      : {
+          $ref: `#/components/schemas/${route.path.endsWith('/{assignmentId}') ? 'RoutineAssignmentDetail' : 'RoutineAssignmentList'}`,
+        };
+    return {
+      ...operation,
+      responses: {
+        ...(operation.responses as JsonSchema),
+        '200': { description: 'Immutable routine assignments', content: { 'application/json': { schema } } },
+        '404': errorResponse('Asignación no encontrada'),
+      },
+    };
+  }
   if (route.method === 'get' && route.path === '/health')
     return {
       ...operation,
@@ -138,7 +161,10 @@ function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
           content: {
             'application/json': {
               schema: toJsonSchema(
-                z.object({ status: z.string(), capabilities: z.object({ routineHandoffPreview: z.boolean() }) }),
+                z.object({
+                  status: z.string(),
+                  capabilities: z.object({ routineHandoffPreview: z.boolean(), routineVersions: z.boolean() }),
+                }),
               ),
             },
           },

@@ -24,6 +24,8 @@ export type RoutineHandoffRequest = {
   clientId: string;
   clientName: string;
   routineName: string;
+  candidateTemplateId?: string;
+  prepare?: () => Promise<string>;
   submit: (options: RoutineAssignOptions) => Promise<void>;
 };
 export type AskRoutineHandoff = (request: RoutineHandoffRequest) => Promise<boolean>;
@@ -32,19 +34,20 @@ export async function assignClientRoutine(input: {
   clientId: string;
   clientName: string;
   routineName: string;
+  candidateTemplateId?: string;
   sameRoutine: boolean;
   assign: (options: RoutineAssignOptions) => Promise<void>;
   openCalendar: () => void;
   ask: AskRoutineHandoff;
 }): Promise<void> {
   if (
-    input.sameRoutine ||
-    (await input.ask({
+    await input.ask({
       clientId: input.clientId,
       clientName: input.clientName,
       routineName: input.routineName,
+      candidateTemplateId: input.candidateTemplateId,
       submit: input.assign,
-    }))
+    })
   )
     input.openCalendar();
 }

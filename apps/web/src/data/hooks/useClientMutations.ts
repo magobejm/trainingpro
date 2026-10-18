@@ -80,6 +80,8 @@ export function useUpdateClientMutation(clientId: string) {
       }
       void queryClient.invalidateQueries({ queryKey: ['clients'] });
       if (input.trainingPlanId !== undefined) {
+        void queryClient.invalidateQueries({ queryKey: ['routine-assignments'] });
+        void queryClient.invalidateQueries({ queryKey: ['routine-template-days'] });
         void queryClient.invalidateQueries({ queryKey: ['calendar'] });
         void queryClient.invalidateQueries({ queryKey: ['routine-templates'] });
       }
@@ -102,6 +104,8 @@ export function useAssignRoutineMutation() {
       routineHandoff?: RoutineHandoff;
     }) => updateClient(auth, clientId, { trainingPlanId: templateId, routineHandoff }),
     onSuccess: (_data, { clientId, templateId }) => {
+      void queryClient.invalidateQueries({ queryKey: ['routine-assignments'] });
+      void queryClient.invalidateQueries({ queryKey: ['routine-template-days'] });
       const trainingPlanId = normalizePlanTemplateId(String(templateId)) ?? templateId;
       syncClientInCache(queryClient, clientId, { trainingPlanId });
       void queryClient.invalidateQueries({ queryKey: ['clients'] });

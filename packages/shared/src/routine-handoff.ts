@@ -1,15 +1,18 @@
 import { z } from 'zod';
+import { routineComparisonSchema } from './routine-comparison';
 
 export const clearFutureWorkoutsSchema = z.object({
   clientId: z.string().uuid(),
   from: z.string().date(),
   dryRun: z.boolean().optional(),
+  candidateTemplateId: z.string().uuid().optional(),
 });
 
 export const routineHandoffSchema = z.object({
   mode: z.enum(['continue', 'replace']),
   from: z.string().date(),
   expectedSignature: z.string().regex(/^[a-f0-9]{64}$/),
+  candidateTemplateId: z.string().uuid().optional(),
 });
 export type RoutineHandoff = z.infer<typeof routineHandoffSchema>;
 
@@ -47,6 +50,18 @@ export const routineHandoffPreviewSchema = z.object({
   removable: z.array(workoutSchema),
   preserved: z.array(workoutSchema.extend({ reason: z.enum(['started', 'completed', 'incomplete']) })),
   signature: z.string(),
+  appliedRoutine: z
+    .object({
+      name: z.string(),
+      templateId: z.string(),
+      version: z.number(),
+      initial: z.boolean(),
+      appliedAt: z.string().nullable(),
+    })
+    .nullable()
+    .optional(),
+  candidateRoutine: z.object({ name: z.string(), templateId: z.string(), version: z.number() }).optional(),
+  comparison: routineComparisonSchema.optional(),
 });
 export type RoutineHandoffPreview = z.infer<typeof routineHandoffPreviewSchema>;
 

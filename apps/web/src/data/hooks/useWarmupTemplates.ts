@@ -2,6 +2,7 @@ import { useFeedbackMutation } from './useFeedbackMutation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { decodeUserKey } from '../../theme/appearance.logic';
 
 type BlockType = 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport' | 'strength';
 
@@ -71,6 +72,15 @@ export function useWarmupTemplatesQuery(options?: { summary?: boolean }) {
     enabled: Boolean(auth),
     queryFn: () => listTemplates(auth, options),
     queryKey: ['warmup-templates', auth?.accessToken, auth?.activeRole, options?.summary],
+  });
+}
+
+export function useWarmupTemplateQuery(templateId?: string) {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth && templateId),
+    queryKey: ['warmup-template-detail', decodeUserKey(auth?.accessToken ?? null), auth?.activeRole, templateId],
+    queryFn: () => createApiClient(auth!).get<WarmupTemplateView>(`/plans/templates/warmups/${templateId}`),
   });
 }
 

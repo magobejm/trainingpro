@@ -121,11 +121,11 @@ export class ClientCalendarPlanDaySwapService {
   private async loadPlanDays(requestedPlanDayId: string): Promise<PlanDayRef[]> {
     const anchor = await this.prisma.planDay.findFirst({
       where: { archivedAt: null, id: requestedPlanDayId },
-      select: { templateId: true },
+      select: { templateId: true, revisionVersion: true },
     });
     if (!anchor) return [];
     return this.prisma.planDay.findMany({
-      where: { archivedAt: null, templateId: anchor.templateId },
+      where: { archivedAt: null, templateId: anchor.templateId, revisionVersion: anchor.revisionVersion },
       select: { dayIndex: true, id: true, title: true },
       orderBy: { dayIndex: 'asc' },
     });

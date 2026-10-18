@@ -27,10 +27,7 @@ type ClientProfileExtras = {
   waistCm?: null | number;
 };
 
-export type ClientDataPayload = Omit<
-  ReturnType<typeof normalizeCreateInput>,
-  'clientSupabaseUid' | 'objectiveId'
-> & {
+export type ClientDataPayload = Omit<ReturnType<typeof normalizeCreateInput>, 'clientSupabaseUid' | 'objectiveId'> & {
   objectiveId: string;
 };
 
@@ -42,9 +39,9 @@ function readProfileExtras(row: PrismaClientWithObjective): ClientProfileExtras 
   return row as PrismaClientWithObjective & ClientProfileExtras;
 }
 
-function mapCoreClient(
-  row: PrismaClientWithObjective,
-): Omit<Client, keyof ReturnType<typeof mapProfileClient>> {
+function mapCoreClient(row: PrismaClientWithObjective): Omit<Client, keyof ReturnType<typeof mapProfileClient>> {
+  const applied = (row as typeof row & { activeRoutineAssignment?: { revision: { name: string } } | null })
+    .activeRoutineAssignment;
   return {
     avatarUrl: row.avatarUrl,
     birthDate: row.birthDate,
@@ -66,7 +63,7 @@ function mapCoreClient(
     weightKg: mapDecimal(row.weightKg),
     trainingPlanId: row.trainingPlanId,
     trainingPlan: row.trainingPlan
-      ? { id: row.trainingPlan.id, name: row.trainingPlan.name }
+      ? { id: row.trainingPlan.id, name: applied?.revision.name ?? row.trainingPlan.name }
       : undefined,
   };
 }
@@ -173,11 +170,7 @@ function normalizeObjectives(input: string[] | undefined): string[] | undefined 
   return input.map((value) => value.trim()).filter((value) => value.length > 0);
 }
 
-function assignIfDefined(
-  payload: Prisma.ClientUpdateInput & Record<string, unknown>,
-  key: string,
-  value: unknown,
-) {
+function assignIfDefined(payload: Prisma.ClientUpdateInput & Record<string, unknown>, key: string, value: unknown) {
   if (value !== undefined) {
     payload[key] = value;
   }

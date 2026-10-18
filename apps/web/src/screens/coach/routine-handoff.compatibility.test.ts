@@ -37,3 +37,15 @@ it('requests a read-only simulation after checking capability support', async ()
   expect(request.method).toBe('POST');
   expect(JSON.parse(request.body as string)).toEqual({ clientId: preview.clientId, from: preview.from, dryRun: true });
 });
+
+it('requires version support before reviewing a candidate template', async () => {
+  useAuthStore.setState({ accessToken: 'test-token', activeRole: 'coach' });
+  const fetch = vi
+    .fn()
+    .mockResolvedValue(new Response(JSON.stringify({ status: 'ok', capabilities: { routineHandoffPreview: true } })));
+  vi.stubGlobal('fetch', fetch);
+  await expect(
+    loadRoutineHandoffPreview('11111111-1111-4111-8111-111111111111', '2026-10-17', '22222222-2222-4222-8222-222222222222'),
+  ).rejects.toThrow('version comparison');
+  expect(fetch).toHaveBeenCalledTimes(1);
+});

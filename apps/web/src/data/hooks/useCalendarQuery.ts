@@ -181,7 +181,7 @@ export type RoutineTemplateBasic = {
   }>;
 };
 
-export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefined) {
+export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefined, clientId?: string) {
   const auth = useAuth();
   const resolved =
     trainingPlanId !== undefined && trainingPlanId !== null && String(trainingPlanId).length > 0
@@ -189,11 +189,13 @@ export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefi
       : undefined;
   return useQuery({
     enabled: Boolean(auth) && Boolean(resolved),
-    queryKey: ['routine-template-days', resolved],
+    queryKey: ['routine-template-days', resolved, clientId],
     queryFn: async () => {
       if (!auth || !resolved) return [];
       const api = createApiClient(auth);
-      const response = await api.get<RoutineTemplateBasic>(`/plans/templates/routines/${resolved}`);
+      const response = await api.get<RoutineTemplateBasic>(
+        clientId ? `/clients/${clientId}/routine-assignments/current` : `/plans/templates/routines/${resolved}`,
+      );
       return (response.days ?? []).map((day) => ({
         id: day.id,
         title: day.title,

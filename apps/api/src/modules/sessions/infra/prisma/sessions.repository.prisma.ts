@@ -103,9 +103,24 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     input: EnsureSessionInput,
     membership: CoachMembership,
   ): Promise<SessionInstance> {
-    const row = await persistEnsuredSession(this.prisma, context, input, membership, (tx) =>
-      this.readTemplateSnapshot(tx, input.templateId, membership.id, input.planDayId),
-    );
+    const row = await persistEnsuredSession(this.prisma, context, input, membership, async (tx) => {
+      let planDayId = input.planDayId;
+      if (!planDayId) {
+        const client = await tx.client.findUnique({
+          where: { id: input.clientId },
+          include: { activeRoutineAssignment: { include: { revision: true } } },
+        });
+        const revision = client?.activeRoutineAssignment?.revision;
+        if (revision?.templateId === input.templateId)
+          planDayId = (
+            await tx.planDay.findFirst({
+              where: { templateId: input.templateId, revisionVersion: revision.version, archivedAt: null },
+              orderBy: { dayIndex: 'asc' },
+            })
+          )?.id;
+      }
+      return this.readTemplateSnapshot(tx, input.templateId, membership.id, planDayId, input.clientId);
+    });
     return mapSessionWithGroups(this.prisma, row);
   }
 
@@ -349,8 +364,9 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     templateId: string,
     coachMembershipId: string,
     planDayId?: string | null,
+    clientId?: string,
   ) {
-    const row = await readWorkoutTemplate(db, templateId, coachMembershipId);
+    const row = await readWorkoutTemplate(db, templateId, coachMembershipId, planDayId, clientId);
     if (!row) {
       throw new NotFoundException('Template not found');
     }

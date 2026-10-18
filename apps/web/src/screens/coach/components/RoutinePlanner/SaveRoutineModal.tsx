@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useClientsQuery, useClientObjectivesQuery, type ClientView } from '../../../../data/hooks/useClientsQuery';
 import { matchesSearch } from '../../../../utils/normalize-search';
 import { useRoutineHandoffPrompt } from '../../RoutineHandoffDialog';
-import { isSameAssignedRoutine, type RoutineAssignOptions } from '../../routine-handoff';
+import { type RoutineAssignOptions } from '../../routine-handoff';
 import { Button, Modal, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const SCROLL_KEYBOARD_TAPS = 'handled' as const;
@@ -19,6 +19,7 @@ interface SaveRoutineModalProps {
   isGlobal?: boolean;
   onClose: () => void;
   onSave: (name: string) => Promise<void>;
+  onPrepareAssignment?: (name: string) => Promise<string>;
   onSaveAndAssign: (name: string, clientId: string, options?: RoutineAssignOptions) => Promise<void>;
   onAssignOnly?: (clientId: string, options?: RoutineAssignOptions) => Promise<void>;
   templateId?: string | null;
@@ -49,11 +50,6 @@ function ClientRow({ client, isSelected, onPress }: { client: ClientView; isSele
 }
 
 const CHECK_ICON = '✓';
-
-function clientHasSameRoutine(client: ClientView | undefined, templateId: string | null | undefined): boolean {
-  if (!client || !templateId) return false;
-  return isSameAssignedRoutine(client.trainingPlanId, client.trainingPlan?.id, templateId);
-}
 
 export function SaveRoutineModal(props: SaveRoutineModalProps) {
   const { visible, initialName, isGlobal, onClose, onSave, onSaveAndAssign, onAssignOnly, templateId, t } = props;
@@ -109,10 +105,9 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
   }
 
   const selectedClient = clients.find((client) => client.id === selectedClientId);
-  const alreadyAssigned = clientHasSameRoutine(selectedClient, templateId);
 
   async function reviewAndAssign(save: boolean) {
-    if (!selectedClientId || alreadyAssigned || isSaving) return;
+    if (!selectedClientId || isSaving) return;
     markNameTouched();
     setSaveError(null);
     setIsSaving(true);
@@ -121,6 +116,8 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
         clientId: selectedClientId,
         clientName: selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}` : '',
         routineName: name,
+        candidateTemplateId: templateId ?? undefined,
+        prepare: save && props.onPrepareAssignment ? () => props.onPrepareAssignment!(name) : undefined,
         submit: async (options) => {
           if (save) await onSaveAndAssign(name, selectedClientId, options);
           else await onAssignOnly?.(selectedClientId, options);
@@ -136,7 +133,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
 
   if (!visible) return null;
 
-  const assignDisabled = !selectedClientId || isSaving || alreadyAssigned;
+  const assignDisabled = !selectedClientId || isSaving;
   const footer = isGlobal ? (
     <Button
       disabled={assignDisabled}
@@ -178,11 +175,9 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
           showsVerticalScrollIndicator={false}
           style={styles.body}
         >
-          {alreadyAssigned || saveError ? (
+          {saveError ? (
             <View style={styles.errorBanner}>
-              <Text style={styles.errorBannerText}>
-                {alreadyAssigned ? t('coach.routine.saveModal.alreadyAssigned') : saveError}
-              </Text>
+              <Text style={styles.errorBannerText}>{saveError}</Text>
             </View>
           ) : null}
           {!isGlobal && (
@@ -204,12 +199,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
               value={search}
             />
             {objectives.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.objectiveFilterRow}
-                contentContainerStyle={styles.objectiveFilterContent}
-              >
+              <View style={styles.objectiveFilterRow}>
                 {objectives.map((obj) => {
                   const active = selectedObjectiveId === obj.id;
                   return (
@@ -222,7 +212,7 @@ export function SaveRoutineModal(props: SaveRoutineModalProps) {
                     </Pressable>
                   );
                 })}
-              </ScrollView>
+              </View>
             )}
             <Text style={styles.sectionLabel}>{t('coach.routine.saveModal.quickAssign')}</Text>
             {filtered.map((client) => (
@@ -249,8 +239,7 @@ const styles = StyleSheet.create({
     gap: space.lg,
   },
   field: { gap: space.sm },
-  objectiveFilterRow: { marginTop: space.sm },
-  objectiveFilterContent: { flexDirection: 'row', gap: space.sm, paddingVertical: 2 },
+  objectiveFilterRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm },
   objectiveChip: {
     borderWidth: 1,
     borderColor: colors.border,

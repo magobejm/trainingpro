@@ -69,6 +69,9 @@ postgres('coach workflows with connection_limit=1', () => {
         await db.calendarEvent.deleteMany({ where: { clientId: fixture.client.id } });
         await db.client.update({ where: { id: fixture.client.id }, data: { trainingPlanId: null } });
         await db.sessionInstance.deleteMany({ where: { clientId: fixture.client.id } });
+        await db.client.update({ where: { id: fixture.client.id }, data: { activeRoutineAssignmentId: null } });
+        await db.routineAssignment.deleteMany({ where: { clientId: fixture.client.id } });
+        await db.routineRevision.deleteMany({ where: { templateId: nextRoutineId } });
         await db.planTemplate.delete({ where: { id: nextRoutineId } });
         await fixture.cleanup();
       }

@@ -515,13 +515,311 @@
         "required": ["error", "message", "statusCode"],
         "type": "object"
       },
+      "RoutineAssignmentDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "comparison": {
+            "additionalProperties": false,
+            "properties": {
+              "addedDays": {
+                "type": "number"
+              },
+              "addedExercises": {
+                "type": "number"
+              },
+              "changes": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dayIndex": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "after": {},
+                          "before": {},
+                          "field": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["field", "before", "after"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "kind": {
+                      "enum": ["added", "removed", "modified", "moved"],
+                      "type": "string"
+                    },
+                    "scope": {
+                      "enum": ["routine", "day", "exercise"],
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["kind", "scope", "dayIndex", "title", "type", "fields"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "modifiedDays": {
+                "type": "number"
+              },
+              "modifiedExercises": {
+                "type": "number"
+              },
+              "removedDays": {
+                "type": "number"
+              },
+              "removedExercises": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "addedDays",
+              "removedDays",
+              "modifiedDays",
+              "addedExercises",
+              "removedExercises",
+              "modifiedExercises",
+              "changes"
+            ],
+            "type": "object"
+          },
+          "content": {
+            "additionalProperties": {},
+            "propertyNames": {
+              "type": "string"
+            },
+            "type": "object"
+          }
+        },
+        "required": ["content", "comparison"],
+        "type": "object"
+      },
+      "RoutineAssignmentList": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "active": {
+                  "type": "boolean"
+                },
+                "appliedAt": {
+                  "type": "string"
+                },
+                "id": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "initial": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "templateId": {
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "version": {
+                  "maximum": 9007199254740991,
+                  "minimum": -9007199254740991,
+                  "type": "integer"
+                }
+              },
+              "required": ["id", "name", "templateId", "version", "appliedAt", "initial", "active"],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["items", "nextCursor"],
+        "type": "object"
+      },
       "RoutineHandoffPreview": {
         "additionalProperties": false,
         "properties": {
+          "appliedRoutine": {
+            "anyOf": [
+              {
+                "additionalProperties": false,
+                "properties": {
+                  "appliedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "initial": {
+                    "type": "boolean"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "templateId": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "number"
+                  }
+                },
+                "required": ["name", "templateId", "version", "initial", "appliedAt"],
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidateRoutine": {
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "templateId": {
+                "type": "string"
+              },
+              "version": {
+                "type": "number"
+              }
+            },
+            "required": ["name", "templateId", "version"],
+            "type": "object"
+          },
           "clientId": {
             "format": "uuid",
             "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
             "type": "string"
+          },
+          "comparison": {
+            "additionalProperties": false,
+            "properties": {
+              "addedDays": {
+                "type": "number"
+              },
+              "addedExercises": {
+                "type": "number"
+              },
+              "changes": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "dayIndex": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "fields": {
+                      "items": {
+                        "additionalProperties": false,
+                        "properties": {
+                          "after": {},
+                          "before": {},
+                          "field": {
+                            "type": "string"
+                          }
+                        },
+                        "required": ["field", "before", "after"],
+                        "type": "object"
+                      },
+                      "type": "array"
+                    },
+                    "kind": {
+                      "enum": ["added", "removed", "modified", "moved"],
+                      "type": "string"
+                    },
+                    "scope": {
+                      "enum": ["routine", "day", "exercise"],
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": ["kind", "scope", "dayIndex", "title", "type", "fields"],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "modifiedDays": {
+                "type": "number"
+              },
+              "modifiedExercises": {
+                "type": "number"
+              },
+              "removedDays": {
+                "type": "number"
+              },
+              "removedExercises": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "addedDays",
+              "removedDays",
+              "modifiedDays",
+              "addedExercises",
+              "removedExercises",
+              "modifiedExercises",
+              "changes"
+            ],
+            "type": "object"
           },
           "currentRoutineId": {
             "anyOf": [
@@ -3488,6 +3786,11 @@
               "schema": {
                 "additionalProperties": false,
                 "properties": {
+                  "candidateTemplateId": {
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                    "type": "string"
+                  },
                   "clientId": {
                     "format": "uuid",
                     "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
@@ -3521,7 +3824,43 @@
                   },
                   "preview": {
                     "value": {
+                      "appliedRoutine": {
+                        "appliedAt": "2026-10-16T00:00:00.000Z",
+                        "initial": false,
+                        "name": "Fuerza inicial",
+                        "templateId": "44444444-4444-4444-8444-444444444444",
+                        "version": 1
+                      },
+                      "candidateRoutine": {
+                        "name": "Fuerza revisada",
+                        "templateId": "44444444-4444-4444-8444-444444444444",
+                        "version": 2
+                      },
                       "clientId": "11111111-1111-4111-8111-111111111111",
+                      "comparison": {
+                        "addedDays": 0,
+                        "addedExercises": 0,
+                        "changes": [
+                          {
+                            "dayIndex": 1,
+                            "fields": [
+                              {
+                                "after": 10,
+                                "before": 8,
+                                "field": "sets.0.reps"
+                              }
+                            ],
+                            "kind": "modified",
+                            "scope": "exercise",
+                            "title": "Sentadilla",
+                            "type": "exercises"
+                          }
+                        ],
+                        "modifiedDays": 0,
+                        "modifiedExercises": 1,
+                        "removedDays": 0,
+                        "removedExercises": 0
+                      },
                       "currentRoutineId": "44444444-4444-4444-8444-444444444444",
                       "from": "2026-10-16",
                       "preserved": [
@@ -5889,6 +6228,11 @@
                   "routineHandoff": {
                     "additionalProperties": false,
                     "properties": {
+                      "candidateTemplateId": {
+                        "format": "uuid",
+                        "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                        "type": "string"
+                      },
                       "expectedSignature": {
                         "pattern": "^[a-f0-9]{64}$",
                         "type": "string"
@@ -7316,6 +7660,241 @@
         "x-roles": ["coach"]
       }
     },
+    "/clients/{clientId}/routine-assignments": {
+      "get": {
+        "operationId": "get_clients_clientId_routine_assignments",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutineAssignmentList"
+                }
+              }
+            },
+            "description": "Immutable routine assignments"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Asignación no encontrada"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/{clientId}/routine-assignments",
+        "x-controller": "ClientRoutineHistoryController",
+        "x-filters": ["before"],
+        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
+    "/clients/{clientId}/routine-assignments/current": {
+      "get": {
+        "operationId": "get_clients_clientId_routine_assignments_current",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": {},
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "type": "object"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            },
+            "description": "Immutable routine assignments"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Asignación no encontrada"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/{clientId}/routine-assignments/current",
+        "x-controller": "ClientRoutineHistoryController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
+    "/clients/{clientId}/routine-assignments/{assignmentId}": {
+      "get": {
+        "operationId": "get_clients_clientId_routine_assignments_assignmentId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "assignmentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutineAssignmentDetail"
+                }
+              }
+            },
+            "description": "Immutable routine assignments"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Asignación no encontrada"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/{clientId}/routine-assignments/{assignmentId}",
+        "x-controller": "ClientRoutineHistoryController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
     "/clients/{clientId}/timeline": {
       "get": {
         "operationId": "get_clients_clientId_timeline",
@@ -8201,9 +8780,12 @@
                       "properties": {
                         "routineHandoffPreview": {
                           "type": "boolean"
+                        },
+                        "routineVersions": {
+                          "type": "boolean"
                         }
                       },
-                      "required": ["routineHandoffPreview"],
+                      "required": ["routineHandoffPreview", "routineVersions"],
                       "type": "object"
                     },
                     "status": {

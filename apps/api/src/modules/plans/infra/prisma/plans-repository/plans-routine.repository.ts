@@ -2,11 +2,6 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { LibraryItemScope, Prisma, TemplateKind } from '@prisma/client';
 import { buildCreateAuditFields, buildUpdateAuditFields } from '../../../../../common/audit/audit-fields';
 import { AuthContext } from '../../../../../common/auth-context/auth-context';
-import {
-  parseDayIndexFromCalendarTitle,
-  resolvePlanDayIdFromCalendarEvent,
-  type PlanDayRef,
-} from '../../../../../common/plan/resolve-plan-day-from-calendar';
 import { PrismaService } from '../../../../../common/prisma/prisma.service';
 import {
   emptyRoutineMetadata,
@@ -46,26 +41,29 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     if (reused) return reused;
     let row;
     try {
-      row = await this.prisma.planTemplate.create({
-        data: {
-          ...buildCreateAuditFields(ctx),
-          clientSaveId: input.clientSaveId,
-          coachMembershipId: m.id,
-          days: { create: input.days.map(mapRoutineDayCreate) },
-          kind: TemplateKind.ROUTINE,
-          name: input.name.trim(),
-          organizationId: m.organizationId,
-        },
-        include: routineTemplateInclude(),
-      });
+      row = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.planTemplate.create({
+          data: {
+            ...buildCreateAuditFields(ctx),
+            clientSaveId: input.clientSaveId,
+            coachMembershipId: m.id,
+            days: { create: input.days.map(mapRoutineDayCreate) },
+            kind: TemplateKind.ROUTINE,
+            name: input.name.trim(),
+            organizationId: m.organizationId,
+          },
+          include: routineTemplateInclude(),
+        });
+        await this.persistRoutineMetadata(tx, created.id, input);
+        await this.persistDayGroups(tx, created.id, input.days);
+        return created;
+      }, ROUTINE_WRITE_TX_OPTIONS);
     } catch (error) {
       if (!isUniqueViolation(error)) throw error;
       const existing = await this.findRoutineSavedEarlier(ctx, m.id, input.clientSaveId);
       if (!existing) throw error;
       return existing;
     }
-    await this.persistRoutineMetadata(this.prisma, row.id, input);
-    await this.persistDayGroups(this.prisma, row.id, input.days);
     const metadataByTemplate = await this.loadRoutineMetadata([row.id]);
     const refreshed = await this.prisma.planTemplate.findUniqueOrThrow({
       where: { id: row.id },
@@ -128,31 +126,19 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       if (!cur) throw new NotFoundException('Routine template not found');
       await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
 
-      const oldDays = await tx.planDay.findMany({
-        where: { templateId: cur.id },
-        select: { dayIndex: true, id: true, title: true },
-        orderBy: { dayIndex: 'asc' },
-      });
-
-      await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
         data: {
           ...buildUpdateAuditFields(ctx),
-          days: { create: input.days.map(mapRoutineDayCreate) },
+          days: {
+            create: input.days.map((day) => ({ ...mapRoutineDayCreate(day), revisionVersion: cur.templateVersion + 1 })),
+          },
           name: input.name.trim(),
         },
         select: { id: true },
       });
       await this.persistRoutineMetadata(tx, row.id, input);
       await this.persistDayGroups(tx, row.id, input.days);
-
-      const newDays = await tx.planDay.findMany({
-        where: { templateId: row.id },
-        select: { dayIndex: true, id: true, title: true },
-        orderBy: { dayIndex: 'asc' },
-      });
-      await this.syncAssignedClientCalendarPlanDays(tx, row.id, oldDays, newDays);
 
       return row.id;
     }, ROUTINE_WRITE_TX_OPTIONS);
@@ -202,6 +188,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       // Find the created day
       const day = await tx.planDay.findFirst({
         where: { templateId, dayIndex: dayInput.dayIndex },
+        orderBy: { revisionVersion: 'desc' },
         select: { id: true },
       });
       if (!day) continue;
@@ -307,76 +294,6 @@ export class PlansRoutineRepository extends PlansBaseRepository {
   private resolveGroupId(clientId: null | string | undefined, map: Map<string, string>): null | string {
     if (!clientId) return null;
     return map.get(clientId) ?? null;
-  }
-
-  private async syncAssignedClientCalendarPlanDays(
-    tx: Prisma.TransactionClient,
-    templateId: string,
-    oldDays: PlanDayRef[],
-    newDays: PlanDayRef[],
-  ): Promise<void> {
-    if (newDays.length === 0) return;
-
-    const newDayByIndex = new Map(newDays.map((day) => [day.dayIndex, day]));
-    const oldDayById = new Map(oldDays.map((day) => [day.id, day]));
-    const assignedClients = await tx.client.findMany({
-      where: { archivedAt: null, trainingPlanId: templateId },
-      select: { id: true },
-    });
-
-    for (const client of assignedClients) {
-      const events = await tx.calendarEvent.findMany({
-        where: { archivedAt: null, clientId: client.id, type: 'workout' },
-        select: { id: true, planDayId: true, title: true },
-      });
-
-      for (const event of events) {
-        const resolvedDayIndex = this.resolveCalendarEventDayIndex(event, oldDays, oldDayById);
-        if (resolvedDayIndex == null) continue;
-
-        const nextDay = newDayByIndex.get(resolvedDayIndex);
-        if (!nextDay) continue;
-
-        await tx.calendarEvent.update({
-          where: { id: event.id },
-          data: {
-            planDayId: nextDay.id,
-            title: nextDay.title,
-          },
-        });
-      }
-    }
-  }
-
-  private resolveCalendarEventDayIndex(
-    event: { planDayId: string | null; title: string | null },
-    newDays: PlanDayRef[],
-    oldDayById: Map<string, PlanDayRef>,
-  ): number | null {
-    if (event.planDayId) {
-      const oldDay = oldDayById.get(event.planDayId);
-      if (oldDay) return oldDay.dayIndex;
-
-      const stillValid = newDays.find((day) => day.id === event.planDayId);
-      if (stillValid) return stillValid.dayIndex;
-    }
-
-    const title = event.title?.trim();
-    if (title) {
-      const oldByTitle = [...oldDayById.values()].find((day) => day.title === title);
-      if (oldByTitle) return oldByTitle.dayIndex;
-
-      const parsed = parseDayIndexFromCalendarTitle(title);
-      if (parsed != null && newDays.some((day) => day.dayIndex === parsed)) {
-        return parsed;
-      }
-
-      const resolvedId = resolvePlanDayIdFromCalendarEvent(event, newDays);
-      const resolvedDay = resolvedId ? newDays.find((day) => day.id === resolvedId) : null;
-      if (resolvedDay) return resolvedDay.dayIndex;
-    }
-
-    return null;
   }
 
   private async loadRoutineMetadata(templateIds: string[]): Promise<Map<string, RoutineTemplateMetadata>> {

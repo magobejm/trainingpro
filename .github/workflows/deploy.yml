@@ -67,6 +67,11 @@ jobs:
         env:
           DATABASE_URL: ${{ env.DIRECT_URL }}
         run: pnpm --filter @trainerpro/api db:migrate:deploy
+      - run: pnpm --filter @trainerpro/api db:generate
+      - name: Capture existing routine assignments
+        env:
+          DATABASE_URL: ${{ env.DIRECT_URL }}
+        run: pnpm --filter @trainerpro/api db:backfill:routine-assignments
 
   deploy-api:
     name: Build + push image, deploy Cloud Run

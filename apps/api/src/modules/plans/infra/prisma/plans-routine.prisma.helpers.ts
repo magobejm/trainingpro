@@ -79,7 +79,9 @@ export function mapRoutineTemplate(row: RoutineRow, metadata?: RoutineTemplateMe
     assignedClientsCount: row.assignedClients.length,
     coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
-    days: row.days.map(mapRoutineDay),
+    days: row.days
+      .filter((day: any) => day.revisionVersion == null || day.revisionVersion === row.templateVersion)
+      .map(mapRoutineDay),
     expectedCompletionDays: safeMetadata.expectedCompletionDays,
     id: row.id,
     isAssigned: row.assignedClients.length > 0,

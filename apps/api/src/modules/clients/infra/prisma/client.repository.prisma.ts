@@ -1,4 +1,9 @@
 import { applyRoutineHandoff, handoffTransaction } from '../../../calendar/infra/prisma/routine-handoff.prisma';
+import {
+  attachRevisionInstructions,
+  captureLegacyAssignments,
+  recordRoutineAssignment,
+} from '../../../plans/infra/prisma/routine-revision.prisma';
 import { readLastClientActivities } from './client-last-activity.prisma';
 import { readClientStatusFacts, statusForClient } from './client-status.prisma';
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
@@ -47,11 +52,13 @@ import {
 } from './client.repository.prisma.ops';
 
 const CLIENT_LIST_INCLUDE = {
+  activeRoutineAssignment: { include: { revision: true } },
   objectiveRef: true,
   trainingPlan: { select: { id: true, name: true } },
 } as const;
 
 const CLIENT_WITH_RELATIONS_INCLUDE = {
+  activeRoutineAssignment: { include: { revision: true } },
   objectiveRef: true,
   progressPhotos: {
     orderBy: { createdAt: 'asc' as const },
@@ -209,6 +216,15 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     const membership = await resolveCoachMembership(context, this.prisma);
     const run = async (tx: Prisma.TransactionClient) => {
       const client = await readActiveClient(tx, membership, clientId);
+      if (input.trainingPlanId !== undefined) {
+        const current = await tx.client.findUniqueOrThrow({ where: { id: clientId }, select: { trainingPlanId: true } });
+        for (const id of [
+          ...new Set([current.trainingPlanId, input.trainingPlanId].filter((id): id is string => Boolean(id))),
+        ].sort()) {
+          await tx.$queryRaw`SELECT id FROM plan_template WHERE id = ${id}::uuid FOR SHARE`;
+        }
+        if (current.trainingPlanId) await captureLegacyAssignments(tx, current.trainingPlanId);
+      }
       if (typeof input.trainingPlanId === 'string') {
         const plan = await tx.planTemplate.findFirst({
           where: { archivedAt: null, id: input.trainingPlanId },
@@ -218,11 +234,14 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       }
       if (input.routineHandoff) {
         if (!input.trainingPlanId) throw new ConflictException('A routine is required for handoff');
+        if (input.routineHandoff.candidateTemplateId && input.routineHandoff.candidateTemplateId !== input.trainingPlanId)
+          throw new ConflictException('Reviewed routine does not match assignment');
         await applyRoutineHandoff(tx, membership.id, clientId, input.routineHandoff);
       }
       const payload = normalizeUpdateInput(input);
       if (input.trainingPlanId !== undefined) {
         await claimTrainingPlanAssignment(tx, client.id, input.trainingPlanId);
+        await recordRoutineAssignment(tx, client.id, input.trainingPlanId, context.subject);
         delete (payload as { trainingPlanId?: null | string }).trainingPlanId;
       }
       if (input.objectiveId !== undefined) {
@@ -277,10 +296,10 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
   async findClientRoutineByEmail(email: string): Promise<ClientRoutine | null> {
     const client = await this.prisma.client.findFirst({
       where: { email: email.toLowerCase(), archivedAt: null },
-      select: { trainingPlanId: true },
+      select: { trainingPlanId: true, activeRoutineAssignment: { include: { revision: true } } },
     });
     if (!client?.trainingPlanId) return null;
-    return loadClientRoutine(this.prisma, client.trainingPlanId);
+    return loadClientRoutine(this.prisma, client.trainingPlanId, client.activeRoutineAssignment?.revision);
   }
 
   async findClientPlanDayByEmail(email: string, planDayId: string): Promise<ClientRoutine['planDays'][number] | null> {
@@ -380,19 +399,27 @@ const PLAN_WITH_DAYS_INCLUDE = {
 type PlanWithDays = Prisma.PlanTemplateGetPayload<{ include: typeof PLAN_WITH_DAYS_INCLUDE }>;
 type PlanDay = PlanWithDays['days'][number];
 
-async function loadClientRoutine(prisma: PrismaService, planId: string): Promise<ClientRoutine | null> {
+async function loadClientRoutine(
+  prisma: PrismaService,
+  planId: string,
+  revision?: { version: number; content: Prisma.JsonValue; name: string } | null,
+): Promise<ClientRoutine | null> {
   const plan = await prisma.planTemplate.findFirst({
-    where: { id: planId, archivedAt: null },
+    where: { id: planId, ...(revision ? {} : { archivedAt: null }) },
     include: PLAN_WITH_DAYS_INCLUDE,
   });
   if (!plan) return null;
+  await attachRevisionInstructions(prisma, planId, revision?.version ?? plan.templateVersion, plan.days);
+  const snapshot = revision?.content as
+    | { expectedCompletionDays?: number; neats?: typeof plan.neats; objectives?: { label: string }[] }
+    | undefined;
   return {
-    expectedCompletionDays: plan.expectedCompletionDays ?? null,
+    expectedCompletionDays: snapshot ? (snapshot.expectedCompletionDays ?? null) : (plan.expectedCompletionDays ?? null),
     id: plan.id,
-    name: plan.name,
-    neats: mapClientRoutineNeats(plan.neats),
-    objectives: plan.routineObjectives.map((o) => o.objective.label),
-    planDays: plan.days.map(mapPlanDay),
+    name: revision?.name ?? plan.name,
+    neats: mapClientRoutineNeats(snapshot?.neats ?? plan.neats),
+    objectives: snapshot?.objectives?.map((o) => o.label) ?? plan.routineObjectives.map((o) => o.objective.label),
+    planDays: plan.days.filter((day) => day.revisionVersion === (revision?.version ?? plan.templateVersion)).map(mapPlanDay),
   };
 }
 
@@ -405,7 +432,12 @@ async function loadAccessibleClientPlanDay(
 ): Promise<AccessiblePlanDay | null> {
   const client = await prisma.client.findFirst({
     where: { email: email.toLowerCase(), archivedAt: null },
-    select: { coachMembershipId: true, id: true, trainingPlanId: true },
+    select: {
+      coachMembershipId: true,
+      id: true,
+      trainingPlanId: true,
+      activeRoutineAssignment: { include: { revision: true } },
+    },
   });
   if (!client) return null;
 
@@ -414,7 +446,6 @@ async function loadAccessibleClientPlanDay(
       archivedAt: null,
       id: planDayId,
       template: {
-        archivedAt: null,
         OR: [{ coachMembershipId: client.coachMembershipId }, { scope: LibraryItemScope.GLOBAL }],
       },
     },
@@ -422,7 +453,9 @@ async function loadAccessibleClientPlanDay(
   });
   if (!planDay) return null;
 
-  const inAssignedPlan = client.trainingPlanId === planDay.templateId;
+  const inAssignedPlan =
+    client.trainingPlanId === planDay.templateId &&
+    (!client.activeRoutineAssignment || client.activeRoutineAssignment.revision.version === planDay.revisionVersion);
   if (!inAssignedPlan) {
     const calendarEvent = await prisma.calendarEvent.findFirst({
       where: {
@@ -436,6 +469,7 @@ async function loadAccessibleClientPlanDay(
     if (!calendarEvent) return null;
   }
 
+  await attachRevisionInstructions(prisma, planDay.templateId, planDay.revisionVersion, [planDay]);
   return { ...planDay, templateId: planDay.templateId };
 }
 

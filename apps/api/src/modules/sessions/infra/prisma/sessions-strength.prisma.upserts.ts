@@ -1,4 +1,5 @@
 import { LibraryItemScope, Prisma, TemplateKind } from '@prisma/client';
+import { attachRevisionInstructions } from '../../../plans/infra/prisma/routine-revision.prisma';
 import { writeOrUpdate } from '../../../../common/prisma/unique-violation';
 import {
   isometricSetHasData,
@@ -220,10 +221,25 @@ const PLAN_BLOCK_SETS_INCLUDE = {
   orderBy: { setIndex: 'asc' as const },
 };
 
-export function readWorkoutTemplate(prisma: Prisma.TransactionClient, templateId: string, coachMembershipId: string) {
-  return prisma.planTemplate.findFirst({
+export async function readWorkoutTemplate(
+  prisma: Prisma.TransactionClient,
+  templateId: string,
+  coachMembershipId: string,
+  planDayId?: string | null,
+  clientId?: string,
+) {
+  const row = await prisma.planTemplate.findFirst({
     where: {
-      archivedAt: null,
+      AND: [
+        {
+          OR: [
+            { archivedAt: null },
+            ...(planDayId && clientId
+              ? [{ days: { some: { id: planDayId, calendarEvents: { some: { clientId, archivedAt: null } } } } }]
+              : []),
+          ],
+        },
+      ],
       id: templateId,
       kind: { in: [TemplateKind.STRENGTH, TemplateKind.ROUTINE] },
       OR: [{ coachMembershipId }, { scope: LibraryItemScope.GLOBAL }],
@@ -277,4 +293,9 @@ export function readWorkoutTemplate(prisma: Prisma.TransactionClient, templateId
       },
     },
   });
+  if (!row) return null;
+  const day = planDayId ? row.days.find((item) => item.id === planDayId) : null;
+  const version = day?.revisionVersion ?? row.templateVersion;
+  await attachRevisionInstructions(prisma, templateId, version, row.days);
+  return { ...row, templateVersion: version, days: row.days.filter((item) => item.revisionVersion === version) };
 }

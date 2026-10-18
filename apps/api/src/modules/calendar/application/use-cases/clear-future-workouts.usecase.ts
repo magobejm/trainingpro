@@ -13,6 +13,7 @@ export type ClearFutureWorkoutsInput = {
   clientId: string;
   from: string;
   dryRun?: boolean;
+  candidateTemplateId?: string;
 };
 
 @Injectable()
@@ -27,7 +28,7 @@ export class ClearFutureWorkoutsUseCase {
       this.prisma,
       async (tx) => {
         if (!input.dryRun) await lockHandoffRows(tx, input.clientId);
-        const preview = await readHandoffPreview(tx, membership.id, input.clientId, input.from);
+        const preview = await readHandoffPreview(tx, membership.id, input.clientId, input.from, input.candidateTemplateId);
         if (input.dryRun) return preview;
         const result = await archivePreviewWorkouts(tx, membership.id, preview);
         return { archived: result.count };

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useAssignRoutineMutation, useUpdateClientMutation } from '../../data/hooks/useClientMutations';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
+import { useAppliedRoutineQuery } from '../../data/hooks/useRoutineAssignments';
 
 import {
   useRoutineObjectivesQuery,
@@ -68,9 +69,12 @@ function useRoutinePlannerScreenModel(onRouteChange?: (route: ShellRoute) => voi
 }
 
 function useRoutinePlannerModelData(onRouteChange: undefined | ((route: ShellRoute) => void), t: (key: string) => string) {
-  const templates = useRoutineTemplatesQuery().data ?? [];
+  const catalogTemplates = useRoutineTemplatesQuery().data ?? [];
   const objectiveOptions = useRoutineObjectivesQuery().data ?? [];
   const plannerContext = usePlannerContextState();
+  const applied = useAppliedRoutineQuery(plannerContext.viewMode === 'view' ? plannerContext.clientId : null);
+  const templates =
+    plannerContext.viewMode === 'view' && plannerContext.clientId ? (applied.data ? [applied.data] : []) : catalogTemplates;
   const draftState = useRoutinePlannerDraft(t);
   const uiState = useRoutinePlannerUIState();
   const templateKey = plannerContext.initialTemplateId ?? uiState.editingId ?? 'new';

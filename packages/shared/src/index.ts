@@ -116,3 +116,4 @@ export {
 } from './nutrition/calculations';
 
 export * from './routine-handoff';
+export * from './routine-comparison';

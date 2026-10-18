@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { HandoffWorkout, ProtectedWorkout } from '@trainerpro/shared';
+import type { HandoffWorkout, ProtectedWorkout, RoutineHandoffPreview } from '@trainerpro/shared';
 import type { AskRoutineHandoff, RoutineHandoffRequest } from './routine-handoff';
 import { useFormatDate } from '../../i18n/useFormatDate';
 import { useRoutineHandoffReview } from './useRoutineHandoffReview';
-import { Button, Modal, colors, fontSize, space } from '@trainerpro/ui';
+import { RoutineComparisonPanel } from './RoutineComparisonPanel';
+import { Button, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -20,7 +21,7 @@ export function RoutineHandoffDialog({ request, onCancel, onDone, t }: DialogPro
     <Modal
       closeLabel={t('common.cancel')}
       onClose={cancel}
-      size="md"
+      size="lg"
       title={t('coach.routine.handoff.title')}
       visible
       footer={
@@ -70,6 +71,7 @@ export function RoutineHandoffDialog({ request, onCancel, onDone, t }: DialogPro
         ) : null}
         {review.preview && !review.loading ? (
           <>
+            <RoutineVersionSummary preview={review.preview} t={t} />
             <Text style={styles.message}>{t('coach.routine.handoff.from', { date: format(review.preview.from) })}</Text>
             <View style={styles.content}>
               {review.mode === 'continue' ? (
@@ -101,6 +103,36 @@ export function RoutineHandoffDialog({ request, onCancel, onDone, t }: DialogPro
         ) : null}
       </View>
     </Modal>
+  );
+}
+
+function RoutineVersionSummary({ preview, t }: { preview: RoutineHandoffPreview; t: Translate }) {
+  if (!preview.candidateRoutine) return null;
+  return (
+    <View style={styles.content}>
+      <View style={styles.versionCards}>
+        <View style={styles.versionCard}>
+          <Text style={styles.heading}>{t('routineVersions.before')}</Text>
+          <Text style={styles.message}>
+            {preview.appliedRoutine
+              ? t('routineVersions.applied', { name: preview.appliedRoutine.name, version: preview.appliedRoutine.version })
+              : t('routineVersions.firstAssignment')}
+          </Text>
+          {preview.appliedRoutine?.initial ? <Text style={styles.message}>{t('routineVersions.initial')}</Text> : null}
+        </View>
+        <View style={[styles.versionCard, styles.proposedVersion]}>
+          <Text style={styles.heading}>{t('routineVersions.after')}</Text>
+          <Text style={styles.message}>
+            {t('routineVersions.proposed', {
+              name: preview.candidateRoutine.name,
+              version: preview.candidateRoutine.version,
+            })}
+          </Text>
+        </View>
+      </View>
+      <Text style={styles.message}>{t('routineVersions.keepScheduled')}</Text>
+      {preview.comparison ? <RoutineComparisonPanel comparison={preview.comparison} t={t} /> : null}
+    </View>
   );
 }
 
@@ -174,6 +206,16 @@ export function useRoutineHandoffPrompt(t: Translate): {
 }
 
 const styles = StyleSheet.create({
+  versionCards: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  versionCard: {
+    flexGrow: 1,
+    flexBasis: 240,
+    gap: space.sm,
+    padding: space.lg,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceMuted,
+  },
+  proposedVersion: { backgroundColor: colors.primarySoft },
   content: { gap: space.md },
   choices: { gap: space.sm },
   row: { paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: colors.border },

@@ -45,12 +45,13 @@ import { ClientRepositoryPrisma } from './infra/prisma/client.repository.prisma'
 import { ClientLibraryController } from './presentation/controllers/client-library.controller';
 import { ClientSelfController } from './presentation/controllers/client-self.controller';
 import { ClientsController } from './presentation/controllers/clients.controller';
+import { ClientRoutineHistoryController } from './presentation/controllers/client-routine-history.controller';
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
   imports: [AuthModule, ChatModule, FilesModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
   exports: [ClientAccessPolicy],
-  controllers: [ClientLibraryController, ClientSelfController, ClientsController],
+  controllers: [ClientLibraryController, ClientSelfController, ClientsController, ClientRoutineHistoryController],
   providers: [
     ArchiveClientUseCase,
     EnsureClientSelfSessionUseCase,

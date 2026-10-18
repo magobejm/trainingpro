@@ -66,7 +66,9 @@ export function mapTemplate(
   return {
     coachMembershipId: row.coachMembershipId,
     createdAt: row.createdAt,
-    days: row.days.map(mapTemplateDay),
+    days: row.days
+      .filter((day) => day.revisionVersion == null || day.revisionVersion === row.templateVersion)
+      .map(mapTemplateDay),
     id: row.id,
     name: row.name,
     scope: row.scope as 'COACH' | 'GLOBAL',

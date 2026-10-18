@@ -59,6 +59,7 @@ interface LayoutProps {
     lastAddedBlockId: string | null;
   };
   onSave: (name: string) => Promise<void>;
+  onPrepareAssignment?: (name: string) => Promise<string>;
   onSaveAndAssign: (
     name: string,
     clientId: string,
@@ -190,6 +191,7 @@ function RoutineFooterSection(props: LayoutProps) {
         templateId={uiState.editingId}
         onSave={props.onSave}
         onSaveAndAssign={props.onSaveAndAssign}
+        onPrepareAssignment={props.onPrepareAssignment}
         t={t}
         visible={uiState.showSaveModal}
       />
@@ -275,6 +277,7 @@ export function RoutinePlannerLayout(props: LayoutProps) {
           warmupTemplates={warmupTemplates}
         />
         <WarmupTemplateDetailModal
+          templateId={viewingWarmup?.templateId}
           template={viewingTemplate}
           onClose={() => setViewingWarmup(null)}
           t={props.t}

@@ -82,6 +82,7 @@ export class WarmupTemplatesService {
         updated_at AS "updatedAt"
       FROM warmup_template
       WHERE archived_at IS NULL
+        AND is_revision = false
         AND (coach_membership_id = $1::uuid OR scope = 'GLOBAL')
       ORDER BY lower(name) ASC`,
       membership.id,
@@ -256,6 +257,7 @@ export class WarmupTemplatesService {
       `SELECT id, scope
        FROM warmup_template
        WHERE id = $1::uuid
+         AND is_revision = false
          AND archived_at IS NULL
          AND (coach_membership_id = $2::uuid OR scope = 'GLOBAL')`,
       templateId,

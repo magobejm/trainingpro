@@ -81,7 +81,7 @@ function useCalendarLogic() {
   );
   const planTemplateId = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id, viewMode === 'coachOnly');
-  const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId);
+  const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId, selectedClient?.id);
   const createEvent = useCreateCalendarEventMutation();
   const proposeCall = useCreateCallProposalMutation();
   const updateEvent = useUpdateCalendarEventMutation();

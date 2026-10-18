@@ -13,6 +13,7 @@ import {
 } from './client.repository.prisma.ops';
 import { seedMissingClientManagementSections } from './client-management-sections.prisma';
 import { type ClientDataPayload, normalizeCreateInput } from './client.repository.prisma.mappers';
+import { recordRoutineAssignment } from '../../../plans/infra/prisma/routine-revision.prisma';
 
 type CreateAudit = ReturnType<typeof buildCreateAuditFields>;
 type Tx = Prisma.TransactionClient;
@@ -33,7 +34,9 @@ export async function createClientRecord(
         ...clientData,
         objectiveId: await resolveObjectiveId(tx, objectiveId),
       };
-      return createOrRestoreClient(tx, membership, payload, audit, updatedBy, include);
+      const client = await createOrRestoreClient(tx, membership, payload, audit, updatedBy, include);
+      if (payload.trainingPlanId) await recordRoutineAssignment(tx, client.id, payload.trainingPlanId, updatedBy);
+      return client;
     });
   } catch (error) {
     if (isUniqueViolation(error)) {

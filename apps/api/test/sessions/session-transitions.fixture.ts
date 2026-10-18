@@ -6,7 +6,9 @@ export async function sessionFixture(db: PrismaClient) {
   const org = await db.organization.create({ data: { name: 'TP-33 ' + uid } });
   const user = await db.user.create({ data: { email: uid + '@example.test', supabaseUid: uid } });
   const member = await db.organizationMember.create({ data: { organizationId: org.id, userId: user.id, role: 'COACH' } });
-  const objective = await db.clientObjective.create({ data: { code: uid, label: uid } });
+  const objective = await db.clientObjective.create({
+    data: { code: uid, label: `Objetivo de prueba TP-33 (${uid.slice(0, 8)})` },
+  });
   const client = await db.client.create({
     data: {
       organizationId: org.id,
@@ -49,6 +51,9 @@ export async function sessionFixture(db: PrismaClient) {
       });
     },
     async cleanup() {
+      await db.client.update({ where: { id: client.id }, data: { activeRoutineAssignmentId: null } });
+      await db.routineAssignment.deleteMany({ where: { clientId: client.id } });
+      await db.routineRevision.deleteMany({ where: { templateId: template.id } });
       await db.sessionInstance.deleteMany({ where: { clientId: client.id } });
       await db.client.delete({ where: { id: client.id } });
       await db.planTemplate.delete({ where: { id: template.id } });

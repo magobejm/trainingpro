@@ -76,6 +76,8 @@ describe('HTTP route inventory', () => {
       roles: ['coach'],
     });
     expect(route(routes, 'get', '/plans/templates/strength')?.filters).toEqual(['summary']);
+    expect(route(routes, 'get', '/clients/{clientId}/routine-assignments')?.roles).toEqual(['coach']);
+    expect(route(routes, 'get', '/clients/{clientId}/routine-assignments/{assignmentId}')?.roles).toEqual(['coach']);
     expect(route(routes, 'get', '/sessions/{sessionId}')?.roles).toEqual(['coach', 'client']);
     expect(route(routes, 'get', '/chat/messages')).toMatchObject({
       filters: ['before', 'beforeId', 'threadId'],
@@ -121,7 +123,10 @@ function readBaseline(): OpenApiDocument | null {
 
 describe('routine handoff contracts', () => {
   it('declares simulation support without changing the health status', () => {
-    expect(new HealthController().getHealth()).toEqual({ status: 'ok', capabilities: { routineHandoffPreview: true } });
+    expect(new HealthController().getHealth()).toEqual({
+      status: 'ok',
+      capabilities: { routineHandoffPreview: true, routineVersions: true },
+    });
   });
   it('validates the preview example and legacy/dry-run requests', () => {
     expect(routineHandoffPreviewSchema.parse(routineHandoffExample)).toEqual(routineHandoffExample);

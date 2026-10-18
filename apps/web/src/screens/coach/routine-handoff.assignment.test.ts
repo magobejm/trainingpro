@@ -36,6 +36,9 @@ it('keeps the saved template and draft when assignment fails, then retries witho
     state.route,
     state.work as never,
   );
+  expect(await assign.prepare('Name')).toBe(templateId);
+  expect(state.route).not.toHaveBeenCalled();
+  expect(mutateAsync).not.toHaveBeenCalled();
   await expect(assign('Name', 'client', options)).rejects.toThrow('conflict');
   expect(state.work.release).not.toHaveBeenCalled();
   expect(state.draft.setDraft).not.toHaveBeenCalled();

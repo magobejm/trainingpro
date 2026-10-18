@@ -99,12 +99,13 @@ export class PlansCardioRepository extends PlansBaseRepository {
       });
       if (!cur) throw new NotFoundException('Cardio template not found');
       await advanceTemplateVersion(tx, cur.id, input.expectedTemplateVersion, cur.templateVersion);
-      await tx.planDay.deleteMany({ where: { templateId: cur.id } });
       const row = await tx.planTemplate.update({
         where: { id: cur.id },
         data: {
           ...buildUpdateAuditFields(ctx),
-          days: { create: input.days.map(mapCardioDayCreate) },
+          days: {
+            create: input.days.map((day) => ({ ...mapCardioDayCreate(day), revisionVersion: cur.templateVersion + 1 })),
+          },
           name: input.name.trim(),
         },
         include: cardioTemplateInclude(),

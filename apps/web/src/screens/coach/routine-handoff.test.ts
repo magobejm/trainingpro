@@ -35,12 +35,12 @@ describe('routine handoff', () => {
     expect(input.assign).toHaveBeenCalledWith(options);
     expect(input.openCalendar).toHaveBeenCalledOnce();
   });
-  it('opens the same routine without reassigning', async () => {
+  it('reviews the same template too because its version may have changed', async () => {
     const input = { ...setup(), sameRoutine: true };
     await assignClientRoutine(input);
-    expect(input.ask).not.toHaveBeenCalled();
+    expect(input.ask).toHaveBeenCalledOnce();
     expect(input.assign).not.toHaveBeenCalled();
-    expect(input.openCalendar).toHaveBeenCalledOnce();
+    expect(input.openCalendar).not.toHaveBeenCalled();
   });
   it('does not navigate after a failed confirmation', async () => {
     const input = setup();

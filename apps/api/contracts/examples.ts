@@ -174,6 +174,36 @@ export const routineHandoffExample = {
   from: '2026-10-16',
   currentRoutineId: '44444444-4444-4444-8444-444444444444',
   signature: 'a'.repeat(64),
+  appliedRoutine: {
+    name: 'Fuerza inicial',
+    templateId: '44444444-4444-4444-8444-444444444444',
+    version: 1,
+    initial: false,
+    appliedAt: '2026-10-16T00:00:00.000Z',
+  },
+  candidateRoutine: {
+    name: 'Fuerza revisada',
+    templateId: '44444444-4444-4444-8444-444444444444',
+    version: 2,
+  },
+  comparison: {
+    addedDays: 0,
+    removedDays: 0,
+    modifiedDays: 0,
+    addedExercises: 0,
+    removedExercises: 0,
+    modifiedExercises: 1,
+    changes: [
+      {
+        kind: 'modified',
+        scope: 'exercise',
+        dayIndex: 1,
+        title: 'Sentadilla',
+        type: 'exercises',
+        fields: [{ field: 'sets.0.reps', before: 8, after: 10 }],
+      },
+    ],
+  },
   removable: [
     {
       id: 'pending-workout',

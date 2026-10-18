@@ -1,6 +1,7 @@
 import { ConflictException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { assertExpectedTemplateVersion } from './template-save.policy';
+import { captureLegacyAssignments } from '../infra/prisma/routine-revision.prisma';
 
 export async function advanceTemplateVersion(
   tx: Prisma.TransactionClient,
@@ -9,6 +10,13 @@ export async function advanceTemplateVersion(
   current: number,
 ): Promise<void> {
   assertExpectedTemplateVersion(expected, current);
+  await tx.$queryRaw`SELECT id FROM plan_template WHERE id = ${templateId}::uuid FOR UPDATE`;
+  const locked = await tx.planTemplate.findFirst({
+    where: { id: templateId, archivedAt: null },
+    select: { templateVersion: true },
+  });
+  assertExpectedTemplateVersion(current, locked?.templateVersion ?? current);
+  await captureLegacyAssignments(tx, templateId);
   const updated = await tx.planTemplate.updateMany({
     where: {
       archivedAt: null,

@@ -56,7 +56,11 @@ export function buildSaveAndAssign(
   work: ReturnType<typeof useUnsavedWork<ReturnType<typeof useRoutinePlannerDraft>['draft']>>,
 ) {
   let preparedTemplateId: string | null = null;
-  return async (name: string, assignClientId: string, options?: RoutineAssignOptions) => {
+  const prepare = async (name: string) => {
+    preparedTemplateId = preparedTemplateId ?? (await onSaveCore(name));
+    return preparedTemplateId;
+  };
+  const submit = async (name: string, assignClientId: string, options?: RoutineAssignOptions) => {
     const templateId = preparedTemplateId ?? (await onSaveCore(name));
     preparedTemplateId = templateId;
     await assignMutation.mutateAsync({ clientId: assignClientId, templateId, ...options });
@@ -69,6 +73,7 @@ export function buildSaveAndAssign(
     draftState.setActiveDayIdx(0);
     goToAssignedClientCalendar(assignClientId, onRouteChange);
   };
+  return Object.assign(submit, { prepare });
 }
 
 export function buildLayoutModel(params: {
@@ -78,7 +83,7 @@ export function buildLayoutModel(params: {
   objectiveOptions: Array<{ id: string; label: string }>;
   isSaving: boolean;
   onSave: ReturnType<typeof useRoutineSaveHandler>['onSave'];
-  onSaveAndAssign: (name: string, clientId: string, options?: RoutineAssignOptions) => Promise<void>;
+  onSaveAndAssign: ReturnType<typeof buildSaveAndAssign>;
   work: ReturnType<typeof useUnsavedWork<ReturnType<typeof useRoutinePlannerDraft>['draft']>>;
   onAssignOnly: (clientId: string, options?: RoutineAssignOptions) => Promise<void>;
   handoffDialog: React.JSX.Element;
@@ -115,6 +120,7 @@ export function buildLayoutModel(params: {
         : undefined,
     onSave: params.onSave,
     onSaveAndAssign: params.onSaveAndAssign,
+    onPrepareAssignment: params.onSaveAndAssign.prepare,
     saveDisabled: params.isSaving,
     isDraft: !params.uiState.editingId || params.work.isDirty,
     statusNode: <UnsavedStatus t={params.t} work={params.work} />,
@@ -267,6 +273,7 @@ function assignWithHandoff(
     clientId,
     clientName: client ? `${client.firstName} ${client.lastName}` : '',
     routineName: ports.routineName,
+    candidateTemplateId: templateId,
     openCalendar: () => {
       clearInitialTemplate();
       goToAssignedClientCalendar(clientId, onRouteChange);

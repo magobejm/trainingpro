@@ -8,16 +8,19 @@ export function isHandoffConflict(error: unknown): boolean {
   return error instanceof ApiClientError && error.status === 409 && error.responseText.includes('ROUTINE_HANDOFF_CHANGED');
 }
 
-export async function loadRoutineHandoffPreview(clientId: string, from: string) {
+export async function loadRoutineHandoffPreview(clientId: string, from: string, candidateTemplateId?: string) {
   const { accessToken, activeRole } = useAuthStore.getState();
   if (!accessToken || !activeRole) throw new Error('Not authenticated');
   const api = createApiClient({ accessToken, activeRole });
-  const health = await api.get<{ capabilities?: { routineHandoffPreview?: boolean } }>('/health');
+  const health = await api.get<{ capabilities?: { routineHandoffPreview?: boolean; routineVersions?: boolean } }>('/health');
   if (health.capabilities?.routineHandoffPreview !== true) throw new Error('Routine handoff preview is not available');
+  if (candidateTemplateId && health.capabilities.routineVersions !== true)
+    throw new Error('Routine version comparison is not available');
   const response = await api.post('/calendar/clear-future-workouts', {
     clientId,
     from,
     dryRun: true,
+    ...(candidateTemplateId ? { candidateTemplateId } : {}),
   });
   return routineHandoffPreviewSchema.parse(response);
 }
@@ -32,19 +35,27 @@ export function useRoutineHandoffReview(request: RoutineHandoffRequest, onDone: 
   const alive = useRef(true);
   const busy = useRef(false);
   const loadSequence = useRef(0);
+  const prepared = useRef<Promise<string> | null>(null);
+  const candidate = useRef(request.candidateTemplateId);
   const reload = useCallback(async () => {
     const sequence = ++loadSequence.current;
     setLoading(true);
     setError(null);
     try {
-      const next = await loadRoutineHandoffPreview(request.clientId, localCalendarDay());
+      if (request.prepare && !prepared.current)
+        prepared.current = request.prepare().catch((failure) => {
+          prepared.current = null;
+          throw failure;
+        });
+      if (prepared.current) candidate.current = await prepared.current;
+      const next = await loadRoutineHandoffPreview(request.clientId, localCalendarDay(), candidate.current);
       if (alive.current && sequence === loadSequence.current) setPreview(next);
     } catch {
       if (alive.current && sequence === loadSequence.current) setError('load');
     } finally {
       if (alive.current && sequence === loadSequence.current) setLoading(false);
     }
-  }, [request.clientId]);
+  }, [request]);
   useEffect(() => {
     alive.current = true;
     void reload();
@@ -63,7 +74,14 @@ export function useRoutineHandoffReview(request: RoutineHandoffRequest, onDone: 
     setSaving(true);
     setError(null);
     try {
-      await request.submit({ routineHandoff: { mode, from: preview.from, expectedSignature: preview.signature } });
+      await request.submit({
+        routineHandoff: {
+          mode,
+          from: preview.from,
+          expectedSignature: preview.signature,
+          ...(candidate.current ? { candidateTemplateId: candidate.current } : {}),
+        },
+      });
       if (alive.current) onDone();
     } catch (failure) {
       if (!alive.current) return;

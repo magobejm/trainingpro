@@ -9,7 +9,7 @@ import type {
   SportLibraryItem,
 } from '../../../../data/hooks/useLibraryQuery';
 import type { LibraryItem } from './ExercisePickerModal.types';
-import { matchesSearch } from '../../../../utils/normalize-search';
+import { normalizeSearch } from '../../../../utils/normalize-search';
 
 function resolveApiBaseUrl(): string {
   const env = readFrontEnv();
@@ -115,5 +115,6 @@ export function mapSports(items: SportLibraryItem[]): LibraryItem[] {
 }
 
 export function filterByQuery(items: LibraryItem[], query: string): LibraryItem[] {
-  return items.filter((item) => matchesSearch(item.name, query));
+  const words = query.trim().split(/\s+/).map(normalizeSearch).filter(Boolean);
+  return items.filter((item) => words.every((word) => normalizeSearch(item.name).includes(word)));
 }

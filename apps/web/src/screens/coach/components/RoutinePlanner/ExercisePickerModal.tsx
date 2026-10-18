@@ -6,30 +6,9 @@ import { PickerBody, PickerTypeBar } from './ExercisePickerModal.components';
 import { s } from './ExercisePickerModal.styles';
 import { DEFAULT_PICKER_BLOCK_TYPES, type PickerProps, type LibraryItem } from './ExercisePickerModal.types';
 import type { BlockType } from '../../RoutinePlanner.types';
-import { useUnifiedExercisesQuery, type UnifiedExerciseItem } from '../../../../data/hooks/useUnifiedLibraryQuery';
 import { UnifiedExerciseDetailModal } from '../../UnifiedExerciseDetailModal';
-
-const PICKER_CATEGORY_MAP: Record<string, string> = {
-  strength: 'muscleGroups',
-  cardio: 'cardioMethodTypes',
-  isometric: 'isometricTypes',
-  plio: 'plioTypes',
-  warmup: 'mobilityTypes',
-  sport: 'sportTypes',
-};
-
-function usePickerDetailItem(
-  blockType: BlockType | null,
-  selectedName: string | undefined,
-  selectedId: string | null,
-): UnifiedExerciseItem | null {
-  const { data } = useUnifiedExercisesQuery({
-    baseCategory: PICKER_CATEGORY_MAP[blockType ?? ''] ?? 'muscleGroups',
-    search: selectedName,
-  });
-  if (!selectedId && !selectedName) return null;
-  return (data ?? []).find((i) => i.id === selectedId || i.name === selectedName) ?? null;
-}
+import { ExercisePickerFilters } from './ExercisePickerFilters';
+import { EMPTY_PICKER_FILTERS, type PickerFilters } from './ExercisePickerModal.filters';
 
 export const ExercisePickerModal = (p: PickerProps) => {
   const allowedTypes = p.allowedTypes ?? DEFAULT_PICKER_BLOCK_TYPES;
@@ -39,15 +18,18 @@ export const ExercisePickerModal = (p: PickerProps) => {
   const [addedCount, setAddedCount] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
-  const { items, isLoading } = useLibraryItems(activeType, query);
-  const selectedName = items.find((i) => i.id === selectedId)?.name;
-  const detailItem = usePickerDetailItem(activeType, selectedName, selectedId);
+  const [filtersByType, setFiltersByType] = useState<Partial<Record<BlockType, PickerFilters>>>({});
+  const filters = filtersByType[activeType] ?? EMPTY_PICKER_FILTERS;
+  const library = useLibraryItems(activeType, query, filters);
+  const { items, isLoading } = library;
+  const detailItem = library.source.find((item) => item.id === selectedId) ?? null;
 
   useEffect(() => {
     if (!p.blockType) return;
     const initial = allowedTypes.includes(p.blockType) ? p.blockType : (allowedTypes[0] ?? 'strength');
     setActiveType(initial);
     setQuery('');
+    setFiltersByType({});
     setAddedIds(new Set());
     setAddedCount(0);
     setSelectedId(null);
@@ -85,6 +67,10 @@ export const ExercisePickerModal = (p: PickerProps) => {
           addedCount={addedCount}
           addedIds={addedIds}
           allowedTypes={allowedTypes}
+          filters={filters}
+          setFilters={(value) => setFiltersByType((prev) => ({ ...prev, [activeType]: value }))}
+          isError={library.isError}
+          retry={() => void library.retry()}
           isLoading={isLoading}
           items={items}
           onSelect={handleSelect}
@@ -111,6 +97,10 @@ const Layout = (p: { isNarrow: boolean; children: React.ReactNode }) => (
 );
 
 interface ModalViewProps extends Omit<PickerProps, 'onSelect'> {
+  filters: PickerFilters;
+  setFilters: (filters: PickerFilters) => void;
+  isError: boolean;
+  retry: () => void;
   activeType: BlockType;
   addedCount: number;
   addedIds: Set<string>;
@@ -130,16 +120,25 @@ const ModalView = (p: ModalViewProps) => {
     <View style={s.sheet}>
       <PickerTypeBar activeType={p.activeType} allowedTypes={p.allowedTypes} onChange={p.setActiveType} t={p.t} />
       <TextField onChangeText={p.setQuery} placeholder={p.t('coach.routine.picker.search')} value={p.query} />
-      <ModalBody
-        addedIds={p.addedIds}
-        block={p.activeType}
-        isLoading={p.isLoading}
-        items={p.items}
-        isNarrow={layout.isNarrow}
-        onSelect={p.onSelect}
-        onViewDetail={p.setSelectedId}
-        t={p.t}
-      />
+      <ExercisePickerFilters type={p.activeType} value={p.filters} onChange={p.setFilters} t={p.t} />
+      {p.isError ? (
+        <View>
+          <Text style={s.error}>{p.t('coach.routine.picker.loadError')}</Text>
+          <Button label={p.t('common.retry')} variant="secondary" onPress={p.retry} />
+        </View>
+      ) : null}
+      {!p.isError ? (
+        <ModalBody
+          addedIds={p.addedIds}
+          block={p.activeType}
+          isLoading={p.isLoading}
+          items={p.items}
+          isNarrow={layout.isNarrow}
+          onSelect={p.onSelect}
+          onViewDetail={p.setSelectedId}
+          t={p.t}
+        />
+      ) : null}
     </View>
   );
 };

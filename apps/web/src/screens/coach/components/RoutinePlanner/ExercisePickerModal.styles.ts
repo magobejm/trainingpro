@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export const s = StyleSheet.create({
+  error: { color: colors.danger, fontSize: fontSize.sm },
   body: {
     gap: space.lg,
     flex: 1,

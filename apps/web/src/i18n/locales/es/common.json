@@ -1,4 +1,6 @@
 {
+  "coach.routine.picker.filtersError": "No se han podido cargar los filtros.",
+  "coach.routine.picker.loadError": "No se han podido cargar los ejercicios. Reintenta para continuar.",
   "routineVersions.savedContent": "Contenido de esta asignación",
   "routineVersions.comparedToCurrent": "Comparación con la asignación vigente",
   "routineVersions.changes": "Cambios de contenido",

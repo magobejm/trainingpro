@@ -1,53 +1,31 @@
 import { useEffect } from 'react';
 import type { BlockType } from '../../RoutinePlanner.types';
-import {
-  useLibraryExercisesQuery,
-  useLibraryCardioMethodsQuery,
-  useLibraryIsometricExercisesQuery,
-  useLibraryPlioExercisesQuery,
-  useLibraryMobilityExercisesQuery,
-  useLibrarySportsQuery,
-} from '../../../../data/hooks/useLibraryQuery';
-import type { LibraryItem } from './ExercisePickerModal.types';
-import {
-  filterByQuery,
-  mapCardio,
-  mapExercises,
-  mapIsometric,
-  mapPlio,
-  mapSports,
-  mapWarmup,
-} from './ExercisePickerModal.utils';
+import { useUnifiedExercisesQuery } from '../../../../data/hooks/useUnifiedLibraryQuery';
+import { filterByQuery } from './ExercisePickerModal.utils';
+import { pickerLibraryFilter, type PickerFilters } from './ExercisePickerModal.filters';
 
-export function useLibraryItems(blockType: BlockType | null, query: string): { items: LibraryItem[]; isLoading: boolean } {
-  const str = useLibraryExercisesQuery({ query: blockType === 'strength' ? query : undefined });
-  const car = useLibraryCardioMethodsQuery({ query: blockType === 'cardio' ? query : undefined });
-  const iso = useLibraryIsometricExercisesQuery({ query: blockType === 'isometric' ? query : undefined });
-  const plio = useLibraryPlioExercisesQuery({ query: blockType === 'plio' ? query : undefined });
-  const warm = useLibraryMobilityExercisesQuery({
-    query: blockType === 'mobility' ? query : undefined,
-  });
-  const sport = useLibrarySportsQuery();
-
-  if (blockType === 'strength') {
-    return { items: filterByQuery(mapExercises(str.data ?? []), query), isLoading: str.isLoading };
-  }
-  if (blockType === 'cardio') {
-    return { items: filterByQuery(mapCardio(car.data ?? []), query), isLoading: car.isLoading };
-  }
-  if (blockType === 'isometric') {
-    return { items: filterByQuery(mapIsometric(iso.data ?? []), query), isLoading: iso.isLoading };
-  }
-  if (blockType === 'plio') {
-    return { items: filterByQuery(mapPlio(plio.data ?? []), query), isLoading: plio.isLoading };
-  }
-  if (blockType === 'mobility') {
-    return { items: filterByQuery(mapWarmup(warm.data ?? []), query), isLoading: warm.isLoading };
-  }
-  if (blockType === 'sport') {
-    return { items: filterByQuery(mapSports(sport.data ?? []), query), isLoading: sport.isLoading };
-  }
-  return { items: [], isLoading: false };
+export function useLibraryItems(blockType: BlockType, query: string, filters: PickerFilters) {
+  // This endpoint returns the full category when no pagination is requested.
+  // Search locally so an exact-phrase server query cannot discard word matches.
+  const result = useUnifiedExercisesQuery(pickerLibraryFilter(blockType, filters));
+  const source = (result.data ?? []).filter(
+    (item) => !filters.equipmentIds.length || filters.equipmentIds.includes(item.equipmentId ?? ''),
+  );
+  const items = filterByQuery(
+    source.map((item) => ({
+      id: item.id,
+      name: item.name,
+      description: item.instructions ?? null,
+      notes: item.coachInstructions ?? null,
+      imageUrl: item.mediaUrl,
+      youtubeUrl: item.youtubeUrl ?? null,
+      equipment: item.equipmentRef?.label,
+      muscleGroup: blockType === 'strength' ? item.tags.join(' · ') : undefined,
+      methodType: blockType !== 'strength' ? item.tags.join(' · ') : undefined,
+    })),
+    query,
+  );
+  return { items, source, isLoading: result.isLoading, isError: result.isError, error: result.error, retry: result.refetch };
 }
 
 export function useLockBodyScroll(locked: boolean) {

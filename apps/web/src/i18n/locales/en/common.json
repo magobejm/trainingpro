@@ -1,4 +1,6 @@
 {
+  "coach.routine.picker.filtersError": "Could not load filters.",
+  "coach.routine.picker.loadError": "Could not load exercises. Retry to continue.",
   "routineVersions.savedContent": "Content of this assignment",
   "routineVersions.comparedToCurrent": "Compared with the current assignment",
   "routineVersions.changes": "Content changes",

@@ -84,24 +84,26 @@ export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScree
       <ScrollView contentContainerStyle={s.panelContent}>
         <RoutineHeroCard routine={routine} t={t} />
         {schedule?.mode === 'calendar' ? (
-          <CalendarScheduleSections
-            completedPlanDayIds={completedPlanDayIds}
-            onOpenTest={onOpenTest}
-            onSelectDay={onSelectDay}
-            schedule={schedule}
-            t={t}
-            todayTest={todayTest}
-          />
-        ) : (
-          <AssignedRoutineSection
-            completedPlanDayIds={completedPlanDayIds}
-            days={schedule?.days ?? routine.planDays}
-            onOpenTest={onOpenTest}
-            onSelectDay={onSelectDay}
-            t={t}
-            todayTest={todayTest}
-          />
-        )}
+          <>
+            <CalendarScheduleSections
+              completedPlanDayIds={completedPlanDayIds}
+              onOpenTest={onOpenTest}
+              onSelectDay={onSelectDay}
+              schedule={schedule}
+              t={t}
+              todayTest={todayTest}
+            />
+            <View style={s.routineSeparator} />
+          </>
+        ) : null}
+        <AssignedRoutineSection
+          completedPlanDayIds={completedPlanDayIds}
+          days={routine.planDays}
+          onOpenTest={onOpenTest}
+          onSelectDay={onSelectDay}
+          t={t}
+          todayTest={schedule?.mode === 'calendar' ? null : todayTest}
+        />
         <ClientNeatSection neats={routine.neats} />
       </ScrollView>
     </View>

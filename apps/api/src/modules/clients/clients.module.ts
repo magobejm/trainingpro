@@ -46,13 +46,22 @@ import { ClientLibraryController } from './presentation/controllers/client-libra
 import { ClientSelfController } from './presentation/controllers/client-self.controller';
 import { ClientsController } from './presentation/controllers/clients.controller';
 import { ClientRoutineHistoryController } from './presentation/controllers/client-routine-history.controller';
+import { ClientRoutineColorsController } from './presentation/controllers/client-routine-colors.controller';
+import { ClientRoutineColorsService } from './application/services/client-routine-colors.service';
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
   imports: [AuthModule, ChatModule, FilesModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
   exports: [ClientAccessPolicy],
-  controllers: [ClientLibraryController, ClientSelfController, ClientsController, ClientRoutineHistoryController],
+  controllers: [
+    ClientLibraryController,
+    ClientSelfController,
+    ClientsController,
+    ClientRoutineHistoryController,
+    ClientRoutineColorsController,
+  ],
   providers: [
+    ClientRoutineColorsService,
     ArchiveClientUseCase,
     EnsureClientSelfSessionUseCase,
     GetClientCalendarSummaryUseCase,

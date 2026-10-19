@@ -292,6 +292,8 @@ export function getLayoutStyle29(value1: NativeStyle['backgroundColor']): Native
       width: 16,
       height: 16,
       borderRadius: radius.sm,
+      borderWidth: 2,
+      borderColor: tk.textMuted,
     },
   }).value;
 }

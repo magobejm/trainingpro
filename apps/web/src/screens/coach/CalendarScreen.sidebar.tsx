@@ -362,11 +362,7 @@ function RoutineDayItem({
       {isColorPickerOpen && (
         <WebBox style={layoutStyle29} onClick={(e: React.MouseEvent) => e.stopPropagation()}>
           {CALENDAR_COLORS.map((c) => {
-            const layoutStyle30 = getLayoutStyle30(
-              c.bg,
-              colorObj.bg === c.bg ? 2 : 1,
-              colorObj.bg === c.bg ? tk.text : c.border,
-            );
+            const layoutStyle30 = getLayoutStyle30(c.bg, 2, colorObj.bg === c.bg ? tk.primary : tk.textMuted);
             return (
               <IconButton
                 key={c.bg}

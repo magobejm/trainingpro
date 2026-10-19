@@ -241,6 +241,7 @@ model Client {
   trainingPlan          PlanTemplate?             @relation(fields: [trainingPlanId], references: [id], onDelete: SetNull)
   activeRoutineAssignment RoutineAssignment?      @relation("active_routine_assignment", fields: [activeRoutineAssignmentId], references: [id], onDelete: SetNull)
   routineAssignments    RoutineAssignment[]       @relation("client_routine_history")
+  routineDayColors      ClientRoutineDayColor[]
   managementSections    ClientManagementSection[]
   progressPhotos        ClientProgressPhoto[]
   sessions              SessionInstance[]
@@ -265,6 +266,18 @@ model Client {
   @@index([email], map: "idx_client_email")
   // Active email uniqueness is the partial index uq_client_org_active_email in migration 0028.
   @@map("client")
+}
+
+model ClientRoutineDayColor {
+  clientId  String @map("client_id") @db.Uuid
+  planDayId String @map("plan_day_id") @db.Uuid
+  color     String @db.VarChar(7)
+  client    Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  planDay   PlanDay @relation(fields: [planDayId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, planDayId])
+  @@index([planDayId])
+  @@map("client_routine_day_color")
 }
 
 model ClientManagementSection {
@@ -935,6 +948,7 @@ model PlanDay {
   isometricBlocks    PlanIsometricBlock[]
   exerciseGroups     PlanExerciseGroup[]
   calendarEvents     CalendarEvent[]
+  clientColors       ClientRoutineDayColor[]
   sessions           SessionInstance[]
 
   @@unique([templateId, revisionVersion, dayIndex], map: "uq_plan_day_template_revision_index")

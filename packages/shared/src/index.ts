@@ -118,3 +118,4 @@ export {
 
 export * from './routine-handoff';
 export * from './routine-comparison';
+export * from './routine-day-colors';

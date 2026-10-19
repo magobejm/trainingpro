@@ -230,6 +230,14 @@ pnpm dlx supabase start
 
 ---
 
+### Colores de los días de rutina por cliente
+
+La migración `0037_client_routine_day_colors` crea únicamente la tabla de preferencias `client_routine_day_color`, con una clave única por cliente y día. No modifica los eventos agendados ni los datos existentes. Guardar una preferencia afecta a las nuevas sesiones que se arrastren al calendario.
+
+Orden de despliegue: aplicar las migraciones con `db:migrate:deploy`, publicar la API y después la web. Las versiones anteriores de la API pueden convivir con la tabla nueva; al revertir código se conserva la tabla. No ejecutar `migrate reset` ni semillas para desplegar este cambio.
+
+Las pruebas HTTP con PostgreSQL usan `TEST_ROUTINE_COLORS_DATABASE_URL` y exigen una base local independiente cuyo nombre empiece por `routine_colors_test_`.
+
 ## 7. Diagnóstico de coste
 
 Mensualmente comprobar:

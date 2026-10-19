@@ -18,14 +18,16 @@ import {
   useUpdateCalendarEventMutation,
   useDeleteCalendarEventMutation,
   useClientRoutineDaysQuery,
+  useSaveRoutineDayColorMutation,
 } from '../../data/hooks/useCalendarQuery';
 import { useCreateCallProposalMutation } from '../../data/hooks/useChat';
 import { useArchivePhysicalTestScheduleMutation } from '../../data/hooks/usePhysicalTests';
 import type { ClientView } from '../../data/hooks/useClientsQuery';
-import type { CalendarEventData, RoutineDayCard } from './calendar-screen.types';
+import type { CalendarEventData } from './calendar-screen.types';
 import { DEFAULT_COLOR } from './calendar-screen.types';
 import { gridRangeDates } from './calendar-screen.utils';
 import { CalendarSidebar } from './CalendarScreen.sidebar';
+import { QueryResult } from '../../components/AsyncStatus';
 import { CalendarGrid } from './CalendarScreen.grid';
 import { DayDetailModal, AddNoteModal, AddReminderModal } from './CalendarScreen.modals';
 import type { CalendarClipboard } from './CalendarScreen.week-row';
@@ -66,7 +68,6 @@ const mainStyle = (stacked: boolean) =>
   }) as const;
 type TFunc = (k: string, opts?: Record<string, unknown>) => string;
 function useCalendarLogic() {
-  const [routineDayColors, setRoutineDayColors] = useState<Record<string, string>>({});
   const [modal, setModal] = useState<ModalState>({ type: 'none' });
   const [clipboard, setClipboard] = useState<CalendarClipboard | null>(null);
   const clientsQuery = useClientsQuery();
@@ -82,16 +83,13 @@ function useCalendarLogic() {
   const planTemplateId = selectedClient?.trainingPlanId ?? selectedClient?.trainingPlan?.id ?? null;
   const eventsQuery = useCalendarEventsQuery(dateFrom, dateTo, selectedClient?.id, viewMode === 'coachOnly');
   const routineDaysQuery = useClientRoutineDaysQuery(planTemplateId, selectedClient?.id);
+  const saveRoutineDayColor = useSaveRoutineDayColorMutation();
   const createEvent = useCreateCalendarEventMutation();
   const proposeCall = useCreateCallProposalMutation();
   const updateEvent = useUpdateCalendarEventMutation();
   const deleteEvent = useDeleteCalendarEventMutation();
   const archiveSchedule = useArchivePhysicalTestScheduleMutation();
   useMutationFeedback(archiveSchedule);
-  const routineDays: RoutineDayCard[] = useMemo(
-    () => (routineDaysQuery.data ?? []).map((d) => ({ ...d, color: routineDayColors[d.id] ?? d.color })),
-    [routineDaysQuery.data, routineDayColors],
-  );
   const events = eventsQuery.data ?? [];
   const dayEvents = useMemo(() => filterDayEvents(events, modal), [events, modal]);
   const handlePrevMonth = () => moveToPrevMonth(month, setMonth, setYear);
@@ -135,7 +133,7 @@ function useCalendarLogic() {
     setAllView,
     modal,
     setModal,
-    routineDays,
+    routineDays: routineDaysQuery.data ?? [],
     events,
     dayEvents,
     clients,
@@ -162,7 +160,11 @@ function useCalendarLogic() {
     handleUpdateNote,
     handleUpdateReminder,
     handleEditEvent,
-    onRoutineDayColorChange: (dayId: string, color: string) => setRoutineDayColors((prev) => ({ ...prev, [dayId]: color })),
+    routineDaysQuery,
+    onRoutineDayColorChange: (planDayId: string, color: string) => {
+      if (!selectedClient || !planTemplateId) return;
+      saveRoutineDayColor.mutate({ clientId: selectedClient.id, trainingPlanId: planTemplateId, planDayId, color });
+    },
   };
 }
 type TopBarProps = {
@@ -289,6 +291,7 @@ function CalendarModalsRenderer({
     </>
   );
 }
+// eslint-disable-next-line max-lines-per-function
 export function CalendarScreen(): React.JSX.Element {
   const { t } = useTranslation();
   const {
@@ -329,6 +332,7 @@ export function CalendarScreen(): React.JSX.Element {
     handleUpdateReminder,
     handleEditEvent,
     onRoutineDayColorChange,
+    routineDaysQuery,
   } = useCalendarLogic();
   useOpenTodayFromQuickCreate(setModal);
   const stacked = useBreakpoint() === 'sm';
@@ -349,6 +353,7 @@ export function CalendarScreen(): React.JSX.Element {
       />
       <View style={mainStyle(stacked)}>
         <CalendarTopBar selectedClient={selectedClient} t={t} />
+        <RoutineDaysQueryError visible={Boolean(selectedClient)} query={routineDaysQuery} />
         <View style={layoutStyle5}>
           <CalendarGrid
             year={year}
@@ -387,5 +392,27 @@ export function CalendarScreen(): React.JSX.Element {
         t={t}
       />
     </View>
+  );
+}
+
+function RoutineDaysQueryError({
+  visible,
+  query,
+}: {
+  visible: boolean;
+  query: ReturnType<typeof useClientRoutineDaysQuery>;
+}) {
+  const { t } = useTranslation();
+  if (!visible || !query.isError) return null;
+  return (
+    <QueryResult
+      emptyTitle={t('coach.calendar.sidebar.assignedRoutine')}
+      error={query.error}
+      isError
+      itemCount={query.data?.length ?? 0}
+      onRetry={() => {
+        void query.refetch();
+      }}
+    />
   );
 }

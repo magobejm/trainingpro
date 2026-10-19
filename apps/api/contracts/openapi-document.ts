@@ -4,6 +4,9 @@ import {
   clientViewSchema,
   routineAssignmentListSchema,
   routineAssignmentDetailSchema,
+  routineDayColorSchema,
+  routineDayColorsSchema,
+  updateRoutineDayColorSchema,
 } from '@trainerpro/shared';
 import { UpdateClientDto } from '../src/modules/clients/presentation/dto/update-client.dto';
 import { routineHandoffExample } from './examples';
@@ -137,6 +140,29 @@ function operationId(method: string, path: string): string {
 }
 
 function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  if (route.path.startsWith('/clients/{clientId}/routine-day-colors')) {
+    const patch = route.method === 'patch';
+    return {
+      ...operation,
+      ...(patch
+        ? {
+            requestBody: {
+              required: true,
+              content: { 'application/json': { schema: toJsonSchema(updateRoutineDayColorSchema) } },
+            },
+          }
+        : {}),
+      responses: {
+        ...(operation.responses as JsonSchema),
+        '200': {
+          description: 'Saved calendar colors for the client routine days; existing events are unchanged.',
+          content: { 'application/json': { schema: toJsonSchema(patch ? routineDayColorSchema : routineDayColorsSchema) } },
+        },
+        '400': errorResponse('Color o día de rutina no válido'),
+        '403': errorResponse('Cliente no accesible'),
+      },
+    };
+  }
   if (route.method === 'get' && route.path.includes('/routine-assignments')) {
     const schema = route.path.endsWith('/current')
       ? toJsonSchema(z.record(z.string(), z.unknown()).nullable())

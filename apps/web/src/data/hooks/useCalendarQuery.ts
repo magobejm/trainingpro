@@ -7,6 +7,7 @@ import type { SessionProgressCategory } from '../types/session-progress';
 import type { CalendarEventData } from '../../screens/coach/calendar-screen.types';
 import { calendarStoredColor } from '../calendar-stored-color';
 import { lightColors } from '@trainerpro/ui';
+import type { RoutineDayColors } from '@trainerpro/shared';
 
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -193,17 +194,43 @@ export function useClientRoutineDaysQuery(trainingPlanId: string | null | undefi
     queryFn: async () => {
       if (!auth || !resolved) return [];
       const api = createApiClient(auth);
-      const response = await api.get<RoutineTemplateBasic>(
-        clientId ? `/clients/${clientId}/routine-assignments/current` : `/plans/templates/routines/${resolved}`,
-      );
+      const [response, preferences] = await Promise.all([
+        api.get<RoutineTemplateBasic>(
+          clientId ? `/clients/${clientId}/routine-assignments/current` : `/plans/templates/routines/${resolved}`,
+        ),
+        clientId ? api.get<RoutineDayColors>(`/clients/${clientId}/routine-day-colors`) : Promise.resolve({ colors: [] }),
+      ]);
+      const savedColors = new Map(preferences.colors.map((entry) => [entry.planDayId, entry.color]));
       return (response.days ?? []).map((day) => ({
         id: day.id,
         title: day.title,
         dayIndex: day.dayIndex,
         exerciseCount: countRoutineDayExercises(day),
-        color: lightColors.primarySoft,
+        color: savedColors.get(day.id) ?? lightColors.primarySoft,
         categories: inferRoutineDayCategories(day as Parameters<typeof inferRoutineDayCategories>[0]),
       })) as RoutineDayCard[];
+    },
+  });
+}
+
+export function useSaveRoutineDayColorMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useFeedbackMutation({
+    scope: { id: 'routine-day-colors' },
+    mutationFn: async (input: { clientId: string; trainingPlanId: string; planDayId: string; color: string }) => {
+      if (!auth) throw new Error('Not authenticated');
+      return createApiClient(auth).patch<{ planDayId: string; color: string }>(
+        `/clients/${input.clientId}/routine-day-colors/${input.planDayId}`,
+        { color: calendarStoredColor(input.color) },
+      );
+    },
+    onSuccess: (saved, input) => {
+      const queryKey = ['routine-template-days', normalizePlanTemplateId(input.trainingPlanId), input.clientId];
+      queryClient.setQueryData<RoutineDayCard[]>(queryKey, (days) =>
+        days?.map((day) => (day.id === saved.planDayId ? { ...day, color: saved.color } : day)),
+      );
+      void queryClient.invalidateQueries({ queryKey });
     },
   });
 }

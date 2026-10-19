@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { TFunction } from 'i18next';
 import { LIGHT } from '../../theme/light';
@@ -10,51 +10,6 @@ import { keyboardForField, sanitizeSessionNumber } from './session-number-input'
 import type { SetColumn, SetFieldKey } from './active-exercise.helpers';
 
 const HIT = 48;
-
-export function SetChipRow(props: {
-  current: number;
-  saved: boolean[];
-  total: number;
-  onSelect: (setIndex: number) => void;
-  t: TFunction;
-}): React.JSX.Element | null {
-  if (props.total <= 1) return null;
-  return (
-    <ScrollView horizontal contentContainerStyle={styles.chips} showsHorizontalScrollIndicator={false}>
-      {props.saved.map((done, index) => {
-        const setIndex = index + 1;
-        const selected = setIndex === props.current;
-        return (
-          <Pressable
-            accessibilityLabel={props.t('mobile.client.session.setPosition', { current: setIndex, total: props.total })}
-            accessibilityRole={'button'}
-            accessibilityState={{ selected }}
-            key={setIndex}
-            onPress={() => props.onSelect(setIndex)}
-            style={[styles.chip, selected && styles.chipSelected, done && styles.chipDone]}
-          >
-            <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{setIndex}</Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-}
-
-export function IndicationsBanner(props: { text: string; onPress: () => void; t: TFunction }): React.JSX.Element {
-  return (
-    <Pressable
-      accessibilityLabel={props.t('mobile.client.session.openIndications')}
-      accessibilityRole={'button'}
-      onPress={props.onPress}
-      style={styles.indication}
-    >
-      <Text numberOfLines={1} style={styles.indicationText}>
-        {props.text}
-      </Text>
-    </Pressable>
-  );
-}
 
 export function CurrentSetFields(props: {
   columns: SetColumn[];
@@ -163,45 +118,49 @@ export function ExerciseActionBar(props: {
   );
 }
 
-export function SessionFooter(props: {
+export function SetSaveButton(props: {
   busy: boolean;
-  canGoBack: boolean;
   clean: boolean;
-  finishing: boolean;
-  last: boolean;
-  onFinish: () => void;
-  onPrevious: () => void;
   onSave: () => void;
-  readOnly?: boolean;
+  setIndex: number;
   t: TFunction;
 }): React.JSX.Element {
-  const savedHere = !props.readOnly && props.clean && props.last;
-  const label = props.readOnly
-    ? props.t('mobile.client.session.nextSet')
-    : saveButtonLabel(props.clean, props.last, props.t);
-  const nextDisabled = props.busy || savedHere || (props.readOnly === true && props.last);
+  const label = props.t(props.clean ? 'mobile.client.session.setSaved' : 'mobile.client.session.saveSet');
+  return (
+    <Pressable
+      accessibilityLabel={`${label} ${props.setIndex}`}
+      accessibilityRole={'button'}
+      accessibilityState={{ busy: props.busy, disabled: props.busy || props.clean }}
+      disabled={props.busy || props.clean}
+      onPress={props.onSave}
+      style={[styles.saveBtn, props.clean && styles.footerSaved]}
+    >
+      <Text style={[styles.footerSecondaryText, props.clean && styles.footerSavedText]}>{label}</Text>
+    </Pressable>
+  );
+}
+
+export function ExerciseSessionFooter(props: {
+  busy: boolean;
+  finishing: boolean;
+  onFinish: () => void;
+  onOpenHistory?: () => void;
+  readOnly?: boolean;
+  t: TFunction;
+  workoutElapsed?: string;
+}): React.JSX.Element {
   return (
     <View style={styles.footer}>
-      <Pressable
-        accessibilityLabel={props.t('mobile.client.session.previousSet')}
-        accessibilityRole={'button'}
-        accessibilityState={{ disabled: !props.canGoBack }}
-        disabled={!props.canGoBack}
-        onPress={props.onPrevious}
-        style={[styles.footerBtn, styles.footerSecondary, !props.canGoBack && styles.footerDisabled]}
-      >
-        <Text style={styles.footerSecondaryText}>{props.t('mobile.client.session.previousSet')}</Text>
-      </Pressable>
-      <Pressable
-        accessibilityLabel={label}
-        accessibilityRole={'button'}
-        accessibilityState={{ busy: props.busy, disabled: nextDisabled, selected: props.clean }}
-        disabled={nextDisabled}
-        onPress={props.onSave}
-        style={[styles.footerBtn, props.clean && !props.readOnly ? styles.footerSaved : styles.footerPrimary]}
-      >
-        <Text style={[styles.footerPrimaryText, props.clean && !props.readOnly && styles.footerSavedText]}>{label}</Text>
-      </Pressable>
+      {props.onOpenHistory ? (
+        <Pressable
+          accessibilityLabel={props.t('mobile.client.session.previousDays')}
+          accessibilityRole={'button'}
+          onPress={props.onOpenHistory}
+          style={styles.footerBtn}
+        >
+          <Text style={styles.footerSecondaryText}>{props.t('mobile.client.session.previousDays')}</Text>
+        </Pressable>
+      ) : null}
       {props.readOnly ? null : (
         <Pressable
           accessibilityLabel={props.t('mobile.client.session.finishExercise')}
@@ -209,20 +168,14 @@ export function SessionFooter(props: {
           accessibilityState={{ busy: props.finishing || props.busy, disabled: props.finishing || props.busy }}
           disabled={props.finishing || props.busy}
           onPress={props.onFinish}
-          style={[styles.footerBtn, styles.footerSecondary]}
+          style={[styles.footerBtn, styles.footerPrimary]}
         >
-          <Text style={styles.footerSecondaryText}>{props.t('mobile.client.session.finishExercise')}</Text>
+          <Text style={styles.footerPrimaryText}>{props.t('mobile.client.session.finishExercise')}</Text>
         </Pressable>
       )}
+      {props.workoutElapsed ? <Text style={styles.timer}>{props.workoutElapsed}</Text> : null}
     </View>
   );
-}
-
-function saveButtonLabel(clean: boolean, last: boolean, t: TFunction): string {
-  if (clean && last) return t('mobile.client.session.setSaved');
-  if (clean) return t('mobile.client.session.nextSet');
-  if (last) return t('mobile.client.session.saveSet');
-  return t('mobile.client.session.saveAndNext');
 }
 
 function SetColumnCell(props: {
@@ -281,7 +234,7 @@ function ActionButton(props: {
       onPress={props.onPress}
       style={[styles.actionCard, { backgroundColor: props.surface }]}
     >
-      {props.icon}
+      <View style={[styles.actionIcon, { backgroundColor: props.tint }]}>{props.icon}</View>
       <Text numberOfLines={2} style={[styles.actionLabel, { color: props.tint }]}>
         {props.label}
       </Text>
@@ -314,34 +267,16 @@ function NotesGlyph(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  chips: { gap: 8, paddingHorizontal: 16, paddingBottom: 8 },
-  chip: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.bgCard,
-    borderColor: LIGHT.border,
-    borderRadius: LIGHT.radiusFull,
-    borderWidth: 1,
-    height: HIT,
-    justifyContent: 'center',
-    minWidth: HIT,
-  },
-  chipSelected: { backgroundColor: LIGHT.accent, borderColor: LIGHT.accent },
-  chipDone: { borderColor: LIGHT.success },
-  chipText: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '700' },
-  chipTextSelected: { color: LIGHT.textOnNavy },
-  indication: {
-    backgroundColor: LIGHT.accentSoft,
-    borderRadius: LIGHT.radiusMd,
-    justifyContent: 'center',
-    marginHorizontal: 16,
-    marginBottom: 8,
-    minHeight: HIT,
-    paddingHorizontal: 12,
-  },
-  indicationText: { color: LIGHT.accentDark, fontSize: 14, fontWeight: '600' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  column: { minWidth: '46%', flexGrow: 1 },
-  columnLabel: { ...SESSION.inputLabel },
+  column: { flexBasis: 0, flexGrow: 1, minWidth: 56 },
+  columnLabel: {
+    color: LIGHT.accentMuted,
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+  },
   targetValue: {
     color: LIGHT.textStrong,
     fontSize: 13,
@@ -349,8 +284,8 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: 'center',
   },
-  input: { ...SESSION.input, fontSize: 18, justifyContent: 'center', minHeight: HIT },
-  inputText: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '700', textAlign: 'center' },
+  input: { ...SESSION.input, fontSize: 16, justifyContent: 'center', minHeight: HIT },
+  inputText: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '700', textAlign: 'center' },
   restBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.emeraldSoft,
@@ -372,13 +307,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     minHeight: HIT,
     paddingHorizontal: 6,
+    paddingVertical: 10,
   },
+  actionIcon: { alignItems: 'center', borderRadius: 14, height: 36, justifyContent: 'center', width: 36 },
   actionLabel: { fontSize: 12, fontWeight: '800', textAlign: 'center' },
   footer: {
+    alignItems: 'center',
     backgroundColor: LIGHT.bgCard,
     borderTopColor: LIGHT.border,
     borderTopWidth: 1,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 8,
     padding: 12,
   },
@@ -394,7 +333,14 @@ const styles = StyleSheet.create({
   footerPrimaryText: { color: LIGHT.textOnNavy, fontSize: 13, fontWeight: '700', textAlign: 'center' },
   footerSaved: { backgroundColor: LIGHT.emeraldSoft },
   footerSavedText: { color: LIGHT.success },
-  footerSecondary: { backgroundColor: LIGHT.accentSoft },
   footerSecondaryText: { color: LIGHT.accentDark, fontSize: 13, fontWeight: '700', textAlign: 'center' },
-  footerDisabled: { opacity: 0.4 },
+  timer: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700', textAlign: 'center', minWidth: 64 },
+  saveBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: LIGHT.radiusMd,
+    justifyContent: 'center',
+    minHeight: HIT,
+    paddingHorizontal: 12,
+  },
 });

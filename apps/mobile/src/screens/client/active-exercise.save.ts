@@ -117,24 +117,6 @@ function canonical(payload: unknown): string {
   return JSON.stringify(entries);
 }
 
-type SetNavigator = {
-  draft: { setCount: number; setCurrentSet: (index: number) => void };
-  save: { run: (indexes: number[]) => Promise<SaveOutcome[]> };
-};
-
-export function browseOrSave(props: SetNavigator, setIndex: number, readOnly: boolean): void {
-  if (readOnly) {
-    if (setIndex < props.draft.setCount) props.draft.setCurrentSet(setIndex + 1);
-    return;
-  }
-  void saveAndAdvance(props, setIndex);
-}
-
-async function saveAndAdvance(props: SetNavigator, setIndex: number): Promise<void> {
-  const outcomes = await props.save.run([setIndex]);
-  if (!outcomes.includes('failed') && setIndex < props.draft.setCount) props.draft.setCurrentSet(setIndex + 1);
-}
-
 function emptyDraft(): SetRowState {
   return {
     distance: '',

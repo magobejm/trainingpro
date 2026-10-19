@@ -1,12 +1,5 @@
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
-import {
-  browseOrSave,
-  claimSetSave,
-  dirtySetIndexes,
-  loggedDraft,
-  saveNoticeKey,
-  setDraftMatchesLogged,
-} from '../active-exercise.save';
+import { claimSetSave, dirtySetIndexes, loggedDraft, saveNoticeKey, setDraftMatchesLogged } from '../active-exercise.save';
 import type { SetRowState } from '../active-exercise.helpers';
 
 const logged = {
@@ -50,18 +43,5 @@ describe('set save decisions', () => {
     expect(saveNoticeKey(['pending', 'synced'])).toBe('mobile.client.sync.savedOffline');
     expect(saveNoticeKey(['skipped'])).toBeNull();
     expect(saveNoticeKey(['synced', 'failed'])).toBeNull();
-  });
-
-  it('pages through a finished workout without saving', () => {
-    const setCurrentSet = jest.fn();
-    const run = jest.fn();
-    const props = { draft: { setCount: 3, setCurrentSet }, save: { run } };
-
-    browseOrSave(props, 1, true);
-    browseOrSave(props, 3, true);
-
-    expect(setCurrentSet).toHaveBeenCalledTimes(1);
-    expect(setCurrentSet).toHaveBeenCalledWith(2);
-    expect(run).not.toHaveBeenCalled();
   });
 });

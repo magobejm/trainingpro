@@ -28,11 +28,9 @@ import {
   restWasRecorded,
   setWasLogged,
   type LogPayload,
-  type SetColumn,
-  type SetFieldKey,
   type SetRowState,
 } from './active-exercise.helpers';
-import { browseOrSave, setDraftMatchesLogged } from './active-exercise.save';
+import { loggedDraft, setDraftMatchesLogged } from './active-exercise.save';
 import { useActiveSetDraft } from './active-exercise.draft';
 import { useActiveSetSave } from './active-exercise.session';
 import { useRestCountdown } from '../../features/timers/useRestCountdown';
@@ -46,9 +44,8 @@ import type { RestState } from './session-rest.types';
 import {
   CurrentSetFields,
   ExerciseActionBar,
-  IndicationsBanner,
-  SessionFooter,
-  SetChipRow,
+  ExerciseSessionFooter,
+  SetSaveButton,
   SetRestControl,
 } from './ActiveExerciseSetPanel';
 
@@ -98,8 +95,6 @@ function ActiveExerciseFrame(props: {
   const [showNotes, setShowNotes] = useState(false);
   const [showPrevious, setShowPrevious] = useState(false);
   const [showVideo, setShowVideo] = useState(false);
-  const setIndex = props.draft.setIndex;
-  const view = readSetView(screen.item, setIndex, props.draft.drafts[setIndex], props.save.restSeconds.current[setIndex]);
   const remaining = useRestCountdown(screen.restState, screen.onAdjustRest, () => {
     completeRest(screen, props.save, finishedRestKey);
   });
@@ -109,16 +104,11 @@ function ActiveExerciseFrame(props: {
     <Modal animationType={'slide'} onRequestClose={screen.onClose} visible={screen.visible}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
         <ExerciseChrome
-          indication={view.indication}
           onOpenComment={() => setShowComment(true)}
           onOpenNotes={() => setShowNotes(true)}
           onOpenVideo={() => openVideo(youtubeUrl, setShowVideo, t)}
-          onSelectSet={props.draft.setCurrentSet}
-          saved={savedFlags(screen, props.draft)}
           screen={screen}
-          setIndex={setIndex}
           t={t}
-          total={props.draft.setCount}
         />
         <ScrollView
           automaticallyAdjustKeyboardInsets
@@ -126,34 +116,27 @@ function ActiveExerciseFrame(props: {
           keyboardShouldPersistTaps={'handled'}
           ref={scrollRef}
         >
-          <CurrentSetCard
-            columns={view.columns}
-            onFocus={(node) => scrollFieldIntoView(scrollRef.current, node)}
-            onOpenHistory={() => setShowPrevious(true)}
-            onOpenRom={() => props.draft.setRomSet(setIndex)}
-            readOnly={screen.readOnly}
-            remaining={remaining}
-            screen={screen}
-            setIndex={setIndex}
-            setKey={view.setKey}
-            t={t}
-            targets={view.targets}
-            total={props.draft.setCount}
-            values={props.draft.drafts[setIndex] ?? {}}
-            onChange={props.draft.updateField}
-          />
+          {Array.from({ length: props.draft.setCount }, (_, index) => (
+            <ExerciseSetCard
+              draft={props.draft}
+              key={`${screen.item.id}:${index + 1}`}
+              onFocus={(node) => scrollFieldIntoView(scrollRef.current, node)}
+              remaining={remaining}
+              save={props.save}
+              screen={screen}
+              setIndex={index + 1}
+              t={t}
+            />
+          ))}
         </ScrollView>
-        <SessionFooter
+        <ExerciseSessionFooter
           busy={props.save.busy}
-          canGoBack={setIndex > 1}
-          clean={view.clean}
           finishing={props.save.finishing}
-          last={setIndex >= props.draft.setCount}
           onFinish={() => void props.save.finishExercise(() => screen.onFinishExercise(screen.item.id))}
-          onPrevious={() => props.draft.setCurrentSet(setIndex - 1)}
-          onSave={() => browseOrSave(props, setIndex, screen.readOnly === true)}
+          onOpenHistory={screen.item.type === 'strength' ? () => setShowPrevious(true) : undefined}
           readOnly={screen.readOnly}
           t={t}
+          workoutElapsed={screen.workoutElapsed}
         />
         <ExerciseOverlays
           draft={props.draft}
@@ -182,40 +165,37 @@ function ActiveExerciseFrame(props: {
   );
 }
 
-function CurrentSetCard(props: {
-  columns: SetColumn[];
-  onChange: (key: SetFieldKey, value: string) => void;
+function ExerciseSetCard(props: {
+  draft: ReturnType<typeof useActiveSetDraft>;
   onFocus: (node: number) => void;
-  onOpenHistory: () => void;
-  onOpenRom: () => void;
-  readOnly?: boolean;
   remaining: number | null;
+  save: ReturnType<typeof useActiveSetSave>;
   screen: ActiveExerciseScreenProps;
   setIndex: number;
-  setKey: string;
   t: TFunction;
-  targets: Record<string, string>;
-  total: number;
-  values: Partial<Record<SetFieldKey, string>>;
 }): React.JSX.Element {
+  const view = readSetView(
+    props.screen.item,
+    props.setIndex,
+    props.draft.drafts[props.setIndex],
+    props.save.restSeconds.current[props.setIndex],
+  );
   const restSeconds = getRestSeconds(props.screen.item, props.setIndex);
-  const active = props.screen.restState?.setKey === props.setKey;
-  const markedDone = props.screen.completedRestKeys.includes(props.setKey);
+  const active = props.screen.restState?.setKey === view.setKey;
+  const markedDone = props.screen.completedRestKeys.includes(view.setKey);
   const restDone = markedDone || restWasRecorded(props.screen.item, props.setIndex);
   return (
     <View style={styles.setCard}>
       <View style={styles.setHeader}>
-        <Text style={styles.setTitle}>
-          {props.t('mobile.client.session.setPosition', { current: props.setIndex, total: props.total })}
-        </Text>
+        <Text style={styles.setTitle}>{`${props.t('client.today.set')} ${props.setIndex}`}</Text>
         {restSeconds > 0 ? (
           <SetRestControl
             active={active}
             completed={restDone}
             countdown={<RestCountdown remaining={props.remaining} total={restSeconds} />}
-            disabled={props.readOnly === true || (props.screen.restState != null && !active)}
+            disabled={props.screen.readOnly === true || (props.screen.restState != null && !active)}
             onExpand={props.screen.onExpandRest}
-            onStart={() => props.screen.onStartRest(props.setKey, restSeconds)}
+            onStart={() => props.screen.onStartRest(view.setKey, restSeconds)}
             remaining={active ? props.remaining : null}
             restSeconds={restSeconds}
             t={props.t}
@@ -223,26 +203,24 @@ function CurrentSetCard(props: {
         ) : null}
       </View>
       <CurrentSetFields
-        columns={props.columns}
-        draft={props.values}
-        onChange={props.onChange}
+        columns={view.columns}
+        draft={props.draft.drafts[props.setIndex] ?? loggedDraft(props.screen.item, props.setIndex)}
+        onChange={(key, value) => props.draft.updateField(props.setIndex, key, value)}
         onFocus={props.onFocus}
-        onOpenRom={props.onOpenRom}
-        readOnly={props.readOnly}
+        onOpenRom={() => props.draft.setRomSet(props.setIndex)}
+        readOnly={props.screen.readOnly}
         t={props.t}
-        targets={props.targets}
+        targets={view.targets}
       />
-      {props.screen.item.type === 'strength' ? (
-        <Pressable
-          accessibilityLabel={props.t('mobile.client.session.previousDays')}
-          accessibilityRole={'button'}
-          onPress={props.onOpenHistory}
-          style={styles.historyLink}
-        >
-          <Text style={styles.historyText}>{props.t('mobile.client.session.previousDays')}</Text>
-        </Pressable>
-      ) : null}
-      {props.screen.workoutElapsed ? <Text style={styles.timer}>{props.screen.workoutElapsed}</Text> : null}
+      {props.screen.readOnly ? null : (
+        <SetSaveButton
+          busy={props.save.busy || props.save.finishing}
+          clean={view.clean}
+          onSave={() => void props.save.run([props.setIndex])}
+          setIndex={props.setIndex}
+          t={props.t}
+        />
+      )}
     </View>
   );
 }
@@ -252,16 +230,11 @@ function RestCountdown(props: { remaining: number | null; total: number }): Reac
 }
 
 function ExerciseChrome(props: {
-  indication: string;
   onOpenComment: () => void;
   onOpenNotes: () => void;
   onOpenVideo: () => void;
-  onSelectSet: (setIndex: number) => void;
-  saved: boolean[];
   screen: ActiveExerciseScreenProps;
-  setIndex: number;
   t: TFunction;
-  total: number;
 }): React.JSX.Element {
   return (
     <>
@@ -272,19 +245,11 @@ function ExerciseChrome(props: {
         onNavigate={props.screen.onNavigateExercise}
         t={props.t}
       />
-      {props.indication ? <IndicationsBanner onPress={props.onOpenNotes} t={props.t} text={props.indication} /> : null}
       <ExerciseActionBar
         onOpenComment={props.onOpenComment}
         onOpenNotes={props.onOpenNotes}
         onOpenVideo={props.onOpenVideo}
         t={props.t}
-      />
-      <SetChipRow
-        current={props.setIndex}
-        onSelect={props.onSelectSet}
-        saved={props.saved}
-        t={props.t}
-        total={props.total}
       />
     </>
   );
@@ -361,7 +326,7 @@ function ExerciseOverlays(props: {
   youtubeUrl: null | string;
 }): React.JSX.Element {
   const { t } = useTranslation();
-  const romIndex = props.draft.romSet ?? props.draft.setIndex;
+  const romIndex = props.draft.romSet ?? 1;
   return (
     <>
       <RomScaleModal
@@ -425,20 +390,11 @@ function completeRest(
   screen.onRestFinish();
 }
 
-function savedFlags(screen: ActiveExerciseScreenProps, draft: ReturnType<typeof useActiveSetDraft>): boolean[] {
-  return Array.from({ length: draft.setCount }, (_, index) => {
-    const setIndex = index + 1;
-    const values = draft.drafts[setIndex];
-    return values != null && setWasLogged(screen.item, setIndex) && setDraftMatchesLogged(screen.item, setIndex, values);
-  });
-}
-
 function readSetView(item: SessionItem, setIndex: number, draft: SetRowState | undefined, restSeconds?: number) {
   const columns = getSetColumns(item);
   return {
-    clean: setDraftMatchesLogged(item, setIndex, draft ?? emptyVisibleDraft(), restSeconds),
+    clean: setDraftMatchesLogged(item, setIndex, draft ?? loggedDraft(item, setIndex), restSeconds),
     columns,
-    indication: item.coachInstructions?.trim() || item.notes?.trim() || '',
     setKey: `${item.id}:${setIndex}`,
     targets: Object.fromEntries(columns.map((column) => [column.key, readTargetValue(item, setIndex, column.key)])),
   };
@@ -469,22 +425,6 @@ function scrollFieldIntoView(scroll: ScrollView | null, node: number): void {
   responder?.scrollResponderScrollNativeHandleToKeyboard?.(node, 96, true);
 }
 
-function emptyVisibleDraft() {
-  return {
-    distance: '',
-    duration: '',
-    fcMaxPct: '',
-    fcReservePct: '',
-    heartRate: '',
-    reps: '',
-    rest: '',
-    rir: '',
-    rom: '',
-    rpe: '',
-    weight: '',
-  };
-}
-
 const styles = StyleSheet.create({
   container: { backgroundColor: LIGHT.bgSoft, flex: 1 },
   header: { alignItems: 'center', flexDirection: 'row', gap: 8, padding: 16 },
@@ -496,7 +436,7 @@ const styles = StyleSheet.create({
   navBtn: { alignItems: 'center', height: 48, justifyContent: 'center', width: 48 },
   navArrow: { color: LIGHT.accent, fontSize: 28, fontWeight: '700' },
   navDisabled: { opacity: 0.3 },
-  scroll: { padding: 16, paddingBottom: 24 },
+  scroll: { gap: 16, padding: 16, paddingBottom: 24 },
   setCard: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,
@@ -507,9 +447,6 @@ const styles = StyleSheet.create({
   },
   setHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   setTitle: { color: LIGHT.textStrong, flex: 1, fontSize: 16, fontWeight: '800' },
-  historyLink: { justifyContent: 'center', minHeight: 48 },
-  historyText: { color: LIGHT.accent, fontSize: 14, fontWeight: '700' },
-  timer: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
   notesOverlay: { alignItems: 'center', backgroundColor: LIGHT.overlay, flex: 1, justifyContent: 'center', padding: 24 },
   notesCard: { backgroundColor: LIGHT.bgCard, borderRadius: LIGHT.radiusXl, maxHeight: '70%', padding: 16, width: '100%' },
 });

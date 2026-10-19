@@ -1,28 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SessionItem } from '../../data/hooks/useTodaySession';
 import { getSetCount, type SetFieldKey, type SetRowState } from './active-exercise.helpers';
 import { loggedDraft } from './active-exercise.save';
 
 export function useActiveSetDraft(item: SessionItem) {
   const setCount = getSetCount(item);
-  const [currentSet, setCurrentSet] = useState(1);
-  const [drafts, setDrafts] = useState<Record<number, SetRowState>>({});
+  const previousItem = useRef(item);
+  const [drafts, setDrafts] = useState(() => reconcileSetDrafts(item, item, {}));
   const [romSet, setRomSet] = useState<number | null>(null);
 
   useEffect(() => {
-    const next: Record<number, SetRowState> = {};
-    for (let setIndex = 1; setIndex <= setCount; setIndex += 1) next[setIndex] = loggedDraft(item, setIndex);
-    setDrafts(next);
+    const previous = previousItem.current;
+    setDrafts((current) => reconcileSetDrafts(previous, item, current));
+    previousItem.current = item;
   }, [item, setCount]);
 
   useEffect(() => {
-    setCurrentSet(1);
     setRomSet(null);
   }, [item.id]);
 
-  const setIndex = Math.min(Math.max(currentSet, 1), Math.max(setCount, 1));
-
-  const updateField = (key: SetFieldKey, value: string) => {
+  const updateField = (setIndex: number, key: SetFieldKey, value: string) => {
     setDrafts((current) => ({
       ...current,
       [setIndex]: { ...(current[setIndex] ?? loggedDraft(item, setIndex)), [key]: value },
@@ -38,5 +35,20 @@ export function useActiveSetDraft(item: SessionItem) {
     setRomSet(null);
   };
 
-  return { drafts, romSet, saveRom, setCount, setCurrentSet, setIndex, setRomSet, updateField };
+  return { drafts, romSet, saveRom, setCount, setRomSet, updateField };
+}
+
+export function reconcileSetDrafts(
+  previous: SessionItem,
+  item: SessionItem,
+  drafts: Record<number, SetRowState>,
+): Record<number, SetRowState> {
+  const next: Record<number, SetRowState> = {};
+  for (let index = 1; index <= getSetCount(item); index += 1) {
+    const draft = drafts[index];
+    const before = loggedDraft(previous, index);
+    const dirty = draft && Object.keys(before).some((key) => draft[key as SetFieldKey] !== before[key as SetFieldKey]);
+    next[index] = previous.id === item.id && dirty ? draft : loggedDraft(item, index);
+  }
+  return next;
 }

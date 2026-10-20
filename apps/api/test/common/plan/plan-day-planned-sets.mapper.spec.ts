@@ -32,6 +32,7 @@ describe('buildPlanDayPlannedSetsLookup', () => {
     expect(lookup.get(1)).toEqual([
       {
         advancedTechnique: null,
+        distanceMeters: null,
         durationSeconds: null,
         fcMaxPct: null,
         fcReservePct: null,
@@ -47,6 +48,7 @@ describe('buildPlanDayPlannedSetsLookup', () => {
       },
       {
         advancedTechnique: null,
+        distanceMeters: null,
         durationSeconds: null,
         fcMaxPct: null,
         fcReservePct: null,

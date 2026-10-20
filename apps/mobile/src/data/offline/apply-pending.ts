@@ -189,6 +189,7 @@ function applySportSet(
   const next: SportSetLog | null = clear
     ? null
     : {
+        distanceDoneMeters: numOrNull(body['distanceDoneMeters']),
         durationSecondsDone: numOrNull(body['durationSecondsDone']),
         effortRir: numOrNull(body['effortRir']),
         effortRpe: numOrNull(body['effortRpe']),

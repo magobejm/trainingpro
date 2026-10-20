@@ -96,6 +96,7 @@ export function sportPerformedWhere(session: SessionWhere) {
               { weightDoneKg: positive },
               { effortRpe: positive },
               { effortRir: positive },
+              { distanceDoneMeters: positive },
               { durationSecondsDone: positive },
               { heartRateDone: positive },
               { hrMaxPctDone: positive },

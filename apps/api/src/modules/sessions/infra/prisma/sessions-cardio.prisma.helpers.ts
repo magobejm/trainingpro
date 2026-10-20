@@ -1,3 +1,4 @@
+import type { PlanSetRow } from '../../../../common/plan/client-routine-set.mapper';
 import { BadRequestException } from '@nestjs/common';
 import { Prisma, SessionStatus } from '@prisma/client';
 import {
@@ -58,7 +59,7 @@ export function mapCardioTemplateBlockSnapshot(block: {
   notes: null | string;
   restSeconds: number;
   roundsPlanned: number;
-  sets: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets: PlanSetRow[];
   sortOrder: number;
   targetDistanceMeters: null | number;
   targetRpe: Prisma.Decimal | null | number;

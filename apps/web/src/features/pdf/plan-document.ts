@@ -1,3 +1,4 @@
+import { SET_VARIABLE_PRIORITY, setVariablesForType, usesMinuteDuration, toSetDisplayValue } from '@trainerpro/shared';
 import type { DraftBlock, DraftSet, DraftState } from '../../screens/coach/RoutinePlanner.types';
 import type { WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { mapWarmupTemplateItemsToBlocks } from '../../screens/coach/RoutinePlanner.template-mapper';
@@ -6,16 +7,20 @@ export { nutritionPdfSections } from './nutrition-document';
 
 export type PdfTranslate = (key: string) => string;
 const fields: Array<{ key: keyof DraftSet; unit?: string }> = [
-  { key: 'reps' },
-  { key: 'weightKg', unit: 'kg' },
-  { key: 'durationSeconds', unit: 's' },
-  { key: 'rpe' },
-  { key: 'rir' },
-  { key: 'fcMaxPct', unit: '%' },
-  { key: 'fcReservePct', unit: '%' },
-  { key: 'heartRate', unit: 'bpm' },
-  { key: 'rom' },
-  { key: 'restSeconds', unit: 's' },
+  ...SET_VARIABLE_PRIORITY.map((key) => ({
+    key,
+    unit: (
+      {
+        weightKg: 'kg',
+        durationSeconds: 's',
+        distanceMeters: 'km',
+        fcMaxPct: '%',
+        fcReservePct: '%',
+        heartRate: 'bpm',
+        restSeconds: 's',
+      } as Record<string, string>
+    )[key],
+  })),
   { key: 'advancedTechnique' },
   { key: 'note' },
 ];
@@ -62,12 +67,21 @@ function groupedSections(
 }
 
 function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
-  const count = Math.max(block.setsPlanned ?? block.roundsPlanned ?? 0, block.sets?.length ?? 0);
+  const count = Math.max(
+    block.setsPlanned ?? block.roundsPlanned ?? 0,
+    block.sets?.length ?? 0,
+    usesMinuteDuration(block.type) && (block.workSeconds != null || block.durationMinutes != null) ? 1 : 0,
+  );
   const sets = Array.from({ length: count }, (_, index) => resolvedSet(block, index));
-  const active = fields.filter(({ key }) => sets.some((set) => present(set[key])));
+  const active = fields.filter(
+    ({ key }) =>
+      (key === 'advancedTechnique' || key === 'note' || setVariablesForType(block.type).includes(key as never)) &&
+      sets.some((set) => present(set[key])),
+  );
   const paragraphs = block.notes ? [block.notes] : [];
   if (block.repsRange) paragraphs.push(`${t('web.pdf.repsRange')}: ${block.repsRange}`);
-  if (block.durationMinutes != null) paragraphs.push(`${t('web.pdf.totalTime')}: ${block.durationMinutes} min`);
+  if (!usesMinuteDuration(block.type) && block.durationMinutes != null)
+    paragraphs.push(`${t('web.pdf.totalTime')}: ${block.durationMinutes} min`);
   if (!sets.length) paragraphs.push(t('web.pdf.noSets'));
   return {
     heading: block.displayName,
@@ -77,9 +91,21 @@ function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
           table: {
             columns: [
               t('web.pdf.set'),
-              ...active.map(({ key, unit }) => `${t(`web.pdf.${key}`)}${unit ? ` (${unit})` : ''}`),
+              ...active.map(
+                ({ key, unit }) =>
+                  `${t(`web.pdf.${key}`)}${unit ? ` (${key === 'durationSeconds' && usesMinuteDuration(block.type) ? 'min' : unit})` : ''}`,
+              ),
             ],
-            rows: sets.map((set, index) => [index + 1, ...active.map(({ key }) => fieldValue(key, set[key], t))]),
+            rows: sets.map((set, index) => [
+              index + 1,
+              ...active.map(({ key }) =>
+                fieldValue(
+                  key,
+                  typeof set[key] === 'number' ? toSetDisplayValue(block.type, key, set[key] as number) : set[key],
+                  t,
+                ),
+              ),
+            ]),
             identifyingColumns: 1,
           },
         }
@@ -106,7 +132,12 @@ function resolvedSet(block: DraftBlock, index: number): DraftSet {
     setIndex: index,
     reps: set?.reps ?? csv(block.repsPerSeries, index) ?? block.repsPlanned,
     weightKg: set?.weightKg ?? csv(block.weightPerSeriesKg, index) ?? block.weightKg,
-    durationSeconds: set?.durationSeconds ?? block.totalTimeSeconds ?? block.workSeconds,
+    distanceMeters: set?.distanceMeters,
+    durationSeconds:
+      set?.durationSeconds ??
+      block.totalTimeSeconds ??
+      block.workSeconds ??
+      (block.type === 'sport' && block.durationMinutes != null ? block.durationMinutes * 60 : undefined),
     rpe: set?.rpe ?? block.targetRpe,
     rir: set?.rir ?? block.targetRir,
     fcMaxPct: set?.fcMaxPct ?? block.intensityFcMax,

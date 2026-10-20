@@ -1,3 +1,4 @@
+import type { PlanSetRow } from '../plan/client-routine-set.mapper';
 import { Prisma } from '@prisma/client';
 import { mapPlanSetsToPlannedSnapshots, type PlannedSetSnapshot } from './planned-set.mapper';
 import { stripMetaNotes } from './parse-meta-notes';
@@ -11,7 +12,7 @@ export type SessionNoteSnapshot = {
 export function buildSessionNoteSnapshot(input: {
   coachInstructions?: null | string;
   notes?: null | string;
-  sets?: Array<{ setIndex: number; note?: null | string; advancedTechnique?: null | string }>;
+  sets?: PlanSetRow[];
 }): SessionNoteSnapshot {
   const plannedSetsJson = mapPlanSetsToPlannedSnapshots(input.sets);
   return {
@@ -40,6 +41,8 @@ export function readPlannedSetsJson(value: Prisma.JsonValue | null): PlannedSetS
         note: typeof row.note === 'string' ? row.note : null,
         setIndex: typeof row.setIndex === 'number' ? row.setIndex : 0,
       };
+      const distanceMeters = readOptionalNumber(row.distanceMeters);
+      if (distanceMeters != null) snapshot.distanceMeters = distanceMeters;
       const durationSeconds = readOptionalNumber(row.durationSeconds);
       if (durationSeconds != null) snapshot.durationSeconds = durationSeconds;
       const fcMaxPct = readOptionalNumber(row.fcMaxPct);

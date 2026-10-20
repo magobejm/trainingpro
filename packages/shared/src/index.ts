@@ -119,3 +119,12 @@ export {
 export * from './routine-handoff';
 export * from './routine-comparison';
 export * from './routine-day-colors';
+
+export { CARDIO_DEFAULT_LOCKED_VARIABLES } from './exercise-set-variables';
+export {
+  usesMinuteDuration,
+  toSetDisplayValue,
+  fromSetDisplayValue,
+  normalizeLegacyLockedFields,
+  normalizeRoutineSetVariables,
+} from './set-variable-units';

@@ -212,6 +212,7 @@ function mapCardioSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
@@ -353,6 +354,7 @@ function mapSportSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     advancedTechnique: s.advancedTechnique ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,

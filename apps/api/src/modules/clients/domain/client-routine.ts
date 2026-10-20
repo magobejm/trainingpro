@@ -1,5 +1,6 @@
 export type ClientRoutineSet = {
   advancedTechnique: null | string;
+  distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
   fcReservePct?: null | number;

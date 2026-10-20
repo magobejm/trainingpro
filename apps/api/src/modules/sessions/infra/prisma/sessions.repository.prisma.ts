@@ -48,6 +48,7 @@ import {
   mapTemplateSportSnapshot,
 } from './sessions-prisma.mappers';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
+import { mapCardioTemplateBlockSnapshot } from './sessions-cardio.prisma.helpers';
 import { mapSessionWithGroups, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
 import {
   readWorkoutTemplate,
@@ -384,6 +385,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     if (!day) {
       throw new NotFoundException('Plan day not found for this template');
     }
+    const cardioBlocks = (day.cardioBlocks ?? []).map(mapCardioTemplateBlockSnapshot);
     const exercises = day.exercises.map(mapTemplateExerciseSnapshot);
     const plioBlocks = day.plioBlocks.map(mapTemplatePlioSnapshot);
     const mobilityBlocks = day.mobilityBlocks.map(mapTemplateMobilitySnapshot);
@@ -394,12 +396,14 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       plioBlocks.length > 0 ||
       mobilityBlocks.length > 0 ||
       isometricBlocks.length > 0 ||
-      sportBlocks.length > 0;
+      sportBlocks.length > 0 ||
+      cardioBlocks.length > 0;
     if (!hasContent) {
       throw new BadRequestException('Selected template day has no workout content');
     }
     return {
       id: row.id,
+      cardioBlocks,
       items: exercises,
       plioBlocks,
       mobilityBlocks,

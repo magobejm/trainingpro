@@ -362,6 +362,7 @@ function ExerciseOverlays(props: {
         </Modal>
       ) : null}
       <PreviousDaysOverlay
+        exerciseType={props.screen.item.type}
         exerciseName={props.screen.item.displayName}
         onClose={props.onClosePrevious}
         sessionId={props.screen.sessionId}

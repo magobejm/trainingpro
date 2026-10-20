@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   canUnlockSetVariable,
+  fromSetDisplayValue,
+  toSetDisplayValue,
+  usesMinuteDuration,
   COACH_LIBRARY_IDS,
   resolveLockedFields,
   setVariablesForType,
@@ -22,11 +25,11 @@ const blockNumbers: Record<CoachBlockKind, string[]> = {
     'weightRangeMinKg',
     'weightRangeMaxKg',
   ],
-  cardio: ['roundsPlanned', 'workSeconds', 'restSeconds', 'targetDistanceMeters', 'targetRpe'],
+  cardio: ['roundsPlanned', 'restSeconds', 'targetRpe'],
   isometric: ['setsPlanned', 'targetRpe'],
   plio: ['roundsPlanned', 'workSeconds', 'restSeconds', 'targetRpe'],
   mobility: ['roundsPlanned', 'workSeconds', 'restSeconds', 'targetRpe'],
-  sport: ['durationMinutes', 'targetRpe'],
+  sport: ['targetRpe'],
 };
 export function CoachPlanBlockEditor({
   kind,
@@ -166,11 +169,14 @@ function BlockVariables({
   return (
     <View style={ui.card}>
       <Text style={ui.label}>{t('coachWorkspace.variables')}</Text>
+      <Text style={ui.label}>{t('coachWorkspace.variableLimit')}</Text>
       {setVariablesForType(kind).map((key) => (
         <View key={key} style={ui.field}>
           {!warmup ? (
             <CoachSelect
-              label={t('coachWorkspace.field.' + key)}
+              label={t(
+                'coachWorkspace.field.' + (key === 'durationSeconds' && usesMinuteDuration(kind) ? 'durationMinutes' : key),
+              )}
               value={modes.find((m) => m.fieldKey === key)?.mode ?? 'COACH_INPUT'}
               onChange={(mode) => setMode(key, mode)}
               options={['COACH_INPUT', 'CLIENT_INPUT', 'HIDDEN'].map((mode) => ({
@@ -217,17 +223,29 @@ function BlockSets({
           <Text style={ui.label}>
             {t('coachWorkspace.set')} {index + 1}
           </Text>
-          {setVariablesForType(kind).map((field) => (
-            <CoachField
-              key={field}
-              label={t('coachWorkspace.field.' + field)}
-              value={String(set[field] ?? '')}
-              onChange={(next) =>
-                update(index, field, field === 'rom' ? next : next === '' ? null : Number(next.replace(',', '.')))
-              }
-              numeric={field !== 'rom'}
-            />
-          ))}
+          {setVariablesForType(kind)
+            .filter((field) => !resolveLockedFields(kind, value.lockedFields as string[] | undefined).includes(field))
+            .map((field) =>
+              field === 'distanceMeters' || (field === 'durationSeconds' && usesMinuteDuration(kind)) ? (
+                <SetUnitField
+                  key={field}
+                  kind={kind}
+                  field={field}
+                  value={set[field] as number | null | undefined}
+                  onChange={(next) => update(index, field, next)}
+                />
+              ) : (
+                <CoachField
+                  key={field}
+                  label={t('coachWorkspace.field.' + field)}
+                  value={String(set[field] ?? '')}
+                  onChange={(next) =>
+                    update(index, field, field === 'rom' ? next : next === '' ? null : Number(next.replace(',', '.')))
+                  }
+                  numeric={field !== 'rom'}
+                />
+              ),
+            )}
           <CoachSelect
             label={t('coachWorkspace.technique')}
             value={String(set.advancedTechnique ?? '')}
@@ -260,6 +278,53 @@ function BlockSets({
         label={t('coachWorkspace.addSet')}
         disabled={sets.length >= 30}
         onPress={() => onChange({ ...value, sets: [...sets, { setIndex: sets.length }] })}
+      />
+    </View>
+  );
+}
+
+function SetUnitField({
+  kind,
+  field,
+  value,
+  onChange,
+}: {
+  kind: CoachBlockKind;
+  field: 'distanceMeters' | 'durationSeconds';
+  value: number | null | undefined;
+  onChange: (next: number | null) => void;
+}) {
+  const { t } = useTranslation();
+  const display = value == null ? '' : String(toSetDisplayValue(kind, field, value));
+  const [raw, setRaw] = useState(display);
+  useEffect(() => setRaw(display), [display]);
+  const commit = () => {
+    if (!raw.trim()) {
+      onChange(null);
+      return;
+    }
+    const normalized = raw.replace(',', '.');
+    const number = Number(normalized);
+    const valid =
+      /^\d*(?:\.\d*)?$/.test(normalized) &&
+      Number.isFinite(number) &&
+      number >= 0 &&
+      (field === 'distanceMeters' ? number <= 500 && (normalized.split('.')[1]?.length ?? 0) <= 3 : number <= 60);
+    if (valid) onChange(fromSetDisplayValue(kind, field, number));
+    else setRaw(display);
+  };
+  const label = t('coachWorkspace.field.' + (field === 'durationSeconds' ? 'durationMinutes' : field));
+  return (
+    <View style={ui.field}>
+      <Text style={ui.label}>{label}</Text>
+      <TextInput
+        accessibilityLabel={label}
+        style={ui.input}
+        keyboardType={'decimal-pad'}
+        value={raw}
+        onChangeText={setRaw}
+        onBlur={commit}
+        onSubmitEditing={commit}
       />
     </View>
   );

@@ -28,6 +28,6 @@ describe('comparePlannedAndLogged', () => {
     expect(rows).toHaveLength(1);
     const byKey = Object.fromEntries(rows[0]!.cells.map((cell) => [cell.key, cell]));
     expect(byKey.reps).toEqual({ differs: false, done: '10', key: 'reps', planned: '10' });
-    expect(byKey.durationSeconds).toEqual({ differs: true, done: '80', key: 'durationSeconds', planned: '90' });
+    expect(byKey.durationSeconds).toEqual({ differs: true, done: '1.333', key: 'durationSeconds', planned: '1.5' });
   });
 });

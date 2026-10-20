@@ -4,6 +4,7 @@ import type { ClientRoutineExercise, ClientRoutineSet } from '../../modules/clie
 
 export type PlanSetRow = {
   advancedTechnique?: null | string;
+  distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
   fcReservePct?: null | number;
@@ -19,6 +20,9 @@ export type PlanSetRow = {
 };
 
 export type RoutineBlockPrescription = {
+  workSeconds?: null | number;
+  durationMinutes?: null | number;
+  targetDistanceMeters?: null | number;
   notes?: null | string;
   perSetWeightRangesJson?: unknown;
   repsMax?: null | number;
@@ -59,6 +63,7 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
       return {
         ...base,
         durationSeconds: set.durationSeconds ?? null,
+        distanceMeters: set.distanceMeters ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
         fcReservePct: set.fcReservePct ?? null,
         heartRate: set.heartRate ?? null,
@@ -95,6 +100,7 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
       return {
         ...base,
         durationSeconds: set.durationSeconds ?? null,
+        distanceMeters: set.distanceMeters ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
         fcReservePct: set.fcReservePct ?? null,
         heartRate: set.heartRate ?? null,
@@ -194,6 +200,11 @@ function enrichSet(
     case 'cardio':
       return {
         ...set,
+        distanceMeters: set.distanceMeters ?? (type === 'cardio' ? (prescription?.targetDistanceMeters ?? null) : null),
+        durationSeconds:
+          set.durationSeconds ??
+          prescription?.workSeconds ??
+          (prescription?.durationMinutes == null ? null : prescription.durationMinutes * 60),
         fcMaxPct: set.fcMaxPct ?? readMetaNumber(meta, 'intensidadFcMax'),
         fcReservePct: set.fcReservePct ?? readMetaNumber(meta, 'intensidadFcReserva'),
         heartRate: set.heartRate ?? readMetaNumber(meta, 'pulsaciones'),
@@ -226,6 +237,11 @@ function enrichSet(
     case 'sport':
       return {
         ...set,
+        distanceMeters: set.distanceMeters ?? null,
+        durationSeconds:
+          set.durationSeconds ??
+          prescription?.workSeconds ??
+          (prescription?.durationMinutes == null ? null : prescription.durationMinutes * 60),
         fcMaxPct: set.fcMaxPct ?? readMetaNumber(meta, 'intensidadFcMax'),
         fcReservePct: set.fcReservePct ?? readMetaNumber(meta, 'intensidadFcReserva'),
         heartRate: set.heartRate ?? readMetaNumber(meta, 'pulsaciones'),

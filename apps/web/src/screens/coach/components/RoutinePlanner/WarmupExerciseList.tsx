@@ -1,3 +1,4 @@
+import { routineSetColumnsForType, normalizeLegacyLockedFields, type ExerciseBlockType } from '@trainerpro/shared';
 import { EmptyIllustration } from '../../../../components/EmptyIllustrations';
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
@@ -147,16 +148,13 @@ function ExerciseBody({
 }) {
   const { t } = useTranslation();
   const sets = resolveDisplaySets(item);
-  const ph = t('coach.routine.seriesTable.placeholderDash');
-
   const globalChips = buildWarmupMainFieldChips(item, t);
-
-  const hasReps = sets.some((s) => s.reps != null);
-  const hasRpe = sets.some((s) => s.rpe != null);
-  const hasRom = sets.some((s) => s.rom != null);
-  const hasWeight = sets.some((s) => s.weightKg != null);
-  const hasRir = sets.some((s) => s.rir != null);
-  const hasRest = sets.some((s) => s.restSeconds != null);
+  const metadata = item.metadataJson as { lockedFields?: string[]; setVariablesVersion?: number } | null;
+  const type = item.blockType as ExerciseBlockType;
+  const columns = routineSetColumnsForType(
+    type,
+    metadata?.setVariablesVersion === 2 ? metadata.lockedFields : normalizeLegacyLockedFields(type, metadata?.lockedFields),
+  );
 
   return (
     <View style={el.body}>
@@ -186,32 +184,20 @@ function ExerciseBody({
                 <Text style={[el.tableCell, el.tableCellSerie, el.tableHeaderText]}>
                   {t('coach.routine.seriesTable.seriesCol')}
                 </Text>
-                <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.routine.seriesTable.col.reps')}</Text>
-                <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.routine.block.rpe')}</Text>
-                {hasRom ? (
-                  <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.warmupExerciseList.colRom')}</Text>
-                ) : null}
-                <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.routine.block.weightKg')}</Text>
-                <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.routine.block.rest')}</Text>
-                <Text style={[el.tableCell, el.tableHeaderText]}>{t('coach.routine.block.rir')}</Text>
+                {columns.map((column) => (
+                  <Text key={column.key} style={[el.tableCell, el.tableHeaderText]}>
+                    {t(column.labelKey)}
+                  </Text>
+                ))}
               </View>
               {sets.map((s, rowIdx) => (
                 <View key={`${s.setIndex}-${rowIdx}`} style={el.tableRow}>
                   <Text style={[el.tableCell, el.tableCellSerie, el.tableCellValue]}>{s.setIndex + 1}</Text>
-                  <Text style={[el.tableCell, el.tableCellValue]}>
-                    {hasReps ? (s.reps != null ? String(s.reps) : ph) : ph}
-                  </Text>
-                  <Text style={[el.tableCell, el.tableCellValue]}>{hasRpe ? (s.rpe != null ? String(s.rpe) : ph) : ph}</Text>
-                  {hasRom ? (
-                    <Text style={[el.tableCell, el.tableCellValue]}>{s.rom != null && s.rom !== '' ? s.rom : ph}</Text>
-                  ) : null}
-                  <Text style={[el.tableCell, el.tableCellValue]}>
-                    {hasWeight ? (s.weightKg != null ? String(s.weightKg) : ph) : ph}
-                  </Text>
-                  <Text style={[el.tableCell, el.tableCellValue]}>
-                    {hasRest ? (s.restSeconds != null ? String(s.restSeconds) : ph) : ph}
-                  </Text>
-                  <Text style={[el.tableCell, el.tableCellValue]}>{hasRir ? (s.rir != null ? String(s.rir) : ph) : ph}</Text>
+                  {columns.map((column) => (
+                    <Text key={column.key} style={[el.tableCell, el.tableCellValue]}>
+                      {column.format({ ...s, note: s.note ?? null, advancedTechnique: null })}
+                    </Text>
+                  ))}
                 </View>
               ))}
             </View>

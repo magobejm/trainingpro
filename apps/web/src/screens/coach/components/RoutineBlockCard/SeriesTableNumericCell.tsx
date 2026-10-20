@@ -16,14 +16,22 @@ const KB_NUMERIC = 'numeric' as const;
 
 interface SeriesTableNumericCellProps {
   fieldKey: keyof DraftSet;
+  numericMode?: SeriesNumericMode;
   value: number | undefined;
   readOnly: boolean;
   placeholder: string;
   onChange: (value: number | undefined) => void;
 }
 
-export function SeriesTableNumericCell({ fieldKey, value, readOnly, placeholder, onChange }: SeriesTableNumericCellProps) {
-  const mode = numericModeForField(fieldKey);
+export function SeriesTableNumericCell({
+  fieldKey,
+  value,
+  readOnly,
+  placeholder,
+  onChange,
+  numericMode,
+}: SeriesTableNumericCellProps) {
+  const mode = numericMode ?? numericModeForField(fieldKey);
   const [rawText, setRawText] = useState(() => formatDisplayValue(value, mode));
 
   useEffect(() => {

@@ -2,7 +2,7 @@ import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { setVariablesForType } from '@trainerpro/shared';
+import { usesMinuteDuration, setVariablesForType } from '@trainerpro/shared';
 import { useSessionDetailQuery } from '../../../data/hooks/useSessionDetailQuery';
 import { comparePlannedAndLogged, type ComparedCell } from './session-compare.helpers';
 import { Modal, colors, fontSize, space } from '@trainerpro/ui';
@@ -13,7 +13,8 @@ type Props = {
 };
 
 const COLUMN_LABEL: Record<string, string> = {
-  durationSeconds: 'Duración',
+  distanceMeters: 'Distancia (km)',
+  durationSeconds: 'Duración (s)',
   fcMaxPct: '%FC máx',
   fcReservePct: '%FC res',
   heartRate: 'Pulsaciones',
@@ -49,7 +50,9 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
                 <Text style={styles.headCell}>{'#'}</Text>
                 {columns.map((key) => (
                   <Text key={key} style={styles.headCell}>
-                    {COLUMN_LABEL[key] ?? key}
+                    {key === 'durationSeconds' && usesMinuteDuration(item.type)
+                      ? 'Duración (min)'
+                      : (COLUMN_LABEL[key] ?? key)}
                   </Text>
                 ))}
               </View>

@@ -40,8 +40,8 @@ describe('routineSetColumnsForType', () => {
       'rpe',
       'fcMaxPct',
       'durationSeconds',
+      'distanceMeters',
       'heartRate',
-      'fcReservePct',
       'restSeconds',
     ]);
     expect(routineSetColumnsForType('isometric').map((column) => column.key)).toEqual([
@@ -73,7 +73,7 @@ describe('routineSetColumnsForType', () => {
       'rpe',
       'fcMaxPct',
       'durationSeconds',
-      'restSeconds',
+      'distanceMeters',
     ]);
   });
 });

@@ -209,8 +209,8 @@ function SetColumnCell(props: {
         <TextInput
           accessibilityLabel={label}
           editable={!props.readOnly}
-          keyboardType={keyboardForField(props.column.key)}
-          onChangeText={(value) => props.onChange(sanitizeSessionNumber(props.column.key, value))}
+          keyboardType={keyboardForField(props.column.key, props.column.minutes)}
+          onChangeText={(value) => props.onChange(sanitizeSessionNumber(props.column.key, value, props.column.minutes))}
           onFocus={(event) => props.onFocus(Number(event.nativeEvent.target))}
           style={styles.input}
           value={props.draft}

@@ -1,5 +1,5 @@
 import { parseMetaNotes, stripMetaNotes } from '../../../src/common/notes/parse-meta-notes';
-import { buildSessionNoteSnapshot } from '../../../src/common/notes/session-note-snapshot';
+import { readPlannedSetsJson, buildSessionNoteSnapshot } from '../../../src/common/notes/session-note-snapshot';
 import { mapPlanSetsToPlannedSnapshots } from '../../../src/common/notes/planned-set.mapper';
 
 describe('parseMetaNotes', () => {
@@ -38,4 +38,10 @@ describe('session note snapshot', () => {
     ]);
     expect(mapPlanSetsToPlannedSnapshots(snapshot.plannedSetsJson as never)).toHaveLength(2);
   });
+});
+
+test('distance survives the planned-set snapshot round trip', () => {
+  const sets = [{ setIndex: 0, distanceMeters: 1250, durationSeconds: 150 }];
+  const snapshot = buildSessionNoteSnapshot({ sets });
+  expect(readPlannedSetsJson(snapshot.plannedSetsJson as never)[0]).toMatchObject(sets[0]!);
 });

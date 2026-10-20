@@ -1,3 +1,4 @@
+import { resolveLockedFields } from './exercise-set-variables';
 export { coachRoutineSchema } from './coach-routine-contract';
 export const COACH_BLOCKS = ['strength', 'cardio', 'isometric', 'plio', 'mobility', 'sport'] as const;
 export type CoachBlockKind = (typeof COACH_BLOCKS)[number];
@@ -38,6 +39,11 @@ export function normalizeCoachRoutine(value: Record<string, unknown>): Record<st
     days: ((value.days ?? []) as Record<string, unknown>[]).map((day, index) => ({
       ...day,
       dayIndex: index + 1,
+      cardioBlocks:
+        (day.cardioBlocks as Record<string, unknown>[] | undefined)?.map((block) => ({
+          ...block,
+          methodType: block.methodType ?? 'continuo',
+        })) ?? [],
       exercises:
         (day.exercises as Record<string, unknown>[] | undefined)?.map((block) => ({
           ...block,
@@ -59,7 +65,14 @@ export function createCoachBlock(
   sortOrder: number,
   libraryId?: string,
 ): Record<string, unknown> {
-  const block: Record<string, unknown> = { displayName, sortOrder, fieldModes: [], sets: [], lockedFields: [], notes: '' };
+  const block: Record<string, unknown> = {
+    displayName,
+    sortOrder,
+    fieldModes: [],
+    sets: [],
+    lockedFields: resolveLockedFields(kind),
+    notes: '',
+  };
   if (libraryId) block[COACH_LIBRARY_IDS[kind]] = libraryId;
   if (kind === 'strength' || kind === 'isometric') block.setsPlanned = 3;
   if (kind === 'strength')

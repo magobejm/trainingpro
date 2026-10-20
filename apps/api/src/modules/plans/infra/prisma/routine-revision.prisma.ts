@@ -1,3 +1,4 @@
+import { normalizeRoutineSetVariables } from '@trainerpro/shared';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma } from '@prisma/client';
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
@@ -18,7 +19,7 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
   const frozen = await tx.routineRevision.findUnique({
     where: { templateId_version: { templateId, version: template.templateVersion } },
   });
-  if (frozen) return frozen.content as Prisma.InputJsonObject;
+  if (frozen) return normalizeRoutineSetVariables(frozen.content) as Prisma.InputJsonObject;
   const include = routineTemplateInclude();
   include.routineObjectives = { include: { objective: true } };
   for (const [key, relation] of Object.entries(blockLibraries)) include.days.include[key].include[relation] = true;
@@ -74,7 +75,7 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
     });
     delete day.warmupTemplateIds;
   });
-  return JSON.parse(JSON.stringify(mapped)) as Prisma.InputJsonObject;
+  return JSON.parse(JSON.stringify({ ...mapped, setVariablesVersion: 2 })) as Prisma.InputJsonObject;
 }
 
 export async function ensureRoutineRevision(tx: Tx, templateId: string, initial = false) {
@@ -142,7 +143,7 @@ function copyFields<T extends object, K extends keyof T>(value: T, excluded: K[]
 /** Preserve library instructions as they were when the routine was applied. */
 export async function attachRevisionInstructions(tx: Tx, templateId: string, version: number, days: any[]) {
   const revision = await tx.routineRevision.findUnique({ where: { templateId_version: { templateId, version } } });
-  const content = revision?.content as { days?: any[] } | undefined;
+  const content = normalizeRoutineSetVariables(revision?.content) as { days?: any[] } | undefined;
   for (const day of days) {
     const saved = content?.days?.find((item) => item.dayIndex === day.dayIndex);
     if (!saved) continue;

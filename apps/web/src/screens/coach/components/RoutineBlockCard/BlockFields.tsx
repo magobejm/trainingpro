@@ -218,8 +218,7 @@ function SeriesSpinbox({
 /** Per-type global fields (everything except the Series spinbox) */
 function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   const x = txtField(block, onUpdateField, readOnly, t);
-  if (block.type === 'cardio')
-    return <CardioGlobalFields block={block} onUpdateField={onUpdateField} readOnly={readOnly} t={t} />;
+  if (block.type === 'cardio') return null;
   if (block.type === 'isometric') return null;
   if (blockTypeShowsRepRange(block.type)) return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   return (
@@ -229,22 +228,6 @@ function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
       readOnly={readOnly}
       value={block.durationMinutes}
     />
-  );
-}
-
-function CardioGlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
-  return (
-    <>
-      <TextField
-        label={t('coach.routine.block.totalTime')}
-        onChange={(v) => {
-          onUpdateField('totalTimeSeconds', v ? Number(v) : undefined);
-        }}
-        readOnly={readOnly}
-        value={block.totalTimeSeconds !== undefined ? String(block.totalTimeSeconds) : ''}
-        placeholder={t('coach.routine.block.totalTimePlaceholder')}
-      />
-    </>
   );
 }
 
@@ -324,7 +307,7 @@ const sp = {
 };
 
 const bf = {
-  container: { gap: space.md },
+  container: { width: '100%' as const, minWidth: 0, gap: space.md },
   tableHeader: {
     flexDirection: 'row' as const,
     alignItems: 'center' as const,

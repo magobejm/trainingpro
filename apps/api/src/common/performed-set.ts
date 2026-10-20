@@ -76,6 +76,7 @@ export function sportLogHasData(row: SportLogFields): boolean {
 }
 
 type SportSetFields = {
+  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;
@@ -93,6 +94,7 @@ export function sportSetHasData(set: SportSetFields): boolean {
     set.weightDoneKg,
     set.effortRpe,
     set.effortRir,
+    set.distanceDoneMeters,
     set.durationSecondsDone,
     set.heartRateDone,
     set.hrMaxPctDone,

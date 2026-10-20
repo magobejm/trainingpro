@@ -19,12 +19,12 @@ describe('previous workout cards', () => {
     expect(columns.map((column) => column.key)).toEqual([
       'repsDone',
       'weightDoneKg',
+      'effortRpe',
+      'hrMaxPctDone',
       'durationSecondsDone',
       'distanceDoneMeters',
-      'effortRpe',
-      'effortRir',
       'heartRateDone',
-      'hrMaxPctDone',
+      'effortRir',
       'hrReservePctDone',
       'romDone',
       'restSecondsDone',
@@ -37,4 +37,10 @@ describe('previous workout cards', () => {
   it('formats date-only values without a timezone shift', () => {
     expect(historyDate('2026-10-12', 'es')).toBe('12/10/2026');
   });
+});
+
+it('formats distances in km and durations in minutes only for cardio and sport', () => {
+  expect(historyCell(1250, 'distanceDoneMeters', 'cardio')).toBe('1.25');
+  expect(historyCell(150, 'durationSecondsDone', 'sport')).toBe('2.5');
+  expect(historyCell(150, 'durationSecondsDone', 'plio')).toBe('150');
 });

@@ -433,6 +433,8 @@ export function mapTemplateSportSnapshot(block: {
     durationMinutes: block.durationMinutes,
     notes: noteSnapshot.notes,
     plannedSetsJson: buildStoredPlannedSetsJson('sport', block.sets, {
+      durationMinutes: block.durationMinutes,
+      setsPlanned: block.sets?.length || 1,
       notes: block.notes,
       targetRpe: toRpeNumber(block.targetRpe),
     }),
@@ -535,6 +537,7 @@ export function mapSportLog(row: {
 }
 
 export function mapSportSetLog(row: {
+  distanceDoneMeters?: null | number;
   durationSecondsDone: null | number;
   effortRir: null | number;
   effortRpe: Prisma.Decimal | null | number;
@@ -549,6 +552,7 @@ export function mapSportSetLog(row: {
   weightDoneKg: Prisma.Decimal | null;
 }): SessionSportSetLog {
   return {
+    distanceDoneMeters: row.distanceDoneMeters ?? null,
     durationSecondsDone: row.durationSecondsDone,
     effortRir: row.effortRir,
     effortRpe: toRpeNumber(row.effortRpe),

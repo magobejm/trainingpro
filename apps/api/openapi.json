@@ -1120,6 +1120,16 @@
                               }
                             ]
                           },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "durationSeconds": {
                             "anyOf": [
                               {
@@ -1444,6 +1454,16 @@
                             "anyOf": [
                               {
                                 "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
                               },
                               {
                                 "type": "null"
@@ -1790,6 +1810,16 @@
                               }
                             ]
                           },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "durationSeconds": {
                             "anyOf": [
                               {
@@ -2120,6 +2150,16 @@
                               }
                             ]
                           },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "durationSeconds": {
                             "anyOf": [
                               {
@@ -2426,6 +2466,16 @@
                               }
                             ]
                           },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "durationSeconds": {
                             "anyOf": [
                               {
@@ -2549,6 +2599,16 @@
                       "items": {
                         "additionalProperties": false,
                         "properties": {
+                          "distanceDoneMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "durationSecondsDone": {
                             "anyOf": [
                               {
@@ -2869,6 +2929,16 @@
                             "anyOf": [
                               {
                                 "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "distanceMeters": {
+                            "anyOf": [
+                              {
+                                "type": "number"
                               },
                               {
                                 "type": "null"
@@ -3354,6 +3424,16 @@
                               "anyOf": [
                                 {
                                   "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "distanceMeters": {
+                              "anyOf": [
+                                {
+                                  "type": "number"
                                 },
                                 {
                                   "type": "null"

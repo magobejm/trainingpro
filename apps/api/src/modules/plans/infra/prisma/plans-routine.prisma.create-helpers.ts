@@ -118,6 +118,7 @@ export function mapCardioCreate(b: RoutineCardioInput, groupId: null | string): 
 function mapCardioSetCreate(s: RoutineCardioSetInput) {
   return {
     setIndex: s.setIndex,
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     fcMaxPct: s.fcMaxPct ?? null,
     fcReservePct: s.fcReservePct ?? null,
@@ -208,6 +209,7 @@ export function mapSportCreate(b: RoutineSportInput, groupId: null | string): an
 function mapSportSetCreate(s: RoutineSportSetInput) {
   return {
     setIndex: s.setIndex,
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: toDecimal(s.rpe),

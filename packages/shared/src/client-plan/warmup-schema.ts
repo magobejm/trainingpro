@@ -10,6 +10,7 @@ const set = z.object({
   restSeconds: metric,
   rir: metric,
   rpe: metric,
+  distanceMeters: metric,
   durationSeconds: metric,
   heartRate: metric,
   fcMaxPct: metric,

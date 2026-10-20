@@ -1,5 +1,5 @@
 import { Controller, Get, NotFoundException, Param, Query, UseGuards } from '@nestjs/common';
-import { compareRoutineContent } from '@trainerpro/shared';
+import { normalizeRoutineSetVariables, compareRoutineContent } from '@trainerpro/shared';
 import { z } from 'zod';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
@@ -22,7 +22,7 @@ export class ClientRoutineHistoryController {
       include: { activeRoutineAssignment: { include: { revision: true } } },
     });
     return (
-      client.activeRoutineAssignment?.revision.content ??
+      normalizeRoutineSetVariables(client.activeRoutineAssignment?.revision.content) ??
       (client.trainingPlanId ? await readRoutineContent(this.db, client.trainingPlanId) : null)
     );
   }
@@ -69,8 +69,11 @@ export class ClientRoutineHistoryController {
       include: { activeRoutineAssignment: { include: { revision: true } } },
     });
     return {
-      content: row.revision.content,
-      comparison: compareRoutineContent(row.revision.content, client.activeRoutineAssignment?.revision.content ?? null),
+      content: normalizeRoutineSetVariables(row.revision.content),
+      comparison: compareRoutineContent(
+        normalizeRoutineSetVariables(row.revision.content),
+        normalizeRoutineSetVariables(client.activeRoutineAssignment?.revision.content) ?? null,
+      ),
     };
   }
 }

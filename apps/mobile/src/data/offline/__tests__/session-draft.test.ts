@@ -33,3 +33,20 @@ function memoryKv(): KvBackend {
     },
   };
 }
+
+it('upgrades legacy locks without changing queued seconds or metres', async () => {
+  const backend = memoryKv();
+  const session = sampleSession();
+  session.items = [{ type: 'cardio', lockedFields: [] }] as never;
+  const draft = upsertOp(createSessionDraft(session), {
+    kind: 'log-interval',
+    dedupeKey: 'old',
+    path: '/old',
+    body: { durationSecondsDone: 150, distanceDoneMeters: 1250 },
+  });
+  await writeSessionDraft({ ...draft, version: 1 } as never, backend);
+  const restored = await readSessionDraft(draft.sessionId, backend);
+  expect(restored?.session?.items[0]?.lockedFields).toEqual(['distanceMeters']);
+  expect(restored?.ops[0]?.body).toEqual(draft.ops[0]?.body);
+  expect(restored?.version).toBe(2);
+});

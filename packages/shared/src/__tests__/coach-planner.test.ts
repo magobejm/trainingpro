@@ -1,5 +1,25 @@
 import { coachRoutineSchema, moveCoachItem, nutritionAmountTotals, normalizeCoachRoutine } from '../coach-planner';
 
+it('saves API cardio blocks without a method while preserving explicit methods and canonical series', () => {
+  const block = {
+    displayName: 'Carrera',
+    sortOrder: 0,
+    roundsPlanned: 1,
+    restSeconds: 30,
+    workSeconds: 150,
+    fieldModes: [{ fieldKey: 'durationSeconds', mode: 'COACH_INPUT' }],
+    sets: [{ setIndex: 0, distanceMeters: 1250, durationSeconds: 150 }],
+  };
+  const input = {
+    name: 'API routine',
+    days: [{ title: 'Día', cardioBlocks: [block, { ...block, sortOrder: 1, methodType: 'intervalos' }] }],
+  };
+  const result = coachRoutineSchema.parse(normalizeCoachRoutine(input));
+  expect(result.days[0]?.cardioBlocks.map((row) => row.methodType)).toEqual(['continuo', 'intervalos']);
+  expect(result.days[0]?.cardioBlocks[0]?.sets[0]).toMatchObject({ distanceMeters: 1250, durationSeconds: 150 });
+  expect(block).not.toHaveProperty('methodType');
+});
+
 describe('coach planner interoperability', () => {
   it('round trips every block category and advanced prescription', () => {
     const value = {

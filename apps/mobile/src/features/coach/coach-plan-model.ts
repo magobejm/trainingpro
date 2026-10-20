@@ -1,4 +1,11 @@
-import { COACH_BLOCK_ARRAYS, COACH_BLOCKS, type CoachBlockKind } from '@trainerpro/shared';
+import {
+  setVariablesForType,
+  usesMinuteDuration,
+  toSetDisplayValue,
+  COACH_BLOCK_ARRAYS,
+  COACH_BLOCKS,
+  type CoachBlockKind,
+} from '@trainerpro/shared';
 export type PlanRecord = Record<string, unknown>;
 export type PlanEntry = { kind: CoachBlockKind; index: number; value: PlanRecord };
 export function routineEntries(day: PlanRecord): PlanEntry[] {
@@ -71,4 +78,39 @@ export function moveRoutineBlockToDay(days: PlanRecord[], from: number, to: numb
         ? { ...target, groups, [key]: [...((target[key] as PlanRecord[]) ?? []), block] }
         : day,
   );
+}
+
+export function coachDocumentSetLines(
+  kind: CoachBlockKind,
+  value: PlanRecord,
+  t: (key: string) => string,
+  supplied?: PlanRecord[],
+): string[] {
+  const prescribed = supplied ?? (value.sets as PlanRecord[]) ?? [];
+  const duration = usesMinuteDuration(kind)
+    ? (value.workSeconds ?? (value.durationMinutes == null ? null : Number(value.durationMinutes) * 60))
+    : null;
+  const count = Math.max(prescribed.length, Number(value.setsPlanned ?? value.roundsPlanned ?? 0), duration == null ? 0 : 1);
+  return Array.from({ length: count }, (_, index) => {
+    const row = prescribed.find((set) => Number(set.setIndex) === index) ?? prescribed[index] ?? {};
+    const set = {
+      ...row,
+      ...(row.durationSeconds == null && duration != null ? { durationSeconds: duration } : {}),
+    } as PlanRecord;
+    return (
+      t('coachWorkspace.set') +
+      ' ' +
+      (index + 1) +
+      ': ' +
+      [...setVariablesForType(kind), 'advancedTechnique', 'note']
+        .filter((key) => set[key] != null && set[key] !== '')
+        .map(
+          (key) =>
+            t('coachWorkspace.field.' + (key === 'durationSeconds' && usesMinuteDuration(kind) ? 'durationMinutes' : key)) +
+            ' ' +
+            String(typeof set[key] === 'number' ? toSetDisplayValue(kind, key, set[key] as number) : set[key]),
+        )
+        .join(' · ')
+    );
+  });
 }

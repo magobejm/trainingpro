@@ -1878,5 +1878,14 @@
   "routineVersions.values.restPause": "Rest-pause",
   "routineVersions.counts.added": "Added",
   "routineVersions.counts.removed": "Removed",
-  "routineVersions.counts.modified": "Modified"
+  "routineVersions.counts.modified": "Modified",
+  "coach.routine.seriesTable.col.distanceMeters": "Distance (km)",
+  "coach.routine.seriesTable.col.durationMinutes": "Duration (min)",
+  "mobile.client.exercise.seriesTable.distance": "Distance (km)",
+  "mobile.client.exercise.seriesTable.durationMinutes": "Duration (min)",
+  "mobile.client.history.distanceKm": "Distance (km)",
+  "mobile.client.history.durationMinutes": "Duration (min)",
+  "web.pdf.distanceMeters": "Distance",
+  "coachWorkspace.field.distanceMeters": "Distance (km)",
+  "coachWorkspace.variableLimit": "Maximum 6 active variables. Lock one to enable another."
 }

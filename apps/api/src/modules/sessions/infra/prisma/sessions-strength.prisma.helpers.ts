@@ -182,6 +182,7 @@ export function mapSession(
       plannedSets: readPlannedSets(b.sortOrder, b.plannedSetsJson),
       setLogs: b.setLogs.map(
         (l): SessionSportSetLog => ({
+          distanceDoneMeters: l.distanceDoneMeters,
           durationSecondsDone: l.durationSecondsDone,
           effortRir: l.effortRir,
           effortRpe: toRpeNumber(l.effortRpe),

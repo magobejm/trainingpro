@@ -1,5 +1,6 @@
+import { usesMinuteDuration } from '@trainerpro/shared';
 import type { WarmupTemplateItemInput } from '../../../../data/hooks/useWarmupTemplates';
-import { blockTypeShowsRepRange, blockTypeShowsTotalTime } from '../../exercise-rep-range';
+import { blockTypeShowsRepRange } from '../../exercise-rep-range';
 import { resolvePlaceholder } from './ExercisePickerModal.utils';
 import type { BlockType } from '../../RoutinePlanner.types';
 
@@ -25,6 +26,7 @@ export function resolveLibraryId(item: WarmupTemplateItemInput): string | null {
 
 export type PerSet = {
   setIndex: number;
+  distanceMeters?: number;
   durationSeconds?: number;
   fcMaxPct?: number;
   fcReservePct?: number;
@@ -45,6 +47,7 @@ export function parseSets(item: WarmupTemplateItemInput): PerSet[] {
     .filter((s): s is Record<string, unknown> => s !== null && typeof s === 'object')
     .map((s, i) => ({
       setIndex: typeof s.setIndex === 'number' ? s.setIndex : i,
+      distanceMeters: typeof s.distanceMeters === 'number' ? s.distanceMeters : undefined,
       durationSeconds: typeof s.durationSeconds === 'number' ? s.durationSeconds : undefined,
       fcMaxPct: typeof s.fcMaxPct === 'number' ? s.fcMaxPct : undefined,
       fcReservePct: typeof s.fcReservePct === 'number' ? s.fcReservePct : undefined,
@@ -63,13 +66,18 @@ export function parseSets(item: WarmupTemplateItemInput): PerSet[] {
 export function resolveDisplaySets(item: WarmupTemplateItemInput): PerSet[] {
   const parsed = parseSets(item);
   const planned = item.setsPlanned ?? item.roundsPlanned ?? 0;
-  const n = Math.max(planned, parsed.length);
+  const legacySeconds = usesMinuteDuration(toBlockType(item.blockType))
+    ? (item.workSeconds ?? (item.durationMinutes == null ? undefined : item.durationMinutes * 60))
+    : undefined;
+  const n = Math.max(planned, parsed.length, legacySeconds == null ? 0 : 1);
   if (n <= 0) return [];
 
   const rows: PerSet[] = [];
   for (let i = 0; i < n; i++) {
     const fromParsed = parsed.find((s) => s.setIndex === i);
-    rows.push(fromParsed ? { ...fromParsed, setIndex: i } : { setIndex: i });
+    const row = fromParsed ? { ...fromParsed, setIndex: i } : { setIndex: i };
+    if (row.durationSeconds == null && legacySeconds != null) row.durationSeconds = legacySeconds;
+    rows.push(row);
   }
   return rows;
 }
@@ -99,23 +107,9 @@ export function buildWarmupMainFieldChips(item: WarmupTemplateItemInput, t: (key
       value: repsRange ?? dash,
     });
   };
-  const pushWork = (out: MainFieldChip[]) => {
-    out.push({
-      label: t('coach.routine.block.work'),
-      value: item.workSeconds != null ? `${item.workSeconds}s` : dash,
-    });
-  };
-  const pushTotalTime = (out: MainFieldChip[]) => {
-    out.push({
-      label: t('coach.warmupExerciseList.mainFieldTotalTime'),
-      value: item.durationMinutes != null ? `${item.durationMinutes} min` : dash,
-    });
-  };
-
   const out: MainFieldChip[] = [];
   pushSeries(out);
   if (blockTypeShowsRepRange(item.blockType)) pushRepsRange(out);
-  if (item.blockType === 'cardio' || item.blockType === 'sport') pushWork(out);
-  if (blockTypeShowsTotalTime(item.blockType)) pushTotalTime(out);
+
   return out;
 }

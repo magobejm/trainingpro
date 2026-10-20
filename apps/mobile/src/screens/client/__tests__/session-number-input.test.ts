@@ -31,3 +31,10 @@ describe('session number input', () => {
     expect(sanitizeSessionNumber('rpe', '7,5')).toBe('7,5');
   });
 });
+
+it('allows kilometre precision and decimal minutes only for cardio/sport', () => {
+  expect(sanitizeSessionNumber('distance', '1,2509')).toBe('1,250');
+  expect(sanitizeSessionNumber('duration', '2,5', true)).toBe('2,5');
+  expect(sanitizeSessionNumber('duration', '2,5')).toBe('2');
+  expect(keyboardForField('duration', true)).toBe('decimal-pad');
+});

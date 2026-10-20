@@ -1,6 +1,7 @@
-import { setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
+import { toSetDisplayValue, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 
 export type PlannedSetLike = {
+  distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
   fcReservePct?: null | number;
@@ -15,6 +16,7 @@ export type PlannedSetLike = {
 };
 
 export type LoggedSetLike = {
+  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;
@@ -53,6 +55,7 @@ export type ComparedRow = {
 };
 
 const PLANNED_KEY: Record<SetVariableKey, keyof PlannedSetLike> = {
+  distanceMeters: 'distanceMeters',
   durationSeconds: 'durationSeconds',
   fcMaxPct: 'fcMaxPct',
   fcReservePct: 'fcReservePct',
@@ -66,6 +69,7 @@ const PLANNED_KEY: Record<SetVariableKey, keyof PlannedSetLike> = {
 };
 
 const DONE_KEY: Record<SetVariableKey, keyof LoggedSetLike> = {
+  distanceMeters: 'distanceDoneMeters',
   durationSeconds: 'durationSecondsDone',
   fcMaxPct: 'hrMaxPctDone',
   fcReservePct: 'hrReservePctDone',
@@ -88,8 +92,8 @@ export function comparePlannedAndLogged(item: SessionCompareItem): ComparedRow[]
     return {
       setIndex,
       cells: columns.map((key) => {
-        const plannedValue = formatValue(planned?.[PLANNED_KEY[key]]);
-        const doneValue = formatDone(key, done);
+        const plannedValue = formatDisplay(item.type, key, planned?.[PLANNED_KEY[key]]);
+        const doneValue = formatDone(key, done, item.type);
         return {
           differs: plannedValue !== '-' && doneValue !== '-' && plannedValue !== doneValue,
           done: doneValue,
@@ -117,15 +121,19 @@ function collectSetIndexes(planned: PlannedSetLike[], logs: LoggedSetLike[]): nu
   return [...indexes].sort((a, b) => a - b);
 }
 
-function formatDone(key: SetVariableKey, log: LoggedSetLike | undefined): string {
+function formatDone(key: SetVariableKey, log: LoggedSetLike | undefined, type: SessionCompareItem['type']): string {
   if (!log) return '-';
   if (key === 'heartRate' && log.heartRateDone == null && log.avgHeartRate != null) {
     return formatValue(log.avgHeartRate);
   }
-  return formatValue(log[DONE_KEY[key]]);
+  return formatDisplay(type, key, log[DONE_KEY[key]]);
 }
 
 function formatValue(value: null | number | string | undefined): string {
   if (value == null || value === '') return '-';
   return String(value);
+}
+
+function formatDisplay(type: SessionCompareItem['type'], key: SetVariableKey, value: unknown): string {
+  return formatValue(typeof value === 'number' ? toSetDisplayValue(type, key, value) : (value as string | null | undefined));
 }

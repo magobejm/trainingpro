@@ -22,3 +22,10 @@ describe('web effort input', () => {
     expect(parseAndValidateNumericInput('6.5', 'rir')).toBeUndefined();
   });
 });
+
+it('accepts comma-separated km and minute duration with their own precision', () => {
+  expect(parseAndValidateNumericInput('1,250', 'distance')).toBe(1.25);
+  expect(parseAndValidateNumericInput('0.0001', 'distance')).toBeUndefined();
+  expect(parseAndValidateNumericInput('500.001', 'distance')).toBeUndefined();
+  expect(parseAndValidateNumericInput('2,5', 'minutes')).toBe(2.5);
+});

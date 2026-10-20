@@ -850,5 +850,14 @@
   "mobile.client.warmup.summary": "{{routine}} rutina · {{warmup}} calentamiento",
   "mobile.client.warmup.close": "Volver al entrenamiento",
   "mobile.client.warmup.previous": "Anterior",
-  "mobile.client.warmup.next": "Siguiente"
+  "mobile.client.warmup.next": "Siguiente",
+  "coach.routine.seriesTable.col.distanceMeters": "Distancia (km)",
+  "coach.routine.seriesTable.col.durationMinutes": "Duración (min)",
+  "mobile.client.exercise.seriesTable.distance": "Distancia (km)",
+  "mobile.client.exercise.seriesTable.durationMinutes": "Duración (min)",
+  "mobile.client.history.distanceKm": "Distancia (km)",
+  "mobile.client.history.durationMinutes": "Duración (min)",
+  "web.pdf.distanceMeters": "Distancia",
+  "coachWorkspace.field.distanceMeters": "Distancia (km)",
+  "coachWorkspace.variableLimit": "Máximo 6 variables activas. Bloquea una para activar otra."
 }

@@ -1,3 +1,4 @@
+import { usesMinuteDuration, toSetDisplayValue } from '../set-variable-units';
 import type { ClientRoutineExercise, ClientRoutineSet } from './types';
 
 import { resolveLockedFields, setVariablesForType, type SetVariableKey } from '../exercise-set-variables';
@@ -51,6 +52,11 @@ const ROUTINE_COLUMN_BY_KEY: Record<SetVariableKey, RoutineSetColumn> = {
     labelKey: 'mobile.client.exercise.seriesTable.fcMaxPct',
     format: (set) => formatNumber(set.fcMaxPct),
   },
+  distanceMeters: {
+    key: 'distanceMeters',
+    labelKey: 'mobile.client.exercise.seriesTable.distance',
+    format: (set) => (set.distanceMeters == null ? '-' : `${set.distanceMeters / 1000} km`),
+  },
   durationSeconds: {
     key: 'durationSeconds',
     labelKey: 'mobile.client.exercise.seriesTable.duration',
@@ -72,7 +78,15 @@ const ROUTINE_COLUMN_BY_KEY: Record<SetVariableKey, RoutineSetColumn> = {
 };
 
 function getRoutineSetColumnsForType(type: ClientRoutineExercise['type']): RoutineSetColumn[] {
-  return setVariablesForType(type).map((key) => ROUTINE_COLUMN_BY_KEY[key]);
+  return setVariablesForType(type).map((key) =>
+    key === 'durationSeconds' && usesMinuteDuration(type)
+      ? {
+          ...ROUTINE_COLUMN_BY_KEY[key],
+          labelKey: 'mobile.client.exercise.seriesTable.durationMinutes',
+          format: (set) => (set.durationSeconds == null ? '-' : `${toSetDisplayValue(type, key, set.durationSeconds)} min`),
+        }
+      : ROUTINE_COLUMN_BY_KEY[key],
+  );
 }
 
 export function exerciseTypeShowsRepRange(type: ClientRoutineExercise['type']): boolean {

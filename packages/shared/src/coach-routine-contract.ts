@@ -43,6 +43,7 @@ const strengthSetSchema = z.object({
 
 const cardioSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
+  distanceMeters: z.number().int().min(0).max(500000).nullable().optional(),
   durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   fcMaxPct: z.number().int().min(0).max(100).nullable().optional(),
   fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
@@ -87,6 +88,7 @@ const mobilitySetSchema = z.object({
 
 const sportSetSchema = z.object({
   setIndex: z.number().int().min(0).max(99),
+  distanceMeters: z.number().int().min(0).max(500000).nullable().optional(),
   durationSeconds: z.number().int().min(0).max(3600).nullable().optional(),
   reps: z.number().int().min(0).max(999).nullable().optional(),
   rpe: rpeHalfSchema,

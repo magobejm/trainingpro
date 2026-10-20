@@ -93,3 +93,9 @@ describe('routine content comparison', () => {
     },
   );
 });
+
+it('ignores the technical variable-defaults marker', () => {
+  expect(compareRoutineContent({ name: 'A', days: [] }, { name: 'A', days: [], setVariablesVersion: 2 }).changes).toEqual(
+    [],
+  );
+});

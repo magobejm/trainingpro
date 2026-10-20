@@ -73,6 +73,7 @@ export type LogIsometricSetMutationInput = {
 };
 
 export type LogSportMutationInput = {
+  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;
@@ -88,6 +89,7 @@ export type LogSportMutationInput = {
 };
 
 export type LogIntervalMutationInput = {
+  distanceDoneMeters?: null | number;
   avgHeartRate?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;

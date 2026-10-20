@@ -42,6 +42,20 @@ describe('edit window on every session write', () => {
     jest.useRealTimers();
   });
 
+  it('rejects cardio inside a routine after the local day closes', async () => {
+    jest.setSystemTime(LATE);
+    const write = jest.fn();
+    const repository = {
+      canAccessSession: async () => true,
+      getCardioSessionById: async () => null,
+      getSessionById: async () => ({ sessionDate: SESSION_DATE }),
+      logInterval: write,
+    } as unknown as SessionsRepositoryPort;
+    const useCase = new LogIntervalUseCase(repository, new SessionAccessPolicy(repository), new EditWindowPolicy());
+    await expect(useCase.execute(AUTH, intervalInput(), 120)).rejects.toBeInstanceOf(ForbiddenException);
+    expect(write).not.toHaveBeenCalled();
+  });
+
   it.each(WRITE_NAMES)('rejects %s after the local day and does not write', async (name) => {
     jest.setSystemTime(LATE);
     const entry = build().find((item) => item.name === name);

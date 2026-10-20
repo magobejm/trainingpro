@@ -1,3 +1,4 @@
+import { resolveLockedFields } from '@trainerpro/shared';
 import { blockTypeShowsRepRange } from './exercise-rep-range';
 import { mapWarmupTemplateItemsToBlocks } from './RoutinePlanner.helpers';
 import type { BlockType, DraftBlock, DraftExerciseGroup } from './RoutinePlanner.types';
@@ -59,7 +60,11 @@ function mapItem(block: DraftBlock, sortOrder: number): WarmupTemplateItemInput 
     exerciseLibraryId: block.type === 'strength' ? (block.libraryId ?? null) : null,
     groupId: block.groupId ?? null,
     isometricExerciseLibraryId: block.type === 'isometric' ? (block.libraryId ?? null) : null,
-    metadataJson: block.sets && block.sets.length > 0 ? { sets: block.sets } : null,
+    metadataJson: {
+      sets: block.sets ?? [],
+      lockedFields: resolveLockedFields(block.type, block.lockedFields),
+      setVariablesVersion: 2,
+    },
     notes,
     plioExerciseLibraryId: block.type === 'plio' ? (block.libraryId ?? null) : null,
     repsMax: range.max,

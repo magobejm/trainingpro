@@ -40,6 +40,7 @@ export const routineAssignmentDetailSchema = z.object({
 export type RoutineAssignmentSummary = z.infer<typeof routineAssignmentSummarySchema>;
 const blockKeys = ['exercises', 'cardioBlocks', 'plioBlocks', 'mobilityBlocks', 'isometricBlocks', 'sportBlocks'];
 const ignored = new Set([
+  'setVariablesVersion',
   'clientWarmups',
   'id',
   'templateId',

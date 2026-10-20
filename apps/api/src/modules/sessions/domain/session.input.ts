@@ -81,6 +81,7 @@ export type LogSportInput = {
 };
 
 export type LogSportSetInput = {
+  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;

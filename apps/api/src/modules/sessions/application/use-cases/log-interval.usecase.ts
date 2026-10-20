@@ -3,10 +3,7 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { LogIntervalInput } from '../../domain/cardio-session.input';
-import {
-  SESSIONS_REPOSITORY,
-  type SessionsRepositoryPort,
-} from '../../domain/sessions-repository.port';
+import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 
 @Injectable()
 export class LogIntervalUseCase {
@@ -18,7 +15,9 @@ export class LogIntervalUseCase {
 
   async execute(context: AuthContext, input: LogIntervalInput, timezoneOffsetMinutes: number) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session = await this.repository.getCardioSessionById(context, input.sessionId);
+    const session =
+      (await this.repository.getCardioSessionById(context, input.sessionId)) ??
+      (await this.repository.getSessionById(context, input.sessionId));
     if (session) {
       this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
     }

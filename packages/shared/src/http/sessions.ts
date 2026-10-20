@@ -8,6 +8,7 @@ const groupType = z.enum(['CIRCUIT', 'SUPERSET']).nullable();
 export const plannedSetSchema = z
   .object({
     advancedTechnique: nullableString,
+    distanceMeters: nullableNumber.optional(),
     durationSeconds: nullableNumber.optional(),
     fcMaxPct: nullableNumber.optional(),
     fcReservePct: nullableNumber.optional(),
@@ -172,6 +173,7 @@ const sportLogSchema = z
 
 const sportSetLogSchema = z
   .object({
+    distanceDoneMeters: nullableNumber.optional(),
     durationSecondsDone: nullableNumber,
     effortRir: nullableNumber,
     effortRpe: nullableNumber,

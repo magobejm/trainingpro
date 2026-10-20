@@ -1,4 +1,4 @@
-import { SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
+import { resolveLockedFields } from '@trainerpro/shared';
 import { normalizePlanTemplateId } from '../../data/normalize-plan-template-id';
 import type { BlockType, DraftBlock, DraftDay, DraftSet, DraftState } from './RoutinePlanner.types';
 import { mapTemplateToDraft as mapTemplateToDraftImpl } from './RoutinePlanner.draft-mapper';
@@ -32,7 +32,7 @@ export function createEmptyDraft(t: (k: string) => string, prefixKey = 'coach.ro
 }
 
 export function createBlock(type: BlockType, displayName: string): DraftBlock {
-  const base: DraftBlock = { displayName, id: nextBlockId(), sets: [], type };
+  const base: DraftBlock = { displayName, id: nextBlockId(), sets: [], type, lockedFields: resolveLockedFields(type) };
   if (['cardio', 'plio', 'mobility'].includes(type)) {
     base.restSeconds = 30;
     base.roundsPlanned = 3;
@@ -48,7 +48,7 @@ export function createBlock(type: BlockType, displayName: string): DraftBlock {
   }
   if (type === 'sport') {
     base.durationMinutes = 30;
-    base.lockedFields = [...SPORT_DEFAULT_LOCKED_VARIABLES];
+    base.lockedFields = resolveLockedFields(type);
   }
   return base;
 }

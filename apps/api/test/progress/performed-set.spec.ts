@@ -6,6 +6,7 @@ import {
   mobilitySetHasData,
   plioSetHasData,
   sportLoadFromLog,
+  sportSetHasData,
   sportLogHasData,
   strengthSetHasData,
   summarizeCardioIntervals,
@@ -102,4 +103,8 @@ describe('performed set', () => {
     expect(averageRecorded([8, null, 6])).toBe(7);
     expect(averageRecorded([null, 0])).toBeNull();
   });
+});
+
+test('sport distance alone counts as a performed set', () => {
+  expect(sportSetHasData({ distanceDoneMeters: 1250 } as never)).toBe(true);
 });

@@ -1,3 +1,4 @@
+import { coachDocumentSetLines } from '../coach-plan-model';
 import { coachMonthDays, localCoachDate, shiftCoachDate, shiftCoachMonth, isCoachDate } from '../coach-calendar';
 import {
   changeRoutineBlock,
@@ -67,4 +68,18 @@ describe('coach workspace date and plan editing', () => {
     expect(routineEntries(day)[0]?.value.sortOrder).toBe(0);
     expect(changeRoutineBlock(changed, 'cardio', 0, null).cardioBlocks).toEqual([]);
   });
+});
+
+it('formats cardio and sport PDF series in order and display units', () => {
+  for (const kind of ['cardio', 'sport'] as const) {
+    const lines = coachDocumentSetLines(
+      kind,
+      { sets: [{ setIndex: 0, distanceMeters: 1250, durationSeconds: 150, rpe: 7 }] },
+      (key) => key,
+    );
+    expect(lines[0]).toBe(
+      'coachWorkspace.set 1: coachWorkspace.field.rpe 7 · coachWorkspace.field.durationMinutes 2.5 · coachWorkspace.field.distanceMeters 1.25',
+    );
+  }
+  expect(coachDocumentSetLines('sport', { durationMinutes: 30 }, (key) => key)[0]).toContain('durationMinutes 30');
 });

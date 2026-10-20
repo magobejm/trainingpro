@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { canUnlockSetVariable, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
 import { buildRoutinePayload, createBlock, createEmptyDraft } from '../RoutinePlanner.helpers';
 import { mapTemplateBlock } from '../RoutinePlanner.template-mapper';
-import { parseSets } from '../components/RoutinePlanner/warmup-exercise-list.helpers';
+import { resolveDisplaySets, parseSets } from '../components/RoutinePlanner/warmup-exercise-list.helpers';
 
 describe('createBlock sport locks', () => {
   it('locks the four extra sport variables by default', () => {
@@ -50,6 +50,7 @@ describe('parseSets', () => {
     ).toEqual([
       {
         setIndex: 0,
+        distanceMeters: undefined,
         durationSeconds: 90,
         fcMaxPct: 80,
         fcReservePct: undefined,
@@ -64,4 +65,32 @@ describe('parseSets', () => {
       },
     ]);
   });
+});
+
+it('round trips distance prescriptions for cardio and sport', () => {
+  const draft = createEmptyDraft((key) => key);
+  for (const type of ['cardio', 'sport'] as const)
+    draft.days[0]!.blocks.push({
+      ...createBlock(type, type),
+      sets: [{ setIndex: 0, distanceMeters: 1250, durationSeconds: 150 }],
+    });
+  const payload = buildRoutinePayload(draft);
+  for (const key of ['cardioBlocks', 'sportBlocks'] as const) {
+    const block = payload.days[0]![key][0]!;
+    expect(block.sets[0]).toMatchObject({ distanceMeters: 1250, durationSeconds: 150 });
+    expect(mapTemplateBlock(key === 'cardioBlocks' ? 'cardio' : 'sport', block, createBlock).sets?.[0]).toMatchObject({
+      distanceMeters: 1250,
+      durationSeconds: 150,
+    });
+  }
+});
+
+it('shows legacy warmup durations inside the sets', () => {
+  expect(resolveDisplaySets({ blockType: 'cardio', roundsPlanned: 2, workSeconds: 120 } as never)).toEqual([
+    { setIndex: 0, durationSeconds: 120 },
+    { setIndex: 1, durationSeconds: 120 },
+  ]);
+  expect(resolveDisplaySets({ blockType: 'sport', durationMinutes: 30 } as never)).toEqual([
+    { setIndex: 0, durationSeconds: 1800 },
+  ]);
 });

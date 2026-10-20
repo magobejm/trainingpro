@@ -12,7 +12,14 @@ import type {
 import { filterActiveSetColumns, isFieldLocked, isRestFieldLocked } from '../../utils/locked-fields.utils';
 import { toYouTubeEmbedUrl } from '../../utils/library-media.helpers';
 import { resolvePlannedSet } from './planned-set.utils';
-import { resolveLockedFields, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
+import {
+  toSetDisplayValue,
+  fromSetDisplayValue,
+  usesMinuteDuration,
+  resolveLockedFields,
+  setVariablesForType,
+  type SetVariableKey,
+} from '@trainerpro/shared';
 import { exerciseTypeShowsRepRange, formatRepRangeBounds } from './routine-exercise-set.utils';
 import { formatRestLabel } from './session-completion.utils';
 
@@ -32,6 +39,7 @@ export type SetFieldKey =
 export type SetColumn = {
   key: SetFieldKey;
   labelKey: string;
+  minutes?: boolean;
   scale?: 'none' | 'rpe' | 'rir' | 'rom';
 };
 
@@ -73,6 +81,7 @@ const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
   weightKg: { key: 'weight', labelKey: 'mobile.client.history.weight' },
   rpe: { key: 'rpe', labelKey: 'mobile.client.history.rpe', scale: 'rpe' },
   fcMaxPct: { key: 'fcMaxPct', labelKey: 'mobile.client.history.fcMaxPct' },
+  distanceMeters: { key: 'distance', labelKey: 'mobile.client.history.distanceKm' },
   durationSeconds: { key: 'duration', labelKey: 'mobile.client.history.duration' },
   heartRate: { key: 'heartRate', labelKey: 'mobile.client.history.heartRate' },
   rir: { key: 'rir', labelKey: 'mobile.client.history.rir', scale: 'rir' },
@@ -82,7 +91,15 @@ const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
 };
 
 function getBaseSetColumns(item: SessionItem): SetColumn[] {
-  return setVariablesForType(item.type).map((key) => ACTIVE_COLUMN_BY_KEY[key]);
+  return setVariablesForType(item.type).map((key) =>
+    key === 'durationSeconds' && usesMinuteDuration(item.type)
+      ? {
+          ...ACTIVE_COLUMN_BY_KEY[key],
+          labelKey: 'mobile.client.history.durationMinutes',
+          minutes: true,
+        }
+      : ACTIVE_COLUMN_BY_KEY[key],
+  );
 }
 
 export function readTargetValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
@@ -109,7 +126,17 @@ export function readTargetValue(item: SessionItem, setIndex: number, key: SetFie
     const rest = planned?.restSeconds ?? ('restSeconds' in item ? item.restSeconds : null);
     return formatTargetSeconds(rest);
   }
+  if (key === 'distance') {
+    const metres = planned?.distanceMeters ?? (item.type === 'cardio' ? item.targetDistanceMeters : null);
+    return metres == null ? '-' : `${metres / 1000} km`;
+  }
   if (key === 'duration') {
+    if (usesMinuteDuration(item.type)) {
+      const seconds =
+        planned?.durationSeconds ??
+        (item.type === 'cardio' ? item.workSeconds : item.type === 'sport' ? item.durationMinutes * 60 : null);
+      return seconds == null ? '-' : `${toSetDisplayValue(item.type, 'durationSeconds', seconds)} min`;
+    }
     if (planned?.durationSeconds != null) return formatTargetSeconds(planned.durationSeconds);
     if (item.type === 'cardio' && item.workSeconds) return `${item.workSeconds}s`;
     if (item.type === 'sport') return `${item.durationMinutes}m`;
@@ -166,7 +193,11 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
     case 'cardio': {
       const log = item.intervalLogs.find((entry) => entry.intervalIndex === setIndex);
       if (!log) return '';
-      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
+      if (key === 'distance') return log.distanceDoneMeters != null ? String(log.distanceDoneMeters / 1000) : '';
+      if (key === 'duration')
+        return log.durationSecondsDone != null
+          ? String(toSetDisplayValue(item.type, 'durationSeconds', log.durationSecondsDone))
+          : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
       if (key === 'heartRate') return log.avgHeartRate != null ? String(log.avgHeartRate) : '';
       if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
@@ -179,7 +210,11 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
       if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
       if (key === 'fcMaxPct') return log.hrMaxPctDone != null ? String(log.hrMaxPctDone) : '';
-      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
+      if (key === 'distance') return log.distanceDoneMeters != null ? String(log.distanceDoneMeters / 1000) : '';
+      if (key === 'duration')
+        return log.durationSecondsDone != null
+          ? String(toSetDisplayValue(item.type, 'durationSeconds', log.durationSecondsDone))
+          : '';
       if (key === 'heartRate') return log.heartRateDone != null ? String(log.heartRateDone) : '';
       if (key === 'rir') return log.effortRir != null ? String(log.effortRir) : '';
       if (key === 'fcReservePct') return log.hrReservePctDone != null ? String(log.hrReservePctDone) : '';
@@ -256,10 +291,11 @@ function lockedOrDraftNumber(
   activeKey: SetFieldKey,
   draftValue: string,
 ): null | number {
-  if (isFieldLocked(item.lockedFields, webFieldKey)) {
-    return parseNumber(readActualValue(item, setIndex, activeKey));
-  }
-  return parseNumber(draftValue);
+  const raw = isFieldLocked(resolveLockedFields(item.type, item.lockedFields), webFieldKey)
+    ? readActualValue(item, setIndex, activeKey)
+    : draftValue;
+  const value = parseNumber(raw);
+  return value == null ? null : fromSetDisplayValue(item.type, webFieldKey, value);
 }
 
 function lockedOrDraftText(
@@ -397,6 +433,7 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
       };
     case 'cardio':
       return {
+        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
         avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
@@ -405,6 +442,7 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
       };
     case 'sport':
       return {
+        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),

@@ -53,6 +53,7 @@ describe('session set-log mappers', () => {
   it('maps sport set logs with setIndex and logged fields', () => {
     expect(
       mapSportSetLog({
+        distanceDoneMeters: 1250,
         durationSecondsDone: 90,
         effortRir: 2,
         effortRpe: 8,
@@ -67,6 +68,7 @@ describe('session set-log mappers', () => {
         weightDoneKg: new Prisma.Decimal(5),
       }),
     ).toEqual({
+      distanceDoneMeters: 1250,
       durationSecondsDone: 90,
       effortRir: 2,
       effortRpe: 8,

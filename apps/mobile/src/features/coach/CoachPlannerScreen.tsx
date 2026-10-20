@@ -1,3 +1,5 @@
+import { coachDocumentSetLines } from './coach-plan-model';
+import { normalizeLegacyLockedFields } from '@trainerpro/shared';
 import React, { useState } from 'react';
 import { FlatList, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -121,14 +123,34 @@ function WarmupEditor(props: WarmupEditorProps) {
       <CoachPlanBlockEditor
         warmup
         kind={item.blockType as CoachBlockKind}
-        value={{ ...item, sets: metadata?.sets ?? [] }}
+        value={{
+          ...item,
+          sets: metadata?.sets ?? [],
+          lockedFields:
+            metadata?.setVariablesVersion === 2
+              ? metadata.lockedFields
+              : normalizeLegacyLockedFields(
+                  item.blockType as CoachBlockKind,
+                  metadata?.lockedFields as string[] | undefined,
+                ),
+        }}
         groups={groups}
         onBack={() => setActive(null)}
         onChange={(next) => {
-          const { sets, ...body } = next;
+          const { sets, lockedFields, ...body } = next;
           updateItems(
             items.map((old, i) =>
-              i === active ? { ...body, metadataJson: { ...((old.metadataJson as PlanRecord) ?? {}), sets } } : old,
+              i === active
+                ? {
+                    ...body,
+                    metadataJson: {
+                      ...((old.metadataJson as PlanRecord) ?? {}),
+                      sets,
+                      lockedFields,
+                      setVariablesVersion: 2,
+                    },
+                  }
+                : old,
             ),
           );
         }}
@@ -179,9 +201,14 @@ function WarmupEditorView({
             key={kind}
             label={'+ ' + t('coachWorkspace.block.' + kind)}
             onPress={() => {
+              const block = createCoachBlock(kind, t('coachWorkspace.block.' + kind), items.length);
               updateItems([
                 ...items,
-                { ...createCoachBlock(kind, t('coachWorkspace.block.' + kind), items.length), blockType: kind },
+                {
+                  ...block,
+                  blockType: kind,
+                  metadataJson: { sets: block.sets, lockedFields: block.lockedFields, setVariablesVersion: 2 },
+                },
               ]);
               setActive(items.length);
             }}
@@ -254,18 +281,18 @@ function warmupDocumentSections(value: PlanRecord, t: (key: string) => string) {
         'targetRpe',
         'targetRir',
       ]
-        .filter((key) => item[key] != null && item[key] !== '')
+        .filter(
+          (key) =>
+            item[key] != null &&
+            item[key] !== '' &&
+            !(['cardio', 'sport'].includes(String(item.blockType)) && ['workSeconds', 'durationMinutes'].includes(key)),
+        )
         .map((key) => t('coachWorkspace.field.' + key) + ': ' + String(item[key])),
-      ...(((item.metadataJson as PlanRecord | undefined)?.sets as PlanRecord[]) ?? []).map(
-        (set, i) =>
-          t('coachWorkspace.set') +
-          ' ' +
-          (i + 1) +
-          ': ' +
-          Object.entries(set)
-            .filter(([key, v]) => key !== 'setIndex' && v != null)
-            .map(([key, v]) => t('coachWorkspace.field.' + key) + ' ' + String(v))
-            .join(' · '),
+      ...coachDocumentSetLines(
+        item.blockType as CoachBlockKind,
+        item,
+        t,
+        ((item.metadataJson as PlanRecord | undefined)?.sets as PlanRecord[]) ?? [],
       ),
     ],
   }));

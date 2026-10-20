@@ -1,3 +1,4 @@
+import { coachDocumentSetLines } from './coach-plan-model';
 import { CoachRoutineDayActions } from './CoachRoutineDayActions';
 import React, { useState } from 'react';
 import { Text, View } from 'react-native';
@@ -420,17 +421,7 @@ function routineDocumentSections(value: PlanRecord, t: (key: string) => string) 
         ...['setsPlanned', 'repsMin', 'repsMax', 'restSeconds', 'notes']
           .filter((key) => entry.value[key] != null && entry.value[key] !== '')
           .map((key) => t('coachWorkspace.field.' + key) + ': ' + String(entry.value[key])),
-        ...((entry.value.sets as PlanRecord[]) ?? []).map(
-          (set, i) =>
-            t('coachWorkspace.set') +
-            ' ' +
-            (i + 1) +
-            ': ' +
-            Object.entries(set)
-              .filter(([key, v]) => key !== 'setIndex' && v != null)
-              .map(([key, v]) => t('coachWorkspace.field.' + key) + ' ' + String(v))
-              .join(' · '),
-        ),
+        ...coachDocumentSetLines(entry.kind, entry.value, t),
       ]),
       ...((day.groups as PlanRecord[]) ?? []).map(
         (group) => t('coachWorkspace.' + String(group.groupType)) + ': ' + String(group.note ?? ''),

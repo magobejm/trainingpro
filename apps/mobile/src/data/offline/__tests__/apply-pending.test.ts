@@ -29,3 +29,17 @@ describe('apply pending ops', () => {
     expect(session.items[0]).toMatchObject({ type: 'strength', logs: [] });
   });
 });
+
+it('keeps sport distance in canonical metres across pending-op replay', () => {
+  const session = sampleSession();
+  session.items = [{ id: 'sport-1', type: 'sport', setLogs: [] }] as never;
+  const draft = upsertOp(createSessionDraft(session), {
+    kind: 'sport-set',
+    path: '/sessions/session-1/sport-blocks/sport-1/sets',
+    dedupeKey: 'sport-set:sport-1:1',
+    body: { sessionSportBlockId: 'sport-1', setIndex: 1, distanceDoneMeters: 1250, durationSecondsDone: 150 },
+  });
+  const view = applyPendingOps(session, draft.ops);
+  expect(view.items[0]).toMatchObject({ setLogs: [{ distanceDoneMeters: 1250, durationSecondsDone: 150 }] });
+  expect(applyPendingOps(view, draft.ops)).toEqual(view);
+});

@@ -224,6 +224,7 @@ const fields: Record<string, readonly [string, string]> = {
   durationSeconds: ['Duración (s)', 'Duration (s)'],
   heartRate: ['Frecuencia cardíaca', 'Heart rate'],
   fcMaxPct: ['FC máxima (%)', 'Max HR (%)'],
+  distanceMeters: ['Distancia (km)', 'Distance (km)'],
   fcReservePct: ['FC reserva (%)', 'Reserve HR (%)'],
   rom: ['Rango de movimiento', 'Range of motion'],
   title: ['Título', 'Title'],

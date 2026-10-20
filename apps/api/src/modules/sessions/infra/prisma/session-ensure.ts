@@ -14,10 +14,12 @@ import {
   mapSessionSportCreate,
 } from './sessions-prisma.mappers';
 import { sessionInclude } from './sessions-strength.prisma.helpers';
+import { mapCardioSessionBlockCreate } from './sessions-cardio.prisma.helpers';
 
 type Membership = { id: string; organizationId: string };
 type TemplateWrite = {
   id: string;
+  cardioBlocks?: Parameters<typeof mapCardioSessionBlockCreate>[0][];
   isometricBlocks: Parameters<typeof mapSessionIsometricCreate>[0][];
   items: Parameters<typeof mapSessionItemCreate>[0][];
   mobilityBlocks: Parameters<typeof mapSessionMobilityCreate>[0][];
@@ -110,6 +112,7 @@ function shouldRewrite(existing: PendingRow, planDayId?: string): boolean {
 
 function templateFields(template: TemplateWrite) {
   return {
+    cardioBlocks: nested(template.cardioBlocks, mapCardioSessionBlockCreate),
     isometricBlocks: nested(template.isometricBlocks, mapSessionIsometricCreate),
     items: nested(template.items, mapSessionItemCreate),
     mobilityBlocks: nested(template.mobilityBlocks, mapSessionMobilityCreate),

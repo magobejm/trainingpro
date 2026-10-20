@@ -84,7 +84,7 @@ export class SessionsCardioRepositoryPrisma {
   async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
     await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readCardioSessionForMutation(input.sessionId, db);
+      const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
       assertCardioSessionMutable(session.status, session.skippedAt);
       const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId, db);
       if (!block) {
@@ -177,12 +177,17 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(existing);
   }
 
-  private async readCardioSessionForMutation(sessionId: string, db: Prisma.TransactionClient) {
+  private async readCardioSessionForMutation(sessionId: string, db: Prisma.TransactionClient, allowWorkoutCardio = false) {
     const row = await db.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
     });
-    if (!row || row.template.kind !== TemplateKind.CARDIO) {
+    const workoutCardio =
+      allowWorkoutCardio &&
+      row &&
+      row.cardioBlocks.length > 0 &&
+      (row.template.kind === TemplateKind.ROUTINE || row.template.kind === TemplateKind.STRENGTH);
+    if (!row || (row.template.kind !== TemplateKind.CARDIO && !workoutCardio)) {
       throw new NotFoundException('Cardio session not found');
     }
     return row;

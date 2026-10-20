@@ -1,4 +1,4 @@
-import { resolveLockedFields } from '@trainerpro/shared';
+import { normalizeLegacyLockedFields, resolveLockedFields } from '@trainerpro/shared';
 import type { BlockType, DraftBlock, DraftSet } from './RoutinePlanner.types';
 
 type MetaMap = Record<string, unknown>;
@@ -70,6 +70,11 @@ function normalizeWarmupTemplateItem(item: {
     displayName: toStringValue(item.displayName) ?? '',
     sortOrder: toNumber(item.sortOrder) ?? 0,
     sets: item.sets ?? meta?.sets,
+    lockedFields:
+      item.lockedFields ??
+      (meta?.setVariablesVersion === 2
+        ? meta.lockedFields
+        : normalizeLegacyLockedFields(item.blockType as BlockType, meta?.lockedFields as string[] | undefined)),
   };
 }
 
@@ -172,6 +177,7 @@ function mapSets(rawSets: unknown): DraftSet[] {
       restSeconds: toNumber(s.restSeconds),
       advancedTechnique: toStringValue(s.advancedTechnique),
       note: toStringValue(s.note),
+      distanceMeters: toNumber(s.distanceMeters),
       durationSeconds: toNumber(s.durationSeconds),
       fcMaxPct: toNumber(s.fcMaxPct),
       fcReservePct: toNumber(s.fcReservePct),

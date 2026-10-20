@@ -1,6 +1,7 @@
 import type { SetColumn } from '../screens/client/active-exercise.helpers';
 
 const WEB_TO_ACTIVE_FIELD: Record<string, string[]> = {
+  distanceMeters: ['distance'],
   durationSeconds: ['duration'],
   fcMaxPct: ['fcMaxPct'],
   fcReservePct: ['fcReservePct'],

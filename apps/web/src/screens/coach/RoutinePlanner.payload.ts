@@ -126,6 +126,7 @@ const mapCardio = (b: DraftBlock, si: number) => ({
 function mapCardioSet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     fcMaxPct: s.fcMaxPct ?? null,
     fcReservePct: s.fcReservePct ?? null,
@@ -243,6 +244,7 @@ function mapSport(block: DraftBlock, sortOrder: number) {
 function mapSportSet(s: DraftSet) {
   return {
     setIndex: s.setIndex,
+    distanceMeters: s.distanceMeters ?? null,
     durationSeconds: s.durationSeconds ?? null,
     reps: s.reps ?? null,
     rpe: s.rpe ?? null,

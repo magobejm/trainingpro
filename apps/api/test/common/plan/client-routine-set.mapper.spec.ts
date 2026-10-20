@@ -124,3 +124,12 @@ describe('resolveClientRoutineSets fallbacks', () => {
     expect(sets[2]).toMatchObject({ setIndex: 2, reps: 50 });
   });
 });
+
+it('keeps per-series distance and falls back to legacy cardio/sport duration', () => {
+  expect(resolveClientRoutineSets([{ setIndex: 0, distanceMeters: 1250 }], 'cardio', { workSeconds: 150 })[0]).toMatchObject(
+    { distanceMeters: 1250, durationSeconds: 150 },
+  );
+  expect(
+    resolveClientRoutineSets([{ setIndex: 0, distanceMeters: 2500 }], 'sport', { durationMinutes: 30 })[0],
+  ).toMatchObject({ distanceMeters: 2500, durationSeconds: 1800 });
+});

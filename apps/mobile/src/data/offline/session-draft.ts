@@ -1,7 +1,7 @@
-import type { SessionView } from '@trainerpro/shared';
+import { normalizeLegacyLockedFields, type SessionView } from '@trainerpro/shared';
 import { createChunkedStorage, type KvBackend } from '../chunked-storage';
 
-export const SESSION_DRAFT_VERSION = 1;
+export const SESSION_DRAFT_VERSION = 2;
 
 export type SessionOpKind =
   | 'finish'
@@ -202,9 +202,19 @@ function mapBackend(items: Map<string, string>): KvBackend {
 
 function parseDraft(raw: string): SessionDraft | null {
   try {
-    const parsed = JSON.parse(raw) as Partial<SessionDraft>;
-    if (parsed.version !== SESSION_DRAFT_VERSION || typeof parsed.sessionId !== 'string') return null;
+    const parsed = JSON.parse(raw) as Partial<Omit<SessionDraft, 'version'>> & { version?: number };
+    if ((parsed.version !== 1 && parsed.version !== SESSION_DRAFT_VERSION) || typeof parsed.sessionId !== 'string')
+      return null;
     if (!Array.isArray(parsed.ops) || !Array.isArray(parsed.conflicts)) return null;
+    if (parsed.version === 1 && parsed.session) {
+      parsed.session = {
+        ...parsed.session,
+        items: parsed.session.items.map((item) => ({
+          ...item,
+          lockedFields: normalizeLegacyLockedFields(item.type, item.lockedFields),
+        })),
+      };
+    }
     return {
       conflicts: parsed.conflicts,
       ops: parsed.ops,

@@ -207,3 +207,38 @@ describe('nutrition PDF content', () => {
     expect(JSON.stringify(sections)).toContain('0 g');
   });
 });
+
+it('exports cardio and sport set units without a global total time', () => {
+  const draft: DraftState = {
+    name: 'Units',
+    days: [
+      {
+        id: 'd',
+        title: 'Day',
+        blocks: ['cardio', 'sport'].map((type) => ({
+          type: type as 'cardio' | 'sport',
+          id: type,
+          displayName: type,
+          durationMinutes: 30,
+          sets: [{ setIndex: 0, distanceMeters: 1250, durationSeconds: 150 }],
+        })),
+      },
+    ],
+  };
+  for (const section of routinePdfSections(draft, [], t).filter((s) => s.table)) {
+    expect(section.table?.columns).toEqual(['web.pdf.set', 'web.pdf.durationSeconds (min)', 'web.pdf.distanceMeters (km)']);
+    expect(section.table?.rows[0]).toEqual([1, '2.5', '1.25']);
+    expect(section.paragraphs).toEqual([]);
+  }
+});
+
+it('preserves a legacy sport duration when there were no series', () => {
+  const draft: DraftState = {
+    name: 'Old',
+    days: [
+      { id: 'd', title: 'D', blocks: [{ type: 'sport', id: 'b', displayName: 'Tenis', durationMinutes: 30, sets: [] }] },
+    ],
+  };
+  const section = routinePdfSections(draft, [], t).find((s) => s.heading === 'Tenis');
+  expect(section?.table?.rows[0]).toEqual([1, '30']);
+});

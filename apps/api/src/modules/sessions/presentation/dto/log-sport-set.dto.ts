@@ -3,6 +3,7 @@ import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effor
 
 export class LogSportSetDto {
   static schema = z.object({
+    distanceDoneMeters: z.number().int().min(0).max(500000).nullable().optional(),
     durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
     effortRir: rirIntSchema,
     effortRpe: rpeHalfSchema,
@@ -16,6 +17,7 @@ export class LogSportSetDto {
     weightDoneKg: z.number().min(0).max(1000).nullable().optional(),
   });
 
+  distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;

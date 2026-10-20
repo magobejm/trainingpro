@@ -1,3 +1,4 @@
+import type { ExerciseBlockType } from '@trainerpro/shared';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -21,6 +22,7 @@ type PreviousDaysOverlayProps = {
   sourceExerciseId: null | string;
   sessionId: string;
   exerciseName: string;
+  exerciseType: ExerciseBlockType;
   visible: boolean;
   onClose: () => void;
 };
@@ -63,7 +65,7 @@ export function PreviousDaysOverlay(props: PreviousDaysOverlayProps): React.JSX.
             contentContainerStyle={styles.list}
             ListHeaderComponent={<Text style={styles.hint}>{t('mobile.client.history.hint')}</Text>}
             ListEmptyComponent={<Text style={styles.empty}>{t('client.wizard.noHistory')}</Text>}
-            renderItem={({ item }) => <HistoryCard entry={item} />}
+            renderItem={({ item }) => <HistoryCard entry={item} exerciseType={props.exerciseType} />}
           />
         )}
       </SafeAreaView>
@@ -71,9 +73,15 @@ export function PreviousDaysOverlay(props: PreviousDaysOverlayProps): React.JSX.
   );
 }
 
-function HistoryCard({ entry }: { entry: ExerciseHistoryEntry }): React.JSX.Element {
+function HistoryCard({
+  entry,
+  exerciseType,
+}: {
+  entry: ExerciseHistoryEntry;
+  exerciseType: ExerciseBlockType;
+}): React.JSX.Element {
   const { t, i18n } = useTranslation();
-  const columns = historyColumns(entry.sets);
+  const columns = historyColumns(entry.sets, exerciseType);
   const itemIds = [...new Set(entry.sets.map((set) => set.itemId))];
   const multipleItems = itemIds.length > 1;
   return (
@@ -100,7 +108,7 @@ function HistoryCard({ entry }: { entry: ExerciseHistoryEntry }): React.JSX.Elem
               </Text>
               {columns.map((column) => (
                 <Text key={column.key} style={styles.cell}>
-                  {historyCell(set[column.key])}
+                  {historyCell(set[column.key], column.key, exerciseType)}
                 </Text>
               ))}
             </View>

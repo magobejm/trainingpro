@@ -1,3 +1,4 @@
+import { normalizeLegacyLockedFields, resolveLockedFields } from '@trainerpro/shared';
 import type { Prisma } from '@prisma/client';
 import type { ClientRoutineWarmup, ClientRoutineExercise } from '@trainerpro/shared';
 import { resolveClientRoutineSets, type PlanSetRow } from './client-routine-set.mapper';
@@ -58,7 +59,11 @@ export async function mapClientWarmups(
           item.libraryMobilityExercise ??
           extras.get(item.isometricExerciseLibraryId ?? item.sportLibraryId ?? '');
         const type = item.blockType as ClientRoutineExercise['type'];
-        const metadata = item.metadataJson as { sets?: PlanSetRow[] } | null;
+        const metadata = item.metadataJson as {
+          sets?: PlanSetRow[];
+          lockedFields?: string[];
+          setVariablesVersion?: number;
+        } | null;
         const prescribed = (Array.isArray(metadata?.sets) ? metadata.sets : [])
           .filter((set) => set != null && typeof set === 'object')
           .map((set, index) => ({ ...set, setIndex: typeof set.setIndex === 'number' ? set.setIndex : index }));
@@ -85,7 +90,10 @@ export async function mapClientWarmups(
           notes: stripMetaNotes(item.notes),
           mediaUrl: library?.mediaUrl ?? null,
           youtubeUrl: library?.youtubeUrl ?? null,
-          lockedFields: [],
+          lockedFields:
+            metadata?.setVariablesVersion === 2
+              ? resolveLockedFields(type, metadata.lockedFields)
+              : normalizeLegacyLockedFields(type, metadata?.lockedFields),
           repsMin: item.repsMin,
           repsMax: item.repsMax,
           restSeconds: item.restSeconds,

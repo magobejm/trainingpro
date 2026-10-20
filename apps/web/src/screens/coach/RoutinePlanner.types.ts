@@ -7,6 +7,7 @@ export interface DraftSet {
   rir?: number;
   weightKg?: number;
   // Isometric
+  distanceMeters?: number;
   durationSeconds?: number;
   // Warmup
   rom?: string;

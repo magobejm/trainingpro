@@ -182,6 +182,7 @@ export async function upsertSportSetLog(
     prisma.sportSetLog.upsert({
       where: { sessionSportBlockId_setIndex: { sessionSportBlockId, setIndex: input.setIndex } },
       create: {
+        distanceDoneMeters: input.distanceDoneMeters ?? null,
         durationSecondsDone: input.durationSecondsDone ?? null,
         effortRir: input.effortRir ?? null,
         effortRpe: input.effortRpe ?? null,
@@ -197,6 +198,7 @@ export async function upsertSportSetLog(
         weightDoneKg: toDecimal(input.weightDoneKg),
       },
       update: {
+        ...(input.distanceDoneMeters === undefined ? {} : { distanceDoneMeters: input.distanceDoneMeters }),
         durationSecondsDone: input.durationSecondsDone ?? null,
         effortRir: input.effortRir ?? null,
         effortRpe: input.effortRpe ?? null,
@@ -249,6 +251,14 @@ export async function readWorkoutTemplate(
         where: { archivedAt: null },
         orderBy: { dayIndex: 'asc' },
         include: {
+          cardioBlocks: {
+            where: { archivedAt: null },
+            orderBy: { sortOrder: 'asc' },
+            include: {
+              libraryCardioMethod: { select: { coachInstructions: true } },
+              sets: PLAN_BLOCK_SETS_INCLUDE,
+            },
+          },
           exercises: {
             where: { archivedAt: null },
             orderBy: { sortOrder: 'asc' },

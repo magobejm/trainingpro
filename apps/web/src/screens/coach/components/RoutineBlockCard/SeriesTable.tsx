@@ -2,7 +2,13 @@ import React from 'react';
 import type { BaseSyntheticEvent } from 'react';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
-import { setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
+import {
+  fromSetDisplayValue,
+  toSetDisplayValue,
+  usesMinuteDuration,
+  setVariablesForType,
+  type SetVariableKey,
+} from '@trainerpro/shared';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
@@ -14,6 +20,9 @@ interface ColDef {
   label: string;
   width: number;
   numericOnly?: boolean;
+  numericMode?: 'distance' | 'minutes';
+  display?: (value: number) => number;
+  store?: (value: number) => number;
   isSelect?: boolean;
   selectOptions?: string[];
 }
@@ -25,7 +34,8 @@ const ICON_LOCK_ON = '🔒';
 const ICON_LOCK_OFF = '🔓';
 
 const VARIABLE_WIDTH: Record<SetVariableKey, number> = {
-  durationSeconds: 100,
+  distanceMeters: 115,
+  durationSeconds: 115,
   fcMaxPct: 90,
   fcReservePct: 100,
   heartRate: 100,
@@ -38,6 +48,7 @@ const VARIABLE_WIDTH: Record<SetVariableKey, number> = {
 };
 
 const VARIABLE_LABEL_KEY: Record<SetVariableKey, string> = {
+  distanceMeters: 'coach.routine.seriesTable.col.distanceMeters',
   durationSeconds: 'coach.routine.seriesTable.col.durationSeconds',
   fcMaxPct: 'coach.routine.seriesTable.col.fcMaxPct',
   fcReservePct: 'coach.routine.seriesTable.col.fcReservePct',
@@ -66,7 +77,23 @@ function colsForType(t: (k: string) => string, type: BlockType): ColDef[] {
         selectOptions: romOptions,
       };
     }
-    return { key, label: t(VARIABLE_LABEL_KEY[key]), width: VARIABLE_WIDTH[key] };
+    return {
+      key,
+      label: t(
+        key === 'durationSeconds' && usesMinuteDuration(type)
+          ? 'coach.routine.seriesTable.col.durationMinutes'
+          : VARIABLE_LABEL_KEY[key],
+      ),
+      width: VARIABLE_WIDTH[key],
+      numericMode:
+        key === 'distanceMeters'
+          ? 'distance'
+          : key === 'durationSeconds' && usesMinuteDuration(type)
+            ? 'minutes'
+            : undefined,
+      display: (value) => toSetDisplayValue(type, key, value),
+      store: (value) => fromSetDisplayValue(type, key, value),
+    };
   });
 }
 
@@ -357,10 +384,13 @@ function SeriesRowValueCells({
             ) : (
               <SeriesTableNumericCell
                 fieldKey={col.key}
-                onChange={(v) => onUpdateSet(idx, { [col.key]: v } as Partial<DraftSet>)}
+                numericMode={col.numericMode}
+                onChange={(v) => onUpdateSet(idx, { [col.key]: v == null ? v : (col.store?.(v) ?? v) } as Partial<DraftSet>)}
                 placeholder={phDash}
                 readOnly={readOnly}
-                value={set[col.key] as number | undefined}
+                value={
+                  set[col.key] == null ? undefined : (col.display?.(set[col.key] as number) ?? (set[col.key] as number))
+                }
               />
             )}
           </View>

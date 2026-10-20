@@ -1,5 +1,6 @@
 export type SessionPlannedSet = {
   advancedTechnique: null | string;
+  distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
   fcReservePct?: null | number;
@@ -94,6 +95,7 @@ export type SessionSportLog = {
 };
 
 export type SessionSportSetLog = {
+  distanceDoneMeters?: null | number;
   durationSecondsDone: null | number;
   effortRir: null | number;
   effortRpe: null | number;

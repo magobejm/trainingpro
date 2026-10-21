@@ -66,7 +66,13 @@ export class SessionsCardioController {
     const auth = readAuthContext(request);
     const session = await this.finishCardioSessionUseCase.execute(
       auth,
-      { comment: body.comment, isIncomplete: body.isIncomplete, sessionId: params.sessionId, sessionRpe: body.sessionRpe },
+      {
+        comment: body.comment,
+        isIncomplete: body.isIncomplete,
+        sessionId: params.sessionId,
+        performedDurationSeconds: body.performedDurationSeconds,
+        sessionRpe: body.sessionRpe,
+      },
       readOffset(timezoneOffset),
     );
     return mapSession(session);

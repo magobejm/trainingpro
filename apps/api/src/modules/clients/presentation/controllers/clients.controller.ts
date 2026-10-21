@@ -36,6 +36,7 @@ import { ListClientTimelineUseCase } from '../../application/use-cases/list-clie
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { ListClientObjectivesUseCase } from '../../application/use-cases/list-client-objectives.usecase';
 import { ResetClientPasswordUseCase } from '../../application/use-cases/reset-client-password.usecase';
+import { RestoreClientUseCase } from '../../application/use-cases/restore-client.usecase';
 import { SaveClientManagementSectionsUseCase } from '../../application/use-cases/save-client-management-sections.usecase';
 import { SetClientProgressPhotoArchivedUseCase } from '../../application/use-cases/set-client-progress-photo-archived.usecase';
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
@@ -84,6 +85,7 @@ export class ClientsController {
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly listClientObjectivesUseCase: ListClientObjectivesUseCase,
     private readonly resetClientPasswordUseCase: ResetClientPasswordUseCase,
+    private readonly restoreClientUseCase: RestoreClientUseCase,
     private readonly saveClientManagementSectionsUseCase: SaveClientManagementSectionsUseCase,
     private readonly setClientProgressPhotoArchivedUseCase: SetClientProgressPhotoArchivedUseCase,
     private readonly updateClientUseCase: UpdateClientUseCase,
@@ -117,6 +119,22 @@ export class ClientsController {
       : { items: await this.listClientsUseCase.execute(auth, parsed), nextCursor: undefined };
     return withNextCursor(
       { items: page.items.map((client) => mapClientOutput(client, this.storedFiles())) },
+      page.nextCursor,
+    );
+  }
+
+  @Get('archived')
+  async listArchived(@Query() query: ListClientsQueryDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    const parsed = ListClientsQueryDto.schema.pick({ cursor: true, limit: true, search: true }).parse(query);
+    const page = await this.listClientsUseCase.executeArchivedPage(auth, { ...parsed, limit: parsed.limit ?? 20 });
+    return withNextCursor(
+      {
+        items: page.items.map((client) => ({
+          ...mapClientOutput(client, this.storedFiles()),
+          archivedAt: client.archivedAt.toISOString(),
+        })),
+      },
       page.nextCursor,
     );
   }
@@ -283,5 +301,12 @@ export class ClientsController {
     const auth = readAuthContext(request);
     await this.archiveClientUseCase.execute(auth, params.clientId);
     return { status: 'archived' };
+  }
+
+  @Post(':clientId/restore')
+  async restore(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
+    const auth = readAuthContext(request);
+    await this.restoreClientUseCase.execute(auth, params.clientId);
+    return { status: 'restored' };
   }
 }

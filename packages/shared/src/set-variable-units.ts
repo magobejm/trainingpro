@@ -1,7 +1,8 @@
 import { setVariablesForType, MAX_ACTIVE_SET_VARIABLES, type ExerciseBlockType } from './exercise-set-variables';
 
 export function usesMinuteDuration(type: ExerciseBlockType): boolean {
-  return type === 'cardio' || type === 'sport';
+  void type;
+  return false;
 }
 
 export function toSetDisplayValue(type: ExerciseBlockType, key: string, value: number): number {
@@ -19,7 +20,7 @@ export function fromSetDisplayValue(type: ExerciseBlockType, key: string, value:
 /** Expand the OLD defaults before adding a variable to an existing prescription. */
 export function normalizeLegacyLockedFields(type: ExerciseBlockType, fields?: string[]): string[] {
   const locked = fields?.length ? [...fields] : type === 'sport' ? ['heartRate', 'rir', 'fcReservePct', 'rom'] : [];
-  if (usesMinuteDuration(type)) {
+  if (type === 'sport') {
     const active = setVariablesForType(type).filter((key) => !locked.includes(key));
     if (active.length > MAX_ACTIVE_SET_VARIABLES && !locked.includes('distanceMeters')) locked.push('distanceMeters');
   }

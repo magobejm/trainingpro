@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { ExerciseDistanceHeader } from './ExerciseDistanceHeader';
 import { WorkoutGuideCard, type GuideSyncState } from './WorkoutGuideCard';
 import { useWorkoutGuide } from './WorkoutGuideContext';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -72,6 +73,7 @@ type ActiveExerciseScreenProps = {
   onFinishExercise: (itemId: string) => void;
   onNavigateExercise: (item: SessionItem) => void;
   onRestFinish: () => void;
+  onCardioDistance?: (blockId: string, distanceDoneMeters: number | null) => LogResult;
   onLogInterval: (input: LogIntervalMutationInput) => LogResult;
   onLogIsometricSet: (input: LogIsometricSetMutationInput) => LogResult;
   onLogMobilitySet: (input: LogMobilitySetMutationInput) => LogResult;
@@ -130,6 +132,12 @@ function ActiveExerciseFrame(props: {
           ref={scrollRef}
         >
           {screen.syncBanner}
+          <ExerciseDistanceHeader
+            key={screen.item.id}
+            item={screen.item}
+            onSave={screen.onCardioDistance}
+            readOnly={screen.readOnly}
+          />
           <WorkoutGuideCard
             {...screen.guideSync}
             context={`${screen.guideContext} · ${screen.item.displayName}`}

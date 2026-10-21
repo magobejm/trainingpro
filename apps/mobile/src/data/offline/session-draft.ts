@@ -4,6 +4,7 @@ import { createChunkedStorage, type KvBackend } from '../chunked-storage';
 export const SESSION_DRAFT_VERSION = 2;
 
 export type SessionOpKind =
+  | 'cardio-distance'
   | 'finish'
   | 'log-interval'
   | 'log-isometric-set'
@@ -53,6 +54,7 @@ export type SessionOpInput = {
 const memoryItems = new Map<string, string>();
 
 export function sessionWritePath(sessionId: string, kind: SessionOpKind, blockId?: string): string {
+  if (kind === 'cardio-distance') return `/sessions/${sessionId}/cardio-blocks/${blockId ?? ''}/distance`;
   if (kind === 'sport-set') {
     return `/sessions/${sessionId}/sport-blocks/${blockId ?? ''}/sets`;
   }

@@ -5,12 +5,15 @@ export type CardioIntervalLog = {
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
   effortRpe: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;
 };
 
 export type CardioSessionBlock = {
+  distanceDoneMeters?: null | number;
   coachInstructions: null | string;
   displayName: string;
   id: string;
@@ -31,6 +34,7 @@ export type CardioSessionBlock = {
 export type CardioSessionInstance = {
   blocks: CardioSessionBlock[];
   clientId: string;
+  performedDurationSeconds?: null | number;
   finishComment: null | string;
   finishedAt: Date | null;
   id: string;

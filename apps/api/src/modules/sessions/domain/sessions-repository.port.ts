@@ -41,6 +41,10 @@ export interface SessionsRepositoryPort {
   finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance>;
   getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null>;
   getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null>;
+  logCardioDistance(
+    context: AuthContext,
+    input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
+  ): Promise<{ id: string; distanceDoneMeters: number | null }>;
   logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null>;
   logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog>;
   logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog>;

@@ -217,6 +217,8 @@ const intervalLogSchema = z
     distanceDoneMeters: nullableNumber,
     durationSecondsDone: nullableNumber,
     effortRpe: nullableNumber,
+    hrMaxPctDone: nullableNumber.optional(),
+    hrReservePctDone: nullableNumber.optional(),
     intervalIndex: z.number(),
     restSecondsDone: nullableNumber,
     sessionCardioBlockId: z.string(),
@@ -225,6 +227,7 @@ const intervalLogSchema = z
 
 const cardioItemSchema = z
   .object({
+    distanceDoneMeters: nullableNumber.optional(),
     coachInstructions: nullableString,
     displayName: z.string(),
     groupId: nullableString,
@@ -277,6 +280,7 @@ export const sessionViewSchema = z
     preMotivation: nullableNumber,
     preRecovery: nullableNumber,
     sessionDate: z.string(),
+    performedDurationSeconds: nullableNumber.optional(),
     sessionRpe: nullableNumber,
     startMode: z.enum(['INTERACTIVE', 'TIMER']).nullable(),
     startedAt: nullableString,

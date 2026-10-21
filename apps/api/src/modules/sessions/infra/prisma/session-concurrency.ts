@@ -3,6 +3,7 @@ import { SessionStatus } from '@prisma/client';
 import type { FinishSessionInput } from '../../domain/session.input';
 
 export type FinishComparable = {
+  performedDurationSeconds?: number | null;
   finishComment: null | string;
   isIncomplete: boolean;
   postFatigue: null | number;
@@ -23,6 +24,8 @@ export function shouldReplacePendingSession(
 
 export function sameFinish(current: FinishComparable, input: FinishSessionInput): boolean {
   return (
+    (input.performedDurationSeconds === undefined ||
+      sameNumber(current.performedDurationSeconds ?? null, input.performedDurationSeconds)) &&
     current.isIncomplete === input.isIncomplete &&
     normalize(current.finishComment) === normalize(input.comment) &&
     sameNumber(current.postFatigue, input.postFatigue) &&

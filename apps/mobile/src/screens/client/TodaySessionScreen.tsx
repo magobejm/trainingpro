@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { WorkoutGuideCard } from './WorkoutGuideCard';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +24,7 @@ import { ActiveExerciseScreen } from './ActiveExerciseScreen';
 import { RoutineDayScreen } from './RoutineDayScreen';
 import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
 import { useOptionalCoachNotice } from './MorningCheckinGate';
+import { freezeWorkoutDuration } from './session-rpe.utils';
 import { SessionRpeModal } from './SessionRpeModal';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
@@ -48,6 +49,7 @@ type TodaySessionBodyProps = {
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
+  onCardioDistance: (blockId: string, distanceDoneMeters: number | null) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogInterval: (input: LogIntervalMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
@@ -132,6 +134,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           onLogIsometricSet={props.onLogIsometricSet}
           onLogSport={props.onLogSport}
           onLogInterval={props.onLogInterval}
+          onCardioDistance={props.onCardioDistance}
         />
       ) : null}
     </SafeAreaView>
@@ -154,6 +157,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const workoutElapsed = useWorkoutElapsed(session);
   const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
   const [rpeVisible, setRpeVisible] = useState(false);
+  const finishDurationSeconds = useRef<number | null>(null);
   const [finishBusy, setFinishBusy] = useState(false);
   const startPromptedRef = React.useRef(false);
   const pendingFinishRpe = React.useRef<number | null>(null);
@@ -217,15 +221,16 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     if (finishBusy || isCompleted) {
       return;
     }
+    finishDurationSeconds.current = session ? freezeWorkoutDuration(session) : null;
     setRpeVisible(true);
-  }, [finishBusy, isCompleted]);
+  }, [finishBusy, isCompleted, session]);
 
   const handleSaveSessionRpe = useCallback(
     (sessionRpe: number) => {
       if (finishBusy) return;
       setFinishBusy(true);
       void actions
-        .enqueueFinish(sessionRpe)
+        .enqueueFinish(sessionRpe, finishDurationSeconds.current)
         .then(async (outcome) => {
           if (outcome === 'conflict' || outcome === 'missing') {
             setRpeVisible(false);
@@ -311,6 +316,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         isRunning={isRunning}
         onAdjustRest={timers.onAdjustRest}
         onLogInterval={actions.handleLogInterval}
+        onCardioDistance={actions.handleCardioDistance}
         onLogIsometricSet={actions.handleLogIsometricSet}
         onLogMobilitySet={actions.handleLogMobilitySet}
         onLogPlioSet={actions.handleLogPlioSet}

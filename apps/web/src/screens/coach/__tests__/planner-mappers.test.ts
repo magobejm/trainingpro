@@ -94,3 +94,12 @@ it('shows legacy warmup durations inside the sets', () => {
     { setIndex: 0, durationSeconds: 1800 },
   ]);
 });
+
+it('round trips the cardio header distance independently of interval distance', () => {
+  const draft = createEmptyDraft((key) => key);
+  const block = { ...createBlock('cardio', 'Bici'), targetDistanceMeters: 1250 };
+  draft.days[0]!.blocks.push(block);
+  const saved = buildRoutinePayload(draft).days[0]!.cardioBlocks[0]!;
+  expect(saved.targetDistanceMeters).toBe(1250);
+  expect(mapTemplateBlock('cardio', saved, createBlock)).toMatchObject({ targetDistanceMeters: 1250 });
+});

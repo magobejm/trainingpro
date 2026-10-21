@@ -61,6 +61,7 @@ function applyFinish(session: SessionView, op: SessionOp): SessionView {
     ...session,
     finishComment: textOrNull(body['comment']),
     finishedAt: session.finishedAt ?? op.createdAt,
+    performedDurationSeconds: numOrNull(body['performedDurationSeconds']) ?? session.performedDurationSeconds ?? null,
     isCompleted: true,
     isIncomplete: body['isIncomplete'] === true,
     postFatigue: numOrNull(body['postFatigue']),
@@ -75,6 +76,8 @@ function applyItem(item: SessionItem, op: SessionOp): SessionItem {
   const target = readTarget(op);
   if (!target || item.id !== target.id) return item;
   const body = asRecord(op.body);
+  if (item.type === 'cardio' && op.kind === 'cardio-distance')
+    return { ...item, distanceDoneMeters: numOrNull(body['distanceDoneMeters']) };
   const clear = clearsLog(body);
   if (item.type === 'strength' && op.kind === 'log-set') return applyStrength(item, body, target.index, clear);
   if (item.type === 'plio' && op.kind === 'log-plio-set') return applyPlio(item, body, target.index, clear);
@@ -172,6 +175,8 @@ function applyCardio(
         distanceDoneMeters: numOrNull(body['distanceDoneMeters']),
         durationSecondsDone: numOrNull(body['durationSecondsDone']),
         effortRpe: numOrNull(body['effortRpe']),
+        hrMaxPctDone: numOrNull(body['hrMaxPctDone']),
+        hrReservePctDone: numOrNull(body['hrReservePctDone']),
         intervalIndex,
         restSecondsDone: numOrNull(body['restSecondsDone']),
         sessionCardioBlockId: item.id,

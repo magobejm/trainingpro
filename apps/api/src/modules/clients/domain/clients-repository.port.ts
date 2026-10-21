@@ -15,6 +15,11 @@ export type ClientsRepositoryPort = {
   findClientPlanDayTemplateIdByEmail: (email: string, planDayId: string) => Promise<string | null>;
   findClientRoutineByEmail: (email: string) => Promise<ClientRoutine | null>;
   archiveClient: (context: AuthContext, clientId: string) => Promise<void>;
+  listArchivedClientsPage: (
+    context: AuthContext,
+    query: { cursor?: string; limit: number; search?: string },
+  ) => Promise<PageSlice<Client & { archivedAt: Date }>>;
+  restoreClient: (context: AuthContext, clientId: string) => Promise<void>;
   canCoachAccessClient: (coachSubject: string, clientId: string) => Promise<boolean>;
   createClient: (context: AuthContext, input: ClientCreateInput) => Promise<Client>;
   createProgressPhoto: (context: AuthContext, clientId: string, imageUrl: string) => Promise<ClientProgressPhoto>;

@@ -73,6 +73,8 @@ export function mobilitySetHasData(set: MobilityFields): boolean {
 }
 
 type CardioFields = {
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   avgHeartRate?: null | number;
   distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
@@ -80,6 +82,7 @@ type CardioFields = {
 };
 
 export function cardioIntervalHasData(row: CardioFields): boolean {
+  if ([row.hrMaxPctDone, row.hrReservePctDone].some(isRecordedNonNegative)) return true;
   return (
     isRecordedNonNegative(row.durationSecondsDone) ||
     isRecordedNonNegative(row.distanceDoneMeters) ||

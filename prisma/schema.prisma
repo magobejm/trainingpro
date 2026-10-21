@@ -1375,6 +1375,7 @@ model SessionInstance {
   sourceTemplateVersion Int                   @map("source_template_version")
   sessionDate           DateTime              @map("session_date") @db.Date
   startedAt             DateTime?             @map("started_at") @db.Timestamptz(6)
+  performedDurationSeconds Int? @map("performed_duration_seconds")
   finishedAt            DateTime?             @map("finished_at") @db.Timestamptz(6)
   isCompleted           Boolean               @default(false) @map("is_completed")
   isIncomplete          Boolean               @default(false) @map("is_incomplete")
@@ -1484,6 +1485,7 @@ model SessionCardioBlock {
   roundsPlanned        Int             @default(1) @map("rounds_planned")
   workSeconds          Int             @map("work_seconds")
   restSeconds          Int             @default(0) @map("rest_seconds")
+  distanceDoneMeters Float? @map("distance_done_meters")
   targetDistanceMeters Int?            @map("target_distance_meters")
   targetRpe            Decimal?        @map("target_rpe") @db.Decimal(3, 1)
   notes                String?
@@ -1508,6 +1510,8 @@ model IntervalLog {
   durationSecondsDone  Int?               @map("duration_seconds_done")
   restSecondsDone      Int?               @map("rest_seconds_done")
   effortRpe            Decimal? @db.Decimal(3, 1)               @map("effort_rpe")
+  hrMaxPctDone Float? @map("hr_max_pct_done")
+  hrReservePctDone Float? @map("hr_reserve_pct_done")
   avgHeartRate         Int?               @map("avg_heart_rate")
   createdAt            DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)

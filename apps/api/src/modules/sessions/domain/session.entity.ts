@@ -201,6 +201,8 @@ export type SessionIntervalLog = {
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
   effortRpe: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;
@@ -208,6 +210,7 @@ export type SessionIntervalLog = {
 
 export type CardioSessionItem = {
   type: 'cardio';
+  distanceDoneMeters?: null | number;
   sourceExerciseId?: null | string;
   coachInstructions: null | string;
   displayName: string;
@@ -244,6 +247,7 @@ export type SessionInstance = {
   dayTitle?: string;
   warmups?: import('@trainerpro/shared').ClientRoutineWarmup[];
   clientId: string;
+  performedDurationSeconds?: null | number;
   finishComment: null | string;
   finishedAt: Date | null;
   id: string;

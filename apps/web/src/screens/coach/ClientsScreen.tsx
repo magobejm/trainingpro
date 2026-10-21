@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { Button, useBreakpoint } from '@trainerpro/ui';
@@ -29,6 +29,7 @@ import { CrumbBar } from './ClientsScreen.crumbs';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
 import { useQuickCreateStore } from '../../store/quickCreate.store';
 import { OnboardingCard } from '../../components/OnboardingGuide';
+import { ArchivedClientsDrawer } from './components/ArchivedClientsDrawer';
 
 const MODE_NUTRITION = 'nutrition' as const;
 const MODE_MOOD = 'mood' as const;
@@ -55,6 +56,7 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
   const { t } = useTranslation();
   const state = useClientsViewState();
   const [order, setOrder] = useListContext<ClientSort>('clients.sort', 'name');
+  const [showArchived, setShowArchived] = useState(false);
   const refs = useClientsDataRefs(state, order);
   const detail = useClientByIdQuery(state.selectedClientId);
   const consumeClientId = useRoutinePlannerContextStore((store) => store.consumeClientId);
@@ -69,7 +71,7 @@ function useClientsViewModel(onRouteChange?: (route: ShellRoute) => void) {
     if (clientIdFromPlanner) state.open(clientIdFromPlanner, 'profile', true);
   }, [consumeClientId]);
   const selected = detail.data ?? null;
-  return buildClientsViewModel(refs, selected, state, onRouteChange, t, order, setOrder);
+  return buildClientsViewModel(refs, selected, state, onRouteChange, t, order, setOrder, showArchived, setShowArchived);
 }
 
 function buildClientsViewModel(
@@ -80,6 +82,8 @@ function buildClientsViewModel(
   t: ReturnType<typeof useTranslation>['t'],
   order: ClientSort,
   onOrderChange: (order: ClientSort) => void,
+  showArchived: boolean,
+  setShowArchived: React.Dispatch<React.SetStateAction<boolean>>,
 ) {
   const actions = readViewModelActions(state);
   const selectedClientName = selectedClient ? `${selectedClient.firstName} ${selectedClient.lastName}`.trim() : '';
@@ -99,6 +103,8 @@ function buildClientsViewModel(
     selectedClient,
     selectedClientId: state.selectedClientId,
     selectedClientName,
+    showArchived,
+    onToggleArchived: () => setShowArchived((value) => !value),
     t,
   };
 }
@@ -201,7 +207,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
   }
   return (
     <>
-      <Header count={props.clients.length} t={props.t} />
+      <Header count={props.clients.length} onToggleArchived={props.onToggleArchived} t={props.t} />
       <OnboardingCard />
       <View style={styles.formCard}>{renderCta(props)}</View>
       {renderCreateResult(props)}
@@ -224,6 +230,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
           t={props.t}
         />
       </View>
+      <ArchivedClientsDrawer onClose={props.onToggleArchived} t={props.t} visible={props.showArchived} />
       <View style={styles.profileCard}>
         <EmptyClientSelectionPanel t={props.t} />
       </View>
@@ -274,13 +281,21 @@ function renderCreateResult(props: ViewProps): React.JSX.Element | null {
   );
 }
 
-function Header(props: { count: number; t: (key: string) => string }): React.JSX.Element {
+function Header(props: { count: number; onToggleArchived: () => void; t: (key: string) => string }): React.JSX.Element {
   return (
     <View style={styles.hero}>
       <Text style={styles.title}>{props.t('coach.clients.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.clients.subtitle')}</Text>
-      <View style={styles.badge}>
-        <Text style={styles.badgeText}>{`${props.t('coach.clients.total')}: ${props.count}`}</Text>
+      <View style={styles.managementSummary}>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{`${props.t('coach.clients.total')}: ${props.count}`}</Text>
+        </View>
+        <Button
+          label={props.t('coach.clients.archived.open')}
+          onPress={props.onToggleArchived}
+          size="sm"
+          variant="secondary"
+        />
       </View>
     </View>
   );

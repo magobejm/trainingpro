@@ -135,10 +135,10 @@ export function SeriesTable({
     <ScrollView horizontal style={{ marginTop: space.sm }}>
       <View style={{ minWidth: tableWidth }}>
         <SeriesHeaderRow
-          lockedFields={lockedFields}
+          lockedFields={type === 'cardio' ? [] : lockedFields}
           onToggleLock={onToggleLock}
           orderedCols={orderedCols}
-          readOnly={readOnly}
+          readOnly={readOnly || type === 'cardio'}
           t={t}
         />
         {sets.map((set, idx) => (
@@ -146,7 +146,7 @@ export function SeriesTable({
             key={idx}
             advancedEnabled={advancedEnabled}
             idx={idx}
-            lockedFields={lockedFields}
+            lockedFields={type === 'cardio' ? [] : lockedFields}
             onCopyPrev={onCopyPrev}
             onOpenAdvanced={onOpenAdvanced}
             onRemoveAdvanced={onRemoveAdvanced}

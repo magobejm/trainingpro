@@ -139,7 +139,7 @@ export function readTargetValue(item: SessionItem, setIndex: number, key: SetFie
     }
     if (planned?.durationSeconds != null) return formatTargetSeconds(planned.durationSeconds);
     if (item.type === 'cardio' && item.workSeconds) return `${item.workSeconds}s`;
-    if (item.type === 'sport') return `${item.durationMinutes}m`;
+    if (item.type === 'sport') return `${item.durationMinutes * 60}s`;
     return '-';
   }
   return '-';
@@ -199,6 +199,8 @@ export function readActualValue(item: SessionItem, setIndex: number, key: SetFie
           ? String(toSetDisplayValue(item.type, 'durationSeconds', log.durationSecondsDone))
           : '';
       if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
+      if (key === 'fcMaxPct') return log.hrMaxPctDone != null ? String(log.hrMaxPctDone) : '';
+      if (key === 'fcReservePct') return log.hrReservePctDone != null ? String(log.hrReservePctDone) : '';
       if (key === 'heartRate') return log.avgHeartRate != null ? String(log.avgHeartRate) : '';
       if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
       return '';
@@ -351,7 +353,7 @@ function blankDraft(): SetRowState {
 function logPayloadHasData(payload: LogPayload): boolean {
   return Object.entries(payload).some(([key, value]) => {
     if (IDENTITY_KEYS.has(key) || key === 'restSecondsDone') return false;
-    if (typeof value === 'number') return value > 0 || (key === 'effortRir' && value === 0);
+    if (typeof value === 'number') return Number.isFinite(value) && value >= 0;
     if (typeof value === 'string') return value.trim().length > 0;
     return false;
   });
@@ -433,7 +435,8 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
       };
     case 'cardio':
       return {
-        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
+        hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
+        hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
         avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),

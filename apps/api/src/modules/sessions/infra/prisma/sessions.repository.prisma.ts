@@ -126,6 +126,10 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return mapSessionWithGroups(this.prisma, row);
   }
 
+  logCardioDistance(context: AuthContext, input: { sessionId: string; blockId: string; distanceDoneMeters: number | null }) {
+    return this.cardioRepository.logCardioDistance(context, input);
+  }
+
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
     return this.cardioRepository.finishCardioSession(context, input);
   }
@@ -159,6 +163,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
               ...buildUpdateAuditFields(context),
               finishComment: normalizeText(input.comment),
               finishedAt: new Date(),
+              performedDurationSeconds: input.performedDurationSeconds ?? null,
               isCompleted: true,
               isIncomplete: input.isIncomplete,
               postFatigue: input.postFatigue ?? null,

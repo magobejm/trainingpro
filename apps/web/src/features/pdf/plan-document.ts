@@ -70,7 +70,7 @@ function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
   const count = Math.max(
     block.setsPlanned ?? block.roundsPlanned ?? 0,
     block.sets?.length ?? 0,
-    usesMinuteDuration(block.type) && (block.workSeconds != null || block.durationMinutes != null) ? 1 : 0,
+    ['cardio', 'sport'].includes(block.type) && (block.workSeconds != null || block.durationMinutes != null) ? 1 : 0,
   );
   const sets = Array.from({ length: count }, (_, index) => resolvedSet(block, index));
   const active = fields.filter(
@@ -80,7 +80,7 @@ function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
   );
   const paragraphs = block.notes ? [block.notes] : [];
   if (block.repsRange) paragraphs.push(`${t('web.pdf.repsRange')}: ${block.repsRange}`);
-  if (!usesMinuteDuration(block.type) && block.durationMinutes != null)
+  if (!['cardio', 'sport'].includes(block.type) && block.durationMinutes != null)
     paragraphs.push(`${t('web.pdf.totalTime')}: ${block.durationMinutes} min`);
   if (!sets.length) paragraphs.push(t('web.pdf.noSets'));
   return {

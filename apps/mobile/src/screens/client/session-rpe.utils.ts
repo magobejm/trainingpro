@@ -57,3 +57,15 @@ export function finishSessionWithRpePayload(value: number): {
 export function formatSessionRpeChatNotice(value: number, label: string): string {
   return `RPE de la sesión registrado: ${formatSessionRpe(value)}/10 (${label}).`;
 }
+
+/** Capture once before opening the final RPE sheet; this value travels in the persisted finish operation. */
+export function freezeWorkoutDuration(
+  session: { startedAt: string | null; performedDurationSeconds?: number | null },
+  now = Date.now(),
+): number | null {
+  if (session.performedDurationSeconds != null) return session.performedDurationSeconds;
+  if (!session.startedAt) return null;
+  const start = Date.parse(session.startedAt);
+  if (!Number.isFinite(start)) return null;
+  return Math.min(604800, Math.max(0, Math.floor((now - start) / 1000)));
+}

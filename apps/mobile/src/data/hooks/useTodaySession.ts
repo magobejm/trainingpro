@@ -93,6 +93,8 @@ export type LogIntervalMutationInput = {
   avgHeartRate?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex: number;
   restSecondsDone?: null | number;
   sessionCardioBlockId: string;

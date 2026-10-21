@@ -206,6 +206,7 @@ export function mapSession(
 
   const cardioItems: CardioSessionItem[] = row.cardioBlocks.map((b) => ({
     type: 'cardio' as const,
+    distanceDoneMeters: b.distanceDoneMeters,
     sourceExerciseId: b.sourceCardioMethodId,
     coachInstructions: b.coachInstructions,
     displayName: b.displayName,
@@ -217,6 +218,8 @@ export function mapSession(
         distanceDoneMeters: l.distanceDoneMeters,
         durationSecondsDone: l.durationSecondsDone,
         effortRpe: toRpeNumber(l.effortRpe),
+        hrMaxPctDone: l.hrMaxPctDone,
+        hrReservePctDone: l.hrReservePctDone,
         intervalIndex: l.intervalIndex,
         restSecondsDone: l.restSecondsDone,
         sessionCardioBlockId: l.sessionCardioBlockId,
@@ -240,6 +243,7 @@ export function mapSession(
 
   return {
     clientId: row.clientId,
+    performedDurationSeconds: row.performedDurationSeconds,
     finishComment: row.finishComment,
     finishedAt: row.finishedAt,
     id: row.id,

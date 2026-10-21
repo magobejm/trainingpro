@@ -12,6 +12,7 @@ export type EnsureSessionForClientInput = EnsureSessionInput & {
 };
 
 export type FinishSessionInput = {
+  performedDurationSeconds?: null | number;
   comment?: null | string;
   isIncomplete: boolean;
   postFatigue?: null | number;

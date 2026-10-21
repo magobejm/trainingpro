@@ -142,7 +142,7 @@ function parseCardioValues(b: DraftBlock) {
   return {
     restSeconds: exerciseRestSeconds(b, 30),
     roundsPlanned: b.roundsPlanned ?? 3,
-    targetDistanceMeters: null,
+    targetDistanceMeters: b.targetDistanceMeters ?? null,
     targetRpe: b.targetRpe ?? null,
     workSeconds: b.totalTimeSeconds ?? b.workSeconds ?? 30,
   };

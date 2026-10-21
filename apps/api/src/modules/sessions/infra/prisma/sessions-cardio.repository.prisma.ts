@@ -54,6 +54,7 @@ export class SessionsCardioRepositoryPrisma {
               ...buildUpdateAuditFields(context),
               finishComment: normalizeText(input.comment),
               finishedAt: new Date(),
+              performedDurationSeconds: input.performedDurationSeconds ?? null,
               isCompleted: true,
               isIncomplete: input.isIncomplete,
               sessionRpe: input.sessionRpe ?? null,
@@ -79,6 +80,30 @@ export class SessionsCardioRepositoryPrisma {
       return null;
     }
     return mapCardioSession(row);
+  }
+
+  async logCardioDistance(
+    context: AuthContext,
+    input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
+  ) {
+    if (
+      input.distanceDoneMeters !== null &&
+      (!Number.isFinite(input.distanceDoneMeters) || input.distanceDoneMeters < 0 || input.distanceDoneMeters > 500000)
+    )
+      throw new BadRequestException('Invalid distance');
+    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
+      assertCardioSessionMutable(session.status, session.skippedAt);
+      const block = await this.readSessionCardioBlock(input.sessionId, input.blockId, db);
+      if (!block) throw new NotFoundException('Session cardio block not found');
+      void context;
+      return db.sessionCardioBlock.update({
+        where: { id: block.id },
+        data: { distanceDoneMeters: input.distanceDoneMeters },
+        select: { id: true, distanceDoneMeters: true },
+      });
+    });
   }
 
   async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
@@ -284,7 +309,9 @@ export class SessionsCardioRepositoryPrisma {
     };
     const update = {
       avgHeartRate: input.avgHeartRate ?? null,
-      distanceDoneMeters: input.distanceDoneMeters ?? null,
+      hrMaxPctDone: input.hrMaxPctDone ?? null,
+      hrReservePctDone: input.hrReservePctDone ?? null,
+      ...(input.distanceDoneMeters === undefined ? {} : { distanceDoneMeters: input.distanceDoneMeters }),
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,
       ...(input.restSecondsDone === undefined ? {} : { restSecondsDone: input.restSecondsDone }),
@@ -295,6 +322,7 @@ export class SessionsCardioRepositoryPrisma {
           where,
           create: {
             ...update,
+            distanceDoneMeters: input.distanceDoneMeters ?? null,
             intervalIndex: input.intervalIndex,
             restSecondsDone: input.restSecondsDone ?? null,
             sessionCardioBlockId,

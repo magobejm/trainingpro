@@ -76,3 +76,13 @@ describe('session concurrency', () => {
     expect(shouldReplacePendingSession({ ...pending, startedAt: new Date() }, 'day-2')).toBe(false);
   });
 });
+
+it('retries an identical frozen duration but rejects changing a completed duration', () => {
+  expect(sameFinish({ ...completed, performedDurationSeconds: 120 }, { ...input, performedDurationSeconds: 120 })).toBe(
+    true,
+  );
+  expect(sameFinish({ ...completed, performedDurationSeconds: 120 }, { ...input, performedDurationSeconds: 180 })).toBe(
+    false,
+  );
+  expect(sameFinish({ ...completed, performedDurationSeconds: 120 }, input)).toBe(true);
+});

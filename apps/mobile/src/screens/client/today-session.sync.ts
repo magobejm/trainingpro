@@ -11,7 +11,12 @@ import {
 } from '../../data/hooks/useTodaySession';
 import { useSessionDraft, type EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type { SessionOpInput } from '../../data/offline/session-draft';
-import { finishSessionWithRpePayload, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
+import {
+  freezeWorkoutDuration,
+  finishSessionWithRpePayload,
+  formatSessionRpeChatNotice,
+  sessionRpeBand,
+} from './session-rpe.utils';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 type Enqueue = (session: SessionView, input: SessionOpInput) => Promise<EnqueueResult>;
@@ -23,7 +28,8 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
     [queue.enqueue, session],
   );
   const enqueueFinish = useCallback(
-    (sessionRpe: number) => enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe),
+    (sessionRpe: number, performedDurationSeconds?: number | null) =>
+      enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe, performedDurationSeconds),
     [queue.enqueue, session, sessionId],
   );
   return {
@@ -33,6 +39,13 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
     enqueue: queue.enqueue,
     enqueueFinish,
     flush: queue.flush,
+    handleCardioDistance: (blockId: string, distanceDoneMeters: number | null) =>
+      save({
+        body: { distanceDoneMeters },
+        dedupeKey: `cardio-distance:${blockId}:0`,
+        kind: 'cardio-distance',
+        path: sessionWritePath(sessionId, 'cardio-distance', blockId),
+      }),
     handleLogInterval: (input: LogIntervalMutationInput) => save(intervalInput(sessionId, input)),
     handleLogIsometricSet: (input: LogIsometricSetMutationInput) => save(isometricInput(sessionId, input)),
     handleLogMobilitySet: (input: LogMobilitySetMutationInput) => save(mobilityInput(sessionId, input)),
@@ -68,10 +81,15 @@ function enqueueSessionFinish(
   session: SessionView | null,
   sessionId: string,
   sessionRpe: number,
+  performedDurationSeconds?: number | null,
 ): Promise<EnqueueResult | 'missing'> {
   if (!session) return Promise.resolve('missing');
   return enqueue(session, {
-    body: finishSessionWithRpePayload(sessionRpe),
+    body: {
+      ...finishSessionWithRpePayload(sessionRpe),
+      performedDurationSeconds:
+        performedDurationSeconds === undefined ? freezeWorkoutDuration(session) : performedDurationSeconds,
+    },
     dedupeKey: 'finish',
     kind: 'finish',
     path: sessionWritePath(sessionId, 'finish'),

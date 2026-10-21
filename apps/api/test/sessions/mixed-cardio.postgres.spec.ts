@@ -8,6 +8,8 @@ const url = process.env.TEST_SESSION_DATABASE_URL;
 const postgres = url ? describe : describe.skip;
 jest.setTimeout(20000);
 
+// Keep database setup, teardown and the regression scenarios in one suite.
+// eslint-disable-next-line max-lines-per-function
 postgres('cardio inside routine sessions against PostgreSQL', () => {
   let db: PrismaClient;
   let fixture: Awaited<ReturnType<typeof sessionFixture>>;
@@ -66,6 +68,15 @@ postgres('cardio inside routine sessions against PostgreSQL', () => {
       durationSecondsDone: 150,
     });
     expect(log).toMatchObject({ distanceDoneMeters: 1532, durationSecondsDone: 150 });
+    await repo.logCardioDistance(fixture.context, { sessionId: session.id, blockId: cardio.id, distanceDoneMeters: 2500 });
+    await repo.logInterval(fixture.context, {
+      sessionId: session.id,
+      sessionCardioBlockId: cardio.id,
+      intervalIndex: 0,
+      durationSecondsDone: 150,
+      hrMaxPctDone: 82.5,
+      hrReservePctDone: 0,
+    });
     if (withSport) {
       const sport = session.items.find((item) => item.type === 'sport');
       if (!sport) throw new Error('Missing sport');
@@ -78,7 +89,27 @@ postgres('cardio inside routine sessions against PostgreSQL', () => {
     }
     const reloaded = await repo.getSessionById(fixture.context, session.id);
     const saved = reloaded?.items.find((item) => item.type === 'cardio');
-    expect(saved?.type === 'cardio' && saved.intervalLogs[0]).toMatchObject({ distanceDoneMeters: 1532 });
+    expect(saved?.type === 'cardio' && saved.distanceDoneMeters).toBe(2500);
+    expect(saved?.type === 'cardio' && saved.intervalLogs[0]).toMatchObject({
+      distanceDoneMeters: 1532,
+      hrMaxPctDone: 82.5,
+      hrReservePctDone: 0,
+    });
+    const finished = await repo.finishSession(fixture.context, {
+      sessionId: session.id,
+      isIncomplete: false,
+      performedDurationSeconds: 1234,
+    });
+    expect(finished.performedDurationSeconds).toBe(1234);
+    expect(
+      (
+        await repo.finishSession(fixture.context, {
+          sessionId: session.id,
+          isIncomplete: false,
+          performedDurationSeconds: 1234,
+        })
+      ).performedDurationSeconds,
+    ).toBe(1234);
     if (withSport) {
       const sport = reloaded?.items.find((item) => item.type === 'sport');
       expect(sport?.type === 'sport' && sport.setLogs[0]).toMatchObject({

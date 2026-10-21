@@ -87,9 +87,10 @@ export function coachDocumentSetLines(
   supplied?: PlanRecord[],
 ): string[] {
   const prescribed = supplied ?? (value.sets as PlanRecord[]) ?? [];
-  const duration = usesMinuteDuration(kind)
-    ? (value.workSeconds ?? (value.durationMinutes == null ? null : Number(value.durationMinutes) * 60))
-    : null;
+  const duration =
+    kind === 'cardio' || kind === 'sport'
+      ? (value.workSeconds ?? (value.durationMinutes == null ? null : Number(value.durationMinutes) * 60))
+      : null;
   const count = Math.max(prescribed.length, Number(value.setsPlanned ?? value.roundsPlanned ?? 0), duration == null ? 0 : 1);
   return Array.from({ length: count }, (_, index) => {
     const row = prescribed.find((set) => Number(set.setIndex) === index) ?? prescribed[index] ?? {};

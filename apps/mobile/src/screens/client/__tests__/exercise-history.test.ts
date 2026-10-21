@@ -39,8 +39,8 @@ describe('previous workout cards', () => {
   });
 });
 
-it('formats distances in km and durations in minutes only for cardio and sport', () => {
+it('formats distances in km and all durations in seconds', () => {
   expect(historyCell(1250, 'distanceDoneMeters', 'cardio')).toBe('1.25');
-  expect(historyCell(150, 'durationSecondsDone', 'sport')).toBe('2.5');
+  expect(historyCell(150, 'durationSecondsDone', 'sport')).toBe('150');
   expect(historyCell(150, 'durationSecondsDone', 'plio')).toBe('150');
 });

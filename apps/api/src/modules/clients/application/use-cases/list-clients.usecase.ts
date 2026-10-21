@@ -18,4 +18,8 @@ export class ListClientsUseCase {
   executePage(context: AuthContext, query: ListClientsQuery & { limit: number }) {
     return this.repository.listClientsPage(context, query);
   }
+
+  executeArchivedPage(context: AuthContext, query: { cursor?: string; limit: number; search?: string }) {
+    return this.repository.listArchivedClientsPage(context, query);
+  }
 }

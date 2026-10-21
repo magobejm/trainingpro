@@ -36,6 +36,7 @@ import { ListClientsUseCase } from './application/use-cases/list-clients.usecase
 import { ListClientTimelineUseCase } from './application/use-cases/list-client-timeline.usecase';
 import { ListClientObjectivesUseCase } from './application/use-cases/list-client-objectives.usecase';
 import { ResetClientPasswordUseCase } from './application/use-cases/reset-client-password.usecase';
+import { RestoreClientUseCase } from './application/use-cases/restore-client.usecase';
 import { SaveClientManagementSectionsUseCase } from './application/use-cases/save-client-management-sections.usecase';
 import { SetClientProgressPhotoArchivedUseCase } from './application/use-cases/set-client-progress-photo-archived.usecase';
 import { UpdateClientUseCase } from './application/use-cases/update-client.usecase';
@@ -97,6 +98,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientTimelineUseCase,
     ListClientObjectivesUseCase,
     ResetClientPasswordUseCase,
+    RestoreClientUseCase,
     SaveClientManagementSectionsUseCase,
     SetClientProgressPhotoArchivedUseCase,
     UpdateClientUseCase,

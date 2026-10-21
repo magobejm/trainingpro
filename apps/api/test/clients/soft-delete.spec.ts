@@ -33,6 +33,19 @@ async function bootstrap() {
 }
 
 describe('Clients soft delete', () => {
+  it('serves the archived client collection before the dynamic client id route', async () => {
+    const app = await bootstrap();
+    await request(app.getHttpServer())
+      .get('/clients/archived?limit=10')
+      .set('Authorization', 'Bearer coach-a')
+      .set('x-active-role', 'coach')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.items).toEqual([]);
+      });
+    await app.close();
+  });
+
   it('hides archived client from list and get', async () => {
     const app = await bootstrap();
     await request(app.getHttpServer())
@@ -81,5 +94,6 @@ function createSoftDeleteRepository() {
       const visible = clients.filter((item) => item.coach === context.subject && !item.archived);
       return visible.map((item) => mapClientFromSeed(item)).filter(Boolean);
     },
+    listArchivedClientsPage: async () => ({ items: [], nextCursor: null }),
   };
 }

@@ -133,6 +133,7 @@ export {
 } from './nutrition/calculations';
 
 export * from './routine-handoff';
+export * from './http/progress-dashboard';
 export * from './routine-comparison';
 export * from './routine-day-colors';
 

@@ -21,6 +21,8 @@ type LogIntervalInput = {
   distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex: number;
   sessionCardioBlockId: string;
 };

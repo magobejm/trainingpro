@@ -8,6 +8,8 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { EnsureSessionUseCase } from '../../application/use-cases/ensure-session.usecase';
 import { FinishSessionUseCase } from '../../application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../application/use-cases/get-session.usecase';
+import { LogCardioDistanceUseCase } from '../../application/use-cases/log-cardio-distance.usecase';
+import { CardioDistanceDto, CardioDistanceParamsDto } from '../dto/cardio-distance.dto';
 import { LogIntervalUseCase } from '../../application/use-cases/log-interval.usecase';
 import { LogIsometricSetUseCase } from '../../application/use-cases/log-isometric-set.usecase';
 import { LogMobilitySetUseCase } from '../../application/use-cases/log-mobility-set.usecase';
@@ -38,6 +40,7 @@ export class SessionsController {
     private readonly ensureSessionUseCase: EnsureSessionUseCase,
     private readonly finishSessionUseCase: FinishSessionUseCase,
     private readonly getSessionUseCase: GetSessionUseCase,
+    private readonly logCardioDistanceUseCase: LogCardioDistanceUseCase,
     private readonly logIntervalUseCase: LogIntervalUseCase,
     private readonly logIsometricSetUseCase: LogIsometricSetUseCase,
     private readonly logMobilitySetUseCase: LogMobilitySetUseCase,
@@ -70,6 +73,20 @@ export class SessionsController {
       startMode: body.startMode,
     });
     return mapSession(session);
+  }
+
+  @Post(':sessionId/cardio-blocks/:blockId/distance')
+  async logCardioDistance(
+    @Param() params: CardioDistanceParamsDto,
+    @Body() body: CardioDistanceDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+  ) {
+    return this.logCardioDistanceUseCase.execute(
+      readAuthContext(request),
+      { ...params, ...body },
+      readOffset(timezoneOffset),
+    );
   }
 
   @Post(':sessionId/log-interval')
@@ -175,6 +192,7 @@ export class SessionsController {
         postMood: body.postMood,
         postPain: body.postPain,
         sessionId: params.sessionId,
+        performedDurationSeconds: body.performedDurationSeconds,
         sessionRpe: body.sessionRpe,
       },
       readOffset(timezoneOffset),

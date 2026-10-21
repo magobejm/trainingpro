@@ -1,6 +1,7 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
+import { ExerciseDistanceHeader, exerciseDistanceMeters } from '../ExerciseDistanceHeader';
 import { ActiveExerciseScreen } from '../ActiveExerciseScreen';
 import { loggedDraft } from '../active-exercise.save';
 
@@ -137,4 +138,26 @@ it('shows all series of a finished workout without enabling writes', () => {
       .filter((button) => button.accessibilityLabel?.startsWith('client.today.restTimer'))
       .every((button) => button.disabled),
   ).toBe(true);
+});
+
+it('uses the cardio header as authoritative distance and sums sport distances once', () => {
+  const cardio = {
+    ...item,
+    type: 'cardio',
+    distanceDoneMeters: 1250,
+    intervalLogs: [{ distanceDoneMeters: 200 }, { distanceDoneMeters: 300 }],
+  } as unknown as SessionItem;
+  expect(exerciseDistanceMeters(cardio)).toBe(1250);
+  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: 0 } as SessionItem)).toBe(0);
+  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: null } as SessionItem)).toBe(500);
+  expect(
+    exerciseDistanceMeters({
+      ...item,
+      type: 'sport',
+      setLogs: [{ distanceDoneMeters: 250 }, { distanceDoneMeters: 750 }],
+    } as unknown as SessionItem),
+  ).toBe(1000);
+  const markup = renderToStaticMarkup(React.createElement(ExerciseDistanceHeader, { item: cardio, readOnly: true }));
+  expect(markup).toContain('1.25');
+  expect(markup).not.toContain('button');
 });

@@ -127,6 +127,17 @@ export function useArchiveClientMutation() {
   });
 }
 
+export function useRestoreClientMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (clientId: string) => restoreClient(auth, clientId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
+    },
+  });
+}
+
 export function useResetClientPasswordMutation() {
   const auth = useAuth();
   return useMutation({
@@ -205,6 +216,11 @@ async function archiveClient(auth: ReturnType<typeof useAuth>, clientId: string)
     throw new Error('Missing authenticated context');
   }
   await createApiClient(auth).delete<{ status: string }>(`/clients/${clientId}`);
+}
+
+async function restoreClient(auth: ReturnType<typeof useAuth>, clientId: string): Promise<void> {
+  if (!auth) throw new Error('Missing authenticated context');
+  await createApiClient(auth).post<{ status: string }>(`/clients/${clientId}/restore`);
 }
 
 async function createClient(auth: ReturnType<typeof useAuth>, input: CreateClientInput): Promise<CreateClientResult> {

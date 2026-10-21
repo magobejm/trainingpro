@@ -63,3 +63,29 @@ it('recomputes the result when replaying start and incomplete finish with stale 
   expect(view).toMatchObject({ outcome: 'incomplete', originDate: '2026-10-18', sessionDate: '2026-10-19' });
   expect(applyPendingOps(view, []).outcome).toBe('incomplete');
 });
+
+it('replays header distance independently of series and preserves frozen duration', () => {
+  const session = sampleSession();
+  session.items = [
+    { id: 'cardio-1', type: 'cardio', intervalLogs: [{ intervalIndex: 1, durationSecondsDone: 40 }] },
+  ] as never;
+  const draft = upsertOp(createSessionDraft(session), {
+    kind: 'cardio-distance',
+    path: '/sessions/session-1/cardio-blocks/cardio-1/distance',
+    dedupeKey: 'cardio-distance:cardio-1:0',
+    body: { distanceDoneMeters: 0 },
+  });
+  const done = upsertOp(draft, {
+    kind: 'finish',
+    path: '/sessions/session-1/finish',
+    dedupeKey: 'finish',
+    body: { isIncomplete: false, performedDurationSeconds: 120 },
+  });
+  const view = applyPendingOps(session, done.ops);
+  expect(view.items[0]).toMatchObject({
+    distanceDoneMeters: 0,
+    intervalLogs: [{ intervalIndex: 1, durationSecondsDone: 40 }],
+  });
+  expect(view.performedDurationSeconds).toBe(120);
+  expect(applyPendingOps(view, done.ops)).toEqual(view);
+});

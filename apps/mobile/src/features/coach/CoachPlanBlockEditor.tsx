@@ -189,7 +189,7 @@ function BlockVariables({
           )}
           <CoachButton
             label={t(locked.includes(key) ? 'coachWorkspace.unlock' : 'coachWorkspace.lock')}
-            disabled={locked.includes(key) && !canUnlockSetVariable(kind, locked, key)}
+            disabled={kind === 'cardio' || (locked.includes(key) && !canUnlockSetVariable(kind, locked, key))}
             onPress={() =>
               onChange({
                 ...value,
@@ -226,7 +226,7 @@ function BlockSets({
           {setVariablesForType(kind)
             .filter((field) => !resolveLockedFields(kind, value.lockedFields as string[] | undefined).includes(field))
             .map((field) =>
-              field === 'distanceMeters' || (field === 'durationSeconds' && usesMinuteDuration(kind)) ? (
+              field === 'distanceMeters' || field === 'durationSeconds' ? (
                 <SetUnitField
                   key={field}
                   kind={kind}
@@ -309,11 +309,13 @@ function SetUnitField({
       /^\d*(?:\.\d*)?$/.test(normalized) &&
       Number.isFinite(number) &&
       number >= 0 &&
-      (field === 'distanceMeters' ? number <= 500 && (normalized.split('.')[1]?.length ?? 0) <= 3 : number <= 60);
+      (field === 'distanceMeters'
+        ? number <= 500 && (normalized.split('.')[1]?.length ?? 0) <= 3
+        : Number.isInteger(number) && number <= 50000);
     if (valid) onChange(fromSetDisplayValue(kind, field, number));
     else setRaw(display);
   };
-  const label = t('coachWorkspace.field.' + (field === 'durationSeconds' ? 'durationMinutes' : field));
+  const label = t('coachWorkspace.field.' + field);
   return (
     <View style={ui.field}>
       <Text style={ui.label}>{label}</Text>

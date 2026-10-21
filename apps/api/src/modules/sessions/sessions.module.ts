@@ -8,6 +8,7 @@ import { FinishCardioSessionUseCase } from './application/use-cases/finish-cardi
 import { FinishSessionUseCase } from './application/use-cases/finish-session.usecase';
 import { GetCardioSessionUseCase } from './application/use-cases/get-cardio-session.usecase';
 import { GetSessionUseCase } from './application/use-cases/get-session.usecase';
+import { LogCardioDistanceUseCase } from './application/use-cases/log-cardio-distance.usecase';
 import { LogIntervalUseCase } from './application/use-cases/log-interval.usecase';
 import { LogIsometricSetUseCase } from './application/use-cases/log-isometric-set.usecase';
 import { LogMobilitySetUseCase } from './application/use-cases/log-mobility-set.usecase';
@@ -36,6 +37,7 @@ import { SessionsController } from './presentation/controllers/sessions.controll
     FinishSessionUseCase,
     GetCardioSessionUseCase,
     GetSessionUseCase,
+    LogCardioDistanceUseCase,
     LogIntervalUseCase,
     LogIsometricSetUseCase,
     LogMobilitySetUseCase,

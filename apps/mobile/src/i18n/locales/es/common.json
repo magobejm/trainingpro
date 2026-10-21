@@ -1,4 +1,6 @@
 {
+  "mobile.client.exercise.saveDistance": "Guardar distancia",
+  "mobile.client.exercise.distanceInvalid": "Introduce una distancia válida entre 0 y 500 km.",
   "mobile.guide.helpTitle": "Ayuda",
   "mobile.guide.helpIntro": "Aprende a registrar tu entrenamiento y a contactar con tu entrenador.",
   "mobile.guide.progress": "Tu guía · {{current}} de {{total}}",

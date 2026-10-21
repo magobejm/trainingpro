@@ -1,4 +1,3 @@
-import { usesMinuteDuration } from '@trainerpro/shared';
 import type { WarmupTemplateItemInput } from '../../../../data/hooks/useWarmupTemplates';
 import { blockTypeShowsRepRange } from '../../exercise-rep-range';
 import { resolvePlaceholder } from './ExercisePickerModal.utils';
@@ -66,7 +65,7 @@ export function parseSets(item: WarmupTemplateItemInput): PerSet[] {
 export function resolveDisplaySets(item: WarmupTemplateItemInput): PerSet[] {
   const parsed = parseSets(item);
   const planned = item.setsPlanned ?? item.roundsPlanned ?? 0;
-  const legacySeconds = usesMinuteDuration(toBlockType(item.blockType))
+  const legacySeconds = ['cardio', 'sport'].includes(toBlockType(item.blockType))
     ? (item.workSeconds ?? (item.durationMinutes == null ? undefined : item.durationMinutes * 60))
     : undefined;
   const n = Math.max(planned, parsed.length, legacySeconds == null ? 0 : 1);

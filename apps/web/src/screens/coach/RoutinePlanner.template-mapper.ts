@@ -114,6 +114,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
 function mapCardioBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaMap): DraftBlock {
   return {
     ...base,
+    targetDistanceMeters: toNumber(item.targetDistanceMeters),
     ...readWarmupImportFlags(meta),
     durationMinutes: toNumber(item.durationMinutes),
     heartRate: toNumber(meta.pulsaciones),

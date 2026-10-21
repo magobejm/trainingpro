@@ -7,6 +7,8 @@ export class LogIntervalDto {
     distanceDoneMeters: z.number().int().min(0).max(500000).nullable().optional(),
     durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
     effortRpe: rpeHalfSchema,
+    hrMaxPctDone: z.number().min(0).max(100).nullable().optional(),
+    hrReservePctDone: z.number().min(0).max(100).nullable().optional(),
     intervalIndex: z.number().int().min(1).max(1000),
     restSecondsDone: z.number().int().min(0).max(3600).nullable().optional(),
     sessionCardioBlockId: z.string().uuid(),
@@ -16,6 +18,8 @@ export class LogIntervalDto {
   distanceDoneMeters?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex!: number;
   restSecondsDone?: null | number;
   sessionCardioBlockId!: string;

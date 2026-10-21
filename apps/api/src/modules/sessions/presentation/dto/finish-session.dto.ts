@@ -7,6 +7,7 @@ export class FinishSessionDto {
   static schema = z.object({
     comment: z.string().max(2000).nullable().optional(),
     isIncomplete: z.boolean(),
+    performedDurationSeconds: z.number().int().min(0).max(604800).nullable().optional(),
     postFatigue: wellnessInt,
     postMood: wellnessInt,
     postPain: wellnessInt,
@@ -15,6 +16,7 @@ export class FinishSessionDto {
 
   comment?: null | string;
   isIncomplete!: boolean;
+  performedDurationSeconds?: null | number;
   postFatigue?: null | number;
   postMood?: null | number;
   postPain?: null | number;

@@ -18,6 +18,7 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { completeQueryPage, queryPageWindow, type PageSlice } from '../../../../common/pagination/page-query';
 import { normalizeSearch } from '../../../../common/text/normalize-search';
+import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
@@ -50,8 +51,10 @@ import { stripMetaNotes } from '../../../../common/notes/parse-meta-notes';
 import {
   archiveClientAndReleaseSeat,
   claimTrainingPlanAssignment,
+  ensureUniqueClientEmail,
   readActiveClient,
   resolveCoachMembership,
+  restoreArchivedClient,
 } from './client.repository.prisma.ops';
 
 const CLIENT_LIST_INCLUDE = {
@@ -295,6 +298,84 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       },
       { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
     );
+  }
+
+  async listArchivedClientsPage(
+    context: AuthContext,
+    query: { cursor?: string; limit: number; search?: string },
+  ): Promise<PageSlice<Client & { archivedAt: Date }>> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    const { after: cursor, take } = queryPageWindow(query);
+    const filters = [
+      Prisma.sql`archived_at IS NOT NULL`,
+      Prisma.sql`coach_membership_id = ${membership.id}::uuid`,
+      Prisma.sql`organization_id = ${membership.organizationId}::uuid`,
+    ];
+    const needle = query.search ? normalizeSearch(query.search) : undefined;
+    if (needle)
+      filters.push(Prisma.sql`normalize_search(concat_ws(' ', first_name, last_name, email)) LIKE ${`%${needle}%`}`);
+    if (cursor)
+      filters.push(
+        Prisma.sql`(
+          archived_at < ${cursor.sort}::timestamptz OR
+          (archived_at = ${cursor.sort}::timestamptz AND id::text COLLATE "C" < ${cursor.id} COLLATE "C")
+        )`,
+      );
+    return this.prisma.$transaction(
+      async (tx) => {
+        const candidates = await tx.$queryRaw<Array<{ id: string; sort: string }>>(Prisma.sql`
+        SELECT id::text AS id, to_char(archived_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS sort
+        FROM client WHERE ${Prisma.join(filters, ' AND ')}
+        ORDER BY archived_at DESC, id::text COLLATE "C" DESC LIMIT ${take!}
+      `);
+        const page = completeQueryPage(candidates, query, {
+          direction: 'desc',
+          id: (item) => item.id,
+          sort: (item) => item.sort,
+        });
+        if (!page.items.length) return { items: [], nextCursor: null };
+        const rows = await tx.client.findMany({
+          include: CLIENT_LIST_INCLUDE,
+          where: {
+            id: { in: page.items.map((item) => item.id) },
+            archivedAt: { not: null },
+            coachMembershipId: membership.id,
+            organizationId: membership.organizationId,
+          },
+        });
+        const byId = new Map(
+          rows.map((row) => [row.id, { ...mapClient({ ...row, progressPhotos: [] }), archivedAt: row.archivedAt! }]),
+        );
+        return {
+          items: page.items.flatMap(({ id }) => (byId.has(id) ? [byId.get(id)!] : [])),
+          nextCursor: page.nextCursor ?? null,
+        };
+      },
+      { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+    );
+  }
+
+  async restoreClient(context: AuthContext, clientId: string): Promise<void> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        const client = await tx.client.findFirst({
+          where: {
+            archivedAt: { not: null },
+            coachMembershipId: membership.id,
+            id: clientId,
+            organizationId: membership.organizationId,
+          },
+          select: { email: true },
+        });
+        if (!client) throw new NotFoundException('Archived client not found');
+        await ensureUniqueClientEmail(tx, membership.organizationId, client.email);
+        await restoreArchivedClient(tx, clientId, membership.id, membership.organizationId, context.subject, client.email);
+      });
+    } catch (error) {
+      if (isUniqueViolation(error)) throw new ConflictException('Client email already exists');
+      throw error;
+    }
   }
 
   async listProgressPhotos(context: AuthContext, clientId: string): Promise<ClientProgressPhoto[]> {

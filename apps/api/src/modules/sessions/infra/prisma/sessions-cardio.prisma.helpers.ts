@@ -101,6 +101,8 @@ export function mapCardioIntervalLog(row: {
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
   effortRpe: Prisma.Decimal | null | number;
+  hrMaxPctDone?: null | number;
+  hrReservePctDone?: null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;
@@ -110,6 +112,8 @@ export function mapCardioIntervalLog(row: {
     distanceDoneMeters: row.distanceDoneMeters,
     durationSecondsDone: row.durationSecondsDone,
     effortRpe: toRpeNumber(row.effortRpe),
+    hrMaxPctDone: row.hrMaxPctDone ?? null,
+    hrReservePctDone: row.hrReservePctDone ?? null,
     intervalIndex: row.intervalIndex,
     restSecondsDone: row.restSecondsDone,
     sessionCardioBlockId: row.sessionCardioBlockId,
@@ -122,6 +126,7 @@ export function mapCardioSession(
   return {
     blocks: row.cardioBlocks.map((block) => ({
       coachInstructions: block.coachInstructions,
+      distanceDoneMeters: block.distanceDoneMeters,
       displayName: block.displayName,
       id: block.id,
       notes: block.notes,
@@ -134,6 +139,7 @@ export function mapCardioSession(
       workSeconds: block.workSeconds,
     })),
     clientId: row.clientId,
+    performedDurationSeconds: row.performedDurationSeconds,
     finishComment: row.finishComment,
     finishedAt: row.finishedAt,
     id: row.id,

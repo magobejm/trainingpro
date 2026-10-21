@@ -45,7 +45,7 @@ describe('getSetColumns', () => {
     const plio = getSetColumns({ type: 'plio', lockedFields: [] } as unknown as SessionItem);
     const mobility = getSetColumns({ type: 'mobility', lockedFields: [] } as unknown as SessionItem);
 
-    expect(cardio.map((column) => column.key)).toEqual(['rpe', 'fcMaxPct', 'duration', 'distance', 'heartRate']);
+    expect(cardio.map((column) => column.key)).toEqual(['rpe', 'fcMaxPct', 'duration', 'heartRate', 'fcReservePct']);
     expect(isometric.map((column) => column.key)).toEqual(['weight', 'rpe', 'duration']);
     expect(plio.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'duration']);
     expect(mobility.map((column) => column.key)).toEqual(['reps', 'weight', 'rpe', 'rom']);
@@ -270,19 +270,20 @@ describe('buildLogPayload for all exercise types', () => {
     const payload = buildLogPayload(
       item,
       1,
-      emptyDraft({ duration: '2', heartRate: '145', rest: '30', rpe: '6', distance: '1' }),
+      emptyDraft({ duration: '120', heartRate: '145', rest: '30', rpe: '6', fcMaxPct: '85', fcReservePct: '60' }),
       47,
     );
     expect(payload).toEqual({
       avgHeartRate: 145,
-      distanceDoneMeters: 1000,
+      hrMaxPctDone: 85,
+      hrReservePctDone: 60,
       durationSecondsDone: 120,
       effortRpe: 6,
       intervalIndex: 1,
       restSecondsDone: 47,
       sessionCardioBlockId: 'cardio-1',
     });
-    expect(payload).toHaveProperty('distanceDoneMeters', 1000);
+    expect(payload).not.toHaveProperty('distanceDoneMeters');
   });
 
   it('sends sport set logs in seconds with setIndex and all visible fields', () => {
@@ -292,7 +293,7 @@ describe('buildLogPayload for all exercise types', () => {
         item,
         2,
         emptyDraft({
-          duration: '1.5',
+          duration: '90',
           fcMaxPct: '85',
           fcReservePct: '70',
           heartRate: '150',
@@ -330,7 +331,7 @@ describe('getSetCount and readActualValue for sport', () => {
     expect(getSetCount(item)).toBe(3);
   });
 
-  it('reads sport set logs by setIndex in minutes', () => {
+  it('reads sport set logs by setIndex in seconds', () => {
     const item = {
       type: 'sport',
       log: null,
@@ -353,7 +354,7 @@ describe('getSetCount and readActualValue for sport', () => {
     } as unknown as SessionItem;
     expect(readActualValue(item, 2, 'reps')).toBe('12');
     expect(readActualValue(item, 2, 'weight')).toBe('5');
-    expect(readActualValue(item, 2, 'duration')).toBe('1.5');
+    expect(readActualValue(item, 2, 'duration')).toBe('90');
     expect(readActualValue(item, 2, 'rom')).toBe('parcial');
     expect(readActualValue(item, 1, 'reps')).toBe('');
   });
@@ -396,9 +397,9 @@ describe('empty sets', () => {
   });
   const item = { type: 'strength', id: 'item-1', lockedFields: [], logs: [] } as unknown as SessionItem;
 
-  it('does not build a save payload for an empty or zero-only set', () => {
+  it('keeps an explicitly logged zero but does not turn blanks into zeros', () => {
     expect(buildLogPayload(item, 3, emptyDraft())).toBeNull();
-    expect(buildLogPayload(item, 3, emptyDraft({ reps: '0', weight: '0' }))).toBeNull();
+    expect(buildLogPayload(item, 3, emptyDraft({ reps: '0', weight: '0' }))).toMatchObject({ repsDone: 0, weightDoneKg: 0 });
   });
 
   it('deletes a previously saved set that is cleared and skips one that was never saved', () => {
@@ -419,33 +420,40 @@ describe('empty sets', () => {
 });
 
 describe('cardio and sport units', () => {
-  it.each(['cardio', 'sport'] as const)('saves and reloads distance and minute duration for %s', (type) => {
-    const item = {
-      type,
-      id: 'x',
-      plannedSets: [],
-      lockedFields: type === 'sport' ? ['heartRate', 'rir', 'fcReservePct', 'rom', 'restSeconds'] : ['fcReservePct'],
-      intervalLogs: [],
-      setLogs: [],
-    } as unknown as SessionItem;
-    const values = {
-      distance: '1,250',
-      duration: '2,5',
-      rpe: '',
-      rir: '',
-      rom: '',
-      weight: '',
-      reps: '',
-      rest: '',
-      heartRate: '',
-      fcMaxPct: '',
-      fcReservePct: '',
-    };
-    expect(buildLogPayload(item, 1, values)).toMatchObject({ distanceDoneMeters: 1250, durationSecondsDone: 150 });
-    const log = { intervalIndex: 1, setIndex: 1, distanceDoneMeters: 1250, durationSecondsDone: 150 };
-    const logged = { ...item, intervalLogs: [log], setLogs: [log] } as unknown as SessionItem;
-    expect(readActualValue(logged, 1, 'distance')).toBe('1.25');
-    expect(readActualValue(logged, 1, 'duration')).toBe('2.5');
-    expect(buildLogPayload(item, 1, { ...values, duration: '' })).not.toBeNull();
-  });
+  it.each(['cardio', 'sport'] as const)(
+    'saves and reloads seconds while sport alone saves distance per set for %s',
+    (type) => {
+      const item = {
+        type,
+        id: 'x',
+        plannedSets: [],
+        lockedFields: type === 'sport' ? ['heartRate', 'rir', 'fcReservePct', 'rom', 'restSeconds'] : ['fcReservePct'],
+        intervalLogs: [],
+        setLogs: [],
+      } as unknown as SessionItem;
+      const values = {
+        distance: '1,250',
+        duration: '150',
+        rpe: '',
+        rir: '',
+        rom: '',
+        weight: '',
+        reps: '',
+        rest: '',
+        heartRate: '',
+        fcMaxPct: '',
+        fcReservePct: '',
+      };
+      expect(buildLogPayload(item, 1, values)).toMatchObject({
+        durationSecondsDone: 150,
+        ...(type === 'sport' ? { distanceDoneMeters: 1250 } : {}),
+      });
+      if (type === 'cardio') expect(buildLogPayload(item, 1, values)).not.toHaveProperty('distanceDoneMeters');
+      const log = { intervalIndex: 1, setIndex: 1, distanceDoneMeters: 1250, durationSecondsDone: 150 };
+      const logged = { ...item, intervalLogs: [log], setLogs: [log] } as unknown as SessionItem;
+      expect(readActualValue(logged, 1, 'distance')).toBe('1.25');
+      expect(readActualValue(logged, 1, 'duration')).toBe('150');
+      expect(buildLogPayload(item, 1, { ...values, duration: '', rpe: '7' })).not.toBeNull();
+    },
+  );
 });

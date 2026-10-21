@@ -21,6 +21,18 @@ export function useClientsPagedQuery(filter: { objective?: string; search?: stri
   });
 }
 
+export type ArchivedClientView = ClientView & { archivedAt: string };
+
+export function useArchivedClientsPagedQuery(searchValue: string, enabled = true) {
+  const auth = useAuth();
+  const search = useDebouncedValue(searchValue, 300);
+  return usePagedList<ArchivedClientView>({
+    enabled: Boolean(auth) && enabled,
+    fetchPage: (cursor) => fetchItemsPage<ArchivedClientView>(auth, '/clients/archived', { cursor, search }),
+    queryKey: ['clients', 'archived', 'paged', search, auth?.accessToken],
+  });
+}
+
 export function useNotesPagedQuery(filter: {
   clientId?: string;
   dateFrom?: string;

@@ -31,6 +31,7 @@ export interface DraftBlock {
   warmupTemplateName?: string;
   type: BlockType;
   durationMinutes?: number;
+  targetDistanceMeters?: number;
   notes?: string;
   restSeconds?: number;
   roundsPlanned?: number;

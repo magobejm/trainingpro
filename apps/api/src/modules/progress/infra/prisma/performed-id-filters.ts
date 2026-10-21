@@ -19,16 +19,23 @@ export function strengthPerformedWhere(session: SessionWhere) {
 export function cardioPerformedWhere(session: SessionWhere) {
   return {
     archivedAt: null,
-    intervalLogs: {
-      some: {
-        OR: [
-          { durationSecondsDone: { gte: 0 } },
-          { distanceDoneMeters: { gte: 0 } },
-          { effortRpe: positive },
-          { avgHeartRate: positive },
-        ],
+    OR: [
+      { distanceDoneMeters: { gte: 0 } },
+      {
+        intervalLogs: {
+          some: {
+            OR: [
+              { durationSecondsDone: { gte: 0 } },
+              { distanceDoneMeters: { gte: 0 } },
+              { effortRpe: positive },
+              { avgHeartRate: positive },
+              { hrMaxPctDone: { gte: 0 } },
+              { hrReservePctDone: { gte: 0 } },
+            ],
+          },
+        },
       },
-    },
+    ],
     session,
     sourceCardioMethodId: { not: null },
   };

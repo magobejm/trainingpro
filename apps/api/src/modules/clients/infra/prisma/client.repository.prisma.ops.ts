@@ -59,6 +59,28 @@ export async function archiveClientAndReleaseSeat(
   await releaseClientSeat(tx, organizationId);
 }
 
+export async function restoreArchivedClient(
+  tx: Prisma.TransactionClient,
+  clientId: string,
+  coachMembershipId: string,
+  organizationId: string,
+  updatedBy: string,
+  email: string,
+): Promise<void> {
+  const restored = await tx.client.updateMany({
+    where: { archivedAt: { not: null }, coachMembershipId, id: clientId, organizationId },
+    data: { archivedAt: null, archivedBy: null, updatedBy },
+  });
+  if (restored.count === 0) throw new NotFoundException('Archived client not found');
+
+  await claimClientSeat(tx, organizationId);
+  await tx.user.updateMany({ where: { email }, data: { isActive: true } });
+  await tx.organizationMember.updateMany({
+    where: { organizationId, role: Role.CLIENT, user: { email } },
+    data: { archivedAt: null, isActive: true },
+  });
+}
+
 export async function claimTrainingPlanAssignment(
   tx: Prisma.TransactionClient,
   clientId: string,

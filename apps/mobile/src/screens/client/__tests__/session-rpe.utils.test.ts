@@ -1,5 +1,6 @@
 import {
   clampSessionRpe,
+  freezeWorkoutDuration,
   DEFAULT_SESSION_RPE,
   finishSessionWithRpePayload,
   formatSessionRpe,
@@ -50,4 +51,10 @@ describe('session RPE', () => {
   it('formats a chat notice for the coach', () => {
     expect(formatSessionRpeChatNotice(7.5, 'Muy duro')).toBe('RPE de la sesión registrado: 7.5/10 (Muy duro).');
   });
+});
+
+it('freezes performed seconds at finish click, keeps zero and handles missing start', () => {
+  expect(freezeWorkoutDuration({ startedAt: '2026-10-21T10:00:00Z' }, new Date('2026-10-21T10:01:30Z').getTime())).toBe(90);
+  expect(freezeWorkoutDuration({ startedAt: null, performedDurationSeconds: 0 })).toBe(0);
+  expect(freezeWorkoutDuration({ startedAt: null })).toBe(null);
 });

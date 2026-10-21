@@ -226,8 +226,12 @@ it('exports cardio and sport set units without a global total time', () => {
     ],
   };
   for (const section of routinePdfSections(draft, [], t).filter((s) => s.table)) {
-    expect(section.table?.columns).toEqual(['web.pdf.set', 'web.pdf.durationSeconds (min)', 'web.pdf.distanceMeters (km)']);
-    expect(section.table?.rows[0]).toEqual([1, '2.5', '1.25']);
+    expect(section.table?.columns).toEqual(
+      section.heading === 'cardio'
+        ? ['web.pdf.set', 'web.pdf.durationSeconds (s)']
+        : ['web.pdf.set', 'web.pdf.durationSeconds (s)', 'web.pdf.distanceMeters (km)'],
+    );
+    expect(section.table?.rows[0]).toEqual(section.heading === 'cardio' ? [1, '150'] : [1, '150', '1.25']);
     expect(section.paragraphs).toEqual([]);
   }
 });
@@ -240,5 +244,5 @@ it('preserves a legacy sport duration when there were no series', () => {
     ],
   };
   const section = routinePdfSections(draft, [], t).find((s) => s.heading === 'Tenis');
-  expect(section?.table?.rows[0]).toEqual([1, '30']);
+  expect(section?.table?.rows[0]).toEqual([1, '1800']);
 });

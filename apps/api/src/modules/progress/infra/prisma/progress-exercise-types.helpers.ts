@@ -1,7 +1,15 @@
+import { selectRecordedSportRecords } from './sport-progress-records';
+import { intervalCoverage, setCoverage } from './progress-metric-coverage';
+import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
+import type { Prisma } from '@prisma/client';
+import { sessionOutcome } from '@trainerpro/shared';
+import { closedSessionWhere, outcomeSelect } from './closed-session';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import {
   isRecordedNumber,
+  isRecordedNonNegative,
   sportLogHasData,
+  sportSetHasData,
   summarizeCardioIntervals,
   summarizeIsometricSets,
   summarizeMobilitySets,
@@ -33,8 +41,9 @@ function buildSessionDate(d: Date): string {
 }
 
 /** min/km from total duration and distance */
-export function paceMinPerKm(totalDurationSeconds: number, totalDistanceMeters: number): number | null {
-  if (totalDurationSeconds <= 0 || totalDistanceMeters <= 0) return null;
+export function paceMinPerKm(totalDurationSeconds: number | null, totalDistanceMeters: number | null): number | null {
+  if (totalDurationSeconds === null || totalDistanceMeters === null || totalDurationSeconds <= 0 || totalDistanceMeters <= 0)
+    return null;
   const km = totalDistanceMeters / 1000;
   const min = totalDurationSeconds / 60;
   return Math.round((min / km) * 100) / 100;
@@ -56,7 +65,7 @@ export async function readCardioExerciseProgress(
   const rows = await prisma.intervalLog.findMany({
     where: {
       sessionCardioBlock: { sourceCardioMethodId: query.exerciseId },
-      session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      session: { archivedAt: null, clientId, ...closedSessionWhere, sessionDate: { gte: query.from, lte: query.to } },
     },
     select: {
       effortRpe: true,
@@ -64,7 +73,7 @@ export async function readCardioExerciseProgress(
       distanceDoneMeters: true,
       avgHeartRate: true,
       sessionId: true,
-      session: { select: { sessionDate: true } },
+      session: { select: { sessionDate: true, ...outcomeSelect } },
     },
     orderBy: [{ session: { sessionDate: 'asc' } }],
   });
@@ -84,20 +93,32 @@ export async function readCardioExerciseProgress(
       })),
     );
     if (summary.sets === 0) return [];
-    const avgPaceMinKm = paceMinPerKm(summary.totalDurationSeconds, summary.totalDistanceMeters);
+    const paceRows = entry.rows.filter(
+      (row) => isRecordedNumber(row.durationSecondsDone) && isRecordedNumber(row.distanceDoneMeters),
+    );
+    const avgPaceMinKm = paceMinPerKm(
+      paceRows.reduce((sum, row) => sum + row.durationSecondsDone!, 0),
+      paceRows.reduce((sum, row) => sum + row.distanceDoneMeters!, 0),
+    );
     const fcReservePercent = computeFcReservePercent(summary.avgHeartRate, heartProfile.fcMax, heartProfile.fcRest);
     return [
       {
         sessionDate: buildSessionDate(entry.sessionDate),
         sessionId,
+        outcome: sessionOutcome(entry.rows[0]!.session),
+        hasRecordedData: true,
         sets: summary.sets,
-        totalReps: 0,
-        tonnage: 0,
+        metricCoverage: intervalCoverage(
+          entry.rows.map((row) => ({ ...row, effortRpe: toRpeNumber(row.effortRpe) })),
+          heartProfile,
+        ),
+        totalReps: null,
+        tonnage: null,
         avgRpe: summary.avgRpe,
         e1rm: null,
         inol: null,
         totalDurationSeconds: summary.totalDurationSeconds,
-        durationMinutes: Math.round(summary.totalDurationSeconds / 60),
+        durationMinutes: summary.totalDurationSeconds !== null ? summary.totalDurationSeconds / 60 : null,
         avgHeartRate: summary.avgHeartRate,
         avgPaceMinKm,
         fcReservePercent,
@@ -116,7 +137,7 @@ export async function readPlioProgress(
   const rows = await prisma.plioSetLog.findMany({
     where: {
       sessionPlioBlock: { sourcePlioExerciseId: query.exerciseId },
-      session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      session: { archivedAt: null, clientId, ...closedSessionWhere, sessionDate: { gte: query.from, lte: query.to } },
     },
     select: {
       setIndex: true,
@@ -125,7 +146,7 @@ export async function readPlioProgress(
       weightDoneKg: true,
       durationSecondsDone: true,
       sessionId: true,
-      session: { select: { sessionDate: true } },
+      session: { select: { sessionDate: true, ...outcomeSelect } },
     },
     orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
   });
@@ -145,15 +166,20 @@ export async function readPlioProgress(
       })),
     );
     if (summary.sets === 0) return [];
-    const plioEffort =
-      summary.avgRpe !== null && summary.totalReps > 0
-        ? Math.round(summary.totalReps * (summary.avgRpe / 10) * 100) / 100
-        : null;
+    const effortSets = sets.filter(
+      (set) => isRecordedNonNegative(set.repsDone) && isRecordedNumber(toRpeNumber(set.effortRpe)),
+    );
+    const plioEffort = effortSets.length
+      ? Math.round(effortSets.reduce((sum, set) => sum + (set.repsDone! * toRpeNumber(set.effortRpe)!) / 10, 0) * 100) / 100
+      : null;
     return [
       {
         sessionDate: buildSessionDate(sessionDate),
         sessionId,
+        outcome: sessionOutcome(sets[0]!.session),
+        hasRecordedData: true,
         sets: summary.sets,
+        metricCoverage: setCoverage(sets, 'plio'),
         totalReps: summary.totalReps,
         tonnage: summary.tonnage,
         avgRpe: summary.avgRpe,
@@ -177,7 +203,7 @@ export async function readMobilityProgress(
   const rows = await prisma.mobilitySetLog.findMany({
     where: {
       sessionMobilityBlock: { sourceMobilityExerciseId: query.exerciseId },
-      session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      session: { archivedAt: null, clientId, ...closedSessionWhere, sessionDate: { gte: query.from, lte: query.to } },
     },
     select: {
       setIndex: true,
@@ -186,7 +212,7 @@ export async function readMobilityProgress(
       romDone: true,
       weightDoneKg: true,
       sessionId: true,
-      session: { select: { sessionDate: true } },
+      session: { select: { sessionDate: true, ...outcomeSelect } },
     },
     orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
   });
@@ -210,9 +236,12 @@ export async function readMobilityProgress(
       {
         sessionDate: buildSessionDate(sessionDate),
         sessionId,
+        outcome: sessionOutcome(sets[0]!.session),
+        hasRecordedData: true,
         sets: summary.sets,
+        metricCoverage: setCoverage(sets, 'mobility'),
         totalReps: summary.totalReps,
-        tonnage: 0,
+        tonnage: null,
         avgRpe: summary.avgRpe,
         e1rm: null,
         inol: null,
@@ -233,7 +262,7 @@ export async function readIsometricProgress(
   const rows = await prisma.isometricSetLog.findMany({
     where: {
       sessionIsometricBlock: { sourceIsometricExerciseId: query.exerciseId },
-      session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      session: { archivedAt: null, clientId, ...closedSessionWhere, sessionDate: { gte: query.from, lte: query.to } },
     },
     select: {
       setIndex: true,
@@ -241,7 +270,7 @@ export async function readIsometricProgress(
       weightDoneKg: true,
       effortRpe: true,
       sessionId: true,
-      session: { select: { sessionDate: true } },
+      session: { select: { sessionDate: true, ...outcomeSelect } },
     },
     orderBy: [{ session: { sessionDate: 'asc' } }, { setIndex: 'asc' }],
   });
@@ -264,8 +293,11 @@ export async function readIsometricProgress(
       {
         sessionDate: buildSessionDate(sessionDate),
         sessionId,
+        outcome: sessionOutcome(sets[0]!.session),
+        hasRecordedData: true,
         sets: summary.sets,
-        totalReps: 0,
+        metricCoverage: setCoverage(sets, 'isometric'),
+        totalReps: null,
         tonnage: summary.tonnage,
         avgRpe: summary.avgRpe,
         e1rm: null,
@@ -286,51 +318,104 @@ export async function readSportProgress(
   query: ExerciseProgressQuery,
   heartProfile: HeartProfile,
 ): Promise<ExerciseProgressPoint[]> {
-  const rows = await prisma.sportSessionLog.findMany({
+  const blocks = await prisma.sessionSportBlock.findMany({
     where: {
-      sessionSportBlock: { sourceSportId: query.exerciseId },
-      session: { archivedAt: null, clientId, isCompleted: true, sessionDate: { gte: query.from, lte: query.to } },
+      archivedAt: null,
+      sourceSportId: query.exerciseId,
+      session: { archivedAt: null, clientId, ...closedSessionWhere, sessionDate: { gte: query.from, lte: query.to } },
     },
-    select: {
-      durationMinutesDone: true,
-      effortRpe: true,
-      avgHeartRate: true,
-      sessionId: true,
-      session: { select: { sessionDate: true } },
-    },
-    orderBy: [{ session: { sessionDate: 'asc' } }],
+    select: { sessionId: true, session: { select: { sessionDate: true, ...outcomeSelect } }, logs: true, setLogs: true },
+    orderBy: { session: { sessionDate: 'asc' } },
   });
-  return rows.flatMap((row) => {
-    const effortRpe = toRpeNumber(row.effortRpe);
-    if (!sportLogHasData({ avgHeartRate: row.avgHeartRate, durationMinutesDone: row.durationMinutesDone, effortRpe })) {
-      return [];
+  const grouped = new Map<
+    string,
+    {
+      session: (typeof blocks)[number]['session'];
+      rows: Array<{
+        durationSecondsDone: number | null;
+        distanceDoneMeters: number | null;
+        effortRpe: number | null;
+        effortRir?: number | null;
+        avgHeartRate: number | null;
+        repsDone?: number | null;
+        weightDoneKg?: number | null;
+      }>;
     }
-    const dm = isRecordedNumber(row.durationMinutesDone) ? row.durationMinutesDone : null;
-    const avgHeartRate = isRecordedNumber(row.avgHeartRate) ? row.avgHeartRate : null;
-    const fcReservePercent = computeFcReservePercent(avgHeartRate, heartProfile.fcMax, heartProfile.fcRest);
+  >();
+  for (const block of blocks) {
+    const entry = grouped.get(block.sessionId) ?? { session: block.session, rows: [] };
+    // Per-set records supersede the legacy summary for the same block.
+    const records = selectRecordedSportRecords(block.setLogs, block.logs);
+    const sets = records.sets
+      .map((set) => ({
+        ...set,
+        weightDoneKg: set.weightDoneKg === null ? null : Number(set.weightDoneKg),
+        effortRpe: toRpeNumber(set.effortRpe),
+      }))
+      .filter(sportSetHasData);
+    if (sets.length) entry.rows.push(...sets.map((set) => ({ ...set, avgHeartRate: set.heartRateDone })));
+    else
+      entry.rows.push(
+        ...records.legacy
+          .map((log) => ({ ...log, effortRpe: toRpeNumber(log.effortRpe) }))
+          .filter(sportLogHasData)
+          .map((log) => ({
+            durationSecondsDone: log.durationMinutesDone === null ? null : log.durationMinutesDone * 60,
+            distanceDoneMeters: null,
+            effortRpe: log.effortRpe,
+            avgHeartRate: log.avgHeartRate,
+          })),
+      );
+    grouped.set(block.sessionId, entry);
+  }
+  return [...grouped].flatMap(([sessionId, entry]) => {
+    if (!entry.rows.length) return [];
+    const summary = summarizeCardioIntervals(entry.rows);
+    const paceRows = entry.rows.filter(
+      (row) => isRecordedNumber(row.durationSecondsDone) && isRecordedNumber(row.distanceDoneMeters),
+    );
+    const avgPaceMinKm = paceMinPerKm(
+      paceRows.reduce((sum, row) => sum + row.durationSecondsDone!, 0),
+      paceRows.reduce((sum, row) => sum + row.distanceDoneMeters!, 0),
+    );
+    const strength = aggregateExerciseSets(
+      sessionId,
+      entry.session.sessionDate,
+      entry.rows.map((row, index) => ({
+        setIndex: index + 1,
+        repsDone: row.repsDone ?? null,
+        weightDoneKg: row.weightDoneKg ?? null,
+        effortRpe: row.effortRpe,
+        effortRir: row.effortRir,
+      })),
+    );
     return [
       {
-        sessionDate: buildSessionDate(row.session.sessionDate),
-        sessionId: row.sessionId,
-        sets: 1,
-        totalReps: dm !== null ? Math.round(dm * 8) : 0,
-        tonnage: 0,
-        avgRpe: isRecordedNumber(effortRpe) ? effortRpe : null,
-        e1rm: null,
-        inol: null,
-        totalDurationSeconds: dm !== null ? dm * 60 : null,
-        durationMinutes: dm,
-        avgHeartRate,
-        avgPaceMinKm: null,
-        fcReservePercent,
-        plioEffort: null,
-        setDetails: [],
+        ...strength,
+        sessionId,
+        sessionDate: buildSessionDate(entry.session.sessionDate),
+        outcome: sessionOutcome(entry.session),
+        hasRecordedData: true,
+        sets: entry.rows.length,
+        avgRpe: summary.avgRpe,
+        totalDurationSeconds: summary.totalDurationSeconds,
+        durationMinutes: summary.totalDurationSeconds === null ? null : summary.totalDurationSeconds / 60,
+        avgHeartRate: summary.avgHeartRate,
+        avgPaceMinKm,
+        fcReservePercent: computeFcReservePercent(summary.avgHeartRate, heartProfile.fcMax, heartProfile.fcRest),
+        metricCoverage: { ...strength.metricCoverage, ...intervalCoverage(entry.rows, heartProfile) },
       },
     ];
   });
 }
 
-type SessionWhereInput = { archivedAt: null; clientId: string; isCompleted: boolean; sessionDate: { gte: Date; lte: Date } };
+type SessionWhereInput = {
+  archivedAt: null;
+  clientId: string;
+  OR?: Prisma.SessionInstanceWhereInput[];
+  isCompleted?: boolean;
+  sessionDate: { gte: Date; lte: Date };
+};
 
 function uniqueIds(items: Array<null | string>): string[] {
   return [...new Set(items.filter((item): item is string => Boolean(item)))];

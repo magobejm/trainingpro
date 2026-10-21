@@ -2,6 +2,7 @@ import { estimateE1rm } from './metrics/exercise-metrics';
 
 export type PriorSet = {
   effortRpe: number | null;
+  effortRir?: number | null;
   exerciseId: string | null;
   repsDone: number | null;
   weightDoneKg: number | null;
@@ -20,7 +21,7 @@ export function bestE1rmByExercise(sets: PriorSet[]): Map<string, number> {
 
 function e1rmOf(set: PriorSet): number | null {
   if (set.repsDone === null || set.weightDoneKg === null) return null;
-  return estimateE1rm(set.weightDoneKg, set.repsDone, set.effortRpe);
+  return estimateE1rm(set.weightDoneKg, set.repsDone, set.effortRpe, set.effortRir);
 }
 
 export type RecordCandidate = PriorSet & {

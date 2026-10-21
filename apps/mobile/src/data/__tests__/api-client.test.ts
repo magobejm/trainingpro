@@ -36,6 +36,23 @@ describe('api client failures', () => {
   });
 });
 
+it.each(['120', '840'])('sends a single timezone offset when an override uses lowercase headers (%s)', async (offset) => {
+  const timezone = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-120);
+  const originalFetch = global.fetch;
+  const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+  global.fetch = fetchMock as unknown as typeof fetch;
+  try {
+    await createApiClient({ activeRole: 'coach', baseUrl: 'http://localhost:8081' }).get('/progress/adherence', {
+      'x-timezone-offset': offset,
+    });
+    const request = fetchMock.mock.calls[0]![1] as { headers: Record<string, string> };
+    expect(new Headers(request.headers).get('x-timezone-offset')).toBe(offset);
+  } finally {
+    global.fetch = originalFetch;
+    timezone.mockRestore();
+  }
+});
+
 function failedResponse(requestId: string): {
   headers: { get: (name: string) => string | null };
   json: () => Promise<Record<string, never>>;

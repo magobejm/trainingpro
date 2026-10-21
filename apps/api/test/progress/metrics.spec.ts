@@ -32,7 +32,7 @@ describe('progress metrics', () => {
       },
     ]);
 
-    expect(result).toEqual([
+    expect(result).toMatchObject([
       {
         maxWeightKg: 70,
         muscleGroup: 'back',
@@ -80,12 +80,12 @@ describe('progress metrics', () => {
       },
     ]);
 
-    expect(result).toEqual([
+    expect(result).toMatchObject([
       {
         avgHeartRate: null,
         avgRpe: 5,
         methodType: 'CONTINUOUS',
-        totalDistanceMeters: 0,
+        totalDistanceMeters: null,
         totalDurationSeconds: 900,
         weekStart: '2026-02-16',
       },
@@ -115,9 +115,9 @@ describe('performed weight missing', () => {
 
     expect(result.sets).toBe(1);
     expect(result.setDetails).toEqual([
-      { e1rm: null, inol: null, reps: 8, rpe: null, setIndex: 1, tonnage: 0, weightKg: null },
+      { e1rm: null, inol: null, reps: 8, rpe: null, setIndex: 1, tonnage: null, weightKg: null },
     ]);
-    expect(result.tonnage).toBe(0);
+    expect(result.tonnage).toBeNull();
     expect(result.e1rm).toBeNull();
     expect(result.totalReps).toBe(8);
   });
@@ -132,13 +132,13 @@ describe('performed weight missing', () => {
       },
     ]);
 
-    expect(result).toEqual([
+    expect(result).toMatchObject([
       {
         maxWeightKg: null,
         muscleGroup: 'chest',
         totalReps: 8,
         totalSets: 1,
-        volumeKg: 0,
+        volumeKg: null,
         weekStart: '2026-02-16',
       },
     ]);

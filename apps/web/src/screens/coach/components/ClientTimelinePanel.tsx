@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { SessionDetailModal } from '../progress/SessionDetailModal';
 import { StyleSheet, Text, View } from 'react-native';
 import { Button, colors, fontSize, space } from '@trainerpro/ui';
 import { QueryResult } from '../../../components/AsyncStatus';
@@ -8,6 +9,7 @@ import type { ClientTimelineItem } from '@trainerpro/shared';
 type Translate = (key: string, options?: Record<string, number | string>) => string;
 
 export function ClientTimelinePanel(props: { clientId: string; t: Translate }): React.JSX.Element {
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const query = useClientTimelineQuery(props.clientId);
   const items = query.data?.pages.flatMap((page) => page.items) ?? [];
   if (query.isLoading || query.isError || items.length === 0) {
@@ -31,12 +33,18 @@ export function ClientTimelinePanel(props: { clientId: string; t: Translate }): 
         <View key={group.day}>
           <Text style={styles.day}>{group.day}</Text>
           {group.items.map((item) => (
-            <Text key={item.id} style={styles.item}>
+            <Text
+              key={item.id}
+              accessibilityRole={item.kind === 'session' ? 'button' : undefined}
+              onPress={item.kind === 'session' ? () => setSessionId(item.refId) : undefined}
+              style={styles.item}
+            >
               {itemLabel(item, props.t)}
             </Text>
           ))}
         </View>
       ))}
+      <SessionDetailModal sessionId={sessionId} onClose={() => setSessionId(null)} />
       {query.hasNextPage ? (
         <Button
           label={props.t('coach.timeline.more')}
@@ -52,9 +60,9 @@ export function ClientTimelinePanel(props: { clientId: string; t: Translate }): 
 function groupByDay(items: ClientTimelineItem[]): Array<{ day: string; items: ClientTimelineItem[] }> {
   const groups: Array<{ day: string; items: ClientTimelineItem[] }> = [];
   for (const item of items) {
-    const day = item.occurredAt.slice(0, 10);
+    const day = (item.sessionDate ?? item.occurredAt).slice(0, 10);
     const current = groups[groups.length - 1];
-    if (current?.day === day) current.items.push(item);
+    if (current && current.day === day) current.items.push(item);
     else groups.push({ day, items: [item] });
   }
   return groups;
@@ -64,7 +72,9 @@ function itemLabel(item: ClientTimelineItem, t: Translate): string {
   const kind = t(`coach.timeline.kind.${item.kind}`);
   if (item.kind === 'chat') return `${kind}: ${t('coach.timeline.messages', { count: item.detail ?? '0' })}`;
   if (item.kind === 'incident' && item.detail === 'reviewed') return `${t('coach.timeline.reviewed')}: ${item.title}`;
-  const extra = timelineDetail(item.detail, t);
+  const extra = item.outcome
+    ? ` · ${t('training.outcome.' + item.outcome)}${item.originDate ? ' · ' + t('training.originDate') + ': ' + item.originDate.slice(0, 10) : ''}${item.skipReason ? ' · ' + item.skipReason : ''}`
+    : timelineDetail(item.detail, t);
   return item.title ? `${kind}: ${item.title}${extra}` : kind;
 }
 

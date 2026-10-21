@@ -73,6 +73,10 @@ export type MicrocycleProgressQuery = {
 };
 
 export type RecentSessionsQuery = {
+  dayIndex?: number;
+  category?: ExerciseType;
+  beforeDate?: Date;
+  beforeId?: string;
   clientId?: string;
   exerciseId?: string;
   templateId?: string;

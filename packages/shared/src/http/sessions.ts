@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { sessionOutcomeSchema } from '../session-outcome';
 import { clientRoutineWarmupSchema } from '../client-plan/warmup-schema';
 
 const nullableNumber = z.number().nullable();
@@ -256,6 +257,10 @@ export const sessionItemSchema = z.discriminatedUnion('type', [
 
 export const sessionViewSchema = z
   .object({
+    outcome: sessionOutcomeSchema.optional(),
+    originDate: z.string().date().nullable().optional(),
+    skippedAt: z.string().nullable().optional(),
+    skipReason: z.string().nullable().optional(),
     warmups: z.array(clientRoutineWarmupSchema).optional(),
     dayTitle: z.string().optional(),
     clientId: z.string(),

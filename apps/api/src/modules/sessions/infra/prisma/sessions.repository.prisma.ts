@@ -3,6 +3,7 @@ import { Prisma, Role, SessionStatus } from '@prisma/client';
 import { buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { exerciseHistoryQuery, mapExerciseHistory } from './exercise-history';
+import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
@@ -135,10 +136,12 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     limit: number,
     excludeSessionId?: string,
   ): Promise<ExerciseHistoryEntry[]> {
+    await closeStaleSessions(this.prisma, { clientId });
     const rows = await this.prisma.sessionInstance.findMany(
       exerciseHistoryQuery(clientId, sourceExerciseId, limit, excludeSessionId),
     );
-    return rows.map(mapExerciseHistory);
+    const origins = await readSessionOrigins(this.prisma, rows);
+    return rows.map((row) => ({ ...mapExerciseHistory(row), originDate: origins.get(row.id) ?? null }));
   }
 
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {

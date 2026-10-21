@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { SessionOutcome } from '@trainerpro/shared';
+import { resolveWorkoutResults, type SessionOutcome } from '@trainerpro/shared';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
-import { indexSessionOutcomes, readWorkoutMark, workoutEventFields } from '../../../calendar/domain/completed-workout';
+import { workoutEventFields } from '../../../calendar/domain/completed-workout';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 
@@ -62,7 +62,7 @@ export class ListClientCalendarUseCase {
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'desc' }],
     });
-    const marks = await this.loadWorkoutMarks(client.id, input);
+    const marks = await this.loadWorkoutMarks(client.id, input, rows);
     const notes = await this.loadClientNotes(client.id, input);
     const pending = await this.loadPendingProposals(client.id, input);
     const tests = await this.physicalTests.listScheduleCalendarRows({
@@ -87,8 +87,7 @@ export class ListClientCalendarUseCase {
           type: 'physical_test',
         })),
         ...rows.map((r) => {
-          const workout =
-            r.type === 'workout' ? workoutEventFields(readWorkoutMark(marks, client.id, r.date, r.planDayId)) : null;
+          const workout = r.type === 'workout' ? workoutEventFields(marks.get(r.id) ?? null) : null;
           return {
             id: r.id,
             type: r.type,
@@ -160,7 +159,11 @@ export class ListClientCalendarUseCase {
     }));
   }
 
-  private async loadWorkoutMarks(clientId: string, input: ListClientCalendarInput) {
+  private async loadWorkoutMarks(
+    clientId: string,
+    input: ListClientCalendarInput,
+    events: Array<{ id: string; type: string; date: Date; planDayId: string | null }>,
+  ) {
     await closeStaleSessions(this.prisma, { clientId });
     const rows = await this.prisma.sessionInstance.findMany({
       select: {
@@ -172,6 +175,7 @@ export class ListClientCalendarUseCase {
         skipReason: true,
         skippedAt: true,
         status: true,
+        updatedAt: true,
       },
       where: {
         archivedAt: null,
@@ -179,7 +183,10 @@ export class ListClientCalendarUseCase {
         sessionDate: { gte: input.dateFrom, lte: input.dateTo },
       },
     });
-    return indexSessionOutcomes(rows.map((row) => ({ ...row, clientId }))).marks;
+    return resolveWorkoutResults(
+      events.filter((event) => event.type === 'workout').map((event) => ({ ...event, clientId })),
+      rows.map((row) => ({ ...row, clientId })),
+    );
   }
 
   private async resolveClient(context: AuthContext) {

@@ -87,9 +87,19 @@ function HistoryCard({
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
-        <Text style={styles.date}>{historyDate(entry.sessionDate, i18n.language)}</Text>
+        <Text style={styles.date}>
+          {historyDate(entry.sessionDate, i18n.language)}
+          {entry.outcome ? ' · ' + t('training.outcome.' + entry.outcome) : ''}
+        </Text>
         <Text style={styles.count}>{t('mobile.client.history.setCount', { count: entry.sets.length })}</Text>
       </View>
+      {entry.originDate ? (
+        <Text style={styles.cardHint}>
+          {t('training.originDate')}
+          {': '}
+          {historyDate(entry.originDate, i18n.language)}
+        </Text>
+      ) : null}
       <ScrollView horizontal showsHorizontalScrollIndicator nestedScrollEnabled>
         <View>
           <View style={[styles.tableRow, styles.tableHeader]}>

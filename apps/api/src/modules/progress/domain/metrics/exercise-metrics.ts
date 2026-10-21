@@ -1,4 +1,4 @@
-import { isRecordedNumber, strengthSetHasData } from '../../../../common/performed-set';
+import { isRecordedNumber, isRecordedNonNegative, strengthSetHasData } from '../../../../common/performed-set';
 
 /**
  * Exercise-level metric calculations based on coach documentation.
@@ -12,9 +12,15 @@ import { isRecordedNumber, strengthSetHasData } from '../../../../common/perform
 
 /** Estimate 1 Rep Max using the Brzycki formula.
  *  Returns null when inputs are not usable (zero reps, zero weight, etc.). */
-export function estimateE1rm(weightKg: number, repsDone: number, effortRpe: number | null): number | null {
+export function estimateE1rm(
+  weightKg: number,
+  repsDone: number,
+  effortRpe: number | null,
+  effortRir?: number | null,
+): number | null {
   if (weightKg <= 0 || repsDone <= 0) return null;
-  const rir = effortRpe !== null ? Math.max(0, 10 - effortRpe) : 0;
+  if (effortRpe === null && !isRecordedNonNegative(effortRir)) return null;
+  const rir = isRecordedNonNegative(effortRir) ? effortRir : Math.max(0, 10 - effortRpe!);
   const ref = repsDone + rir;
   const denominator = 1.0278 - 0.0278 * ref;
   if (denominator <= 0) return null;
@@ -44,15 +50,15 @@ export type SetMetrics = {
   rpe: number | null;
   e1rm: number | null;
   inol: number | null;
-  tonnage: number;
+  tonnage: number | null;
 };
 
 export type ExerciseSessionMetrics = {
   sessionDate: string;
   sessionId: string;
   sets: number;
-  totalReps: number;
-  tonnage: number;
+  totalReps: number | null;
+  tonnage: number | null;
   avgRpe: number | null;
   e1rm: number | null;
   inol: number | null;
@@ -62,6 +68,7 @@ export type ExerciseSessionMetrics = {
   avgPaceMinKm: number | null;
   fcReservePercent: number | null;
   plioEffort: number | null;
+  metricCoverage?: import('../progress.models').MetricCoverage;
   setDetails: SetMetrics[];
 };
 
@@ -70,6 +77,7 @@ type RawSetLog = {
   repsDone: number | null;
   weightDoneKg: number | null;
   effortRpe: number | null;
+  effortRir?: number | null;
 };
 
 /** Aggregate a list of set logs for a single exercise into session-level metrics. */
@@ -84,16 +92,16 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
   let maxE1rm: number | null = null;
 
   const setDetails: SetMetrics[] = performed.map((log) => {
-    const reps = isRecordedNumber(log.repsDone) ? log.repsDone : null;
-    const weight = isRecordedNumber(log.weightDoneKg) ? log.weightDoneKg : null;
+    const reps = isRecordedNonNegative(log.repsDone) ? log.repsDone : null;
+    const weight = isRecordedNonNegative(log.weightDoneKg) ? log.weightDoneKg : null;
     const rpe = isRecordedNumber(log.effortRpe) ? log.effortRpe : null;
 
-    const e1rm = reps !== null && weight !== null ? estimateE1rm(weight, reps, rpe) : null;
+    const e1rm = reps !== null && weight !== null ? estimateE1rm(weight, reps, rpe, log.effortRir) : null;
     const inol = reps !== null && weight !== null && e1rm !== null ? calculateSetInol(weight, reps, e1rm) : null;
-    const tonnage = reps !== null && weight !== null ? calculateSetTonnage(weight, reps) : 0;
+    const tonnage = reps !== null && weight !== null ? calculateSetTonnage(weight, reps) : null;
 
     if (reps !== null) totalReps += reps;
-    if (tonnage > 0) totalTonnage += tonnage;
+    if (tonnage !== null) totalTonnage += tonnage;
 
     if (inol !== null) {
       totalInol += inol;
@@ -114,8 +122,18 @@ export function aggregateExerciseSets(sessionId: string, sessionDate: Date, setL
     sessionDate: sessionDate.toISOString().slice(0, 10),
     sessionId,
     sets: performed.length,
-    totalReps,
-    tonnage: Math.round(totalTonnage * 100) / 100,
+    totalReps: setDetails.some((s) => s.reps !== null) ? totalReps : null,
+    tonnage: setDetails.some((s) => s.tonnage !== null) ? Math.round(totalTonnage * 100) / 100 : null,
+    metricCoverage: Object.fromEntries(
+      ['reps', 'weightKg', 'rpe', 'e1rm', 'inol', 'tonnage'].map((key) => [
+        key === 'reps' ? 'totalReps' : key === 'rpe' ? 'avgRpe' : key,
+        {
+          validSamples: setDetails.filter((set) => set[key as keyof SetMetrics] !== null).length,
+          eligibleSamples: setLogs.length,
+          unit: 'sets' as const,
+        },
+      ]),
+    ),
     avgRpe: rpeCount > 0 ? Math.round((totalRpe / rpeCount) * 100) / 100 : null,
     e1rm: maxE1rm,
     inol: inolCount > 0 ? Math.round(totalInol * 10000) / 10000 : null,

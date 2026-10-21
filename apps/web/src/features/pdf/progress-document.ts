@@ -1,3 +1,7 @@
+import type { AdherenceResult } from '../../data/hooks/useAdherenceQuery';
+import type { RecentSessionSummary } from '../../data/hooks/useRecentSessionsQuery';
+import { adherenceLines } from '../../screens/coach/progress/adherence-presentation';
+import { metricCoverageLines } from '../../screens/coach/progress/metric-samples';
 import type { CoachBranding } from '../../data/hooks/useBranding';
 import type { AnalysisMode, DateRange, VariableDef } from '../../screens/coach/progress/progress-screen.types';
 import type { HeatmapModel } from '../../screens/coach/progress/heatmap';
@@ -19,6 +23,8 @@ type ProgressSnapshot = {
   heatmapRange: DateRange;
   heatmap: HeatmapModel;
   locale?: string;
+  adherence?: AdherenceResult;
+  sessions?: RecentSessionSummary[];
 };
 
 export function progressDocument(input: ProgressSnapshot): PdfDocument {
@@ -39,6 +45,20 @@ export function progressDocument(input: ProgressSnapshot): PdfDocument {
       rows: input.kpis.map((kpi) => [t(kpi.label), kpi.value]),
     },
   });
+  if (input.adherence)
+    sections.push({ heading: t('training.adherence.title'), paragraphs: adherenceLines(input.adherence, t) });
+  if (input.sessions)
+    sections.push({
+      heading: t('training.sessions'),
+      table: {
+        columns: [t('pdf.progress.date'), t('training.sessions'), t('training.originDate')],
+        rows: input.sessions.map((s) => [
+          s.sessionDate.slice(0, 10),
+          `${s.outcome ? t('training.outcome.' + s.outcome) : '—'}${s.skipReason ? ' · ' + s.skipReason : ''}`,
+          s.originDate?.slice(0, 10) ?? '—',
+        ]),
+      },
+    });
   for (const variable of input.variables) {
     const points = input.points.map((point) => ({
       label: String(point[input.mode === 'microcycle' ? 'weekStart' : 'sessionDate'] ?? ''),
@@ -46,10 +66,11 @@ export function progressDocument(input: ProgressSnapshot): PdfDocument {
     }));
     sections.push({
       heading: t(variable.labelKey),
+      paragraphs: metricCoverageLines(input.points, variable.dataKey, t),
       chart: { points, unit: variable.unit, color: variable.color },
       table: {
         columns: [t('pdf.progress.date'), `${t(variable.labelKey)}${variable.unit ? ` (${variable.unit})` : ''}`],
-        rows: points.map((point) => [point.label, point.value ?? '-']),
+        rows: points.map((point) => [point.label, point.value ?? '—']),
       },
     });
   }

@@ -1,9 +1,5 @@
-type SessionWhere = {
-  archivedAt: null;
-  clientId: string;
-  isCompleted: boolean;
-  sessionDate: { gte: Date; lte: Date };
-};
+import type { Prisma } from '@prisma/client';
+type SessionWhere = Prisma.SessionInstanceWhereInput;
 
 const positive = { gt: 0 };
 
@@ -12,7 +8,7 @@ export function strengthPerformedWhere(session: SessionWhere) {
     archivedAt: null,
     logs: {
       some: {
-        OR: [{ repsDone: positive }, { weightDoneKg: positive }, { effortRpe: positive }, { effortRir: positive }],
+        OR: [{ repsDone: { gte: 0 } }, { weightDoneKg: { gte: 0 } }, { effortRpe: positive }, { effortRir: { gte: 0 } }],
       },
     },
     session,
@@ -26,8 +22,8 @@ export function cardioPerformedWhere(session: SessionWhere) {
     intervalLogs: {
       some: {
         OR: [
-          { durationSecondsDone: positive },
-          { distanceDoneMeters: positive },
+          { durationSecondsDone: { gte: 0 } },
+          { distanceDoneMeters: { gte: 0 } },
           { effortRpe: positive },
           { avgHeartRate: positive },
         ],
@@ -43,7 +39,12 @@ export function plioPerformedWhere(session: SessionWhere) {
     archivedAt: null,
     logs: {
       some: {
-        OR: [{ repsDone: positive }, { weightDoneKg: positive }, { effortRpe: positive }, { durationSecondsDone: positive }],
+        OR: [
+          { repsDone: { gte: 0 } },
+          { weightDoneKg: { gte: 0 } },
+          { effortRpe: positive },
+          { durationSecondsDone: { gte: 0 } },
+        ],
       },
     },
     session,
@@ -56,7 +57,7 @@ export function mobilityPerformedWhere(session: SessionWhere) {
     archivedAt: null,
     logs: {
       some: {
-        OR: [{ repsDone: positive }, { weightDoneKg: positive }, { effortRpe: positive }, { romDone: { not: '' } }],
+        OR: [{ repsDone: { gte: 0 } }, { weightDoneKg: { gte: 0 } }, { effortRpe: positive }, { romDone: { not: '' } }],
       },
     },
     session,
@@ -69,7 +70,7 @@ export function isometricPerformedWhere(session: SessionWhere) {
     archivedAt: null,
     logs: {
       some: {
-        OR: [{ durationSecondsDone: positive }, { weightDoneKg: positive }, { effortRpe: positive }],
+        OR: [{ durationSecondsDone: { gte: 0 } }, { weightDoneKg: { gte: 0 } }, { effortRpe: positive }],
       },
     },
     session,
@@ -92,12 +93,12 @@ export function sportPerformedWhere(session: SessionWhere) {
         setLogs: {
           some: {
             OR: [
-              { repsDone: positive },
-              { weightDoneKg: positive },
+              { repsDone: { gte: 0 } },
+              { weightDoneKg: { gte: 0 } },
               { effortRpe: positive },
-              { effortRir: positive },
-              { distanceDoneMeters: positive },
-              { durationSecondsDone: positive },
+              { effortRir: { gte: 0 } },
+              { distanceDoneMeters: { gte: 0 } },
+              { durationSecondsDone: { gte: 0 } },
               { heartRateDone: positive },
               { hrMaxPctDone: positive },
               { hrReservePctDone: positive },

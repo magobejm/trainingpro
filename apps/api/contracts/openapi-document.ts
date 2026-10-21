@@ -1,5 +1,6 @@
 import {
   clearFutureWorkoutsSchema,
+  workoutAdherenceSchema,
   routineHandoffPreviewSchema,
   clientViewSchema,
   routineAssignmentListSchema,
@@ -30,6 +31,7 @@ export function buildOpenApiDocument(routes: RouteRecord[]) {
   return {
     components: {
       schemas: {
+        WorkoutAdherence: toJsonSchema(workoutAdherenceSchema),
         RoutineHandoffPreview: toJsonSchema(routineHandoffPreviewSchema),
         RoutineAssignmentList: toJsonSchema(routineAssignmentListSchema),
         RoutineAssignmentDetail: toJsonSchema(routineAssignmentDetailSchema),
@@ -139,7 +141,23 @@ function operationId(method: string, path: string): string {
   return `${method}_${slug || 'root'}`;
 }
 
+function adherenceOperation(operation: JsonSchema): JsonSchema {
+  return {
+    ...operation,
+    responses: {
+      ...(operation.responses as JsonSchema),
+      '200': {
+        description: 'Completed / scheduled workouts through the last closed day; null without registered agenda.',
+        content: { 'application/json': { schema: { $ref: '#/components/schemas/WorkoutAdherence' } } },
+      },
+      '400': errorResponse('Rango no válido'),
+      '403': errorResponse('Cliente no accesible'),
+    },
+  };
+}
+
 function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  if (route.method === 'get' && route.path === '/progress/adherence') return adherenceOperation(operation);
   if (route.path.startsWith('/clients/{clientId}/routine-day-colors')) {
     const patch = route.method === 'patch';
     return {
@@ -212,7 +230,19 @@ function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
     ...operation,
     description: detail.description,
     operationId: contract.operationId,
-    parameters: detail.parameters,
+    parameters:
+      route.path === '/sessions/{sessionId}'
+        ? [
+            ...detail.parameters,
+            parameter(
+              'query',
+              'includeOutcome',
+              false,
+              { type: 'boolean' },
+              'Opt in to outcome, originDate and skip metadata; omitted for legacy strict APK parsers by default.',
+            ),
+          ]
+        : detail.parameters,
     responses,
   };
 }

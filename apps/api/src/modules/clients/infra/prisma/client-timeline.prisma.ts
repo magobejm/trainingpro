@@ -1,4 +1,6 @@
 import { Prisma } from '@prisma/client';
+import { sessionOutcome, sessionDateKey } from '@trainerpro/shared';
+import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import {
@@ -14,12 +16,12 @@ const TITLE_LIMIT = 80;
 export async function readClientTimeline(
   prisma: PrismaService,
   clientId: string,
-  input: { cursor: TimelineCursor; limit: number },
+  input: { cursor: TimelineCursor; limit: number; includeOutcome?: boolean },
 ): Promise<TimelinePage> {
   const take = input.limit + 1;
   await closeStaleSessions(prisma, { clientId });
   const sources = await Promise.all([
-    readSessions(prisma, clientId, input.cursor, take),
+    readSessions(prisma, clientId, input.cursor, take, input.includeOutcome === true),
     readNotes(prisma, clientId, input.cursor, take),
     readChatDays(prisma, clientId, input.cursor, take),
     readIncidents(prisma, clientId, input.cursor, take),
@@ -37,6 +39,7 @@ async function readSessions(
   clientId: string,
   cursor: TimelineCursor,
   take: number,
+  includeOutcome: boolean,
 ): Promise<TimelineDraft[]> {
   const rows = await prisma.sessionInstance.findMany({
     orderBy: [{ sessionDate: 'desc' }, { id: 'desc' }],
@@ -49,11 +52,17 @@ async function readSessions(
       sessionRpe: true,
       skipReason: true,
       skippedAt: true,
+      status: true,
+      planDayId: true,
     },
     take,
     where: {
       AND: [
-        { archivedAt: null, clientId, OR: [{ isCompleted: true }, { isIncomplete: true }, { skippedAt: { not: null } }] },
+        {
+          archivedAt: null,
+          clientId,
+          OR: [{ isCompleted: true }, { isIncomplete: true }, { status: 'COMPLETED' }, { skippedAt: { not: null } }],
+        },
         sessionCursor(cursor),
       ],
     },
@@ -62,7 +71,21 @@ async function readSessions(
     prisma,
     rows.map((row) => row.id),
   );
+  const origins = includeOutcome
+    ? await readSessionOrigins(
+        prisma,
+        rows.map((row) => ({ ...row, clientId })),
+      )
+    : new Map<string, string | null>();
   return rows.map((row) => ({
+    ...(includeOutcome
+      ? {
+          outcome: sessionOutcome(row),
+          sessionDate: sessionDateKey(row.sessionDate),
+          originDate: origins.get(row.id) ?? null,
+          skipReason: row.skipReason,
+        }
+      : {}),
     detail: sessionDetail(row, tonnage.get(row.id) ?? null),
     id: row.id,
     kind: 'session',
@@ -211,9 +234,9 @@ async function readTonnage(prisma: PrismaService, sessionIds: string[]): Promise
     where: { sessionId: { in: sessionIds } },
   });
   for (const log of logs) {
-    const weight = log.weightDoneKg === null ? 0 : Number(log.weightDoneKg);
-    const reps = log.repsDone ?? 0;
-    if (weight <= 0 || reps <= 0) continue;
+    const weight = log.weightDoneKg === null ? null : Number(log.weightDoneKg);
+    const reps = log.repsDone;
+    if (weight === null || reps === null || !Number.isFinite(weight) || weight < 0 || reps < 0) continue;
     totals.set(log.sessionId, (totals.get(log.sessionId) ?? 0) + weight * reps);
   }
   return totals;
@@ -226,15 +249,17 @@ function sessionDetail(
     sessionRpe: { toString(): string } | null;
     skipReason: string | null;
     skippedAt: Date | null;
+    status: string;
   },
   tonnage: number | null,
 ): string | null {
-  const mode = row.isIncomplete ? 'incomplete' : !row.isCompleted && row.skippedAt ? 'skipped' : null;
+  const outcome = sessionOutcome(row);
+  const mode = outcome === 'incomplete' || outcome === 'skipped' ? outcome : null;
   const parts = [
     mode,
     mode === 'skipped' ? row.skipReason : null,
     row.sessionRpe === null ? null : `RPE ${row.sessionRpe.toString()}`,
-    tonnage && tonnage > 0 ? `${Math.round(tonnage)} kg` : null,
+    tonnage !== null ? `${Math.round(tonnage)} kg` : null,
   ].filter((part): part is string => Boolean(part));
   return parts.length ? parts.join(' · ') : null;
 }

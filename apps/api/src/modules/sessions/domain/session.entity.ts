@@ -238,6 +238,9 @@ export type SessionItem =
 export type SessionStartMode = 'INTERACTIVE' | 'TIMER';
 
 export type SessionInstance = {
+  originDate?: string | null;
+  skippedAt?: Date | null;
+  skipReason?: string | null;
   dayTitle?: string;
   warmups?: import('@trainerpro/shared').ClientRoutineWarmup[];
   clientId: string;

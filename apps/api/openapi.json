@@ -3201,6 +3201,22 @@
             },
             "type": "array"
           },
+          "originDate": {
+            "anyOf": [
+              {
+                "format": "date",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "outcome": {
+            "enum": ["done", "incomplete", "in_progress", "pending", "skipped"],
+            "type": "string"
+          },
           "postFatigue": {
             "anyOf": [
               {
@@ -3268,6 +3284,26 @@
             "anyOf": [
               {
                 "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skipReason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "skippedAt": {
+            "anyOf": [
+              {
+                "type": "string"
               },
               {
                 "type": "null"
@@ -3976,6 +4012,82 @@
           }
         },
         "required": ["items"],
+        "type": "object"
+      },
+      "WorkoutAdherence": {
+        "additionalProperties": false,
+        "properties": {
+          "counts": {
+            "additionalProperties": false,
+            "properties": {
+              "done": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "in_progress": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "incomplete": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "pending": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              },
+              "skipped": {
+                "maximum": 9007199254740991,
+                "minimum": 0,
+                "type": "integer"
+              }
+            },
+            "required": ["done", "incomplete", "skipped", "pending", "in_progress"],
+            "type": "object"
+          },
+          "cutoffDate": {
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "percent": {
+            "anyOf": [
+              {
+                "maximum": 100,
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "plannedCount": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "to": {
+            "format": "date",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$",
+            "type": "string"
+          },
+          "unplannedSessionsCount": {
+            "maximum": 9007199254740991,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": ["from", "to", "cutoffDate", "percent", "plannedCount", "counts", "unplannedSessionsCount"],
         "type": "object"
       }
     },
@@ -8536,6 +8648,15 @@
             }
           },
           {
+            "description": "Filtro",
+            "in": "query",
+            "name": "includeOutcome",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "description": "Paginación",
             "in": "query",
             "name": "limit",
@@ -8578,7 +8699,7 @@
         ],
         "summary": "GET /clients/{clientId}/timeline",
         "x-controller": "ClientsController",
-        "x-filters": ["before", "beforeId"],
+        "x-filters": ["before", "beforeId", "includeOutcome"],
         "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
         "x-pagination": ["limit"],
         "x-roles": ["coach"]
@@ -14731,6 +14852,111 @@
         "x-roles": ["coach"]
       }
     },
+    "/progress/adherence": {
+      "get": {
+        "operationId": "get_progress_adherence",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "clientId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "templateId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-timezone-offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkoutAdherence"
+                }
+              }
+            },
+            "description": "Completed / scheduled workouts through the last closed day; null without registered agenda."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rango no válido"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Cliente no accesible"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /progress/adherence",
+        "x-controller": "ProgressController",
+        "x-filters": ["clientId", "from", "templateId", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
     "/progress/exercise": {
       "get": {
         "operationId": "get_progress_exercise",
@@ -15440,7 +15666,43 @@
           {
             "description": "Filtro",
             "in": "query",
+            "name": "beforeDate",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "beforeId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
             "name": "clientId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "dayIndex",
             "required": false,
             "schema": {
               "type": "string"
@@ -15525,7 +15787,17 @@
         ],
         "summary": "GET /progress/sessions",
         "x-controller": "ProgressController",
-        "x-filters": ["clientId", "exerciseId", "from", "templateId", "to"],
+        "x-filters": [
+          "beforeDate",
+          "beforeId",
+          "category",
+          "clientId",
+          "dayIndex",
+          "exerciseId",
+          "from",
+          "templateId",
+          "to"
+        ],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": ["limit"],
         "x-roles": ["coach", "client"]
@@ -15557,6 +15829,14 @@
             "description": "Filtro",
             "in": "query",
             "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-timezone-offset",
             "required": false,
             "schema": {
               "type": "string"
@@ -16076,6 +16356,15 @@
               "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
               "type": "string"
             }
+          },
+          {
+            "description": "Opt in to outcome, originDate and skip metadata; omitted for legacy strict APK parsers by default.",
+            "in": "query",
+            "name": "includeOutcome",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -16181,7 +16470,7 @@
         ],
         "summary": "GET /sessions/{sessionId}",
         "x-controller": "SessionsController",
-        "x-filters": [],
+        "x-filters": ["includeOutcome"],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]

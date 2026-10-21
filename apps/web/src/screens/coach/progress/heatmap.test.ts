@@ -28,3 +28,18 @@ describe('buildHeatmap', () => {
     expect(model.bestStreak).toBe(1);
   });
 });
+
+it('counts completed cardio and partial activity without inventing tonnage', () => {
+  const model = buildHeatmap(
+    [
+      { sessionDate: '2026-10-12', totalTonnage: null, outcome: 'done' },
+      { sessionDate: '2026-10-13', totalTonnage: null, outcome: 'incomplete', hasRecordedData: true },
+      { sessionDate: '2026-10-14', totalTonnage: null, outcome: 'skipped' },
+      { sessionDate: '2026-10-15', totalTonnage: null, outcome: 'incomplete', hasRecordedData: false },
+    ],
+    new Date('2026-10-15T12:00:00Z'),
+  );
+  expect(model.trainedDays).toBe(2);
+  expect(model.weeks.flat().find((c) => c.date === '2026-10-12')).toMatchObject({ active: true, tonnage: null, level: 1 });
+  expect(model.weeks.flat().find((c) => c.date === '2026-10-14')?.level).toBe(0);
+});

@@ -1,3 +1,8 @@
+import type { SessionOutcome } from '@trainerpro/shared';
+
+export type { MetricCoverage } from '@trainerpro/shared';
+import type { MetricCoverage } from '@trainerpro/shared';
+
 // ── Performed exercises result ────────────────────────────────────────────────
 
 export type PerformedExerciseItem = {
@@ -37,11 +42,15 @@ export type PerformedSessionDaysResult = {
 // ── New detailed progress models ─────────────────────────────────────────────
 
 export type ExerciseProgressPoint = {
+  outcome?: SessionOutcome;
+  hasRecordedData?: boolean;
+  originDate?: string | null;
+  metricCoverage?: MetricCoverage;
   sessionDate: string;
   sessionId: string;
   sets: number;
-  totalReps: number;
-  tonnage: number;
+  totalReps: number | null;
+  tonnage: number | null;
   avgRpe: number | null;
   e1rm: number | null;
   inol: number | null;
@@ -58,14 +67,18 @@ export type ExerciseProgressPoint = {
     rpe: number | null;
     e1rm: number | null;
     inol: number | null;
-    tonnage: number;
+    tonnage: number | null;
   }>;
 };
 
 export type SessionProgressPoint = {
+  outcome?: SessionOutcome;
+  hasRecordedData?: boolean;
+  originDate?: string | null;
+  metricCoverage?: MetricCoverage;
   sessionDate: string;
   sessionId: string;
-  sessionTonnage: number;
+  sessionTonnage: number | null;
   sessionInol: number | null;
   sessionRpe: number | null;
   effortIndex: number | null;
@@ -77,8 +90,9 @@ export type SessionProgressPoint = {
 };
 
 export type MicrocycleProgressPoint = {
+  metricCoverage?: MetricCoverage;
   weekStart: string;
-  totalTonnage: number;
+  totalTonnage: number | null;
   avgRpe: number | null;
   totalTrainingLoad: number | null;
   sessionsCount: number;
@@ -92,10 +106,15 @@ export type MicrocycleProgressResult = {
 };
 
 export type RecentSessionSummary = {
+  outcome?: SessionOutcome;
+  skipReason?: string | null;
+  hasRecordedData?: boolean;
+  originDate?: string | null;
+  metricCoverage?: MetricCoverage;
   sessionDate: string;
   sessionId: string;
   exerciseCount: number;
-  totalTonnage: number;
+  totalTonnage: number | null;
   sessionInol: number | null;
   avgRpe: number | null;
   durationMinutes: number | null;
@@ -113,11 +132,12 @@ export type CardioLogRow = {
 };
 
 export type CardioWeeklyPoint = {
+  metricCoverage?: MetricCoverage;
   avgHeartRate: null | number;
   avgRpe: null | number;
   methodType: string;
-  totalDistanceMeters: number;
-  totalDurationSeconds: number;
+  totalDistanceMeters: number | null;
+  totalDurationSeconds: number | null;
   weekStart: string;
 };
 
@@ -128,7 +148,8 @@ export type SessionSrpeRow = {
 };
 
 export type SrpeWeeklyPoint = {
-  totalSrpe: number;
+  metricCoverage?: MetricCoverage;
+  totalSrpe: number | null;
   weekStart: string;
 };
 
@@ -140,10 +161,11 @@ export type StrengthLogRow = {
 };
 
 export type StrengthWeeklyPoint = {
+  metricCoverage?: MetricCoverage;
   maxWeightKg: null | number;
   muscleGroup: string;
-  totalReps: number;
+  totalReps: number | null;
   totalSets: number;
-  volumeKg: number;
+  volumeKg: number | null;
   weekStart: string;
 };

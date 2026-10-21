@@ -1,3 +1,4 @@
+import { sessionOutcome } from '@trainerpro/shared';
 import type {
   CardioSessionItem,
   IntervalLog,
@@ -31,7 +32,8 @@ const METRIC_KEYS = [
 ];
 
 export function applyPendingOps(session: SessionView, ops: SessionOp[]): SessionView {
-  return ops.reduce((current, op) => applyOp(current, op), session);
+  const view = ops.reduce((current, op) => applyOp(current, op), session);
+  return { ...view, outcome: sessionOutcome(view) };
 }
 
 function applyOp(session: SessionView, op: SessionOp): SessionView {

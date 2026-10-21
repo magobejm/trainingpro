@@ -1,4 +1,5 @@
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
+import { readWorkoutAdherenceBatch } from '../../../../common/plan/workout-adherence.prisma';
 import { computeClientStatus, daysSinceActivity, statusWindowStart, type ClientStatus } from '../../domain/client-status';
 
 const SEVERE = new Set(['CRITICAL', 'HIGH']);
@@ -20,8 +21,8 @@ export async function readClientStatusFacts(
 ): Promise<Map<string, ClientStatusFacts>> {
   const facts = new Map(clientIds.map((id) => [id, emptyFacts()]));
   if (!clientIds.length) return facts;
-  const windowStart = statusWindowStart(now);
-  const windowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const windowEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 86_400_000);
+  const windowStart = statusWindowStart(windowEnd);
   await Promise.all([
     fillSessions(prisma, clientIds, windowStart, windowEnd, facts),
     fillIncidents(prisma, clientIds, facts),
@@ -70,21 +71,12 @@ async function fillSessions(
   windowEnd: Date,
   facts: Map<string, ClientStatusFacts>,
 ): Promise<void> {
-  const rows = await prisma.sessionInstance.groupBy({
-    _count: { _all: true },
-    by: ['clientId', 'status'],
-    where: {
-      archivedAt: null,
-      clientId: { in: clientIds },
-      sessionDate: { gte: windowStart, lte: windowEnd },
-      status: { in: ['COMPLETED', 'PENDING'] },
-    },
-  });
-  for (const row of rows) {
-    const current = facts.get(row.clientId);
+  const rows = await readWorkoutAdherenceBatch(prisma, clientIds, { from: windowStart, to: windowEnd });
+  for (const [clientId, summary] of rows) {
+    const current = facts.get(clientId);
     if (!current) continue;
-    current.plannedSessions += row._count._all;
-    if (row.status === 'COMPLETED') current.completedSessions += row._count._all;
+    current.plannedSessions = summary.plannedCount;
+    current.completedSessions = summary.counts.done;
   }
 }
 

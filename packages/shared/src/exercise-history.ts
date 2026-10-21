@@ -16,6 +16,8 @@ export type ExerciseHistorySet = {
 };
 
 export type ExerciseHistoryEntry = {
+  outcome?: import('./session-outcome').SessionOutcome;
+  originDate?: string | null;
   sessionId: string;
   sessionDate: string;
   sets: ExerciseHistorySet[];

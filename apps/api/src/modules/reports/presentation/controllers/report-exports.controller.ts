@@ -1,12 +1,5 @@
-import {
-  Controller,
-  Get,
-  Query,
-  Req,
-  Res,
-  StreamableFile,
-  UseGuards,
-} from '@nestjs/common';
+import { readTimezoneOffset } from '../../../sessions/presentation/read-timezone-offset';
+import { Controller, Headers, Get, Query, Req, Res, StreamableFile, UseGuards } from '@nestjs/common';
 import type { Response } from 'express';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
@@ -24,6 +17,7 @@ export class ReportExportsController {
 
   @Get('pdf')
   async exportPdf(
+    @Headers('x-timezone-offset') timezoneOffset: string | undefined,
     @Query() query: ExportWeeklyPdfQueryDto,
     @Req() request: HttpAuthRequest,
     @Res({ passthrough: true }) response: Response,
@@ -31,6 +25,7 @@ export class ReportExportsController {
     const auth = readAuthContext(request);
     const file = await this.exportWeeklyPdfUseCase.execute(auth, {
       clientId: query.clientId,
+      timezoneOffset: readTimezoneOffset(timezoneOffset),
       from: new Date(query.from),
       to: new Date(query.to),
     });

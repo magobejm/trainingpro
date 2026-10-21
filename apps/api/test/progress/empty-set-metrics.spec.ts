@@ -39,12 +39,18 @@ describe('empty set metrics', () => {
         { durationSeconds: 1800, effortRpe: null, sessionDate },
         { durationSeconds: null, effortRpe: 8, sessionDate },
       ]),
-    ).toEqual([]);
+    ).toEqual([
+      {
+        totalSrpe: null,
+        weekStart: '2026-10-05',
+        metricCoverage: { totalSrpe: { validSamples: 0, eligibleSamples: 2, unit: 'sessions' } },
+      },
+    ]);
     expect(
       aggregateSrpeWeekly([
         { durationSeconds: 1800, effortRpe: 8, sessionDate },
         { durationSeconds: 1800, effortRpe: null, sessionDate },
       ]),
-    ).toEqual([{ totalSrpe: 240, weekStart: '2026-10-05' }]);
+    ).toMatchObject([{ totalSrpe: 240, weekStart: '2026-10-05' }]);
   });
 });

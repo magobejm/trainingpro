@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Button, colors, fontSize, space } from '@trainerpro/ui';
+import { useAdherenceQuery } from '../../data/hooks/useAdherenceQuery';
 import { useBranding } from '../../data/hooks/useBranding';
 import { recentRecordRange, useClientRecordsQuery } from '../../data/hooks/useClientRecordsQuery';
 import { useRecentSessionsQuery } from '../../data/hooks/useRecentSessionsQuery';
@@ -21,6 +22,7 @@ type Props = {
   exerciseName: string;
   templateId: string | null;
   dayIndex: number | null;
+  exerciseId?: string;
   dayName?: string;
   category: string | null;
   variables: VariableDef[];
@@ -35,7 +37,7 @@ export function ProgressPdfButton(props: Props): React.JSX.Element {
   const now = new Date();
   const consistencyRange = heatmapRange(now);
   const recordsRange = recentRecordRange(14);
-  const sessions = useRecentSessionsQuery({ clientId: props.clientId, ...consistencyRange, limit: 200 });
+  const sessions = useRecentSessionsQuery({ clientId: props.clientId, ...consistencyRange, limit: 200, all: true });
   const records = useClientRecordsQuery(props.clientId, recordsRange.from, recordsRange.to);
   const templates = usePerformedTemplatesQuery(
     { clientId: props.clientId, ...props.range },
@@ -43,8 +45,23 @@ export function ProgressPdfButton(props: Props): React.JSX.Element {
       enabled: props.mode !== 'exercise' && Boolean(props.templateId),
     },
   );
+  const adherence = useAdherenceQuery({
+    clientId: props.clientId,
+    ...props.range,
+    templateId: props.mode === 'exercise' ? undefined : props.templateId,
+  });
+  const selectedSessions = useRecentSessionsQuery({
+    clientId: props.clientId,
+    ...props.range,
+    templateId: props.mode === 'exercise' ? undefined : (props.templateId ?? undefined),
+    exerciseId: props.mode === 'exercise' ? props.exerciseId : undefined,
+    limit: 200,
+    all: true,
+    dayIndex: props.mode === 'session' ? (props.dayIndex ?? undefined) : undefined,
+    category: props.mode !== 'exercise' ? (props.category ?? undefined) : undefined,
+  });
   const needsTemplate = props.mode !== 'exercise' && Boolean(props.templateId);
-  const required = [branding, sessions, records, ...(needsTemplate ? [templates] : [])];
+  const required = [branding, sessions, records, adherence, selectedSessions, ...(needsTemplate ? [templates] : [])];
   const blocked = props.disabled || required.some((query) => query.isPending || query.isError || query.isFetching);
   const failed = required.some((query) => query.isError);
   const selection =
@@ -71,10 +88,12 @@ export function ProgressPdfButton(props: Props): React.JSX.Element {
             mode: props.mode,
             range: { ...props.range },
             selection,
+            adherence: adherence.data,
+            sessions: selectedSessions.data,
             points: props.points,
             variables: props.variables,
             kpis: props.kpis,
-            insights: buildInsights(props.mode, props.points).map((insight) => insight.text),
+            insights: buildInsights(props.mode, props.points, props.t).map((insight) => insight.text),
             recordInsights: recordInsights(records.data?.records ?? [], props.t).map((insight) => insight.text),
             recordsRange,
             heatmapRange: consistencyRange,

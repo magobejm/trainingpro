@@ -6,6 +6,7 @@ import { Breadcrumbs } from '../../layout/Breadcrumbs';
 import { Button, EmptyState, colors, fontSize, space } from '@trainerpro/ui';
 import { ProgressPdfButton } from '../../features/pdf/ProgressPdfButton';
 import { CalendarRangeModal } from './progress/CalendarRangeModal';
+import { AdherenceSummary } from './progress/AdherenceSummary';
 import { ConsistencyHeatmap } from './progress/ConsistencyHeatmap';
 import { InsightsPanel } from './progress/InsightsPanel';
 import { KpiGrid } from './progress/KpiGrid';
@@ -64,7 +65,9 @@ export type ProgressViewInput = {
   selectedExercise: SelectedExercise | null;
   selectedExerciseName: string;
   selectedTemplateId: string | null;
-  sessionQuery: { data?: Array<{ sessionDate: string; sessionId: string }> };
+  sessionQuery: {
+    data?: Array<{ sessionDate: string; sessionId: string; outcome?: import('@trainerpro/shared').SessionOutcome }>;
+  };
   setActiveVarIds: (value: Set<string>) => void;
   setCustomRange: (value: DateRange | null) => void;
   setDetailSessionId: (value: string | null) => void;
@@ -151,7 +154,6 @@ export function ProgressView(input: ProgressViewInput): React.JSX.Element {
         clientName={clientDisplayName ?? ''}
         disabled={
           !hasSelection ||
-          !chartPoints.length ||
           isLoading ||
           activeProgressQuery.isError ||
           activeProgressQuery.isFetching ||
@@ -163,6 +165,7 @@ export function ProgressView(input: ProgressViewInput): React.JSX.Element {
         mode={mode}
         range={range}
         exerciseName={selectedExerciseName}
+        exerciseId={selectedExercise?.id}
         templateId={selectedTemplateId}
         dayIndex={selectedDayIndex}
         dayName={routineDaysQuery.data?.find((day) => day.dayIndex === selectedDayIndex)?.title}
@@ -173,6 +176,12 @@ export function ProgressView(input: ProgressViewInput): React.JSX.Element {
         t={t}
       />
       <ConsistencyHeatmap clientId={clientId} t={t} />
+      <AdherenceSummary
+        clientId={clientId}
+        {...range}
+        templateId={mode === 'exercise' ? undefined : selectedTemplateId}
+        t={t}
+      />
 
       <ProgressFilters
         mode={mode}
@@ -282,7 +291,7 @@ export function ProgressView(input: ProgressViewInput): React.JSX.Element {
           {(sessionQuery.data ?? []).map((point) => (
             <Button
               key={point.sessionId}
-              label={`${point.sessionDate} · ${t('coach.progress.sessionDetail.open')}`}
+              label={`${point.sessionDate.slice(0, 10)} · ${point.outcome ? t('training.outcome.' + point.outcome) : ''} · ${t('coach.progress.sessionDetail.open')}`}
               onPress={() => setDetailSessionId(point.sessionId)}
               size="sm"
               variant="secondary"

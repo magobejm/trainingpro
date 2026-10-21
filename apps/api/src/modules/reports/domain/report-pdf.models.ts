@@ -1,5 +1,6 @@
 export type ReportPdfInput = {
   clientId: string;
+  timezoneOffset?: number;
   from: Date;
   to: Date;
 };

@@ -9,23 +9,32 @@ export function aggregateStrengthWeekly(rows: StrengthLogRow[]): StrengthWeeklyP
     const current = index.get(key) ?? {
       maxWeightKg: null,
       muscleGroup: row.muscleGroup,
-      totalReps: 0,
+      totalReps: null,
       totalSets: 0,
-      volumeKg: 0,
+      volumeKg: null,
       weekStart,
     };
     if (row.repsDone !== null || row.weightDoneKg !== null) {
       current.totalSets += 1;
     }
     if (row.repsDone !== null) {
-      current.totalReps += row.repsDone;
+      current.totalReps = (current.totalReps ?? 0) + row.repsDone;
     }
     if (row.weightDoneKg !== null) {
       current.maxWeightKg = Math.max(current.maxWeightKg ?? 0, row.weightDoneKg);
     }
     if (row.repsDone !== null && row.weightDoneKg !== null) {
-      current.volumeKg += row.repsDone * row.weightDoneKg;
+      current.volumeKg = (current.volumeKg ?? 0) + row.repsDone * row.weightDoneKg;
     }
+    const coverage = current.metricCoverage ?? {
+      volumeKg: { validSamples: 0, eligibleSamples: 0, unit: 'sets' as const },
+      totalReps: { validSamples: 0, eligibleSamples: 0, unit: 'sets' as const },
+    };
+    coverage.volumeKg!.eligibleSamples++;
+    coverage.totalReps!.eligibleSamples++;
+    if (row.repsDone !== null && row.weightDoneKg !== null) coverage.volumeKg!.validSamples++;
+    if (row.repsDone !== null) coverage.totalReps!.validSamples++;
+    current.metricCoverage = coverage;
     index.set(key, current);
   }
   return [...index.values()].sort(sortStrength);

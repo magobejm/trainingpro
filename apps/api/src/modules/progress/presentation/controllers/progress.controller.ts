@@ -1,4 +1,7 @@
-import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { Controller, Get, Headers, Query, Req, UseGuards } from '@nestjs/common';
+import { GetAdherenceUseCase } from '../../application/use-cases/get-adherence.usecase';
+import { GetAdherenceQueryDto } from '../dto/get-adherence-query.dto';
+import { readTimezoneOffset } from '../../../sessions/presentation/read-timezone-offset';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -31,6 +34,7 @@ import { GetSessionProgressQueryDto } from '../dto/get-session-progress-query.dt
 @Roles('coach', 'client')
 export class ProgressController {
   constructor(
+    private readonly getAdherenceUseCase: GetAdherenceUseCase,
     private readonly getProgressOverviewUseCase: GetProgressOverviewUseCase,
     private readonly getExerciseProgressUseCase: GetExerciseProgressUseCase,
     private readonly getExercisePrUseCase: GetExercisePrUseCase,
@@ -42,6 +46,21 @@ export class ProgressController {
     private readonly getPerformedTemplatesUseCase: GetPerformedTemplatesUseCase,
     private readonly getPerformedSessionDaysUseCase: GetPerformedSessionDaysUseCase,
   ) {}
+
+  @Get('adherence')
+  async getAdherence(
+    @Query() query: GetAdherenceQueryDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') offset?: string,
+  ) {
+    const parsed = GetAdherenceQueryDto.schema.parse(query);
+    return this.getAdherenceUseCase.execute(readAuthContext(request), {
+      ...parsed,
+      from: new Date(parsed.from),
+      to: new Date(parsed.to),
+      timezoneOffset: readTimezoneOffset(offset),
+    });
+  }
 
   @Get('overview')
   async getOverview(@Query() query: GetProgressQueryDto, @Req() request: HttpAuthRequest) {
@@ -149,6 +168,10 @@ export class ProgressController {
       from: new Date(parsed.from),
       to: new Date(parsed.to),
       limit: parsed.limit ?? 20,
+      beforeDate: parsed.beforeDate ? new Date(parsed.beforeDate) : undefined,
+      beforeId: parsed.beforeId,
+      dayIndex: parsed.dayIndex,
+      category: parsed.category,
     });
   }
 

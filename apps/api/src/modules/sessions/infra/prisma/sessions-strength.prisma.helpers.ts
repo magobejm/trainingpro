@@ -1,4 +1,5 @@
 import { Prisma } from '@prisma/client';
+import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
 import type { ClientRoutineWarmup } from '@trainerpro/shared';
 import {
@@ -244,6 +245,8 @@ export function mapSession(
     id: row.id,
     isCompleted: row.isCompleted,
     isIncomplete: row.isIncomplete,
+    skippedAt: row.skippedAt,
+    skipReason: row.skipReason,
     items,
     postFatigue: row.postFatigue,
     postMood: row.postMood,
@@ -471,6 +474,7 @@ export async function mapSessionWithGroups(
     row.sourceTemplateVersion,
   );
   const session = mapSession(row, groupLookup, lockedFieldsLookup, plannedSetsLookup);
+  session.originDate = (await readSessionOrigins(prisma, [row])).get(row.id) ?? null;
   session.warmups = warmups;
   if (dayTitle ?? row.planDayTitle) session.dayTitle = dayTitle ?? row.planDayTitle ?? undefined;
   if (!dayTitle && row.planDayIndex != null) {

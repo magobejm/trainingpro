@@ -1,12 +1,19 @@
+import { allSessionPages } from './recent-session-pages';
+import type { SessionOutcome } from '@trainerpro/shared';
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type RecentSessionSummary = {
+  outcome?: SessionOutcome;
+  originDate?: string | null;
+  skipReason?: string | null;
+  hasRecordedData?: boolean;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
   sessionDate: string;
   sessionId: string;
   exerciseCount: number;
-  totalTonnage: number;
+  totalTonnage: number | null;
   sessionInol: number | null;
   avgRpe: number | null;
   durationMinutes: number | null;
@@ -19,6 +26,9 @@ type QueryInput = {
   from: string;
   to: string;
   limit?: number;
+  all?: boolean;
+  dayIndex?: number;
+  category?: string;
 };
 
 export function useRecentSessionsQuery(input: QueryInput, options?: { enabled?: boolean }) {
@@ -35,6 +45,9 @@ export function useRecentSessionsQuery(input: QueryInput, options?: { enabled?: 
       input.from,
       input.to,
       input.limit,
+      input.all,
+      input.dayIndex,
+      input.category,
     ],
   });
 }
@@ -52,6 +65,14 @@ async function fetchRecentSessions(auth: ReturnType<typeof useAuth>, input: Quer
   if (input.clientId) query.set('clientId', input.clientId);
   if (input.exerciseId) query.set('exerciseId', input.exerciseId);
   if (input.templateId) query.set('templateId', input.templateId);
-  if (input.limit !== undefined) query.set('limit', String(input.limit));
-  return createApiClient(auth).get<RecentSessionSummary[]>(`/progress/sessions?${query}`);
+  if (input.limit !== undefined || input.all) query.set('limit', String(input.limit ?? 200));
+  if (input.dayIndex !== undefined) query.set('dayIndex', String(input.dayIndex));
+  if (input.category) query.set('category', input.category);
+  const fetchPage = ({ beforeDate, beforeId }: { beforeDate?: string; beforeId?: string }) => {
+    const pageQuery = new URLSearchParams(query);
+    if (beforeDate) pageQuery.set('beforeDate', beforeDate);
+    if (beforeId) pageQuery.set('beforeId', beforeId);
+    return createApiClient(auth).get<RecentSessionSummary[]>(`/progress/sessions?${pageQuery}`);
+  };
+  return input.all ? allSessionPages(fetchPage, input.limit ?? 200) : fetchPage({});
 }

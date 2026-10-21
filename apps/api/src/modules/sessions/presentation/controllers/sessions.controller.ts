@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { sessionOutcome, type SessionOutcome } from '@trainerpro/shared';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -182,16 +183,48 @@ export class SessionsController {
   }
 
   @Get(':sessionId')
-  async getOne(@Param() params: SessionIdParamDto, @Req() request: HttpAuthRequest) {
+  async getOne(
+    @Param() params: SessionIdParamDto,
+    @Req() request: HttpAuthRequest,
+    @Query('includeOutcome') includeOutcome?: string,
+  ) {
     const auth = readAuthContext(request);
     const session = await this.getSessionUseCase.execute(auth, params.sessionId);
-    return mapSession(session);
+    return mapSession(session, includeOutcome === 'true');
   }
 }
 
-export function mapSession(session: { finishedAt: Date | null; sessionDate: Date; startedAt: Date | null }) {
+type SessionPresentation = {
+  finishedAt: Date | null;
+  sessionDate: Date;
+  startedAt: Date | null;
+  isCompleted?: boolean;
+  isIncomplete?: boolean;
+  status?: string;
+  outcome?: SessionOutcome;
+  originDate?: string | null;
+  skippedAt?: Date | null;
+  skipReason?: string | null;
+};
+
+export function mapSession<T extends SessionPresentation>(session: T, includeOutcome = false) {
+  const { originDate, skippedAt, skipReason, ...legacy } = session;
+  delete legacy.outcome;
   return {
-    ...session,
+    ...legacy,
+    ...(includeOutcome
+      ? {
+          outcome: sessionOutcome({
+            isCompleted: session.isCompleted ?? false,
+            isIncomplete: session.isIncomplete ?? false,
+            status: session.status ?? 'PENDING',
+            skippedAt,
+          }),
+          originDate: originDate ?? null,
+          skippedAt: skippedAt?.toISOString() ?? null,
+          skipReason: skipReason ?? null,
+        }
+      : {}),
     finishedAt: session.finishedAt ? session.finishedAt.toISOString() : null,
     sessionDate: session.sessionDate.toISOString().slice(0, 10),
     startedAt: session.startedAt ? session.startedAt.toISOString() : null,

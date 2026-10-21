@@ -43,3 +43,23 @@ it('keeps sport distance in canonical metres across pending-op replay', () => {
   expect(view.items[0]).toMatchObject({ setLogs: [{ distanceDoneMeters: 1250, durationSecondsDone: 150 }] });
   expect(applyPendingOps(view, draft.ops)).toEqual(view);
 });
+
+it('recomputes the result when replaying start and incomplete finish with stale metadata', () => {
+  const session = { ...sampleSession(), outcome: 'pending' as const, originDate: '2026-10-18', sessionDate: '2026-10-19' };
+  const start = upsertOp(createSessionDraft(session), {
+    kind: 'start',
+    path: '/sessions/session-1/start',
+    dedupeKey: 'start',
+    body: {},
+  });
+  expect(applyPendingOps(session, start.ops).outcome).toBe('in_progress');
+  const finish = upsertOp(start, {
+    kind: 'finish',
+    path: '/sessions/session-1/finish',
+    dedupeKey: 'finish',
+    body: { isIncomplete: true },
+  });
+  const view = applyPendingOps(session, finish.ops);
+  expect(view).toMatchObject({ outcome: 'incomplete', originDate: '2026-10-18', sessionDate: '2026-10-19' });
+  expect(applyPendingOps(view, []).outcome).toBe('incomplete');
+});

@@ -15,7 +15,7 @@ export class ListClientTimelineUseCase {
   async execute(
     context: AuthContext,
     clientId: string,
-    input: { cursor: TimelineCursor; limit: number },
+    input: { cursor: TimelineCursor; limit: number; includeOutcome?: boolean },
   ): Promise<TimelinePage> {
     await this.getClient.execute(context, clientId);
     return readClientTimeline(this.prisma, clientId, input);

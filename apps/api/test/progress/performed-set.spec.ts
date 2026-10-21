@@ -18,7 +18,7 @@ import {
 describe('performed set', () => {
   test('a strength set counts only when it has a recorded value', () => {
     expect(strengthSetHasData({ effortRir: null, effortRpe: null, repsDone: null, weightDoneKg: null })).toBe(false);
-    expect(strengthSetHasData({ effortRir: 0, effortRpe: 0, repsDone: 0, weightDoneKg: 0 })).toBe(false);
+    expect(strengthSetHasData({ effortRir: 0, effortRpe: 0, repsDone: 0, weightDoneKg: 0 })).toBe(true);
     expect(strengthSetHasData({ effortRpe: null, repsDone: 8, weightDoneKg: null })).toBe(true);
   });
 

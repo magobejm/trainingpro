@@ -61,7 +61,22 @@ export {
   type RecoveryHash,
 } from './password-recovery';
 export { physicalTestFields, type PhysicalTestFieldKey } from './physical-test-fields';
-export { sessionOutcome, type SessionOutcome } from './session-outcome';
+export { sessionOutcome, sessionOutcomeSchema, type SessionOutcome } from './session-outcome';
+export {
+  workoutAdherenceSchema,
+  metricCoverageSchema,
+  type WorkoutAdherenceSummary,
+  type MetricCoverage,
+} from './http/progress';
+export {
+  resolveWorkoutResults,
+  sessionDateKey,
+  sessionOutcomeRank,
+  hasClosedSessionResult,
+  type ScheduledWorkout,
+  type WorkoutSession,
+  type WorkoutResult,
+} from './workout-results';
 export { weekdayName, workoutShift, type WorkoutShift } from './workout-shift';
 export { formatDate } from './format-date';
 export type { ExerciseHistoryEntry, ExerciseHistorySet } from './exercise-history';

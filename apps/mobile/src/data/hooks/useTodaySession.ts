@@ -327,7 +327,7 @@ async function readSession(auth: ReturnType<typeof useAuth>, sessionId: string):
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  return createApiClient(auth).get<SessionView>(`/sessions/${sessionId}`);
+  return createApiClient(auth).get<SessionView>(`/sessions/${sessionId}?includeOutcome=true`);
 }
 
 async function fetchExerciseHistory(

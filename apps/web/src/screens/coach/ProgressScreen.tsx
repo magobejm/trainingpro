@@ -27,13 +27,14 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import type { AnalysisMode, DateRange, VariableDef } from './progress/progress-screen.types';
 import { Button, EmptyState } from '@trainerpro/ui';
 
+import { useAdherenceQuery } from '../../data/hooks/useAdherenceQuery';
 import { buildKpis } from './progress/build-kpis';
 import { ProgressView, styles } from './ProgressScreen.view';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
 function toDateStr(d: Date): string {
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function useResetClientFilters(
@@ -240,9 +241,16 @@ export function ProgressScreen(props: ProgressScreenProps): React.JSX.Element {
 
   const activeVars = currentVars.filter((v) => activeVarIds.has(v.id));
 
+  const adherenceQuery = useAdherenceQuery({
+    clientId: clientId ?? '',
+    ...range,
+    templateId: mode === 'exercise' ? undefined : selectedTemplateId,
+  });
+
   // KPIs
   const kpis = buildKpis({
     mode,
+    adherencePercent: adherenceQuery.data?.percent,
     points: chartPoints,
     range,
     exercisePr: exercisePrQuery.data ?? null,

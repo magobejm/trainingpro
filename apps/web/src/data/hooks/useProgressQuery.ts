@@ -11,24 +11,27 @@ export type ProgressOverviewView = {
 export type StrengthWeeklyPoint = {
   maxWeightKg: null | number;
   muscleGroup: string;
-  totalReps: number;
+  totalReps: number | null;
   totalSets: number;
-  volumeKg: number;
+  volumeKg: number | null;
   weekStart: string;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
 };
 
 export type CardioWeeklyPoint = {
   avgHeartRate: null | number;
   avgRpe: null | number;
   methodType: string;
-  totalDistanceMeters: number;
-  totalDurationSeconds: number;
+  totalDistanceMeters: number | null;
+  totalDurationSeconds: number | null;
   weekStart: string;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
 };
 
 export type SrpeWeeklyPoint = {
-  totalSrpe: number;
+  totalSrpe: number | null;
   weekStart: string;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
 };
 
 type QueryInput = {
@@ -41,10 +44,7 @@ type Options = {
   enabled?: boolean;
 };
 
-export function useProgressOverviewQuery(
-  input: QueryInput,
-  options?: Options,
-): UseQueryResult<ProgressOverviewView, Error> {
+export function useProgressOverviewQuery(input: QueryInput, options?: Options): UseQueryResult<ProgressOverviewView, Error> {
   const auth = useAuth();
   return useQuery({
     enabled: Boolean(auth) && (options?.enabled ?? true),
@@ -62,10 +62,7 @@ function useAuth() {
   return { accessToken, activeRole };
 }
 
-async function fetchProgressOverview(
-  auth: ReturnType<typeof useAuth>,
-  input: QueryInput,
-): Promise<ProgressOverviewView> {
+async function fetchProgressOverview(auth: ReturnType<typeof useAuth>, input: QueryInput): Promise<ProgressOverviewView> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

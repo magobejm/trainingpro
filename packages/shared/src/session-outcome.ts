@@ -1,4 +1,7 @@
-export type SessionOutcome = 'done' | 'incomplete' | 'in_progress' | 'pending' | 'skipped';
+import { z } from 'zod';
+
+export const sessionOutcomeSchema = z.enum(['done', 'incomplete', 'in_progress', 'pending', 'skipped']);
+export type SessionOutcome = z.infer<typeof sessionOutcomeSchema>;
 
 export function sessionOutcome(row: {
   isCompleted: boolean;

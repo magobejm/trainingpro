@@ -4,7 +4,7 @@ describe('collectBrokenRecords', () => {
   it('keeps the first mark and any later higher e1rm', () => {
     const records = collectBrokenRecords(new Map([['bench', 100]]), [
       {
-        effortRpe: null,
+        effortRpe: 10,
         exerciseId: 'bench',
         exerciseName: 'Press',
         repsDone: 5,
@@ -13,7 +13,7 @@ describe('collectBrokenRecords', () => {
         weightDoneKg: 80,
       },
       {
-        effortRpe: null,
+        effortRpe: 10,
         exerciseId: 'bench',
         exerciseName: 'Press',
         repsDone: 5,

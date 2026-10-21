@@ -1,4 +1,10 @@
-import { sessionOutcome, workoutShift, type SessionOutcome, type WorkoutShift } from '@trainerpro/shared';
+import {
+  sessionOutcome,
+  sessionOutcomeRank as outcomeRank,
+  workoutShift,
+  type SessionOutcome,
+  type WorkoutShift,
+} from '@trainerpro/shared';
 import type { ClientCalendarEvent, ClientSessionSummary } from '../../data/hooks/useClientCalendar';
 
 export type DayWorkout = {
@@ -84,12 +90,21 @@ export function mergeDayData(events: ClientCalendarEvent[], sessions: ClientSess
   const map = new Map<string, DayData>();
   const get = (key: string): DayData => map.get(key) ?? emptyDay();
 
+  const canonicalSessions = new Map(
+    events
+      .filter((event) => event.type === 'workout' && event.planDayId && event.sessionId && event.outcome)
+      .map((event) => [`${event.date.slice(0, 10)}|${event.planDayId}`, event.sessionId]),
+  );
   for (const session of sessions) {
-    const day = get(session.sessionDate);
+    const canonical = session.planDayId
+      ? canonicalSessions.get(`${session.sessionDate.slice(0, 10)}|${session.planDayId}`)
+      : undefined;
+    if (canonical && canonical !== session.id) continue;
+    const day = get(session.sessionDate.slice(0, 10));
     day.mood = session.postMood;
     day.sessionStatus = session.status;
     addWorkout(day, workoutFromSession(session));
-    map.set(session.sessionDate, day);
+    map.set(session.sessionDate.slice(0, 10), day);
   }
 
   for (const event of events) {
@@ -214,7 +229,7 @@ function applyEvent(day: DayData, event: ClientCalendarEvent, dateStr: string): 
 
 function workoutFromEvent(event: ClientCalendarEvent, dateStr: string): DayWorkout {
   const outcome = event.outcome ?? (event.isCompleted ? 'done' : 'pending');
-  const shift = outcome === 'done' ? workoutShift(dateStr, event.originDate) : null;
+  const shift = outcome === 'done' || outcome === 'incomplete' ? workoutShift(dateStr, event.originDate) : null;
   return {
     color: event.color,
     done: outcome === 'done',
@@ -244,26 +259,23 @@ function addWorkout(day: DayData, workout: DayWorkout): void {
   day.originDate = shifted?.originDate ?? null;
 }
 
-function outcomeRank(outcome: SessionOutcome): number {
-  if (outcome === 'done') return 4;
-  if (outcome === 'incomplete') return 3;
-  if (outcome === 'in_progress') return 2;
-  if (outcome === 'skipped') return 1;
-  return 0;
-}
-
 function sameWorkout(item: DayWorkout, workout: DayWorkout): boolean {
+  if (workout.sessionId && item.sessionId && workout.sessionId === item.sessionId) return true;
   if (workout.planDayId && item.planDayId) return item.planDayId === workout.planDayId;
-  return Boolean(workout.title) && item.title === workout.title;
+  if (workout.sessionId || item.sessionId) return false;
+  return !workout.planDayId && !item.planDayId && Boolean(workout.title) && item.title === workout.title;
 }
 
 function mergeWorkout(item: DayWorkout, workout: DayWorkout): void {
-  if (outcomeRank(workout.outcome) >= outcomeRank(item.outcome)) {
+  const rankDifference = outcomeRank(workout.outcome) - outcomeRank(item.outcome);
+  const wins =
+    rankDifference > 0 || (rankDifference === 0 && (workout.sessionId ?? '').localeCompare(item.sessionId ?? '') >= 0);
+  if (wins) {
     item.done = workout.outcome === 'done';
     item.outcome = workout.outcome;
     item.skipReason = workout.skipReason;
+    if (workout.sessionId) item.sessionId = workout.sessionId;
   }
-  if (workout.sessionId) item.sessionId = workout.sessionId;
   if (workout.title) item.title = workout.title;
   if (workout.planDayId) item.planDayId = workout.planDayId;
   if (workout.color) item.color = workout.color;

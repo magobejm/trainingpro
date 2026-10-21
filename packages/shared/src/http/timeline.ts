@@ -1,8 +1,13 @@
 import { z } from 'zod';
+import { sessionOutcomeSchema } from '../session-outcome';
 
 export const clientTimelineItemSchema = z
   .object({
     detail: z.string().nullable(),
+    outcome: sessionOutcomeSchema.optional(),
+    sessionDate: z.string().date().optional(),
+    originDate: z.string().date().nullable().optional(),
+    skipReason: z.string().nullable().optional(),
     id: z.string(),
     kind: z.enum(['chat', 'incident', 'note', 'photo', 'session', 'test']),
     occurredAt: z.string(),

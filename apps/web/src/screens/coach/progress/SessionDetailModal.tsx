@@ -2,7 +2,7 @@ import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { usesMinuteDuration, setVariablesForType } from '@trainerpro/shared';
+import { sessionOutcome, usesMinuteDuration, setVariablesForType } from '@trainerpro/shared';
 import { useSessionDetailQuery } from '../../../data/hooks/useSessionDetailQuery';
 import { comparePlannedAndLogged, type ComparedCell } from './session-compare.helpers';
 import { Modal, colors, fontSize, space } from '@trainerpro/ui';
@@ -38,7 +38,26 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
       visible={Boolean(props.sessionId)}
     >
       {query.isLoading ? <LoadingState label={t('coach.progress.loading')} /> : null}
-      {query.data?.isIncomplete ? <Text style={styles.notice}>{t('coach.progress.sessionDetail.incomplete')}</Text> : null}
+      {query.data ? (
+        <View style={styles.notice}>
+          <Text style={styles.noticeText}>
+            {query.data.sessionDate.slice(0, 10)}
+            {' · '}
+            {t(
+              'training.outcome.' +
+                (query.data.outcome ?? sessionOutcome({ ...query.data, isCompleted: query.data.isCompleted ?? false })),
+            )}
+          </Text>
+          {query.data.originDate ? (
+            <Text style={styles.noticeText}>
+              {t('training.originDate')}
+              {': '}
+              {query.data.originDate.slice(0, 10)}
+            </Text>
+          ) : null}
+          {query.data.skipReason ? <Text style={styles.noticeText}>{query.data.skipReason}</Text> : null}
+        </View>
+      ) : null}
       <View>
         {(query.data?.items ?? []).map((item) => {
           const rows = comparePlannedAndLogged(item);
@@ -73,15 +92,17 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
 }
 
 function ComparedValueCell(props: { cell: ComparedCell; incomplete: boolean }): React.JSX.Element {
-  const done = props.incomplete && props.cell.done === '-' ? '—' : props.cell.done;
+  const { t } = useTranslation();
+  const done = props.cell.done === '-' ? t('training.noRecord') : props.cell.done;
   return <Text style={[styles.cell, props.cell.differs && styles.differs]}>{`${props.cell.planned} / ${done}`}</Text>;
 }
 
 const styles = StyleSheet.create({
   block: { marginBottom: space.lg },
-  notice: { color: colors.textMuted, fontSize: fontSize.sm, marginBottom: space.md },
-  blockTitle: { fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
-  cell: { flex: 1, fontSize: fontSize.xs },
+  notice: { gap: space.xs, marginBottom: space.md },
+  noticeText: { color: colors.textMuted, fontSize: fontSize.sm },
+  blockTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
+  cell: { color: colors.text, flex: 1, fontSize: fontSize.xs },
   differs: { color: colors.warning, fontWeight: '700' },
   headCell: { color: colors.textMuted, flex: 1, fontSize: fontSize.xs, fontWeight: '700' },
   muted: { color: colors.textMuted, marginBottom: space.md },

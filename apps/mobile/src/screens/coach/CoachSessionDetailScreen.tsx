@@ -1,4 +1,5 @@
 import React from 'react';
+import { sessionOutcome } from '@trainerpro/shared';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
@@ -20,7 +21,19 @@ export function CoachSessionDetailScreen(props: Props): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{t('coach.notice.sessionTitle')}</Text>
-      <Text style={styles.status}>{t(`coach.notice.status.${query.data.status}`)}</Text>
+      <Text style={styles.status}>
+        {query.data.sessionDate.slice(0, 10)}
+        {' · '}
+        {t('training.outcome.' + (query.data.outcome ?? sessionOutcome(query.data)))}
+      </Text>
+      {query.data.originDate ? (
+        <Text style={styles.status}>
+          {t('training.originDate')}
+          {': '}
+          {query.data.originDate.slice(0, 10)}
+        </Text>
+      ) : null}
+      {query.data.skipReason ? <Text style={styles.status}>{query.data.skipReason}</Text> : null}
       {renderItems(query.data.items, t('coach.notice.sessionEmpty'))}
     </ScrollView>
   );

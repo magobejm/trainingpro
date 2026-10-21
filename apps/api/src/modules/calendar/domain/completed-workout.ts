@@ -1,8 +1,8 @@
-import { sessionOutcome, type SessionOutcome } from '@trainerpro/shared';
+import { sessionOutcome, sessionOutcomeRank, type SessionOutcome } from '@trainerpro/shared';
 
 export type WorkoutMark = {
   outcome: SessionOutcome;
-  sessionId: string;
+  sessionId: string | null;
   skipReason: string | null;
 };
 
@@ -16,14 +16,6 @@ export type SessionOutcomeRow = {
   skipReason: string | null;
   skippedAt: Date | null;
   status: string;
-};
-
-const OUTCOME_RANK: Record<SessionOutcome, number> = {
-  done: 4,
-  incomplete: 3,
-  in_progress: 2,
-  pending: 0,
-  skipped: 1,
 };
 
 export function completedDayKey(clientId: string | null, date: Date): string {
@@ -94,5 +86,11 @@ function rememberIndexedSession(done: Set<string>, marks: Map<string, WorkoutMar
 
 function putMark(marks: Map<string, WorkoutMark>, key: string, mark: WorkoutMark): void {
   const current = marks.get(key);
-  if (!current || OUTCOME_RANK[mark.outcome] >= OUTCOME_RANK[current.outcome]) marks.set(key, mark);
+  if (
+    !current ||
+    sessionOutcomeRank(mark.outcome) > sessionOutcomeRank(current.outcome) ||
+    (sessionOutcomeRank(mark.outcome) === sessionOutcomeRank(current.outcome) &&
+      (mark.sessionId ?? '') > (current.sessionId ?? ''))
+  )
+    marks.set(key, mark);
 }

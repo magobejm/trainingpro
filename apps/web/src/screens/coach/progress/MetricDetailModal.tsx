@@ -1,8 +1,10 @@
+import { buildMetricChartData, metricTooltipTitle } from './metric-chart-presentation';
 import { getLayoutStyle1, getLayoutStyle2 } from './MetricDetailModal.layout-styles';
 import { WebBox, WebText } from '@trainerpro/ui';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { metricSamples, metricCoverageLines } from './metric-samples';
 import type { VariableDef } from './progress-screen.types';
 import type { ExerciseProgressPoint } from '../../../data/hooks/useExerciseProgressQuery';
 import { Button, Modal, colors, fontSize, radius, space } from '@trainerpro/ui';
@@ -33,28 +35,12 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
   const setRepsSeparator = t('coach.progress.modal.setRepsSeparator');
   const dotSeparator = t('coach.progress.modal.dotSeparator');
   if (!visible || !variable) return null;
-  const chartData = data.map((pt) => ({
-    date: pt.sessionDate.slice(5),
-    value: (pt as Record<string, unknown>)[variable.dataKey] ?? 0,
-  }));
+  const chartData = buildMetricChartData(data, 'sessionDate', variable.dataKey);
   const selectedPoint = data[selectedIdx];
   const sets = selectedPoint?.setDetails ?? [];
-  const avgVal =
-    data.length > 0
-      ? data.reduce((s, pt) => {
-          const v = (pt as Record<string, unknown>)[variable.dataKey];
-          return s + (typeof v === 'number' ? v : 0);
-        }, 0) / data.length
-      : 0;
-  const maxVal =
-    data.length > 0
-      ? Math.max(
-          ...data.map((pt) => {
-            const v = (pt as Record<string, unknown>)[variable.dataKey];
-            return typeof v === 'number' ? v : 0;
-          }),
-        )
-      : 0;
+  const samples = metricSamples(data, variable.dataKey);
+  const avgVal = samples.average;
+  const maxVal = samples.max;
   const layoutStyle1 = getLayoutStyle1;
   const layoutStyle2 = getLayoutStyle2;
   return (
@@ -67,11 +53,17 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
           <KpiTile label={t('coach.progress.kpi.sessions')} value={`${data.length}`} />
           <KpiTile
             label={`${t('coach.progress.kpi.avgPrefix')} ${t(variable.labelKey)}`}
-            value={`${Math.round(avgVal * 10) / 10} ${variable.unit}`}
+            value={avgVal == null ? '—' : `${Math.round(avgVal * 10) / 10} ${variable.unit}`}
           />
-          <KpiTile label={t('coach.progress.kpi.max')} value={`${Math.round(maxVal * 10) / 10} ${variable.unit}`} />
+          <KpiTile
+            label={t('coach.progress.kpi.max')}
+            value={maxVal == null ? '—' : `${Math.round(maxVal * 10) / 10} ${variable.unit}`}
+          />
         </WebBox>
 
+        {metricCoverageLines(data, variable.dataKey, t).map((line, index) => (
+          <WebText key={index}>{line}</WebText>
+        ))}
         {/* Main chart */}
         <WebBox style={chartContainer}>
           <WebText style={sectionLabel}>
@@ -87,10 +79,21 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray={lineDash} stroke={gridColor} />
-                <XAxis dataKey={dateKey} tick={{ fontSize: fontSize.xs }} />
-                <YAxis tick={{ fontSize: fontSize.xs }} />
+                <XAxis
+                  dataKey={dateKey}
+                  tickFormatter={(date: string) => date.slice(5)}
+                  tick={{ fontSize: fontSize.xs, fill: colors.textMuted }}
+                />
+                <YAxis tick={{ fontSize: fontSize.xs, fill: colors.textMuted }} />
                 <Tooltip
-                  formatter={(v) => [`${Math.round((Number(v) || 0) * 10) / 10} ${variable.unit}`, t(variable.labelKey)]}
+                  contentStyle={{ backgroundColor: colors.surface, borderColor: colors.border, borderRadius: space.sm }}
+                  labelStyle={{ color: colors.text }}
+                  itemStyle={{ color: colors.text }}
+                  labelFormatter={(label, payload) => metricTooltipTitle(label, payload, t)}
+                  formatter={(v) => [
+                    v == null ? '—' : `${Math.round(Number(v) * 10) / 10} ${variable.unit}`,
+                    t(variable.labelKey),
+                  ]}
                 />
                 <Area
                   type={chartType}
@@ -114,9 +117,12 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
               <Button
                 key={pt.sessionId}
                 label={
-                  pt.sessionDate +
+                  pt.sessionDate.slice(0, 10) +
+                  (pt.outcome ? ' · ' + t('training.outcome.' + pt.outcome) : '') +
                   ' · ' +
-                  Math.round(Number((pt as Record<string, unknown>)[variable.dataKey] ?? 0) * 10) / 10 +
+                  ((pt as Record<string, unknown>)[variable.dataKey] == null
+                    ? '—'
+                    : Math.round(Number((pt as Record<string, unknown>)[variable.dataKey]) * 10) / 10) +
                   ' ' +
                   variable.unit
                 }
@@ -130,6 +136,9 @@ export function MetricDetailModal({ visible, onClose, variable, exerciseName, da
           {/* Set breakdown */}
           <WebBox style={setsPanel}>
             <WebText style={sectionLabel}>{t('coach.progress.modal.sets.title')}</WebText>
+            {selectedPoint ? (
+              <WebText>{metricTooltipTitle(selectedPoint.sessionDate, [{ payload: chartData[selectedIdx] }], t)}</WebText>
+            ) : null}
             {sets.length === 0 && <WebText style={layoutStyle2}>{t('coach.progress.modal.noData')}</WebText>}
             {sets.map((set) => (
               <WebBox key={set.setIndex} style={setRow}>

@@ -4,6 +4,10 @@ export const TIMELINE_MAX_LIMIT = 50;
 export type TimelineKind = 'chat' | 'incident' | 'note' | 'photo' | 'session' | 'test';
 
 export type TimelineDraft = {
+  outcome?: import('@trainerpro/shared').SessionOutcome;
+  sessionDate?: string;
+  originDate?: string | null;
+  skipReason?: string | null;
   detail: string | null;
   id: string;
   kind: TimelineKind;

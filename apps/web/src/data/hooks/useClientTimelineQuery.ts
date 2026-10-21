@@ -35,5 +35,5 @@ async function fetchTimeline(
     params.set('before', cursor.before);
     params.set('beforeId', cursor.beforeId);
   }
-  return createApiClient(auth).get<ClientTimelineResponse>(`/clients/${clientId}/timeline?${params}`);
+  return createApiClient(auth).get<ClientTimelineResponse>(`/clients/${clientId}/timeline?includeOutcome=true&${params}`);
 }

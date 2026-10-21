@@ -5,10 +5,17 @@ export function aggregateSrpeWeekly(rows: SessionSrpeRow[]): SrpeWeeklyPoint[] {
   const index = new Map<string, SrpeWeeklyPoint>();
   for (const row of rows) {
     const value = computeSessionSrpe(row.effortRpe, row.durationSeconds);
-    if (value === null) continue;
     const weekStart = toWeekStart(row.sessionDate);
-    const current = index.get(weekStart) ?? { totalSrpe: 0, weekStart };
-    current.totalSrpe += value;
+    const current = index.get(weekStart) ?? {
+      totalSrpe: null,
+      weekStart,
+      metricCoverage: { totalSrpe: { validSamples: 0, eligibleSamples: 0, unit: 'sessions' as const } },
+    };
+    current.metricCoverage!.totalSrpe!.eligibleSamples++;
+    if (value !== null) {
+      current.totalSrpe = (current.totalSrpe ?? 0) + value;
+      current.metricCoverage!.totalSrpe!.validSamples++;
+    }
     index.set(weekStart, current);
   }
   return [...index.values()].sort((a, b) => a.weekStart.localeCompare(b.weekStart));

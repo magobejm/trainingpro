@@ -217,3 +217,50 @@ describe('callTimeOptions', () => {
     expect(options).not.toContain('09:10');
   });
 });
+
+it('keeps the original date of a moved incomplete workout', () => {
+  const day = mergeDayData([event({ outcome: 'incomplete', date: '2026-10-20', originDate: '2026-10-19' })], []).get(
+    '2026-10-20',
+  );
+  expect(day?.workouts[0]).toMatchObject({ outcome: 'incomplete', originDate: '2026-10-19', shift: 'late' });
+});
+
+it('keeps the winning result and its session together independent of event order', () => {
+  const complete = event({ id: 'event-a', planDayId: 'plan-a', outcome: 'done', sessionId: 'session-a' });
+  const pending = event({ id: 'event-b', planDayId: 'plan-a', outcome: 'pending', sessionId: 'session-b' });
+  for (const events of [
+    [complete, pending],
+    [pending, complete],
+  ]) {
+    expect(mergeDayData(events, []).get('2026-10-20')?.workouts).toMatchObject([
+      { outcome: 'done', sessionId: 'session-a' },
+    ]);
+  }
+});
+
+it('uses the server canonical session while retaining a newer local result for that same session', () => {
+  const session = (id: string, status: 'COMPLETED' | 'IN_PROGRESS') => ({
+    id,
+    sessionDate: '2026-10-20',
+    status,
+    isCompleted: status === 'COMPLETED',
+    isIncomplete: false,
+    planDayId: 'plan-a',
+    planDayIndex: 1,
+    planDayTitle: 'Pierna',
+    preMotivation: null,
+    postMood: null,
+    postFatigue: null,
+    postPain: null,
+  });
+  const result = mergeDayData(
+    [event({ planDayId: 'plan-a', sessionId: 'a', outcome: 'done' })],
+    [session('z', 'COMPLETED'), session('a', 'COMPLETED')],
+  );
+  expect(result.get('2026-10-20')?.workouts).toMatchObject([{ sessionId: 'a', outcome: 'done' }]);
+  const offline = mergeDayData(
+    [event({ planDayId: 'plan-a', sessionId: 'a', outcome: 'pending' })],
+    [session('a', 'IN_PROGRESS')],
+  );
+  expect(offline.get('2026-10-20')?.workouts).toMatchObject([{ sessionId: 'a', outcome: 'in_progress' }]);
+});

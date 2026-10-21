@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import type { ExerciseHistorySet } from '@trainerpro/shared';
+import { sessionOutcome, type ExerciseHistorySet } from '@trainerpro/shared';
 import type { ExerciseHistoryEntry } from '../../domain/session.entity';
 
 export function exerciseHistoryQuery(clientId: string, sourceId: string, limit: number, excludeSessionId?: string) {
@@ -14,7 +14,7 @@ export function exerciseHistoryQuery(clientId: string, sourceId: string, limit: 
     where: {
       clientId,
       archivedAt: null,
-      status: 'COMPLETED' as const,
+      AND: [{ OR: [{ isCompleted: true }, { isIncomplete: true }, { status: 'COMPLETED' as const }] }],
       ...(excludeSessionId ? { id: { not: excludeSessionId } } : {}),
       OR: [
         { items: { some: strength } },
@@ -86,6 +86,7 @@ export function mapExerciseHistory(row: HistoryRow): ExerciseHistoryEntry {
   }
   const last = sets.at(-1);
   return {
+    outcome: sessionOutcome(row),
     sessionId: row.id,
     sessionDate: row.sessionDate,
     sets,

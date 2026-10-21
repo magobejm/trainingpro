@@ -62,6 +62,8 @@ export const styles = StyleSheet.create({
   menuAction: { justifyContent: 'center', minHeight: 32, paddingHorizontal: space.md },
   menuActionLabel: { color: colors.text, fontSize: fontSize.xs, fontWeight: '700' },
   menuLabel: { color: colors.textMuted, fontSize: fontSize.md, fontWeight: '700' },
+  rowPanelHeader: { alignItems: 'center', flexDirection: 'row', width: '100%', minWidth: 0 },
+  inlinePanel: { width: '100%', minWidth: 0, maxWidth: '100%' },
   rowSubtitle: { color: colors.textMuted, fontSize: fontSize.xs },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
@@ -127,3 +129,5 @@ export const rowStyle: React.CSSProperties = {
   padding: '10px 14px',
   position: 'relative',
 };
+
+export const expandedRowStyle: React.CSSProperties = { ...rowStyle, flexDirection: 'column', alignItems: 'stretch' };

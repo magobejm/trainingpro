@@ -81,7 +81,13 @@ function WorkoutRow(props: {
         {props.count != null ? (
           <Text style={styles.meta}>{props.t('client.calendar.detail.exerciseCount', { count: props.count, title })}</Text>
         ) : null}
-        <WorkoutStatus language={props.language} t={props.t} workout={props.workout} />
+        <WorkoutStatus
+          language={props.language}
+          t={props.t}
+          workout={props.workout}
+          dateStr={props.dateStr}
+          todayStr={props.todayStr}
+        />
       </Pressable>
       <WorkoutSkipActions
         dateStr={props.dateStr}
@@ -103,13 +109,15 @@ function statusLabel(outcome: DayWorkout['outcome'], t: Translate): string | nul
   if (outcome === 'done') return t('client.calendar.workout.done');
   if (outcome === 'incomplete') return t('client.calendar.workout.incomplete');
   if (outcome === 'skipped') return t('client.calendar.workout.skipped');
-  return null;
+  return t('training.outcome.' + (outcome ?? 'pending'));
 }
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 function WorkoutStatus(props: {
   language: string;
+  dateStr: string;
+  todayStr: string;
   t: (key: string, options?: Record<string, unknown>) => string;
   workout: DayWorkout;
 }): React.JSX.Element | null {
@@ -118,6 +126,9 @@ function WorkoutStatus(props: {
   return (
     <View>
       {label ? <Text style={styles.meta}>{label}</Text> : null}
+      {props.workout.outcome === 'pending' && props.dateStr < props.todayStr ? (
+        <Text style={styles.meta}>{props.t('training.overdue')}</Text>
+      ) : null}
       {props.workout.outcome === 'skipped' && props.workout.skipReason ? (
         <Text style={styles.meta}>{props.workout.skipReason}</Text>
       ) : null}

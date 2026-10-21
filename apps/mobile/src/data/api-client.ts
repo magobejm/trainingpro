@@ -143,8 +143,11 @@ function buildHeaders(config: ApiClientOptions, body?: unknown, extra?: Record<s
     'X-Active-Role': config.activeRole,
     'X-Request-Id': createRequestId(),
     'X-Timezone-Offset': String(deviceTimezoneOffsetMinutes()),
-    ...(extra ?? {}),
   };
+  for (const [name, value] of Object.entries(extra ?? {})) {
+    const existing = Object.keys(headers).find((key) => key.toLowerCase() === name.toLowerCase());
+    headers[existing ?? name] = value;
+  }
   if (config.accessToken) {
     headers.Authorization = `Bearer ${config.accessToken}`;
   }

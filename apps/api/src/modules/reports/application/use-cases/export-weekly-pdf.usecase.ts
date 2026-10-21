@@ -1,3 +1,9 @@
+import { selectRecordedSportRecords, sportRecordsSelect } from '../../../progress/infra/prisma/sport-progress-records';
+import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
+import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
+import { sessionOutcome } from '@trainerpro/shared';
+import { closedSessionWhere, outcomeSelect } from '../../../progress/infra/prisma/closed-session';
+import { readWorkoutAdherence } from '../../../../common/plan/workout-adherence.prisma';
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { type Prisma, Role } from '@prisma/client';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
@@ -20,13 +26,51 @@ export class ExportWeeklyPdfUseCase {
   async execute(context: AuthContext, input: ReportPdfInput): Promise<ReportPdfFile> {
     const coach = await this.resolveCoach(context);
     await this.assertClientOwnership(coach.id, input.clientId);
+    await closeStaleSessions(this.prisma, { clientId: input.clientId });
     const [weeklyReports, strengthRows, cardioRows, srpeRows] = await Promise.all([
       this.readWeeklyReports(input.clientId, input.from, input.to),
       this.readStrengthRows(input.clientId, input.from, input.to),
       this.readCardioRows(input.clientId, input.from, input.to),
       this.readSrpeRows(input.clientId, input.from, input.to),
     ]);
-    const lines = buildWeeklyReportLines({ cardioRows, srpeRows, strengthRows, weeklyReports }, input);
+    const [adherence, sessions] = await Promise.all([
+      readWorkoutAdherence(this.prisma, {
+        clientId: input.clientId,
+        from: input.from,
+        to: input.to,
+        timezoneOffset: input.timezoneOffset,
+      }),
+      this.prisma.sessionInstance.findMany({
+        where: { archivedAt: null, clientId: input.clientId, sessionDate: { gte: input.from, lte: input.to } },
+        select: {
+          id: true,
+          clientId: true,
+          planDayId: true,
+          updatedAt: true,
+          sessionDate: true,
+          skipReason: true,
+          ...outcomeSelect,
+        },
+        orderBy: [{ sessionDate: 'asc' }, { id: 'asc' }],
+      }),
+    ]);
+    const origins = await readSessionOrigins(this.prisma, sessions);
+    const lines = buildWeeklyReportLines(
+      {
+        cardioRows,
+        srpeRows,
+        strengthRows,
+        weeklyReports,
+        adherence,
+        sessions: sessions.map((session) => ({
+          sessionDate: session.sessionDate.toISOString().slice(0, 10),
+          outcome: sessionOutcome(session),
+          originDate: origins.get(session.id) ?? null,
+          skipReason: session.skipReason,
+        })),
+      },
+      input,
+    );
     const branding = await this.brandingService.pdfBranding(context);
     return {
       data: this.pdfRenderer.render(lines, branding.accent || branding.logo ? branding : undefined),
@@ -92,7 +136,7 @@ export class ExportWeeklyPdfUseCase {
       muscleGroup: map.get(row.sessionItem.sourceExerciseId ?? '') ?? 'UNKNOWN',
       repsDone: row.repsDone,
       sessionDate: row.session.sessionDate,
-      weightDoneKg: row.weightDoneKg ? Number(row.weightDoneKg) : null,
+      weightDoneKg: row.weightDoneKg !== null ? Number(row.weightDoneKg) : null,
     }));
   }
 
@@ -124,20 +168,34 @@ export class ExportWeeklyPdfUseCase {
       where: {
         archivedAt: null,
         clientId,
-        isCompleted: true,
+        ...closedSessionWhere,
         sessionDate: { gte: from, lte: to },
       },
       select: {
         finishedAt: true,
         intervalLogs: { select: { durationSecondsDone: true, effortRpe: true } },
         logs: { select: { effortRpe: true } },
+        plioLogs: { select: { effortRpe: true } },
+        mobilityLogs: { select: { effortRpe: true } },
+        isometricLogs: { select: { effortRpe: true } },
+        ...sportRecordsSelect,
         sessionDate: true,
         startedAt: true,
       },
     });
     return rows.map((row) => ({
       durationSeconds: readDurationSeconds(row.startedAt, row.finishedAt, row.intervalLogs),
-      effortRpe: readSessionEffort(row.logs, row.intervalLogs),
+      effortRpe: readSessionEffort(
+        [
+          ...row.logs,
+          ...row.plioLogs,
+          ...row.mobilityLogs,
+          ...row.isometricLogs,
+          ...selectRecordedSportRecords(row.sportSetLogs, row.sportLogs).sets,
+          ...selectRecordedSportRecords(row.sportSetLogs, row.sportLogs).legacy,
+        ],
+        row.intervalLogs,
+      ),
       sessionDate: row.sessionDate,
     }));
   }
@@ -172,7 +230,7 @@ function buildDateWhere(clientId: string, from: Date, to: Date) {
     session: {
       archivedAt: null,
       clientId,
-      isCompleted: true,
+      ...closedSessionWhere,
       sessionDate: { gte: from, lte: to },
     },
   };

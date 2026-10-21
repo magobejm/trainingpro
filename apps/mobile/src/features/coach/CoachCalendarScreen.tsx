@@ -1,5 +1,6 @@
 import { useCoachEditor } from './useCoachEditor';
 import React, { useState } from 'react';
+import type { SessionOutcome } from '@trainerpro/shared';
 import { Text, View, Pressable, StyleSheet } from 'react-native';
 import { LIGHT } from '../../theme/light';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,7 @@ import { useCoachAuth } from '../../data/hooks/useCoachData';
 import { createApiClient } from '../../data/api-client';
 import { useCoachSaveGuard } from './useCoachSaveGuard';
 import { stableDraftValue } from '../../data/coach-draft-policy';
+import { CoachSessionView } from './CoachProgressScreen';
 
 export type CoachCalendarEvent = {
   id: string;
@@ -36,7 +38,9 @@ export type CoachCalendarEvent = {
   planDayTitle?: string;
   scheduleId?: string;
   sessionId?: string;
-  outcome?: string;
+  outcome?: SessionOutcome;
+  originDate?: string | null;
+  skipReason?: string | null;
   updatedAt?: string;
 };
 type EventDraft = {
@@ -61,6 +65,7 @@ export function CoachCalendarScreen({
   const [mode, setMode] = useState('week');
   const [filter, setFilter] = useState(clientId ?? '');
   const [coachOnly, setCoachOnly] = useState(false);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const { value: editing, select: setEditing, close: closeEditor } = useCoachEditor<CoachCalendarEvent | 'new'>();
   const from = date.slice(0, 7) + '-01';
   const nextMonth = new Date(from + 'T12:00:00');
@@ -77,6 +82,7 @@ export function CoachCalendarScreen({
     .filter((event) => event.date.slice(0, 10) === date)
     .sort((a, b) => (a.time ?? '').localeCompare(b.time ?? ''));
   const days = mode === 'month' ? coachMonthDays(date) : Array.from({ length: 7 }, (_, i) => shiftCoachDate(date, i - 3));
+  if (sessionId) return <CoachSessionView sessionId={sessionId} onBack={() => setSessionId(null)} />;
   if (editing)
     return (
       <CalendarEditor
@@ -122,26 +128,56 @@ export function CoachCalendarScreen({
       <CoachButton label={t('coachWorkspace.newEvent')} onPress={() => setEditing('new')} />
       <CoachStatus query={query} empty={events.length === 0} />
       {events.map((event) => (
-        <View key={event.id} style={[ui.card, eventTone(event.type)]}>
-          <Text style={ui.label}>
-            {t('coachWorkspace.event.' + event.type)}
-            {' · '}
-            {event.time ?? '—'}
-          </Text>
-          <Text style={ui.text}>{event.title ?? event.planDayTitle ?? t('coachWorkspace.event.' + event.type)}</Text>
-          <Text style={ui.muted}>
-            {event.clientName ?? ''} {event.callStatus ? t('coachWorkspace.call.' + event.callStatus.toLowerCase()) : ''}{' '}
-            {event.outcome ?? ''}
-          </Text>
-          {event.content ? <Text style={ui.text}>{event.content}</Text> : null}
-          {event.type === 'physical_test' ? (
-            <CoachButton label={t('coachWorkspace.open')} onPress={() => onOpen('tests', event.clientId ?? undefined)} />
-          ) : (
-            <CoachButton label={t('coachWorkspace.edit')} onPress={() => setEditing(event)} />
-          )}
-        </View>
+        <CalendarEventCard key={event.id} event={event} onOpen={onOpen} onEdit={setEditing} onOpenSession={setSessionId} />
       ))}
     </CoachPage>
+  );
+}
+
+function CalendarEventCard({
+  event,
+  onOpen,
+  onEdit,
+  onOpenSession,
+}: {
+  event: CoachCalendarEvent;
+  onOpen: (feature: string, clientId?: string) => void;
+  onEdit: (event: CoachCalendarEvent) => void;
+  onOpenSession: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <View style={[ui.card, eventTone(event.type)]}>
+      <Text style={ui.label}>
+        {t('coachWorkspace.event.' + event.type)}
+        {' · '}
+        {event.time ?? '—'}
+      </Text>
+      <Text style={ui.text}>{event.title ?? event.planDayTitle ?? t('coachWorkspace.event.' + event.type)}</Text>
+      <Text style={ui.muted}>
+        {event.clientName ?? ''} {event.callStatus ? t('coachWorkspace.call.' + event.callStatus.toLowerCase()) : ''}{' '}
+        {event.outcome ? t('training.outcome.' + event.outcome) : ''}
+      </Text>
+      <Text style={ui.muted}>{event.date.slice(0, 10)}</Text>
+      {event.originDate ? (
+        <Text style={ui.muted}>{t('training.originDate') + ': ' + event.originDate.slice(0, 10)}</Text>
+      ) : null}
+      {event.skipReason ? <Text style={ui.text}>{event.skipReason}</Text> : null}
+      {event.content ? <Text style={ui.text}>{event.content}</Text> : null}
+      {event.type === 'workout' && event.sessionId ? (
+        <CoachButton
+          label={t('coachWorkspace.open')}
+          onPress={() => {
+            if (event.sessionId) onOpenSession(event.sessionId);
+          }}
+        />
+      ) : null}
+      {event.type === 'physical_test' ? (
+        <CoachButton label={t('coachWorkspace.open')} onPress={() => onOpen('tests', event.clientId ?? undefined)} />
+      ) : (
+        <CoachButton label={t('coachWorkspace.edit')} onPress={() => onEdit(event)} />
+      )}
+    </View>
   );
 }
 

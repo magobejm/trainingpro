@@ -3,17 +3,18 @@ import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import { withLockedSession } from './session-lock';
 
 export const STALE_SESSION_MS = 6 * 60 * 60 * 1000;
-type StaleScope = { clientId?: string; coachMembershipId?: string; sessionId?: string };
+type StaleScope = { clientId?: string; clientIds?: string[]; coachMembershipId?: string; sessionId?: string };
 
 /** Candidate reads are advisory; state and activity are reloaded under the session lock. */
 export async function closeStaleSessions(prisma: PrismaService, scope: StaleScope, now = new Date()): Promise<void> {
-  if (!scope.clientId && !scope.coachMembershipId && !scope.sessionId) return;
+  if (!scope.clientId && !scope.clientIds?.length && !scope.coachMembershipId && !scope.sessionId) return;
   const cutoff = new Date(now.getTime() - STALE_SESSION_MS);
   const where = {
     archivedAt: null,
     startedAt: { lte: cutoff },
     status: 'IN_PROGRESS' as const,
     ...(scope.clientId ? { clientId: scope.clientId } : {}),
+    ...(scope.clientIds?.length ? { clientId: { in: scope.clientIds } } : {}),
     ...(scope.coachMembershipId ? { coachMembershipId: scope.coachMembershipId } : {}),
     ...(scope.sessionId ? { id: scope.sessionId } : {}),
   };

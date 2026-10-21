@@ -2,6 +2,15 @@ export function isRecordedNumber(value: null | number | undefined): value is num
   return typeof value === 'number' && Number.isFinite(value) && value > 0;
 }
 
+export function isRecordedNonNegative(value: null | number | undefined): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+export function sumRecordedOrNull(values: Array<null | number | undefined>): number | null {
+  const present = values.filter(isRecordedNonNegative);
+  return present.length ? present.reduce((sum, value) => sum + value, 0) : null;
+}
+
 export function isRecordedText(value: null | string | undefined): boolean {
   return typeof value === 'string' && value.trim().length > 0;
 }
@@ -29,13 +38,18 @@ type StrengthFields = {
 };
 
 export function strengthSetHasData(set: StrengthFields): boolean {
-  return [set.repsDone, set.weightDoneKg, set.effortRpe, set.effortRir].some(isRecordedNumber);
+  return (
+    isRecordedNonNegative(set.repsDone) ||
+    isRecordedNumber(set.effortRpe) ||
+    isRecordedNonNegative(set.weightDoneKg) ||
+    isRecordedNonNegative(set.effortRir)
+  );
 }
 
 type PlioFields = StrengthFields & { durationSecondsDone?: null | number };
 
 export function plioSetHasData(set: PlioFields): boolean {
-  return strengthSetHasData(set) || isRecordedNumber(set.durationSecondsDone);
+  return strengthSetHasData(set) || isRecordedNonNegative(set.durationSecondsDone);
 }
 
 type IsometricFields = {
@@ -45,7 +59,11 @@ type IsometricFields = {
 };
 
 export function isometricSetHasData(set: IsometricFields): boolean {
-  return [set.durationSecondsDone, set.weightDoneKg, set.effortRpe].some(isRecordedNumber);
+  return (
+    isRecordedNonNegative(set.durationSecondsDone) ||
+    isRecordedNumber(set.effortRpe) ||
+    isRecordedNonNegative(set.weightDoneKg)
+  );
 }
 
 type MobilityFields = StrengthFields & { romDone?: null | string };
@@ -62,7 +80,11 @@ type CardioFields = {
 };
 
 export function cardioIntervalHasData(row: CardioFields): boolean {
-  return [row.durationSecondsDone, row.distanceDoneMeters, row.effortRpe, row.avgHeartRate].some(isRecordedNumber);
+  return (
+    isRecordedNonNegative(row.durationSecondsDone) ||
+    isRecordedNonNegative(row.distanceDoneMeters) ||
+    [row.effortRpe, row.avgHeartRate].some(isRecordedNumber)
+  );
 }
 
 type SportLogFields = {
@@ -100,7 +122,15 @@ export function sportSetHasData(set: SportSetFields): boolean {
     set.hrMaxPctDone,
     set.hrReservePctDone,
   ];
-  return numbers.some(isRecordedNumber) || isRecordedText(set.romDone);
+  return (
+    numbers.some(isRecordedNumber) ||
+    [set.repsDone, set.durationSecondsDone, set.distanceDoneMeters, set.hrMaxPctDone, set.hrReservePctDone].some(
+      isRecordedNonNegative,
+    ) ||
+    isRecordedNonNegative(set.weightDoneKg) ||
+    isRecordedNonNegative(set.effortRir) ||
+    isRecordedText(set.romDone)
+  );
 }
 
 export function sportLoadFromLog(
@@ -127,21 +157,29 @@ export function filterPerformedSourceIds<T>(
 export function summarizePlioSets(sets: PlioFields[]): {
   avgRpe: number | null;
   sets: number;
-  tonnage: number;
-  totalReps: number;
+  tonnage: number | null;
+  totalReps: number | null;
 } {
   const performed = sets.filter(plioSetHasData);
   let tonnage = 0;
   for (const set of performed) {
-    if (isRecordedNumber(set.weightDoneKg) && isRecordedNumber(set.repsDone)) {
+    if (isRecordedNonNegative(set.weightDoneKg) && isRecordedNonNegative(set.repsDone)) {
       tonnage += set.weightDoneKg * set.repsDone;
     }
   }
   return {
     avgRpe: averageRecorded(performed.map((set) => set.effortRpe)),
     sets: performed.length,
-    tonnage: Math.round(tonnage * 100) / 100,
-    totalReps: sumRecorded(performed.map((set) => set.repsDone)),
+    tonnage: performed.some(
+      (set) =>
+        isRecordedNonNegative(set.weightDoneKg) &&
+        ('repsDone' in set
+          ? isRecordedNonNegative(set.repsDone as number | null)
+          : 'durationSecondsDone' in set && isRecordedNonNegative(set.durationSecondsDone as number | null)),
+    )
+      ? Math.round(tonnage * 100) / 100
+      : null,
+    totalReps: sumRecordedOrNull(performed.map((set) => set.repsDone)),
   };
 }
 
@@ -149,39 +187,54 @@ export function summarizeIsometricSets(sets: IsometricFields[]): {
   avgRpe: number | null;
   plioEffort: number | null;
   sets: number;
-  tonnage: number;
-  totalDurationSeconds: number;
+  tonnage: number | null;
+  totalDurationSeconds: number | null;
 } {
   const performed = sets.filter(isometricSetHasData);
   const totalDurationSeconds = sumRecorded(performed.map((set) => set.durationSecondsDone));
   const avgRpe = averageRecorded(performed.map((set) => set.effortRpe));
   let tonnage = 0;
   for (const set of performed) {
-    if (isRecordedNumber(set.weightDoneKg) && isRecordedNumber(set.durationSecondsDone)) {
+    if (isRecordedNonNegative(set.weightDoneKg) && isRecordedNonNegative(set.durationSecondsDone)) {
       tonnage += set.weightDoneKg * (set.durationSecondsDone / 60);
     }
   }
-  const plioEffort =
-    avgRpe !== null && totalDurationSeconds > 0 ? Math.round((totalDurationSeconds / 60) * (avgRpe / 10) * 100) / 100 : null;
+  const effortSets = performed.filter(
+    (set) => isRecordedNonNegative(set.durationSecondsDone) && isRecordedNumber(set.effortRpe),
+  );
+  const plioEffort = effortSets.length
+    ? Math.round(effortSets.reduce((sum, set) => sum + ((set.durationSecondsDone! / 60) * set.effortRpe!) / 10, 0) * 100) /
+      100
+    : null;
   return {
     avgRpe,
     plioEffort,
     sets: performed.length,
-    tonnage: Math.round(tonnage * 100) / 100,
-    totalDurationSeconds,
+    tonnage: performed.some(
+      (set) =>
+        isRecordedNonNegative(set.weightDoneKg) &&
+        ('repsDone' in set
+          ? isRecordedNonNegative(set.repsDone as number | null)
+          : 'durationSecondsDone' in set && isRecordedNonNegative(set.durationSecondsDone as number | null)),
+    )
+      ? Math.round(tonnage * 100) / 100
+      : null,
+    totalDurationSeconds: performed.some((set) => isRecordedNonNegative(set.durationSecondsDone))
+      ? totalDurationSeconds
+      : null,
   };
 }
 
 export function summarizeMobilitySets(sets: MobilityFields[]): {
   avgRpe: number | null;
   sets: number;
-  totalReps: number;
+  totalReps: number | null;
 } {
   const performed = sets.filter(mobilitySetHasData);
   return {
     avgRpe: averageRecorded(performed.map((set) => set.effortRpe)),
     sets: performed.length,
-    totalReps: sumRecorded(performed.map((set) => set.repsDone)),
+    totalReps: sumRecordedOrNull(performed.map((set) => set.repsDone)),
   };
 }
 
@@ -189,8 +242,8 @@ export function summarizeCardioIntervals(rows: CardioFields[]): {
   avgHeartRate: number | null;
   avgRpe: number | null;
   sets: number;
-  totalDistanceMeters: number;
-  totalDurationSeconds: number;
+  totalDistanceMeters: number | null;
+  totalDurationSeconds: number | null;
 } {
   const performed = rows.filter(cardioIntervalHasData);
   let hrWeighted = 0;
@@ -205,7 +258,7 @@ export function summarizeCardioIntervals(rows: CardioFields[]): {
     avgHeartRate: hrWeightSecs > 0 ? Math.round(hrWeighted / hrWeightSecs) : null,
     avgRpe: averageRecorded(performed.map((row) => row.effortRpe)),
     sets: performed.length,
-    totalDistanceMeters: sumRecorded(performed.map((row) => row.distanceDoneMeters)),
-    totalDurationSeconds: sumRecorded(performed.map((row) => row.durationSecondsDone)),
+    totalDistanceMeters: sumRecordedOrNull(performed.map((row) => row.distanceDoneMeters)),
+    totalDurationSeconds: sumRecordedOrNull(performed.map((row) => row.durationSecondsDone)),
   };
 }

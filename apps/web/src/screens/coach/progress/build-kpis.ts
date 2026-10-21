@@ -22,15 +22,17 @@ export function buildKpis(input: {
   exercisePr: number | null;
   cycleDays: number | null;
   planDaysCount: number;
+  adherencePercent?: number | null;
 }) {
   if (input.points.length === 0) return [];
   if (input.mode === 'exercise') {
     const exercisePoints = input.points as ExerciseProgressPoint[];
-    const maxE1rm = Math.max(...exercisePoints.map((p) => p.e1rm ?? 0));
+    const e1rms = exercisePoints.map((p) => p.e1rm).filter((value): value is number => value != null);
+    const maxE1rm = e1rms.length ? Math.max(...e1rms) : null;
     const totalDays = Math.max(1, daysBetweenInclusive(input.range.from, input.range.to));
     const weeklyFrequency = exercisePoints.length / (totalDays / 7);
     return [
-      { id: 'e1rm', label: 'coach.progress.kpi.e1rm', value: `${Math.round(maxE1rm)} kg` },
+      { id: 'e1rm', label: 'coach.progress.kpi.e1rm', value: maxE1rm == null ? '—' : `${Math.round(maxE1rm)} kg` },
       { id: 'weeklyFrequency', label: 'coach.progress.kpi.weeklyFrequency', value: formatMetric(weeklyFrequency, 2) },
       {
         id: 'historicPr',
@@ -49,7 +51,8 @@ export function buildKpis(input: {
       withIntensity.length > 0
         ? withIntensity.reduce((s, p) => s + (p.avgIntensityPercent ?? 0), 0) / withIntensity.length
         : null;
-    const peakLoad = Math.max(...sessionPoints.map((p) => p.peakLoadKg ?? 0));
+    const loads = sessionPoints.map((p) => p.peakLoadKg).filter((value): value is number => value != null);
+    const peakLoad = loads.length ? Math.max(...loads) : null;
     return [
       {
         id: 'avgSessionTime',
@@ -61,17 +64,12 @@ export function buildKpis(input: {
         label: 'coach.progress.kpi.avgIntensity',
         value: avgIntensity !== null ? `${formatMetric(avgIntensity, 1)}%` : '—',
       },
-      { id: 'peakLoad', label: 'coach.progress.kpi.peakLoad', value: `${Math.round(peakLoad)} kg` },
+      { id: 'peakLoad', label: 'coach.progress.kpi.peakLoad', value: peakLoad == null ? '—' : `${Math.round(peakLoad)} kg` },
     ];
   }
 
   const microPoints = input.points as MicrocycleProgressPoint[];
-  const totalSessions = microPoints.reduce((s, p) => s + p.sessionsCount, 0);
-  const cycleDays = Math.max(1, input.cycleDays ?? 7);
-  const totalRangeDays = Math.max(1, daysBetweenInclusive(input.range.from, input.range.to));
-  const cyclesInRange = Math.floor(totalRangeDays / cycleDays);
-  const expectedSessions = input.planDaysCount > 0 ? input.planDaysCount * cyclesInRange : 0;
-  const adherence = expectedSessions > 0 ? (totalSessions / expectedSessions) * 100 : null;
+  const adherence = input.adherencePercent ?? null;
   const firstE1rm = microPoints[0]?.avgE1rm ?? null;
   const lastE1rm = microPoints[microPoints.length - 1]?.avgE1rm ?? null;
   const globalStrengthGain =

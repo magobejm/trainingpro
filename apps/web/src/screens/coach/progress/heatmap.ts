@@ -1,6 +1,12 @@
-export type HeatSession = { sessionDate: string; totalTonnage: number };
+import type { SessionOutcome } from '@trainerpro/shared';
+export type HeatSession = {
+  sessionDate: string;
+  totalTonnage: number | null;
+  outcome?: SessionOutcome;
+  hasRecordedData?: boolean;
+};
 export type HeatLevel = 0 | 1 | 2 | 3 | 4;
-export type HeatCell = { date: string; level: HeatLevel; tonnage: number };
+export type HeatCell = { date: string; level: HeatLevel; tonnage: number | null; active?: boolean };
 export type HeatmapModel = {
   bestStreak: number;
   currentStreak: number;
@@ -13,21 +19,33 @@ const MS_PER_DAY = 86_400_000;
 
 /** Cuadrícula de lunes a domingo, 26 semanas, con la intensidad según el tonelaje. */
 export function buildHeatmap(sessions: HeatSession[], today: Date): HeatmapModel {
-  const byDate = new Map<string, number>();
+  const byDate = new Map<string, number | null>();
   for (const session of sessions) {
+    const active =
+      session.outcome === undefined ||
+      session.outcome === 'done' ||
+      (session.outcome === 'incomplete' && session.hasRecordedData === true);
+    if (!active) continue;
     const date = session.sessionDate.slice(0, 10);
-    byDate.set(date, (byDate.get(date) ?? 0) + session.totalTonnage);
+    const previous = byDate.get(date);
+    byDate.set(date, session.totalTonnage == null ? (previous ?? null) : (previous ?? 0) + session.totalTonnage);
   }
   const end = endOfWeekSunday(today);
   const start = addDays(end, -(WEEKS * 7 - 1));
-  const thresholds = quartiles([...byDate.values()].filter((value) => value > 0));
+  const thresholds = quartiles([...byDate.values()].filter((value): value is number => value != null && value > 0));
   const weeks: HeatCell[][] = [];
   for (let week = 0; week < WEEKS; week += 1) {
     const column: HeatCell[] = [];
     for (let day = 0; day < 7; day += 1) {
       const date = formatDay(addDays(start, week * 7 + day));
-      const tonnage = byDate.get(date) ?? 0;
-      column.push({ date, level: levelFor(tonnage, thresholds), tonnage });
+      const active = byDate.has(date);
+      const tonnage = byDate.get(date) ?? null;
+      column.push({
+        date,
+        active,
+        level: active ? (tonnage != null && tonnage > 0 ? levelFor(tonnage, thresholds) : 1) : 0,
+        tonnage,
+      });
     }
     weeks.push(column);
   }

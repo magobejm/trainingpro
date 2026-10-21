@@ -17,7 +17,7 @@ export function InsightsPanel({
 }): React.JSX.Element | null {
   const range = recentRecordRange(14);
   const records = useClientRecordsQuery(clientId ?? '', range.from, range.to).data?.records ?? [];
-  const insights = [...recordInsights(records, t), ...buildInsights(mode, points)];
+  const insights = [...recordInsights(records, t), ...buildInsights(mode, points, t)];
   if (!insights.length) return null;
   return (
     <View style={styles.panel}>

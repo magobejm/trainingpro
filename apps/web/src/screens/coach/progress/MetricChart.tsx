@@ -1,7 +1,9 @@
+import { buildMetricChartData, metricTooltipTitle } from './metric-chart-presentation';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button, Card, colors, fontSize, space } from '@trainerpro/ui';
+import { metricCoverageLines } from './metric-samples';
 import type { VariableDef } from './progress-screen.types';
 export function MetricChart({
   variable,
@@ -14,7 +16,7 @@ export function MetricChart({
   data: Record<string, unknown>[];
   xKey: string;
   onExpand: () => void;
-  t: (k: string) => string;
+  t: (k: string, options?: Record<string, string | number>) => string;
 }) {
   const fullSize = '100%';
   const axisZero = '0';
@@ -27,17 +29,18 @@ export function MetricChart({
   const chartType = 'monotone';
   const fillUrl = `url(#grad-${variable.id})`;
   const gridColor = colors.border;
-  const chartData = data.map((pt) => ({
-    date: String(pt[xKey] ?? '').slice(5),
-    value: pt[variable.dataKey] ?? null,
-  }));
-
+  const chartData = buildMetricChartData(data, xKey, variable.dataKey);
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.title}>{t(variable.labelKey)}</Text>
         <Button label={t('coach.progress.chart.detailCta')} onPress={onExpand} size="sm" variant="ghost" />
       </View>
+      {metricCoverageLines(data, variable.dataKey, t).map((line, index) => (
+        <Text key={index} style={{ fontSize: fontSize.xs, color: colors.textMuted }}>
+          {line}
+        </Text>
+      ))}
       <View style={styles.chart}>
         <ResponsiveContainer width={fullSize} height={fullSize}>
           <AreaChart data={chartData}>
@@ -48,10 +51,21 @@ export function MetricChart({
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray={gridDash} stroke={gridColor} />
-            <XAxis dataKey={dateKey} tick={{ fontSize: fontSize.xs }} />
-            <YAxis tick={{ fontSize: fontSize.xs }} />
+            <XAxis
+              dataKey={dateKey}
+              tickFormatter={(date: string) => date.slice(5)}
+              tick={{ fontSize: fontSize.xs, fill: colors.textMuted }}
+            />
+            <YAxis tick={{ fontSize: fontSize.xs, fill: colors.textMuted }} />
             <Tooltip
-              formatter={(v) => [`${Math.round((Number(v) || 0) * 10) / 10} ${variable.unit}`, t(variable.labelKey)]}
+              contentStyle={{ backgroundColor: colors.surface, borderColor: colors.border, borderRadius: space.sm }}
+              labelStyle={{ color: colors.text }}
+              itemStyle={{ color: colors.text }}
+              labelFormatter={(label, payload) => metricTooltipTitle(label, payload, t)}
+              formatter={(v) => [
+                v == null ? '—' : `${Math.round(Number(v) * 10) / 10} ${variable.unit}`,
+                t(variable.labelKey),
+              ]}
             />
             <Area
               type={chartType}

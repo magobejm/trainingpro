@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { GetAdherenceUseCase } from './application/use-cases/get-adherence.usecase';
 import { AuthModule } from '../auth/auth.module';
 import { GetExercisePrUseCase } from './application/use-cases/get-exercise-pr.usecase';
 import { GetExerciseProgressUseCase } from './application/use-cases/get-exercise-progress.usecase';
@@ -18,6 +19,7 @@ import { ProgressController } from './presentation/controllers/progress.controll
   imports: [AuthModule],
   controllers: [ProgressController],
   providers: [
+    GetAdherenceUseCase,
     GetProgressOverviewUseCase,
     GetExerciseProgressUseCase,
     GetExercisePrUseCase,

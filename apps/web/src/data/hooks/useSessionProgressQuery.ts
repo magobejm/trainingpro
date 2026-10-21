@@ -1,12 +1,17 @@
+import type { SessionOutcome } from '@trainerpro/shared';
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 import type { SessionProgressCategory } from '../types/session-progress';
 
 export type SessionProgressPoint = {
+  outcome?: SessionOutcome;
+  originDate?: string | null;
+  hasRecordedData?: boolean;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
   sessionDate: string;
   sessionId: string;
-  sessionTonnage: number;
+  sessionTonnage: number | null;
   sessionInol: number | null;
   sessionRpe: number | null;
   effortIndex: number | null;

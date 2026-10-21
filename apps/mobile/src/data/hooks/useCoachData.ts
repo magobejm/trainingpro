@@ -1,3 +1,4 @@
+import { allSessionPages } from './recent-session-pages';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -13,12 +14,33 @@ export function useCoachAuth() {
   return { accessToken: accessToken ?? undefined, activeRole: activeRole ?? 'coach', userId };
 }
 
-export function useCoachQuery<T>(path: string | null) {
+export function useCoachQuery<T>(path: string | null, options?: { allSessions?: boolean }) {
+  const offset = -new Date().getTimezoneOffset();
   const auth = useCoachAuth();
   return useQuery<T>({
-    queryKey: ['coach', auth.userId, auth.activeRole, path],
+    queryKey: [
+      'coach',
+      auth.userId,
+      auth.activeRole,
+      path,
+      options?.allSessions,
+      path?.startsWith('/progress/adherence?') ? offset : null,
+    ],
     enabled: Boolean(path && auth.accessToken && auth.activeRole === 'coach'),
-    queryFn: () => createApiClient(auth).get<T>(path!),
+    queryFn: async () => {
+      const api = createApiClient(auth);
+      if (options?.allSessions) {
+        const rows = await allSessionPages<{ sessionDate: string; sessionId: string }>((cursor) => {
+          const params = new URLSearchParams(cursor as Record<string, string>);
+          return api.get(`${path}&${params}`);
+        });
+        return rows as T;
+      }
+      return api.get<T>(
+        path!,
+        path?.startsWith('/progress/adherence?') ? { 'x-timezone-offset': String(offset) } : undefined,
+      );
+    },
   });
 }
 

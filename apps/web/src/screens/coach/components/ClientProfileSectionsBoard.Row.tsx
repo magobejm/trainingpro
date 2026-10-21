@@ -1,10 +1,11 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { menuStyle, menuStyleTop, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
+import { menuStyle, menuStyleTop, expandedRowStyle, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
 import { IconButton, colors } from '@trainerpro/ui';
 import { ClientTimelinePanel } from './ClientTimelinePanel';
 import { ClientComparePanel } from './ClientComparePanel';
+import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
 
 type Props = {
   hasTrainingPlan: boolean;
@@ -30,23 +31,35 @@ type Props = {
 
 export function ClientProfileSectionRow(props: Props): React.JSX.Element {
   const dragProps = readDragProps(props.item.id, props.rowIndex, props.onDropReorderByIndex);
+  const hasInlinePanel = props.item.id === 'timeline' || props.item.id === 'compare';
+  const rowMain = (
+    <RowMain
+      item={props.item}
+      clientId={props.clientId}
+      moodSubtitle={props.moodSubtitle}
+      onOpenMood={props.onOpenMood}
+      testsSubtitle={props.testsSubtitle}
+      onOpenNutrition={props.onOpenNutrition}
+      onOpenProgress={props.onOpenProgress}
+      onOpenTests={props.onOpenTests}
+      onOpenTrainingPlanner={props.onOpenTrainingPlanner}
+      onToggleMenu={props.onToggleMenu}
+      t={props.t}
+      trainingPlanName={props.trainingPlanName}
+    />
+  );
   return (
-    <div {...dragProps} style={rowStyle}>
-      <RowMain
-        item={props.item}
-        moodSubtitle={props.moodSubtitle}
-        onOpenMood={props.onOpenMood}
-        testsSubtitle={props.testsSubtitle}
-        onOpenNutrition={props.onOpenNutrition}
-        onOpenProgress={props.onOpenProgress}
-        onOpenTests={props.onOpenTests}
-        onOpenTrainingPlanner={props.onOpenTrainingPlanner}
-        onToggleMenu={props.onToggleMenu}
-        t={props.t}
-        trainingPlanName={props.trainingPlanName}
-      />
-      {props.item.id === 'timeline' ? <ClientTimelinePanel clientId={props.clientId} t={props.t} /> : null}
-      {props.item.id === 'compare' ? <ClientComparePanel clientId={props.clientId} t={props.t} /> : null}
+    <div {...dragProps} style={hasInlinePanel ? expandedRowStyle : rowStyle}>
+      {hasInlinePanel ? <View style={styles.rowPanelHeader}>{rowMain}</View> : rowMain}
+      {hasInlinePanel ? (
+        <View style={styles.inlinePanel}>
+          {props.item.id === 'timeline' ? (
+            <ClientTimelinePanel clientId={props.clientId} t={props.t} />
+          ) : (
+            <ClientComparePanel clientId={props.clientId} t={props.t} />
+          )}
+        </View>
+      ) : null}
       {props.showMenu ? (
         <RowMenu
           hasTrainingPlan={props.hasTrainingPlan}
@@ -62,6 +75,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
 }
 
 function RowMain(props: {
+  clientId: string;
   item: SectionItem;
   moodSubtitle?: string;
   onOpenMood?: () => void;
@@ -95,7 +109,11 @@ function RowMain(props: {
         style={styles.rowText}
       >
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
-        <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        {props.item.id === 'progress' ? (
+          <ClientProgressActivitySubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : (
+          <Text style={styles.rowSubtitle}>{subtitle}</Text>
+        )}
       </Pressable>
       <IconButton
         accessibilityLabel={props.t('coach.clientProfile.sections.actions.menu')}

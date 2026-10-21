@@ -112,7 +112,7 @@ function ScrollIfCompact({ children }: { children: React.ReactNode }): React.JSX
 }
 
 const styles = StyleSheet.create({
-  filters: { gap: space.md },
+  filters: { gap: space.md, position: 'relative', zIndex: 2, overflow: 'visible' },
   topBar: { flexDirection: 'row', flexWrap: 'wrap', gap: space.md, alignItems: 'center' },
   variablesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   scrollRow: { maxWidth: '100%', flexGrow: 0 },

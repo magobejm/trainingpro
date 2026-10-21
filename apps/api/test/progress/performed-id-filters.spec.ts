@@ -6,5 +6,5 @@ test('a sport with distance as its only metric is included in performed filters'
     isCompleted: true,
     sessionDate: { gte: new Date(0), lte: new Date() },
   });
-  expect(where.OR[1]?.setLogs?.some.OR).toContainEqual({ distanceDoneMeters: { gt: 0 } });
+  expect(where.OR[1]?.setLogs?.some.OR).toContainEqual({ distanceDoneMeters: { gte: 0 } });
 });

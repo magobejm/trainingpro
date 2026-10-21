@@ -7,6 +7,11 @@ describe('exercise history', () => {
     const findMany = jest.fn().mockResolvedValue([
       {
         id: 'session-1',
+        clientId: 'client-1',
+        status: 'COMPLETED',
+        isCompleted: true,
+        isIncomplete: true,
+        planDayId: null,
         sessionDate: new Date('2026-10-12'),
         items: [
           {
@@ -28,6 +33,7 @@ describe('exercise history', () => {
     const repo = new SessionsRepositoryPrisma(
       {
         sessionInstance: { findMany },
+        calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
         setLog: {
           findMany: jest.fn().mockResolvedValue([
             {
@@ -43,10 +49,12 @@ describe('exercise history', () => {
       } as unknown as PrismaService,
       {} as SessionsCardioRepositoryPrisma,
     );
+    findMany.mockResolvedValueOnce([]); // No stale IN_PROGRESS sessions before reading closed history.
     const result = await repo.findExerciseHistory('client-1', 'exercise-1', 5, 'current');
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
       sessionId: 'session-1',
+      outcome: 'incomplete',
       sets: [
         { itemId: 'item-1', setIndex: 1, repsDone: 12, weightDoneKg: 0, effortRir: 0, restSecondsDone: 60 },
         { itemId: 'item-1', setIndex: 2, repsDone: 10, weightDoneKg: 25 },
@@ -59,7 +67,7 @@ describe('exercise history', () => {
         where: expect.objectContaining({
           clientId: 'client-1',
           archivedAt: null,
-          status: 'COMPLETED',
+          AND: [{ OR: [{ isCompleted: true }, { isIncomplete: true }, { status: 'COMPLETED' }] }],
           id: { not: 'current' },
         }),
         orderBy: [{ sessionDate: 'desc' }, { finishedAt: 'desc' }, { id: 'desc' }],
@@ -71,6 +79,11 @@ describe('exercise history', () => {
 describe('exercise history across exercise types', () => {
   it('returns all recorded variables for other exercise types and preserves separate sessions on one date', async () => {
     const base = {
+      clientId: 'client',
+      status: 'COMPLETED',
+      isCompleted: true,
+      isIncomplete: false,
+      planDayId: null,
       sessionDate: new Date('2026-10-10'),
       items: [],
       cardioBlocks: [],
@@ -115,6 +128,7 @@ describe('exercise history across exercise types', () => {
     const repo = new SessionsRepositoryPrisma(
       {
         sessionInstance: { findMany },
+        calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
         setLog: {
           findMany: jest.fn().mockResolvedValue([
             {
@@ -130,6 +144,7 @@ describe('exercise history across exercise types', () => {
       } as unknown as PrismaService,
       {} as SessionsCardioRepositoryPrisma,
     );
+    findMany.mockResolvedValueOnce([]);
     const result = await repo.findExerciseHistory('client', 'exercise', 5);
     expect(result.map((entry) => entry.sessionId)).toEqual(['sport', 'cardio']);
     expect(result[0]!.sets[0]).toMatchObject({

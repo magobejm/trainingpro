@@ -5,10 +5,11 @@ import type { AnalysisMode } from './progress-screen.types';
 export type InsightItem = { emoji: string; color: string; text: string };
 
 function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): InsightItem[] {
+  const tonnagePoints = exercisePoints.filter((p) => p.tonnage != null);
   const insights: InsightItem[] = [];
 
-  const firstTonnage = exercisePoints.slice(0, 3).reduce((s, p) => s + p.tonnage, 0) / 3;
-  const lastTonnage = exercisePoints.slice(-3).reduce((s, p) => s + p.tonnage, 0) / 3;
+  const firstTonnage = tonnagePoints.slice(0, 3).reduce((s, p) => s + p.tonnage!, 0) / Math.min(3, tonnagePoints.length);
+  const lastTonnage = tonnagePoints.slice(-3).reduce((s, p) => s + p.tonnage!, 0) / Math.min(3, tonnagePoints.length);
   const tonPct = firstTonnage > 0 ? ((lastTonnage - firstTonnage) / firstTonnage) * 100 : 0;
 
   if (tonPct >= 5) {
@@ -25,7 +26,7 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
       color: colors.danger,
       text: `El tonelaje ha bajado un ${absPct}%. Puede indicar fatiga acumulada o reducción de volumen.`,
     });
-  } else {
+  } else if (tonnagePoints.length >= 2) {
     insights.push({
       emoji: '➡️',
       color: colors.primary,
@@ -80,12 +81,13 @@ function buildExerciseInsights(exercisePoints: ExerciseProgressPoint[]): Insight
   return insights;
 }
 
-type SessionPoint = { sessionTonnage: number; sessionRpe: number | null; effortIndex: number | null };
+type SessionPoint = { sessionTonnage: number | null; sessionRpe: number | null; effortIndex: number | null };
 
 function buildSessionInsights(sessionPoints: SessionPoint[]): InsightItem[] {
   const insights: InsightItem[] = [];
-  const firstTon = sessionPoints.slice(0, 3).reduce((s, p) => s + p.sessionTonnage, 0) / 3;
-  const lastTon = sessionPoints.slice(-3).reduce((s, p) => s + p.sessionTonnage, 0) / 3;
+  const measured = sessionPoints.filter((p) => p.sessionTonnage != null);
+  const firstTon = measured.slice(0, 3).reduce((s, p) => s + p.sessionTonnage!, 0) / Math.min(3, measured.length);
+  const lastTon = measured.slice(-3).reduce((s, p) => s + p.sessionTonnage!, 0) / Math.min(3, measured.length);
   const tonPct = firstTon > 0 ? ((lastTon - firstTon) / firstTon) * 100 : 0;
 
   if (tonPct >= 5) {
@@ -125,20 +127,22 @@ function buildSessionInsights(sessionPoints: SessionPoint[]): InsightItem[] {
   return insights;
 }
 
-type MicroPoint = { totalTonnage: number; avgRpe: number | null; sessionsCount: number };
+type MicroPoint = { totalTonnage: number | null; avgRpe: number | null; sessionsCount: number };
+type Translate = (key: string, options?: Record<string, string | number>) => string;
 
-function buildMicrocycleInsights(microPoints: MicroPoint[]): InsightItem[] {
+function buildMicrocycleInsights(microPoints: MicroPoint[], t: Translate): InsightItem[] {
   const insights: InsightItem[] = [];
   const avgSessions = microPoints.reduce((s, p) => s + p.sessionsCount, 0) / microPoints.length;
-  const firstTon = microPoints.slice(0, 2).reduce((s, p) => s + p.totalTonnage, 0) / 2;
-  const lastTon = microPoints.slice(-2).reduce((s, p) => s + p.totalTonnage, 0) / 2;
+  const measured = microPoints.filter((p) => p.totalTonnage != null);
+  const firstTon = measured.slice(0, 2).reduce((s, p) => s + p.totalTonnage!, 0) / Math.min(2, measured.length);
+  const lastTon = measured.slice(-2).reduce((s, p) => s + p.totalTonnage!, 0) / Math.min(2, measured.length);
   const tonPct = firstTon > 0 ? ((lastTon - firstTon) / firstTon) * 100 : 0;
 
   const avgSessionsLabel = Math.round(avgSessions * 10) / 10;
   insights.push({
     emoji: '🗓️',
     color: colors.primary,
-    text: `Promedio de ${avgSessionsLabel} sesiones por semana en el período analizado.`,
+    text: t('coach.progress.insight.recordedFrequency', { sessions: avgSessionsLabel, periods: microPoints.length }),
   });
 
   if (tonPct >= 5) {
@@ -159,7 +163,7 @@ function buildMicrocycleInsights(microPoints: MicroPoint[]): InsightItem[] {
   return insights;
 }
 
-export function buildInsights(mode: AnalysisMode, points: Record<string, unknown>[]): InsightItem[] {
+export function buildInsights(mode: AnalysisMode, points: Record<string, unknown>[], t: Translate): InsightItem[] {
   if (points.length < 2) return [];
   if (mode === 'exercise') {
     return buildExerciseInsights(points as ExerciseProgressPoint[]);
@@ -167,7 +171,7 @@ export function buildInsights(mode: AnalysisMode, points: Record<string, unknown
   if (mode === 'session') {
     return buildSessionInsights(points as SessionPoint[]);
   }
-  return buildMicrocycleInsights(points as MicroPoint[]);
+  return buildMicrocycleInsights(points as MicroPoint[], t);
 }
 
 export function recordInsights(

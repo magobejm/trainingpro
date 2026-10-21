@@ -1,3 +1,4 @@
+import type { SessionOutcome } from '@trainerpro/shared';
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
@@ -5,11 +6,15 @@ import { useAuthStore } from '../../store/auth.store';
 export type ExerciseType = 'strength' | 'cardio' | 'plio' | 'mobility' | 'isometric' | 'sport';
 
 export type ExerciseProgressPoint = {
+  outcome?: SessionOutcome;
+  originDate?: string | null;
+  hasRecordedData?: boolean;
+  metricCoverage?: Record<string, { validSamples: number; eligibleSamples: number; unit: string; weightSeconds?: number }>;
   sessionDate: string;
   sessionId: string;
   sets: number;
-  totalReps: number;
-  tonnage: number;
+  totalReps: number | null;
+  tonnage: number | null;
   avgRpe: number | null;
   e1rm: number | null;
   inol: number | null;
@@ -26,7 +31,7 @@ export type ExerciseProgressPoint = {
     rpe: number | null;
     e1rm: number | null;
     inol: number | null;
-    tonnage: number;
+    tonnage: number | null;
   }>;
 };
 

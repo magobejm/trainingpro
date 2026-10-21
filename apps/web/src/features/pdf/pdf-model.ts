@@ -6,7 +6,7 @@ export type PdfSection = {
   paragraphs?: string[];
   table?: { columns: string[]; rows: (string | number)[][]; identifyingColumns?: number };
   chart?: PdfChart;
-  heatmap?: { date: string; level: number; tonnage: number }[][];
+  heatmap?: { date: string; level: number; tonnage: number | null }[][];
 };
 export type PdfDocument = {
   title: string;

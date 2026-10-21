@@ -384,6 +384,16 @@ describe('getSetCount and readActualValue for sport', () => {
 });
 
 describe('empty sets', () => {
+  it('preserves an explicitly recorded RIR of zero as a partial set', () => {
+    const strength = {
+      type: 'strength',
+      id: 'rir-zero',
+      logs: [],
+      plannedSets: [],
+      lockedFields: [],
+    } as unknown as SessionItem;
+    expect(buildLogPayload(strength, 1, emptyDraft({ rir: '0' }))).toMatchObject({ effortRir: 0 });
+  });
   const item = { type: 'strength', id: 'item-1', lockedFields: [], logs: [] } as unknown as SessionItem;
 
   it('does not build a save payload for an empty or zero-only set', () => {

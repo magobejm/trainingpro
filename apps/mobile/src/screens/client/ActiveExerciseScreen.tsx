@@ -1,4 +1,6 @@
 import React, { useRef, useState } from 'react';
+import { WorkoutGuideCard, type GuideSyncState } from './WorkoutGuideCard';
+import { useWorkoutGuide } from './WorkoutGuideContext';
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -52,6 +54,10 @@ import {
 type LogResult = Promise<EnqueueResult | 'missing' | void> | void;
 
 type ActiveExerciseScreenProps = {
+  guideSync: GuideSyncState;
+  guideContext: string;
+  guideEditable: boolean;
+  syncBanner?: React.ReactNode;
   exerciseGroup: SessionItem[];
   item: SessionItem;
   readOnly?: boolean;
@@ -77,8 +83,15 @@ type ActiveExerciseScreenProps = {
 };
 
 export function ActiveExerciseScreen(props: ActiveExerciseScreenProps): React.JSX.Element {
+  const guide = useWorkoutGuide();
   const draft = useActiveSetDraft(props.item);
-  const save = useActiveSetSave(props.item, draft.drafts, draft.setCount, (body) => sendLoggedSet(props, body));
+  const save = useActiveSetSave(props.item, draft.drafts, draft.setCount, async (body) => {
+    const result = await sendLoggedSet(props, body);
+    if (props.guideEditable && guide.guide.status === 'in_progress' && !guide.paused) {
+      void guide.recordSaved(result, body);
+    }
+    return result;
+  });
   return <ActiveExerciseFrame draft={draft} save={save} screen={props} />;
 }
 
@@ -116,6 +129,14 @@ function ActiveExerciseFrame(props: {
           keyboardShouldPersistTaps={'handled'}
           ref={scrollRef}
         >
+          {screen.syncBanner}
+          <WorkoutGuideCard
+            {...screen.guideSync}
+            context={`${screen.guideContext} · ${screen.item.displayName}`}
+            editable={screen.guideEditable}
+            location={'exercise'}
+            onOpenComment={() => setShowComment(true)}
+          />
           {Array.from({ length: props.draft.setCount }, (_, index) => (
             <ExerciseSetCard
               draft={props.draft}

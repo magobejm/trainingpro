@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
+import { WorkoutGuideCard } from './WorkoutGuideCard';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
@@ -39,6 +40,8 @@ type TodaySessionScreenProps = {
 };
 
 type TodaySessionBodyProps = {
+  exerciseSyncBanner: React.ReactNode;
+  guideSync: { pendingCount: number; conflictsCount: number };
   completedRestKeys: string[];
   exerciseGroup: SessionItem[];
   finishedExerciseIds: ReadonlySet<string>;
@@ -103,6 +106,10 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
 
       {props.selectedExercise && (props.isRunning || props.isCompleted) ? (
         <ActiveExerciseScreen
+          guideSync={props.guideSync}
+          guideContext={`${props.session.dayTitle ?? ''} · ${props.session.sessionDate}`}
+          guideEditable={props.isRunning && props.session.sessionDate === localDateKey()}
+          syncBanner={props.exerciseSyncBanner}
           exerciseGroup={props.exerciseGroup.length > 0 ? props.exerciseGroup : [props.selectedExercise]}
           item={props.selectedExercise}
           readOnly={props.isCompleted}
@@ -266,20 +273,35 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     );
   }
 
+  const syncBanner = (
+    <SessionSyncBanner
+      conflicts={actions.conflicts}
+      onDismiss={() => {
+        void actions.dismissConflicts();
+      }}
+      onRetry={() => {
+        void actions.flush();
+      }}
+      pendingCount={actions.pendingCount}
+    />
+  );
+  const guideSync = { pendingCount: actions.pendingCount, conflictsCount: actions.conflicts.length };
+
   return (
     <>
       <TodaySessionBody
+        exerciseSyncBanner={syncBanner}
+        guideSync={guideSync}
         banner={
-          <SessionSyncBanner
-            conflicts={actions.conflicts}
-            onDismiss={() => {
-              void actions.dismissConflicts();
-            }}
-            onRetry={() => {
-              void actions.flush();
-            }}
-            pendingCount={actions.pendingCount}
-          />
+          <>
+            <WorkoutGuideCard
+              {...guideSync}
+              location={'day'}
+              editable={Boolean(isRunning && session.sessionDate === localDateKey())}
+              context={`${session.dayTitle ?? ''} · ${session.sessionDate}`}
+            />
+            {syncBanner}
+          </>
         }
         completedRestKeys={timers.completedRestKeys}
         exerciseGroup={timers.exerciseGroup}

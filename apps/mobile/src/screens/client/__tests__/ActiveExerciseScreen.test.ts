@@ -55,6 +55,8 @@ jest.mock('../ExerciseCommentModal', () => ({ ExerciseCommentModal: () => null }
 jest.mock('../PreviousDaysOverlay', () => ({ PreviousDaysOverlay: () => null }));
 jest.mock('../RestTimerOverlay', () => ({ RestTimerOverlay: () => null }));
 jest.mock('../RomScaleModal', () => ({ RomScaleModal: () => null }));
+jest.mock('../WorkoutGuideContext', () => ({ useWorkoutGuide: () => ({ recordSaved: jest.fn() }) }));
+jest.mock('../WorkoutGuideCard', () => ({ WorkoutGuideCard: () => null }));
 
 const item = {
   id: 'exercise',
@@ -71,6 +73,9 @@ const item = {
 function renderExercise(readOnly = false) {
   return renderToStaticMarkup(
     React.createElement(ActiveExerciseScreen, {
+      guideSync: { pendingCount: 0, conflictsCount: 0 },
+      guideContext: 'QA workout',
+      guideEditable: !readOnly,
       item,
       readOnly,
       exerciseGroup: [item],

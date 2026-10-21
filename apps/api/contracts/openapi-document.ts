@@ -1,4 +1,6 @@
 import {
+  workoutGuidePatchSchema,
+  workoutGuideResponseSchema,
   clearFutureWorkoutsSchema,
   workoutAdherenceSchema,
   routineHandoffPreviewSchema,
@@ -156,7 +158,32 @@ function adherenceOperation(operation: JsonSchema): JsonSchema {
   };
 }
 
+function workoutGuideOperation(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  return {
+    ...operation,
+    ...(route.method === 'patch'
+      ? {
+          requestBody: {
+            required: true,
+            content: { 'application/json': { schema: toJsonSchema(workoutGuidePatchSchema) } },
+          },
+        }
+      : {}),
+    responses: {
+      ...(operation.responses as JsonSchema),
+      '200': {
+        description: 'Account-scoped, monotonic first workout guide progress',
+        content: { 'application/json': { schema: toJsonSchema(workoutGuideResponseSchema) } },
+      },
+      '400': errorResponse('Invalid guide progress'),
+      '403': errorResponse('Client role required'),
+      '404': errorResponse('Client profile not found'),
+    },
+  };
+}
+
 function applyContract(operation: JsonSchema, route: RouteRecord): JsonSchema {
+  if (route.path === '/clients/me/first-workout-guide') return workoutGuideOperation(operation, route);
   if (route.method === 'get' && route.path === '/progress/adherence') return adherenceOperation(operation);
   if (route.path.startsWith('/clients/{clientId}/routine-day-colors')) {
     const patch = route.method === 'patch';

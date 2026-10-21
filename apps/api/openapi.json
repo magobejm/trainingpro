@@ -5545,6 +5545,208 @@
         "x-roles": ["client"]
       }
     },
+    "/clients/me/first-workout-guide": {
+      "get": {
+        "operationId": "get_clients_me_first_workout_guide",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "eligibleForAutoStart": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "enum": ["not_started", "in_progress", "completed", "dismissed"],
+                      "type": "string"
+                    },
+                    "step": {
+                      "enum": ["overview", "record", "save", "sync", "help"],
+                      "type": "string"
+                    },
+                    "version": {
+                      "const": 1,
+                      "type": "number"
+                    }
+                  },
+                  "required": ["version", "status", "step", "eligibleForAutoStart"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Account-scoped, monotonic first workout guide progress"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Invalid guide progress"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Client role required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Client profile not found"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/me/first-workout-guide",
+        "x-controller": "FirstWorkoutGuideController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      },
+      "patch": {
+        "operationId": "patch_clients_me_first_workout_guide",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": false,
+                "properties": {
+                  "status": {
+                    "enum": ["in_progress", "completed", "dismissed"],
+                    "type": "string"
+                  },
+                  "step": {
+                    "enum": ["overview", "record", "save", "sync", "help"],
+                    "type": "string"
+                  },
+                  "version": {
+                    "const": 1,
+                    "type": "number"
+                  }
+                },
+                "required": ["version", "status", "step"],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "eligibleForAutoStart": {
+                      "type": "boolean"
+                    },
+                    "status": {
+                      "enum": ["not_started", "in_progress", "completed", "dismissed"],
+                      "type": "string"
+                    },
+                    "step": {
+                      "enum": ["overview", "record", "save", "sync", "help"],
+                      "type": "string"
+                    },
+                    "version": {
+                      "const": 1,
+                      "type": "number"
+                    }
+                  },
+                  "required": ["version", "status", "step", "eligibleForAutoStart"],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Account-scoped, monotonic first workout guide progress"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Invalid guide progress"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Client role required"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Client profile not found"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PATCH /clients/me/first-workout-guide",
+        "x-controller": "FirstWorkoutGuideController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients/me/library/cardio-methods": {
       "get": {
         "operationId": "get_clients_me_library_cardio_methods",

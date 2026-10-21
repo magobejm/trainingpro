@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { WorkoutGuideProvider } from '../../screens/client/WorkoutGuideContext';
+import { WorkoutHelpScreen } from '../../screens/client/WorkoutHelpScreen';
 import { Animated, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
@@ -235,7 +237,8 @@ function dispatchMoreMenu(
   openOverlay: (id: OverlayId) => void,
   openProgress: (mode: ProgressMode) => void,
 ): void {
-  if (id === 'incidents') openOverlay('incidents');
+  if (id === 'help') openOverlay('help');
+  else if (id === 'incidents') openOverlay('incidents');
   else if (id === 'calendar') openOverlay('calendar');
   else if (id === 'measures') openOverlay('measures');
   else if (id === 'physicalTests') openOverlay('physicalTests');
@@ -244,6 +247,14 @@ function dispatchMoreMenu(
 }
 
 export function ClientShell(): React.JSX.Element {
+  return (
+    <WorkoutGuideProvider>
+      <ClientShellBody />
+    </WorkoutGuideProvider>
+  );
+}
+
+function ClientShellBody(): React.JSX.Element {
   const { t } = useTranslation();
   const st = useShellState();
   useHardwareBack(st);
@@ -266,6 +277,11 @@ export function ClientShell(): React.JSX.Element {
       {st.activeTab === 'more' && <MoreScreen onNavigate={(id) => dispatchMoreMenu(id, st.openOverlay, st.openProgress)} />}
 
       <MorningCheckinGate />
+      {st.overlay === 'help' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <WorkoutHelpScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
 
       {showBottomNav ? (
         <BottomNav

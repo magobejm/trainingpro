@@ -351,7 +351,7 @@ function blankDraft(): SetRowState {
 function logPayloadHasData(payload: LogPayload): boolean {
   return Object.entries(payload).some(([key, value]) => {
     if (IDENTITY_KEYS.has(key) || key === 'restSecondsDone') return false;
-    if (typeof value === 'number') return value > 0;
+    if (typeof value === 'number') return value > 0 || (key === 'effortRir' && value === 0);
     if (typeof value === 'string') return value.trim().length > 0;
     return false;
   });

@@ -1,4 +1,5 @@
 export type ActiveRole = 'admin' | 'coach' | 'client';
+export * from './first-workout-guide';
 export {
   chatMessageListSchema,
   chatMessageSchema,

@@ -8,12 +8,15 @@ const LAN_BUILD = process.env.TRAINERPRO_LAN_BUILD === '1';
 module.exports = () => {
   const expo = structuredClone(appJson.expo);
   applyGoogleServices(expo);
-  expo.plugins = [...(expo.plugins ?? []).filter((plugin) => plugin !== 'expo-video'), 'expo-video'];
+  expo.plugins = [
+    ...(expo.plugins ?? []).filter((plugin) => plugin !== 'expo-video'),
+    'expo-video',
+    ['./plugins/with-lan-cleartext.js', { enabled: LAN_BUILD }],
+  ];
+  expo.updates = { ...expo.updates, enabled: LAN_BUILD ? false : (expo.updates?.enabled ?? true) };
   if (!LAN_BUILD) {
     return { expo };
   }
-  expo.updates = { ...expo.updates, enabled: false };
-  expo.plugins = [...(expo.plugins ?? []), './plugins/with-lan-cleartext.js'];
   return { expo };
 };
 

@@ -204,6 +204,7 @@ model OrganizationSubscription {
 }
 
 model Client {
+  firstWorkoutGuide     Json?                     @map("first_workout_guide")
   id                    String                    @id @default(uuid()) @db.Uuid
   organizationId        String                    @map("organization_id") @db.Uuid
   coachMembershipId     String                    @map("coach_membership_id") @db.Uuid

@@ -1,4 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
+import { FirstWorkoutGuideService } from './application/services/first-workout-guide.service';
+import { FirstWorkoutGuideController } from './presentation/controllers/first-workout-guide.controller';
 import { AuthModule } from '../auth/auth.module';
 import { ChatModule } from '../chat/chat.module';
 import { FilesModule } from '../files/files.module';
@@ -54,6 +56,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
   imports: [AuthModule, ChatModule, FilesModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
   exports: [ClientAccessPolicy],
   controllers: [
+    FirstWorkoutGuideController,
     ClientLibraryController,
     ClientSelfController,
     ClientsController,
@@ -61,6 +64,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ClientRoutineColorsController,
   ],
   providers: [
+    FirstWorkoutGuideService,
     ClientRoutineColorsService,
     ArchiveClientUseCase,
     EnsureClientSelfSessionUseCase,

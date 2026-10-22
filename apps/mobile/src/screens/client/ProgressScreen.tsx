@@ -73,9 +73,9 @@ function renderState(props: ViewModel) {
 }
 
 function buildSummary(data: ReturnType<typeof useProgressOverviewQuery>['data'], t: (key: string) => string) {
-  const volume = (data?.strengthWeekly ?? []).reduce((sum, point) => sum + point.volumeKg, 0);
-  const duration = (data?.cardioWeekly ?? []).reduce((sum, point) => sum + point.totalDurationSeconds, 0);
-  const srpe = (data?.srpeWeekly ?? []).reduce((sum, point) => sum + point.totalSrpe, 0);
+  const volume = (data?.strengthWeekly ?? []).reduce((sum, point) => sum + (point.volumeKg ?? 0), 0);
+  const duration = (data?.cardioWeekly ?? []).reduce((sum, point) => sum + (point.totalDurationSeconds ?? 0), 0);
+  const srpe = (data?.srpeWeekly ?? []).reduce((sum, point) => sum + (point.totalSrpe ?? 0), 0);
   return [
     { id: 'volume', label: t('client.progress.kpi.volumeKg'), value: `${Math.round(volume)}` },
     { id: 'duration', label: t('client.progress.kpi.timeMin'), value: `${Math.round(duration / 60)}` },
@@ -84,19 +84,31 @@ function buildSummary(data: ReturnType<typeof useProgressOverviewQuery>['data'],
 }
 
 function buildStrengthBars(data: ReturnType<typeof useProgressOverviewQuery>['data']) {
-  return (data?.strengthWeekly ?? []).map((point) => ({
-    id: `${point.weekStart}-${point.muscleGroup}`,
-    label: point.muscleGroup.slice(0, 3).toUpperCase(),
-    value: point.volumeKg,
-  }));
+  return (data?.strengthWeekly ?? []).flatMap((point) =>
+    point.volumeKg === null
+      ? []
+      : [
+          {
+            id: `${point.weekStart}-${point.muscleGroup}`,
+            label: point.muscleGroup.slice(0, 3).toUpperCase(),
+            value: point.volumeKg,
+          },
+        ],
+  );
 }
 
 function buildCardioBars(data: ReturnType<typeof useProgressOverviewQuery>['data']) {
-  return (data?.cardioWeekly ?? []).map((point) => ({
-    id: `${point.weekStart}-${point.methodType}`,
-    label: point.methodType.slice(0, 3).toUpperCase(),
-    value: point.totalDurationSeconds / 60,
-  }));
+  return (data?.cardioWeekly ?? []).flatMap((point) =>
+    point.totalDurationSeconds === null
+      ? []
+      : [
+          {
+            id: `${point.weekStart}-${point.methodType}`,
+            label: point.methodType.slice(0, 3).toUpperCase(),
+            value: point.totalDurationSeconds / 60,
+          },
+        ],
+  );
 }
 
 function buildRange(mode: ProgressMode) {

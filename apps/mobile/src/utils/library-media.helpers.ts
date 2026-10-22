@@ -65,8 +65,24 @@ export function readYouTubeVideoId(raw: string): null | string {
   }
 }
 
+export const YOUTUBE_PLAYER_ORIGIN = 'https://trainer-pro-mobile.expo.app';
+
 export function buildYouTubePlayerUrl(youtubeUrl: string): null | string {
   const embedUrl = toYouTubeEmbedUrl(youtubeUrl);
   if (!embedUrl) return null;
-  return `${embedUrl}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  const origin = encodeURIComponent(YOUTUBE_PLAYER_ORIGIN);
+  return `${embedUrl}?autoplay=1&rel=0&modestbranding=1&playsinline=1&origin=${origin}`;
+}
+
+export function buildYouTubeEmbedDocument(playerUrl: string): string {
+  const src = playerUrl.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+  return [
+    '<!DOCTYPE html><html><head>',
+    '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    '<style>html,body{margin:0;height:100%;background:#000}iframe{border:0;width:100%;height:100%}</style>',
+    '</head><body>',
+    `<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen`,
+    ' referrerpolicy="strict-origin-when-cross-origin"></iframe>',
+    '</body></html>',
+  ].join('');
 }

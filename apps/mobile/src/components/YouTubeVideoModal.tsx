@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useTranslation } from 'react-i18next';
-import { buildYouTubePlayerUrl } from '../utils/library-media.helpers';
+import { buildYouTubeEmbedDocument, buildYouTubePlayerUrl, YOUTUBE_PLAYER_ORIGIN } from '../utils/library-media.helpers';
 import { LIGHT } from '../theme/light';
 
 type YouTubeVideoModalProps = {
@@ -86,9 +86,12 @@ function YouTubePlayer({ playerUrl }: { playerUrl: string }): React.JSX.Element 
   return (
     <WebView
       allowsFullscreenVideo
+      allowsInlineMediaPlayback
+      domStorageEnabled
       javaScriptEnabled
       mediaPlaybackRequiresUserAction={false}
-      source={{ uri: playerUrl }}
+      originWhitelist={['*']}
+      source={{ baseUrl: YOUTUBE_PLAYER_ORIGIN, html: buildYouTubeEmbedDocument(playerUrl) }}
       style={styles.webview}
     />
   );

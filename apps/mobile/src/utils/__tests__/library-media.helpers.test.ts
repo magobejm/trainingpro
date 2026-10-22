@@ -1,10 +1,12 @@
 import {
+  buildYouTubeEmbedDocument,
   buildYouTubePlayerUrl,
   getFullMediaUrl,
   getYouTubeThumbnailUrl,
   readYouTubeVideoId,
   resolvePlaceholder,
   toYouTubeEmbedUrl,
+  YOUTUBE_PLAYER_ORIGIN,
 } from '../library-media.helpers';
 
 describe('library-media.helpers', () => {
@@ -41,6 +43,9 @@ describe('library-media.helpers', () => {
     expect(getYouTubeThumbnailUrl('https://youtu.be/dQw4w9WgXcQ')).toBe(
       'https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg',
     );
-    expect(buildYouTubePlayerUrl('https://youtu.be/dQw4w9WgXcQ')).toContain('autoplay=1');
+    const playerUrl = buildYouTubePlayerUrl('https://youtu.be/dQw4w9WgXcQ');
+    expect(playerUrl).toContain('autoplay=1');
+    expect(playerUrl).toContain(`origin=${encodeURIComponent(YOUTUBE_PLAYER_ORIGIN)}`);
+    expect(buildYouTubeEmbedDocument(playerUrl ?? '')).toContain('referrerpolicy="strict-origin-when-cross-origin"');
   });
 });

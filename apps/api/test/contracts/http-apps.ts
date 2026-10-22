@@ -21,6 +21,7 @@ import { ListClientTimelineUseCase } from '../../src/modules/clients/application
 import { ListClientWellnessUseCase } from '../../src/modules/clients/application/use-cases/list-client-wellness.usecase';
 import { ListClientsUseCase } from '../../src/modules/clients/application/use-cases/list-clients.usecase';
 import { ResetClientPasswordUseCase } from '../../src/modules/clients/application/use-cases/reset-client-password.usecase';
+import { RestoreClientUseCase } from '../../src/modules/clients/application/use-cases/restore-client.usecase';
 import { SaveClientManagementSectionsUseCase } from '../../src/modules/clients/application/use-cases/save-client-management-sections.usecase';
 import { SetClientProgressPhotoArchivedUseCase } from '../../src/modules/clients/application/use-cases/set-client-progress-photo-archived.usecase';
 import { UpdateClientUseCase } from '../../src/modules/clients/application/use-cases/update-client.usecase';
@@ -41,6 +42,7 @@ import { EnsureSessionUseCase } from '../../src/modules/sessions/application/use
 import { FinishSessionUseCase } from '../../src/modules/sessions/application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../src/modules/sessions/application/use-cases/get-session.usecase';
 import { LogIntervalUseCase } from '../../src/modules/sessions/application/use-cases/log-interval.usecase';
+import { LogCardioDistanceUseCase } from '../../src/modules/sessions/application/use-cases/log-cardio-distance.usecase';
 import { LogIsometricSetUseCase } from '../../src/modules/sessions/application/use-cases/log-isometric-set.usecase';
 import { LogMobilitySetUseCase } from '../../src/modules/sessions/application/use-cases/log-mobility-set.usecase';
 import { LogPlioSetUseCase } from '../../src/modules/sessions/application/use-cases/log-plio-set.usecase';
@@ -65,6 +67,7 @@ export async function createClientsApp(): Promise<INestApplication> {
       ListClientTimelineUseCase,
       ListClientWellnessUseCase,
       ResetClientPasswordUseCase,
+      RestoreClientUseCase,
       SaveClientManagementSectionsUseCase,
       SetClientProgressPhotoArchivedUseCase,
       UpdateClientUseCase,
@@ -92,6 +95,7 @@ export async function createSessionApp(): Promise<INestApplication> {
     ...stub(
       EnsureSessionUseCase,
       FinishSessionUseCase,
+      LogCardioDistanceUseCase,
       LogIntervalUseCase,
       LogIsometricSetUseCase,
       LogMobilitySetUseCase,

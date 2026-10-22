@@ -992,6 +992,16 @@
                     "displayName": {
                       "type": "string"
                     },
+                    "distanceDoneMeters": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "groupId": {
                       "anyOf": [
                         {
@@ -1051,6 +1061,26 @@
                             ]
                           },
                           "effortRpe": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hrMaxPctDone": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hrReservePctDone": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -3217,6 +3247,16 @@
             "enum": ["done", "incomplete", "in_progress", "pending", "skipped"],
             "type": "string"
           },
+          "performedDurationSeconds": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "postFatigue": {
             "anyOf": [
               {
@@ -5199,6 +5239,95 @@
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
+    "/clients/archived": {
+      "get": {
+        "operationId": "get_clients_archived",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "objective",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Paginación",
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/archived",
+        "x-controller": "ClientsController",
+        "x-filters": ["objective", "search", "sort"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": ["cursor", "limit"],
         "x-roles": ["coach"]
       }
     },
@@ -8380,6 +8509,58 @@
         "x-controller": "ClientsController",
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard", "ClientOwnershipGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
+    "/clients/{clientId}/restore": {
+      "post": {
+        "operationId": "post_clients_clientId_restore",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /clients/{clientId}/restore",
+        "x-controller": "ClientsController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach"]
       }
@@ -15310,6 +15491,49 @@
         "x-roles": ["coach", "client"]
       }
     },
+    "/progress/exercise/daily": {
+      "get": {
+        "operationId": "get_progress_exercise_daily",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /progress/exercise/daily",
+        "x-controller": "ProgressDashboardController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
     "/progress/microcycle": {
       "get": {
         "operationId": "get_progress_microcycle",
@@ -15678,6 +15902,109 @@
         "summary": "GET /progress/records",
         "x-controller": "ProgressController",
         "x-filters": ["clientId", "from", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
+    "/progress/routines": {
+      "get": {
+        "operationId": "get_progress_routines",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /progress/routines",
+        "x-controller": "ProgressDashboardController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
+    "/progress/routines/{assignmentId}": {
+      "get": {
+        "operationId": "get_progress_routines_assignmentId",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assignmentId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-timezone-offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /progress/routines/{assignmentId}",
+        "x-controller": "ProgressDashboardController",
+        "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]
@@ -16673,6 +17000,85 @@
         "summary": "GET /sessions/{sessionId}",
         "x-controller": "SessionsController",
         "x-filters": ["includeOutcome"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
+    "/sessions/{sessionId}/cardio-blocks/{blockId}/distance": {
+      "post": {
+        "operationId": "post_sessions_sessionId_cardio_blocks_blockId_distance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "blockId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-timezone-offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "CardioDistanceDto",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /sessions/{sessionId}/cardio-blocks/{blockId}/distance",
+        "x-controller": "SessionsController",
+        "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]

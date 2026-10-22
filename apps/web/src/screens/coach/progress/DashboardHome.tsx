@@ -9,6 +9,9 @@ import { matchesSearch } from '../../../utils/normalize-search';
 import { dashboardStyles as styles } from './dashboard.styles';
 import { DashboardPager, DashboardRange } from './DashboardFilters';
 import type { DateRange } from './progress-screen.types';
+import { ConsistencyHeatmap } from './ConsistencyHeatmap';
+import { AdherenceSummary } from './AdherenceSummary';
+import { heatmapRange } from './heatmap';
 
 export const categories = ['strength', 'cardio', 'plio', 'isometric', 'mobility', 'sport'] as const;
 export function DashboardHome(props: {
@@ -20,8 +23,11 @@ export function DashboardHome(props: {
 }): React.JSX.Element {
   const { t } = useTranslation();
   const query = useProgressRoutines(props.clientId);
+  const summaryRange = heatmapRange(new Date());
   return (
     <View style={styles.column}>
+      <ConsistencyHeatmap clientId={props.clientId} t={t} />
+      <AdherenceSummary clientId={props.clientId} {...summaryRange} t={t} />
       <RoutineCatalog routines={query.data?.routines ?? []} onSelect={props.onRoutine} />
       <QueryResult
         {...query}

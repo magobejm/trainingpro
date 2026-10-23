@@ -127,3 +127,18 @@ async function stopStatus(status: number): Promise<number> {
   expect(calls).toBe(1);
   return stopped.ops.length;
 }
+
+it('sends the time each write was queued on the phone', async () => {
+  const draft = withOps(createSessionDraft(sampleSession()), [logInput(8)]);
+  const headers: Array<Record<string, string> | undefined> = [];
+  await flushQueue(
+    {
+      post: async (_path, _body, header) => {
+        headers.push(header);
+        return {};
+      },
+    },
+    draft,
+  );
+  expect(headers[0]?.['X-Occurred-At']).toBe(draft.ops[0]?.createdAt);
+});

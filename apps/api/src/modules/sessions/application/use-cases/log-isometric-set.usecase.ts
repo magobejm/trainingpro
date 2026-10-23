@@ -4,6 +4,7 @@ import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { LogIsometricSetInput } from '../../domain/session.input';
 import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { guardSessionWrite, keepQueuedSessionOpen } from '../guard-session-write';
 
 @Injectable()
 export class LogIsometricSetUseCase {
@@ -13,12 +14,21 @@ export class LogIsometricSetUseCase {
     private readonly editWindowPolicy: EditWindowPolicy,
   ) {}
 
-  async execute(context: AuthContext, input: LogIsometricSetInput, timezoneOffsetMinutes: number) {
+  async execute(
+    context: AuthContext,
+    input: LogIsometricSetInput,
+    timezoneOffsetMinutes: number,
+    occurredAt: Date | null = null,
+  ) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session = await this.repository.getSessionById(context, input.sessionId);
-    if (session) {
-      this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
-    }
-    return this.repository.logIsometricSet(context, input);
+    await guardSessionWrite(
+      this.repository,
+      this.editWindowPolicy,
+      context,
+      input.sessionId,
+      timezoneOffsetMinutes,
+      occurredAt,
+    );
+    return this.repository.logIsometricSet(context, input, keepQueuedSessionOpen(occurredAt));
   }
 }

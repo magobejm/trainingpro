@@ -16707,6 +16707,14 @@
           },
           {
             "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "x-timezone-offset",
             "required": false,
             "schema": {
@@ -17027,6 +17035,14 @@
           },
           {
             "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "x-timezone-offset",
             "required": false,
             "schema": {
@@ -17221,6 +17237,14 @@
           },
           {
             "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "x-timezone-offset",
             "required": false,
             "schema": {
@@ -17286,6 +17310,14 @@
             "in": "path",
             "name": "sessionId",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -17363,6 +17395,14 @@
           },
           {
             "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "x-timezone-offset",
             "required": false,
             "schema": {
@@ -17428,6 +17468,14 @@
             "in": "path",
             "name": "sessionId",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -17505,6 +17553,14 @@
           },
           {
             "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
             "name": "x-timezone-offset",
             "required": false,
             "schema": {
@@ -17570,6 +17626,14 @@
             "in": "path",
             "name": "sessionId",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -17649,6 +17713,14 @@
             "in": "path",
             "name": "blockId",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
             "schema": {
               "type": "string"
             }

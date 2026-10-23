@@ -5,6 +5,7 @@ import type { FinishSessionInput } from '../../domain/session.input';
 export type FinishComparable = {
   performedDurationSeconds?: number | null;
   finishComment: null | string;
+  finishedAt?: Date | null;
   isIncomplete: boolean;
   postFatigue: null | number;
   postMood: null | number;
@@ -24,6 +25,7 @@ export function shouldReplacePendingSession(
 
 export function sameFinish(current: FinishComparable, input: FinishSessionInput): boolean {
   return (
+    (input.finishedAt === undefined || sameInstant(current.finishedAt ?? null, input.finishedAt)) &&
     (input.performedDurationSeconds === undefined ||
       sameNumber(current.performedDurationSeconds ?? null, input.performedDurationSeconds)) &&
     current.isIncomplete === input.isIncomplete &&
@@ -56,6 +58,10 @@ function acceptRepeat<T extends FinishComparable>(session: T, input: FinishSessi
 function normalize(value: null | string | undefined): null | string {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+function sameInstant(current: Date | null, next: Date | null): boolean {
+  return (current?.getTime() ?? null) === (next?.getTime() ?? null);
 }
 
 function sameNumber(current: null | number, next: null | number | undefined): boolean {

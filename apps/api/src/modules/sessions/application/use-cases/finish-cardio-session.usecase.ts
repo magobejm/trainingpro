@@ -4,10 +4,7 @@ import { EmitSessionCompletedEventUseCase } from '../../../notifications/applica
 import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { FinishSessionInput } from '../../domain/session.input';
-import {
-  SESSIONS_REPOSITORY,
-  type SessionsRepositoryPort,
-} from '../../domain/sessions-repository.port';
+import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 
 @Injectable()
 export class FinishCardioSessionUseCase {
@@ -18,15 +15,14 @@ export class FinishCardioSessionUseCase {
     private readonly emitSessionCompletedEventUseCase: EmitSessionCompletedEventUseCase,
   ) {}
 
-  async execute(
-    context: AuthContext,
-    input: FinishSessionInput,
-    timezoneOffsetMinutes: number,
-  ) {
+  async execute(context: AuthContext, input: FinishSessionInput, timezoneOffsetMinutes: number) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session = await this.repository.getCardioSessionById(context, input.sessionId);
+    const clientTime = input.finishedAt ?? null;
+    const session = await this.repository.getCardioSessionById(context, input.sessionId, {
+      closeStale: clientTime == null,
+    });
     if (session) {
-      this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
+      this.editWindowPolicy.resolveWriteInstant(session.sessionDate, new Date(), timezoneOffsetMinutes, clientTime);
     }
     const result = await this.repository.finishCardioSession(context, input);
     await this.emitSessionCompletedEventUseCase.execute(result.id);

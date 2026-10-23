@@ -13,12 +13,7 @@ import {
 import { useSessionDraft, type EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type { SessionOpInput } from '../../data/offline/session-draft';
 import { createDiscardSessionClient, discardStartedSession } from './session-discard.client';
-import {
-  freezeWorkoutDuration,
-  finishSessionWithRpePayload,
-  formatSessionRpeChatNotice,
-  sessionRpeBand,
-} from './session-rpe.utils';
+import { freezeWorkoutDuration, finishSessionBody, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 type Enqueue = (session: SessionView, input: SessionOpInput) => Promise<EnqueueResult>;
@@ -32,8 +27,8 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
     [queue.enqueue, session],
   );
   const enqueueFinish = useCallback(
-    (sessionRpe: number, performedDurationSeconds?: number | null) =>
-      enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe, performedDurationSeconds),
+    (sessionRpe: number, performedDurationSeconds?: number | null, finishedAt?: string | null) =>
+      enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe, performedDurationSeconds, finishedAt),
     [queue.enqueue, session, sessionId],
   );
   const discard = useCallback(() => discardStartedSession(sessionId, discardClient), [discardClient, sessionId]);
@@ -88,14 +83,15 @@ function enqueueSessionFinish(
   sessionId: string,
   sessionRpe: number,
   performedDurationSeconds?: number | null,
+  finishedAt?: string | null,
 ): Promise<EnqueueResult | 'missing'> {
   if (!session) return Promise.resolve('missing');
   return enqueue(session, {
-    body: {
-      ...finishSessionWithRpePayload(sessionRpe),
-      performedDurationSeconds:
-        performedDurationSeconds === undefined ? freezeWorkoutDuration(session) : performedDurationSeconds,
-    },
+    body: finishSessionBody(
+      sessionRpe,
+      performedDurationSeconds === undefined ? freezeWorkoutDuration(session) : performedDurationSeconds,
+      finishedAt,
+    ),
     dedupeKey: 'finish',
     kind: 'finish',
     path: sessionWritePath(sessionId, 'finish'),

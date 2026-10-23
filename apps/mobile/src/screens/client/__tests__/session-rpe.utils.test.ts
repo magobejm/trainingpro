@@ -4,6 +4,7 @@ import {
   isShortWorkout,
   SHORT_WORKOUT_SECONDS,
   DEFAULT_SESSION_RPE,
+  finishSessionBody,
   finishSessionWithRpePayload,
   formatSessionRpe,
   formatSessionRpeChatNotice,
@@ -46,6 +47,14 @@ describe('session RPE', () => {
       postFatigue: null,
       postMood: null,
       postPain: null,
+      sessionRpe: 7.5,
+    });
+  });
+
+  it('keeps the phone finish instant in the queued body', () => {
+    expect(finishSessionBody(7.5, 90, '2026-10-23T10:15:00.000Z')).toMatchObject({
+      finishedAt: '2026-10-23T10:15:00.000Z',
+      performedDurationSeconds: 90,
       sessionRpe: 7.5,
     });
   });

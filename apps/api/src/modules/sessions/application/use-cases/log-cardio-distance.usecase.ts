@@ -3,6 +3,7 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { guardAnySessionWrite, keepQueuedSessionOpen } from '../guard-session-write';
 
 @Injectable()
 export class LogCardioDistanceUseCase {
@@ -16,12 +17,17 @@ export class LogCardioDistanceUseCase {
     context: AuthContext,
     input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
     timezoneOffsetMinutes: number,
+    occurredAt: Date | null = null,
   ) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session =
-      (await this.repository.getCardioSessionById(context, input.sessionId)) ??
-      (await this.repository.getSessionById(context, input.sessionId));
-    if (session) this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
-    return this.repository.logCardioDistance(context, input);
+    await guardAnySessionWrite(
+      this.repository,
+      this.editWindowPolicy,
+      context,
+      input.sessionId,
+      timezoneOffsetMinutes,
+      occurredAt,
+    );
+    return this.repository.logCardioDistance(context, input, keepQueuedSessionOpen(occurredAt));
   }
 }

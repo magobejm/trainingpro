@@ -26,6 +26,8 @@ import type {
 
 export const SESSIONS_REPOSITORY = Symbol('SESSIONS_REPOSITORY');
 
+export type SessionWriteOptions = { closeStale?: boolean };
+
 export interface SessionsRepositoryPort {
   canAccessSession(context: AuthContext, sessionId: string): Promise<boolean>;
   discardSession(context: AuthContext, sessionId: string): Promise<SessionInstance>;
@@ -40,19 +42,40 @@ export interface SessionsRepositoryPort {
   ): Promise<ExerciseHistoryEntry[]>;
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance>;
   finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance>;
-  getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null>;
-  getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null>;
+  getCardioSessionById(
+    context: AuthContext,
+    sessionId: string,
+    options?: SessionWriteOptions,
+  ): Promise<CardioSessionInstance | null>;
+  getSessionById(context: AuthContext, sessionId: string, options?: SessionWriteOptions): Promise<SessionInstance | null>;
   logCardioDistance(
     context: AuthContext,
     input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
+    options?: SessionWriteOptions,
   ): Promise<{ id: string; distanceDoneMeters: number | null }>;
-  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null>;
-  logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog>;
-  logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog>;
-  logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<null | SessionPlioSetLog>;
-  logSet(context: AuthContext, input: LogSetInput): Promise<null | SessionSetLog>;
-  logSport(context: AuthContext, input: LogSportInput): Promise<null | SessionSportLog>;
-  logSportSet(context: AuthContext, input: LogSportSetInput): Promise<null | SessionSportSetLog>;
+  logInterval(
+    context: AuthContext,
+    input: LogIntervalInput,
+    options?: SessionWriteOptions,
+  ): Promise<CardioIntervalLog | null>;
+  logIsometricSet(
+    context: AuthContext,
+    input: LogIsometricSetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionIsometricSetLog>;
+  logMobilitySet(
+    context: AuthContext,
+    input: LogMobilitySetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionMobilitySetLog>;
+  logPlioSet(context: AuthContext, input: LogPlioSetInput, options?: SessionWriteOptions): Promise<null | SessionPlioSetLog>;
+  logSet(context: AuthContext, input: LogSetInput, options?: SessionWriteOptions): Promise<null | SessionSetLog>;
+  logSport(context: AuthContext, input: LogSportInput, options?: SessionWriteOptions): Promise<null | SessionSportLog>;
+  logSportSet(
+    context: AuthContext,
+    input: LogSportSetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionSportSetLog>;
   startCardioSession(context: AuthContext, sessionId: string): Promise<CardioSessionInstance>;
   startSession(context: AuthContext, input: StartSessionInput): Promise<SessionInstance>;
 }

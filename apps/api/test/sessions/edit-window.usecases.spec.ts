@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import type { AuthContext } from '../../src/common/auth-context/auth-context';
 import { EmitSessionCompletedEventUseCase } from '../../src/modules/notifications/application/use-cases/emit-session-completed-event.usecase';
 import { FinishCardioSessionUseCase } from '../../src/modules/sessions/application/use-cases/finish-cardio-session.usecase';
@@ -68,6 +68,52 @@ describe('edit window on every session write', () => {
     const entry = build().find((item) => item.name === name);
     await entry?.run(120);
     expect(entry?.write).toHaveBeenCalledTimes(1);
+  });
+
+  it('writes a queued finish with the phone time after midnight', async () => {
+    jest.setSystemTime(new Date('2026-09-08T08:00:00.000Z'));
+    const finish = jest.fn(async () => ({ id: 'session' }));
+    const repository = {
+      canAccessSession: async () => true,
+      finishSession: finish,
+      getSessionById: async () => ({ sessionDate: SESSION_DATE }),
+    } as unknown as SessionsRepositoryPort;
+    const finishedAt = new Date('2026-09-07T18:00:00.000Z');
+    await new FinishSessionUseCase(repository, new SessionAccessPolicy(repository), new EditWindowPolicy(), {
+      execute: async () => undefined,
+    } as unknown as EmitSessionCompletedEventUseCase).execute(AUTH, { ...finishInput(), finishedAt }, 120);
+    expect(finish).toHaveBeenCalledWith(AUTH, expect.objectContaining({ finishedAt }));
+  });
+
+  it('does not write a set queued with a future phone time', async () => {
+    jest.setSystemTime(new Date('2026-09-07T18:00:00.000Z'));
+    const write = jest.fn();
+    const repository = {
+      canAccessSession: async () => true,
+      getSessionById: async () => ({ sessionDate: SESSION_DATE }),
+      logSet: write,
+    } as unknown as SessionsRepositoryPort;
+    const useCase = new LogSetUseCase(repository, new SessionAccessPolicy(repository), new EditWindowPolicy());
+    await expect(useCase.execute(AUTH, setInput(), 120, new Date('2026-09-07T18:03:00.000Z'))).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
+    expect(write).not.toHaveBeenCalled();
+  });
+
+  it('writes a set queued inside the session day after the server day has closed', async () => {
+    jest.setSystemTime(new Date('2026-09-08T08:00:00.000Z'));
+    const write = jest.fn(async () => ({}));
+    const repository = {
+      canAccessSession: async () => true,
+      getSessionById: async (_context: unknown, _id: string, options?: { closeStale?: boolean }) => {
+        expect(options).toEqual({ closeStale: false });
+        return { sessionDate: SESSION_DATE };
+      },
+      logSet: write,
+    } as unknown as SessionsRepositoryPort;
+    const useCase = new LogSetUseCase(repository, new SessionAccessPolicy(repository), new EditWindowPolicy());
+    await useCase.execute(AUTH, setInput(), 120, new Date('2026-09-07T18:00:00.000Z'));
+    expect(write).toHaveBeenCalledWith(AUTH, setInput(), { closeStale: false });
   });
 });
 

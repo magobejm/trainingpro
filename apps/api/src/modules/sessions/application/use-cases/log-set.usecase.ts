@@ -3,10 +3,8 @@ import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { LogSetInput } from '../../domain/session.input';
-import {
-  SESSIONS_REPOSITORY,
-  type SessionsRepositoryPort,
-} from '../../domain/sessions-repository.port';
+import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { guardSessionWrite, keepQueuedSessionOpen } from '../guard-session-write';
 
 @Injectable()
 export class LogSetUseCase {
@@ -16,16 +14,16 @@ export class LogSetUseCase {
     private readonly editWindowPolicy: EditWindowPolicy,
   ) {}
 
-  async execute(
-    context: AuthContext,
-    input: LogSetInput,
-    timezoneOffsetMinutes: number,
-  ) {
+  async execute(context: AuthContext, input: LogSetInput, timezoneOffsetMinutes: number, occurredAt: Date | null = null) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session = await this.repository.getSessionById(context, input.sessionId);
-    if (session) {
-      this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
-    }
-    return this.repository.logSet(context, input);
+    await guardSessionWrite(
+      this.repository,
+      this.editWindowPolicy,
+      context,
+      input.sessionId,
+      timezoneOffsetMinutes,
+      occurredAt,
+    );
+    return this.repository.logSet(context, input, keepQueuedSessionOpen(occurredAt));
   }
 }

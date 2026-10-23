@@ -25,6 +25,10 @@ describe('progress capture contracts', () => {
       performedDurationSeconds: 0,
     });
     expect(FinishSessionDto.schema.safeParse({ isIncomplete: false, performedDurationSeconds: -1 }).success).toBe(false);
+    expect(FinishSessionDto.schema.parse({ finishedAt: '2026-10-23T10:15:00.000Z', isIncomplete: false })).toMatchObject({
+      finishedAt: '2026-10-23T10:15:00.000Z',
+    });
+    expect(FinishSessionDto.schema.safeParse({ finishedAt: 'yesterday', isIncomplete: false }).success).toBe(false);
   });
 });
 

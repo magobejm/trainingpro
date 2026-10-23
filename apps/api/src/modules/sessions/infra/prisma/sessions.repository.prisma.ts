@@ -29,14 +29,14 @@ import type {
   LogSportSetInput,
   StartSessionInput,
 } from '../../domain/session.input';
-import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import type { SessionWriteOptions, SessionsRepositoryPort } from '../../domain/sessions-repository.port';
 import { discardOpenSession } from './session-discard';
 import { finishIfOpen } from './session-concurrency';
+import { assertWritableSession, takeStaleFinish } from './session-finish-replace';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
 import { persistEnsuredSession } from './session-ensure';
 import {
-  assertSessionMutable,
   mapIsometricSetLog,
   mapMobilitySetLog,
   mapPlioSetLog,
@@ -135,8 +135,12 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return mapSessionWithGroups(this.prisma, row);
   }
 
-  logCardioDistance(context: AuthContext, input: { sessionId: string; blockId: string; distanceDoneMeters: number | null }) {
-    return this.cardioRepository.logCardioDistance(context, input);
+  logCardioDistance(
+    context: AuthContext,
+    input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
+    options?: SessionWriteOptions,
+  ) {
+    return this.cardioRepository.logCardioDistance(context, input, options);
   }
 
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
@@ -158,29 +162,24 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   }
 
   async finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    if (!input.finishedAt) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
       if (session.skippedAt) throw new BadRequestException('Session marked as skipped');
+      const replaced = await takeStaleFinish(
+        session,
+        input,
+        () => replaceStaleStrengthFinish(db, context, session.id, input),
+        () => this.readSessionForMutation(input.sessionId, db),
+      );
+      if (replaced) return mapSessionWithGroups(db, replaced);
       const row = await finishIfOpen(
         session,
         input,
         async () => {
           const updated = await db.sessionInstance.updateMany({
             where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
-            data: {
-              ...buildUpdateAuditFields(context),
-              finishComment: normalizeText(input.comment),
-              finishedAt: new Date(),
-              performedDurationSeconds: input.performedDurationSeconds ?? null,
-              isCompleted: true,
-              isIncomplete: input.isIncomplete,
-              postFatigue: input.postFatigue ?? null,
-              postMood: input.postMood ?? null,
-              postPain: input.postPain ?? null,
-              sessionRpe: input.sessionRpe ?? null,
-              status: SessionStatus.COMPLETED,
-            },
+            data: strengthFinishData(context, input),
           });
           return updated.count;
         },
@@ -190,12 +189,20 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
-    return this.cardioRepository.getCardioSessionById(context, sessionId);
+  getCardioSessionById(
+    context: AuthContext,
+    sessionId: string,
+    options?: SessionWriteOptions,
+  ): Promise<CardioSessionInstance | null> {
+    return this.cardioRepository.getCardioSessionById(context, sessionId, options);
   }
 
-  async getSessionById(context: AuthContext, sessionId: string): Promise<SessionInstance | null> {
-    await closeStaleSessions(this.prisma, { sessionId });
+  async getSessionById(
+    context: AuthContext,
+    sessionId: string,
+    options?: SessionWriteOptions,
+  ): Promise<SessionInstance | null> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: sessionInclude(),
@@ -204,15 +211,23 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     return row ? mapSessionWithGroups(this.prisma, row) : null;
   }
 
-  logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
-    return this.cardioRepository.logInterval(context, input);
+  logInterval(
+    context: AuthContext,
+    input: LogIntervalInput,
+    options?: SessionWriteOptions,
+  ): Promise<CardioIntervalLog | null> {
+    return this.cardioRepository.logInterval(context, input, options);
   }
 
-  async logPlioSet(context: AuthContext, input: LogPlioSetInput): Promise<null | SessionPlioSetLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logPlioSet(
+    context: AuthContext,
+    input: LogPlioSetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionPlioSetLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await db.sessionPlioBlock.findFirst({
         where: { archivedAt: null, id: input.sessionPlioBlockId, sessionId: input.sessionId },
         select: { id: true },
@@ -224,11 +239,15 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  async logMobilitySet(context: AuthContext, input: LogMobilitySetInput): Promise<null | SessionMobilitySetLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logMobilitySet(
+    context: AuthContext,
+    input: LogMobilitySetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionMobilitySetLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await db.sessionMobilityBlock.findFirst({
         where: { archivedAt: null, id: input.sessionMobilityBlockId, sessionId: input.sessionId },
         select: { id: true },
@@ -240,11 +259,15 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  async logIsometricSet(context: AuthContext, input: LogIsometricSetInput): Promise<null | SessionIsometricSetLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logIsometricSet(
+    context: AuthContext,
+    input: LogIsometricSetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionIsometricSetLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await db.sessionIsometricBlock.findFirst({
         where: { archivedAt: null, id: input.sessionIsometricBlockId, sessionId: input.sessionId },
         select: { id: true },
@@ -256,11 +279,15 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  async logSport(context: AuthContext, input: LogSportInput): Promise<null | SessionSportLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logSport(
+    context: AuthContext,
+    input: LogSportInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionSportLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await db.sessionSportBlock.findFirst({
         where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
         select: { id: true },
@@ -272,11 +299,15 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  async logSportSet(context: AuthContext, input: LogSportSetInput): Promise<null | SessionSportSetLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logSportSet(
+    context: AuthContext,
+    input: LogSportSetInput,
+    options?: SessionWriteOptions,
+  ): Promise<null | SessionSportSetLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await db.sessionSportBlock.findFirst({
         where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
         select: { id: true },
@@ -288,11 +319,11 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     });
   }
 
-  async logSet(context: AuthContext, input: LogSetInput): Promise<null | SessionSetLog> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logSet(context: AuthContext, input: LogSetInput, options?: SessionWriteOptions): Promise<null | SessionSetLog> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readSessionForMutation(input.sessionId, db);
-      assertSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const item = await this.readSessionItem(input.sessionId, input.sessionItemId, db);
       if (!item) {
         throw new NotFoundException('Session item not found');
@@ -460,4 +491,41 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       select: { id: true },
     });
   }
+}
+
+function strengthFinishData(context: AuthContext, input: FinishSessionInput) {
+  return {
+    ...buildUpdateAuditFields(context),
+    finishComment: normalizeText(input.comment),
+    finishedAt: input.finishedAt ?? new Date(),
+    isCompleted: true,
+    isIncomplete: input.isIncomplete,
+    performedDurationSeconds: input.performedDurationSeconds ?? null,
+    postFatigue: input.postFatigue ?? null,
+    postMood: input.postMood ?? null,
+    postPain: input.postPain ?? null,
+    sessionRpe: input.sessionRpe ?? null,
+    status: SessionStatus.COMPLETED,
+  };
+}
+
+function replaceStaleStrengthFinish(
+  db: Prisma.TransactionClient,
+  context: AuthContext,
+  sessionId: string,
+  input: FinishSessionInput,
+): Promise<number> {
+  return db.sessionInstance
+    .updateMany({
+      data: strengthFinishData(context, input),
+      where: {
+        finishComment: null,
+        id: sessionId,
+        isIncomplete: true,
+        performedDurationSeconds: null,
+        sessionRpe: null,
+        status: SessionStatus.COMPLETED,
+      },
+    })
+    .then((updated) => updated.count);
 }

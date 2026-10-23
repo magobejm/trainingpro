@@ -4,6 +4,7 @@ import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { LogIntervalInput } from '../../domain/cardio-session.input';
 import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { guardAnySessionWrite, keepQueuedSessionOpen } from '../guard-session-write';
 
 @Injectable()
 export class LogIntervalUseCase {
@@ -13,14 +14,21 @@ export class LogIntervalUseCase {
     private readonly editWindowPolicy: EditWindowPolicy,
   ) {}
 
-  async execute(context: AuthContext, input: LogIntervalInput, timezoneOffsetMinutes: number) {
+  async execute(
+    context: AuthContext,
+    input: LogIntervalInput,
+    timezoneOffsetMinutes: number,
+    occurredAt: Date | null = null,
+  ) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session =
-      (await this.repository.getCardioSessionById(context, input.sessionId)) ??
-      (await this.repository.getSessionById(context, input.sessionId));
-    if (session) {
-      this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
-    }
-    return this.repository.logInterval(context, input);
+    await guardAnySessionWrite(
+      this.repository,
+      this.editWindowPolicy,
+      context,
+      input.sessionId,
+      timezoneOffsetMinutes,
+      occurredAt,
+    );
+    return this.repository.logInterval(context, input, keepQueuedSessionOpen(occurredAt));
   }
 }

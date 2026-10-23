@@ -24,7 +24,8 @@ import { ActiveExerciseScreen } from './ActiveExerciseScreen';
 import { RoutineDayScreen } from './RoutineDayScreen';
 import { startSessionPayloadFromMorningCheckin } from './session-checkin.utils';
 import { useOptionalCoachNotice } from './MorningCheckinGate';
-import { freezeWorkoutDuration } from './session-rpe.utils';
+import { ShortWorkoutGuard, type ShortWorkoutStep } from './ShortWorkoutGuard';
+import { freezeWorkoutDuration, isShortWorkout } from './session-rpe.utils';
 import { SessionRpeModal } from './SessionRpeModal';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
@@ -156,8 +157,10 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const timers = usePersistedSessionTimers(sessionId, session, sessionQuery.data?.status);
   const workoutElapsed = useWorkoutElapsed(session);
   const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
+  const [guardStep, setGuardStep] = useState<ShortWorkoutStep | null>(null);
   const [rpeVisible, setRpeVisible] = useState(false);
   const finishDurationSeconds = useRef<number | null>(null);
+  const discardGuard = useRef(false);
   const [finishBusy, setFinishBusy] = useState(false);
   const startPromptedRef = React.useRef(false);
   const pendingFinishRpe = React.useRef<number | null>(null);
@@ -221,9 +224,39 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     if (finishBusy || isCompleted) {
       return;
     }
-    finishDurationSeconds.current = session ? freezeWorkoutDuration(session) : null;
+    const seconds = session ? freezeWorkoutDuration(session) : null;
+    finishDurationSeconds.current = seconds;
+    if (isShortWorkout(seconds)) {
+      setGuardStep('register');
+      return;
+    }
     setRpeVisible(true);
   }, [finishBusy, isCompleted, session]);
+
+  const handleRegisterShortWorkout = useCallback(() => {
+    setGuardStep(null);
+    setRpeVisible(true);
+  }, []);
+
+  const handleConfirmDiscard = useCallback(() => {
+    if (finishBusy || discardGuard.current) return;
+    discardGuard.current = true;
+    setFinishBusy(true);
+    void actions
+      .discard()
+      .then(() => {
+        timers.clearSessionTimers();
+        setGuardStep(null);
+        onClose();
+      })
+      .catch(() => {
+        showError(t('mobile.client.session.shortDiscardOffline'));
+      })
+      .finally(() => {
+        discardGuard.current = false;
+        setFinishBusy(false);
+      });
+  }, [actions, finishBusy, onClose, t, timers]);
 
   const handleSaveSessionRpe = useCallback(
     (sessionRpe: number) => {
@@ -339,6 +372,14 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         showActiveDay={showActiveDay}
         t={t}
         workoutElapsed={workoutElapsed}
+      />
+      <ShortWorkoutGuard
+        busy={finishBusy}
+        step={guardStep}
+        onBack={() => setGuardStep('register')}
+        onConfirmMistake={handleConfirmDiscard}
+        onDecline={() => setGuardStep('mistake')}
+        onRegister={handleRegisterShortWorkout}
       />
       <SessionRpeModal
         isSubmitting={finishBusy}

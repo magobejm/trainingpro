@@ -1,3 +1,4 @@
+export const SHORT_WORKOUT_SECONDS = 20 * 60;
 export const DEFAULT_SESSION_RPE = 7.5;
 export const SESSION_RPE_STEP = 0.5;
 export const SESSION_RPE_MIN = 1;
@@ -56,6 +57,11 @@ export function finishSessionWithRpePayload(value: number): {
 
 export function formatSessionRpeChatNotice(value: number, label: string): string {
   return `RPE de la sesión registrado: ${formatSessionRpe(value)}/10 (${label}).`;
+}
+
+export function isShortWorkout(durationSeconds: number | null): boolean {
+  if (durationSeconds == null) return false;
+  return durationSeconds < SHORT_WORKOUT_SECONDS;
 }
 
 /** Capture once before opening the final RPE sheet; this value travels in the persisted finish operation. */

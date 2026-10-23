@@ -30,6 +30,7 @@ import type {
   StartSessionInput,
 } from '../../domain/session.input';
 import type { SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { discardOpenSession } from './session-discard';
 import { finishIfOpen } from './session-concurrency';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
@@ -72,6 +73,14 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
     private readonly prisma: PrismaService,
     private readonly cardioRepository: SessionsCardioRepositoryPrisma,
   ) {}
+
+  async discardSession(context: AuthContext, sessionId: string): Promise<SessionInstance> {
+    return withLockedSession(this.prisma, sessionId, async (db) => {
+      const session = await this.readSessionForMutation(sessionId, db);
+      await discardOpenSession(db, context, session);
+      return mapSessionWithGroups(db, await this.readSessionForMutation(sessionId, db));
+    });
+  }
 
   async canAccessSession(context: AuthContext, sessionId: string): Promise<boolean> {
     if (context.activeRole === 'admin') {

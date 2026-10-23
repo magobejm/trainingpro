@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
 import { ClientsModule } from '../clients/clients.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { DiscardSessionUseCase } from './application/use-cases/discard-session.usecase';
 import { EnsureCardioSessionUseCase } from './application/use-cases/ensure-cardio-session.usecase';
 import { EnsureSessionUseCase } from './application/use-cases/ensure-session.usecase';
 import { FinishCardioSessionUseCase } from './application/use-cases/finish-cardio-session.usecase';
@@ -31,6 +32,7 @@ import { SessionsController } from './presentation/controllers/sessions.controll
   controllers: [SessionsController, SessionsCardioController],
   exports: [SESSIONS_REPOSITORY, SessionsRepositoryPrisma, SessionsCardioRepositoryPrisma],
   providers: [
+    DiscardSessionUseCase,
     EnsureCardioSessionUseCase,
     EnsureSessionUseCase,
     FinishCardioSessionUseCase,

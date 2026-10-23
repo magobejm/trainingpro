@@ -28,6 +28,7 @@ export const SESSIONS_REPOSITORY = Symbol('SESSIONS_REPOSITORY');
 
 export interface SessionsRepositoryPort {
   canAccessSession(context: AuthContext, sessionId: string): Promise<boolean>;
+  discardSession(context: AuthContext, sessionId: string): Promise<SessionInstance>;
   ensureCardioSession(context: AuthContext, input: EnsureCardioSessionInput): Promise<CardioSessionInstance>;
   ensureSession(context: AuthContext, input: EnsureSessionInput): Promise<SessionInstance>;
   ensureSessionForClient(context: AuthContext, input: EnsureSessionForClientInput): Promise<SessionInstance>;

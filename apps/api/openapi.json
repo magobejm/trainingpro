@@ -17084,6 +17084,58 @@
         "x-roles": ["coach", "client"]
       }
     },
+    "/sessions/{sessionId}/discard": {
+      "post": {
+        "operationId": "post_sessions_sessionId_discard",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /sessions/{sessionId}/discard",
+        "x-controller": "SessionsController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
     "/sessions/{sessionId}/finish": {
       "post": {
         "operationId": "post_sessions_sessionId_finish",

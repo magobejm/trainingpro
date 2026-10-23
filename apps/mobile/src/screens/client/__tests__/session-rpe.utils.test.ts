@@ -1,6 +1,8 @@
 import {
   clampSessionRpe,
   freezeWorkoutDuration,
+  isShortWorkout,
+  SHORT_WORKOUT_SECONDS,
   DEFAULT_SESSION_RPE,
   finishSessionWithRpePayload,
   formatSessionRpe,
@@ -51,6 +53,14 @@ describe('session RPE', () => {
   it('formats a chat notice for the coach', () => {
     expect(formatSessionRpeChatNotice(7.5, 'Muy duro')).toBe('RPE de la sesión registrado: 7.5/10 (Muy duro).');
   });
+});
+
+it('asks for confirmation only when the clock is under 20 minutes', () => {
+  expect(SHORT_WORKOUT_SECONDS).toBe(1200);
+  expect(isShortWorkout(null)).toBe(false);
+  expect(isShortWorkout(0)).toBe(true);
+  expect(isShortWorkout(1199)).toBe(true);
+  expect(isShortWorkout(1200)).toBe(false);
 });
 
 it('freezes performed seconds at finish click, keeps zero and handles missing start', () => {

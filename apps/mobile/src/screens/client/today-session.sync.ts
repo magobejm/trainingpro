@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo } from 'react';
 import type { SessionView } from '@trainerpro/shared';
 import {
   type LogIntervalMutationInput,
@@ -11,6 +12,7 @@ import {
 } from '../../data/hooks/useTodaySession';
 import { useSessionDraft, type EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type { SessionOpInput } from '../../data/offline/session-draft';
+import { createDiscardSessionClient, discardStartedSession } from './session-discard.client';
 import {
   freezeWorkoutDuration,
   finishSessionWithRpePayload,
@@ -22,6 +24,8 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 type Enqueue = (session: SessionView, input: SessionOpInput) => Promise<EnqueueResult>;
 
 export function useOfflineSessionActions(sessionId: string, session: SessionView | null, revision: number) {
+  const queryClient = useQueryClient();
+  const discardClient = useMemo(() => createDiscardSessionClient(queryClient), [queryClient]);
   const queue = useSessionDraft(sessionId, revision);
   const save = useCallback(
     (input: SessionOpInput) => saveSessionOp(queue.enqueue, session, input),
@@ -32,8 +36,10 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
       enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe, performedDurationSeconds),
     [queue.enqueue, session, sessionId],
   );
+  const discard = useCallback(() => discardStartedSession(sessionId, discardClient), [discardClient, sessionId]);
   return {
     conflicts: queue.conflicts,
+    discard,
     dismissConflicts: queue.dismissConflicts,
     draft: queue.draft,
     enqueue: queue.enqueue,

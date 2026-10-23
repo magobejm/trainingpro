@@ -5,6 +5,7 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { DiscardSessionUseCase } from '../../application/use-cases/discard-session.usecase';
 import { EnsureSessionUseCase } from '../../application/use-cases/ensure-session.usecase';
 import { FinishSessionUseCase } from '../../application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../application/use-cases/get-session.usecase';
@@ -37,6 +38,7 @@ import { readTimezoneOffset as readOffset } from '../read-timezone-offset';
 @Roles('coach', 'client')
 export class SessionsController {
   constructor(
+    private readonly discardSessionUseCase: DiscardSessionUseCase,
     private readonly ensureSessionUseCase: EnsureSessionUseCase,
     private readonly finishSessionUseCase: FinishSessionUseCase,
     private readonly getSessionUseCase: GetSessionUseCase,
@@ -173,6 +175,12 @@ export class SessionsController {
       readOffset(timezoneOffset),
     );
     return entry;
+  }
+
+  @Post(':sessionId/discard')
+  async discard(@Param() params: SessionIdParamDto, @Req() request: HttpAuthRequest) {
+    const session = await this.discardSessionUseCase.execute(readAuthContext(request), params.sessionId);
+    return mapSession(session);
   }
 
   @Post(':sessionId/finish')

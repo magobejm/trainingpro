@@ -79,6 +79,7 @@ describe('HTTP route inventory', () => {
     expect(route(routes, 'get', '/clients/{clientId}/routine-assignments')?.roles).toEqual(['coach']);
     expect(route(routes, 'get', '/clients/{clientId}/routine-assignments/{assignmentId}')?.roles).toEqual(['coach']);
     expect(route(routes, 'get', '/sessions/{sessionId}')?.roles).toEqual(['coach', 'client']);
+    expect(route(routes, 'post', '/sessions/{sessionId}/discard')?.roles).toEqual(['coach', 'client']);
     expect(route(routes, 'get', '/chat/messages')).toMatchObject({
       filters: ['before', 'beforeId', 'threadId'],
       pagination: [],

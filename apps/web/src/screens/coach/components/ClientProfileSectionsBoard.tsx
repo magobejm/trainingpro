@@ -16,6 +16,7 @@ import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types'
 import { ClientProfileArchivedDrawer } from './ClientProfileSectionsBoard.ArchivedDrawer';
 import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.Header';
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
+import { ClientTimelineDrawer } from './ClientTimelineDrawer';
 import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
 import { useClientPhysicalTestsQuery, type ClientPhysicalTestAssignmentView } from '../../../data/hooks/usePhysicalTests';
 import { buildDefaultWellnessRange } from '../client-mood.helpers';
@@ -28,6 +29,7 @@ type Props = {
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
   onOpenTrainingPlanner: () => void;
+  clientName: string;
   onUnassignTrainingPlan: () => void;
   t: (key: string, params?: Record<string, number | string>) => string;
   trainingPlanName?: string;
@@ -37,7 +39,9 @@ type BoardUiState = {
   openMenuId: null | SectionId;
   setOpenMenuId: (value: null | SectionId) => void;
   setShowArchivedDrawer: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowTimeline: React.Dispatch<React.SetStateAction<boolean>>;
   showArchivedDrawer: boolean;
+  showTimeline: boolean;
 };
 
 type BoardViewModel = {
@@ -46,13 +50,16 @@ type BoardViewModel = {
   wellness: ClientWellnessResponse | undefined;
   onArchive: (id: SectionId) => Promise<void>;
   onCloseArchived: () => void;
+  onCloseTimeline: () => void;
   onDropArchive: (sourceId: null | SectionId) => void;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onRestore: (id: SectionId) => Promise<void>;
+  onOpenTimeline: () => void;
   onToggleArchived: () => void;
   onToggleMenu: (id: SectionId) => void;
   openMenuId: null | SectionId;
   showArchivedDrawer: boolean;
+  showTimeline: boolean;
 };
 
 export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
@@ -80,6 +87,13 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
         t={props.t}
         visible={vm.showArchivedDrawer}
       />
+      <ClientTimelineDrawer
+        clientId={props.clientId}
+        clientName={props.clientName}
+        onClose={vm.onCloseTimeline}
+        t={props.t}
+        visible={vm.showTimeline}
+      />
     </View>
   );
 }
@@ -97,20 +111,35 @@ function useBoardViewModel(clientId: string): BoardViewModel {
     wellness,
     onArchive: (id) => saveItems(mutation, archiveSection(items, id), ui.setOpenMenuId),
     onCloseArchived: () => ui.setShowArchivedDrawer(false),
+    onCloseTimeline: () => ui.setShowTimeline(false),
     onDropArchive: (sourceId) => onDropArchive(items, sourceId, mutation, ui.setOpenMenuId),
     onDropReorderByIndex: (sourceIndex, targetIndex) => onDropReorderByIndex(items, sourceIndex, targetIndex, mutation),
+    onOpenTimeline: () => openTimeline(ui),
     onRestore: (id) => saveItems(mutation, restoreSection(items, id), ui.setOpenMenuId),
-    onToggleArchived: () => ui.setShowArchivedDrawer((value) => !value),
+    onToggleArchived: () => toggleArchived(ui),
     onToggleMenu: (id) => ui.setOpenMenuId(ui.openMenuId === id ? null : id),
     openMenuId: ui.openMenuId,
     showArchivedDrawer: ui.showArchivedDrawer,
+    showTimeline: ui.showTimeline,
   };
 }
 
 function useBoardUiState(): BoardUiState {
   const [openMenuId, setOpenMenuId] = useState<null | SectionId>(null);
   const [showArchivedDrawer, setShowArchivedDrawer] = useState(false);
-  return { openMenuId, setOpenMenuId, setShowArchivedDrawer, showArchivedDrawer };
+  const [showTimeline, setShowTimeline] = useState(false);
+  return { openMenuId, setOpenMenuId, setShowArchivedDrawer, setShowTimeline, showArchivedDrawer, showTimeline };
+}
+
+function openTimeline(ui: BoardUiState): void {
+  ui.setOpenMenuId(null);
+  ui.setShowArchivedDrawer(false);
+  ui.setShowTimeline(true);
+}
+
+function toggleArchived(ui: BoardUiState): void {
+  ui.setShowTimeline(false);
+  ui.setShowArchivedDrawer((value) => !value);
 }
 
 function renderRow(
@@ -135,6 +164,7 @@ function renderRow(
       onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
       onOpenTests={props.onOpenTests}
+      onOpenTimeline={vm.onOpenTimeline}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={() => vm.onToggleMenu(item.id)}
       onUnassignTrainingPlan={props.onUnassignTrainingPlan}

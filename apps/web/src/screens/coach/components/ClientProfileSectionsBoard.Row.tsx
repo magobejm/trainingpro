@@ -3,8 +3,8 @@ import { Pressable, Text, View } from 'react-native';
 import { menuStyle, menuStyleTop, expandedRowStyle, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
 import { IconButton, colors } from '@trainerpro/ui';
-import { ClientTimelinePanel } from './ClientTimelinePanel';
 import { ClientComparePanel } from './ClientComparePanel';
+import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
 
 type Props = {
@@ -18,6 +18,7 @@ type Props = {
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
+  onOpenTimeline: () => void;
   onOpenTrainingPlanner: () => void;
   rowIndex: number;
   onToggleMenu: () => void;
@@ -31,7 +32,7 @@ type Props = {
 
 export function ClientProfileSectionRow(props: Props): React.JSX.Element {
   const dragProps = readDragProps(props.item.id, props.rowIndex, props.onDropReorderByIndex);
-  const hasInlinePanel = props.item.id === 'timeline' || props.item.id === 'compare';
+  const hasInlinePanel = props.item.id === 'compare';
   const rowMain = (
     <RowMain
       item={props.item}
@@ -42,6 +43,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
       onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
       onOpenTests={props.onOpenTests}
+      onOpenTimeline={props.onOpenTimeline}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={props.onToggleMenu}
       t={props.t}
@@ -53,11 +55,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
       {hasInlinePanel ? <View style={styles.rowPanelHeader}>{rowMain}</View> : rowMain}
       {hasInlinePanel ? (
         <View style={styles.inlinePanel}>
-          {props.item.id === 'timeline' ? (
-            <ClientTimelinePanel clientId={props.clientId} t={props.t} />
-          ) : (
-            <ClientComparePanel clientId={props.clientId} t={props.t} />
-          )}
+          <ClientComparePanel clientId={props.clientId} t={props.t} />
         </View>
       ) : null}
       {props.showMenu ? (
@@ -83,6 +81,7 @@ function RowMain(props: {
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
+  onOpenTimeline: () => void;
   onOpenTrainingPlanner: () => void;
   onToggleMenu: () => void;
   t: Props['t'];
@@ -95,22 +94,12 @@ function RowMain(props: {
       <View style={[styles.iconShell, { backgroundColor: props.item.badgeColor }]}>
         {props.item.icon({ color: props.item.iconColor || colors.textMuted, size: 18 })}
       </View>
-      <Pressable
-        onPress={() =>
-          onOpenSection(
-            props.item.id,
-            props.onOpenTrainingPlanner,
-            props.onOpenProgress,
-            props.onOpenNutrition,
-            props.onOpenTests,
-            props.onOpenMood,
-          )
-        }
-        style={styles.rowText}
-      >
+      <Pressable onPress={() => onOpenSection(props)} style={styles.rowText}>
         <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
         {props.item.id === 'progress' ? (
           <ClientProgressActivitySubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : props.item.id === 'timeline' ? (
+          <ClientTimelineSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : (
           <Text style={styles.rowSubtitle}>{subtitle}</Text>
         )}
@@ -120,7 +109,9 @@ function RowMain(props: {
         icon={(color) => <Text style={[styles.menuLabel, { color }]}>{'⋯'}</Text>}
         onPress={props.onToggleMenu}
       />
-      <Text style={styles.chevron}>{'›'}</Text>
+      <Pressable accessibilityRole="button" onPress={() => onOpenSection(props)}>
+        <Text style={styles.chevron}>{'›'}</Text>
+      </Pressable>
     </>
   );
 }
@@ -161,19 +152,21 @@ function readDragProps(
   };
 }
 
-function onOpenSection(
-  id: SectionId,
-  onOpenTrainingPlanner: () => void,
-  onOpenProgress?: () => void,
-  onOpenNutrition?: () => void,
-  onOpenTests?: () => void,
-  onOpenMood?: () => void,
-): void {
-  if (id === 'training') onOpenTrainingPlanner();
-  if (id === 'progress') onOpenProgress?.();
-  if (id === 'nutrition') onOpenNutrition?.();
-  if (id === 'tests') onOpenTests?.();
-  if (id === 'mood') onOpenMood?.();
+function onOpenSection(props: {
+  item: SectionItem;
+  onOpenMood?: () => void;
+  onOpenNutrition?: () => void;
+  onOpenProgress?: () => void;
+  onOpenTests?: () => void;
+  onOpenTimeline: () => void;
+  onOpenTrainingPlanner: () => void;
+}): void {
+  if (props.item.id === 'training') props.onOpenTrainingPlanner();
+  if (props.item.id === 'progress') props.onOpenProgress?.();
+  if (props.item.id === 'nutrition') props.onOpenNutrition?.();
+  if (props.item.id === 'tests') props.onOpenTests?.();
+  if (props.item.id === 'mood') props.onOpenMood?.();
+  if (props.item.id === 'timeline') props.onOpenTimeline();
 }
 
 function readSubtitle(

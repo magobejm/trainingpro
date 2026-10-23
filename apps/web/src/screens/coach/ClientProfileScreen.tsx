@@ -319,6 +319,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
       <RoutineAssignmentHistory clientId={props.vm.query.data!.id} />
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
+        clientName={`${props.vm.query.data!.firstName} ${props.vm.query.data!.lastName}`.trim()}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}
         onOpenMood={props.vm.onOpenMood}
         onOpenNutrition={props.vm.onOpenNutrition}

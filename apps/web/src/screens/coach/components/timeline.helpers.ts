@@ -2,7 +2,7 @@ import type { ClientTimelineItem } from '@trainerpro/shared';
 
 type Translate = (key: string, options?: Record<string, number | string>) => string;
 
-export const TIMELINE_FILTERS = ['all', 'session', 'chat', 'note', 'incident', 'test', 'photo'] as const;
+export const TIMELINE_FILTERS = ['all', 'session', 'chat', 'note', 'incident', 'test', 'photo', 'nutrition'] as const;
 export type TimelineFilter = (typeof TIMELINE_FILTERS)[number];
 export type TimelineTone = 'danger' | 'muted' | 'primary' | 'purple' | 'success' | 'warning';
 export type TimelineBadgeTone = 'muted' | 'primary' | 'success' | 'warning';
@@ -45,6 +45,7 @@ export function timelineKindTone(kind: ClientTimelineItem['kind']): TimelineTone
   if (kind === 'note') return 'purple';
   if (kind === 'incident') return 'danger';
   if (kind === 'test') return 'success';
+  if (kind === 'nutrition') return 'primary';
   return 'muted';
 }
 

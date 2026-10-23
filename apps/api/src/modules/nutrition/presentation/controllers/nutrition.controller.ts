@@ -1,11 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { NutritionPlanType, Prisma } from '@prisma/client';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { NutritionLogService } from '../../application/nutrition-log.service';
 import { NutritionService } from '../../application/nutrition.service';
+import { MealLogRangeDto } from '../dto/meal-log.dto';
 import { AssignPlanDto } from '../dto/assign-plan.dto';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
 import { CreateCheckpointDto } from '../dto/create-checkpoint.dto';
@@ -20,7 +22,10 @@ import { UpdatePlanDto } from '../dto/update-plan.dto';
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('coach')
 export class NutritionController {
-  constructor(private readonly nutritionService: NutritionService) {}
+  constructor(
+    private readonly nutritionService: NutritionService,
+    private readonly logs: NutritionLogService,
+  ) {}
 
   @Get('meals')
   async listMeals(@Req() request: HttpAuthRequest) {
@@ -82,6 +87,11 @@ export class NutritionController {
   async listClientPlans(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
     const items = await this.nutritionService.listPlansByClient(readAuthContext(request), params.clientId);
     return { items };
+  }
+
+  @Get('clients/:clientId/adherence')
+  async adherence(@Param() params: ClientIdParamDto, @Query() query: MealLogRangeDto, @Req() request: HttpAuthRequest) {
+    return this.logs.adherence(readAuthContext(request), params.clientId, query.from, query.to);
   }
 
   @Get('plans/:planId/checkpoints')

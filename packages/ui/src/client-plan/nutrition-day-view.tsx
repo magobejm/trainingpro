@@ -28,15 +28,17 @@ export function MacroTargetBars({
 
 export function DayMealsList({
   meals,
+  renderExtra,
   t,
 }: {
   meals: DayMealMacros[];
+  renderExtra?: (meal: DayMealMacros) => React.ReactNode;
   t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
   return (
     <View style={styles.list}>
       {meals.map((meal) => (
-        <MealBlock key={meal.key} meal={meal} t={t} />
+        <MealBlock extra={renderExtra?.(meal)} key={meal.key} meal={meal} t={t} />
       ))}
     </View>
   );
@@ -64,9 +66,11 @@ function MacroBar({
 }
 
 function MealBlock({
+  extra,
   meal,
   t,
 }: {
+  extra?: React.ReactNode;
   meal: DayMealMacros;
   t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
@@ -79,6 +83,7 @@ function MealBlock({
         </Text>
       ))}
       <Text style={styles.mealTotal}>{t('client.nutrition.mealKcal', { value: Math.round(meal.totals.caloriesKcal) })}</Text>
+      {extra}
     </View>
   );
 }

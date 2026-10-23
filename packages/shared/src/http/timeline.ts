@@ -9,7 +9,7 @@ export const clientTimelineItemSchema = z
     originDate: z.string().date().nullable().optional(),
     skipReason: z.string().nullable().optional(),
     id: z.string(),
-    kind: z.enum(['chat', 'incident', 'note', 'photo', 'session', 'test']),
+    kind: z.enum(['chat', 'incident', 'note', 'nutrition', 'photo', 'session', 'test']),
     occurredAt: z.string(),
     refId: z.string(),
     title: z.string(),

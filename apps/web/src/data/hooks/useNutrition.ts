@@ -140,6 +140,21 @@ export function useNutritionCheckpointsQuery(planId: string): UseQueryResult<Nut
   });
 }
 
+export function useNutritionAdherenceQuery(clientId: string, from: string, to: string) {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth) && Boolean(clientId),
+    queryFn: () =>
+      createApiClient(auth!).get<NutritionAdherence>(`/nutrition/clients/${clientId}/adherence?from=${from}&to=${to}`),
+    queryKey: ['nutrition', 'adherence', clientId, from, to, auth?.accessToken],
+  });
+}
+
+export type NutritionAdherence = {
+  days: Array<{ date: string; done: number; expected: number; percent: number | null }>;
+  summary: { done: number; expected: number; percent: number | null };
+};
+
 export function useCreateCheckpointMutation() {
   const auth = useAuth();
   const queryClient = useQueryClient();

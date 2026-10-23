@@ -17898,6 +17898,296 @@
         "x-pagination": [],
         "x-roles": ["admin", "coach", "client"]
       }
+    },
+    "/clients/me/nutrition/logs": {
+      "get": {
+        "operationId": "get_clients_me_nutrition_logs",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "GET /clients/me/nutrition/logs",
+        "x-controller": "ClientNutritionController",
+        "x-filters": ["from", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ]
+      },
+      "put": {
+        "operationId": "put_clients_me_nutrition_logs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "PUT /clients/me/nutrition/logs",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "UpsertMealLogDto",
+          "required": true
+        }
+      }
+    },
+    "/clients/me/nutrition/logs/{id}": {
+      "delete": {
+        "operationId": "delete_clients_me_nutrition_logs_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "DELETE /clients/me/nutrition/logs/{id}",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/clients/me/nutrition/logs/photo": {
+      "post": {
+        "operationId": "post_clients_me_nutrition_logs_photo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "POST /clients/me/nutrition/logs/photo",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Archivo",
+          "required": true
+        }
+      }
+    },
+    "/nutrition/clients/{clientId}/adherence": {
+      "get": {
+        "operationId": "get_nutrition_clients_clientId_adherence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "GET /nutrition/clients/{clientId}/adherence",
+        "x-controller": "NutritionController",
+        "x-filters": ["from", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ]
+      }
     }
   }
 }

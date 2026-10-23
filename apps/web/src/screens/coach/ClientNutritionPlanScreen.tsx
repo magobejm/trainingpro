@@ -14,6 +14,7 @@ import {
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
 import { CheckpointsModal } from './nutrition/CheckpointsModal';
 import { ClientNutritionToday } from './nutrition/ClientNutritionToday';
+import { ClientNutritionAdherence } from './nutrition/ClientNutritionAdherence';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
 import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
 import { styles } from './nutrition/nutrition.styles';
@@ -95,6 +96,7 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
       {activePlan ? (
         <>
           <ClientNutritionToday foods={foodsQuery.data ?? []} meals={mealsQuery.data ?? []} plan={activePlan} t={t} />
+          <ClientNutritionAdherence clientId={props.clientId} t={t} />
           <Text style={styles.sectionTitle}>{activePlan.name}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <ClientPreviewButton isDraft={false}>

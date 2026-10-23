@@ -3,6 +3,7 @@ import { sessionOutcome, sessionDateKey } from '@trainerpro/shared';
 import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
 import type { PrismaService } from '../../../../common/prisma/prisma.service';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
+import { readNutritionTimeline } from './nutrition-timeline';
 import {
   isBeforeCursor,
   pageTimeline,
@@ -27,6 +28,7 @@ export async function readClientTimeline(
     readIncidents(prisma, clientId, input.cursor, take),
     readTests(prisma, clientId, input.cursor, take),
     readPhotos(prisma, clientId, input.cursor, take),
+    readNutritionTimeline(prisma, clientId, take),
   ]);
   return pageTimeline(
     sources.flat().filter((item) => isBeforeCursor(item, input.cursor)),

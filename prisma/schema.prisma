@@ -107,6 +107,12 @@ enum NutritionPlanType {
   ESTRUCTURADO
 }
 
+enum NutritionMealStatus {
+  DONE
+  CHANGED
+  SKIPPED
+}
+
 model Organization {
   id                       String                    @id @default(uuid()) @db.Uuid
   name                     String                    @db.VarChar(120)
@@ -256,6 +262,7 @@ model Client {
   coachNotes                CoachNote[]                @relation("client_notes")
   calendarEvents            CalendarEvent[]            @relation("client_calendar_events")
   nutritionPlans            NutritionPlan[]            @relation("client_nutrition_plans")
+  nutritionMealLogs         NutritionMealLog[]
   clientPhysicalTests       ClientPhysicalTest[]
   clientPhysicalTestResults ClientPhysicalTestResult[]
   physicalTestSchedules     ClientPhysicalTestSchedule[]
@@ -2065,6 +2072,7 @@ model NutritionPlan {
   sourcePlan        NutritionPlan?            @relation("nutrition_plan_source", fields: [sourcePlanId], references: [id], onDelete: SetNull)
   derivedPlans      NutritionPlan[]           @relation("nutrition_plan_source")
   checkpoints       NutritionPlanCheckpoint[]
+  mealLogs          NutritionMealLog[]
 
   @@index([scope, archivedAt], map: "idx_nutrition_plan_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_nutrition_plan_coach_archived")
@@ -2089,6 +2097,27 @@ model NutritionPlanCheckpoint {
 
   @@index([planId, endDate], map: "idx_nutrition_plan_checkpoint_plan_end")
   @@map("nutrition_plan_checkpoint")
+}
+
+model NutritionMealLog {
+  id             String              @id @default(uuid()) @db.Uuid
+  organizationId String              @map("organization_id") @db.Uuid
+  clientId       String              @map("client_id") @db.Uuid
+  planId         String              @map("plan_id") @db.Uuid
+  date           DateTime            @db.Date
+  mealKey        String              @map("meal_key") @db.VarChar(80)
+  mealName       String              @map("meal_name") @db.VarChar(120)
+  status         NutritionMealStatus
+  comment        String?             @db.VarChar(500)
+  photoPath      String?             @map("photo_path")
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  plan           NutritionPlan       @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, planId, date, mealKey], map: "uq_nutrition_meal_log")
+  @@index([clientId, date], map: "idx_nutrition_meal_log_client_date")
+  @@map("nutrition_meal_log")
 }
 
 model PhysicalTest {

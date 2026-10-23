@@ -1,7 +1,7 @@
 export const TIMELINE_DEFAULT_LIMIT = 30;
 export const TIMELINE_MAX_LIMIT = 50;
 
-export type TimelineKind = 'chat' | 'incident' | 'note' | 'photo' | 'session' | 'test';
+export type TimelineKind = 'chat' | 'incident' | 'note' | 'nutrition' | 'photo' | 'session' | 'test';
 
 export type TimelineDraft = {
   outcome?: import('@trainerpro/shared').SessionOutcome;

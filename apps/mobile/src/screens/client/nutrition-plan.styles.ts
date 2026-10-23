@@ -37,4 +37,12 @@ export const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 16, marginHorizontal: 16 },
   toggleText: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
   toggleTextActive: { color: LIGHT.textOnNavy },
+  comment: {
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
+    marginTop: 8,
+    padding: 8,
+  },
 });

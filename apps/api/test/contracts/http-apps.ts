@@ -38,6 +38,7 @@ import { ListTemplatesUseCase } from '../../src/modules/plans/application/use-ca
 import { UpdateTemplateUseCase } from '../../src/modules/plans/application/use-cases/update-template.usecase';
 import { PlansController } from '../../src/modules/plans/presentation/controllers/plans.controller';
 import { PlanOwnershipGuard } from '../../src/modules/plans/presentation/guards/plan-ownership.guard';
+import { DiscardSessionUseCase } from '../../src/modules/sessions/application/use-cases/discard-session.usecase';
 import { EnsureSessionUseCase } from '../../src/modules/sessions/application/use-cases/ensure-session.usecase';
 import { FinishSessionUseCase } from '../../src/modules/sessions/application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../src/modules/sessions/application/use-cases/get-session.usecase';
@@ -93,6 +94,7 @@ export async function createPlansApp(): Promise<INestApplication> {
 export async function createSessionApp(): Promise<INestApplication> {
   return compile(SessionsController, [
     ...stub(
+      DiscardSessionUseCase,
       EnsureSessionUseCase,
       FinishSessionUseCase,
       LogCardioDistanceUseCase,

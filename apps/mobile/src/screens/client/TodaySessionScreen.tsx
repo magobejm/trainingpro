@@ -160,6 +160,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const [guardStep, setGuardStep] = useState<ShortWorkoutStep | null>(null);
   const [rpeVisible, setRpeVisible] = useState(false);
   const finishDurationSeconds = useRef<number | null>(null);
+  const finishInstant = useRef<string | null>(null);
   const discardGuard = useRef(false);
   const [finishBusy, setFinishBusy] = useState(false);
   const startPromptedRef = React.useRef(false);
@@ -226,6 +227,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     }
     const seconds = session ? freezeWorkoutDuration(session) : null;
     finishDurationSeconds.current = seconds;
+    finishInstant.current = new Date().toISOString();
     if (isShortWorkout(seconds)) {
       setGuardStep('register');
       return;
@@ -263,7 +265,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
       if (finishBusy) return;
       setFinishBusy(true);
       void actions
-        .enqueueFinish(sessionRpe, finishDurationSeconds.current)
+        .enqueueFinish(sessionRpe, finishDurationSeconds.current, finishInstant.current)
         .then(async (outcome) => {
           if (outcome === 'conflict' || outcome === 'missing') {
             setRpeVisible(false);

@@ -13,7 +13,7 @@ import { EnsureCardioSessionDto } from '../dto/ensure-cardio-session.dto';
 import { FinishSessionDto } from '../dto/finish-session.dto';
 import { LogIntervalDto } from '../dto/log-interval.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
-import { readTimezoneOffset as readOffset } from '../read-timezone-offset';
+import { readOccurredAt, readTimezoneOffset as readOffset } from '../read-timezone-offset';
 
 @Controller('sessions/cardio')
 @UseGuards(AuthGuard, RolesGuard)
@@ -51,9 +51,15 @@ export class SessionsCardioController {
     @Body() body: LogIntervalDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logIntervalUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logIntervalUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/finish')
@@ -69,6 +75,7 @@ export class SessionsCardioController {
       {
         comment: body.comment,
         isIncomplete: body.isIncomplete,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : undefined,
         sessionId: params.sessionId,
         performedDurationSeconds: body.performedDurationSeconds,
         sessionRpe: body.sessionRpe,

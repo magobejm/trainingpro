@@ -60,7 +60,7 @@ function applyFinish(session: SessionView, op: SessionOp): SessionView {
   return {
     ...session,
     finishComment: textOrNull(body['comment']),
-    finishedAt: session.finishedAt ?? op.createdAt,
+    finishedAt: textOrNull(body['finishedAt']) ?? session.finishedAt ?? op.createdAt,
     performedDurationSeconds: numOrNull(body['performedDurationSeconds']) ?? session.performedDurationSeconds ?? null,
     isCompleted: true,
     isIncomplete: body['isIncomplete'] === true,

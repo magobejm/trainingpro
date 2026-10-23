@@ -158,7 +158,7 @@ async function flushStored(context: FlushContext): Promise<void> {
 
 async function postDraft(context: FlushContext, current: SessionDraft): Promise<SessionDraft> {
   const client = createApiClient({ accessToken: context.accessToken ?? '', activeRole: context.activeRole ?? 'client' });
-  const flushed = await flushQueue({ post: (path, body) => client.post(path, body) }, current);
+  const flushed = await flushQueue({ post: (path, body, headers) => client.post(path, body, headers) }, current);
   const removed = removedOps(current, flushed);
   const session = flushed.session ? applyPendingOps(flushed.session, removed) : flushed.session;
   return {
@@ -189,4 +189,18 @@ function readEnqueueResult(draft: SessionDraft | null, dedupeKey: string): Enque
   if (draft.ops.some((op) => op.dedupeKey === dedupeKey)) return 'pending';
   if (draft.conflicts.some((conflict) => conflict.op.dedupeKey === dedupeKey)) return 'conflict';
   return 'synced';
+}
+
+export function requestSessionFlush(sessionId: string, queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
+  const auth = useAuthStore.getState();
+  return scheduleFlush(sessionId, () =>
+    flushStored({
+      accessToken: auth.accessToken,
+      activeRole: auth.activeRole,
+      draftRef: { current: null },
+      queryClient,
+      sessionId,
+      setDraft: () => undefined,
+    }),
+  );
 }

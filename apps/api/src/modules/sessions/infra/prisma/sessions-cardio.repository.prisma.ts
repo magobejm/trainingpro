@@ -7,13 +7,14 @@ import { createOrReread, writeOrUpdate } from '../../../../common/prisma/unique-
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import type { CardioIntervalLog, CardioSessionInstance } from '../../domain/cardio-session.entity';
 import type { EnsureCardioSessionInput, LogIntervalInput } from '../../domain/cardio-session.input';
+import type { SessionWriteOptions } from '../../domain/sessions-repository.port';
 import type { FinishSessionInput } from '../../domain/session.input';
 import { finishIfOpen } from './session-concurrency';
+import { assertWritableSession, takeStaleFinish } from './session-finish-replace';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
 import { attachRevisionInstructions } from '../../../plans/infra/prisma/routine-revision.prisma';
 import {
-  assertCardioSessionMutable,
   cardioSessionInclude,
   mapCardioIntervalLog,
   mapCardioSession,
@@ -40,26 +41,24 @@ export class SessionsCardioRepositoryPrisma {
   }
 
   async finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    if (!input.finishedAt) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readCardioSessionForMutation(input.sessionId, db);
       if (session.skippedAt) throw new BadRequestException('Session marked as skipped');
+      const replaced = await takeStaleFinish(
+        session,
+        input,
+        () => replaceStaleCardioFinish(db, context, session.id, input),
+        () => this.readCardioSessionForMutation(input.sessionId, db),
+      );
+      if (replaced) return mapCardioSession(replaced);
       const row = await finishIfOpen(
         session,
         input,
         async () => {
           const updated = await db.sessionInstance.updateMany({
             where: { id: session.id, status: { not: SessionStatus.COMPLETED } },
-            data: {
-              ...buildUpdateAuditFields(context),
-              finishComment: normalizeText(input.comment),
-              finishedAt: new Date(),
-              performedDurationSeconds: input.performedDurationSeconds ?? null,
-              isCompleted: true,
-              isIncomplete: input.isIncomplete,
-              sessionRpe: input.sessionRpe ?? null,
-              status: SessionStatus.COMPLETED,
-            },
+            data: cardioFinishData(context, input),
           });
           return updated.count;
         },
@@ -69,8 +68,12 @@ export class SessionsCardioRepositoryPrisma {
     });
   }
 
-  async getCardioSessionById(context: AuthContext, sessionId: string): Promise<CardioSessionInstance | null> {
-    await closeStaleSessions(this.prisma, { sessionId });
+  async getCardioSessionById(
+    context: AuthContext,
+    sessionId: string,
+    options?: SessionWriteOptions,
+  ): Promise<CardioSessionInstance | null> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId });
     const row = await this.prisma.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
@@ -85,16 +88,17 @@ export class SessionsCardioRepositoryPrisma {
   async logCardioDistance(
     context: AuthContext,
     input: { sessionId: string; blockId: string; distanceDoneMeters: number | null },
+    options?: SessionWriteOptions,
   ) {
     if (
       input.distanceDoneMeters !== null &&
       (!Number.isFinite(input.distanceDoneMeters) || input.distanceDoneMeters < 0 || input.distanceDoneMeters > 500000)
     )
       throw new BadRequestException('Invalid distance');
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
-      assertCardioSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await this.readSessionCardioBlock(input.sessionId, input.blockId, db);
       if (!block) throw new NotFoundException('Session cardio block not found');
       void context;
@@ -106,11 +110,15 @@ export class SessionsCardioRepositoryPrisma {
     });
   }
 
-  async logInterval(context: AuthContext, input: LogIntervalInput): Promise<CardioIntervalLog | null> {
-    await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+  async logInterval(
+    context: AuthContext,
+    input: LogIntervalInput,
+    options?: SessionWriteOptions,
+  ): Promise<CardioIntervalLog | null> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
       const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
-      assertCardioSessionMutable(session.status, session.skippedAt);
+      assertWritableSession(session, options);
       const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId, db);
       if (!block) {
         throw new NotFoundException('Session cardio block not found');
@@ -338,4 +346,38 @@ export class SessionsCardioRepositoryPrisma {
 function normalizeText(value: null | string | undefined): null | string {
   const normalized = value?.trim();
   return normalized ? normalized : null;
+}
+
+function cardioFinishData(context: AuthContext, input: FinishSessionInput) {
+  return {
+    ...buildUpdateAuditFields(context),
+    finishComment: normalizeText(input.comment),
+    finishedAt: input.finishedAt ?? new Date(),
+    isCompleted: true,
+    isIncomplete: input.isIncomplete,
+    performedDurationSeconds: input.performedDurationSeconds ?? null,
+    sessionRpe: input.sessionRpe ?? null,
+    status: SessionStatus.COMPLETED,
+  };
+}
+
+function replaceStaleCardioFinish(
+  db: Prisma.TransactionClient,
+  context: AuthContext,
+  sessionId: string,
+  input: FinishSessionInput,
+): Promise<number> {
+  return db.sessionInstance
+    .updateMany({
+      data: cardioFinishData(context, input),
+      where: {
+        finishComment: null,
+        id: sessionId,
+        isIncomplete: true,
+        performedDurationSeconds: null,
+        sessionRpe: null,
+        status: SessionStatus.COMPLETED,
+      },
+    })
+    .then((updated) => updated.count);
 }

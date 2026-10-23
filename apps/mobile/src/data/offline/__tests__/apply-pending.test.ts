@@ -79,7 +79,7 @@ it('replays header distance independently of series and preserves frozen duratio
     kind: 'finish',
     path: '/sessions/session-1/finish',
     dedupeKey: 'finish',
-    body: { isIncomplete: false, performedDurationSeconds: 120 },
+    body: { finishedAt: '2026-10-12T08:12:00.000Z', isIncomplete: false, performedDurationSeconds: 120 },
   });
   const view = applyPendingOps(session, done.ops);
   expect(view.items[0]).toMatchObject({
@@ -87,5 +87,6 @@ it('replays header distance independently of series and preserves frozen duratio
     intervalLogs: [{ intervalIndex: 1, durationSecondsDone: 40 }],
   });
   expect(view.performedDurationSeconds).toBe(120);
+  expect(view.finishedAt).toBe('2026-10-12T08:12:00.000Z');
   expect(applyPendingOps(view, done.ops)).toEqual(view);
 });

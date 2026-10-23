@@ -26,6 +26,7 @@ import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
 import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
+import { usePendingDraftFlush } from '../../data/hooks/usePendingDraftFlush';
 import { useHardwareBack } from './use-hardware-back';
 import { useNotificationTargetStore } from '../../store/notification-target.store';
 type ListOverlay = Extract<OverlayId, 'calendar' | 'planning' | 'routine'>;
@@ -259,6 +260,7 @@ function ClientShellBody(): React.JSX.Element {
   const st = useShellState();
   useHardwareBack(st);
   useClientNotification(st.openSession);
+  usePendingDraftFlush();
   const showBottomNav = st.overlay === null;
 
   return (

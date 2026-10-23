@@ -14,6 +14,8 @@ export type EnsureSessionForClientInput = EnsureSessionInput & {
 export type FinishSessionInput = {
   performedDurationSeconds?: null | number;
   comment?: null | string;
+  /** Instant captured on the phone. Absent means the server clock. */
+  finishedAt?: Date | null;
   isIncomplete: boolean;
   postFatigue?: null | number;
   postMood?: null | number;

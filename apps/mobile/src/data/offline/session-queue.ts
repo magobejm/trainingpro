@@ -3,7 +3,7 @@ import { ApiClientError } from '../api-client';
 import type { ConflictReason, SessionDraft, SessionOp } from './session-draft';
 
 export type SessionTransport = {
-  post: (path: string, body: unknown) => Promise<unknown>;
+  post: (path: string, body: unknown, headers?: Record<string, string>) => Promise<unknown>;
 };
 
 export type FlushOutcome =
@@ -19,7 +19,7 @@ export async function flushQueue(transport: SessionTransport, draft: SessionDraf
     const op = draft.ops[index];
     if (!op) continue;
     try {
-      const response = await transport.post(op.path, op.body);
+      const response = await transport.post(op.path, op.body, { 'X-Occurred-At': op.createdAt });
       if (isSessionSnapshot(response)) session = response;
     } catch (error) {
       const outcome = classifyFlushError(error);

@@ -31,7 +31,7 @@ import { LogSportDto } from '../dto/log-sport.dto';
 import { SessionIdParamDto } from '../dto/session-id-param.dto';
 import { SportBlockSetParamsDto } from '../dto/sport-block-set-params.dto';
 import { StartSessionDto } from '../dto/start-session.dto';
-import { readTimezoneOffset as readOffset } from '../read-timezone-offset';
+import { readOccurredAt, readTimezoneOffset as readOffset } from '../read-timezone-offset';
 
 @Controller('sessions')
 @UseGuards(AuthGuard, RolesGuard)
@@ -83,11 +83,13 @@ export class SessionsController {
     @Body() body: CardioDistanceDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     return this.logCardioDistanceUseCase.execute(
       readAuthContext(request),
       { ...params, ...body },
       readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
     );
   }
 
@@ -97,9 +99,15 @@ export class SessionsController {
     @Body() body: LogIntervalDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logIntervalUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logIntervalUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/log-plio-set')
@@ -108,9 +116,15 @@ export class SessionsController {
     @Body() body: LogPlioSetDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logPlioSetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logPlioSetUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/log-mobility-set')
@@ -119,9 +133,15 @@ export class SessionsController {
     @Body() body: LogMobilitySetDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logMobilitySetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logMobilitySetUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/log-isometric-set')
@@ -130,9 +150,15 @@ export class SessionsController {
     @Body() body: LogIsometricSetDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logIsometricSetUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logIsometricSetUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/log-sport')
@@ -141,9 +167,15 @@ export class SessionsController {
     @Body() body: LogSportDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
-    return this.logSportUseCase.execute(auth, { ...body, sessionId: params.sessionId }, readOffset(timezoneOffset));
+    return this.logSportUseCase.execute(
+      auth,
+      { ...body, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
   }
 
   @Post(':sessionId/sport-blocks/:blockId/sets')
@@ -152,12 +184,14 @@ export class SessionsController {
     @Body() body: LogSportSetDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
     return this.logSportSetUseCase.execute(
       auth,
       { ...body, sessionId: params.sessionId, sessionSportBlockId: params.blockId },
       readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
     );
   }
 
@@ -167,12 +201,14 @@ export class SessionsController {
     @Body() body: LogSetDto,
     @Req() request: HttpAuthRequest,
     @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
   ) {
     const auth = readAuthContext(request);
     const entry = await this.logSetUseCase.execute(
       auth,
       { ...body, sessionId: params.sessionId },
       readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
     );
     return entry;
   }
@@ -199,6 +235,7 @@ export class SessionsController {
         postFatigue: body.postFatigue,
         postMood: body.postMood,
         postPain: body.postPain,
+        finishedAt: body.finishedAt ? new Date(body.finishedAt) : undefined,
         sessionId: params.sessionId,
         performedDurationSeconds: body.performedDurationSeconds,
         sessionRpe: body.sessionRpe,

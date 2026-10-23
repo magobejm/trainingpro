@@ -77,6 +77,15 @@ describe('session concurrency', () => {
   });
 });
 
+it('retries the same phone finish time and rejects a different one', () => {
+  const finishedAt = new Date('2026-09-07T18:00:00.000Z');
+  expect(sameFinish({ ...completed, finishedAt }, { ...input, finishedAt })).toBe(true);
+  expect(sameFinish({ ...completed, finishedAt }, { ...input, finishedAt: new Date('2026-09-07T18:05:00.000Z') })).toBe(
+    false,
+  );
+  expect(sameFinish({ ...completed, finishedAt }, input)).toBe(true);
+});
+
 it('retries an identical frozen duration but rejects changing a completed duration', () => {
   expect(sameFinish({ ...completed, performedDurationSeconds: 120 }, { ...input, performedDurationSeconds: 120 })).toBe(
     true,

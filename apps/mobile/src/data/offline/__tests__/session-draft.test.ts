@@ -1,5 +1,13 @@
 import type { KvBackend } from '../../chunked-storage';
-import { createSessionDraft, readSessionDraft, upsertOp, writeSessionDraft, type SessionOpInput } from '../session-draft';
+import {
+  createSessionDraft,
+  readPendingSessionIds,
+  readSessionDraft,
+  removeSessionDraft,
+  upsertOp,
+  writeSessionDraft,
+  type SessionOpInput,
+} from '../session-draft';
 import { sampleSession } from './sample-session';
 
 describe('session draft', () => {
@@ -18,6 +26,9 @@ describe('session draft', () => {
     await writeSessionDraft(draft, backend);
     const restored = await readSessionDraft(draft.sessionId, backend);
     expect(restored).toEqual(draft);
+    expect(await readPendingSessionIds(backend)).toEqual([draft.sessionId]);
+    await removeSessionDraft(draft.sessionId, backend);
+    expect(await readPendingSessionIds(backend)).toEqual([]);
   });
 });
 

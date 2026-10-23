@@ -4,6 +4,7 @@ import { EditWindowPolicy } from '../../domain/policies/edit-window.policy';
 import { SessionAccessPolicy } from '../../domain/policies/session-access.policy';
 import type { LogSportSetInput } from '../../domain/session.input';
 import { SESSIONS_REPOSITORY, type SessionsRepositoryPort } from '../../domain/sessions-repository.port';
+import { guardSessionWrite, keepQueuedSessionOpen } from '../guard-session-write';
 
 @Injectable()
 export class LogSportSetUseCase {
@@ -13,12 +14,21 @@ export class LogSportSetUseCase {
     private readonly editWindowPolicy: EditWindowPolicy,
   ) {}
 
-  async execute(context: AuthContext, input: LogSportSetInput, timezoneOffsetMinutes: number) {
+  async execute(
+    context: AuthContext,
+    input: LogSportSetInput,
+    timezoneOffsetMinutes: number,
+    occurredAt: Date | null = null,
+  ) {
     await this.accessPolicy.assertCanAccess(context, input.sessionId);
-    const session = await this.repository.getSessionById(context, input.sessionId);
-    if (session) {
-      this.editWindowPolicy.assertCanEdit(session.sessionDate, new Date(), timezoneOffsetMinutes);
-    }
-    return this.repository.logSportSet(context, input);
+    await guardSessionWrite(
+      this.repository,
+      this.editWindowPolicy,
+      context,
+      input.sessionId,
+      timezoneOffsetMinutes,
+      occurredAt,
+    );
+    return this.repository.logSportSet(context, input, keepQueuedSessionOpen(occurredAt));
   }
 }

@@ -111,10 +111,13 @@ export async function readSessionDraft(
 
 export async function writeSessionDraft(draft: SessionDraft, backend: KvBackend = defaultDraftBackend()): Promise<void> {
   await createChunkedStorage(backend).setItem(draftKey(draft.sessionId), JSON.stringify(draft));
+  if (draft.ops.length > 0) await rememberPendingSession(draft.sessionId, backend);
+  else await forgetPendingSession(draft.sessionId, backend);
 }
 
 export async function removeSessionDraft(sessionId: string, backend: KvBackend = defaultDraftBackend()): Promise<void> {
   await createChunkedStorage(backend).removeItem(draftKey(sessionId));
+  await forgetPendingSession(sessionId, backend);
 }
 
 export async function rememberSession(session: SessionView, backend: KvBackend = defaultDraftBackend()): Promise<void> {
@@ -234,6 +237,32 @@ function parseDraft(raw: string): SessionDraft | null {
 
 function draftKey(sessionId: string): string {
   return `tp.session-draft.${sessionId}`;
+}
+
+const PENDING_INDEX_KEY = 'tp.session-draft.index';
+
+export async function readPendingSessionIds(backend: KvBackend = defaultDraftBackend()): Promise<string[]> {
+  const raw = await backend.getItem(PENDING_INDEX_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === 'string');
+  } catch {
+    return [];
+  }
+}
+
+async function rememberPendingSession(sessionId: string, backend: KvBackend): Promise<void> {
+  const ids = await readPendingSessionIds(backend);
+  if (ids.includes(sessionId)) return;
+  await backend.setItem(PENDING_INDEX_KEY, JSON.stringify([...ids, sessionId]));
+}
+
+async function forgetPendingSession(sessionId: string, backend: KvBackend): Promise<void> {
+  const ids = await readPendingSessionIds(backend);
+  if (!ids.includes(sessionId)) return;
+  await backend.setItem(PENDING_INDEX_KEY, JSON.stringify(ids.filter((id) => id !== sessionId)));
 }
 
 function createOpId(): string {

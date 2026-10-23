@@ -55,6 +55,27 @@ export function finishSessionWithRpePayload(value: number): {
   };
 }
 
+export function finishSessionBody(
+  sessionRpe: number,
+  performedDurationSeconds: number | null,
+  finishedAt?: string | null,
+): {
+  comment: null;
+  finishedAt?: string;
+  isIncomplete: false;
+  performedDurationSeconds: number | null;
+  postFatigue: null;
+  postMood: null;
+  postPain: null;
+  sessionRpe: number;
+} {
+  return {
+    ...finishSessionWithRpePayload(sessionRpe),
+    ...(finishedAt ? { finishedAt } : {}),
+    performedDurationSeconds,
+  };
+}
+
 export function formatSessionRpeChatNotice(value: number, label: string): string {
   return `RPE de la sesión registrado: ${formatSessionRpe(value)}/10 (${label}).`;
 }

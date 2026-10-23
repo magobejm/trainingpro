@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { EditWindowPolicy } from '../../src/modules/sessions/domain/policies/edit-window.policy';
 import { readTimezoneOffset } from '../../src/modules/sessions/presentation/read-timezone-offset';
 
@@ -54,6 +54,38 @@ describe('EditWindowPolicy', () => {
   it('allows logging during the evening in UTC-4', () => {
     const now = new Date('2026-09-08T03:00:00.000Z');
     expect(() => policy.assertCanEdit(sessionDate, now, -240)).not.toThrow();
+  });
+
+  it('stores a phone finish from the session day after the server clock has moved on', () => {
+    const now = new Date('2026-09-08T08:00:00.000Z');
+    const finishedAt = new Date('2026-09-07T18:00:00.000Z');
+    expect(policy.resolveWriteInstant(sessionDate, now, 120, finishedAt)).toEqual(finishedAt);
+  });
+
+  it('rejects a phone finish more than two minutes ahead of the server', () => {
+    const now = new Date('2026-09-07T18:00:00.000Z');
+    const finishedAt = new Date('2026-09-07T18:03:00.000Z');
+    expect(() => policy.resolveWriteInstant(sessionDate, now, 120, finishedAt)).toThrow(BadRequestException);
+  });
+
+  it('rejects a phone finish from outside the session day', () => {
+    const now = new Date('2026-09-07T18:00:00.000Z');
+    const before = new Date('2026-09-06T21:00:00.000Z');
+    expect(() => policy.resolveWriteInstant(sessionDate, now, 120, before)).toThrow(ForbiddenException);
+  });
+
+  it('rejects a queued finish more than 24 hours after the session day', () => {
+    const now = new Date('2026-09-08T22:00:00.000Z');
+    const finishedAt = new Date('2026-09-07T18:00:00.000Z');
+    expect(() => policy.resolveWriteInstant(sessionDate, now, 120, finishedAt)).toThrow(ForbiddenException);
+  });
+
+  it('keeps the server clock when the client does not send a time', () => {
+    const now = new Date('2026-09-07T18:50:00.000Z');
+    expect(policy.resolveWriteInstant(sessionDate, now, 120, null)).toEqual(now);
+    expect(() => policy.resolveWriteInstant(sessionDate, new Date('2026-09-07T22:00:00.000Z'), 120, null)).toThrow(
+      ForbiddenException,
+    );
   });
 
   it('drops an offset outside the real timezone range', () => {

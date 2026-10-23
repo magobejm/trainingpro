@@ -20,6 +20,7 @@ export type FoodSnapshotRow = {
   carbsG: number | null;
   fatG: number | null;
   fiberG: Prisma.Decimal | null;
+  foodCategory: string | null;
   id: string;
   micronutrients: string[];
   name: string;
@@ -85,6 +86,7 @@ const MEAL_INCLUDE = {
           carbsG: true,
           fatG: true,
           fiberG: true,
+          foodCategory: true,
           id: true,
           micronutrients: true,
           name: true,
@@ -380,6 +382,7 @@ export class NutritionRepository extends LibraryBaseRepository {
         carbsG: true,
         fatG: true,
         fiberG: true,
+        foodCategory: true,
         id: true,
         micronutrients: true,
         name: true,

@@ -38,6 +38,7 @@ export type FoodConsiderationOutput = {
   carbsG?: number | null;
   considerations: Consideration[];
   fatG?: number | null;
+  foodCategory?: string | null;
   id: string;
   name: string;
   proteinG?: number | null;
@@ -99,6 +100,7 @@ export function mapFoodConsideration(food: FoodSnapshotRow): FoodConsiderationOu
     carbsG: food.carbsG,
     considerations: evaluateFoodConsiderations(snapshot, food.id),
     fatG: food.fatG,
+    foodCategory: food.foodCategory,
     id: food.id,
     name: food.name,
     proteinG: food.proteinG,

@@ -20,8 +20,9 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { NutritionLogService } from '../../application/nutrition-log.service';
+import { NutritionSubstituteService } from '../../application/nutrition-substitute.service';
 import { NutritionService } from '../../application/nutrition.service';
-import { MealLogIdParamDto, MealLogRangeDto, UpsertMealLogDto } from '../dto/meal-log.dto';
+import { MealLogIdParamDto, MealLogRangeDto, SubstituteQueryDto, UpsertMealLogDto } from '../dto/meal-log.dto';
 
 @Controller('clients')
 @UseGuards(AuthGuard, RolesGuard)
@@ -30,6 +31,7 @@ export class ClientNutritionController {
   constructor(
     private readonly nutritionService: NutritionService,
     private readonly logs: NutritionLogService,
+    private readonly substitutes: NutritionSubstituteService,
   ) {}
 
   @Get('me/nutrition')
@@ -40,6 +42,11 @@ export class ClientNutritionController {
   @Get('me/nutrition/logs')
   async listLogs(@Query() query: MealLogRangeDto, @Req() request: HttpAuthRequest) {
     return { items: await this.logs.listMine(readAuthContext(request), query.from, query.to) };
+  }
+
+  @Get('me/nutrition/substitutes')
+  async listSubstitutes(@Query() query: SubstituteQueryDto, @Req() request: HttpAuthRequest) {
+    return this.substitutes.list(readAuthContext(request), query.foodId, query.grams);
   }
 
   @Put('me/nutrition/logs')

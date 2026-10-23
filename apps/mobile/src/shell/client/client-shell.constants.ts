@@ -8,6 +8,7 @@ export type OverlayId =
   | 'measures'
   | 'mood'
   | 'nutrition'
+  | 'shopping'
   | 'physicalTests'
   | 'planning'
   | 'profile'

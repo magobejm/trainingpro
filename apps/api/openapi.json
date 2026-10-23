@@ -18188,6 +18188,68 @@
           }
         ]
       }
+    },
+    "/clients/me/nutrition/substitutes": {
+      "get": {
+        "operationId": "get_clients_me_nutrition_substitutes",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "foodId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "grams",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "GET /clients/me/nutrition/substitutes",
+        "x-controller": "ClientNutritionController",
+        "x-filters": ["foodId", "grams"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ]
+      }
     }
   }
 }

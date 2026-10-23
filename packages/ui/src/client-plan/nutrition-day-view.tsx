@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import type { DayMealMacros, MacroComparison } from '@trainerpro/shared';
 import { LIGHT } from './light';
 
@@ -28,17 +28,19 @@ export function MacroTargetBars({
 
 export function DayMealsList({
   meals,
+  onPressItem,
   renderExtra,
   t,
 }: {
   meals: DayMealMacros[];
+  onPressItem?: (item: DayMealMacros['items'][number]) => void;
   renderExtra?: (meal: DayMealMacros) => React.ReactNode;
   t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
   return (
     <View style={styles.list}>
       {meals.map((meal) => (
-        <MealBlock extra={renderExtra?.(meal)} key={meal.key} meal={meal} t={t} />
+        <MealBlock extra={renderExtra?.(meal)} key={meal.key} meal={meal} onPressItem={onPressItem} t={t} />
       ))}
     </View>
   );
@@ -68,19 +70,21 @@ function MacroBar({
 function MealBlock({
   extra,
   meal,
+  onPressItem,
   t,
 }: {
   extra?: React.ReactNode;
   meal: DayMealMacros;
+  onPressItem?: (item: DayMealMacros['items'][number]) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 }): React.JSX.Element {
   return (
     <View style={styles.meal}>
       <Text style={styles.mealTitle}>{mealTitle(meal, t)}</Text>
       {meal.items.map((item, index) => (
-        <Text key={`${meal.key}-${index}`} style={styles.item}>
-          {itemLine(item.name, item.amountGrams, item.totals.caloriesKcal, t)}
-        </Text>
+        <Pressable key={`${meal.key}-${index}`} onPress={onPressItem ? () => onPressItem(item) : undefined}>
+          <Text style={styles.item}>{itemLine(item.name, item.amountGrams, item.totals.caloriesKcal, t)}</Text>
+        </Pressable>
       ))}
       <Text style={styles.mealTotal}>{t('client.nutrition.mealKcal', { value: Math.round(meal.totals.caloriesKcal) })}</Text>
       {extra}

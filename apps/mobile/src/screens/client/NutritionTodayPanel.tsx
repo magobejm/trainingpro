@@ -1,5 +1,5 @@
 import { DayMealsList, MacroTargetBars } from '@trainerpro/ui';
-import React from 'react';
+import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import {
   buildDayMacros,
@@ -13,6 +13,7 @@ import {
 import type { ClientNutrition, NutritionPlan } from '../../data/hooks/useClientNutrition';
 import { useNutritionLogs } from '../../data/hooks/useNutritionLogs';
 import { NutritionMealActions } from './NutritionMealActions';
+import { NutritionSubstituteSheet } from './NutritionSubstituteSheet';
 import { styles } from './nutrition-plan.styles';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -40,6 +41,7 @@ export function NutritionTodayPanel({
     (data.meals ?? []) as MealMacroSource[],
     (data.foods ?? []) as FoodMacroSource[],
   );
+  const [selected, setSelected] = useState<{ foodId: string; grams: number; name: string } | null>(null);
   const planned = macros.total;
   return (
     <>
@@ -73,20 +75,34 @@ export function NutritionTodayPanel({
           <Text style={styles.empty}>{t('client.nutrition.noMealsToday')}</Text>
         </View>
       ) : (
-        <DayMealsList
-          meals={macros.meals}
-          renderExtra={(meal) => (
-            <NutritionMealActions
-              date={dateKey}
-              mealKey={meal.key}
-              mealName={meal.name}
-              planId={plan.id}
-              saved={logs.data?.find((log) => log.mealKey === meal.key && log.planId === plan.id)}
+        <>
+          <DayMealsList
+            meals={macros.meals}
+            onPressItem={(item) => {
+              if (item.foodId) setSelected({ foodId: item.foodId, grams: item.amountGrams ?? 100, name: item.name });
+            }}
+            renderExtra={(meal) => (
+              <NutritionMealActions
+                date={dateKey}
+                mealKey={meal.key}
+                mealName={meal.name}
+                planId={plan.id}
+                saved={logs.data?.find((log) => log.mealKey === meal.key && log.planId === plan.id)}
+                t={t}
+              />
+            )}
+            t={t}
+          />
+          {selected ? (
+            <NutritionSubstituteSheet
+              foodId={selected.foodId}
+              grams={selected.grams}
+              name={selected.name}
+              onClose={() => setSelected(null)}
               t={t}
             />
-          )}
-          t={t}
-        />
+          ) : null}
+        </>
       )}
     </>
   );

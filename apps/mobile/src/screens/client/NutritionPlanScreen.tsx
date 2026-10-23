@@ -10,7 +10,7 @@ import { moveNutritionDay, NutritionTodayPanel } from './NutritionTodayPanel';
 import { styles } from './nutrition-plan.styles';
 import { LIGHT } from '../../theme/light';
 
-type Props = { onClose: () => void };
+type Props = { onClose: () => void; onOpenShopping: () => void };
 type PlanTab = 'estructurado' | 'libre';
 type ScreenView = 'plan' | 'today';
 type ClientNutritionFoods = ClientNutrition['foods'];
@@ -18,7 +18,7 @@ type ClientNutritionMeals = ClientNutrition['meals'];
 
 const SPINNER_SIZE = 'large' as const;
 
-export function NutritionPlanScreen({ onClose }: Props): React.JSX.Element {
+export function NutritionPlanScreen({ onClose, onOpenShopping }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const query = useClientNutritionQuery();
   const [activeTab, setActiveTab] = useState<PlanTab | null>(null);
@@ -42,6 +42,7 @@ export function NutritionPlanScreen({ onClose }: Props): React.JSX.Element {
           setView={setView}
           t={t}
           view={view}
+          onOpenShopping={onOpenShopping}
         />
       </ScrollView>
     </View>
@@ -58,6 +59,7 @@ function NutritionBody(props: {
   setView: (view: ScreenView) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   view: ScreenView;
+  onOpenShopping: () => void;
 }): React.JSX.Element {
   if (props.query.isLoading) {
     return (
@@ -86,6 +88,9 @@ function NutritionBody(props: {
       <ViewToggle onChange={props.setView} t={props.t} view={props.view} />
       {showToggle ? <PlanToggle active={props.resolvedTab} onChange={props.setActiveTab} t={props.t} /> : null}
       {props.activePlan.name ? <Text style={styles.planName}>{props.activePlan.name}</Text> : null}
+      <Pressable onPress={props.onOpenShopping}>
+        <Text style={styles.dayLabel}>{props.t('client.nutrition.shopping')}</Text>
+      </Pressable>
       {props.view === 'today' ? (
         <NutritionTodayPanel
           data={props.query.data}

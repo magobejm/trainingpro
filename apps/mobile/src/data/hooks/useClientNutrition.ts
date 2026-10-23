@@ -45,6 +45,7 @@ export type ClientNutrition = {
     carbsG?: number | null;
     considerations?: NutritionConsideration[];
     fatG?: number | null;
+    foodCategory?: string | null;
     id: string;
     name: string;
     proteinG?: number | null;

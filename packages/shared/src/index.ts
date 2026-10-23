@@ -87,6 +87,7 @@ export * from './client-plan/warmup-schema';
 export * from './client-plan/nutrition';
 export * from './client-plan/nutrition-day';
 export * from './client-plan/nutrition-adherence';
+export * from './client-plan/nutrition-shopping';
 export * from './client-plan/exercise-groups';
 export * from './client-plan/routine-sets';
 

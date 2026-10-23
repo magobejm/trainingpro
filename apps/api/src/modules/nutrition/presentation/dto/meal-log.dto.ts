@@ -30,6 +30,16 @@ export class MealLogRangeDto {
   to!: string;
 }
 
+export class SubstituteQueryDto {
+  static schema = z.object({
+    foodId: z.string().uuid(),
+    grams: z.coerce.number().positive().max(5000),
+  });
+
+  foodId!: string;
+  grams!: number;
+}
+
 export class MealLogIdParamDto {
   static schema = z.object({ id: z.string().uuid() });
   id!: string;

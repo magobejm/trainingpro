@@ -12,6 +12,7 @@ import { ClientPlanningScreen } from '../../screens/client/ClientPlanningScreen'
 import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { IncidentsScreen } from '../../screens/client/IncidentsScreen';
 import { NutritionPlanScreen } from '../../screens/client/NutritionPlanScreen';
+import { ShoppingListScreen } from '../../screens/client/ShoppingListScreen';
 import { PhysicalTestsScreen } from '../../screens/client/PhysicalTestsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
@@ -368,7 +369,12 @@ function ClientShellBody(): React.JSX.Element {
       )}
       {st.overlay === 'nutrition' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <NutritionPlanScreen onClose={st.closeOverlay} />
+          <NutritionPlanScreen onClose={st.closeOverlay} onOpenShopping={() => st.openOverlay('shopping')} />
+        </Animated.View>
+      )}
+      {st.overlay === 'shopping' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <ShoppingListScreen onClose={() => st.openOverlay('nutrition')} />
         </Animated.View>
       )}
       {st.overlay === 'scheduledTest' && st.selectedScheduleId !== null && (

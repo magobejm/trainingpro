@@ -19,9 +19,9 @@ import { useCoachDraft } from '../../data/hooks/useCoachDraft';
 import { createApiClient } from '../../data/api-client';
 import { CoachButton, CoachField, CoachPage, CoachSelect, CoachStatus, ui } from './CoachUi';
 import { CoachPdfButton } from './CoachPdfButton';
-import { NutritionSetupEditor, defaultNutritionSetup } from './coach-nutrition-setup';
-import { StructuredNutritionContent, FreeNutritionContent } from './coach-nutrition-content';
+import { defaultNutritionSetup } from './coach-nutrition-setup';
 import { useNutritionCopy } from './coach-nutrition-copy';
+import { PlanContentFields, PlanGoalFields, PlanStepBar, type PlanStep } from './coach-nutrition-plan-steps';
 import {
   nutritionDocument,
   nutritionPlanPayload,
@@ -130,41 +130,14 @@ function NutritionPlanView({
   set,
   save,
 }: PlanEditorProps & ReturnType<typeof useNutritionPlanModel>) {
+  const [step, setStep] = useState<PlanStep>('goal');
   return (
     <CoachPage title={plan ? c('edit') : c('newPlan')} onBack={onClose}>
-      <CoachField label={c('name')} value={value.name} onChange={(name) => set({ name })} />
-      <CoachField
-        multiline
-        label={c('description')}
-        value={value.description ?? ''}
-        onChange={(description) => set({ description })}
-      />
-      <CoachField label={c('strategy')} value={value.strategy ?? ''} onChange={(strategy) => set({ strategy })} />
-      <CoachSelect
-        label={c('type')}
-        value={value.type}
-        onChange={(type) => set({ type: type as PlanWriteInput['type'] })}
-        options={[
-          { value: 'ESTRUCTURADO', label: c('structured') },
-          { value: 'LIBRE', label: c('free') },
-        ]}
-      />
-      <NutritionSetupEditor value={value.setupData} onChange={(setupData) => set({ setupData })} />
-      <CoachStatus query={meals} />
-      {value.type === 'ESTRUCTURADO' ? (
-        <StructuredNutritionContent
-          value={value.content}
-          onChange={(content) => set({ content })}
-          meals={meals.data?.items ?? []}
-        />
-      ) : (
-        <FreeNutritionContent
-          value={value.content}
-          onChange={(content) => set({ content })}
-          meals={meals.data?.items ?? []}
-        />
-      )}
-      <CoachPdfButton title={value.name || c('nutrition')} sections={nutritionDocument(value, meals.data?.items ?? [])} />
+      <PlanStepBar onChange={setStep} step={step} />
+      {step === 'goal' ? <PlanGoalFields onChange={set} value={value} /> : null}
+      {step === 'content' ? (
+        <PlanContentFields meals={meals.data?.items ?? []} mealsQuery={meals} onChange={set} value={value} />
+      ) : null}
       {draft.conflict || changed ? (
         <View style={ui.card}>
           <Text style={ui.error}>{c('conflict')}</Text>
@@ -189,12 +162,12 @@ function NutritionPlanView({
         onPress={() => void save()}
       />
       <CoachButton label={c('copy')} disabled={!draft.ready} loading={write.isPending} onPress={() => void save(true)} />
-      {plan?.id ? (
+      {step === 'assign' && plan?.id ? (
         <NutritionSavedPlanActions
+          clients={clients}
           plan={plan}
           selectedClient={selectedClient}
           setSelectedClient={setSelectedClient}
-          clients={clients}
           write={write}
         />
       ) : null}

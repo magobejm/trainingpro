@@ -34,9 +34,14 @@ export type MealOutput = {
 };
 
 export type FoodConsiderationOutput = {
+  caloriesKcal?: number | null;
+  carbsG?: number | null;
   considerations: Consideration[];
+  fatG?: number | null;
   id: string;
   name: string;
+  proteinG?: number | null;
+  servingUnit?: string | null;
 };
 
 export function mapFoodSnapshot(food: FoodSnapshotRow): MealFoodSnapshotOutput {
@@ -90,9 +95,14 @@ export function mapMeal(row: {
 export function mapFoodConsideration(food: FoodSnapshotRow): FoodConsiderationOutput {
   const snapshot = mapFoodSnapshot(food);
   return {
+    caloriesKcal: food.caloriesKcal,
+    carbsG: food.carbsG,
     considerations: evaluateFoodConsiderations(snapshot, food.id),
+    fatG: food.fatG,
     id: food.id,
     name: food.name,
+    proteinG: food.proteinG,
+    servingUnit: food.servingUnit,
   };
 }
 

@@ -11,7 +11,9 @@ import {
   useNutritionPlansQuery,
   useNutritionMealsQuery,
 } from '../../data/hooks/useNutrition';
+import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
 import { CheckpointsModal } from './nutrition/CheckpointsModal';
+import { ClientNutritionToday } from './nutrition/ClientNutritionToday';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
 import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
 import { styles } from './nutrition/nutrition.styles';
@@ -31,6 +33,7 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const plansQuery = useClientNutritionPlansQuery(props.clientId);
   const mealsQuery = useNutritionMealsQuery();
+  const foodsQuery = useLibraryFoodsQuery({ query: '' });
   const templatesQuery = useNutritionPlansQuery();
   const assignMutation = useAssignPlanMutation();
   const toast = useToast();
@@ -91,6 +94,7 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
       ) : null}
       {activePlan ? (
         <>
+          <ClientNutritionToday foods={foodsQuery.data ?? []} meals={mealsQuery.data ?? []} plan={activePlan} t={t} />
           <Text style={styles.sectionTitle}>{activePlan.name}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <ClientPreviewButton isDraft={false}>

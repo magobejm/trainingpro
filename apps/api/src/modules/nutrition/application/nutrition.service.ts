@@ -35,6 +35,7 @@ export type CheckpointOutput = {
 };
 
 export type PlanOutput = {
+  assignedAt: string;
   checkpoints: CheckpointOutput[];
   clientId: string | null;
   content: Prisma.JsonValue;
@@ -160,6 +161,7 @@ function mapPlan(row: {
   }>;
   clientId: string | null;
   content: Prisma.JsonValue;
+  createdAt: Date;
   description: string | null;
   id: string;
   name: string;
@@ -169,6 +171,7 @@ function mapPlan(row: {
   type: NutritionPlanType;
 }): PlanOutput {
   return {
+    assignedAt: row.createdAt.toISOString(),
     checkpoints: row.checkpoints.map(mapCheckpoint),
     clientId: row.clientId,
     content: row.content,

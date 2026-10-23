@@ -168,4 +168,10 @@ describe('computeMealTotals', () => {
     expect(totals.saltG).toBe(1);
     expect(totals.micronutrients).toEqual(['Hierro', 'Magnesio']);
   });
+
+  it('scales a portion by the amount instead of by 100 grams', () => {
+    const totals = computeMealTotals([{ amountGrams: 2, food: { caloriesKcal: 80, proteinG: 6, servingUnit: 'porcion' } }]);
+    expect(totals.caloriesKcal).toBe(160);
+    expect(totals.proteinG).toBe(12);
+  });
 });

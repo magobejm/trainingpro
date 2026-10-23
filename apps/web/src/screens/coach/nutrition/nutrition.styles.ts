@@ -112,6 +112,24 @@ export const styles = StyleSheet.create({
   header: {
     marginBottom: space.sm,
   },
+  todayDate: {
+    color: colors.text,
+    flex: 1,
+    fontSize: fontSize.sm,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  todayRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    marginBottom: space.md,
+  },
+  todayStep: {
+    color: colors.text,
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    paddingHorizontal: space.md,
+  },
   headerSubtitle: {
     color: colors.textMuted,
     fontSize: fontSize.sm,

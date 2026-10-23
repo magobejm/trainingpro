@@ -23,7 +23,7 @@ export type EvaluateOptions = {
 
 export type MealIngredientNutrients = {
   amountGrams: number;
-  food: NutrientProfile;
+  food: NutrientProfile & { servingUnit?: string | null };
 };
 
 const FOOD_ORDER = [
@@ -83,7 +83,7 @@ export function computeMealTotals(ingredients: MealIngredientNutrients[]): Nutri
   };
   const micros = new Set<string>();
   for (const item of ingredients) {
-    const factor = item.amountGrams / 100;
+    const factor = item.food.servingUnit === 'porcion' ? item.amountGrams : item.amountGrams / 100;
     addScaled(totals, item.food, factor);
     for (const tag of item.food.micronutrients ?? []) {
       if (tag.trim()) {

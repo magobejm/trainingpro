@@ -18,6 +18,9 @@ import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.H
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 import { ClientTimelineDrawer } from './ClientTimelineDrawer';
 import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
+import { useClientNutritionPlansQuery } from '../../../data/hooks/useNutrition';
+import { readSetupData } from '../nutrition/nutrition-tdee.utils';
+import type { NutritionPlan } from '../nutrition/nutrition.types';
 import { useClientPhysicalTestsQuery, type ClientPhysicalTestAssignmentView } from '../../../data/hooks/usePhysicalTests';
 import { buildDefaultWellnessRange } from '../client-mood.helpers';
 
@@ -67,6 +70,8 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
   const lists = useMemo(() => buildSectionLists(vm.items), [vm.items]);
   const moodSubtitle = resolveMoodSubtitle(vm.wellness, props.t);
   const testsSubtitle = resolveNextTestSubtitle(vm.assignments, props.t);
+  const nutritionPlans = useClientNutritionPlansQuery(props.clientId).data;
+  const nutritionSubtitle = resolveNutritionSubtitle(nutritionPlans, props.t);
   return (
     <View style={styles.board}>
       <ClientProfileSectionsBoardHeader
@@ -77,7 +82,7 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
       />
       <View style={styles.mainList}>
         {lists.activeSections.map((item, index) =>
-          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle, testsSubtitle),
+          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle, testsSubtitle, nutritionSubtitle),
         )}
       </View>
       <ClientProfileArchivedDrawer
@@ -150,6 +155,7 @@ function renderRow(
   vm: BoardViewModel,
   moodSubtitle?: string,
   testsSubtitle?: string,
+  nutritionSubtitle?: string,
 ): React.JSX.Element {
   return (
     <ClientProfileSectionRow
@@ -157,6 +163,7 @@ function renderRow(
       hasTrainingPlan={props.hasTrainingPlan}
       item={item}
       moodSubtitle={moodSubtitle}
+      nutritionSubtitle={nutritionSubtitle}
       testsSubtitle={testsSubtitle}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
@@ -176,6 +183,14 @@ function renderRow(
       clientId={props.clientId}
     />
   );
+}
+
+function resolveNutritionSubtitle(plans: NutritionPlan[] | undefined, t: Props['t']): string | undefined {
+  const plan = plans?.find((item) => item.type === 'ESTRUCTURADO') ?? plans?.[0];
+  if (!plan) return undefined;
+  const calories = readSetupData(plan.setupData)?.targetCalories;
+  if (calories == null) return plan.name;
+  return t('coach.clientProfile.details.nutritionPlan.summary', { kcal: Math.round(calories), name: plan.name });
 }
 
 function resolveNextTestSubtitle(assignments: ClientPhysicalTestAssignmentView[], t: Props['t']): string | undefined {

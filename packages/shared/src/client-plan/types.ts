@@ -98,6 +98,7 @@ export type NutritionPlan = {
   name: string;
   setupData: unknown;
   sourcePlanId: null | string;
+  assignedAt?: string;
   strategy: null | string;
   type: NutritionPlanType;
 };
@@ -105,9 +106,14 @@ export type NutritionPlan = {
 export type ClientNutrition = {
   estructuradoPlan?: NutritionPlan;
   foods?: Array<{
+    caloriesKcal?: number | null;
+    carbsG?: number | null;
     considerations?: NutritionConsideration[];
+    fatG?: number | null;
     id: string;
     name: string;
+    proteinG?: number | null;
+    servingUnit?: string | null;
   }>;
   librePlan?: NutritionPlan;
   meals?: Array<{

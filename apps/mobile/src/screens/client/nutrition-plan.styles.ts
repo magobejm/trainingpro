@@ -1,0 +1,40 @@
+import { StyleSheet } from 'react-native';
+import { LIGHT } from '../../theme/light';
+import { SCREEN } from '../../theme/sessionStyles';
+
+export const styles = StyleSheet.create({
+  center: { alignItems: 'center', justifyContent: 'center', minHeight: 160, padding: 24 },
+  container: SCREEN.root,
+  content: { paddingBottom: 32 },
+  dayButton: { paddingHorizontal: 12, paddingVertical: 8 },
+  dayLabel: { color: LIGHT.textStrong, flex: 1, fontSize: 15, fontWeight: '800', textAlign: 'center' },
+  dayRow: { alignItems: 'center', flexDirection: 'row', marginBottom: 16, marginHorizontal: 16 },
+  empty: { color: LIGHT.textMuted, fontSize: 14, textAlign: 'center' },
+  error: { color: LIGHT.error, fontSize: 14, textAlign: 'center' },
+  hint: {
+    backgroundColor: LIGHT.accentSoft,
+    borderColor: LIGHT.borderStrong,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    marginBottom: 16,
+    marginHorizontal: 16,
+    padding: 12,
+  },
+  hintText: { color: LIGHT.accentDark, fontSize: 12, textAlign: 'center' },
+  planDescription: { color: LIGHT.textMuted, fontSize: 13, marginBottom: 12, marginHorizontal: 16 },
+  planName: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '800', marginBottom: 4, marginHorizontal: 16 },
+  subtitle: { color: LIGHT.textMuted, fontSize: 13, marginBottom: 12, paddingHorizontal: 16 },
+  toggleBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusFull,
+    borderWidth: 1,
+    flex: 1,
+    paddingVertical: 10,
+  },
+  toggleBtnActive: { backgroundColor: LIGHT.accent, borderColor: LIGHT.accent },
+  toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 16, marginHorizontal: 16 },
+  toggleText: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
+  toggleTextActive: { color: LIGHT.textOnNavy },
+});

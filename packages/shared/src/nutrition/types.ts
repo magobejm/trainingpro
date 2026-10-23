@@ -69,6 +69,7 @@ export type NutritionPlan = {
   name: string;
   setupData: unknown;
   sourcePlanId: null | string;
+  assignedAt?: string;
   strategy: null | string;
   type: NutritionPlanType;
 };

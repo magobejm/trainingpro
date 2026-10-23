@@ -25,6 +25,7 @@ export type NutritionCheckpoint = {
 };
 
 export type NutritionPlan = {
+  assignedAt?: string;
   checkpoints: NutritionCheckpoint[];
   clientId: null | string;
   content: unknown;
@@ -40,14 +41,32 @@ export type NutritionPlan = {
 export type ClientNutrition = {
   estructuradoPlan?: NutritionPlan;
   foods?: Array<{
+    caloriesKcal?: number | null;
+    carbsG?: number | null;
     considerations?: NutritionConsideration[];
+    fatG?: number | null;
     id: string;
     name: string;
+    proteinG?: number | null;
+    servingUnit?: string | null;
   }>;
   librePlan?: NutritionPlan;
   meals?: Array<{
     considerations?: NutritionConsideration[];
     id: string;
+    ingredients?: Array<{
+      amountGrams: number;
+      food: {
+        caloriesKcal?: number | null;
+        carbsG?: number | null;
+        fatG?: number | null;
+        id: string;
+        name?: string;
+        proteinG?: number | null;
+        servingUnit?: string | null;
+      };
+      foodId: string;
+    }>;
     name: string;
   }>;
 };

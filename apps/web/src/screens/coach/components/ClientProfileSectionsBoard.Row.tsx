@@ -11,6 +11,7 @@ type Props = {
   hasTrainingPlan: boolean;
   item: SectionItem;
   moodSubtitle?: string;
+  nutritionSubtitle?: string;
   onArchive: () => void;
   testsSubtitle?: string;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
@@ -38,6 +39,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
       item={props.item}
       clientId={props.clientId}
       moodSubtitle={props.moodSubtitle}
+      nutritionSubtitle={props.nutritionSubtitle}
       onOpenMood={props.onOpenMood}
       testsSubtitle={props.testsSubtitle}
       onOpenNutrition={props.onOpenNutrition}
@@ -76,6 +78,7 @@ function RowMain(props: {
   clientId: string;
   item: SectionItem;
   moodSubtitle?: string;
+  nutritionSubtitle?: string;
   onOpenMood?: () => void;
   testsSubtitle?: string;
   onOpenNutrition?: () => void;
@@ -87,7 +90,14 @@ function RowMain(props: {
   t: Props['t'];
   trainingPlanName?: string;
 }): React.JSX.Element {
-  const subtitle = readSubtitle(props.item, props.trainingPlanName, props.t, props.moodSubtitle, props.testsSubtitle);
+  const subtitle = readSubtitle(
+    props.item,
+    props.trainingPlanName,
+    props.t,
+    props.moodSubtitle,
+    props.testsSubtitle,
+    props.nutritionSubtitle,
+  );
   return (
     <>
       <Text style={styles.dragHandle}>{'⋮⋮'}</Text>
@@ -175,10 +185,12 @@ function readSubtitle(
   t: Props['t'],
   moodSubtitle?: string,
   testsSubtitle?: string,
+  nutritionSubtitle?: string,
 ): string {
   if (item.id === 'training') return trainingPlanName || t(item.emptyKey);
   if (item.id === 'mood' && moodSubtitle) return moodSubtitle;
   if (item.id === 'tests' && testsSubtitle) return testsSubtitle;
+  if (item.id === 'nutrition' && nutritionSubtitle) return nutritionSubtitle;
   return t(item.emptyKey);
 }
 

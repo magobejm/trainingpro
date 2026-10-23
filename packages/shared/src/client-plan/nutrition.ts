@@ -84,7 +84,7 @@ export function readStructuredPlanContent(value: unknown): StructuredPlanContent
   return content as StructuredPlanContent;
 }
 
-export function buildMealGroups(plan: PlanContent): MealCategoryGroup[] {
+export function buildMealGroups(plan: PlanContent, weekIndex = 0): MealCategoryGroup[] {
   if (plan.type === 'LIBRE') {
     const content = readFreePlanContent(plan.content);
     if (!content) return [];
@@ -122,10 +122,11 @@ export function buildMealGroups(plan: PlanContent): MealCategoryGroup[] {
   }
 
   const content = readStructuredPlanContent(plan.content);
-  const firstWeek = content?.weeks[0];
-  if (!firstWeek) return [];
+  const weeks = content?.weeks ?? [];
+  const week = weeks[normalizeWeek(weekIndex, weeks.length)];
+  if (!week) return [];
   const groups: MealCategoryGroup[] = [];
-  for (const day of firstWeek.days) {
+  for (const day of week.days) {
     const meals = day.meals ?? day.days ?? [];
     groups.push({
       category: day.label,
@@ -144,4 +145,9 @@ export function hasNutritionPlanData(plan: PlanContent | undefined): boolean {
   const setup = readSetupData(plan.setupData);
   const meals = buildMealGroups(plan);
   return Boolean(setup) || meals.length > 0 || Boolean(plan.description);
+}
+
+function normalizeWeek(weekIndex: number, weekCount: number): number {
+  if (weekCount <= 0) return 0;
+  return ((weekIndex % weekCount) + weekCount) % weekCount;
 }

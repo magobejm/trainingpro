@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { pulseRestEnd } from '../../features/timers/rest-feedback';
 import { LIGHT } from '../../theme/light';
 import { formatRestLabel } from './session-completion.utils';
 
@@ -12,15 +13,18 @@ type MiniRestTimerProps = {
 
 export function MiniRestTimer({ endAt, onPress, onFinish }: MiniRestTimerProps): React.JSX.Element {
   const { t } = useTranslation();
+  const finished = useRef(false);
   const [remaining, setRemaining] = useState(() => Math.max(0, Math.ceil((endAt - Date.now()) / 1000)));
 
   useEffect(() => {
+    finished.current = false;
     const tick = () => {
       const next = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
       setRemaining(next);
-      if (next <= 0) {
-        onFinish();
-      }
+      if (next > 0 || finished.current) return;
+      finished.current = true;
+      pulseRestEnd();
+      onFinish();
     };
     tick();
     const interval = setInterval(tick, 1000);
@@ -45,8 +49,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     flexDirection: 'row',
     gap: 8,
-    marginHorizontal: 16,
-    marginVertical: 8,
     paddingHorizontal: 16,
     paddingVertical: 10,
   },

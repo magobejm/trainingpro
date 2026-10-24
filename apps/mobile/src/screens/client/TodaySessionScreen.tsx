@@ -30,6 +30,7 @@ import { SessionRpeModal } from './SessionRpeModal';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
 import { usePersistedSessionTimers, useWorkoutElapsed } from './today-session.timers';
+import { useRestEndNotification } from '../../features/timers/rest-notification';
 import { localDateKey, readTodayCheckin } from './daily-checkin.utils';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
@@ -68,6 +69,8 @@ type TodaySessionBodyProps = {
   onNavigateExercise: (item: SessionItem) => void;
   onSelectExercise: (item: SessionItem, group: SessionItem[]) => void;
   onStartRest: (setKey: string, seconds: number) => void;
+  onReopenRest: () => void;
+  onShiftRest: (deltaSeconds: number) => void;
   banner: React.ReactNode;
   restState: RestState | null;
   selectedExercise: SessionItem | null;
@@ -101,6 +104,9 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
               onClose={props.onClose}
               onSelectExercise={props.onSelectExercise}
               onFinishDay={props.onFinishDay}
+              onOpenRest={props.onReopenRest}
+              onRestFinish={props.onRestFinish}
+              rest={props.selectedExercise ? null : props.restState}
               workoutElapsed={props.workoutElapsed}
             />
           </>
@@ -129,6 +135,7 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           onRestFinish={props.onRestFinish}
           onFinishExercise={props.onFinishExercise}
           onStartRest={props.onStartRest}
+          onShiftRest={props.onShiftRest}
           onLogSet={props.onLogSet}
           onLogPlioSet={props.onLogPlioSet}
           onLogMobilitySet={props.onLogMobilitySet}
@@ -155,6 +162,10 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   );
 
   const timers = usePersistedSessionTimers(sessionId, session, sessionQuery.data?.status);
+  useRestEndNotification(timers.hydrated ? timers.restState : undefined, {
+    body: t('mobile.client.rest.doneBody'),
+    title: t('mobile.client.rest.doneTitle'),
+  });
   const workoutElapsed = useWorkoutElapsed(session);
   const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
   const [guardStep, setGuardStep] = useState<ShortWorkoutStep | null>(null);
@@ -367,6 +378,8 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         onRestFinish={timers.onRestFinish}
         onSelectExercise={timers.onSelectExercise}
         onStartRest={timers.onStartRest}
+        onReopenRest={timers.onReopenRest}
+        onShiftRest={timers.onShiftRest}
         restState={timers.restState}
         selectedExercise={timers.selectedExercise}
         session={session}

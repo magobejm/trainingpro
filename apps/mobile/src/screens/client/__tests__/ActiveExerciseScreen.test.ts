@@ -30,6 +30,7 @@ jest.mock('react-native', () => {
       mockInputs.push(props);
       return react.createElement('input', { value: props.value, readOnly: true });
     },
+    Switch: element,
     View: element,
   };
 });
@@ -98,6 +99,7 @@ function renderExercise(readOnly = false) {
       onLogSet: jest.fn(),
       onLogSport: jest.fn(),
       onStartRest: jest.fn(),
+      onShiftRest: jest.fn(),
     }),
   );
 }

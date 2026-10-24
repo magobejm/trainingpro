@@ -11,8 +11,10 @@ import { PrimaryButton } from '../../theme/primitives';
 import { ExerciseCard } from './ExerciseCard';
 import { buildExerciseBlocks } from './exercise-group.utils';
 import { isListedExerciseDone } from './session-completion.utils';
+import { MiniRestTimer } from './MiniRestTimer';
 import { WorkoutWarmups, RoutineBlock, warmupExerciseCount } from './WorkoutWarmups';
 import type { ClientRoutineWarmup } from '@trainerpro/shared';
+import type { RestState } from './session-rest.types';
 
 type PreviewProps = {
   day: ClientRoutineDay;
@@ -39,6 +41,9 @@ type ActiveProps = {
   onSelectExercise: (item: SessionItem, group: SessionItem[]) => void;
   session: SessionView;
   workoutElapsed?: string;
+  onOpenRest?: () => void;
+  onRestFinish?: () => void;
+  rest?: RestState | null;
 };
 
 export type RoutineDayScreenProps = ActiveProps | PreviewProps;
@@ -103,11 +108,12 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
   const { t } = useTranslation();
   const blocks = useMemo(() => buildExerciseBlocks(props.exercises), [props.exercises]);
   const isFinished = props.session.status === 'COMPLETED';
+  const resting = props.rest != null && props.onOpenRest != null && props.onRestFinish != null;
 
   return (
-    <View style={s.sidePanel}>
+    <View style={[s.sidePanel, styles.activeDay]}>
       <OverlayBackHeader onClose={props.onClose} />
-      <ScrollView contentContainerStyle={[s.panelContent, styles.scrollBottom]}>
+      <ScrollView contentContainerStyle={[s.panelContent, resting ? styles.scrollBottomWithRest : styles.scrollBottom]}>
         <View style={styles.activeHeader}>
           <Text style={styles.activeTitle}>{props.dayTitle}</Text>
           <View style={styles.headerRight}>
@@ -176,6 +182,11 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
           />
         )}
       </ScrollView>
+      {resting && props.rest && props.onOpenRest && props.onRestFinish ? (
+        <View style={styles.miniRest}>
+          <MiniRestTimer endAt={props.rest.endAt} onFinish={props.onRestFinish} onPress={props.onOpenRest} />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -200,8 +211,22 @@ function ExerciseBlockContainer(props: {
 }
 
 const styles = StyleSheet.create({
+  activeDay: {
+    flex: 1,
+    position: 'relative',
+  },
   scrollBottom: {
     paddingBottom: 80,
+  },
+  scrollBottomWithRest: {
+    paddingBottom: 160,
+  },
+  miniRest: {
+    bottom: 12,
+    left: 16,
+    position: 'absolute',
+    right: 16,
+    zIndex: 20,
   },
   notice: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '700' },
   dayHeader: {

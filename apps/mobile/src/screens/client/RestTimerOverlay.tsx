@@ -10,7 +10,10 @@ type RestTimerOverlayProps = {
   visible: boolean;
   onHide: () => void;
   onFinish: () => void;
+  onShift: (deltaSeconds: number) => void;
 };
+
+const SHIFT_SECONDS = 15;
 
 export function RestTimerOverlay({
   remaining,
@@ -18,6 +21,7 @@ export function RestTimerOverlay({
   visible,
   onHide,
   onFinish,
+  onShift,
 }: RestTimerOverlayProps): React.JSX.Element | null {
   const { t } = useTranslation();
 
@@ -28,6 +32,14 @@ export function RestTimerOverlay({
       <View style={styles.card}>
         <Text style={styles.label}>{t('client.today.restTimer')}</Text>
         <CircularCountdown remaining={remaining} size={220} strokeWidth={14} totalSeconds={totalSeconds} />
+        <View style={styles.shiftRow}>
+          <Pressable onPress={() => onShift(-SHIFT_SECONDS)} style={styles.shiftBtn}>
+            <Text style={styles.shiftText}>{t('mobile.client.rest.minus15')}</Text>
+          </Pressable>
+          <Pressable onPress={() => onShift(SHIFT_SECONDS)} style={styles.shiftBtn}>
+            <Text style={styles.shiftText}>{t('mobile.client.rest.plus15')}</Text>
+          </Pressable>
+        </View>
         <View style={styles.actions}>
           <Pressable style={styles.secondaryBtn} onPress={onHide}>
             <Text style={styles.secondaryText}>{t('mobile.client.rest.hide')}</Text>
@@ -64,6 +76,23 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textTransform: 'uppercase',
+  },
+  shiftRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  shiftBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.bgSoft,
+    borderRadius: LIGHT.radiusMd,
+    flex: 1,
+    paddingVertical: 12,
+  },
+  shiftText: {
+    color: LIGHT.textStrong,
+    fontSize: 16,
+    fontWeight: '800',
   },
   actions: {
     flexDirection: 'row',

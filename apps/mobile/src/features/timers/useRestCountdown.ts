@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { remainingSeconds, rewindEndAt } from './countdown';
+import { pulseRestEnd } from './rest-feedback';
 
 export type RestClock = {
   endAt: number;
@@ -45,6 +46,7 @@ export function useRestCountdown(
       setRemaining(next);
       if (next > 0 || finishedFor.current === endAt) return;
       finishedFor.current = endAt;
+      pulseRestEnd();
       onFinishRef.current();
     };
     tick();

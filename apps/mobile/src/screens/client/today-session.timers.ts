@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { SessionItem, SessionView } from '../../data/hooks/useTodaySession';
 import { workoutElapsedMs } from '../../features/timers/countdown';
+import { restItemId, shiftRest } from '../../features/timers/rest-shift';
 import { formatWorkoutElapsed } from '../../features/timers/workout-elapsed';
 import { timerPersist } from '../../store/session-timers.persist';
 import {
@@ -49,9 +50,15 @@ export function usePersistedSessionTimers(
     clearSessionTimers: clear,
     completedRestKeys: entry?.completedRestKeys ?? [],
     exerciseGroup: findGroup(session, entry?.groupIds ?? []),
+    hydrated,
     leaveExercise: useCallback(() => {
-      patch({ groupIds: [], rest: null, selectedExerciseId: null });
-    }, [patch]),
+      const rest = readRest();
+      if (!rest) {
+        patch({ groupIds: [], rest: null, selectedExerciseId: null });
+        return;
+      }
+      patch({ rest: { ...rest, expanded: false }, selectedExerciseId: null });
+    }, [patch, readRest]),
     onAdjustRest: useCallback(
       (endAt: number, lastSeenAt: number) => {
         const rest = readRest();
@@ -70,9 +77,24 @@ export function usePersistedSessionTimers(
     }, [patch, readRest]),
     onNavigateExercise: useCallback(
       (item: SessionItem) => {
-        patch({ rest: null, selectedExerciseId: item.id });
+        const rest = readRest();
+        patch({ rest: rest ? { ...rest, expanded: false } : null, selectedExerciseId: item.id });
       },
-      [patch],
+      [patch, readRest],
+    ),
+    onReopenRest: useCallback(() => {
+      const rest = readRest();
+      const item = rest ? findItem(session, restItemId(rest.setKey)) : null;
+      if (!rest || !item) return;
+      patch({ rest: { ...rest, expanded: true }, selectedExerciseId: item.id });
+    }, [patch, readRest, session]),
+    onShiftRest: useCallback(
+      (deltaSeconds: number) => {
+        const rest = readRest();
+        if (!rest) return;
+        patch({ rest: shiftRest(rest, deltaSeconds, Date.now()) });
+      },
+      [patch, readRest],
     ),
     onRestFinish: useCallback(() => {
       const rest = readRest();

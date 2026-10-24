@@ -17,13 +17,16 @@ let currentAuth: PushAuth | null = null;
 let listening = false;
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
+  handleNotification: async (notification) => {
+    const restTimer = notification.request.content.data?.kind === 'rest-timer';
+    return {
+      shouldPlaySound: false,
+      shouldSetBadge: false,
+      shouldShowAlert: !restTimer,
+      shouldShowBanner: !restTimer,
+      shouldShowList: !restTimer,
+    };
+  },
 });
 
 export async function registerPushToken(auth: PushAuth): Promise<void> {
@@ -107,7 +110,7 @@ async function ensureAndroidChannel(): Promise<void> {
   });
 }
 
-async function ensurePermission(): Promise<boolean> {
+export async function ensurePermission(): Promise<boolean> {
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) {
     return true;

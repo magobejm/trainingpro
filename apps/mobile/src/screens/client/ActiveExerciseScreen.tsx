@@ -37,11 +37,14 @@ import { loggedDraft, setDraftMatchesLogged } from './active-exercise.save';
 import { useActiveSetDraft } from './active-exercise.draft';
 import { useActiveSetSave } from './active-exercise.session';
 import { useRestCountdown } from '../../features/timers/useRestCountdown';
+import { restItemId, saveSetAndMaybeRest } from '../../features/timers/rest-shift';
+import { useRestPreferencesStore } from '../../store/rest-preferences.store';
 import { CircularCountdown } from './CircularCountdown';
 import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
 import { RestTimerOverlay } from './RestTimerOverlay';
+import { RestAutoStartToggle } from './RestAutoStartToggle';
 import { RomScaleModal } from './RomScaleModal';
 import type { RestState } from './session-rest.types';
 import {
@@ -81,6 +84,7 @@ type ActiveExerciseScreenProps = {
   onLogSet: (input: LogSetMutationInput) => LogResult;
   onLogSport: (input: LogSportMutationInput) => LogResult;
   onStartRest: (setKey: string, seconds: number) => void;
+  onShiftRest: (deltaSeconds: number) => void;
   restState: RestState | null;
 };
 
@@ -184,6 +188,7 @@ function ActiveExerciseFrame(props: {
           <RestTimerOverlay
             onFinish={() => completeRest(screen, props.save, finishedRestKey)}
             onHide={screen.onCollapseRest}
+            onShift={screen.onShiftRest}
             remaining={remaining ?? 0}
             totalSeconds={screen.restState.seconds}
             visible
@@ -210,6 +215,7 @@ function ExerciseSetCard(props: {
     props.save.restSeconds.current[props.setIndex],
   );
   const restSeconds = getRestSeconds(props.screen.item, props.setIndex);
+  const autoStart = useRestPreferencesStore((state) => state.autoStartRest);
   const active = props.screen.restState?.setKey === view.setKey;
   const markedDone = props.screen.completedRestKeys.includes(view.setKey);
   const restDone = markedDone || restWasRecorded(props.screen.item, props.setIndex);
@@ -245,7 +251,17 @@ function ExerciseSetCard(props: {
         <SetSaveButton
           busy={props.save.busy || props.save.finishing}
           clean={view.clean}
-          onSave={() => void props.save.run([props.setIndex])}
+          onSave={() =>
+            void saveSetAndMaybeRest({
+              enabled: autoStart,
+              readOnly: props.screen.readOnly === true,
+              restActive: props.screen.restState != null,
+              restDone,
+              restSeconds,
+              run: () => props.save.run([props.setIndex]),
+              start: () => props.screen.onStartRest(view.setKey, restSeconds),
+            })
+          }
           setIndex={props.setIndex}
           t={props.t}
         />
@@ -280,6 +296,7 @@ function ExerciseChrome(props: {
         onOpenVideo={props.onOpenVideo}
         t={props.t}
       />
+      {props.screen.readOnly ? null : <RestAutoStartToggle />}
     </>
   );
 }
@@ -412,10 +429,12 @@ function completeRest(
   const restKey = `${rest.setKey}:${rest.endAt}`;
   if (finishedRestKey.current === restKey) return;
   finishedRestKey.current = restKey;
-  const setIndex = Number(rest.setKey.split(':').at(-1));
-  if (Number.isInteger(setIndex) && setIndex > 0) {
-    save.rememberRest(setIndex, elapsedRestSeconds(rest.endAt, rest.seconds));
-    if (setWasLogged(screen.item, setIndex)) void save.run([setIndex]);
+  if (restItemId(rest.setKey) === screen.item.id) {
+    const setIndex = Number(rest.setKey.split(':').at(-1));
+    if (Number.isInteger(setIndex) && setIndex > 0) {
+      save.rememberRest(setIndex, elapsedRestSeconds(rest.endAt, rest.seconds));
+      if (setWasLogged(screen.item, setIndex)) void save.run([setIndex]);
+    }
   }
   screen.onRestFinish();
 }

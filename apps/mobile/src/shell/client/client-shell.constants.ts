@@ -23,7 +23,16 @@ export type ProgressMode = 'progress' | 'volume';
 
 export type TabId = 'chat' | 'home' | 'more';
 
-export type MoreMenuId = 'calendar' | 'help' | 'incidents' | 'measures' | 'notes' | 'physicalTests' | 'planning' | 'volume';
+export type MoreMenuId =
+  | 'calendar'
+  | 'help'
+  | 'incidents'
+  | 'library'
+  | 'measures'
+  | 'notes'
+  | 'physicalTests'
+  | 'planning'
+  | 'volume';
 
 export const SPRING = { damping: 25, stiffness: 200, useNativeDriver: false } as const;
 

@@ -245,6 +245,7 @@ function dispatchMoreMenu(
   else if (id === 'measures') openOverlay('measures');
   else if (id === 'physicalTests') openOverlay('physicalTests');
   else if (id === 'planning') openOverlay('planning');
+  else if (id === 'library') openOverlay('library');
   else if (id === 'volume') openProgress('volume');
 }
 

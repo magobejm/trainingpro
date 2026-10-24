@@ -17899,6 +17899,59 @@
         "x-roles": ["admin", "coach", "client"]
       }
     },
+    "/clients/me/nutrition/foods": {
+      "get": {
+        "operationId": "get_clients_me_nutrition_foods",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "summary": "GET /clients/me/nutrition/foods",
+        "x-controller": "ClientNutritionController",
+        "x-filters": ["query"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"],
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/clients/me/nutrition/logs": {
       "get": {
         "operationId": "get_clients_me_nutrition_logs",

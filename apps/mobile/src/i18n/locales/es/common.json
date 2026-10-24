@@ -787,6 +787,7 @@
   "client.nutrition.statusChanged": "Cambiada",
   "client.nutrition.statusSkipped": "Saltada",
   "client.nutrition.comment": "Comentario",
+  "client.nutrition.searchFoods": "Buscar alimento",
   "client.nutrition.saveLog": "Guardar",
   "client.nutrition.plannedTitle": "Previsto",
   "client.nutrition.eatenTitle": "Comido",

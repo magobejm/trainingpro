@@ -7,11 +7,13 @@ import {
   readPlanSetup,
   resolvePlanDay,
   shiftPlanDate,
+  type DayMealMacros,
   type FoodMacroSource,
+  type MacroTotals,
   type MealMacroSource,
 } from '@trainerpro/shared';
 import type { ClientNutrition, NutritionPlan } from '../../data/hooks/useClientNutrition';
-import { useNutritionLogs } from '../../data/hooks/useNutritionLogs';
+import { useNutritionLogs, type NutritionMealLog } from '../../data/hooks/useNutritionLogs';
 import { NutritionMealActions } from './NutritionMealActions';
 import { NutritionSubstituteSheet } from './NutritionSubstituteSheet';
 import { styles } from './nutrition-plan.styles';
@@ -37,12 +39,7 @@ export function NutritionTodayPanel({
   const dateKey = formatKey(date);
   const logs = useNutritionLogs(dateKey);
   const macros = buildDayMacros(day, (data.meals ?? []) as MealMacroSource[], (data.foods ?? []) as FoodMacroSource[]);
-  const eatenMeals = day.meals.filter((meal) => logs.data?.some((log) => log.mealKey === meal.key && log.status === 'DONE'));
-  const eaten = buildDayMacros(
-    { ...day, meals: eatenMeals },
-    (data.meals ?? []) as MealMacroSource[],
-    (data.foods ?? []) as FoodMacroSource[],
-  );
+  const eaten = eatenTotals(macros.meals, logs.data ?? []);
   const [selected, setSelected] = useState<{ foodId: string; grams: number; name: string } | null>(null);
   const planned = macros.total;
   return (
@@ -69,7 +66,7 @@ export function NutritionTodayPanel({
       <MacroTargetBars comparison={compareToTarget(macros.total, readPlanSetup(plan.setupData))} t={t} />
       <Text style={styles.dayLabel}>{t('client.nutrition.eatenTitle')}</Text>
       <MacroTargetBars
-        comparison={compareToTarget(eaten.total, {
+        comparison={compareToTarget(eaten, {
           carbsG: planned.carbsG,
           fatG: planned.fatG,
           proteinG: planned.proteinG,
@@ -94,6 +91,7 @@ export function NutritionTodayPanel({
                 mealKey={meal.key}
                 mealName={meal.name}
                 planId={plan.id}
+                planned={plannedFoods(meal)}
                 saved={logs.data?.find((log) => log.mealKey === meal.key && log.planId === plan.id)}
                 t={t}
               />
@@ -117,6 +115,51 @@ export function NutritionTodayPanel({
 
 export function moveNutritionDay(date: Date, days: number): Date {
   return shiftPlanDate(date, days);
+}
+
+function eatenTotals(meals: DayMealMacros[], logs: NutritionMealLog[]): MacroTotals {
+  return meals.reduce(addTotals, { caloriesKcal: 0, carbsG: 0, fatG: 0, proteinG: 0 });
+
+  function addTotals(total: MacroTotals, meal: DayMealMacros): MacroTotals {
+    const log = logs.find((item) => item.mealKey === meal.key);
+    const part =
+      log?.status === 'DONE' ? meal.totals : log?.status === 'CHANGED' ? itemsTotals(log.eatenItems) : zeroTotals();
+    return {
+      caloriesKcal: total.caloriesKcal + part.caloriesKcal,
+      carbsG: total.carbsG + part.carbsG,
+      fatG: total.fatG + part.fatG,
+      proteinG: total.proteinG + part.proteinG,
+    };
+  }
+}
+
+function itemsTotals(items: NutritionMealLog['eatenItems']): MacroTotals {
+  return items.reduce(
+    (total, item) => ({
+      caloriesKcal: total.caloriesKcal + item.caloriesKcal,
+      carbsG: total.carbsG + item.carbsG,
+      fatG: total.fatG + item.fatG,
+      proteinG: total.proteinG + item.proteinG,
+    }),
+    zeroTotals(),
+  );
+}
+
+function plannedFoods(meal: DayMealMacros) {
+  return meal.items.flatMap((item) => (item.foodId ? [plannedFood(item)] : []));
+}
+
+function plannedFood(item: DayMealMacros['items'][number]) {
+  return {
+    amount: item.amountGrams ?? 1,
+    foodId: item.foodId ?? '',
+    name: item.name,
+    servingUnit: item.servingUnit,
+  };
+}
+
+function zeroTotals(): MacroTotals {
+  return { caloriesKcal: 0, carbsG: 0, fatG: 0, proteinG: 0 };
 }
 
 function formatKey(date: Date): string {

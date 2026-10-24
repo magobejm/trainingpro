@@ -22,7 +22,13 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { NutritionLogService } from '../../application/nutrition-log.service';
 import { NutritionSubstituteService } from '../../application/nutrition-substitute.service';
 import { NutritionService } from '../../application/nutrition.service';
-import { MealLogIdParamDto, MealLogRangeDto, SubstituteQueryDto, UpsertMealLogDto } from '../dto/meal-log.dto';
+import {
+  FoodSearchQueryDto,
+  MealLogIdParamDto,
+  MealLogRangeDto,
+  SubstituteQueryDto,
+  UpsertMealLogDto,
+} from '../dto/meal-log.dto';
 
 @Controller('clients')
 @UseGuards(AuthGuard, RolesGuard)
@@ -37,6 +43,11 @@ export class ClientNutritionController {
   @Get('me/nutrition')
   async getMyNutrition(@Req() request: HttpAuthRequest) {
     return this.nutritionService.getClientNutrition(readAuthContext(request));
+  }
+
+  @Get('me/nutrition/foods')
+  async searchFoods(@Query() query: FoodSearchQueryDto, @Req() request: HttpAuthRequest) {
+    return this.logs.searchFoods(readAuthContext(request), query.query);
   }
 
   @Get('me/nutrition/logs')

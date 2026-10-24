@@ -65,6 +65,15 @@ export const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 12,
   },
+  amount: {
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusSm,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
+    minWidth: 64,
+    padding: 8,
+  },
+  photo: { borderRadius: LIGHT.radiusSm, height: 72, marginTop: 8, width: 72 },
   sheet: {
     backgroundColor: LIGHT.bgSoft,
     borderColor: LIGHT.border,

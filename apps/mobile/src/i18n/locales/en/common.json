@@ -787,6 +787,7 @@
   "client.nutrition.statusChanged": "Changed",
   "client.nutrition.statusSkipped": "Skipped",
   "client.nutrition.comment": "Comment",
+  "client.nutrition.searchFoods": "Search food",
   "client.nutrition.saveLog": "Save",
   "client.nutrition.plannedTitle": "Planned",
   "client.nutrition.eatenTitle": "Eaten",

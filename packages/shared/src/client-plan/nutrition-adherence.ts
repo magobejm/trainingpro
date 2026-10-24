@@ -12,11 +12,12 @@ export function countAdherence(expected: number, statuses: MealLogStatus[]): Adh
   const done = statuses.filter((status) => status === 'DONE').length;
   const changed = statuses.filter((status) => status === 'CHANGED').length;
   const skipped = statuses.filter((status) => status === 'SKIPPED').length;
+  const met = done + changed;
   return {
     changed,
     done,
     expected,
-    percent: expected > 0 ? Math.round((done / expected) * 100) : null,
+    percent: expected > 0 ? Math.round((met / expected) * 100) : null,
     skipped,
   };
 }

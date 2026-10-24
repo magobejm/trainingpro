@@ -1,19 +1,21 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { YouTubeVideoModal } from '../../components/YouTubeVideoModal';
-import type { LibraryDisplayItem } from './client-library.helpers';
+import { getFullMediaUrl } from '../../utils/library-media.helpers';
+import type { LibraryDisplayItem, LibraryTabId } from './client-library.helpers';
 import { LIGHT } from '../../theme/light';
 
 type Props = {
+  category: LibraryTabId;
   item: LibraryDisplayItem | null;
   onClose: () => void;
 };
 
 const MODAL_ANIM = 'slide' as const;
 
-export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
+export function LibraryItemDetail({ category, item, onClose }: Props): React.JSX.Element {
   const { t } = useTranslation();
   const [videoOpen, setVideoOpen] = useState(false);
 
@@ -21,6 +23,7 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
   const bodyText = item?.instructions ?? item?.description ?? null;
   const coachText = item?.coachInstructions?.trim() ?? '';
   const videoUrl = item?.youtubeUrl ?? null;
+  const imageUri = item?.mediaUrl ? getFullMediaUrl(category, item.mediaUrl) : null;
   const hasExtra = Boolean(item?.equipment) || Boolean(item?.muscleGroups?.length);
 
   return (
@@ -33,6 +36,9 @@ export function LibraryItemDetail({ item, onClose }: Props): React.JSX.Element {
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+          {imageUri ? (
+            <Image accessibilityLabel={item?.name} resizeMode={'contain'} source={{ uri: imageUri }} style={styles.photo} />
+          ) : null}
           {typeLabel ? <Text style={styles.typeChip}>{typeLabel}</Text> : null}
 
           {hasExtra ? (
@@ -92,6 +98,13 @@ const styles = StyleSheet.create({
   container: { backgroundColor: LIGHT.bgSoft, flex: 1 },
   fieldLabel: { color: LIGHT.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },
   fieldRow: { color: LIGHT.textStrong, fontSize: 14, marginBottom: 4 },
+  photo: {
+    backgroundColor: LIGHT.bgCard,
+    borderRadius: LIGHT.radiusMd,
+    height: 220,
+    marginBottom: 16,
+    width: '100%',
+  },
   header: {
     alignItems: 'center',
     backgroundColor: LIGHT.bgCard,

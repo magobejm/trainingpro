@@ -77,7 +77,7 @@ export function ClientLibraryScreen({ onClose }: Props): React.JSX.Element {
         />
       )}
 
-      <LibraryItemDetail item={selectedItem} onClose={() => setSelectedItem(null)} />
+      <LibraryItemDetail category={activeTab} item={selectedItem} onClose={() => setSelectedItem(null)} />
     </View>
   );
 }

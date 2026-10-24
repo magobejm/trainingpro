@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { getFullMediaUrl } from '../../utils/library-media.helpers';
 import type { LibraryDisplayItem, LibraryTabId } from './client-library.helpers';
 import { LIBRARY_TYPE_BADGE, getItemTypeChip } from './client-library.helpers';
 import { LIGHT } from '../../theme/light';
@@ -15,8 +16,12 @@ export function LibraryItemCard({ item, activeTab, onPress }: Props): React.JSX.
   const chip = getItemTypeChip(item);
   const muscles = item.muscleGroups?.map((mg) => mg.label).join(', ');
 
+  const imageUri = item.mediaUrl ? getFullMediaUrl(activeTab, item.mediaUrl) : null;
   return (
     <Pressable onPress={onPress} style={styles.card}>
+      {imageUri ? (
+        <Image accessibilityLabel={item.name} resizeMode={'cover'} source={{ uri: imageUri }} style={styles.thumb} />
+      ) : null}
       <View style={styles.main}>
         <Text style={styles.name}>{item.name}</Text>
         {chip ? (
@@ -49,4 +54,5 @@ const styles = StyleSheet.create({
   main: { flex: 1 },
   muscles: { color: LIGHT.textMuted, fontSize: 11, marginTop: 3 },
   name: { color: LIGHT.textStrong, fontSize: 15, fontWeight: '700' },
+  thumb: { borderRadius: LIGHT.radiusSm, height: 56, marginRight: 12, width: 56 },
 });

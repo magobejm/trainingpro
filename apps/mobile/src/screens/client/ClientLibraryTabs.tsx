@@ -37,9 +37,11 @@ export function LibraryTabBar({ active, onSelect }: Props): React.JSX.Element {
   );
 }
 
+const TAB_ROW_HEIGHT = 44;
+
 const styles = StyleSheet.create({
-  content: { gap: 8, paddingHorizontal: 16 },
-  scroll: { marginBottom: 12 },
+  content: { alignItems: 'center', gap: 8, paddingHorizontal: 16 },
+  scroll: { flexGrow: 0, flexShrink: 0, height: TAB_ROW_HEIGHT, marginBottom: 12 },
   tab: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,

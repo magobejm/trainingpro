@@ -1,11 +1,11 @@
-import { ClientNutritionMacrosCard, ClientNutritionMealGroups } from '@trainerpro/ui';
 import React, { useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { useClientNutritionQuery, type ClientNutrition, type NutritionPlan } from '../../data/hooks/useClientNutrition';
+import { useClientNutritionQuery, type NutritionPlan } from '../../data/hooks/useClientNutrition';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
-import { buildMealGroups, hasNutritionPlanData, readSetupData, resolvePlanDay } from './nutrition-plan.helpers';
+import { hasNutritionPlanData } from './nutrition-plan.helpers';
+import { NutritionWeekPlan } from './NutritionWeekPlan';
 import { moveNutritionDay, NutritionTodayPanel } from './NutritionTodayPanel';
 import { styles } from './nutrition-plan.styles';
 import { LIGHT } from '../../theme/light';
@@ -13,13 +13,11 @@ import { LIGHT } from '../../theme/light';
 type Props = { onClose: () => void; onOpenShopping: () => void };
 type PlanTab = 'estructurado' | 'libre';
 type ScreenView = 'plan' | 'today';
-type ClientNutritionFoods = ClientNutrition['foods'];
-type ClientNutritionMeals = ClientNutrition['meals'];
 
 const SPINNER_SIZE = 'large' as const;
 
 export function NutritionPlanScreen({ onClose, onOpenShopping }: Props): React.JSX.Element {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const query = useClientNutritionQuery();
   const [activeTab, setActiveTab] = useState<PlanTab | null>(null);
   const [view, setView] = useState<ScreenView>('today');
@@ -37,8 +35,10 @@ export function NutritionPlanScreen({ onClose, onOpenShopping }: Props): React.J
           day={day}
           onShift={(days) => setDay((current) => moveNutritionDay(current, days))}
           query={query}
+          locale={i18n.language}
           resolvedTab={resolvedTab}
           setActiveTab={setActiveTab}
+          setDay={setDay}
           setView={setView}
           t={t}
           view={view}
@@ -56,6 +56,8 @@ function NutritionBody(props: {
   query: ReturnType<typeof useClientNutritionQuery>;
   resolvedTab: PlanTab | null;
   setActiveTab: (tab: PlanTab) => void;
+  locale: string;
+  setDay: (date: Date) => void;
   setView: (view: ScreenView) => void;
   t: (key: string, options?: Record<string, unknown>) => string;
   view: ScreenView;
@@ -88,48 +90,26 @@ function NutritionBody(props: {
       <ViewToggle onChange={props.setView} t={props.t} view={props.view} />
       {showToggle ? <PlanToggle active={props.resolvedTab} onChange={props.setActiveTab} t={props.t} /> : null}
       {props.activePlan.name ? <Text style={styles.planName}>{props.activePlan.name}</Text> : null}
-      <Pressable onPress={props.onOpenShopping}>
-        <Text style={styles.dayLabel}>{props.t('client.nutrition.shopping')}</Text>
+      <Pressable onPress={props.onOpenShopping} style={styles.shoppingButton}>
+        <Text style={styles.toggleTextActive}>{props.t('client.nutrition.shopping')}</Text>
       </Pressable>
       {props.view === 'today' ? (
         <NutritionTodayPanel
           data={props.query.data}
           date={props.day}
+          onReset={() => props.setDay(new Date())}
           onShift={props.onShift}
           plan={props.activePlan}
           t={props.t}
         />
       ) : (
-        <FullPlan foods={props.query.data.foods} meals={props.query.data.meals} plan={props.activePlan} t={props.t} />
-      )}
-    </>
-  );
-}
-
-function FullPlan({
-  foods,
-  meals,
-  plan,
-  t,
-}: {
-  foods?: ClientNutritionFoods;
-  meals?: ClientNutritionMeals;
-  plan: NutritionPlan;
-  t: (key: string, options?: Record<string, unknown>) => string;
-}): React.JSX.Element {
-  const setup = readSetupData(plan.setupData);
-  const weekIndex = resolvePlanDay(plan, plan.assignedAt, new Date()).weekIndex;
-  const mealGroups = buildMealGroups(plan, weekIndex);
-  return (
-    <>
-      {plan.description ? <Text style={styles.planDescription}>{plan.description}</Text> : null}
-      {setup ? <ClientNutritionMacrosCard setup={setup} t={t} /> : null}
-      {mealGroups.length > 0 ? (
-        <ClientNutritionMealGroups foods={foods} groups={mealGroups} meals={meals} t={t} />
-      ) : (
-        <View style={styles.center}>
-          <Text style={styles.empty}>{t('client.nutrition.noMeals')}</Text>
-        </View>
+        <NutritionWeekPlan
+          foods={props.query.data.foods}
+          locale={props.locale}
+          meals={props.query.data.meals}
+          plan={props.activePlan}
+          t={props.t}
+        />
       )}
     </>
   );

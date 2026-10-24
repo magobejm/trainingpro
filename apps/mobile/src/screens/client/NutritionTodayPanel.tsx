@@ -21,12 +21,14 @@ type Translate = (key: string, options?: Record<string, unknown>) => string;
 export function NutritionTodayPanel({
   data,
   date,
+  onReset,
   onShift,
   plan,
   t,
 }: {
   data: ClientNutrition;
   date: Date;
+  onReset: () => void;
   onShift: (days: number) => void;
   plan: NutritionPlan;
   t: Translate;
@@ -53,11 +55,16 @@ export function NutritionTodayPanel({
         >
           <Text style={styles.dayLabel}>{t('client.nutrition.previousDay')}</Text>
         </Pressable>
-        <Text style={styles.dayLabel}>{formatDay(date)}</Text>
+        <Text style={styles.dayLabel}>{formatDayHeading(date, t)}</Text>
         <Pressable accessibilityLabel={t('client.nutrition.nextDay')} onPress={() => onShift(1)} style={styles.dayButton}>
           <Text style={styles.dayLabel}>{t('client.nutrition.nextDay')}</Text>
         </Pressable>
       </View>
+      {sameDay(date, new Date()) ? null : (
+        <Pressable onPress={onReset}>
+          <Text style={styles.backToday}>{t('client.nutrition.backToToday')}</Text>
+        </Pressable>
+      )}
       <Text style={styles.dayLabel}>{t('client.nutrition.plannedTitle')}</Text>
       <MacroTargetBars comparison={compareToTarget(macros.total, readPlanSetup(plan.setupData))} t={t} />
       <Text style={styles.dayLabel}>{t('client.nutrition.eatenTitle')}</Text>
@@ -118,8 +125,19 @@ function formatKey(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-function formatDay(date: Date): string {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${day}/${month}/${date.getFullYear()}`;
+function formatDayHeading(date: Date, t: Translate): string {
+  const diff = dayDiff(date, new Date());
+  if (diff === 0) return t('client.nutrition.dayToday');
+  if (diff === 1) return t('client.nutrition.dayTomorrow');
+  return date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', weekday: 'long' });
+}
+
+function sameDay(left: Date, right: Date): boolean {
+  return dayDiff(left, right) === 0;
+}
+
+function dayDiff(date: Date, today: Date): number {
+  const start = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const base = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  return Math.round((start - base) / 86_400_000);
 }

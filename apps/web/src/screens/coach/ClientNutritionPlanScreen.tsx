@@ -18,6 +18,7 @@ import { ClientNutritionAdherence } from './nutrition/ClientNutritionAdherence';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
 import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
 import { styles } from './nutrition/nutrition.styles';
+import { formatFoodAmount } from '@trainerpro/shared';
 import { Button, EmptyState, space, useToast } from '@trainerpro/ui';
 
 const VARIANT_SECONDARY = 'secondary' as const;
@@ -38,13 +39,14 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
   const templatesQuery = useNutritionPlansQuery();
   const assignMutation = useAssignPlanMutation();
   const toast = useToast();
-  const [planType, setPlanType] = useState<NutritionPlanType>('LIBRE');
+  const [planType, setPlanType] = useState<NutritionPlanType | null>(null);
   const [checkpointPlan, setCheckpointPlan] = useState<null | NutritionPlan>(null);
   const plans = plansQuery.data ?? [];
-  const activePlan = useMemo(() => resolveActivePlan(plans, planType), [plans, planType]);
+  const selectedType = planType ?? preferredAssignedType(plans);
+  const activePlan = useMemo(() => resolveActivePlan(plans, selectedType), [plans, selectedType]);
   const templates = useMemo(
-    () => (templatesQuery.data ?? []).filter((plan) => plan.type === planType),
-    [planType, templatesQuery.data],
+    () => (templatesQuery.data ?? []).filter((plan) => plan.type === selectedType),
+    [selectedType, templatesQuery.data],
   );
   const setup = readSetupData(activePlan?.setupData);
   const assigning = assignMutation.isPending;
@@ -62,12 +64,12 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.client.title')}</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
         <TypeChip
-          active={planType === 'LIBRE'}
+          active={selectedType === 'LIBRE'}
           label={t('coach.nutrition.plans.free')}
           onPress={() => setPlanType('LIBRE')}
         />
         <TypeChip
-          active={planType === 'ESTRUCTURADO'}
+          active={selectedType === 'ESTRUCTURADO'}
           label={t('coach.nutrition.plans.structured')}
           onPress={() => setPlanType('ESTRUCTURADO')}
         />
@@ -110,8 +112,10 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
               disabled={mealsQuery.isLoading || mealsQuery.isError}
             />
           </View>
-          {planType === 'LIBRE' ? <FreePlanReadOnly content={activePlan.content} t={t} /> : null}
-          {planType === 'ESTRUCTURADO' ? <StructuredPlanReadOnly content={activePlan.content} t={t} /> : null}
+          {selectedType === 'LIBRE' ? (
+            <FreePlanReadOnly content={activePlan.content} foods={foodsQuery.data ?? []} t={t} />
+          ) : null}
+          {selectedType === 'ESTRUCTURADO' ? <StructuredPlanReadOnly content={activePlan.content} t={t} /> : null}
           <Button label={t('coach.nutrition.checkpoints.open')} onPress={() => setCheckpointPlan(activePlan)} />
         </>
       ) : null}
@@ -166,16 +170,24 @@ function TypeChip(props: { active: boolean; label: string; onPress: () => void }
   );
 }
 
+function preferredAssignedType(plans: NutritionPlan[]): NutritionPlanType {
+  if (plans.some((plan) => plan.type === 'ESTRUCTURADO')) return 'ESTRUCTURADO';
+  return 'LIBRE';
+}
+
 function resolveActivePlan(plans: NutritionPlan[], type: NutritionPlanType): NutritionPlan | undefined {
   return plans.find((plan) => plan.type === type);
 }
 
+const FREE_COLUMN_ORDER = ['breakfast', 'lunch', 'snack', 'dinner', 'other'];
+
 function FreePlanReadOnly(props: {
   content: unknown;
+  foods: Array<{ id: string; servingUnit?: string | null }>;
   t: (key: string, params?: Record<string, number | string>) => string;
 }): React.JSX.Element {
   const content = (props.content as FreePlanContent | undefined) ?? { columns: {} };
-  const columns = Object.entries(content.columns ?? {});
+  const columns = orderedFreeColumns(content.columns ?? {});
   if (columns.length === 0)
     return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
   return (
@@ -185,13 +197,32 @@ function FreePlanReadOnly(props: {
           <Text style={styles.cardTitle}>{props.t(`coach.nutrition.categories.${column}`, { defaultValue: column })}</Text>
           {items.map((item) => (
             <Text key={item.id} style={styles.cardMuted}>
-              {item.mealName ?? item.foodName ?? '—'}
+              {freeItemLabel(item, props.foods, props.t)}
             </Text>
           ))}
         </View>
       ))}
     </>
   );
+}
+
+function orderedFreeColumns(columns: FreePlanContent['columns']): Array<[string, FreePlanContent['columns'][string]]> {
+  const known = FREE_COLUMN_ORDER.filter((key) => (columns[key]?.length ?? 0) > 0).map(
+    (key) => [key, columns[key] ?? []] as [string, FreePlanContent['columns'][string]],
+  );
+  const extra = Object.entries(columns).filter(([key, items]) => !FREE_COLUMN_ORDER.includes(key) && items.length > 0);
+  return [...known, ...extra];
+}
+
+function freeItemLabel(
+  item: FreePlanContent['columns'][string][number],
+  foods: Array<{ id: string; servingUnit?: string | null }>,
+  t: (key: string, params?: Record<string, number | string>) => string,
+): string {
+  const name = item.mealName ?? item.foodName ?? '—';
+  const unit = foods.find((food) => food.id === item.foodId)?.servingUnit;
+  const amount = formatFoodAmount(item.amountGrams, unit, t);
+  return amount ? `${name} · ${amount}` : name;
 }
 
 function StructuredPlanReadOnly(props: {

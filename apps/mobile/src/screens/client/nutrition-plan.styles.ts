@@ -37,6 +37,15 @@ export const styles = StyleSheet.create({
   toggleRow: { flexDirection: 'row', gap: 8, marginBottom: 16, marginHorizontal: 16 },
   toggleText: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
   toggleTextActive: { color: LIGHT.textOnNavy },
+  shoppingButton: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accent,
+    borderRadius: LIGHT.radiusFull,
+    marginBottom: 16,
+    marginHorizontal: 16,
+    paddingVertical: 12,
+  },
+  backToday: { color: LIGHT.accentDark, fontSize: 13, fontWeight: '700', textAlign: 'center' },
   comment: {
     borderColor: LIGHT.border,
     borderRadius: LIGHT.radiusSm,

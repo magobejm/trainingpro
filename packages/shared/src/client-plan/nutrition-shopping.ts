@@ -1,11 +1,14 @@
 import { resolvePlanDay, shiftPlanDate, type FoodMacroSource, type MealMacroSource } from './nutrition-day';
 import { nutritionAmountTotals } from '../coach-planner';
 
+export type ShoppingRange = 'day' | 'week';
+
 export type ShoppingLine = {
   category: string;
   foodId: string;
   grams: number;
   name: string;
+  servingUnit?: string | null;
 };
 
 export type ShoppingGroup = {
@@ -24,10 +27,11 @@ export function buildShoppingList(
   assignedAt: Date | string | null | undefined,
   date: Date,
   meals: MealMacroSource[],
-  foods: Array<FoodMacroSource & { foodCategory?: string | null }>,
+  foods: FoodMacroSource[],
+  range: ShoppingRange = 'week',
 ): ShoppingGroup[] {
   const totals = new Map<string, ShoppingLine>();
-  for (const day of weekDates(date)) {
+  for (const day of range === 'day' ? [date] : weekDates(date)) {
     const resolved = resolvePlanDay(plan, assignedAt ?? plan.assignedAt, day);
     for (const meal of resolved.meals) collectMeal(meal.items, meals, foods, totals);
   }
@@ -38,6 +42,7 @@ export type SubstituteOption = {
   foodId: string;
   grams: number;
   name: string;
+  servingUnit?: string | null;
 };
 
 export function rankSubstitutes(source: FoodMacroSource, grams: number, candidates: FoodMacroSource[]): SubstituteOption[] {
@@ -54,7 +59,12 @@ export function rankSubstitutes(source: FoodMacroSource, grams: number, candidat
     .map((food) => toOption(food, target))
     .sort((left, right) => left.distance - right.distance)
     .slice(0, 5)
-    .map((option) => ({ foodId: option.foodId, grams: option.grams, name: option.name }));
+    .map((option) => ({
+      foodId: option.foodId,
+      grams: option.grams,
+      name: option.name,
+      servingUnit: option.servingUnit,
+    }));
 }
 
 function weekDates(date: Date): Date[] {
@@ -71,7 +81,9 @@ function collectMeal(
   for (const item of items) {
     const meal = item.mealId ? meals.find((candidate) => candidate.id === item.mealId) : undefined;
     if (meal?.ingredients) {
-      for (const ingredient of meal.ingredients) addFood(ingredient.foodId, ingredient.amountGrams, foods, totals);
+      for (const ingredient of meal.ingredients) {
+        addFood(ingredient.foodId, ingredient.amountGrams, foods, totals, ingredient.food);
+      }
       continue;
     }
     if (item.foodId) addFood(item.foodId, item.amountGrams ?? 0, foods, totals);
@@ -81,15 +93,17 @@ function collectMeal(
 function addFood(
   foodId: string,
   grams: number,
-  foods: Array<FoodMacroSource & { foodCategory?: string | null }>,
+  foods: FoodMacroSource[],
   totals: Map<string, ShoppingLine>,
+  fallback?: FoodMacroSource,
 ): void {
-  const food = foods.find((candidate) => candidate.id === foodId);
+  const food = foods.find((candidate) => candidate.id === foodId) ?? fallback;
   const current = totals.get(foodId) ?? {
     category: food?.foodCategory?.trim() || 'other',
     foodId,
     grams: 0,
     name: food?.name ?? '',
+    servingUnit: food?.servingUnit,
   };
   current.grams += grams;
   totals.set(foodId, current);
@@ -117,5 +131,5 @@ function toOption(
     Math.abs((totals.proteinG ?? 0) - target.proteinG) +
     Math.abs((totals.carbsG ?? 0) - target.carbsG) +
     Math.abs((totals.fatG ?? 0) - target.fatG);
-  return { distance, foodId: food.id, grams, name: food.name ?? '' };
+  return { distance, foodId: food.id, grams, name: food.name ?? '', servingUnit: food.servingUnit };
 }

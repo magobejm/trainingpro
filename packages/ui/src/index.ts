@@ -57,6 +57,7 @@ export { webShadow } from './theme/tokens';
 export { legacyCalendarBackgrounds } from './theme/tokens';
 
 export { ClientNutritionMacrosCard, ClientNutritionMealGroups } from './client-plan/ClientNutritionContent';
+export { ConsiderationBadges } from './client-plan/ConsiderationBadges';
 export { DayMealsList, MacroTargetBars } from './client-plan/nutrition-day-view';
 
 export { ClientExerciseCard } from './client-plan/ClientExerciseCard';

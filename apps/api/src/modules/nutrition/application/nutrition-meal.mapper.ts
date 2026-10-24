@@ -9,6 +9,7 @@ import type { NutrientProfile } from '../../nutrition-considerations/domain/nutr
 import type { FoodSnapshotRow } from '../infra/prisma/nutrition.repository';
 
 export type MealFoodSnapshotOutput = NutrientProfile & {
+  foodCategory: string | null;
   id: string;
   name: string;
   servingUnit: string | null;
@@ -51,6 +52,7 @@ export function mapFoodSnapshot(food: FoodSnapshotRow): MealFoodSnapshotOutput {
     carbsG: food.carbsG,
     fatG: food.fatG,
     fiberG: toNumber(food.fiberG),
+    foodCategory: food.foodCategory,
     id: food.id,
     micronutrients: food.micronutrients ?? [],
     name: food.name,

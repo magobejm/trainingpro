@@ -61,6 +61,7 @@ export type ClientNutrition = {
         caloriesKcal?: number | null;
         carbsG?: number | null;
         fatG?: number | null;
+        foodCategory?: string | null;
         id: string;
         name?: string;
         proteinG?: number | null;

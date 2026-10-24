@@ -1,3 +1,4 @@
+import { formatFoodAmount } from '@trainerpro/shared';
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useNutritionSubstitutes } from '../../data/hooks/useNutritionSubstitutes';
@@ -18,7 +19,10 @@ export function NutritionSubstituteSheet(props: {
       <Text style={styles.planName}>{props.t('client.nutrition.substitutes', { name: props.name })}</Text>
       {(query.data ?? []).map((item) => (
         <Text key={item.foodId} style={styles.item}>
-          {props.t('client.nutrition.shoppingItem', { grams: item.grams, name: item.name })}
+          {props.t('client.nutrition.shoppingItem', {
+            amount: formatFoodAmount(item.grams, item.servingUnit, props.t),
+            name: item.name,
+          })}
         </Text>
       ))}
       {query.data && query.data.length === 0 ? (

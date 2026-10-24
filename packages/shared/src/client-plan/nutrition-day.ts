@@ -29,6 +29,7 @@ export type FoodMacroSource = {
   caloriesKcal?: number | null;
   carbsG?: number | null;
   fatG?: number | null;
+  foodCategory?: string | null;
   id: string;
   name?: string;
   proteinG?: number | null;
@@ -46,7 +47,22 @@ export type ResolvedFoodItem = {
   foodId?: string;
   mealId?: string;
   name: string;
+  servingUnit?: string | null;
 };
+
+type AmountTranslator = (key: string, options?: Record<string, number | string>) => string;
+
+export function formatFoodAmount(
+  amount: number | undefined,
+  servingUnit: string | null | undefined,
+  t: AmountTranslator,
+): string {
+  if (amount == null) return '';
+  const value = Number.isInteger(amount) ? amount : Math.round(amount * 10) / 10;
+  if (servingUnit === 'porcion') return t('client.nutrition.units', { value });
+  if (servingUnit === '100ml') return t('client.nutrition.ml', { value });
+  return t('client.nutrition.grams', { value });
+}
 
 export type ResolvedMeal = {
   category?: string;
@@ -178,7 +194,15 @@ function expandItem(
   if (!item.foodId) return [{ ...item, totals: zeroTotals() }];
   const food = foods.find((candidate) => candidate.id === item.foodId);
   const amount = item.amountGrams ?? (food?.servingUnit === 'porcion' ? 1 : 0);
-  return [{ ...item, amountGrams: amount, name: item.name || food?.name || '', totals: scaleFood(food, amount) }];
+  return [
+    {
+      ...item,
+      amountGrams: amount,
+      name: item.name || food?.name || '',
+      servingUnit: food?.servingUnit,
+      totals: scaleFood(food, amount),
+    },
+  ];
 }
 
 function expandMeal(mealId: string, meals: MealMacroSource[]): Array<ResolvedFoodItem & { totals: MacroTotals }> {
@@ -187,6 +211,7 @@ function expandMeal(mealId: string, meals: MealMacroSource[]): Array<ResolvedFoo
     amountGrams: ingredient.amountGrams,
     foodId: ingredient.foodId,
     name: ingredient.food.name ?? '',
+    servingUnit: ingredient.food.servingUnit,
     totals: scaleFood(ingredient.food, ingredient.amountGrams),
   }));
 }

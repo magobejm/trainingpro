@@ -2,7 +2,7 @@ import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-export type NutritionSubstitute = { foodId: string; grams: number; name: string };
+export type NutritionSubstitute = { foodId: string; grams: number; name: string; servingUnit?: string | null };
 
 export function useNutritionSubstitutes(foodId: string | null, grams: number): UseQueryResult<NutritionSubstitute[], Error> {
   const accessToken = useAuthStore((state) => state.accessToken);

@@ -153,6 +153,8 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     width: 48,
   },
+  logLine: { marginLeft: space.md, marginTop: space.xs },
+  logPhoto: { borderRadius: radius.md, height: 72, marginTop: space.xs, width: 72 },
   listItem: {
     backgroundColor: colors.surface,
     borderColor: colors.border,

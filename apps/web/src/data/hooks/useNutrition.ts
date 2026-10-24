@@ -150,9 +150,27 @@ export function useNutritionAdherenceQuery(clientId: string, from: string, to: s
   });
 }
 
+export type NutritionAdherenceMeal = {
+  comment: string | null;
+  eatenItems: Array<{ amount: number; foodId: string; name: string; servingUnit: string | null }>;
+  mealKey: string;
+  mealName: string;
+  photoUrl: string | null;
+  status: 'CHANGED' | 'DONE' | 'SKIPPED';
+};
+
+export type NutritionAdherenceDay = {
+  changed: number;
+  date: string;
+  done: number;
+  expected: number;
+  meals: NutritionAdherenceMeal[];
+  percent: number | null;
+};
+
 export type NutritionAdherence = {
-  days: Array<{ date: string; done: number; expected: number; percent: number | null }>;
-  summary: { done: number; expected: number; percent: number | null };
+  days: NutritionAdherenceDay[];
+  summary: { changed: number; done: number; expected: number; percent: number | null };
 };
 
 export function useCreateCheckpointMutation() {

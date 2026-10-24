@@ -97,7 +97,13 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
       ) : null}
       {activePlan ? (
         <>
-          <ClientNutritionToday foods={foodsQuery.data ?? []} meals={mealsQuery.data ?? []} plan={activePlan} t={t} />
+          <ClientNutritionToday
+            clientId={props.clientId}
+            foods={foodsQuery.data ?? []}
+            meals={mealsQuery.data ?? []}
+            plan={activePlan}
+            t={t}
+          />
           <ClientNutritionAdherence clientId={props.clientId} t={t} />
           <Text style={styles.sectionTitle}>{activePlan.name}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>

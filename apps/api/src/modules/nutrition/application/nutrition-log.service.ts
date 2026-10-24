@@ -1,6 +1,13 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { NutritionMealStatus, type Prisma } from '@prisma/client';
-import { countAdherence, eachPlanDate, nutritionAmountTotals, planCalendarDate, resolvePlanDay } from '@trainerpro/shared';
+import {
+  countAdherence,
+  eachPlanDate,
+  expectedMealsOnDate,
+  nutritionAmountTotals,
+  planCalendarDate,
+  resolvePlanDay,
+} from '@trainerpro/shared';
 import type { AuthContext } from '../../../common/auth-context/auth-context';
 import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../files/domain/private-file-storage.port';
 import { PrivateMediaUrlSigner } from '../../files/domain/private-media-url-signer';
@@ -33,11 +40,21 @@ export type MealLogView = {
   status: NutritionMealStatus;
 };
 
+export type AdherenceMeal = {
+  comment: string | null;
+  eatenItems: EatenItemView[];
+  mealKey: string;
+  mealName: string;
+  photoUrl: string | null;
+  status: NutritionMealStatus;
+};
+
 export type AdherenceDay = {
   changed: number;
   date: string;
   done: number;
   expected: number;
+  meals: AdherenceMeal[];
   percent: number | null;
   skipped: number;
 };
@@ -184,12 +201,32 @@ function daySummary(
   logs: MealLogView[],
   date: string,
 ): AdherenceDay {
-  const expected = plans.reduce((sum, plan) => {
-    const day = resolvePlanDay({ content: plan.content, type: plan.type }, plan.createdAt, planCalendarDate(date));
-    return sum + day.meals.length;
-  }, 0);
-  const statuses = logs.filter((log) => log.date === date).map((log) => log.status);
-  return { date, ...countAdherence(expected, statuses) };
+  const expected = plans.reduce((sum, plan) => sum + plannedMeals(plan, date), 0);
+  const dayLogs = logs.filter((log) => log.date === date);
+  return {
+    date,
+    meals: dayLogs.map(toAdherenceMeal),
+    ...countAdherence(
+      expected,
+      dayLogs.map((log) => log.status),
+    ),
+  };
+}
+
+function plannedMeals(plan: { content: unknown; createdAt: Date; type: 'ESTRUCTURADO' | 'LIBRE' }, date: string): number {
+  const day = resolvePlanDay({ content: plan.content, type: plan.type }, plan.createdAt, planCalendarDate(date));
+  return expectedMealsOnDate(plan.createdAt, date, day.meals.length);
+}
+
+function toAdherenceMeal(log: MealLogView): AdherenceMeal {
+  return {
+    comment: log.comment,
+    eatenItems: log.eatenItems,
+    mealKey: log.mealKey,
+    mealName: log.mealName,
+    photoUrl: log.photoUrl,
+    status: log.status,
+  };
 }
 
 function foldDays(days: AdherenceDay[]): AdherenceDay {
@@ -202,7 +239,7 @@ function foldDays(days: AdherenceDay[]): AdherenceDay {
     }),
     { changed: 0, done: 0, expected: 0, skipped: 0 },
   );
-  return { date: days[0]?.date ?? '', ...countAdherence(totals.expected, repeatStatuses(totals)) };
+  return { date: days[0]?.date ?? '', meals: [], ...countAdherence(totals.expected, repeatStatuses(totals)) };
 }
 
 function repeatStatuses(totals: { changed: number; done: number; skipped: number }) {

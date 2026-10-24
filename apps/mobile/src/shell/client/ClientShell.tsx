@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { ClientCalendarScreen } from '../../screens/client/ClientCalendarScreen';
 import { ClientLibraryScreen } from '../../screens/client/ClientLibraryScreen';
+import { ClientNotesScreen } from '../../screens/client/ClientNotesScreen';
 import { ClientMeasuresScreen } from '../../screens/client/ClientMeasuresScreen';
 import { ClientMoodScreen } from '../../screens/client/ClientMoodScreen';
 import { ClientPlanningScreen } from '../../screens/client/ClientPlanningScreen';
@@ -246,6 +247,7 @@ function dispatchMoreMenu(
   else if (id === 'physicalTests') openOverlay('physicalTests');
   else if (id === 'planning') openOverlay('planning');
   else if (id === 'library') openOverlay('library');
+  else if (id === 'notes') openOverlay('notes');
   else if (id === 'volume') openProgress('volume');
 }
 
@@ -366,6 +368,11 @@ function ClientShellBody(): React.JSX.Element {
       {st.overlay === 'library' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <ClientLibraryScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
+      {st.overlay === 'notes' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <ClientNotesScreen onClose={st.closeOverlay} />
         </Animated.View>
       )}
       {st.overlay === 'nutrition' && (

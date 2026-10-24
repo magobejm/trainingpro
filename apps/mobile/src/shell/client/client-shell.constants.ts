@@ -7,6 +7,7 @@ export type OverlayId =
   | 'library'
   | 'measures'
   | 'mood'
+  | 'notes'
   | 'nutrition'
   | 'shopping'
   | 'physicalTests'

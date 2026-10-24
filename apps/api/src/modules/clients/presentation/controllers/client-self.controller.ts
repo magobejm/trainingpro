@@ -28,6 +28,7 @@ import { GetClientMeUseCase } from '../../application/use-cases/get-client-me.us
 import { GetClientPlanDayUseCase } from '../../application/use-cases/get-client-plan-day.usecase';
 import { GetClientRoutineUseCase } from '../../application/use-cases/get-client-routine.usecase';
 import { ListClientCalendarUseCase } from '../../application/use-cases/list-client-calendar.usecase';
+import { ListClientDayNotesUseCase } from '../../application/use-cases/list-client-day-notes.usecase';
 import { ListClientSessionsUseCase } from '../../application/use-cases/list-client-sessions.usecase';
 import {
   SkipClientSessionUseCase,
@@ -37,7 +38,7 @@ import { ListClientWellnessUseCase } from '../../application/use-cases/list-clie
 import { SaveClientDayNoteUseCase } from '../../application/use-cases/save-client-day-note.usecase';
 import type { ClientRoutine } from '../../domain/client-routine';
 import { ClientCalendarQueryDto, ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
-import { ClientDayNoteParamDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
+import { ClientDayNoteParamDto, ClientDayNotesQueryDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
 import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dto';
 import { SkipClientSessionDto } from '../dto/skip-client-session.dto';
 import { SessionIdParamDto } from '../../../sessions/presentation/dto/session-id-param.dto';
@@ -56,6 +57,7 @@ export class ClientSelfController {
     private readonly getClientPlanDayUseCase: GetClientPlanDayUseCase,
     private readonly getClientRoutineUseCase: GetClientRoutineUseCase,
     private readonly listClientCalendarUseCase: ListClientCalendarUseCase,
+    private readonly listClientDayNotesUseCase: ListClientDayNotesUseCase,
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
@@ -105,6 +107,12 @@ export class ClientSelfController {
       ...e,
       sessionDate: e.sessionDate.toISOString().slice(0, 10),
     }));
+  }
+
+  @Get('me/notes')
+  async listMyNotes(@Query() query: ClientDayNotesQueryDto, @Req() request: HttpAuthRequest) {
+    const parsed = ClientDayNotesQueryDto.schema.parse(query);
+    return this.listClientDayNotesUseCase.execute(readAuthContext(request), parsed);
   }
 
   @Get('me/calendar')

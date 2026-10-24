@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 import { refreshCalendarOnSkipConflict } from '../client-session-skip-error';
@@ -86,6 +86,7 @@ export function useSaveClientDayNoteMutation() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'notes'] });
     },
   });
 }
@@ -154,11 +155,47 @@ function invalidateCalendar(queryClient: QueryClient): void {
   void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar-summary'] });
 }
 
+export type ClientDayNoteItem = {
+  content: string;
+  date: string;
+  updatedAt: string;
+};
+
+type ClientDayNotesPage = {
+  items: ClientDayNoteItem[];
+  nextBefore: string | null;
+};
+
+export function useClientDayNotes(query: string) {
+  const auth = useAuth();
+  const term = query.trim();
+  return useInfiniteQuery({
+    enabled: Boolean(auth),
+    getNextPageParam: (last: ClientDayNotesPage) => last.nextBefore ?? undefined,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => fetchClientDayNotes(auth, term, pageParam),
+    queryKey: ['clients', 'me', 'notes', term],
+  });
+}
+
 function useAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   if (!accessToken || !activeRole) return null;
   return { accessToken, activeRole };
+}
+
+async function fetchClientDayNotes(
+  auth: ReturnType<typeof useAuth>,
+  query: string,
+  before: string | undefined,
+): Promise<ClientDayNotesPage> {
+  if (!auth) throw new Error('Missing authenticated context');
+  const params = new URLSearchParams();
+  if (query.length >= 2) params.set('query', query);
+  if (before) params.set('before', before);
+  const queryText = params.toString();
+  return createApiClient(auth).get<ClientDayNotesPage>(`/clients/me/notes${queryText ? `?${queryText}` : ''}`);
 }
 
 async function fetchCalendarEvents(

@@ -18,6 +18,7 @@ import { ListClientLibraryMobilityUseCase } from './application/use-cases/list-c
 import { ListClientLibraryPlioUseCase } from './application/use-cases/list-client-library-plio.usecase';
 import { ListClientLibrarySportsUseCase } from './application/use-cases/list-client-library-sports.usecase';
 import { ListClientCalendarUseCase } from './application/use-cases/list-client-calendar.usecase';
+import { ListClientDayNotesUseCase } from './application/use-cases/list-client-day-notes.usecase';
 import { SaveClientDayNoteUseCase } from './application/use-cases/save-client-day-note.usecase';
 import { SkipClientSessionUseCase, UndoClientSessionSkipUseCase } from './application/use-cases/skip-client-session.usecase';
 import { ListClientSessionsUseCase } from './application/use-cases/list-client-sessions.usecase';
@@ -78,6 +79,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientLibraryPlioUseCase,
     ListClientLibrarySportsUseCase,
     ListClientCalendarUseCase,
+    ListClientDayNotesUseCase,
     SaveClientDayNoteUseCase,
     SkipClientSessionUseCase,
     UndoClientSessionSkipUseCase,

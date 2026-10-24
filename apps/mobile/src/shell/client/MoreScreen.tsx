@@ -1,7 +1,6 @@
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { showComingSoon } from './feedback';
 import { s } from './client-shell.styles';
 import type { MoreMenuId } from './client-shell.constants';
 
@@ -33,13 +32,7 @@ export function MoreScreen(props: MoreScreenProps): React.JSX.Element {
         {MORE_ITEMS.map((item) => (
           <Pressable
             key={item.id}
-            onPress={() => {
-              if (item.id === 'notes') {
-                showComingSoon(t('mobile.client.more.notes'));
-                return;
-              }
-              props.onNavigate(item.id);
-            }}
+            onPress={() => props.onNavigate(item.id)}
             style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
           >
             <View style={s.moreItemLeft}>

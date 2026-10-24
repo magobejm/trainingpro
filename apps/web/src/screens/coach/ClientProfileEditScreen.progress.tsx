@@ -156,6 +156,7 @@ function ProgressThumb(
       <View style={styles.photoCard}>
         <ThumbButton {...props} />
         <Text style={styles.photoDate}>{thumbDate(props)}</Text>
+        <PhotoMeta item={props.item} t={props.t} />
       </View>
     </div>
   );
@@ -184,6 +185,23 @@ function ThumbButton(props: {
       {hovered ? <HoverMagnifier /> : null}
     </Pressable>
   );
+}
+
+function PhotoMeta(props: { item: ProgressPhoto; t: Translate }): React.JSX.Element | null {
+  const text = photoMetaText(props.item, props.t);
+  if (!text) return null;
+  return <Text style={styles.photoDate}>{text}</Text>;
+}
+
+function photoMetaText(item: ProgressPhoto, t: Translate): string {
+  const pose = poseCaption(item.pose, t);
+  const origin = item.uploadedBy === 'client' ? t('coach.clientProfile.editPage.photoByClient') : '';
+  return [pose, origin].filter(Boolean).join(' · ');
+}
+
+function poseCaption(pose: ProgressPhoto['pose'], t: Translate): string {
+  if (pose !== 'front' && pose !== 'side' && pose !== 'back') return '';
+  return t(`coach.clientProfile.editPage.pose.${pose}`);
 }
 
 function thumbDate(props: { formatLocale: string; item: ProgressPhoto; labels: ProgressLabels }): string {

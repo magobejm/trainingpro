@@ -7,6 +7,8 @@ export type ProgressPhoto = {
   id: string;
   imagePath?: string;
   imageUrl: string;
+  pose?: 'back' | 'front' | 'side' | null;
+  uploadedBy?: 'client' | 'coach';
 };
 
 export const ICON_PLUS = '＋';

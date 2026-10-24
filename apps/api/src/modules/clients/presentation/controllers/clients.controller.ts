@@ -30,6 +30,7 @@ import { CreateClientUseCase } from '../../application/use-cases/create-client.u
 import { DeleteClientProgressPhotoUseCase } from '../../application/use-cases/delete-client-progress-photo.usecase';
 import { GetClientUseCase } from '../../application/use-cases/get-client.usecase';
 import { GetClientManagementSectionsUseCase } from '../../application/use-cases/get-client-management-sections.usecase';
+import { ListClientMeasurementsUseCase } from '../../application/use-cases/list-client-measurements.usecase';
 import { ListClientProgressPhotosUseCase } from '../../application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from '../../application/use-cases/list-clients.usecase';
 import { ListClientTimelineUseCase } from '../../application/use-cases/list-client-timeline.usecase';
@@ -42,6 +43,7 @@ import { SetClientProgressPhotoArchivedUseCase } from '../../application/use-cas
 import { UpdateClientUseCase } from '../../application/use-cases/update-client.usecase';
 import { UploadClientAvatarUseCase } from '../../application/use-cases/upload-client-avatar.usecase';
 import { UploadClientProgressPhotoUseCase } from '../../application/use-cases/upload-client-progress-photo.usecase';
+import { parseProgressPose } from '../../application/services/parse-progress-pose';
 import { ClientTimelineQueryDto, timelineQuery } from '../dto/client-timeline-query.dto';
 import { ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
 import { ClientProgressPhotoIdParamDto } from '../dto/client-progress-photo-id-param.dto';
@@ -57,6 +59,7 @@ import {
   mapClientOutput,
   mapCreateDto,
   mapManagementSection,
+  mapMeasurementOutput,
   mapProgressPhotoOutput,
   mapUpdateDto,
 } from './clients.controller.mappers';
@@ -79,6 +82,7 @@ export class ClientsController {
     private readonly deleteClientProgressPhotoUseCase: DeleteClientProgressPhotoUseCase,
     private readonly getClientUseCase: GetClientUseCase,
     private readonly getClientManagementSectionsUseCase: GetClientManagementSectionsUseCase,
+    private readonly listClientMeasurementsUseCase: ListClientMeasurementsUseCase,
     private readonly listClientProgressPhotosUseCase: ListClientProgressPhotosUseCase,
     private readonly listClientsUseCase: ListClientsUseCase,
     private readonly listClientTimelineUseCase: ListClientTimelineUseCase,
@@ -212,6 +216,13 @@ export class ClientsController {
     return { items: items.map(mapManagementSection) };
   }
 
+  @Get(':clientId/measurements')
+  @UseGuards(ClientOwnershipGuard)
+  async listMeasurements(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
+    const items = await this.listClientMeasurementsUseCase.execute(readAuthContext(request), params.clientId);
+    return { items: items.map(mapMeasurementOutput) };
+  }
+
   @Get(':clientId/progress-photos')
   @UseGuards(ClientOwnershipGuard)
   async listProgressPhotos(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
@@ -238,13 +249,20 @@ export class ClientsController {
   async uploadProgressPhoto(
     @Param() params: ClientIdParamDto,
     @UploadedFile() file: UploadedAvatarFile | undefined,
+    @Body('pose') pose: unknown,
     @Req() request: HttpAuthRequest,
   ) {
     if (!file) {
       throw new BadRequestException('Missing progress photo file');
     }
     const auth = readAuthContext(request);
-    const uploaded = await this.uploadClientProgressPhotoUseCase.execute(auth, params.clientId, file);
+    const parsedPose = parseProgressPose(pose, false);
+    const uploaded = await this.uploadClientProgressPhotoUseCase.execute(
+      auth,
+      params.clientId,
+      file,
+      parsedPose ? { pose: parsedPose, uploadedBy: 'coach' } : undefined,
+    );
     return mapProgressPhotoOutput(uploaded, this.storedFiles());
   }
 

@@ -14,10 +14,7 @@ let useCase: UploadClientProgressPhotoUseCase;
 beforeEach(() => {
   mockStorage.upload.mockReset();
   mockCreatePhotoUseCase.execute.mockReset();
-  useCase = new UploadClientProgressPhotoUseCase(
-    mockStorage as never,
-    mockCreatePhotoUseCase as never,
-  );
+  useCase = new UploadClientProgressPhotoUseCase(mockStorage as never, mockCreatePhotoUseCase as never);
 });
 
 it('should upload a valid photo and create progress photo record', async () => {
@@ -34,15 +31,34 @@ it('should upload a valid photo and create progress photo record', async () => {
 
   const result = await useCase.execute(context, 'client-123', file);
 
-  expect(mockStorage.upload).toHaveBeenCalledWith(
-    expect.objectContaining({ contentType: 'image/jpeg', upsert: false }),
-  );
+  expect(mockStorage.upload).toHaveBeenCalledWith(expect.objectContaining({ contentType: 'image/jpeg', upsert: false }));
   expect(mockCreatePhotoUseCase.execute).toHaveBeenCalledWith(
     context,
     'client-123',
     expect.stringContaining('clients/progress/client-123'),
   );
   expect(result).toBe(photo);
+});
+
+it('should forward pose and uploader when provided', async () => {
+  const context = { subject: 'client-1', activeRole: 'client' } as never;
+  const file = {
+    buffer: Buffer.from('data'),
+    mimetype: 'image/jpeg',
+    originalname: 'side.jpg',
+    size: 500_000,
+  };
+  mockStorage.upload.mockResolvedValue(undefined);
+  mockCreatePhotoUseCase.execute.mockResolvedValue({ id: 'photo-2' });
+
+  await useCase.execute(context, 'client-123', file, { pose: 'side', uploadedBy: 'client' });
+
+  expect(mockCreatePhotoUseCase.execute).toHaveBeenCalledWith(
+    context,
+    'client-123',
+    expect.stringContaining('clients/progress/client-123'),
+    { pose: 'side', uploadedBy: 'client' },
+  );
 });
 
 it('should throw BadRequestException for unsupported MIME type', async () => {

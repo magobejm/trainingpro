@@ -18,7 +18,9 @@ export const clientProgressPhotoSchema = z
     id: z.string(),
     imagePath: z.string(),
     imageUrl: z.string(),
+    pose: z.enum(['front', 'side', 'back']).nullable(),
     updatedAt: z.string(),
+    uploadedBy: z.enum(['coach', 'client']),
   })
   .strict();
 
@@ -90,6 +92,27 @@ export const clientListResponseSchema = z
 
 export type ClientStatus = z.infer<typeof clientStatusSchema>;
 export type ClientObjective = z.infer<typeof clientObjectiveSchema>;
+export const clientMeasurementSchema = z
+  .object({
+    clientId: z.string(),
+    createdAt: z.string(),
+    heightCm: z.number().nullable(),
+    hipCm: z.number().nullable(),
+    id: z.string(),
+    recordedBy: z.enum(['coach', 'client']),
+    waistCm: z.number().nullable(),
+    weightKg: z.number().nullable(),
+  })
+  .strict();
+
+export const clientMeasurementListSchema = z
+  .object({
+    items: z.array(clientMeasurementSchema),
+  })
+  .strict();
+
+export type ClientMeasurement = z.infer<typeof clientMeasurementSchema>;
+export type ClientMeasurementList = z.infer<typeof clientMeasurementListSchema>;
 export type ClientProgressPhoto = z.infer<typeof clientProgressPhotoSchema>;
 export type ClientView = z.infer<typeof clientViewSchema>;
 export type ClientListResponse = z.infer<typeof clientListResponseSchema>;

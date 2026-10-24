@@ -32,6 +32,25 @@ export function useClientByIdQuery(clientId: string): UseQueryResult<ClientView,
   });
 }
 
+export type ClientMeasurementView = {
+  createdAt: string;
+  heightCm: number | null;
+  hipCm: number | null;
+  id: string;
+  recordedBy: 'client' | 'coach';
+  waistCm: number | null;
+  weightKg: number | null;
+};
+
+export function useClientMeasurementsQuery(clientId: string): UseQueryResult<ClientMeasurementView[], Error> {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth) && clientId.length > 0,
+    queryFn: () => fetchMeasurements(auth, clientId),
+    queryKey: ['clients', 'measurements', clientId, auth?.accessToken],
+  });
+}
+
 export function useClientObjectivesQuery(): UseQueryResult<ClientObjectiveView[], Error> {
   const auth = useAuth();
   return useQuery({
@@ -62,6 +81,13 @@ async function fetchClients(auth: ReturnType<typeof useAuth>): Promise<ClientVie
     throw new Error('Missing authenticated context');
   }
   const response = await createApiClient(auth).get<ClientListResponse>('/clients');
+  return response.items;
+}
+
+async function fetchMeasurements(auth: ReturnType<typeof useAuth>, clientId: string): Promise<ClientMeasurementView[]> {
+  if (!auth) throw new Error('Missing authenticated context');
+  const path = `/clients/${clientId}/measurements`;
+  const response = await createApiClient(auth).get<{ items: ClientMeasurementView[] }>(path);
   return response.items;
 }
 

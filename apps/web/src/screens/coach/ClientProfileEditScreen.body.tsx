@@ -5,6 +5,7 @@ import { styles } from './ClientProfileEditScreen.styles';
 import { ProfileFieldsSection } from './components/EditClientProfileModal.fields';
 import { EditableBlockCard } from './ClientProfileEditScreen.components';
 import { ProgressPhotosPanel } from './ClientProfileEditScreen.progress';
+import { ClientMeasurementHistory } from './ClientMeasurementHistory';
 import type { Labels } from './ClientProfileEditScreen.labels';
 import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks';
 import { ICON_ALERT, ICON_IDEA, ICON_INJURY, ICON_NOTE } from './ClientProfileEditScreen.utils';
@@ -55,24 +56,27 @@ function MainColumn(props: { labels: Labels; t: Translate; vm: Vm }): React.JSX.
 function ProgressPanel(props: { labels: Labels; t: Translate; vm: Vm }): React.JSX.Element {
   const vm = props.vm;
   return (
-    <ProgressPhotosPanel
-      archivePhoto={vm.actions.archivePhoto}
-      archivedPhotos={vm.data.archivedPhotos}
-      draggedPhotoId={vm.state.draggedPhotoId}
-      formatLocale={'es-ES'}
-      hoveredPhotoId={vm.state.hoveredPhotoId}
-      labels={props.labels.progress}
-      photoRailRef={vm.refs.photoRailRef}
-      restorePhoto={vm.actions.restorePhoto}
-      setDraggedPhotoId={vm.state.setDraggedPhotoId}
-      setGalleryIndex={vm.state.setGalleryIndex}
-      setHoveredPhotoId={vm.state.setHoveredPhotoId}
-      setShowArchivedPhotos={vm.state.setShowArchivedPhotos}
-      showArchivedPhotos={vm.state.showArchivedPhotos}
-      t={props.t}
-      uploadPhoto={vm.actions.uploadPhoto}
-      visiblePhotos={vm.data.visiblePhotos}
-    />
+    <>
+      <ProgressPhotosPanel
+        archivePhoto={vm.actions.archivePhoto}
+        archivedPhotos={vm.data.archivedPhotos}
+        draggedPhotoId={vm.state.draggedPhotoId}
+        formatLocale={'es-ES'}
+        hoveredPhotoId={vm.state.hoveredPhotoId}
+        labels={props.labels.progress}
+        photoRailRef={vm.refs.photoRailRef}
+        restorePhoto={vm.actions.restorePhoto}
+        setDraggedPhotoId={vm.state.setDraggedPhotoId}
+        setGalleryIndex={vm.state.setGalleryIndex}
+        setHoveredPhotoId={vm.state.setHoveredPhotoId}
+        setShowArchivedPhotos={vm.state.setShowArchivedPhotos}
+        showArchivedPhotos={vm.state.showArchivedPhotos}
+        t={props.t}
+        uploadPhoto={vm.actions.uploadPhoto}
+        visiblePhotos={vm.data.visiblePhotos}
+      />
+      <ClientMeasurementHistory clientId={String(vm.query.data?.id ?? '')} t={props.t} />
+    </>
   );
 }
 

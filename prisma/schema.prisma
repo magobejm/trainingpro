@@ -251,6 +251,7 @@ model Client {
   routineDayColors      ClientRoutineDayColor[]
   managementSections    ClientManagementSection[]
   progressPhotos        ClientProgressPhoto[]
+  measurements          ClientMeasurement[]
   sessions              SessionInstance[]
   incidents             Incident[]
   weeklyReports         WeeklyReport[]
@@ -304,16 +305,33 @@ model ClientManagementSection {
 }
 
 model ClientProgressPhoto {
-  id        String   @id @default(uuid()) @db.Uuid
-  clientId  String   @map("client_id") @db.Uuid
-  imageUrl  String   @map("image_url") @db.VarChar(500)
-  archived  Boolean  @default(false)
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
-  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid()) @db.Uuid
+  clientId   String   @map("client_id") @db.Uuid
+  imageUrl   String   @map("image_url") @db.VarChar(500)
+  pose       String?  @db.VarChar(10)
+  uploadedBy String   @default("coach") @map("uploaded_by") @db.VarChar(10)
+  archived   Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId, archived, createdAt], map: "idx_client_progress_photo_client_archived_created")
   @@map("client_progress_photo")
+}
+
+model ClientMeasurement {
+  id         String   @id @default(uuid()) @db.Uuid
+  clientId   String   @map("client_id") @db.Uuid
+  weightKg   Decimal? @map("weight_kg") @db.Decimal(6, 2)
+  waistCm    Decimal? @map("waist_cm") @db.Decimal(6, 2)
+  hipCm      Decimal? @map("hip_cm") @db.Decimal(6, 2)
+  heightCm   Decimal? @map("height_cm") @db.Decimal(6, 2)
+  recordedBy String   @map("recorded_by") @db.VarChar(10)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt], map: "idx_client_measurement_client_created")
+  @@map("client_measurement")
 }
 
 model ClientObjective {

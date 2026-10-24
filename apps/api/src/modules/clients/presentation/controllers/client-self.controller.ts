@@ -11,8 +11,11 @@ import {
   Put,
   Query,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -21,6 +24,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
 import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { toStoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
+import { ClientSelfProgressService } from '../../application/services/client-self-progress.service';
 import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from '../../application/use-cases/get-client-calendar-summary.usecase';
 import { GetClientExerciseHistoryUseCase } from '../../application/use-cases/get-client-exercise-history.usecase';
@@ -43,7 +47,10 @@ import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dt
 import { SkipClientSessionDto } from '../dto/skip-client-session.dto';
 import { SessionIdParamDto } from '../../../sessions/presentation/dto/session-id-param.dto';
 import { readTimezoneOffset } from '../../../sessions/presentation/read-timezone-offset';
-import { mapClientOutput } from './clients.controller.mappers';
+import { RecordClientMeasurementDto } from '../dto/record-client-measurement.dto';
+import { mapClientOutput, mapMeasurementOutput, mapProgressPhotoOutput } from './clients.controller.mappers';
+
+type UploadedPhoto = { buffer: Buffer; mimetype: string; originalname: string; size: number };
 
 @Controller('clients')
 @UseGuards(AuthGuard, RolesGuard)
@@ -60,6 +67,7 @@ export class ClientSelfController {
     private readonly listClientDayNotesUseCase: ListClientDayNotesUseCase,
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
+    private readonly clientSelfProgressService: ClientSelfProgressService,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
     private readonly skipClientSessionUseCase: SkipClientSessionUseCase,
     private readonly undoClientSessionSkipUseCase: UndoClientSessionSkipUseCase,
@@ -73,6 +81,29 @@ export class ClientSelfController {
     const context = readAuthContext(request);
     const client = await this.getClientMeUseCase.execute(context);
     return mapClientOutput(client, toStoredFileUrls(this.storage, this.mediaUrls));
+  }
+
+  @Get('me/measurements')
+  async listMyMeasurements(@Req() request: HttpAuthRequest) {
+    const items = await this.clientSelfProgressService.listMine(readAuthContext(request));
+    return { items: items.map(mapMeasurementOutput) };
+  }
+
+  @Post('me/measurements')
+  async recordMyMeasurement(@Body() body: RecordClientMeasurementDto, @Req() request: HttpAuthRequest) {
+    const created = await this.clientSelfProgressService.recordMeasurement(readAuthContext(request), body);
+    return mapMeasurementOutput(created);
+  }
+
+  @Post('me/progress-photos/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMyProgressPhoto(
+    @UploadedFile() file: UploadedPhoto | undefined,
+    @Body('pose') pose: unknown,
+    @Req() request: HttpAuthRequest,
+  ) {
+    const uploaded = await this.clientSelfProgressService.uploadPhoto(readAuthContext(request), file, pose);
+    return mapProgressPhotoOutput(uploaded, toStoredFileUrls(this.storage, this.mediaUrls));
   }
 
   @Get('me/routine')

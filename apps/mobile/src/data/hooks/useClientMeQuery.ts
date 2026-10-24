@@ -7,13 +7,17 @@ import { handleUnauthorized } from '../auth-service';
 // this interval refreshes a screen that stays open.
 const PRIVATE_MEDIA_REFRESH_MS = 30 * 60 * 1000;
 
+export type ProgressPose = 'back' | 'front' | 'side';
+
 export type ClientProgressPhoto = {
   archived: boolean;
   clientId: string;
   createdAt: string;
   id: string;
   imageUrl: string;
+  pose?: ProgressPose | null;
   updatedAt: string;
+  uploadedBy?: 'client' | 'coach';
 };
 
 export type ClientMe = {

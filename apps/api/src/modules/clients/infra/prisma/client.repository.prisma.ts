@@ -7,7 +7,7 @@ import {
 } from '../../../plans/infra/prisma/routine-revision.prisma';
 import { readLastClientActivities } from './client-last-activity.prisma';
 import { readClientStatusFacts, statusForClient } from './client-status.prisma';
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import {
   buildArchiveAuditFields,
@@ -21,7 +21,8 @@ import { normalizeSearch } from '../../../../common/text/normalize-search';
 import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientManagementSection } from '../../domain/client-management-section';
-import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
+import { MEASUREMENT_HISTORY_LIMIT, mapClientMeasurement, type ClientMeasurement } from '../../domain/client-measurement';
+import type { ClientProgressPhoto, ProgressPhotoMeta, ProgressPose } from '../../domain/client-progress-photo';
 import { mapExerciseGroupFields, PLAN_EXERCISE_GROUP_INCLUDE } from '../../../../common/plan/plan-exercise-group.mapper';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
@@ -33,6 +34,7 @@ import { selectClients, type ListClientsQuery } from '../../domain/list-clients.
 import type { ClientObjective } from '../../domain/client-objective';
 import type { ClientsRepositoryPort } from '../../domain/clients-repository.port';
 import { listClientManagementSections, replaceClientManagementSections } from './client-management-sections.prisma';
+import { progressPhotoCreate, recordCoachMeasurement } from './client-measurement.prisma';
 import {
   mapProgressPhoto,
   mapClient,
@@ -123,19 +125,52 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     return mapClient(hydrated);
   }
 
-  async createProgressPhoto(context: AuthContext, clientId: string, imageUrl: string): Promise<ClientProgressPhoto> {
+  async createProgressPhoto(
+    context: AuthContext,
+    clientId: string,
+    imageUrl: string,
+    meta?: ProgressPhotoMeta,
+  ): Promise<ClientProgressPhoto> {
+    if (context.activeRole === 'client')
+      return this.createOwnedProgressPhoto(context, clientId, imageUrl, meta?.pose ?? null);
     const membership = await resolveCoachMembership(context, this.prisma);
     return this.prisma.$transaction(async (tx) => {
       await readActiveClient(tx, membership, clientId);
-      const created = await tx.clientProgressPhoto.create({
-        data: {
-          archived: false,
-          clientId,
-          imageUrl,
-        },
-      });
+      const created = await tx.clientProgressPhoto.create({ data: progressPhotoCreate(clientId, imageUrl, meta) });
       return mapProgressPhoto(created);
     });
+  }
+
+  async listMeasurements(context: AuthContext, clientId: string): Promise<ClientMeasurement[]> {
+    const membership = await resolveCoachMembership(context, this.prisma);
+    return this.prisma.$transaction(async (tx) => {
+      await readActiveClient(tx, membership, clientId);
+      const rows = await tx.clientMeasurement.findMany({
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        take: MEASUREMENT_HISTORY_LIMIT,
+        where: { clientId },
+      });
+      return rows.map(mapClientMeasurement);
+    });
+  }
+
+  private async createOwnedProgressPhoto(
+    context: AuthContext,
+    clientId: string,
+    imageUrl: string,
+    pose: ProgressPose | null,
+  ): Promise<ClientProgressPhoto> {
+    const email = context.email?.toLowerCase();
+    if (!email) throw new ForbiddenException('Client profile not found');
+    const owner = await this.prisma.client.findFirst({
+      select: { id: true },
+      where: { archivedAt: null, email, id: clientId },
+    });
+    if (!owner) throw new ForbiddenException('Client profile not found');
+    const created = await this.prisma.clientProgressPhoto.create({
+      data: progressPhotoCreate(clientId, imageUrl, { pose, uploadedBy: 'client' }),
+    });
+    return mapProgressPhoto(created);
   }
 
   async deleteProgressPhoto(context: AuthContext, clientId: string, photoId: string): Promise<void> {
@@ -439,7 +474,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           connect: { id: await resolveObjectiveId(tx, input.objectiveId) },
         };
       }
-      return tx.client.update({
+      const updated = await tx.client.update({
         where: { id: client.id },
         data: {
           ...payload,
@@ -449,6 +484,8 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
           ...CLIENT_WITH_RELATIONS_INCLUDE,
         },
       });
+      await recordCoachMeasurement(tx, client.id, input);
+      return updated;
     };
     const updated = input.routineHandoff ? await handoffTransaction(this.prisma, run) : await this.prisma.$transaction(run);
     return mapClient(updated);

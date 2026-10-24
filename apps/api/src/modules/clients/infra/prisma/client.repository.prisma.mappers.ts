@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import type { ClientCreateInput } from '../../domain/client-create.input';
 import type { ClientObjective } from '../../domain/client-objective';
-import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
+import type { ClientProgressPhoto, ProgressPose } from '../../domain/client-progress-photo';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import type { Client } from '../../domain/client';
 
@@ -90,8 +90,15 @@ export function mapProgressPhoto(row: PrismaProgressPhotoModel): ClientProgressP
     createdAt: row.createdAt,
     id: row.id,
     imageUrl: row.imageUrl,
+    pose: progressPose(row.pose),
     updatedAt: row.updatedAt,
+    uploadedBy: row.uploadedBy === 'client' ? 'client' : 'coach',
   };
+}
+
+function progressPose(value: string | null): ProgressPose | null {
+  if (value === 'front' || value === 'side' || value === 'back') return value;
+  return null;
 }
 
 function mapDecimal(value: Prisma.Decimal | number | null): number | null {

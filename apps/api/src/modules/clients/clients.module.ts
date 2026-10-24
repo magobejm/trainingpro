@@ -7,6 +7,7 @@ import { FilesModule } from '../files/files.module';
 import { PhysicalTestsModule } from '../physical-tests/physical-tests.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { ClientCalendarPlanDaySwapService } from './application/services/client-calendar-plan-day-swap.service';
+import { ClientSelfProgressService } from './application/services/client-self-progress.service';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
 import { EnsureClientSelfSessionUseCase } from './application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from './application/use-cases/get-client-calendar-summary.usecase';
@@ -32,6 +33,7 @@ import { GetClientManagementSectionsUseCase } from './application/use-cases/get-
 import { GetClientMeUseCase } from './application/use-cases/get-client-me.usecase';
 import { GetClientPlanDayUseCase } from './application/use-cases/get-client-plan-day.usecase';
 import { GetClientRoutineUseCase } from './application/use-cases/get-client-routine.usecase';
+import { ListClientMeasurementsUseCase } from './application/use-cases/list-client-measurements.usecase';
 import { ListClientProgressPhotosUseCase } from './application/use-cases/list-client-progress-photos.usecase';
 import { ListClientsUseCase } from './application/use-cases/list-clients.usecase';
 import { ListClientTimelineUseCase } from './application/use-cases/list-client-timeline.usecase';
@@ -87,6 +89,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientWellnessUseCase,
     ClientAuthProvisionerService,
     ClientCalendarPlanDaySwapService,
+    ClientSelfProgressService,
     CreateClientProgressPhotoUseCase,
     CreateClientUseCase,
     DeleteClientProgressPhotoUseCase,
@@ -95,6 +98,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     GetClientMeUseCase,
     GetClientPlanDayUseCase,
     GetClientRoutineUseCase,
+    ListClientMeasurementsUseCase,
     ListClientProgressPhotosUseCase,
     ListClientsUseCase,
     ListClientTimelineUseCase,

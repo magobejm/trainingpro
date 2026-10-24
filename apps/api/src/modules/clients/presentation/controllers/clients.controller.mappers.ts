@@ -1,6 +1,7 @@
 import { resolveStoredFileUrl, type StoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
 import type { Client } from '../../domain/client';
 import type { ClientManagementSection } from '../../domain/client-management-section';
+import type { ClientMeasurement } from '../../domain/client-measurement';
 import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
 import type { CreateClientDto } from '../dto/create-client.dto';
 import type { UpdateClientDto } from '../dto/update-client.dto';
@@ -41,7 +42,22 @@ export function mapProgressPhotoOutput(photo: ClientProgressPhoto, urls?: Stored
     id: photo.id,
     imagePath: imageValue,
     imageUrl: resolvedImageUrl,
+    pose: photo.pose,
     updatedAt: formatIso(photo.updatedAt),
+    uploadedBy: photo.uploadedBy,
+  };
+}
+
+export function mapMeasurementOutput(item: ClientMeasurement) {
+  return {
+    clientId: item.clientId,
+    createdAt: formatIso(item.createdAt),
+    heightCm: item.heightCm,
+    hipCm: item.hipCm,
+    id: item.id,
+    recordedBy: item.recordedBy,
+    waistCm: item.waistCm,
+    weightKg: item.weightKg,
   };
 }
 

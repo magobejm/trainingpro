@@ -303,7 +303,7 @@ function ClientShellBody(): React.JSX.Element {
 
       {st.overlay === 'profile' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <ProfilePanel onClose={st.closeOverlay} />
+          <ProfilePanel onClose={st.closeOverlay} onOpenMeasures={() => st.openOverlay('measures')} />
         </Animated.View>
       )}
       {st.overlay === 'routine' && (

@@ -2,7 +2,8 @@ import type { AuthContext } from '../../../common/auth-context/auth-context';
 import type { ClientCreateInput } from './client-create.input';
 import type { ClientManagementSection } from './client-management-section';
 import type { ClientObjective } from './client-objective';
-import type { ClientProgressPhoto } from './client-progress-photo';
+import type { ClientMeasurement } from './client-measurement';
+import type { ClientProgressPhoto, ProgressPhotoMeta } from './client-progress-photo';
 import type { ClientRoutine, ClientRoutineDay } from './client-routine';
 import type { ClientUpdateInput } from './client-update.input';
 import type { ListClientsQuery } from './list-clients.query';
@@ -22,7 +23,13 @@ export type ClientsRepositoryPort = {
   restoreClient: (context: AuthContext, clientId: string) => Promise<void>;
   canCoachAccessClient: (coachSubject: string, clientId: string) => Promise<boolean>;
   createClient: (context: AuthContext, input: ClientCreateInput) => Promise<Client>;
-  createProgressPhoto: (context: AuthContext, clientId: string, imageUrl: string) => Promise<ClientProgressPhoto>;
+  createProgressPhoto: (
+    context: AuthContext,
+    clientId: string,
+    imageUrl: string,
+    meta?: ProgressPhotoMeta,
+  ) => Promise<ClientProgressPhoto>;
+  listMeasurements: (context: AuthContext, clientId: string) => Promise<ClientMeasurement[]>;
   deleteProgressPhoto: (context: AuthContext, clientId: string, photoId: string) => Promise<void>;
   getClientById: (context: AuthContext, clientId: string) => Promise<Client | null>;
   getClientManagementSections: (context: AuthContext, clientId: string) => Promise<ClientManagementSection[]>;

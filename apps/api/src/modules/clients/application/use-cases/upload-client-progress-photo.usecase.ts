@@ -1,7 +1,7 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../../files/domain/private-file-storage.port';
-import type { ClientProgressPhoto } from '../../domain/client-progress-photo';
+import type { ClientProgressPhoto, ProgressPhotoMeta } from '../../domain/client-progress-photo';
 import { CreateClientProgressPhotoUseCase } from './create-client-progress-photo.usecase';
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -23,6 +23,7 @@ export class UploadClientProgressPhotoUseCase {
     context: AuthContext,
     clientId: string,
     file: { buffer: Buffer; mimetype: string; originalname: string; size: number },
+    meta?: ProgressPhotoMeta,
   ): Promise<ClientProgressPhoto> {
     validatePhotoFile(file);
     const path = buildPhotoPath(clientId, file);
@@ -32,7 +33,8 @@ export class UploadClientProgressPhotoUseCase {
       path,
       upsert: false,
     });
-    return this.createClientProgressPhotoUseCase.execute(context, clientId, path);
+    if (!meta) return this.createClientProgressPhotoUseCase.execute(context, clientId, path);
+    return this.createClientProgressPhotoUseCase.execute(context, clientId, path, meta);
   }
 }
 

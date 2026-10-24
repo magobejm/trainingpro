@@ -9,7 +9,7 @@
     "platforms": ["ios", "android", "web"],
     "android": {
       "package": "com.trainerpro.mobile",
-      "permissions": ["SCHEDULE_EXACT_ALARM", "VIBRATE", "POST_NOTIFICATIONS"],
+      "permissions": ["CAMERA", "SCHEDULE_EXACT_ALARM", "VIBRATE", "POST_NOTIFICATIONS"],
       "versionCode": 2,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
@@ -35,6 +35,17 @@
       "url": "https://u.expo.dev/e32025fc-78da-4dfc-89d8-60149b6e193d"
     },
     "ios": {},
-    "plugins": ["expo-secure-store", "expo-document-picker", "expo-notifications"]
+    "plugins": [
+      "expo-secure-store",
+      "expo-document-picker",
+      "expo-notifications",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Trainer Pro usa la cámara para tus fotos de progreso.",
+          "recordAudioAndroid": false
+        }
+      ]
+    ]
   }
 }

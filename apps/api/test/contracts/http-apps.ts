@@ -16,6 +16,7 @@ import { DeleteClientProgressPhotoUseCase } from '../../src/modules/clients/appl
 import { GetClientManagementSectionsUseCase } from '../../src/modules/clients/application/use-cases/get-client-management-sections.usecase';
 import { GetClientUseCase } from '../../src/modules/clients/application/use-cases/get-client.usecase';
 import { ListClientObjectivesUseCase } from '../../src/modules/clients/application/use-cases/list-client-objectives.usecase';
+import { ListClientMeasurementsUseCase } from '../../src/modules/clients/application/use-cases/list-client-measurements.usecase';
 import { ListClientProgressPhotosUseCase } from '../../src/modules/clients/application/use-cases/list-client-progress-photos.usecase';
 import { ListClientTimelineUseCase } from '../../src/modules/clients/application/use-cases/list-client-timeline.usecase';
 import { ListClientWellnessUseCase } from '../../src/modules/clients/application/use-cases/list-client-wellness.usecase';
@@ -64,6 +65,7 @@ export async function createClientsApp(): Promise<INestApplication> {
       GetClientManagementSectionsUseCase,
       GetClientUseCase,
       ListClientObjectivesUseCase,
+      ListClientMeasurementsUseCase,
       ListClientProgressPhotosUseCase,
       ListClientTimelineUseCase,
       ListClientWellnessUseCase,

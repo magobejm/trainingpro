@@ -1,5 +1,5 @@
-import React from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useLogout } from '../../data/hooks/useAuthMutations';
@@ -7,12 +7,22 @@ import { useClientMeQuery, type ClientMe } from '../../data/hooks/useClientMeQue
 import { LIGHT } from '../../theme/light';
 import { InfoButton, StatSquare } from '../../theme/primitives';
 import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
+import { ClientProfileNoteSheet } from './ClientProfileNoteSheet';
 import { s } from './client-shell.styles';
 
-export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element {
+type NoteKey = 'allergies' | 'considerations' | 'injuries';
+
+const NOTE_LABEL: Record<NoteKey, string> = {
+  allergies: 'mobile.client.profile.allergies',
+  considerations: 'mobile.client.profile.considerations',
+  injuries: 'mobile.client.profile.injuries',
+};
+
+export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () => void }): React.JSX.Element {
   const { t } = useTranslation();
   const { data: client, isLoading } = useClientMeQuery();
   const logout = useLogout();
+  const [note, setNote] = useState<NoteKey | null>(null);
   if (isLoading || !client) {
     return (
       <View style={s.sidePanel}>
@@ -38,7 +48,7 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 8 }}>
           <View style={{ flex: 1, gap: 16 }}>
             <ObjectivesSection client={client} t={t} />
-            <Pressable style={s.photoBtn}>
+            <Pressable onPress={props.onOpenMeasures} style={s.photoBtn}>
               <Text style={{ fontSize: 24 }}>{'🖼️'}</Text>
               <Text style={s.photoBtnText}>{t('mobile.client.profile.photos')}</Text>
             </Pressable>
@@ -53,11 +63,9 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
                 </View>
               </View>
             ) : null}
-            {client.considerations ? (
-              <InfoButton label={t('mobile.client.profile.considerations')} onPress={() => {}} />
-            ) : null}
-            {client.allergies ? <InfoButton label={t('mobile.client.profile.allergies')} onPress={() => {}} /> : null}
-            {client.injuries ? <InfoButton label={t('mobile.client.profile.injuries')} onPress={() => {}} /> : null}
+            <InfoButton label={t('mobile.client.profile.considerations')} onPress={() => setNote('considerations')} />
+            <InfoButton label={t('mobile.client.profile.allergies')} onPress={() => setNote('allergies')} />
+            <InfoButton label={t('mobile.client.profile.injuries')} onPress={() => setNote('injuries')} />
           </View>
         </View>
         <MedicalSection client={client} />
@@ -66,6 +74,12 @@ export function ProfilePanel(props: { onClose: () => void }): React.JSX.Element 
           <Text style={s.logoutBtnText}>{t('mobile.shell.logout')}</Text>
         </Pressable>
       </ScrollView>
+      <ClientProfileNoteSheet
+        body={note ? client[note] : null}
+        onClose={() => setNote(null)}
+        title={note ? t(NOTE_LABEL[note]) : ''}
+        visible={note !== null}
+      />
     </View>
   );
 }
@@ -150,14 +164,23 @@ function ProgressPhotosSection(props: { photos: ClientMe['progressPhotos'] }): R
 }
 
 function MedicalSection(props: { client: ClientMe }): React.JSX.Element {
+  const { t } = useTranslation();
   const hasAny = props.client.injuries || props.client.allergies || props.client.considerations;
   if (!hasAny) return <View />;
   return (
     <View style={s.sectionCard}>
-      {props.client.injuries ? <MedicalRow color={LIGHT.red} label={'Lesiones'} value={props.client.injuries} /> : null}
-      {props.client.allergies ? <MedicalRow color={LIGHT.orange} label={'Alergias'} value={props.client.allergies} /> : null}
+      {props.client.injuries ? (
+        <MedicalRow color={LIGHT.red} label={t('mobile.client.profile.injuries')} value={props.client.injuries} />
+      ) : null}
+      {props.client.allergies ? (
+        <MedicalRow color={LIGHT.orange} label={t('mobile.client.profile.allergies')} value={props.client.allergies} />
+      ) : null}
       {props.client.considerations ? (
-        <MedicalRow color={LIGHT.accent} label={'A tener en cuenta'} value={props.client.considerations} />
+        <MedicalRow
+          color={LIGHT.accent}
+          label={t('mobile.client.profile.considerations')}
+          value={props.client.considerations}
+        />
       ) : null}
     </View>
   );
@@ -183,16 +206,3 @@ function NotesSection(props: { notes: string; t: (k: string) => string }): React
     </View>
   );
 }
-
-const panelStyles = StyleSheet.create({
-  iconBtn: {
-    alignItems: 'center',
-    backgroundColor: LIGHT.accentSoft,
-    borderRadius: LIGHT.radiusFull,
-    height: 36,
-    justifyContent: 'center',
-    width: 36,
-  },
-});
-
-void panelStyles;

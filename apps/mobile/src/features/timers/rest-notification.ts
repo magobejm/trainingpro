@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { ensurePermission } from '../../data/push-registration';
@@ -11,15 +11,21 @@ type RestNotice = {
   title: string;
 };
 
+const CANCEL_SLACK_MS = 2_000;
+
 export function useRestEndNotification(rest: { endAt: number } | null | undefined, texts: RestNotice): void {
   const endAt = rest === undefined ? undefined : (rest?.endAt ?? null);
+  const scheduledEndAt = useRef<number | null>(null);
   const { body, title } = texts;
   useEffect(() => {
     if (endAt === undefined) return;
     if (endAt == null) {
-      void cancelRestEnd();
+      const dueAt = scheduledEndAt.current;
+      scheduledEndAt.current = null;
+      if (dueAt == null || dueAt - Date.now() > CANCEL_SLACK_MS) void cancelRestEnd();
       return;
     }
+    scheduledEndAt.current = endAt;
     void scheduleRestEnd(endAt, { body, title });
   }, [body, endAt, title]);
 }
@@ -55,6 +61,7 @@ async function ensureRestChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(REST_CHANNEL_ID, {
     importance: Notifications.AndroidImportance.HIGH,
+    lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
     name: REST_CHANNEL_ID,
     sound: 'default',
     vibrationPattern: [0, 400, 200, 400],

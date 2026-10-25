@@ -6314,6 +6314,119 @@
         "x-roles": ["client"]
       }
     },
+    "/clients/me/neat-logs": {
+      "get": {
+        "operationId": "get_clients_me_neat_logs",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "date",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/me/neat-logs",
+        "x-controller": "ClientSelfController",
+        "x-filters": ["date"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
+    "/clients/me/neat-logs/{neatId}/{date}": {
+      "put": {
+        "operationId": "put_clients_me_neat_logs_neatId_date",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "neatId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "date",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PUT /clients/me/neat-logs/{neatId}/{date}",
+        "x-controller": "ClientSelfController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients/me/notes": {
       "get": {
         "operationId": "get_clients_me_notes",

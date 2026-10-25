@@ -1,5 +1,10 @@
-import { BadRequestException, HttpException, Injectable } from '@nestjs/common';
-import { GoogleGenAI, Type } from '@google/genai';
+import { BadRequestException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Type } from '@google/genai';
+import type { AuthContext } from '../../../common/auth-context/auth-context';
+import { PrismaService } from '../../../common/prisma/prisma.service';
+import { GeminiService } from '../../ai/gemini.service';
+import { ChatThreadAccessService } from '../../chat/infra/prisma/chat-thread-access.service';
+import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../files/domain/private-file-storage.port';
 import { prepareTechniqueMedia } from '../domain/technique-media';
 import {
   assertTechniqueFile,
@@ -7,73 +12,61 @@ import {
   toEvaluatorProviderFailure,
 } from '../domain/technique-input.policy';
 
+type TechniqueUpload = { buffer: Buffer; mimetype: string; size: number };
+
 @Injectable()
 export class AnalyzeTechniqueUseCase {
-  private readonly ai: GoogleGenAI | null;
-
-  constructor() {
-    this.ai = createAiClient();
-  }
+  constructor(
+    private readonly gemini: GeminiService,
+    private readonly prisma: PrismaService,
+    private readonly threadAccess: ChatThreadAccessService,
+    @Inject(PRIVATE_FILE_STORAGE) private readonly storage: PrivateFileStoragePort,
+  ) {}
 
   async execute(file: Express.Multer.File | undefined, exerciseName?: string) {
     assertTechniqueFile(file);
-    if (!this.ai || !file) throw toEvaluatorProviderFailure();
+    if (!file) throw toEvaluatorProviderFailure();
+    return this.analyzeBuffer(file, exerciseName);
+  }
+
+  /** Analyzes a video/image the client already sent in a chat thread the coach can access. */
+  async executeForAttachment(context: AuthContext, attachmentId: string, exerciseName?: string) {
+    const attachment = await this.prisma.chatAttachment.findUnique({
+      select: { kind: true, message: { select: { threadId: true } }, mimeType: true, storagePath: true },
+      where: { id: attachmentId },
+    });
+    if (!attachment) throw new NotFoundException('Attachment not found');
+    await this.threadAccess.assertAccess(context, attachment.message.threadId);
+    if (attachment.kind !== 'VIDEO' && attachment.kind !== 'IMAGE') {
+      throw new BadRequestException('Solo se pueden analizar vídeos o imágenes.');
+    }
+    const stored = await this.storage.download(attachment.storagePath);
+    if (!stored) throw new NotFoundException('Attachment file not found');
+    return this.analyzeBuffer(
+      { buffer: stored.data, mimetype: attachment.mimeType, size: stored.data.length },
+      exerciseName,
+    );
+  }
+
+  async analyzeBuffer(file: TechniqueUpload, exerciseName?: string) {
+    assertTechniqueFile(file);
+    if (!this.gemini.isConfigured()) throw toEvaluatorProviderFailure();
     try {
       const media = await prepareTechniqueMedia(file);
-      const text = await withTimeout(requestAnalysis(this.ai, media, exerciseName), EVALUATOR_PROVIDER_TIMEOUT_MS);
-      return parseAnalysis(text);
+      return await this.gemini.generateJson({
+        parts: [
+          { text: buildPrompt(exerciseName) },
+          { inlineData: { data: media.contentBase64, mimeType: media.mimeType } },
+        ],
+        schema: responseSchema(),
+        timeoutMs: EVALUATOR_PROVIDER_TIMEOUT_MS,
+      });
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       if (error instanceof HttpException && error.getStatus() < 500) throw error;
       throw toEvaluatorProviderFailure();
     }
   }
-}
-
-function createAiClient(): GoogleGenAI | null {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return null;
-  return new GoogleGenAI({ apiKey });
-}
-
-function requestAnalysis(ai: GoogleGenAI, media: { contentBase64: string; mimeType: string }, exerciseName?: string) {
-  return ai.models.generateContent({
-    config: {
-      responseMimeType: 'application/json',
-      responseSchema: responseSchema(),
-    },
-    contents: [
-      {
-        parts: [
-          { text: buildPrompt(exerciseName) },
-          { inlineData: { data: media.contentBase64, mimeType: media.mimeType } },
-        ],
-        role: 'user',
-      },
-    ],
-    model: 'gemini-3-flash-preview',
-  });
-}
-
-function parseAnalysis(response: { text?: string }): unknown {
-  if (!response.text) throw new Error('empty analysis');
-  return JSON.parse(response.text) as unknown;
-}
-
-function withTimeout<T>(work: Promise<T>, ms: number): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('provider timeout')), ms);
-    work.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (error: unknown) => {
-        clearTimeout(timer);
-        reject(error instanceof Error ? error : new Error('provider failed'));
-      },
-    );
-  });
 }
 
 function buildPrompt(exerciseName?: string): string {

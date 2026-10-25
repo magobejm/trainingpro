@@ -1,9 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  FILE_ALLOWED_MIME_TYPES,
-  FILE_MAX_SIZE_BYTES,
-  type AllowedAttachmentKind,
-} from '../file.constants';
+import { FILE_ALLOWED_MIME_TYPES, maxSizeForKind, type AllowedAttachmentKind } from '../file.constants';
 
 type UploadPolicyInput = {
   fileName: string;
@@ -21,11 +17,12 @@ export type UploadPolicy = {
 @Injectable()
 export class FileUploadPolicy {
   createPolicy(input: UploadPolicyInput): UploadPolicy {
-    this.ensureFileSize(input.sizeBytes);
     const kind = this.resolveKind(input.mimeType);
+    const maxSizeBytes = maxSizeForKind(kind);
+    this.ensureFileSize(input.sizeBytes, maxSizeBytes);
     return {
       kind,
-      maxSizeBytes: FILE_MAX_SIZE_BYTES,
+      maxSizeBytes,
       path: this.buildStoragePath(input.threadId, input.fileName),
     };
   }
@@ -35,9 +32,9 @@ export class FileUploadPolicy {
     return `chat/${threadId}/${Date.now()}-${safeName}`;
   }
 
-  private ensureFileSize(sizeBytes: number): void {
-    if (sizeBytes > FILE_MAX_SIZE_BYTES) {
-      throw new BadRequestException('File exceeds 1MB upload policy');
+  private ensureFileSize(sizeBytes: number, maxSizeBytes: number): void {
+    if (sizeBytes > maxSizeBytes) {
+      throw new BadRequestException(`File exceeds ${Math.round(maxSizeBytes / 1_000_000)}MB upload policy`);
     }
   }
 
@@ -51,6 +48,9 @@ export class FileUploadPolicy {
 }
 
 function toSafeName(input: string): string {
-  const normalized = input.trim().toLowerCase().replace(/[^a-z0-9._-]+/g, '-');
+  const normalized = input
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9._-]+/g, '-');
   return normalized.length > 0 ? normalized : 'attachment.bin';
 }

@@ -2,6 +2,8 @@ import React from 'react';
 import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { ChatMessage } from '../../../data/hooks/useChat';
 import { CallProposalCard } from './CallProposalCard';
+import { ChatTechniqueAnalysis } from './ChatTechniqueAnalysis';
+import { extractExerciseName } from './chat-exercise-name';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 
 export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.Element {
@@ -13,16 +15,28 @@ export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.El
     <View style={[styles.bubble, isCoach ? styles.bubbleCoach : styles.bubbleClient]}>
       {props.message.text ? <Text style={styles.bubbleText}>{props.message.text}</Text> : null}
       {props.message.attachments.map((attachment) => (
-        <AttachmentItem attachment={attachment} key={attachment.storagePath} />
+        <AttachmentItem attachment={attachment} key={attachment.storagePath} messageText={props.message.text} />
       ))}
     </View>
   );
 }
 
-function AttachmentItem(props: { attachment: ChatMessage['attachments'][number] }): React.JSX.Element {
+function AttachmentItem(props: {
+  attachment: ChatMessage['attachments'][number];
+  messageText?: null | string;
+}): React.JSX.Element {
   const url = props.attachment.publicUrl;
   if (!url) {
     return <Text style={styles.attachmentItem}>{props.attachment.fileName}</Text>;
+  }
+  if (props.attachment.kind === 'VIDEO') {
+    return (
+      <View>
+        <video controls src={url} style={{ borderRadius: 12, marginTop: 8, maxWidth: 260 }} />
+        <Text style={styles.attachmentLink}>{props.attachment.fileName}</Text>
+        <ChatTechniqueAnalysis attachmentId={props.attachment.id} exerciseName={extractExerciseName(props.messageText)} />
+      </View>
+    );
   }
   if (props.attachment.kind === 'IMAGE') {
     return (

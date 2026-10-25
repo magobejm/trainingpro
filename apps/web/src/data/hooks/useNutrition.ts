@@ -151,6 +151,7 @@ export function useNutritionAdherenceQuery(clientId: string, from: string, to: s
 }
 
 export type NutritionAdherenceMeal = {
+  aiEstimate: { carbsG: number; fatG: number; kcal: number; proteinG: number } | null;
   comment: string | null;
   eatenItems: Array<{ amount: number; foodId: string; name: string; servingUnit: string | null }>;
   mealKey: string;

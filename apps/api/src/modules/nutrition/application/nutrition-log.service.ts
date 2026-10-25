@@ -13,6 +13,7 @@ import { PRIVATE_FILE_STORAGE, type PrivateFileStoragePort } from '../../files/d
 import { PrivateMediaUrlSigner } from '../../files/domain/private-media-url-signer';
 import { NutritionRepository } from '../infra/prisma/nutrition.repository';
 import { NutritionLogRepository } from '../infra/prisma/nutrition-log.repository';
+import { aiEstimateSchema, NutritionAiService, type AiMealEstimate, type ProductNutrition } from './nutrition-ai.service';
 
 const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -28,6 +29,7 @@ export type EatenItemView = {
 };
 
 export type MealLogView = {
+  aiEstimate: AiMealEstimate | null;
   comment: string | null;
   date: string;
   eatenItems: EatenItemView[];
@@ -41,6 +43,7 @@ export type MealLogView = {
 };
 
 export type AdherenceMeal = {
+  aiEstimate: AiMealEstimate | null;
   comment: string | null;
   eatenItems: EatenItemView[];
   mealKey: string;
@@ -65,6 +68,7 @@ export class NutritionLogService {
     private readonly logs: NutritionLogRepository,
     private readonly plans: NutritionRepository,
     private readonly signer: PrivateMediaUrlSigner,
+    private readonly ai: NutritionAiService,
     @Inject(PRIVATE_FILE_STORAGE) private readonly storage: PrivateFileStoragePort,
   ) {}
 
@@ -91,7 +95,7 @@ export class NutritionLogService {
 
   async saveMine(context: AuthContext, input: SaveMealLog): Promise<MealLogView> {
     const eatenItems = input.status === 'CHANGED' ? await this.snapshotFoods(context, input.eatenItems ?? []) : null;
-    return this.toView(await this.logs.save(context, { ...input, eatenItems }));
+    return this.toView(await this.logs.save(context, { ...input, aiEstimate: input.aiEstimate ?? null, eatenItems }));
   }
 
   async removeMine(context: AuthContext, logId: string): Promise<void> {
@@ -112,6 +116,31 @@ export class NutritionLogService {
     const photoPath = `clients/nutrition/${clientId}/${Date.now()}.${extension}`;
     await this.storage.upload({ contentType: file.mimetype, data: file.buffer, path: photoPath, upsert: false });
     return { photoPath };
+  }
+
+  async uploadPhotoWithEstimate(
+    context: AuthContext,
+    file: { buffer: Buffer; mimetype: string; originalname: string; size: number },
+  ): Promise<{ estimate: AiMealEstimate | null; photoPath: string }> {
+    const { photoPath } = await this.uploadPhoto(context, file);
+    return { estimate: await this.ai.estimateMeal(file.buffer, file.mimetype), photoPath };
+  }
+
+  /** Local library first, then Open Food Facts. Returns null (404 upstream) when the product is unknown. */
+  async foodByBarcode(context: AuthContext, code: string) {
+    const existing = await this.logs.findFoodByBarcode(context, code);
+    if (existing) return toFoodItem(existing);
+    const product = await this.ai.lookupBarcode(code);
+    return product ? toFoodItem(await this.logs.createScannedFood(context, product)) : null;
+  }
+
+  async foodFromLabel(context: AuthContext, file: { buffer: Buffer; mimetype: string; size: number }, barcode?: string) {
+    if (!PHOTO_TYPES.includes(file.mimetype) || file.size <= 0 || file.size > 4_000_000) {
+      throw new BadRequestException('Unsupported label photo');
+    }
+    const product: ProductNutrition | null = await this.ai.readLabel(file.buffer, file.mimetype);
+    if (!product) return null;
+    return toFoodItem(await this.logs.createScannedFood(context, { ...product, barcode: barcode ?? null }));
   }
 
   async adherence(
@@ -136,6 +165,7 @@ export class NutritionLogService {
   }
 
   private toView(row: {
+    aiEstimate?: Prisma.JsonValue | null;
     comment: string | null;
     date: Date;
     eatenItems: Prisma.JsonValue | null;
@@ -147,6 +177,7 @@ export class NutritionLogService {
     status: NutritionMealStatus;
   }): MealLogView {
     return {
+      aiEstimate: readAiEstimate(row.aiEstimate),
       comment: row.comment,
       date: row.date.toISOString().slice(0, 10),
       eatenItems: readEatenItems(row.eatenItems),
@@ -186,6 +217,7 @@ export class NutritionLogService {
 type ChosenFood = { amount: number; foodId: string };
 
 type SaveMealLog = {
+  aiEstimate?: AiMealEstimate | null;
   comment?: string | null;
   date: string;
   eatenItems?: ChosenFood[];
@@ -220,6 +252,7 @@ function plannedMeals(plan: { content: unknown; createdAt: Date; type: 'ESTRUCTU
 
 function toAdherenceMeal(log: MealLogView): AdherenceMeal {
   return {
+    aiEstimate: log.aiEstimate,
     comment: log.comment,
     eatenItems: log.eatenItems,
     mealKey: log.mealKey,
@@ -278,4 +311,29 @@ function readEatenItems(value: Prisma.JsonValue | null): EatenItemView[] {
       },
     ];
   });
+}
+
+function readAiEstimate(value: Prisma.JsonValue | null | undefined): AiMealEstimate | null {
+  const parsed = aiEstimateSchema.safeParse(value);
+  return parsed.success ? parsed.data : null;
+}
+
+function toFoodItem(food: {
+  caloriesKcal: number | null;
+  carbsG: number | null;
+  fatG: number | null;
+  id: string;
+  name: string;
+  proteinG: number | null;
+  servingUnit: string | null;
+}) {
+  return {
+    caloriesKcal: food.caloriesKcal,
+    carbsG: food.carbsG,
+    fatG: food.fatG,
+    foodId: food.id,
+    name: food.name,
+    proteinG: food.proteinG,
+    servingUnit: food.servingUnit,
+  };
 }

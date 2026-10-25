@@ -8,7 +8,7 @@ import { useAuthStore } from '../../store/auth.store';
 export type { ChatCallProposal, ChatMessage };
 
 type UploadPolicy = {
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   maxSizeBytes: number;
   path: string;
 };
@@ -31,7 +31,7 @@ export function useSendChatMessageMutation(threadId: string) {
     mutationFn: (input: {
       attachments?: Array<{
         fileName: string;
-        kind: 'AUDIO' | 'IMAGE' | 'PDF';
+        kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
         mimeType: string;
         sizeBytes: number;
         storagePath: string;
@@ -56,7 +56,7 @@ export async function postChatUpload(
   form: FormData,
 ): Promise<{
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
@@ -82,7 +82,7 @@ export async function postChatUpload(
 
 function isUploadedChatFile(value: unknown): value is {
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
@@ -93,7 +93,7 @@ function isUploadedChatFile(value: unknown): value is {
   const record = value as Record<string, unknown>;
   return (
     typeof record.fileName === 'string' &&
-    (record.kind === 'AUDIO' || record.kind === 'IMAGE' || record.kind === 'PDF') &&
+    (record.kind === 'AUDIO' || record.kind === 'IMAGE' || record.kind === 'PDF' || record.kind === 'VIDEO') &&
     typeof record.mimeType === 'string' &&
     typeof record.sizeBytes === 'number' &&
     typeof record.storagePath === 'string' &&

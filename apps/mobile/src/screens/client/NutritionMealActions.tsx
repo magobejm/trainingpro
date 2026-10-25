@@ -59,8 +59,10 @@ export function NutritionMealActions(props: {
           initial={initialDraft(props.saved, props.planned)}
           initialComment={props.saved?.comment ?? ''}
           initialPhoto={props.saved?.photoPath ?? null}
-          onSave={(items, comment, photoPath) => {
+          initialEstimate={props.saved?.aiEstimate ?? null}
+          onSave={(items, comment, photoPath, aiEstimate) => {
             save.mutate({
+              aiEstimate,
               comment,
               date: props.date,
               eatenItems: items,

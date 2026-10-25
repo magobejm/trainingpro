@@ -83,6 +83,9 @@ function TodayMealLog(props: { log?: NutritionAdherenceMeal; t: Translate }): Re
           })}
         </Text>
       ))}
+      {props.log.aiEstimate ? (
+        <Text style={styles.headerSubtitle}>{props.t('coach.nutrition.client.estimateApprox', props.log.aiEstimate)}</Text>
+      ) : null}
       {props.log.photoUrl ? <Image source={{ uri: props.log.photoUrl }} style={styles.logPhoto} /> : null}
     </View>
   );

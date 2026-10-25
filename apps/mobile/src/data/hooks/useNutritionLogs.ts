@@ -13,7 +13,17 @@ export type EatenItem = {
   servingUnit: string | null;
 };
 
+export type AiMealEstimate = {
+  carbsG: number;
+  confidence: number;
+  dishes: string[];
+  fatG: number;
+  kcal: number;
+  proteinG: number;
+};
+
 export type NutritionMealLog = {
+  aiEstimate: AiMealEstimate | null;
   comment: string | null;
   date: string;
   eatenItems: EatenItem[];
@@ -37,6 +47,7 @@ export type FoodSearchHit = {
 };
 
 type LogInput = {
+  aiEstimate?: AiMealEstimate | null;
   comment?: string | null;
   date: string;
   eatenItems?: Array<{ amount: number; foodId: string }>;
@@ -101,4 +112,21 @@ function useLogAuth() {
   const activeRole = useAuthStore((state) => state.activeRole);
   if (!accessToken || activeRole !== 'client') return null;
   return { accessToken, activeRole };
+}
+
+export function useNutritionApi() {
+  const auth = useLogAuth();
+  return auth ? createApiClient(auth) : null;
+}
+
+export async function fetchFoodByBarcode(
+  api: NonNullable<ReturnType<typeof useNutritionApi>>,
+  code: string,
+): Promise<FoodSearchHit | null> {
+  try {
+    return await api.get<FoodSearchHit>(`/clients/me/nutrition/foods/barcode/${encodeURIComponent(code)}`);
+  } catch (error) {
+    if (error instanceof Error && 'status' in error && (error as { status: number }).status === 404) return null;
+    throw error;
+  }
 }

@@ -6,6 +6,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 export type MealLogWrite = {
   comment?: string | null;
   date: string;
+  aiEstimate?: Prisma.InputJsonValue | null;
   eatenItems?: Prisma.InputJsonValue | null;
   mealKey: string;
   mealName: string;
@@ -33,6 +34,7 @@ export class NutritionLogRepository {
     const date = new Date(`${input.date}T00:00:00.000Z`);
     return this.prisma.nutritionMealLog.upsert({
       create: {
+        aiEstimate: jsonOrNull(input.aiEstimate),
         clientId: client.id,
         comment: blank(input.comment),
         date,
@@ -45,6 +47,7 @@ export class NutritionLogRepository {
         status: input.status,
       },
       update: {
+        aiEstimate: jsonOrNull(input.aiEstimate),
         comment: blank(input.comment),
         eatenItems: jsonOrNull(input.eatenItems),
         mealName: input.mealName,
@@ -68,6 +71,38 @@ export class NutritionLogRepository {
       orderBy: { name: 'asc' },
       take: 20,
       where: { ...visibleFoods(client.coachMembershipId), name: { contains: query, mode: 'insensitive' } },
+    });
+  }
+
+  async findFoodByBarcode(context: AuthContext, barcode: string) {
+    const client = await this.requireCoach(context);
+    return this.prisma.food.findFirst({
+      where: { ...visibleFoods(client.coachMembershipId), barcode },
+    });
+  }
+
+  async createScannedFood(
+    context: AuthContext,
+    input: { barcode: string | null; caloriesKcal: number; carbsG: number; fatG: number; name: string; proteinG: number },
+  ) {
+    const client = await this.prisma.client.findFirst({
+      select: { coachMembershipId: true, organizationId: true },
+      where: { archivedAt: null, email: context.email ?? '' },
+    });
+    if (!client?.coachMembershipId) throw new NotFoundException('Client profile not found');
+    return this.prisma.food.create({
+      data: {
+        barcode: input.barcode,
+        caloriesKcal: input.caloriesKcal,
+        carbsG: input.carbsG,
+        coachMembershipId: client.coachMembershipId,
+        fatG: input.fatG,
+        name: input.name,
+        notes: input.barcode ? 'Importado por código de barras' : 'Importado desde etiqueta',
+        organizationId: client.organizationId,
+        proteinG: input.proteinG,
+        scope: LibraryItemScope.COACH,
+      },
     });
   }
 

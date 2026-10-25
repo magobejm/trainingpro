@@ -84,6 +84,7 @@ enum ChatAttachmentKind {
   IMAGE
   AUDIO
   PDF
+  VIDEO
 }
 
 enum NotificationTopic {
@@ -664,6 +665,7 @@ model Food {
   notes             String?
   mediaUrl          String?             @map("media_url") @db.VarChar(500)
   mediaType         String?             @map("media_type") @db.VarChar(40)
+  barcode           String?             @db.VarChar(32)
   createdBy         String?             @map("created_by") @db.Uuid
   updatedBy         String?             @map("updated_by") @db.Uuid
   archivedAt        DateTime?           @map("archived_at") @db.Timestamptz(6)
@@ -675,6 +677,7 @@ model Food {
 
   @@index([scope, archivedAt], map: "idx_food_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_food_coach_archived")
+  @@index([barcode], map: "idx_food_barcode")
   @@map("food")
 }
 
@@ -2148,6 +2151,7 @@ model NutritionMealLog {
   comment        String?             @db.VarChar(500)
   photoPath      String?             @map("photo_path")
   eatenItems     Json?               @map("eaten_items")
+  aiEstimate     Json?               @map("ai_estimate")
   createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
   client         Client              @relation(fields: [clientId], references: [id], onDelete: Cascade)

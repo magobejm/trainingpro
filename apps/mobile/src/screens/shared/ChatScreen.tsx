@@ -14,6 +14,9 @@ import {
 import { CALL_COLOR, CALL_REQUEST_COLOR } from '../client/calendar-fixed-colors';
 import { CallTimeSelect } from '../client/CallTimeSelect';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
+import { TechniqueAnalysisButton } from '../../features/chat/TechniqueAnalysisButton';
+import { VideoAttachment } from '../../features/chat/VideoAttachment';
+import { extractExerciseName } from '../client/exercise-comment.utils';
 import { LIGHT } from '../../theme/light';
 import { useAuthStore } from '../../store/auth.store';
 import { useCoachDraft } from '../../data/hooks/useCoachDraft';
@@ -237,7 +240,7 @@ function MessageBubble(props: { message: ChatMessage }) {
     <View style={[styles.bubble, isClient ? styles.bubbleClient : styles.bubbleCoach]}>
       {props.message.text ? <Text style={styles.bubbleText}>{props.message.text}</Text> : null}
       {props.message.attachments.map((attachment) => (
-        <AttachmentItem attachment={attachment} key={attachment.storagePath} />
+        <AttachmentItem attachment={attachment} key={attachment.storagePath} messageText={props.message.text} />
       ))}
     </View>
   );
@@ -316,10 +319,22 @@ function CallButton(props: { label: string; onPress: () => void; disabled?: bool
   );
 }
 
-function AttachmentItem(props: { attachment: ChatMessage['attachments'][number] }): React.JSX.Element {
+function AttachmentItem(props: {
+  attachment: ChatMessage['attachments'][number];
+  messageText?: null | string;
+}): React.JSX.Element {
   const url = props.attachment.publicUrl;
   if (!url) {
     return <Text style={styles.attachmentItem}>{props.attachment.fileName}</Text>;
+  }
+  if (props.attachment.kind === 'VIDEO') {
+    return (
+      <View>
+        <VideoAttachment uri={url} />
+        <Text style={styles.attachmentLink}>{props.attachment.fileName}</Text>
+        <TechniqueAnalysisButton attachmentId={props.attachment.id} exerciseName={extractExerciseName(props.messageText)} />
+      </View>
+    );
   }
   if (props.attachment.kind === 'IMAGE') {
     return (

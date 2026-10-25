@@ -2,7 +2,7 @@ export const CHAT_REPOSITORY = Symbol('CHAT_REPOSITORY');
 
 export type ChatAttachmentInput = {
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   publicUrl?: null | string;
   sizeBytes: number;
@@ -22,7 +22,7 @@ export type ResolveChatThreadInput = {
 export type ChatAttachmentView = {
   fileName: string;
   id: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   publicUrl: null | string;
   sizeBytes: number;

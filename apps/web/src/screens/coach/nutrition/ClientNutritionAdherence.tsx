@@ -79,6 +79,9 @@ function MealLogLine(props: { meal: NutritionAdherenceMeal; t: Translate }): Rea
           })}
         </Text>
       ))}
+      {props.meal.aiEstimate ? (
+        <Text style={styles.headerSubtitle}>{props.t('coach.nutrition.client.estimateApprox', props.meal.aiEstimate)}</Text>
+      ) : null}
       {props.meal.photoUrl ? <Image source={{ uri: props.meal.photoUrl }} style={styles.logPhoto} /> : null}
     </View>
   );

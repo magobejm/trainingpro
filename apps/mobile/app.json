@@ -11,6 +11,7 @@
       "package": "com.trainerpro.mobile",
       "permissions": [
         "CAMERA",
+        "RECORD_AUDIO",
         "SCHEDULE_EXACT_ALARM",
         "VIBRATE",
         "POST_NOTIFICATIONS",
@@ -59,6 +60,14 @@
         }
       ],
       "expo-document-picker",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Trainer Pro usa la cámara para fotografiar tus comidas y grabar tus series.",
+          "microphonePermission": "Trainer Pro usa el micrófono al grabar vídeos de tus series.",
+          "photosPermission": "Trainer Pro accede a tus fotos para adjuntarlas."
+        }
+      ],
       "expo-notifications",
       [
         "expo-camera",

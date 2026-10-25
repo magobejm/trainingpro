@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useCreateIncidentMutation } from '../../data/hooks/useIncidents';
 import { showError, showToast } from '../../shell/client/feedback';
 import { ConfirmModal } from '../../theme/ConfirmModal';
 import { LIGHT } from '../../theme/light';
 import { useOptionalCoachNotice } from './MorningCheckinGate';
+import { useChatVideoUpload, type PickedChatVideo } from '../../features/chat/useChatVideoUpload';
+import { VideoAttachment } from '../../features/chat/VideoAttachment';
 import {
   formatExerciseCommentChatNotice,
   formatExerciseIncidentChatNotice,
@@ -57,6 +59,7 @@ export function ExerciseCommentModal(props: ExerciseCommentModalProps): React.JS
               style={[styles.textarea, vm.showIncident ? styles.textareaCompact : null]}
               value={vm.commentText}
             />
+            <VideoAttachSection vm={vm} />
             <Pressable
               disabled={!vm.commentText.trim() || vm.isSubmitting}
               onPress={() => {
@@ -112,6 +115,19 @@ export function ExerciseCommentModal(props: ExerciseCommentModalProps): React.JS
   );
 }
 
+async function applyPickedVideo(
+  picked: ReturnType<ReturnType<typeof useChatVideoUpload>['pick']>,
+  setVideo: (video: PickedChatVideo | null) => void,
+  report: (key: string) => void,
+): Promise<void> {
+  const result = await picked;
+  if (result.error) {
+    report(`mobile.client.comment.video.error.${result.error}`);
+    return;
+  }
+  if (result.video) setVideo(result.video);
+}
+
 function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
   const { t } = useTranslation();
   const createMutation = useCreateIncidentMutation();
@@ -121,9 +137,12 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
   const [showIncident, setShowIncident] = useState(false);
   const [category, setCategory] = useState<IncidentCategory>('molestia');
   const [confirmReport, setConfirmReport] = useState(false);
+  const [video, setVideo] = useState<PickedChatVideo | null>(null);
+  const videoUpload = useChatVideoUpload();
 
   useEffect(() => {
     if (props.visible) {
+      setVideo(null);
       setCommentText('');
       setIncidentText('');
       setShowIncident(false);
@@ -149,6 +168,7 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
         exerciseName: props.exerciseName,
         routineDay: props.routineDayLabel,
       }),
+      video ? [video.draft] : undefined,
     );
     showToast(t('mobile.client.comment.saved'));
     close();
@@ -176,6 +196,7 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
             exerciseName: props.exerciseName,
             routineDay: props.routineDayLabel,
           }),
+          video ? [video.draft] : undefined,
         );
         showToast(t('mobile.client.comment.incidentReported'));
       } else {
@@ -195,6 +216,9 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
     handleSaveComment,
     incidentText,
     isSubmitting: createMutation.isPending,
+    pickVideo: (source: 'camera' | 'library') =>
+      applyPickedVideo(videoUpload.pick(source), setVideo, (key) => showError(t(key))),
+    removeVideo: () => setVideo(null),
     saveIncident,
     setCategory,
     setCommentText,
@@ -202,7 +226,58 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
     setIncidentText,
     setShowIncident,
     showIncident,
+    video,
+    videoPending: videoUpload.pending,
+    videoReady: videoUpload.ready,
   };
+}
+
+function VideoAttachSection(props: { vm: ReturnType<typeof useExerciseCommentViewModel> }): React.JSX.Element {
+  const { t } = useTranslation();
+  const { vm } = props;
+  if (vm.videoPending) {
+    return (
+      <View style={styles.videoBox}>
+        <ActivityIndicator color={LIGHT.accent} />
+        <Text style={styles.videoHint}>{t('mobile.client.comment.video.uploading')}</Text>
+      </View>
+    );
+  }
+  if (vm.video) {
+    return (
+      <View style={styles.videoBox}>
+        <VideoAttachment uri={vm.video.localUri} />
+        <Pressable accessibilityRole="button" onPress={vm.removeVideo} style={styles.videoBtn}>
+          <Text style={styles.videoBtnText}>{t('mobile.client.comment.video.remove')}</Text>
+        </Pressable>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.videoBox}>
+      <Text style={styles.videoHint}>{t('mobile.client.comment.video.hint')}</Text>
+      <View style={styles.videoRow}>
+        {Platform.OS === 'web' ? null : (
+          <Pressable
+            accessibilityRole="button"
+            disabled={!vm.videoReady}
+            onPress={() => void vm.pickVideo('camera')}
+            style={[styles.videoBtn, !vm.videoReady ? styles.btnDisabled : null]}
+          >
+            <Text style={styles.videoBtnText}>{t('mobile.client.comment.video.record')}</Text>
+          </Pressable>
+        )}
+        <Pressable
+          accessibilityRole="button"
+          disabled={!vm.videoReady}
+          onPress={() => void vm.pickVideo('library')}
+          style={[styles.videoBtn, !vm.videoReady ? styles.btnDisabled : null]}
+        >
+          <Text style={styles.videoBtnText}>{t('mobile.client.comment.video.gallery')}</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
 }
 
 function IncidentRegisterCard(props: {
@@ -270,6 +345,18 @@ function IncidentRegisterCard(props: {
 }
 
 const styles = StyleSheet.create({
+  videoBox: { gap: 8 },
+  videoBtn: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accentSoft,
+    borderRadius: 12,
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
+  videoBtnText: { color: LIGHT.accent, fontSize: 12, fontWeight: '800' },
+  videoHint: { color: LIGHT.accent, fontSize: 12, fontWeight: '600' },
+  videoRow: { flexDirection: 'row', gap: 8 },
   backdrop: {
     alignItems: 'center',
     backgroundColor: LIGHT.overlay,

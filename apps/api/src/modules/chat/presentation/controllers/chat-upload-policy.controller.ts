@@ -5,7 +5,7 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
-import { FILE_MAX_SIZE_BYTES } from '../../../files/domain/file.constants';
+import { VIDEO_MAX_SIZE_BYTES } from '../../../files/domain/file.constants';
 import { CreateUploadPolicyUseCase } from '../../application/use-cases/create-upload-policy.usecase';
 import { UploadChatFileUseCase } from '../../application/use-cases/upload-chat-file.usecase';
 import { CreateUploadPolicyDto } from '../dto/create-upload-policy.dto';
@@ -36,7 +36,7 @@ export class ChatUploadPolicyController {
   }
 
   @Post('chat-upload')
-  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: FILE_MAX_SIZE_BYTES } }))
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: VIDEO_MAX_SIZE_BYTES } }))
   uploadChatFile(
     @UploadedFile() file: UploadedChatPayload | undefined,
     @Body() body: UploadedChatBody,

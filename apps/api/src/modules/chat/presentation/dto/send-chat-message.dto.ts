@@ -3,7 +3,7 @@ import { assertPrivateStoragePath } from '../../../files/domain/private-storage-
 
 const attachmentSchema = z.object({
   fileName: z.string().min(1).max(160),
-  kind: z.enum(['AUDIO', 'IMAGE', 'PDF']),
+  kind: z.enum(['AUDIO', 'IMAGE', 'PDF', 'VIDEO']),
   mimeType: z.string().min(3).max(120),
   publicUrl: z.string().url().nullable().optional(),
   sizeBytes: z.number().int().positive(),
@@ -31,7 +31,7 @@ export class SendChatMessageDto {
 
   attachments?: Array<{
     fileName: string;
-    kind: 'AUDIO' | 'IMAGE' | 'PDF';
+    kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
     mimeType: string;
     publicUrl?: null | string;
     sizeBytes: number;

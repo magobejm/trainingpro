@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@trainerpro/ui';
 import { useTranslation } from 'react-i18next';
@@ -7,8 +7,8 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import type { DocumentPickerAsset } from 'expo-document-picker';
 import { useCoachAuth } from '../../data/hooks/useCoachData';
 import { CoachPage, CoachButton, CoachField, ui } from './CoachUi';
-import { CoachPdfButton } from './CoachPdfButton';
-import { acceptEvaluatorFile, isTechniqueResult, type CoachTechniqueResult } from './coach-evaluator-model';
+import { EvaluatorResult } from './EvaluatorResult';
+import { acceptEvaluatorFile, isTechniqueResult } from './coach-evaluator-model';
 export function CoachEvaluatorScreen() {
   return <EvaluatorView {...useEvaluatorModel()} />;
 }
@@ -144,41 +144,5 @@ function EvaluatorVideo({ uri }: { uri: string }) {
     instance.loop = false;
   });
   return <VideoView player={player} nativeControls style={mediaStyle} />;
-}
-function EvaluatorResult({ result }: { result: CoachTechniqueResult }) {
-  const { i18n } = useTranslation();
-  const en = i18n.language.startsWith('en');
-  const sections = [
-    { title: en ? 'Immediate correction' : 'Corrección inmediata', lines: [result.correccion_inmediata] },
-    { title: en ? 'Detected errors' : 'Errores detectados', lines: result.errores_detectados },
-    {
-      title: en ? 'Key points' : 'Puntos clave',
-      lines: [
-        (en ? 'Back: ' : 'Espalda: ') + result.analisis_puntos_clave.espalda,
-        (en ? 'Range of motion: ' : 'Rango de movimiento: ') + result.analisis_puntos_clave.rango_movimiento,
-        (en ? 'Joint alignment: ' : 'Alineación articular: ') + result.analisis_puntos_clave.alineacion_articulaciones,
-      ],
-    },
-  ];
-  return (
-    <View style={ui.field}>
-      <Text style={ui.title}>{result.ejercicio}</Text>
-      <Text style={ui.text}>{result.fase_movimiento}</Text>
-      <Text style={result.score_seguridad < 50 ? ui.error : ui.label}>
-        {(en ? 'Safety score: ' : 'Puntuación de seguridad: ') + result.score_seguridad + '/100'}
-      </Text>
-      {sections.map((section) => (
-        <View key={section.title} style={ui.card}>
-          <Text style={ui.label}>{section.title}</Text>
-          {section.lines.map((line, index) => (
-            <Text key={index} style={ui.text}>
-              {line}
-            </Text>
-          ))}
-        </View>
-      ))}
-      <CoachPdfButton title={result.ejercicio} sections={sections} />
-    </View>
-  );
 }
 const mediaStyle = StyleSheet.create({ media: { width: '100%', height: 240, borderRadius: 16 } }).media;

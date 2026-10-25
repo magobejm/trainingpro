@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { aiEstimateSchema, type AiMealEstimate } from '../../application/nutrition-ai.service';
 
 const eatenItemSchema = z.object({
   amount: z.number().positive().max(5000),
@@ -6,7 +7,9 @@ const eatenItemSchema = z.object({
 });
 
 export class UpsertMealLogDto {
+  aiEstimate?: AiMealEstimate | null;
   static schema = z.object({
+    aiEstimate: aiEstimateSchema.nullable().optional(),
     comment: z.string().max(500).nullable().optional(),
     date: z.string().date(),
     eatenItems: z.array(eatenItemSchema).max(20).optional(),
@@ -58,4 +61,10 @@ export class SubstituteQueryDto {
 export class MealLogIdParamDto {
   static schema = z.object({ id: z.string().uuid() });
   id!: string;
+}
+
+export class BarcodeParamDto {
+  static schema = z.object({ code: z.string().regex(/^\d{6,14}$/) });
+
+  code!: string;
 }

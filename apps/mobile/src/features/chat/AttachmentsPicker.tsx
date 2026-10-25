@@ -5,10 +5,11 @@ import '../../i18n';
 import { postChatUpload } from '../../data/hooks/useChat';
 import { useAuthStore } from '../../store/auth.store';
 import { acceptChatFile, CHAT_ATTACHMENT_ACCEPT } from './chat-attachment.utils';
+import { captureVideo } from './video-capture';
 
 export type AttachmentDraft = {
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
@@ -33,18 +34,30 @@ export function AttachmentsPicker(props: Props): React.JSX.Element {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   const canAttach = props.threadId.length > 0 && !pending && Boolean(accessToken && activeRole);
-  const onPress = () => {
+  const start = (chooser: () => Promise<SelectedFile | null>) => {
     if (!canAttach || !accessToken || !activeRole) {
       return;
     }
-    void uploadSelectedFile(props, { accessToken, activeRole, setPending, t });
+    void uploadSelectedFile(props, { accessToken, activeRole, chooser, setPending, t });
   };
+  const onPress = () => start(chooseFile);
+  const onRecord = () => start(recordVideoFile);
   return (
     <View style={styles.root}>
       <Text style={styles.label}>{t('client.chat.attachments.title')}</Text>
       <Pressable disabled={!canAttach} onPress={onPress} style={styles.attachButton}>
         <Text style={styles.attachLabel}>{t('client.chat.attachments.add')}</Text>
       </Pressable>
+      {Platform.OS === 'web' ? null : (
+        <Pressable
+          accessibilityLabel={t('client.chat.attachments.recordVideo')}
+          disabled={!canAttach}
+          onPress={onRecord}
+          style={styles.attachButton}
+        >
+          <Text style={styles.attachLabel}>{t('client.chat.attachments.recordVideo')}</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -54,11 +67,12 @@ async function uploadSelectedFile(
   args: {
     accessToken: string;
     activeRole: 'admin' | 'coach' | 'client';
+    chooser: () => Promise<SelectedFile | null>;
     setPending: (pending: boolean) => void;
     t: (key: string) => string;
   },
 ): Promise<void> {
-  const file = await chooseFile();
+  const file = await args.chooser();
   if (!file) {
     return;
   }
@@ -84,6 +98,21 @@ async function uploadSelectedFile(
   } finally {
     args.setPending(false);
   }
+}
+
+async function recordVideoFile(): Promise<SelectedFile | null> {
+  const video = await captureVideo('camera');
+  if (!video) {
+    return null;
+  }
+  return {
+    append: (form) => {
+      form.append('file', { name: video.fileName, type: video.mimeType, uri: video.uri } as unknown as Blob);
+    },
+    mimeType: video.mimeType,
+    name: video.fileName,
+    sizeBytes: video.sizeBytes,
+  };
 }
 
 async function chooseFile(): Promise<SelectedFile | null> {

@@ -4,7 +4,7 @@ const chatAttachmentSchema = z
   .object({
     fileName: z.string(),
     id: z.string(),
-    kind: z.enum(['AUDIO', 'IMAGE', 'PDF']),
+    kind: z.enum(['AUDIO', 'IMAGE', 'PDF', 'VIDEO']),
     mimeType: z.string(),
     publicUrl: z.string().nullable(),
     sizeBytes: z.number(),

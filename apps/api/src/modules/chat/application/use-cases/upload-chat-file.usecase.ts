@@ -15,7 +15,7 @@ export type UploadChatFileInput = {
 
 export type UploadedChatFile = {
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   sizeBytes: number;
   storagePath: string;
@@ -26,6 +26,8 @@ const MIME_BY_EXTENSION: Record<string, string> = {
   jpeg: 'image/jpeg',
   jpg: 'image/jpeg',
   m4a: 'audio/mp4',
+  mov: 'video/quicktime',
+  mp4: 'video/mp4',
   mp3: 'audio/mpeg',
   pdf: 'application/pdf',
   png: 'image/png',

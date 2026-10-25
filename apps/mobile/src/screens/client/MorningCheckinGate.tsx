@@ -70,16 +70,24 @@ export function MorningCheckinGate(): React.JSX.Element {
   return <MorningCheckinModal isSubmitting={false} onSkip={handleSkip} onSubmit={handleSubmit} visible={visible} />;
 }
 
-export function useOptionalCoachNotice(): (text: string) => Promise<void> {
+export type CoachNoticeAttachment = {
+  fileName: string;
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
+  mimeType: string;
+  sizeBytes: number;
+  storagePath: string;
+};
+
+export function useOptionalCoachNotice(): (text: string, attachments?: CoachNoticeAttachment[]) => Promise<void> {
   const threadQuery = useClientThreadQuery();
   const sendMutation = useSendChatMessageMutation(threadQuery.data?.id ?? '');
   return useCallback(
-    async (text: string) => {
+    async (text: string, attachments?: CoachNoticeAttachment[]) => {
       if (!threadQuery.data?.id) {
         return;
       }
       try {
-        await sendMutation.mutateAsync({ text });
+        await sendMutation.mutateAsync(attachments?.length ? { attachments, text } : { text });
       } catch {
         // Chat notice is optional; local/session persistence still counts.
       }

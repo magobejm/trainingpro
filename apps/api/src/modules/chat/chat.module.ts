@@ -32,6 +32,6 @@ import { ChatController } from './presentation/controllers/chat.controller';
       useExisting: ChatRepositoryPrisma,
     },
   ],
-  exports: [CHAT_REPOSITORY, ResolveChatThreadUseCase, SendChatMessageUseCase],
+  exports: [CHAT_REPOSITORY, ChatThreadAccessService, ResolveChatThreadUseCase, SendChatMessageUseCase],
 })
 export class ChatModule {}

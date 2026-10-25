@@ -48,3 +48,10 @@ export function formatTodayIncidentDate(now: Date = new Date()): string {
   const year = String(now.getFullYear());
   return `${day}/${month}/${year}`;
 }
+
+/** Reads the exercise name back from a chat notice produced by the formatters above. */
+export function extractExerciseName(text: null | string | undefined): string | undefined {
+  const match = /🎯 Ejercicio:\s*(.+)/.exec(text ?? '');
+  const name = match?.[1]?.trim();
+  return name ? name.slice(0, 120) : undefined;
+}

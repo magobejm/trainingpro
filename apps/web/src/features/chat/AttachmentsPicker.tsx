@@ -9,7 +9,7 @@ import { Button, colors, fontSize, space } from '@trainerpro/ui';
 
 export type AttachmentDraft = {
   fileName: string;
-  kind: 'AUDIO' | 'IMAGE' | 'PDF';
+  kind: 'AUDIO' | 'IMAGE' | 'PDF' | 'VIDEO';
   mimeType: string;
   sizeBytes: number;
   storagePath: string;

@@ -1028,7 +1028,7 @@
   "coach.chat.attachments.namePlaceholder": "File name",
   "coach.chat.attachments.sizePlaceholder": "Size in KB (max 1000)",
   "coach.chat.attachments.add": "Attach",
-  "coach.chat.attachments.error": "Invalid file or larger than 1MB",
+  "coach.chat.attachments.error": "Invalid file (max 1 MB; MP4/MOV video max 20 MB)",
   "coach.chat.attachments.kind.image": "Image",
   "coach.chat.attachments.kind.pdf": "PDF",
   "coach.chat.attachments.kind.audio": "Audio",
@@ -1849,6 +1849,7 @@
   "coach.nutrition.client.statusSkipped": "Skipped",
   "coach.nutrition.client.noLogs": "No log",
   "coach.nutrition.client.eatenItem": "{{name}} · {{amount}}",
+  "coach.nutrition.client.estimateApprox": "≈ {{kcal}} kcal · P {{proteinG}} g · C {{carbsG}} g · F {{fatG}} g (approximate AI estimate)",
   "coach.nutrition.client.mealStatus": "{{name}} · {{status}}",
   "client.nutrition.category.breakfast": "Breakfast",
   "client.nutrition.category.lunch": "Lunch",
@@ -1981,5 +1982,11 @@
   "training.coverage.weight": "Recorded duration used: {{seconds}} s",
   "training.sessions": "Session results",
   "training.recordedOnly": "Recorded data only; missing values are excluded from averages.",
-  "training.overdue": "Overdue"
+  "training.overdue": "Overdue",
+  "coach.chat.analyzeTechnique.exercise": "Exercise (optional)",
+  "coach.chat.analyzeTechnique.loading": "Analyzing technique…",
+  "coach.chat.analyzeTechnique.error": "Analysis failed. Try again.",
+  "coach.chat.analyzeTechnique.close": "Close",
+  "coach.chat.analyzeTechnique.button": "Analyze technique with AI",
+  "coach.chat.analyzeTechnique.retry": "Retry"
 }

@@ -16,7 +16,7 @@
                     "type": "string"
                   },
                   "kind": {
-                    "enum": ["AUDIO", "IMAGE", "PDF"],
+                    "enum": ["AUDIO", "IMAGE", "PDF", "VIDEO"],
                     "type": "string"
                   },
                   "mimeType": {
@@ -4230,6 +4230,49 @@
         "x-roles": ["coach"]
       }
     },
+    "/ai-evaluator/analyze-attachment": {
+      "post": {
+        "operationId": "post_ai_evaluator_analyze_attachment",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /ai-evaluator/analyze-attachment",
+        "x-controller": "AiEvaluatorController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
     "/calendar": {
       "get": {
         "operationId": "get_calendar",
@@ -6585,6 +6628,112 @@
         "x-roles": ["client"]
       }
     },
+    "/clients/me/nutrition/foods/barcode/{code}": {
+      "get": {
+        "operationId": "get_clients_me_nutrition_foods_barcode_code",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/me/nutrition/foods/barcode/{code}",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
+    "/clients/me/nutrition/foods/label": {
+      "post": {
+        "operationId": "post_clients_me_nutrition_foods_label",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Archivo",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /clients/me/nutrition/foods/label",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients/me/nutrition/logs": {
       "get": {
         "operationId": "get_clients_me_nutrition_logs",
@@ -6746,6 +6895,60 @@
           }
         ],
         "summary": "POST /clients/me/nutrition/logs/photo",
+        "x-controller": "ClientNutritionController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
+    "/clients/me/nutrition/logs/photo/estimate": {
+      "post": {
+        "operationId": "post_clients_me_nutrition_logs_photo_estimate",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "Archivo",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /clients/me/nutrition/logs/photo/estimate",
         "x-controller": "ClientNutritionController",
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],

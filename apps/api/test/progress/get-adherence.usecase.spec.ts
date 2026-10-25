@@ -30,9 +30,15 @@ describe('adherence authorization and empty agenda', () => {
       client: { findFirst: jest.fn().mockResolvedValue({ id: 'client' }) },
       calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
       sessionInstance: { findMany: jest.fn().mockResolvedValue([]) },
+      clientNeatLog: { count: jest.fn().mockResolvedValue(0) },
     };
     const result = await new GetAdherenceUseCase(prisma as never).execute(coach, { ...dates, clientId: 'client' });
-    expect(result).toMatchObject({ percent: null, plannedCount: 0, cutoffDate: '2026-10-02' });
+    expect(result).toMatchObject({
+      percent: null,
+      plannedCount: 0,
+      cutoffDate: '2026-10-02',
+      neat: { done: 0, expected: 0, percent: null },
+    });
     expect(prisma.calendarEvent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ clientId: { in: ['client'] }, type: 'workout', archivedAt: null }),

@@ -176,6 +176,23 @@ export {
 } from './triage/thresholds';
 export { estimateBilling, type BillingEstimate, type PricingTier } from './billing/pricing-tier';
 export {
+  heartRateTarget,
+  mapCardioToGarminWorkout,
+  type GarminCardioBlock,
+  type GarminWorkout,
+  type GarminWorkoutStep,
+} from './integrations/garmin-workout';
+export {
+  activitiesOverlap,
+  assertAiAllowedSource,
+  mergeDailyMetrics,
+  visibleToCoach,
+  type MergedDaily,
+  WEARABLE_SOURCES,
+  type DailyMetricFields,
+  type WearableSource,
+} from './integrations/health-sources';
+export {
   clientIntakeAnswersSchema,
   PAR_Q_KEYS,
   parqNeedsCoachReview,

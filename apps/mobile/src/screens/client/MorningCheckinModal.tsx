@@ -15,6 +15,7 @@ type Props = {
   isSubmitting: boolean;
   visible: boolean;
   onSkip: () => void;
+  initialSleep?: number | null;
   onSubmit: (scores: { motivation: number; recovery: number; sleep: number }) => void;
 };
 
@@ -35,8 +36,9 @@ export function MorningCheckinModal(props: Props): React.JSX.Element {
       setSleepHours(hours);
       const score = sleepScore(hours);
       if (score != null) setSleep(score);
+      else if (props.initialSleep != null) setSleep(props.initialSleep);
     });
-  }, [props.visible]);
+  }, [props.initialSleep, props.visible]);
 
   const canSave = canSubmitMorningCheckin({ motivation, recovery, sleep }) && !props.isSubmitting;
 

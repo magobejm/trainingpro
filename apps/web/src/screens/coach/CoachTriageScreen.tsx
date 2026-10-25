@@ -13,6 +13,7 @@ type Triage = {
   checkins: Array<{ clientId: string; fatigue: number; name: string; pain: number | null }>;
   incidents: Array<{ clientId: string; id: string; name: string; severity: string }>;
   reports: Array<{ clientId: string; id: string; name: string; weekStart: string }>;
+  wearableSignals?: Array<{ clientId: string; hrvMs: number | null; name: string; sleepMinutes: number | null }>;
 };
 
 export function CoachTriageScreen(props: { onRouteChange: (route: ShellRoute) => void }): React.JSX.Element {
@@ -53,6 +54,15 @@ export function CoachTriageScreen(props: { onRouteChange: (route: ShellRoute) =>
           <Row
             key={row.id}
             label={`${row.name} · ${row.weekStart}`}
+            onPress={() => openClient(row.clientId, props.onRouteChange)}
+          />
+        ))}
+      </Column>
+      <Column title={t('coach.triage.wearables')} empty={t('coach.triage.empty')}>
+        {data?.wearableSignals?.map((row) => (
+          <Row
+            key={row.clientId}
+            label={`${row.name} · ${row.sleepMinutes ?? 0}`}
             onPress={() => openClient(row.clientId, props.onRouteChange)}
           />
         ))}

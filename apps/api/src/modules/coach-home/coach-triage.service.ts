@@ -6,12 +6,16 @@ import { readLastClientActivities } from '../clients/infra/prisma/client-last-ac
 import { isHighMorningCheckin, isRiskClient } from '@trainerpro/shared';
 import type { AuthContext } from '../../common/auth-context/auth-context';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 const WEEK_SESSIONS = 4;
 
 @Injectable()
 export class CoachTriageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly integrations: IntegrationsService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   async execute(context: AuthContext) {
     const membership = await resolveCoachMembership(context, this.prisma);
@@ -80,6 +84,10 @@ export class CoachTriageService {
         id: report.id,
         name: names.get(report.clientId) ?? '',
         weekStart: report.weekStartDate.toISOString().slice(0, 10),
+      })),
+      wearableSignals: (await this.integrations.signalsFor([...names.keys()])).map((signal) => ({
+        ...signal,
+        name: names.get(signal.clientId) ?? '',
       })),
     };
   }

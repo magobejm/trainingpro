@@ -6,6 +6,7 @@ import { ProfileFieldsSection } from './components/EditClientProfileModal.fields
 import { EditableBlockCard } from './ClientProfileEditScreen.components';
 import { ProgressPhotosPanel } from './ClientProfileEditScreen.progress';
 import { ClientMeasurementHistory } from './ClientMeasurementHistory';
+import { ClientWearablesPanel } from './ClientWearablesPanel';
 import type { Labels } from './ClientProfileEditScreen.labels';
 import type { useClientProfileEditState } from './ClientProfileEditScreen.hooks';
 import { ICON_ALERT, ICON_IDEA, ICON_INJURY, ICON_NOTE } from './ClientProfileEditScreen.utils';
@@ -77,6 +78,7 @@ function ProgressPanel(props: { labels: Labels; t: Translate; vm: Vm }): React.J
         visiblePhotos={vm.data.visiblePhotos}
       />
       <ClientMeasurementHistory clientId={String(vm.query.data?.id ?? '')} t={props.t} />
+      <ClientWearablesPanel clientId={String(vm.query.data?.id ?? '')} t={props.t} />
     </>
   );
 }

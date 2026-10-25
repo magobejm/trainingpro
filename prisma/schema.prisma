@@ -85,6 +85,26 @@ enum ClientIntakeStatus {
   COMPLETED
 }
 
+enum WearableProviderKind {
+  GARMIN
+  POLAR
+  STRAVA
+  HEALTH_CONNECT
+  HEALTHKIT
+}
+
+enum WearableConnectionStatus {
+  PENDING
+  CONNECTED
+  REVOKED
+}
+
+enum IntegrationEventStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
 enum ChatAttachmentKind {
   IMAGE
   AUDIO
@@ -254,6 +274,97 @@ model CopilotUsage {
   @@map("copilot_usage")
 }
 
+model WearableConnection {
+  id              String                   @id @default(uuid()) @db.Uuid
+  clientId        String                   @map("client_id") @db.Uuid
+  provider        WearableProviderKind
+  externalUserId  String?                  @map("external_user_id") @db.VarChar(120)
+  accessTokenEnc  String?                  @map("access_token_enc")
+  refreshTokenEnc String?                  @map("refresh_token_enc")
+  expiresAt       DateTime?                @map("expires_at") @db.Timestamptz(6)
+  scopes          String[]                 @default([])
+  status          WearableConnectionStatus @default(PENDING)
+  autoExport      Boolean                  @default(false) @map("auto_export")
+  connectedAt     DateTime                 @default(now()) @map("connected_at") @db.Timestamptz(6)
+  lastSyncAt      DateTime?                @map("last_sync_at") @db.Timestamptz(6)
+  client          Client                   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, provider], map: "uq_wearable_connection_client_provider")
+  @@map("wearable_connection")
+}
+
+model IntegrationEvent {
+  id          String                 @id @default(uuid()) @db.Uuid
+  provider    WearableProviderKind
+  type        String                 @db.VarChar(80)
+  payload     Json
+  status      IntegrationEventStatus @default(PENDING)
+  attempts    Int                    @default(0)
+  error       String?
+  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  processedAt DateTime?              @map("processed_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt], map: "idx_integration_event_status_created")
+  @@map("integration_event")
+}
+
+model WearableActivity {
+  id               String               @id @default(uuid()) @db.Uuid
+  clientId         String               @map("client_id") @db.Uuid
+  source           WearableProviderKind
+  externalId       String               @map("external_id") @db.VarChar(160)
+  sportType        String               @map("sport_type") @db.VarChar(40)
+  startAt          DateTime             @map("start_at") @db.Timestamptz(6)
+  durationS        Int                  @map("duration_s")
+  distanceM        Int?                 @map("distance_m")
+  avgHr            Int?                 @map("avg_hr")
+  maxHr            Int?                 @map("max_hr")
+  calories         Int?
+  trainingLoad     Int?                 @map("training_load")
+  lapsJson         Json?                @map("laps_json")
+  fitPath          String?              @map("fit_path")
+  matchedSessionId String?              @map("matched_session_id") @db.Uuid
+  client           Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([source, externalId], map: "uq_wearable_activity_source_external")
+  @@index([clientId, startAt], map: "idx_wearable_activity_client_start")
+  @@map("wearable_activity")
+}
+
+model DailyHealthMetric {
+  id            String               @id @default(uuid()) @db.Uuid
+  clientId      String               @map("client_id") @db.Uuid
+  date          DateTime             @db.Date
+  source        WearableProviderKind
+  steps         Int?
+  activeKcal    Int?                 @map("active_kcal")
+  sleepMinutes  Int?                 @map("sleep_minutes")
+  sleepScore    Int?                 @map("sleep_score")
+  restingHr     Int?                 @map("resting_hr")
+  hrvMs         Int?                 @map("hrv_ms")
+  bodyBattery   Int?                 @map("body_battery")
+  weightKg      Decimal?             @map("weight_kg") @db.Decimal(6, 2)
+  client        Client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date, source], map: "uq_daily_health_client_date_source")
+  @@index([clientId, date], map: "idx_daily_health_client_date")
+  @@map("daily_health_metric")
+}
+
+model GarminWorkoutSync {
+  id              String   @id @default(uuid()) @db.Uuid
+  clientId        String   @map("client_id") @db.Uuid
+  routineKey      String   @map("routine_key") @db.VarChar(120)
+  garminWorkoutId String?  @map("garmin_workout_id") @db.VarChar(80)
+  status          String   @db.VarChar(20)
+  payload         Json
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  client          Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, createdAt], map: "idx_garmin_workout_client_created")
+  @@map("garmin_workout_sync")
+}
+
 model Client {
   firstWorkoutGuide     Json?                     @map("first_workout_guide")
   id                    String                    @id @default(uuid()) @db.Uuid
@@ -318,6 +429,10 @@ model Client {
   physicalTestSchedules     ClientPhysicalTestSchedule[]
   dailyCheckins             DailyCheckin[]
   intake                    ClientIntake?
+  wearableConnections       WearableConnection[]
+  wearableActivities        WearableActivity[]
+  dailyHealthMetrics        DailyHealthMetric[]
+  garminWorkoutSyncs        GarminWorkoutSync[]
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")

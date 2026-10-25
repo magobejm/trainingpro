@@ -26,6 +26,7 @@ export function MorningCheckinGate(): React.JSX.Element {
   const saveToday = useDailyCheckinStore((state) => state.saveToday);
   const dismissToday = useDailyCheckinStore((state) => state.dismissToday);
   const accessToken = useAuthStore((state) => state.accessToken);
+  const [initialSleep, setInitialSleep] = useState<number | null>(null);
   const notifyCoach = useOptionalCoachNotice();
   const todayEntry = readTodayCheckin(entries, userId, todayKey);
   const visible = hydrated && status === 'signedIn' && userId !== null && todayEntry === null;
@@ -50,6 +51,14 @@ export function MorningCheckinGate(): React.JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    if (!visible || !accessToken) return;
+    void createApiClient({ accessToken, activeRole: 'client' })
+      .get<{ sleep: number | null }>('/clients/me/health/checkin-hint')
+      .then((hint) => setInitialSleep(hint.sleep))
+      .catch(() => undefined);
+  }, [accessToken, visible]);
+
   const handleSubmit = useCallback(
     (scores: MorningCheckinScores) => {
       if (!userId) {
@@ -72,7 +81,15 @@ export function MorningCheckinGate(): React.JSX.Element {
     dismissToday(userId, todayKey);
   }, [dismissToday, todayKey, userId]);
 
-  return <MorningCheckinModal isSubmitting={false} onSkip={handleSkip} onSubmit={handleSubmit} visible={visible} />;
+  return (
+    <MorningCheckinModal
+      initialSleep={initialSleep}
+      isSubmitting={false}
+      onSkip={handleSkip}
+      onSubmit={handleSubmit}
+      visible={visible}
+    />
+  );
 }
 
 export type CoachNoticeAttachment = {

@@ -62,7 +62,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
 
 @Module({
   imports: [AuthModule, ChatModule, FilesModule, NutritionModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
-  exports: [ClientAccessPolicy],
+  exports: [ClientAccessPolicy, GetClientMeUseCase],
   controllers: [
     FirstWorkoutGuideController,
     ClientLibraryController,

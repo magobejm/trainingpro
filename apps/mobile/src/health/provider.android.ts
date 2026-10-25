@@ -1,7 +1,16 @@
 import { aggregateHeartRate } from './health-metrics';
 import type { HealthSnapshot } from './provider';
 
-const PERMISSIONS = ['Steps', 'SleepSession', 'Weight', 'HeartRate'] as const;
+const PERMISSIONS = [
+  'Steps',
+  'SleepSession',
+  'Weight',
+  'HeartRate',
+  'RestingHeartRate',
+  'HeartRateVariabilityRmssd',
+  'ExerciseSession',
+  'ActiveCaloriesBurned',
+] as const;
 
 type HealthConnectModule = {
   initialize: () => Promise<boolean>;

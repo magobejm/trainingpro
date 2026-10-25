@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { FilesModule } from '../files/files.module';
+import { IntegrationsModule } from '../integrations/integrations.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PurgeExpiredChatDataUseCase } from './application/use-cases/purge-expired-chat-data.usecase';
 import { CHAT_TTL_REPOSITORY } from './domain/chat-ttl.repository.port';
@@ -8,7 +9,7 @@ import { MaintenanceController } from './presentation/controllers/maintenance.co
 import { CronSecretGuard } from './presentation/guards/cron-secret.guard';
 
 @Module({
-  imports: [FilesModule, NotificationsModule],
+  imports: [FilesModule, IntegrationsModule, NotificationsModule],
   controllers: [MaintenanceController],
   providers: [
     CronSecretGuard,

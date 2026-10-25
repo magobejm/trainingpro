@@ -1,5 +1,8 @@
 export type HealthSnapshot = {
+  activeKcal?: number | null;
   heartRate: { average: number; max: number } | null;
+  hrvMs?: number | null;
+  restingHr?: number | null;
   sleepHours: number | null;
   steps: number | null;
   weightKg: number | null;

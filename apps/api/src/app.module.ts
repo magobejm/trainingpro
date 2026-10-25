@@ -21,6 +21,7 @@ import { ProgressModule } from './modules/progress/progress.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { SessionsModule } from './modules/sessions/sessions.module';
 import { UsersModule } from './modules/users/users.module';
+import { IntegrationsModule } from './modules/integrations/integrations.module';
 import { IncidentsModule } from './modules/incidents/incidents.module';
 import { AiEvaluatorModule } from './modules/ai-evaluator/ai-evaluator.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
@@ -48,6 +49,7 @@ import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.mod
     SessionsModule,
     ProgressModule,
     ReportsModule,
+    IntegrationsModule,
     IncidentsModule,
     AiEvaluatorModule,
     NotesModule,

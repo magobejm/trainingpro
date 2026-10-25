@@ -106,7 +106,7 @@ describe('unknown addresses', () => {
 
 describe('roles', () => {
   it('sends each role to its home screen', () => {
-    expect(defaultPathForRole('coach')).toBe('/coach/clients');
+    expect(defaultPathForRole('coach')).toBe('/coach/home');
     expect(defaultPathForRole('admin')).toBe('/admin/coaches');
   });
 

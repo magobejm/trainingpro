@@ -55,20 +55,25 @@ import { ClientsController } from './presentation/controllers/clients.controller
 import { ClientRoutineHistoryController } from './presentation/controllers/client-routine-history.controller';
 import { ClientRoutineColorsController } from './presentation/controllers/client-routine-colors.controller';
 import { ClientRoutineColorsService } from './application/services/client-routine-colors.service';
+import { NutritionModule } from '../nutrition/nutrition.module';
+import { ClientProductivityService } from './application/services/client-productivity.service';
+import { ClientProductivityController } from './presentation/controllers/client-productivity.controller';
 import { ClientOwnershipGuard } from './presentation/guards/client-ownership.guard';
 
 @Module({
-  imports: [AuthModule, ChatModule, FilesModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
+  imports: [AuthModule, ChatModule, FilesModule, NutritionModule, PhysicalTestsModule, forwardRef(() => SessionsModule)],
   exports: [ClientAccessPolicy],
   controllers: [
     FirstWorkoutGuideController,
     ClientLibraryController,
     ClientSelfController,
     ClientsController,
+    ClientProductivityController,
     ClientRoutineHistoryController,
     ClientRoutineColorsController,
   ],
   providers: [
+    ClientProductivityService,
     FirstWorkoutGuideService,
     ClientRoutineColorsService,
     ArchiveClientUseCase,

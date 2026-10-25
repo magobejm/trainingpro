@@ -23,6 +23,7 @@ type FormState = {
   lastName: string;
   modalVisible: boolean;
   objectiveId: string;
+  requestIntake: boolean;
   result: CreateClientResult | null;
   setConfirmEmail: (value: string) => void;
   setAvatarUrl: (value: string) => void;
@@ -32,6 +33,7 @@ type FormState = {
   setLastName: (value: string) => void;
   setModalVisible: (value: boolean) => void;
   setObjectiveId: (value: string) => void;
+  setRequestIntake: (value: boolean) => void;
   setResult: (value: CreateClientResult | null) => void;
 };
 
@@ -64,8 +66,9 @@ function useFormState(objectiveOptions: Array<{ id: string }>): Omit<FormState, 
   const avatarState = useAvatarState();
   const objectiveState = useObjectiveState(objectiveOptions);
   const modalState = useModalResultState();
+  const intakeState = useIntakeState();
   useSyncEmailMismatch(emailState);
-  return { ...avatarState, ...emailState, ...nameState, ...objectiveState, ...modalState };
+  return { ...avatarState, ...emailState, ...intakeState, ...nameState, ...objectiveState, ...modalState };
 }
 
 function useEmailState() {
@@ -84,6 +87,11 @@ function useSyncEmailMismatch(state: {
     const hasBoth = state.email.trim().length > 0 && state.confirmEmail.trim().length > 0;
     state.setEmailMismatch(hasBoth && !emailsMatch(state.email, state.confirmEmail));
   }, [state.confirmEmail, state.email, state.setEmailMismatch]);
+}
+
+function useIntakeState() {
+  const [requestIntake, setRequestIntake] = useState(true);
+  return { requestIntake, setRequestIntake };
 }
 
 function useNameState() {
@@ -166,6 +174,7 @@ function createClient(createMutation: CreateMutation, state: FormState, onSucces
       firstName: state.firstName,
       lastName: state.lastName,
       objectiveId: state.objectiveId || undefined,
+      requestIntake: state.requestIntake,
     },
     {
       onError: state.onMutationError,

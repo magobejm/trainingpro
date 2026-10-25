@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 import { useClientMeasurementsQuery, type ClientMeasurementView } from '../../data/hooks/useClientsQuery';
+import { ClientIntakeStatus, MeasurementTools } from './MeasurementTools';
 import { styles } from './ClientProfileEditScreen.styles';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -14,6 +15,8 @@ export function ClientMeasurementHistory(props: { clientId: string; t: Translate
     <View style={styles.card}>
       <Text style={styles.label}>{props.t('coach.clientProfile.editPage.measurementHistory')}</Text>
       {items.length === 0 ? <EmptyHistory t={props.t} /> : null}
+      <ClientIntakeStatus clientId={props.clientId} t={props.t} />
+      <MeasurementTools clientId={props.clientId} t={props.t} />
       {items.map((item) => (
         <Text key={item.id} style={styles.helperText}>
           {formatEntry(item, props.t)}

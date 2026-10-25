@@ -1200,5 +1200,14 @@
   "client.nutrition.estimateProtein": "Protein (g)",
   "client.nutrition.estimateCarbs": "Carbs (g)",
   "client.nutrition.estimateFat": "Fat (g)",
-  "client.nutrition.estimateSaved": "≈ {{kcal}} kcal · P {{protein}} g · C {{carbs}} g · F {{fat}} g (approximate AI estimate)"
+  "client.nutrition.estimateSaved": "≈ {{kcal}} kcal · P {{protein}} g · C {{carbs}} g · F {{fat}} g (approximate AI estimate)",
+  "mobile.client.session.suggestedLoad": "Suggested: +{{kg}} kg",
+  "mobile.client.intake.title": "Intake questionnaire",
+  "mobile.client.intake.parq": "Is any PAR-Q answer yes?",
+  "mobile.client.intake.injuries": "Injuries",
+  "mobile.client.intake.allergies": "Allergies",
+  "mobile.client.intake.next": "Continue",
+  "mobile.client.intake.finish": "Complete",
+  "mobile.client.intake.yes": "Yes",
+  "mobile.client.intake.no": "No"
 }

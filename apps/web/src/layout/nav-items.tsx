@@ -4,6 +4,7 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
+  House,
   CalendarRange,
   CreditCard,
   Dumbbell,
@@ -43,6 +44,7 @@ function resolveAdminNavItems(): ShellNavItem[] {
 // Los bloques y el orden los define nav-groups.ts; aquí solo cada pantalla: icono, color y nombre.
 function resolveCoachNavItems(): ShellNavItem[] {
   return [
+    item('coach.home', 'clients', <House />, 'var(--tp-primarySoft)'),
     item('coach.clients', 'clients', <Users />, 'var(--tp-chartPurpleSoft)'),
     item('coach.chat', 'clients', <MessageSquare />, 'var(--tp-primarySoft)'),
     item('coach.notes', 'clients', <FileText />, 'var(--tp-chartPurpleSoft)'),

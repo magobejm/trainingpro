@@ -5,6 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useOrgSubscriptionOccupancyQuery, useUpdateOrgClientLimitMutation } from '../../data/hooks/useOrgSubscription';
 import { Button, SkeletonList, TextField, colors, fontSize, radius, space, useToast } from '@trainerpro/ui';
+import { BillingEstimateCard } from './AdminInsights';
 
 const LIMIT_INPUT_PROPS = {
   keyboardType: 'numeric' as const,
@@ -76,6 +77,7 @@ export function SubscriptionScreen(): React.JSX.Element {
 
   return (
     <View style={styles.page}>
+      <BillingEstimateCard t={t} />
       <View style={styles.card}>
         <Text style={styles.title}>{t('admin.subscription.title')}</Text>
         <Text style={styles.subtitle}>{t('admin.subscription.subtitle')}</Text>

@@ -22,6 +22,7 @@ export type CreateClientInput = {
   notes?: null | string;
   objectiveId?: null | string;
   phone?: null | string;
+  requestIntake?: boolean;
   secondaryObjectives?: string[];
   sex?: null | string;
   waistCm?: null | number;

@@ -1200,5 +1200,14 @@
   "client.nutrition.estimateProtein": "Proteínas (g)",
   "client.nutrition.estimateCarbs": "Hidratos (g)",
   "client.nutrition.estimateFat": "Grasas (g)",
-  "client.nutrition.estimateSaved": "≈ {{kcal}} kcal · P {{protein}} g · H {{carbs}} g · G {{fat}} g (estimación IA aproximada)"
+  "client.nutrition.estimateSaved": "≈ {{kcal}} kcal · P {{protein}} g · H {{carbs}} g · G {{fat}} g (estimación IA aproximada)",
+  "mobile.client.session.suggestedLoad": "Sugerido: +{{kg}} kg",
+  "mobile.client.intake.title": "Cuestionario inicial",
+  "mobile.client.intake.parq": "¿Alguna pregunta del PAR-Q es afirmativa?",
+  "mobile.client.intake.injuries": "Lesiones",
+  "mobile.client.intake.allergies": "Alergias",
+  "mobile.client.intake.next": "Continuar",
+  "mobile.client.intake.finish": "Completar",
+  "mobile.client.intake.yes": "Sí",
+  "mobile.client.intake.no": "No"
 }

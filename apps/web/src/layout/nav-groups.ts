@@ -2,7 +2,10 @@ import type { NavGroupId, ShellNavItem, ShellRoute } from './usePersistentShellR
 
 /** Orden de los bloques del menú del coach y de sus pantallas. */
 export const COACH_MENU_LAYOUT: { group: NavGroupId; routes: ShellRoute[] }[] = [
-  { group: 'clients', routes: ['coach.clients', 'coach.chat', 'coach.notes', 'coach.incidents', 'coach.calendar'] },
+  {
+    group: 'clients',
+    routes: ['coach.home', 'coach.clients', 'coach.chat', 'coach.notes', 'coach.incidents', 'coach.calendar'],
+  },
   {
     group: 'planning',
     routes: ['coach.routine.planner', 'coach.warmup.planner', 'coach.nutrition'],

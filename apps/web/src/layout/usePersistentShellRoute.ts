@@ -2,6 +2,7 @@ import React from 'react';
 
 type AdminRoute = 'admin.coaches' | 'admin.subscription';
 type CoachRoute =
+  | 'coach.home'
   | 'coach.clients'
   | 'coach.library.unified'
   | 'coach.library.foods'
@@ -23,6 +24,7 @@ export type ShellRoute = AdminRoute | CoachRoute;
 export const SHELL_ROUTES: readonly ShellRoute[] = [
   'admin.coaches',
   'admin.subscription',
+  'coach.home',
   'coach.clients',
   'coach.library.unified',
   'coach.library.foods',

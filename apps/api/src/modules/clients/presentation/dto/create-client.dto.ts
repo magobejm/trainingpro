@@ -18,6 +18,7 @@ export class CreateClientDto {
     notes: z.string().max(2000).nullable().optional(),
     objectiveId: z.string().uuid().nullable().optional(),
     phone: z.string().max(30).nullable().optional(),
+    requestIntake: z.boolean().optional().default(true),
     secondaryObjectives: z.array(z.string().trim().min(1).max(80)).max(12).optional(),
     sex: z.string().max(30).nullable().optional(),
     waistCm: z.number().int().min(40).max(220).nullable().optional(),
@@ -40,6 +41,7 @@ export class CreateClientDto {
   notes?: null | string;
   objectiveId?: null | string;
   phone?: null | string;
+  requestIntake?: boolean;
   secondaryObjectives?: string[];
   sex?: null | string;
   waistCm?: number | null;

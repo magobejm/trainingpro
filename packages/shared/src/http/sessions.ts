@@ -21,6 +21,7 @@ export const plannedSetSchema = z
     rom: nullableString.optional(),
     rpe: nullableNumber.optional(),
     setIndex: z.number(),
+    suggestedWeightKg: nullableNumber.optional(),
     weightKg: nullableNumber.optional(),
   })
   .strict();

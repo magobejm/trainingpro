@@ -15,6 +15,7 @@ import { NutritionController } from './presentation/controllers/nutrition.contro
 @Module({
   imports: [AiModule, AuthModule, FilesModule],
   controllers: [NutritionController, ClientNutritionController],
+  exports: [NutritionService],
   providers: [
     NutritionService,
     NutritionAiService,

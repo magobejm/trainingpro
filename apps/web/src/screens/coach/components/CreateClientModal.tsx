@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { Button, Modal, Select, TextField, colors, fontSize, space } from '@trainerpro/ui';
 import { CreateClientAvatarPicker } from './CreateClientAvatarPicker';
 
@@ -27,7 +27,9 @@ type Props = {
   onFirstNameChange: (value: string) => void;
   onLastNameChange: (value: string) => void;
   onObjectiveChange: (value: string) => void;
+  onRequestIntakeChange: (value: boolean) => void;
   onSelectAvatar: (value: string) => void;
+  requestIntake: boolean;
   t: (key: string) => string;
   visible: boolean;
 };
@@ -66,6 +68,11 @@ function ModalFields(props: FieldsProps): React.JSX.Element {
       <EmailFields {...props} />
       <TextFields {...props} />
       <ObjectiveField {...props} />
+      <Pressable accessibilityRole="checkbox" onPress={() => props.onRequestIntakeChange(!props.requestIntake)}>
+        <Text style={styles.subtitle}>
+          {props.requestIntake ? '☑' : '☐'} {props.t('coach.clients.modal.requestIntake')}
+        </Text>
+      </Pressable>
       <CreateClientAvatarPicker
         avatars={props.availableAvatars}
         onSelect={props.onSelectAvatar}

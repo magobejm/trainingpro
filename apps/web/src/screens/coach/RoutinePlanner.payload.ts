@@ -58,6 +58,7 @@ const mapStrength = (b: DraftBlock, si: number) => ({
   exerciseLibraryId: b.libraryId ?? null,
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   groupId: b.groupId ?? null,
+  progressionRule: b.progressionRule,
   lockedFields: resolveLockedFields(b.type, b.lockedFields),
   sets: (b.sets ?? []).map(mapStrengthSet),
   sortOrder: si,

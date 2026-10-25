@@ -59,6 +59,7 @@ function ProgressPanel(props: { labels: Labels; t: Translate; vm: Vm }): React.J
     <>
       <ProgressPhotosPanel
         archivePhoto={vm.actions.archivePhoto}
+        clientId={String(vm.query.data?.id ?? '')}
         archivedPhotos={vm.data.archivedPhotos}
         draggedPhotoId={vm.state.draggedPhotoId}
         formatLocale={'es-ES'}

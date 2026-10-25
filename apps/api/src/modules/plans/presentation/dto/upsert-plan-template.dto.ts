@@ -19,6 +19,7 @@ const exerciseSchema = z.object({
   fieldModes: z.array(fieldModeSchema).min(1),
   lockedFields: z.array(z.string().max(80)).optional().default([]),
   notes: z.string().max(2000).nullable().optional(),
+  progressionRule: z.unknown().optional(),
   perSetWeightRanges: z.array(perSetRangeSchema).optional(),
   repsMax: z.number().int().min(1).max(100).nullable().optional(),
   repsMin: z.number().int().min(1).max(100).nullable().optional(),

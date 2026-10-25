@@ -27,6 +27,7 @@ import { s } from './client-shell.styles';
 import { HomeHub } from './ClientShellHome';
 import { ProfilePanel } from './ClientShellPanels';
 import { MoreScreen } from './MoreScreen';
+import { ClientIntakeGate } from '../../screens/client/ClientIntakeGate';
 import { MorningCheckinGate } from '../../screens/client/MorningCheckinGate';
 import { usePendingDraftFlush } from '../../data/hooks/usePendingDraftFlush';
 import { useHardwareBack } from './use-hardware-back';
@@ -282,6 +283,7 @@ function ClientShellBody(): React.JSX.Element {
       {st.activeTab === 'chat' && <ChatScreen embedded initialMessage={st.chatDraft} />}
       {st.activeTab === 'more' && <MoreScreen onNavigate={(id) => dispatchMoreMenu(id, st.openOverlay, st.openProgress)} />}
 
+      <ClientIntakeGate />
       <MorningCheckinGate />
       {st.overlay === 'help' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>

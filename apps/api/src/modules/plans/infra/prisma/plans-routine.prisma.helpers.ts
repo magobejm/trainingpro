@@ -154,6 +154,7 @@ function mapStrengthOutput(e: any) {
     id: e.id,
     lockedFields: readLockedFields(e.lockedFieldsJson),
     notes: e.notes,
+    progressionRule: (e as { progressionRule?: unknown }).progressionRule ?? null,
     perSetWeightRangesJson: e.perSetWeightRangesJson,
     repsMax: e.repsMax,
     repsMin: e.repsMin,

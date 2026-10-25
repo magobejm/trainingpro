@@ -94,11 +94,16 @@ export type ClientStatus = z.infer<typeof clientStatusSchema>;
 export type ClientObjective = z.infer<typeof clientObjectiveSchema>;
 export const clientMeasurementSchema = z
   .object({
+    bodyFatPct: z.number().nullable().optional(),
     clientId: z.string(),
     createdAt: z.string(),
+    fcMax: z.number().nullable().optional(),
+    fcRest: z.number().nullable().optional(),
     heightCm: z.number().nullable(),
     hipCm: z.number().nullable(),
     id: z.string(),
+    measuredAt: z.string().optional(),
+    notes: z.string().nullable().optional(),
     recordedBy: z.enum(['coach', 'client']),
     waistCm: z.number().nullable(),
     weightKg: z.number().nullable(),

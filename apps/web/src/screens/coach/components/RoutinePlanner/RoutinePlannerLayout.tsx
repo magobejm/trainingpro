@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
 import { SaveRoutineModal } from './SaveRoutineModal';
+import type { ProgressionRule } from '@trainerpro/shared';
 import type { DraftDay, DraftState, BlockType, DraftBlock } from '../../RoutinePlanner.types';
 import type { RoutineTemplateView } from '../../../../data/hooks/useRoutineTemplates';
 import { ROUTINE_LABELS, type PlannerLabels } from './planner-labels';
@@ -17,6 +18,8 @@ import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
 import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
 import { Button, colors } from '@trainerpro/ui';
+import { COPILOT_ROUTINE, CopilotButton } from '../../CopilotActions';
+import { ProgressionPreview } from '../../ProgressionPreview';
 
 interface LayoutProps {
   clientContextId?: null | string;
@@ -262,6 +265,20 @@ export function RoutinePlannerLayout(props: LayoutProps) {
   return (
     <View style={s.plannerColumn}>
       <ScrollView contentContainerStyle={s.page} style={s.plannerScroll}>
+        <ProgressionPreview onApply={(rule) => stampProgression(props.draftState.setDraft, rule)} t={props.t} />
+        {props.clientContextId ? (
+          <CopilotButton
+            body={{
+              clientId: props.clientContextId,
+              daysPerWeek: 3,
+              goal: props.t('coach.copilot.goal'),
+              sessionMinutes: 45,
+            }}
+            label={props.t('coach.copilot.routine')}
+            path={COPILOT_ROUTINE}
+            t={props.t}
+          />
+        ) : null}
         <RoutineLayoutSections
           onOpenPicker={onOpenPicker}
           onOpenWarmupTemplatePicker={onOpenWarmupTemplatePicker}
@@ -356,4 +373,14 @@ function RoutineLayoutSections(props: {
       />
     </>
   );
+}
+
+function stampProgression(setDraft: React.Dispatch<React.SetStateAction<DraftState>>, rule: ProgressionRule): void {
+  setDraft((current) => ({
+    ...current,
+    days: current.days.map((day) => ({
+      ...day,
+      blocks: day.blocks.map((block) => (block.type === 'strength' ? { ...block, progressionRule: rule } : block)),
+    })),
+  }));
 }

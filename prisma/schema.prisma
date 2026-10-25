@@ -80,6 +80,11 @@ enum CallProposalStatus {
   cancelled
 }
 
+enum ClientIntakeStatus {
+  PENDING
+  COMPLETED
+}
+
 enum ChatAttachmentKind {
   IMAGE
   AUDIO
@@ -139,6 +144,8 @@ model Organization {
   notificationEventLogs    NotificationEventLog[]
   meals                    Meal[]
   nutritionPlans           NutritionPlan[]
+  pricingTiers             PricingTier[]
+  billingSnapshots         BillingSnapshot[]
 
   @@map("organization")
 }
@@ -191,6 +198,8 @@ model OrganizationMember {
   callProposals            CallProposal[]            @relation("coach_call_proposals")
   meals                    Meal[]                    @relation("coach_meals")
   nutritionPlans           NutritionPlan[]           @relation("coach_nutrition_plans")
+  dailyCheckins            DailyCheckin[]
+  copilotUsage             CopilotUsage[]
 
   @@unique([organizationId, userId, role], map: "uq_org_user_role")
   @@index([organizationId, role], map: "idx_org_member_org_role")
@@ -208,6 +217,41 @@ model OrganizationSubscription {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_subscription")
+}
+
+model PricingTier {
+  id             String       @id @default(uuid()) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  fromClients    Int          @map("from_clients")
+  toClients      Int?         @map("to_clients")
+  monthlyPrice   Decimal      @map("monthly_price") @db.Decimal(10, 2)
+  sortOrder      Int          @default(0) @map("sort_order")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, fromClients], map: "idx_pricing_tier_org_from")
+  @@map("pricing_tier")
+}
+
+model BillingSnapshot {
+  id                String       @id @default(uuid()) @db.Uuid
+  organizationId    String       @map("organization_id") @db.Uuid
+  day               DateTime     @db.Date
+  activeClientCount Int          @map("active_client_count")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, day], map: "uq_billing_snapshot_org_day")
+  @@map("billing_snapshot")
+}
+
+model CopilotUsage {
+  id                String             @id @default(uuid()) @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  day               DateTime           @db.Date
+  count             Int                @default(0)
+  coachMembership   OrganizationMember @relation(fields: [coachMembershipId], references: [id], onDelete: Cascade)
+
+  @@unique([coachMembershipId, day], map: "uq_copilot_usage_coach_day")
+  @@map("copilot_usage")
 }
 
 model Client {
@@ -234,6 +278,9 @@ model Client {
   secondaryObjectives   String[]                  @default([]) @map("secondary_objectives")
   injuries              String?
   allergies             String?
+  availableDays         String[]                  @default([]) @map("available_days")
+  equipment             String[]                  @default([])
+  parqFlags             Json?                     @map("parq_flags")
   birthDate             DateTime?                 @map("birth_date") @db.Date
   heightCm              Int?                      @map("height_cm")
   weightKg              Decimal?                  @map("weight_kg") @db.Decimal(6, 2)
@@ -269,6 +316,8 @@ model Client {
   clientPhysicalTests       ClientPhysicalTest[]
   clientPhysicalTestResults ClientPhysicalTestResult[]
   physicalTestSchedules     ClientPhysicalTestSchedule[]
+  dailyCheckins             DailyCheckin[]
+  intake                    ClientIntake?
 
   @@index([organizationId, archivedAt], map: "idx_client_org_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_client_coach_archived")
@@ -322,18 +371,57 @@ model ClientProgressPhoto {
 }
 
 model ClientMeasurement {
-  id         String   @id @default(uuid()) @db.Uuid
-  clientId   String   @map("client_id") @db.Uuid
-  weightKg   Decimal? @map("weight_kg") @db.Decimal(6, 2)
-  waistCm    Decimal? @map("waist_cm") @db.Decimal(6, 2)
-  hipCm      Decimal? @map("hip_cm") @db.Decimal(6, 2)
-  heightCm   Decimal? @map("height_cm") @db.Decimal(6, 2)
-  recordedBy String   @map("recorded_by") @db.VarChar(10)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid()) @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  weightKg      Decimal? @map("weight_kg") @db.Decimal(6, 2)
+  waistCm       Decimal? @map("waist_cm") @db.Decimal(6, 2)
+  hipCm         Decimal? @map("hip_cm") @db.Decimal(6, 2)
+  heightCm      Decimal? @map("height_cm") @db.Decimal(6, 2)
+  bodyFatPct    Decimal? @map("body_fat_pct") @db.Decimal(5, 2)
+  skinfoldsJson Json?    @map("skinfolds_json")
+  fcRest        Int?     @map("fc_rest")
+  fcMax         Int?     @map("fc_max")
+  measuredAt    DateTime @default(now()) @map("measured_at") @db.Timestamptz(6)
+  notes         String?
+  recordedBy    String   @map("recorded_by") @db.VarChar(10)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([clientId, measuredAt], map: "idx_client_measurement_client_measured")
   @@index([clientId, createdAt], map: "idx_client_measurement_client_created")
   @@map("client_measurement")
+}
+
+model DailyCheckin {
+  id                String             @id @default(uuid()) @db.Uuid
+  clientId          String             @map("client_id") @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  date              DateTime           @db.Date
+  sleep             Int
+  fatigue           Int
+  motivation        Int
+  recovery          Int
+  pain              Int?
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  client            Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  coachMembership   OrganizationMember @relation(fields: [coachMembershipId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date], map: "uq_daily_checkin_client_date")
+  @@index([coachMembershipId, date], map: "idx_daily_checkin_coach_date")
+  @@map("daily_checkin")
+}
+
+model ClientIntake {
+  id          String             @id @default(uuid()) @db.Uuid
+  clientId    String             @unique @map("client_id") @db.Uuid
+  status      ClientIntakeStatus @default(PENDING)
+  answers     Json               @default("{}")
+  completedAt DateTime?          @map("completed_at") @db.Timestamptz(6)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client      Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("client_intake")
 }
 
 model ClientObjective {
@@ -799,6 +887,7 @@ model PlanTemplate {
   coachMembershipId      String?                 @map("coach_membership_id") @db.Uuid
   kind                   TemplateKind            @default(STRENGTH)
   name                   String                  @db.VarChar(120)
+  blockWeeks             Int?                    @map("block_weeks")
   expectedCompletionDays Int?                    @map("expected_completion_days")
   templateVersion        Int                     @default(1) @map("template_version")
   clientSaveId           String?                 @map("client_save_id") @db.Uuid
@@ -1034,6 +1123,7 @@ model PlanStrengthExercise {
   restSeconds            Int?               @default(0) @map("rest_seconds")
   lockedFieldsJson       Json?              @map("locked_fields_json")
   notes                  String?
+  progressionRule        Json?              @map("progression_rule")
   archivedAt             DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -1838,6 +1928,7 @@ model WeeklyReport {
   sleepHours        Decimal?           @map("sleep_hours") @db.Decimal(4, 2)
   adherencePercent  Int?               @map("adherence_percent")
   notes             String?
+  reviewedAt        DateTime?          @map("reviewed_at") @db.Timestamptz(6)
   createdBy         String             @map("created_by") @db.Uuid
   updatedBy         String             @map("updated_by") @db.Uuid
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)

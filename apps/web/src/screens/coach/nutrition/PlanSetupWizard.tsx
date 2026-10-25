@@ -7,6 +7,8 @@ import { buildPlanSetupData } from './nutrition-tdee.utils';
 import type { ActivityLevel, NutritionPlanType, PlanSetupData, TdeeFormula } from './nutrition.types';
 import { styles } from './nutrition.styles';
 import { Button, TextField } from '@trainerpro/ui';
+import { readRouteClientId } from '../../../layout/list-context';
+import { COPILOT_MENU, CopilotButton } from '../CopilotActions';
 type Props = {
   onBack: () => void;
   onComplete: (input: { name: string; setupData: PlanSetupData; type: NutritionPlanType }) => void;
@@ -121,10 +123,18 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
           })}
         </Text>
       </View>
+      <NutritionDraftButton />
       <Button label={t('coach.nutrition.wizard.continue')} onPress={onContinue} style={styles.ctaButton} />
     </ScrollView>
   );
 }
+function NutritionDraftButton(): React.JSX.Element | null {
+  const { t } = useTranslation();
+  const clientId = readRouteClientId();
+  if (!clientId) return null;
+  return <CopilotButton body={{ clientId }} label={t('coach.copilot.menu')} path={COPILOT_MENU} t={t} />;
+}
+
 function Chip(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
   return (
     <Pressable onPress={props.onPress} style={[styles.chip, props.active && styles.chipActive]}>

@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { createApiClient } from '../../data/api-client';
 import { useClientThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
@@ -24,6 +25,7 @@ export function MorningCheckinGate(): React.JSX.Element {
   const entries = useDailyCheckinStore((state) => state.entries);
   const saveToday = useDailyCheckinStore((state) => state.saveToday);
   const dismissToday = useDailyCheckinStore((state) => state.dismissToday);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const notifyCoach = useOptionalCoachNotice();
   const todayEntry = readTodayCheckin(entries, userId, todayKey);
   const visible = hydrated && status === 'signedIn' && userId !== null && todayEntry === null;
@@ -55,9 +57,12 @@ export function MorningCheckinGate(): React.JSX.Element {
       }
       saveToday(userId, todayKey, scores);
       showToast(t('mobile.client.checkin.saved'));
+      void createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' })
+        .post('/clients/me/checkins', { date: todayKey, ...scores })
+        .catch(() => undefined);
       void notifyCoach(formatMorningCheckinChatNotice(scores));
     },
-    [notifyCoach, saveToday, t, todayKey, userId],
+    [accessToken, notifyCoach, saveToday, t, todayKey, userId],
   );
 
   const handleSkip = useCallback(() => {

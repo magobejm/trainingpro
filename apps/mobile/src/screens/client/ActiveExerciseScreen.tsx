@@ -125,6 +125,7 @@ function ActiveExerciseFrame(props: {
           ref={scrollRef}
         >
           {screen.syncBanner}
+          <SuggestedLoad item={screen.item} />
           <ExerciseDistanceHeader
             key={screen.item.id}
             item={screen.item}
@@ -394,3 +395,18 @@ const styles = StyleSheet.create({
   notesOverlay: { alignItems: 'center', backgroundColor: LIGHT.overlay, flex: 1, justifyContent: 'center', padding: 24 },
   notesCard: { backgroundColor: LIGHT.bgCard, borderRadius: LIGHT.radiusXl, maxHeight: '70%', padding: 16, width: '100%' },
 });
+
+function SuggestedLoad(props: { item: SessionItem }): React.JSX.Element | null {
+  const { t } = useTranslation();
+  const planned =
+    (props.item as { plannedSets?: Array<{ suggestedWeightKg?: number | null; weightKg?: number | null }> }).plannedSets ??
+    [];
+  const suggested = planned.find((set) => typeof set.suggestedWeightKg === 'number')?.suggestedWeightKg;
+  const current = planned.find((set) => typeof set.weightKg === 'number')?.weightKg;
+  if (suggested == null || current == null || suggested <= current) return null;
+  return (
+    <Text style={{ color: LIGHT.accent, fontWeight: '700' }}>
+      {t('mobile.client.session.suggestedLoad', { kg: suggested - current })}
+    </Text>
+  );
+}

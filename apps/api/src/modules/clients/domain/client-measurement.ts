@@ -10,11 +10,16 @@ export type MeasurementDraft = {
 };
 
 export type ClientMeasurement = {
+  bodyFatPct: number | null;
   clientId: string;
   createdAt: Date;
+  fcMax: number | null;
+  fcRest: number | null;
   heightCm: number | null;
   hipCm: number | null;
   id: string;
+  measuredAt: Date;
+  notes: string | null;
   recordedBy: ProgressActor;
   waistCm: number | null;
   weightKg: number | null;
@@ -23,11 +28,16 @@ export type ClientMeasurement = {
 type DecimalLike = number | { toNumber: () => number } | null;
 
 export type MeasurementRow = {
+  bodyFatPct?: DecimalLike;
   clientId: string;
   createdAt: Date;
+  fcMax?: number | null;
+  fcRest?: number | null;
   heightCm: DecimalLike;
   hipCm: DecimalLike;
   id: string;
+  measuredAt?: Date;
+  notes?: string | null;
   recordedBy: string;
   waistCm: DecimalLike;
   weightKg: DecimalLike;
@@ -54,11 +64,16 @@ export function clientMeasureColumns(draft: MeasurementDraft): MeasurementDraft 
 
 export function mapClientMeasurement(row: MeasurementRow): ClientMeasurement {
   return {
+    bodyFatPct: toNumber(row.bodyFatPct ?? null),
     clientId: row.clientId,
     createdAt: row.createdAt,
+    fcMax: row.fcMax ?? null,
+    fcRest: row.fcRest ?? null,
     heightCm: toNumber(row.heightCm),
     hipCm: toNumber(row.hipCm),
     id: row.id,
+    measuredAt: row.measuredAt ?? row.createdAt,
+    notes: row.notes ?? null,
     recordedBy: row.recordedBy === 'client' ? 'client' : 'coach',
     waistCm: toNumber(row.waistCm),
     weightKg: toNumber(row.weightKg),

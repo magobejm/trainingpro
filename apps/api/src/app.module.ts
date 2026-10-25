@@ -6,6 +6,8 @@ import { RequestLoggingInterceptor } from './common/logging/request-logging.inte
 import { PrismaModule } from './common/prisma/prisma.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { CoachHomeModule } from './modules/coach-home/coach-home.module';
+import { CopilotModule } from './modules/copilot/copilot.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { CoachesModule } from './modules/coaches/coaches.module';
 import { FilesModule } from './modules/files/files.module';
@@ -33,6 +35,8 @@ import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.mod
     AuthModule,
     FilesModule,
     ChatModule,
+    CoachHomeModule,
+    CopilotModule,
     UsersModule,
     MaintenanceModule,
     NotificationsModule,

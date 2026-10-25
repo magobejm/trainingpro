@@ -1,6 +1,7 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 import { Button } from '@trainerpro/ui';
+import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { styles } from './ClientProfileEditScreen.styles';
 import { pickImageFile } from './client-profile.avatar';
 import { buildArchiveBadgeText, photoThumbStyle } from './ClientProfileEditScreen.sections';
@@ -33,6 +34,7 @@ export function ProgressPhotosPanel(props: {
   formatLocale: string;
   hoveredPhotoId: string;
   labels: ProgressLabels;
+  clientId: string;
   photoRailRef: React.RefObject<HTMLDivElement | null>;
   restorePhoto: (photoId: string) => Promise<unknown>;
   setDraggedPhotoId: React.Dispatch<React.SetStateAction<string>>;
@@ -49,6 +51,7 @@ export function ProgressPhotosPanel(props: {
       <ProgressActions {...props} />
       <ProgressVisibleRail {...props} />
       <Text style={styles.helperText}>{props.labels.openGalleryHint}</Text>
+      <BeforeAfterSlider clientId={props.clientId} photos={props.visiblePhotos} t={props.t} />
       {props.showArchivedPhotos ? <ArchivedPanel {...props} /> : null}
     </View>
   );

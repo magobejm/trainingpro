@@ -50,11 +50,16 @@ export function mapProgressPhotoOutput(photo: ClientProgressPhoto, urls?: Stored
 
 export function mapMeasurementOutput(item: ClientMeasurement) {
   return {
+    bodyFatPct: item.bodyFatPct,
     clientId: item.clientId,
     createdAt: formatIso(item.createdAt),
+    fcMax: item.fcMax,
+    fcRest: item.fcRest,
     heightCm: item.heightCm,
     hipCm: item.hipCm,
     id: item.id,
+    measuredAt: formatIso(item.measuredAt),
+    notes: item.notes,
     recordedBy: item.recordedBy,
     waistCm: item.waistCm,
     weightKg: item.weightKg,

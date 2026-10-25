@@ -33,10 +33,12 @@ export function useClientByIdQuery(clientId: string): UseQueryResult<ClientView,
 }
 
 export type ClientMeasurementView = {
+  bodyFatPct?: number | null;
   createdAt: string;
   heightCm: number | null;
   hipCm: number | null;
   id: string;
+  measuredAt?: string;
   recordedBy: 'client' | 'coach';
   waistCm: number | null;
   weightKg: number | null;

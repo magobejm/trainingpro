@@ -13,6 +13,7 @@ import { DashboardRoutine } from './DashboardRoutine';
 import { DashboardExercise } from './DashboardExercise';
 import { defaultRange } from './dashboard-model';
 import { dashboardStyles as styles } from './dashboard.styles';
+import { COPILOT_SUMMARY, CopilotButton } from '../CopilotActions';
 
 export function ProgressDashboard(props: { onRouteChange?: (route: ShellRoute) => void }): React.JSX.Element {
   const { t } = useTranslation();
@@ -59,6 +60,12 @@ function ClientDashboard(props: {
           onPress={() => props.onRouteChange?.('coach.clients')}
           variant="secondary"
           size="sm"
+        />
+        <CopilotButton
+          body={{ clientId: props.clientId, weekStart: range.from }}
+          label={t('coach.copilot.summary')}
+          path={COPILOT_SUMMARY}
+          t={t}
         />
       </View>
       <View style={{ display: !assignmentId && !exercise ? 'flex' : 'none' }}>

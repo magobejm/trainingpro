@@ -15,6 +15,7 @@ import {
 import { useArchivedCoachesQuery, useCoachesQuery, type CoachView } from '../../data/hooks/useCoachesQuery';
 import { styles } from './CoachesScreen.styles';
 
+import { CoachMetricsCard } from './AdminInsights';
 import { CreateCoachModal, readInitials, readStatusLabel, readToggleLabel, ResultBanner } from './CoachesScreen.modal';
 
 type Tab = 'active' | 'archived';
@@ -114,6 +115,7 @@ function CoachesView(props: ViewProps): React.JSX.Element {
           t={props.t}
           totalCount={props.totalCount}
         />
+        <CoachMetricsCard t={props.t} />
         <TabBar activeTab={props.activeTab} onSelect={props.setActiveTab} t={props.t} />
         {props.activeTab === 'active' ? (
           <ActiveList

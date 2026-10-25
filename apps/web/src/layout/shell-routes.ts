@@ -14,6 +14,7 @@ export const SHELL_PATHS: Record<ShellRoute, string> = {
   'admin.subscription': '/admin/subscription',
   'coach.calendar': '/coach/calendar',
   'coach.chat': '/coach/chat',
+  'coach.home': '/coach/home',
   'coach.clients': '/coach/clients',
   'coach.evaluator': '/coach/evaluator',
   'coach.incidents': '/coach/incidents',
@@ -97,7 +98,7 @@ function safeDecode(value: string): null | string {
 }
 
 export function defaultPathForRole(role: 'admin' | 'coach'): string {
-  return role === 'admin' ? SHELL_PATHS['admin.coaches'] : SHELL_PATHS['coach.clients'];
+  return role === 'admin' ? SHELL_PATHS['admin.coaches'] : SHELL_PATHS['coach.home'];
 }
 
 /** Un coach no puede abrir pantallas de administración y viceversa. */

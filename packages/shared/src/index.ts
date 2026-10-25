@@ -152,3 +152,32 @@ export {
   normalizeLegacyLockedFields,
   normalizeRoutineSetVariables,
 } from './set-variable-units';
+export {
+  applyProgression,
+  linearDeloadPreset,
+  progressionRuleSchema,
+  progressionWeekIndex,
+  suggestNextWeight,
+  type AutoLoadRule,
+  type ProgressionRule,
+  type ProgressionSet,
+  type ProgressionWeek,
+} from './progression/apply-progression';
+export { jacksonPollock3, jacksonPollock7, type SkinfoldSites } from './anthropometry/body-fat';
+export {
+  fatigueFromSleep,
+  HIGH_FATIGUE_AT,
+  HIGH_PAIN_AT,
+  isHighMorningCheckin,
+  isRiskClient,
+  MIN_CLIENTS_FOR_COACH_METRICS,
+  RISK_ADHERENCE,
+  RISK_INACTIVE_DAYS,
+} from './triage/thresholds';
+export { estimateBilling, type BillingEstimate, type PricingTier } from './billing/pricing-tier';
+export {
+  clientIntakeAnswersSchema,
+  PAR_Q_KEYS,
+  parqNeedsCoachReview,
+  type ClientIntakeAnswers,
+} from './intake/client-intake';

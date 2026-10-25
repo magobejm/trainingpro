@@ -49,6 +49,9 @@ const UnifiedExerciseLibraryScreen = React.lazy(() =>
 const ProgressScreen = React.lazy(() =>
   import('./screens/coach/ProgressScreen').then((mod) => ({ default: mod.ProgressScreen })),
 );
+const CoachTriageScreen = React.lazy(() =>
+  import('./screens/coach/CoachTriageScreen').then((mod) => ({ default: mod.CoachTriageScreen })),
+);
 const TechniqueEvaluatorScreen = React.lazy(() =>
   import('./screens/coach/TechniqueEvaluatorScreen').then((mod) => ({ default: mod.TechniqueEvaluatorScreen })),
 );
@@ -248,6 +251,7 @@ function resolveCoachLibraryScreen(route: ShellRoute, setRoute: (route: ShellRou
 }
 
 function resolveCoachMonitoringScreen(route: ShellRoute, setRoute: (route: ShellRoute) => void): null | React.JSX.Element {
+  if (route === 'coach.home') return <CoachTriageScreen onRouteChange={setRoute} />;
   if (route === 'coach.progress') return <ProgressScreen onRouteChange={setRoute} />;
   if (route === 'coach.nutrition') return <NutritionScreen />;
   if (route === 'coach.evaluator') return <TechniqueEvaluatorScreen />;

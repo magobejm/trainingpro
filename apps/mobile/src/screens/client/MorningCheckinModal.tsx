@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
+import { readSleepHours, sleepScore } from '../../health';
 import {
   canSubmitMorningCheckin,
   MOTIVATION_OPTIONS,
@@ -22,13 +23,19 @@ export function MorningCheckinModal(props: Props): React.JSX.Element {
   const [sleep, setSleep] = useState<null | number>(null);
   const [motivation, setMotivation] = useState<null | number>(null);
   const [recovery, setRecovery] = useState<null | number>(null);
+  const [sleepHours, setSleepHours] = useState<number | null>(null);
 
   useEffect(() => {
-    if (props.visible) {
-      setSleep(null);
-      setMotivation(null);
-      setRecovery(null);
-    }
+    if (!props.visible) return;
+    setSleep(null);
+    setMotivation(null);
+    setRecovery(null);
+    setSleepHours(null);
+    void readSleepHours().then((hours) => {
+      setSleepHours(hours);
+      const score = sleepScore(hours);
+      if (score != null) setSleep(score);
+    });
   }, [props.visible]);
 
   const canSave = canSubmitMorningCheckin({ motivation, recovery, sleep }) && !props.isSubmitting;
@@ -53,6 +60,9 @@ export function MorningCheckinModal(props: Props): React.JSX.Element {
               options={SLEEP_OPTIONS}
               value={sleep}
             />
+            {sleepHours != null ? (
+              <Text style={styles.subtitle}>{t('mobile.client.checkin.sleepHours', { hours: sleepHours })}</Text>
+            ) : null}
             <ScaleCard
               label={t('mobile.client.checkin.motivationQuestion')}
               onSelect={setMotivation}

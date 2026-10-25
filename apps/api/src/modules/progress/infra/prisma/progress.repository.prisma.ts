@@ -607,6 +607,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       exerciseName: record.exerciseName,
       previousBest: record.previousBest,
       sessionDate: record.sessionDate,
+      sessionId: record.sessionId,
     }));
   }
 

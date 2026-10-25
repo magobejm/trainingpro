@@ -7,6 +7,7 @@ import { FilesModule } from '../files/files.module';
 import { PhysicalTestsModule } from '../physical-tests/physical-tests.module';
 import { SessionsModule } from '../sessions/sessions.module';
 import { ClientCalendarPlanDaySwapService } from './application/services/client-calendar-plan-day-swap.service';
+import { ClientNeatLogService } from './application/services/client-neat-log.service';
 import { ClientSelfProgressService } from './application/services/client-self-progress.service';
 import { ArchiveClientUseCase } from './application/use-cases/archive-client.usecase';
 import { EnsureClientSelfSessionUseCase } from './application/use-cases/ensure-client-self-session.usecase';
@@ -89,6 +90,7 @@ import { ClientOwnershipGuard } from './presentation/guards/client-ownership.gua
     ListClientWellnessUseCase,
     ClientAuthProvisionerService,
     ClientCalendarPlanDaySwapService,
+    ClientNeatLogService,
     ClientSelfProgressService,
     CreateClientProgressPhotoUseCase,
     CreateClientUseCase,

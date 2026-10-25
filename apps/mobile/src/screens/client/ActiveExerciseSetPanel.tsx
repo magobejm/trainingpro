@@ -17,6 +17,7 @@ export function CurrentSetFields(props: {
   onChange: (key: SetFieldKey, value: string) => void;
   onFocus: (node: number) => void;
   onOpenRom: () => void;
+  onOpenWeight?: () => void;
   readOnly?: boolean;
   t: TFunction;
   targets: Record<string, string>;
@@ -31,6 +32,7 @@ export function CurrentSetFields(props: {
           onChange={(value) => props.onChange(column.key, value)}
           onFocus={props.onFocus}
           onOpenRom={props.onOpenRom}
+          onOpenWeight={column.key === 'weight' ? props.onOpenWeight : undefined}
           readOnly={props.readOnly}
           t={props.t}
           target={props.targets[column.key] ?? '-'}
@@ -184,6 +186,7 @@ function SetColumnCell(props: {
   onChange: (value: string) => void;
   onFocus: (node: number) => void;
   onOpenRom: () => void;
+  onOpenWeight?: () => void;
   readOnly?: boolean;
   t: TFunction;
   target: string;
@@ -216,7 +219,21 @@ function SetColumnCell(props: {
           value={props.draft}
         />
       )}
+      {props.onOpenWeight ? <WeightButton onPress={props.onOpenWeight} t={props.t} /> : null}
     </View>
+  );
+}
+
+function WeightButton(props: { onPress: () => void; t: TFunction }): React.JSX.Element {
+  return (
+    <Pressable
+      accessibilityLabel={props.t('mobile.client.session.calculator')}
+      accessibilityRole={'button'}
+      onPress={props.onPress}
+      style={styles.calcBtn}
+    >
+      <Text style={styles.calcText}>{props.t('mobile.client.session.calculator')}</Text>
+    </Pressable>
   );
 }
 
@@ -286,6 +303,8 @@ const styles = StyleSheet.create({
   },
   input: { ...SESSION.input, fontSize: 16, justifyContent: 'center', minHeight: HIT },
   inputText: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  calcBtn: { alignItems: 'center', marginTop: 6, minHeight: 32, justifyContent: 'center' },
+  calcText: { color: LIGHT.accentDark, fontSize: 12, fontWeight: '700' },
   restBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.emeraldSoft,

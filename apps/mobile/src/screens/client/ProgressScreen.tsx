@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { BarsChart, SummaryStrip } from '@trainerpro/ui';
 import '../../i18n';
 import { useProgressOverviewQuery } from '../../data/hooks/useProgressQuery';
@@ -8,6 +8,7 @@ import type { ProgressMode } from '../../shell/client/client-shell.constants';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { LIGHT } from '../../theme/light';
 import { SCREEN } from '../../theme/sessionStyles';
+import { ClientRecordsPanel } from './ClientRecordsPanel';
 
 const SPINNER_SIZE = 'small' as const;
 
@@ -37,14 +38,45 @@ type ViewModel = ReturnType<typeof useProgressViewModel> & { mode: ProgressMode;
 function ProgressView(props: ViewModel) {
   const titleKey = props.mode === 'volume' ? 'client.volume.title' : 'client.progress.title';
   const subtitleKey = props.mode === 'volume' ? 'client.volume.subtitle' : 'client.progress.subtitle';
+  const [tab, setTab] = useState<'records' | 'summary'>('summary');
   return (
     <View style={styles.root}>
       <OverlayBackHeader onClose={props.onClose} title={props.t(titleKey)} />
       <ScrollView contentContainerStyle={styles.page}>
-        <Text style={styles.subtitle}>{props.t(subtitleKey)}</Text>
-        {renderState(props)}
+        <ProgressTabs onChange={setTab} t={props.t} tab={tab} />
+        {tab === 'summary' ? <Text style={styles.subtitle}>{props.t(subtitleKey)}</Text> : null}
+        {tab === 'records' ? <ClientRecordsPanel t={props.t} /> : renderState(props)}
       </ScrollView>
     </View>
+  );
+}
+
+function ProgressTabs(props: {
+  onChange: (tab: 'records' | 'summary') => void;
+  t: (key: string) => string;
+  tab: 'records' | 'summary';
+}) {
+  return (
+    <View style={styles.tabs}>
+      <TabButton
+        active={props.tab === 'summary'}
+        label={props.t('client.progress.tabSummary')}
+        onPress={() => props.onChange('summary')}
+      />
+      <TabButton
+        active={props.tab === 'records'}
+        label={props.t('client.progress.tabRecords')}
+        onPress={() => props.onChange('records')}
+      />
+    </View>
+  );
+}
+
+function TabButton(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
+  return (
+    <Pressable accessibilityRole={'button'} onPress={props.onPress} style={[styles.tab, props.active && styles.tabOn]}>
+      <Text style={styles.tabText}>{props.label}</Text>
+    </Pressable>
   );
 }
 
@@ -139,6 +171,10 @@ const styles = StyleSheet.create({
     gap: 12,
     width: '100%',
   },
+  tabs: { flexDirection: 'row', gap: 8, width: '100%' },
+  tab: { backgroundColor: LIGHT.bgCard, borderRadius: LIGHT.radiusFull, paddingHorizontal: 14, paddingVertical: 8 },
+  tabOn: { backgroundColor: LIGHT.accentSoft },
+  tabText: { color: LIGHT.textStrong, fontWeight: '700' },
   subtitle: {
     color: LIGHT.textMuted,
     fontSize: 14,

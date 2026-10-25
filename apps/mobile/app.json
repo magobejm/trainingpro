@@ -9,8 +9,17 @@
     "platforms": ["ios", "android", "web"],
     "android": {
       "package": "com.trainerpro.mobile",
-      "permissions": ["CAMERA", "SCHEDULE_EXACT_ALARM", "VIBRATE", "POST_NOTIFICATIONS"],
-      "versionCode": 2,
+      "permissions": [
+        "CAMERA",
+        "SCHEDULE_EXACT_ALARM",
+        "VIBRATE",
+        "POST_NOTIFICATIONS",
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_SLEEP",
+        "android.permission.health.READ_WEIGHT",
+        "android.permission.health.READ_HEART_RATE"
+      ],
+      "versionCode": 3,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563eb"
@@ -36,7 +45,19 @@
     },
     "ios": {},
     "plugins": [
+      ["expo-build-properties", { "android": { "minSdkVersion": 26 } }],
       "expo-secure-store",
+      [
+        "react-native-health-connect",
+        {
+          "permissions": [
+            "android.permission.health.READ_STEPS",
+            "android.permission.health.READ_SLEEP",
+            "android.permission.health.READ_WEIGHT",
+            "android.permission.health.READ_HEART_RATE"
+          ]
+        }
+      ],
       "expo-document-picker",
       "expo-notifications",
       [

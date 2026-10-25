@@ -12,6 +12,7 @@ module.exports = () => {
     ...(expo.plugins ?? []).filter((plugin) => plugin !== 'expo-video'),
     'expo-video',
     ['./plugins/with-lan-cleartext.js', { enabled: LAN_BUILD }],
+    './plugins/with-health-connect-delegate.js',
   ];
   expo.updates = { ...expo.updates, enabled: LAN_BUILD ? false : (expo.updates?.enabled ?? true) };
   if (!LAN_BUILD) {

@@ -7,6 +7,7 @@ export const progressRecordSchema = z
     exerciseName: z.string(),
     previousBest: z.number().nullable(),
     sessionDate: z.string(),
+    sessionId: z.string().optional(),
   })
   .strict();
 

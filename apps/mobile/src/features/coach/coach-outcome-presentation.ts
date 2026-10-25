@@ -6,6 +6,7 @@ export type Adherence = {
   plannedCount: number;
   counts: Record<SessionOutcome, number>;
   unplannedSessionsCount: number;
+  neat?: { done: number; expected: number; percent: number | null };
 };
 type Translate = (key: string, options?: Record<string, string | number>) => string;
 export function adherenceText(a: Adherence, t: Translate): string[] {
@@ -16,6 +17,9 @@ export function adherenceText(a: Adherence, t: Translate): string[] {
     t('training.adherence.formula', { done: a.counts.done, planned: a.plannedCount, cutoff: a.cutoffDate }),
     ...Object.entries(a.counts).map(([outcome, count]) => `${t('training.outcome.' + outcome)}: ${count}`),
     t('training.adherence.unplanned', { count: a.unplannedSessionsCount }),
+    ...(a.neat?.percent == null
+      ? []
+      : [t('training.adherence.neat', { done: a.neat.done, expected: a.neat.expected, percent: a.neat.percent })]),
   ];
 }
 export function coverageText(

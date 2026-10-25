@@ -26,6 +26,13 @@ export function useActiveSetDraft(item: SessionItem) {
     }));
   };
 
+  const replaceSet = (setIndex: number, values: Partial<SetRowState>) => {
+    setDrafts((current) => ({
+      ...current,
+      [setIndex]: { ...(current[setIndex] ?? loggedDraft(item, setIndex)), ...values },
+    }));
+  };
+
   const saveRom = (value: string) => {
     if (romSet == null) return;
     setDrafts((current) => ({
@@ -35,7 +42,7 @@ export function useActiveSetDraft(item: SessionItem) {
     setRomSet(null);
   };
 
-  return { drafts, romSet, saveRom, setCount, setRomSet, updateField };
+  return { drafts, replaceSet, romSet, saveRom, setCount, setRomSet, updateField };
 }
 
 export function reconcileSetDrafts(

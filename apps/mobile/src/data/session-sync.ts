@@ -4,6 +4,7 @@ import { useAuthStore } from '../store/auth.store';
 import { usePasswordRecoveryStore } from '../store/password-recovery.store';
 import { getSupabaseClient } from './supabase-client';
 import { decideSessionTransition, sessionTransitionClearsUserData, type SessionTransition } from './session-transition';
+import { clearPersistedQueryCache } from './query-persistence';
 
 export { decideSessionTransition, sessionTransitionClearsUserData, type SessionTransition };
 
@@ -35,13 +36,13 @@ export function startSessionSync(queryClient: QueryClient): () => void {
     .getSession()
     .then(({ data: sessionData, error }) => {
       if (error) {
-        signOutLocally(queryClient);
+        if (!keepSessionWhileOffline(error)) signOutLocally(queryClient);
         return;
       }
       applyStoredSession(queryClient, 'INITIAL_SESSION', sessionData.session);
     })
-    .catch(() => {
-      signOutLocally(queryClient);
+    .catch((error: unknown) => {
+      if (!keepSessionWhileOffline(error)) signOutLocally(queryClient);
     })
     .finally(() => {
       ready = true;
@@ -84,5 +85,14 @@ function signOutLocally(queryClient: QueryClient): void {
 
 function clearUserData(queryClient: QueryClient): void {
   void clearCoachDrafts().catch(() => undefined);
+  void clearPersistedQueryCache(useAuthStore.getState().userId);
   queryClient.clear();
+}
+
+function keepSessionWhileOffline(error: unknown): boolean {
+  if (useAuthStore.getState().status !== 'signedIn') return false;
+  const online = (globalThis as { navigator?: { onLine?: boolean } }).navigator?.onLine;
+  if (online === false) return true;
+  const message = error instanceof Error ? error.message : '';
+  return /network|fetch|offline/i.test(message);
 }

@@ -1967,6 +1967,7 @@
   "training.originDate": "Original date",
   "training.noRecord": "No record",
   "training.adherence.title": "Calculated adherence",
+  "training.adherence.neat": "NEAT: {{percent}}% ({{done}}/{{expected}})",
   "training.adherence.empty": "No scheduled workouts recorded",
   "training.adherence.formula": "{{done}} completed / {{planned}} overdue scheduled workouts. Cutoff: {{cutoff}} (through yesterday). Today and future days excluded.",
   "training.adherence.unplanned": "Sessions without matching schedule: {{count}} (excluded from percentage).",

@@ -2,6 +2,7 @@ import { useQuery, useQueries, type UseQueryResult } from '@tanstack/react-query
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient, UnauthorizedApiError } from '../api-client';
 import { handleUnauthorized } from '../auth-service';
+import { QUERY_CACHE_MS } from '../query-persistence';
 
 import type { ClientRoutine, ClientRoutineDay } from '@trainerpro/shared';
 export type {
@@ -28,7 +29,9 @@ export function useClientRoutineQuery(): UseQueryResult<ClientRoutine, Error> {
         throw error;
       }
     },
-    queryKey: ['clients', 'me', 'routine', accessToken],
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
+    queryKey: ['clients', 'me', 'routine'],
     refetchOnMount: 'always',
     staleTime: 0,
   });
@@ -50,7 +53,9 @@ export function useClientPlanDayQuery(planDayId: string | null): UseQueryResult<
         throw error;
       }
     },
-    queryKey: ['clients', 'me', 'plan-days', planDayId, accessToken],
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
+    queryKey: ['clients', 'me', 'plan-days', planDayId],
     refetchOnMount: 'always',
     staleTime: 0,
   });
@@ -62,7 +67,9 @@ export function useScheduledPlanDays(ids: string[]): ClientRoutineDay[] {
   return useQueries({
     queries: [...new Set(ids)].map((id) => ({
       enabled: Boolean(accessToken),
-      queryKey: ['clients', 'me', 'plan-days', id, accessToken],
+      gcTime: QUERY_CACHE_MS,
+      networkMode: 'offlineFirst',
+      queryKey: ['clients', 'me', 'plan-days', id],
       queryFn: () =>
         createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<ClientRoutineDay>(
           `/clients/me/plan-days/${id}`,

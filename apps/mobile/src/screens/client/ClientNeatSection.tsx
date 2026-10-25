@@ -4,6 +4,10 @@ import { useTranslation } from 'react-i18next';
 import type { ClientRoutineNeat } from '../../data/hooks/useClientRoutineQuery';
 import { LIGHT } from '../../theme/light';
 import { shouldShowClientNeatSection } from './client-neat.utils';
+import { useClientNeatLogs } from '../../data/hooks/useClientNeatLogs';
+import { localDateKey } from './daily-checkin.utils';
+import { stepsTarget } from '../../health/health-metrics';
+import { useStepGoals } from '../../health/use-step-goals';
 
 const INFO_ICON = 'ⓘ';
 const CLOSE_ICON = '✕';
@@ -14,6 +18,8 @@ type ClientNeatSectionProps = {
 
 export function ClientNeatSection({ neats }: ClientNeatSectionProps): React.JSX.Element | null {
   const { t } = useTranslation();
+  const logs = useClientNeatLogs(localDateKey());
+  const steps = useStepGoals(neats, logs.logs, logs.toggle);
   const [conceptOpen, setConceptOpen] = useState(false);
   const [selected, setSelected] = useState<ClientRoutineNeat | null>(null);
 
@@ -34,15 +40,33 @@ export function ClientNeatSection({ neats }: ClientNeatSectionProps): React.JSX.
       </View>
       <View style={styles.grid}>
         {neats?.map((neat) => (
-          <Pressable key={neat.id} onPress={() => setSelected(neat)} style={styles.card}>
-            <Text style={styles.cardTitle}>{neat.title}</Text>
-          </Pressable>
+          <View key={neat.id} style={styles.card}>
+            <Pressable
+              accessibilityRole={'checkbox'}
+              accessibilityState={{ checked: logs.logs.some((log) => log.neatId === neat.id && log.done) }}
+              onPress={() => logs.toggle(neat.id, !logs.logs.some((log) => log.neatId === neat.id && log.done))}
+            >
+              <Text style={styles.cardTitle}>{logs.logs.some((log) => log.neatId === neat.id && log.done) ? '✓' : '○'}</Text>
+            </Pressable>
+            <Pressable onPress={() => setSelected(neat)} style={styles.titleRow}>
+              <Text style={styles.cardTitle}>{neatTitle(neat.title, steps, t)}</Text>
+            </Pressable>
+          </View>
         ))}
       </View>
       <NeatConceptModal onClose={() => setConceptOpen(false)} visible={conceptOpen} />
       <NeatActivityModal neat={selected} onClose={() => setSelected(null)} />
     </View>
   );
+}
+
+function neatTitle(
+  title: string,
+  steps: number | null,
+  t: (key: string, values?: Record<string, unknown>) => string,
+): string {
+  if (stepsTarget(title) == null || steps == null) return title;
+  return t('mobile.client.neat.stepsCount', { count: steps, title });
 }
 
 function NeatConceptModal(props: { onClose: () => void; visible: boolean }): React.JSX.Element {

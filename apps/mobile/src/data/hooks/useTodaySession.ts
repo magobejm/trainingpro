@@ -1,4 +1,5 @@
 import type { ExerciseHistoryEntry } from '@trainerpro/shared';
+import { QUERY_CACHE_MS } from '../query-persistence';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   CardioSessionItem,
@@ -117,7 +118,9 @@ export function useSessionQuery(sessionId: string) {
   return useQuery({
     enabled: Boolean(auth) && sessionId.length > 0,
     queryFn: () => readSessionOrDraft(auth, sessionId),
-    queryKey: ['session', sessionId, auth?.activeRole, auth?.accessToken],
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
+    queryKey: ['session', sessionId, auth?.activeRole],
   });
 }
 

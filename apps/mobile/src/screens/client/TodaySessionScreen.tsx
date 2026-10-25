@@ -29,12 +29,15 @@ import { freezeWorkoutDuration, isShortWorkout } from './session-rpe.utils';
 import { SessionRpeModal } from './SessionRpeModal';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
+import { WorkoutSummaryScreen } from './WorkoutSummaryScreen';
 import { usePersistedSessionTimers, useWorkoutElapsed } from './today-session.timers';
 import { useRestEndNotification } from '../../features/timers/rest-notification';
 import { localDateKey, readTodayCheckin } from './daily-checkin.utils';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
 import type { RestState } from './session-rest.types';
+
+type WorkoutFinishSummary = { durationSeconds: number | null; pending: boolean; sessionRpe: number };
 
 type TodaySessionScreenProps = {
   onClose: () => void;
@@ -176,6 +179,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const [finishBusy, setFinishBusy] = useState(false);
   const startPromptedRef = React.useRef(false);
   const pendingFinishRpe = React.useRef<number | null>(null);
+  const [summary, setSummary] = useState<WorkoutFinishSummary | null>(null);
   const [checkinHydrated, setCheckinHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
   const notifyCoach = useOptionalCoachNotice();
   const userId = useAuthStore((state) => state.userId);
@@ -283,14 +287,14 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
             return;
           }
           timers.clearSessionTimers();
+          setSummary({ durationSeconds: finishDurationSeconds.current, pending: outcome === 'pending', sessionRpe });
+          setRpeVisible(false);
           if (outcome === 'pending') {
             pendingFinishRpe.current = sessionRpe;
             showToast(t('mobile.client.sync.savedOffline'));
-            setRpeVisible(false);
             return;
           }
-          await notifyFinishedSession(notifyCoach, onFinishedDay, sessionRpe, t);
-          setRpeVisible(false);
+          await notifyFinishedSession(notifyCoach, sessionRpe, t);
         })
         .catch((error) => {
           handleMutationError(error);
@@ -305,8 +309,9 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
     if (session?.status !== 'COMPLETED' || actions.pendingCount > 0 || actions.conflicts.length > 0) return;
     const sessionRpe = pendingFinishRpe.current;
     pendingFinishRpe.current = null;
-    void notifyFinishedSession(notifyCoach, onFinishedDay, sessionRpe, t);
-  }, [actions.conflicts.length, actions.pendingCount, notifyCoach, onFinishedDay, session?.status, t]);
+    setSummary((current) => (current ? { ...current, pending: false } : current));
+    void notifyFinishedSession(notifyCoach, sessionRpe, t);
+  }, [actions.conflicts.length, actions.pendingCount, notifyCoach, session?.status, t]);
 
   const handleFinishExercise = useCallback(
     (itemId: string) => {
@@ -401,6 +406,17 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         onClose={() => setRpeVisible(false)}
         onSubmit={handleSaveSessionRpe}
         visible={rpeVisible}
+      />
+      <WorkoutSummaryScreen
+        durationSeconds={summary?.durationSeconds ?? null}
+        onClose={() => {
+          setSummary(null);
+          onFinishedDay();
+        }}
+        recordsPending={summary?.pending === true}
+        session={session}
+        sessionRpe={summary?.sessionRpe ?? null}
+        visible={summary != null}
       />
     </>
   );

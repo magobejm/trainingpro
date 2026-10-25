@@ -59,13 +59,11 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
 
 export async function notifyFinishedSession(
   notifyCoach: (message: string) => Promise<void>,
-  onFinishedDay: () => void,
   sessionRpe: number,
   t: Translate,
 ): Promise<void> {
   const label = t(`mobile.client.rpe.band.${sessionRpeBand(sessionRpe).key}.label`);
   await notifyCoach(formatSessionRpeChatNotice(sessionRpe, label));
-  onFinishedDay();
 }
 
 async function saveSessionOp(

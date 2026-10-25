@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { s } from './client-shell.styles';
 import type { MoreMenuId } from './client-shell.constants';
+import { HealthConnectRow } from '../../health/HealthConnectRow';
 
 type MoreScreenProps = {
   onNavigate: (id: MoreMenuId) => void;
@@ -44,6 +45,7 @@ export function MoreScreen(props: MoreScreenProps): React.JSX.Element {
             <Text style={{ color: '#93c5fd', fontSize: 18 }}>{'›'}</Text>
           </Pressable>
         ))}
+        <HealthConnectRow />
       </View>
     </ScrollView>
   );

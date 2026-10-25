@@ -24,6 +24,7 @@ import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-reque
 import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-storage.port';
 import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { toStoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
+import { ClientNeatLogService } from '../../application/services/client-neat-log.service';
 import { ClientSelfProgressService } from '../../application/services/client-self-progress.service';
 import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from '../../application/use-cases/get-client-calendar-summary.usecase';
@@ -67,6 +68,7 @@ export class ClientSelfController {
     private readonly listClientDayNotesUseCase: ListClientDayNotesUseCase,
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
+    private readonly clientNeatLogService: ClientNeatLogService,
     private readonly clientSelfProgressService: ClientSelfProgressService,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
     private readonly skipClientSessionUseCase: SkipClientSessionUseCase,
@@ -104,6 +106,24 @@ export class ClientSelfController {
   ) {
     const uploaded = await this.clientSelfProgressService.uploadPhoto(readAuthContext(request), file, pose);
     return mapProgressPhotoOutput(uploaded, toStoredFileUrls(this.storage, this.mediaUrls));
+  }
+
+  @Get('me/neat-logs')
+  async listMyNeatLogs(@Query('date') date: string, @Req() request: HttpAuthRequest) {
+    return this.clientNeatLogService.listMine(readAuthContext(request), date);
+  }
+
+  @Put('me/neat-logs/:neatId/:date')
+  async saveMyNeatLog(
+    @Param('neatId', ParseUUIDPipe) neatId: string,
+    @Param('date') date: string,
+    @Body() body: { done?: boolean; value?: number | null },
+    @Req() request: HttpAuthRequest,
+  ) {
+    return this.clientNeatLogService.saveMine(readAuthContext(request), neatId, date, {
+      done: body.done === true,
+      value: body.value,
+    });
   }
 
   @Get('me/routine')

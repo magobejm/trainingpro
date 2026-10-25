@@ -91,6 +91,7 @@ export type PersonalRecord = {
   exerciseName: string;
   previousBest: number | null;
   sessionDate: string;
+  sessionId: string;
 };
 
 export type PersonalRecordsQuery = {

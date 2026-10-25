@@ -1967,6 +1967,7 @@
   "training.originDate": "Fecha original",
   "training.noRecord": "Sin registro",
   "training.adherence.title": "Adherencia calculada",
+  "training.adherence.neat": "NEAT: {{percent}}% ({{done}}/{{expected}})",
   "training.adherence.empty": "Sin entrenamientos previstos registrados",
   "training.adherence.formula": "{{done}} completados / {{planned}} previstos vencidos. Corte: {{cutoff}} (hasta ayer). Hoy y días futuros excluidos.",
   "training.adherence.unplanned": "Sesiones sin agenda asociada: {{count}} (fuera del porcentaje).",

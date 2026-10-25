@@ -57,6 +57,15 @@ function AdherenceContent({ result, t }: { result: AdherenceResult; t: Translate
               })}
         </Text>
       </View>
+      {result.neat?.percent != null ? (
+        <Text style={styles.note}>
+          {t('training.adherence.neat', {
+            done: result.neat.done,
+            expected: result.neat.expected,
+            percent: result.neat.percent,
+          })}
+        </Text>
+      ) : null}
       {result.percent != null ? (
         <View
           accessibilityRole="progressbar"

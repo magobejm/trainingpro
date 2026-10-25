@@ -9,6 +9,7 @@ export type AdherenceResult = {
   plannedCount: number;
   counts: Record<'done' | 'incomplete' | 'skipped' | 'pending' | 'in_progress', number>;
   unplannedSessionsCount: number;
+  neat?: { done: number; expected: number; percent: number | null };
 };
 export function useAdherenceQuery(input: { clientId: string; from: string; to: string; templateId?: string | null }) {
   const accessToken = useAuthStore((s) => s.accessToken);

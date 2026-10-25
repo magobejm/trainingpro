@@ -6,14 +6,15 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleShee
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
 import type { EnqueueResult } from '../../data/hooks/useSessionDraft';
-import type {
-  LogIntervalMutationInput,
-  LogIsometricSetMutationInput,
-  LogMobilitySetMutationInput,
-  LogPlioSetMutationInput,
-  LogSetMutationInput,
-  LogSportMutationInput,
-  SessionItem,
+import {
+  useExerciseHistoryQuery,
+  type LogIntervalMutationInput,
+  type LogIsometricSetMutationInput,
+  type LogMobilitySetMutationInput,
+  type LogPlioSetMutationInput,
+  type LogSetMutationInput,
+  type LogSportMutationInput,
+  type SessionItem,
 } from '../../data/hooks/useTodaySession';
 import { YouTubeVideoModal } from '../../components/YouTubeVideoModal';
 import { LIGHT } from '../../theme/light';
@@ -22,42 +23,29 @@ import { showToast } from '../../shell/client/feedback';
 import {
   elapsedRestSeconds,
   formatSessionRepRange,
-  getRestSeconds,
-  getSetColumns,
   getSourceExerciseId,
   getStrengthSessionItemId,
   readSessionYoutubeUrl,
-  readTargetValue,
-  restWasRecorded,
   setWasLogged,
   type LogPayload,
-  type SetRowState,
 } from './active-exercise.helpers';
-import { loggedDraft, setDraftMatchesLogged } from './active-exercise.save';
 import { useActiveSetDraft } from './active-exercise.draft';
 import { useActiveSetSave } from './active-exercise.session';
 import { useRestCountdown } from '../../features/timers/useRestCountdown';
-import { restItemId, saveSetAndMaybeRest } from '../../features/timers/rest-shift';
-import { useRestPreferencesStore } from '../../store/rest-preferences.store';
-import { CircularCountdown } from './CircularCountdown';
+import { restItemId } from '../../features/timers/rest-shift';
 import { ExerciseCommentModal } from './ExerciseCommentModal';
 import { ExerciseNotesPanel } from './ExerciseNotesPanel';
 import { PreviousDaysOverlay } from './PreviousDaysOverlay';
+import { ExerciseSetCard } from './ActiveExerciseSetCard';
 import { RestTimerOverlay } from './RestTimerOverlay';
 import { RestAutoStartToggle } from './RestAutoStartToggle';
 import { RomScaleModal } from './RomScaleModal';
 import type { RestState } from './session-rest.types';
-import {
-  CurrentSetFields,
-  ExerciseActionBar,
-  ExerciseSessionFooter,
-  SetSaveButton,
-  SetRestControl,
-} from './ActiveExerciseSetPanel';
+import { ExerciseActionBar, ExerciseSessionFooter } from './ActiveExerciseSetPanel';
 
 type LogResult = Promise<EnqueueResult | 'missing' | void> | void;
 
-type ActiveExerciseScreenProps = {
+export type ActiveExerciseScreenProps = {
   guideSync: GuideSyncState;
   guideContext: string;
   guideEditable: boolean;
@@ -118,6 +106,7 @@ function ActiveExerciseFrame(props: {
     completeRest(screen, props.save, finishedRestKey);
   });
   const youtubeUrl = readSessionYoutubeUrl(screen.item);
+  const history = useExerciseHistoryQuery(getSourceExerciseId(screen.item), screen.sessionId, screen.visible);
 
   return (
     <Modal animationType={'slide'} onRequestClose={screen.onClose} visible={screen.visible}>
@@ -152,6 +141,7 @@ function ActiveExerciseFrame(props: {
           {Array.from({ length: props.draft.setCount }, (_, index) => (
             <ExerciseSetCard
               draft={props.draft}
+              history={history.data ?? []}
               key={`${screen.item.id}:${index + 1}`}
               onFocus={(node) => scrollFieldIntoView(scrollRef.current, node)}
               remaining={remaining}
@@ -197,81 +187,6 @@ function ActiveExerciseFrame(props: {
       </KeyboardAvoidingView>
     </Modal>
   );
-}
-
-function ExerciseSetCard(props: {
-  draft: ReturnType<typeof useActiveSetDraft>;
-  onFocus: (node: number) => void;
-  remaining: number | null;
-  save: ReturnType<typeof useActiveSetSave>;
-  screen: ActiveExerciseScreenProps;
-  setIndex: number;
-  t: TFunction;
-}): React.JSX.Element {
-  const view = readSetView(
-    props.screen.item,
-    props.setIndex,
-    props.draft.drafts[props.setIndex],
-    props.save.restSeconds.current[props.setIndex],
-  );
-  const restSeconds = getRestSeconds(props.screen.item, props.setIndex);
-  const autoStart = useRestPreferencesStore((state) => state.autoStartRest);
-  const active = props.screen.restState?.setKey === view.setKey;
-  const markedDone = props.screen.completedRestKeys.includes(view.setKey);
-  const restDone = markedDone || restWasRecorded(props.screen.item, props.setIndex);
-  return (
-    <View style={styles.setCard}>
-      <View style={styles.setHeader}>
-        <Text style={styles.setTitle}>{`${props.t('client.today.set')} ${props.setIndex}`}</Text>
-        {restSeconds > 0 ? (
-          <SetRestControl
-            active={active}
-            completed={restDone}
-            countdown={<RestCountdown remaining={props.remaining} total={restSeconds} />}
-            disabled={props.screen.readOnly === true || (props.screen.restState != null && !active)}
-            onExpand={props.screen.onExpandRest}
-            onStart={() => props.screen.onStartRest(view.setKey, restSeconds)}
-            remaining={active ? props.remaining : null}
-            restSeconds={restSeconds}
-            t={props.t}
-          />
-        ) : null}
-      </View>
-      <CurrentSetFields
-        columns={view.columns}
-        draft={props.draft.drafts[props.setIndex] ?? loggedDraft(props.screen.item, props.setIndex)}
-        onChange={(key, value) => props.draft.updateField(props.setIndex, key, value)}
-        onFocus={props.onFocus}
-        onOpenRom={() => props.draft.setRomSet(props.setIndex)}
-        readOnly={props.screen.readOnly}
-        t={props.t}
-        targets={view.targets}
-      />
-      {props.screen.readOnly ? null : (
-        <SetSaveButton
-          busy={props.save.busy || props.save.finishing}
-          clean={view.clean}
-          onSave={() =>
-            void saveSetAndMaybeRest({
-              enabled: autoStart,
-              readOnly: props.screen.readOnly === true,
-              restActive: props.screen.restState != null,
-              restDone,
-              restSeconds,
-              run: () => props.save.run([props.setIndex]),
-              start: () => props.screen.onStartRest(view.setKey, restSeconds),
-            })
-          }
-          setIndex={props.setIndex}
-          t={props.t}
-        />
-      )}
-    </View>
-  );
-}
-
-function RestCountdown(props: { remaining: number | null; total: number }): React.JSX.Element {
-  return <CircularCountdown remaining={props.remaining ?? 0} size={40} strokeWidth={4} totalSeconds={props.total} />;
 }
 
 function ExerciseChrome(props: {
@@ -439,16 +354,6 @@ function completeRest(
   screen.onRestFinish();
 }
 
-function readSetView(item: SessionItem, setIndex: number, draft: SetRowState | undefined, restSeconds?: number) {
-  const columns = getSetColumns(item);
-  return {
-    clean: setDraftMatchesLogged(item, setIndex, draft ?? loggedDraft(item, setIndex), restSeconds),
-    columns,
-    setKey: `${item.id}:${setIndex}`,
-    targets: Object.fromEntries(columns.map((column) => [column.key, readTargetValue(item, setIndex, column.key)])),
-  };
-}
-
 function sendLoggedSet(props: ActiveExerciseScreenProps, body: LogPayload): LogResult {
   if ('sessionItemId' in body) return props.onLogSet(body);
   if ('sessionPlioBlockId' in body) return props.onLogPlioSet(body);
@@ -486,16 +391,6 @@ const styles = StyleSheet.create({
   navArrow: { color: LIGHT.accent, fontSize: 28, fontWeight: '700' },
   navDisabled: { opacity: 0.3 },
   scroll: { gap: 16, padding: 16, paddingBottom: 24 },
-  setCard: {
-    backgroundColor: LIGHT.bgCard,
-    borderColor: LIGHT.border,
-    borderRadius: LIGHT.radius2xl,
-    borderWidth: 1,
-    gap: 12,
-    padding: 16,
-  },
-  setHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
-  setTitle: { color: LIGHT.textStrong, flex: 1, fontSize: 16, fontWeight: '800' },
   notesOverlay: { alignItems: 'center', backgroundColor: LIGHT.overlay, flex: 1, justifyContent: 'center', padding: 24 },
   notesCard: { backgroundColor: LIGHT.bgCard, borderRadius: LIGHT.radiusXl, maxHeight: '70%', padding: 16, width: '100%' },
 });

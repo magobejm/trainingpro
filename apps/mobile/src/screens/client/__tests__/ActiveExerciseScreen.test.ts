@@ -39,6 +39,7 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) =>
 jest.mock('../active-exercise.draft', () => ({
   useActiveSetDraft: (item: SessionItem) => ({
     drafts: Object.fromEntries([1, 2, 3].map((index) => [index, loggedDraft(item, index)])),
+    replaceSet: jest.fn(),
     romSet: null,
     saveRom: jest.fn(),
     setCount: 3,
@@ -46,6 +47,12 @@ jest.mock('../active-exercise.draft', () => ({
     updateField: mockUpdate,
   }),
 }));
+jest.mock('../../../data/hooks/useTodaySession', () => {
+  const actual = jest.requireActual<typeof import('../../../data/hooks/useTodaySession')>(
+    '../../../data/hooks/useTodaySession',
+  );
+  return { ...actual, useExerciseHistoryQuery: () => ({ data: [] }) };
+});
 jest.mock('../active-exercise.session', () => ({
   useActiveSetSave: () => ({ busy: false, finishing: false, restSeconds: { current: {} }, run: mockRun }),
 }));

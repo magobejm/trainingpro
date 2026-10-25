@@ -2,6 +2,7 @@ import { ForbiddenException, Injectable } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { readWorkoutAdherence, type WorkoutAdherenceInput } from '../../../../common/plan/workout-adherence.prisma';
+import { readNeatAdherence } from '../../../clients/application/services/client-neat-log.service';
 
 @Injectable()
 export class GetAdherenceUseCase {
@@ -25,6 +26,8 @@ export class GetAdherenceUseCase {
       },
     });
     if (!client) throw new ForbiddenException('Client not found for current user');
-    return readWorkoutAdherence(this.prisma, { ...input, clientId: client.id });
+    const adherence = await readWorkoutAdherence(this.prisma, { ...input, clientId: client.id });
+    const neat = await readNeatAdherence(this.prisma, client.id, input.from, input.to, input.timezoneOffset);
+    return { ...adherence, neat };
   }
 }

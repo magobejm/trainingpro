@@ -264,6 +264,7 @@ model Client {
   calendarEvents            CalendarEvent[]            @relation("client_calendar_events")
   nutritionPlans            NutritionPlan[]            @relation("client_nutrition_plans")
   nutritionMealLogs         NutritionMealLog[]
+  neatLogs                  ClientNeatLog[]
   clientPhysicalTests       ClientPhysicalTest[]
   clientPhysicalTestResults ClientPhysicalTestResult[]
   physicalTestSchedules     ClientPhysicalTestSchedule[]
@@ -854,9 +855,27 @@ model PlanTemplateNeat {
   description String?      @db.Text
   sortOrder   Int          @default(0) @map("sort_order")
   template    PlanTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  logs        ClientNeatLog[]
 
   @@index([templateId], map: "idx_plan_template_neat_template")
   @@map("plan_template_neat")
+}
+
+model ClientNeatLog {
+  id        String           @id @default(uuid()) @db.Uuid
+  clientId  String           @map("client_id") @db.Uuid
+  neatId    String           @map("neat_id") @db.Uuid
+  date      DateTime         @db.Date
+  done      Boolean          @default(false)
+  value     Decimal?         @db.Decimal(10, 2)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client    Client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  neat      PlanTemplateNeat @relation(fields: [neatId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, neatId, date], map: "uq_client_neat_log")
+  @@index([clientId, date], map: "idx_client_neat_log_client_date")
+  @@map("client_neat_log")
 }
 
 model PlanTemplateObjective {

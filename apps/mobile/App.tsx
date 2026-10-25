@@ -8,6 +8,7 @@ import { createQueryClient } from './src/data/query-client';
 import { useNotificationNavigation } from './src/data/use-notification-navigation';
 import { usePushRegistration } from './src/data/use-push-registration';
 import { startSessionSync } from './src/data/session-sync';
+import { startQueryPersistence } from './src/data/query-persistence';
 import { useRecoveryLinks } from './src/data/recovery-links';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { ResetPasswordScreen } from './src/screens/auth/ResetPasswordScreen';
@@ -25,9 +26,19 @@ export default function App(): React.JSX.Element {
   useSessionSync();
   return (
     <QueryClientProvider client={queryClient}>
+      <PersistQueries />
       <MobileRoot />
     </QueryClientProvider>
   );
+}
+
+function PersistQueries(): null {
+  const userId = useAuthStore((state) => state.userId);
+  React.useEffect(() => {
+    if (!userId) return undefined;
+    return startQueryPersistence(queryClient, userId);
+  }, [userId]);
+  return null;
 }
 
 function useSessionSync(): void {

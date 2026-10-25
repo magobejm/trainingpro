@@ -2,6 +2,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClie
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 import { refreshCalendarOnSkipConflict } from '../client-session-skip-error';
+import { QUERY_CACHE_MS } from '../query-persistence';
 
 export type ClientCalendarEvent = {
   id: string;
@@ -46,6 +47,7 @@ export type ClientSessionSummary = {
 export type ClientCalendarSummary = {
   completedDays: number;
   currentStreakWeeks: number;
+  nutritionStreakWeeks: number;
   avgMotivation: number | null;
 };
 
@@ -54,6 +56,8 @@ export function useClientCalendarEventsQuery(dateFrom: string, dateTo: string) {
   return useQuery({
     enabled: Boolean(auth),
     queryFn: () => fetchCalendarEvents(auth, dateFrom, dateTo),
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
     queryKey: ['clients', 'me', 'calendar', dateFrom, dateTo],
   });
 }
@@ -63,6 +67,8 @@ export function useClientCalendarSessionsQuery(dateFrom: string, dateTo: string)
   return useQuery({
     enabled: Boolean(auth),
     queryFn: () => fetchCalendarSessions(auth, dateFrom, dateTo),
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
     queryKey: ['clients', 'me', 'sessions', dateFrom, dateTo],
   });
 }

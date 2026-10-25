@@ -1,6 +1,7 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
+import { QUERY_CACHE_MS } from '../query-persistence';
 
 export type NutritionConsideration = {
   code: string;
@@ -80,6 +81,8 @@ export function useClientNutritionQuery(): UseQueryResult<ClientNutrition, Error
   return useQuery({
     enabled: Boolean(auth),
     queryFn: () => fetchClientNutrition(auth),
+    gcTime: QUERY_CACHE_MS,
+    networkMode: 'offlineFirst',
     queryKey: NUTRITION_KEY,
   });
 }

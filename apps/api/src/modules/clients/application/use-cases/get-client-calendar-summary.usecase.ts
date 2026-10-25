@@ -2,10 +2,12 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
+import { readNutritionStreakWeeks } from '../nutrition-streak';
 
 export type ClientCalendarSummary = {
   completedDays: number;
   currentStreakWeeks: number;
+  nutritionStreakWeeks: number;
   avgMotivation: number | null;
 };
 
@@ -34,7 +36,8 @@ export class GetClientCalendarSummaryUseCase {
     const motivations = completedRows.filter((r) => r.preMotivation !== null).map((r) => r.preMotivation!);
     const avgMotivation = motivations.length > 0 ? motivations.reduce((a, b) => a + b, 0) / motivations.length : null;
     const currentStreakWeeks = this.computeStreakWeeks(streakRows.map((r) => r.sessionDate));
-    return { completedDays, currentStreakWeeks, avgMotivation };
+    const nutritionStreakWeeks = await readNutritionStreakWeeks(this.prisma, client.id);
+    return { avgMotivation, completedDays, currentStreakWeeks, nutritionStreakWeeks };
   }
 
   private async queryRange(clientId: string, dateFrom: Date, dateTo: Date) {

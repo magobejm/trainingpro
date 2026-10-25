@@ -9,6 +9,8 @@ import { resolveRoutineWeekSchedule } from '../../screens/client/routine-schedul
 import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
+import { HomeStreaks } from './HomeStreaks';
+import { HomeNeatCard } from './HomeNeatCard';
 
 type HomeHubProps = {
   onOpenMood: () => void;
@@ -83,6 +85,8 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
           </View>
         </Pressable>
       </View>
+      <HomeStreaks />
+      <HomeNeatCard neats={routine?.neats} />
       <View style={s.homeContent}>
         <ActionCard
           icon={<Text style={{ fontSize: 24 }}>{'🏋️'}</Text>}

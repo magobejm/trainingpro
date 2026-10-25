@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { LIGHT } from '../../theme/light';
 import { readMeasurementForm, type MeasurementKey } from './client-measures.helpers';
 import { useRecordMeasurementMutation } from './use-client-progress';
+import { readLatestWeightKg } from '../../health';
 
 const FIELDS: MeasurementKey[] = ['weightKg', 'waistCm', 'hipCm', 'heightCm'];
 const EMPTY: Record<MeasurementKey, string> = { heightCm: '', hipCm: '', waistCm: '', weightKg: '' };
@@ -22,6 +23,12 @@ export function ClientMeasuresForm(props: Props): React.JSX.Element {
   const save = useRecordMeasurementMutation();
   const [values, setValues] = useState(EMPTY);
   const [error, setError] = useState('');
+  useEffect(() => {
+    void readLatestWeightKg().then((weight) => {
+      if (weight == null) return;
+      setValues((current) => (current.weightKg ? current : { ...current, weightKg: String(weight) }));
+    });
+  }, []);
   return (
     <Modal animationType={'fade'} onRequestClose={props.onClose} transparent visible>
       <View style={styles.backdrop}>

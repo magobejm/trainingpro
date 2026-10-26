@@ -144,8 +144,18 @@ export class ClientProductivityService {
 
   async bulk(context: AuthContext, clientIds: string[], action: BulkAction) {
     if (clientIds.length > 100) throw new BadRequestException('Bulk actions accept at most 100 clients');
+    const membership = await resolveCoachMembership(context, this.prisma);
+    const owned = await this.prisma.client.findMany({
+      select: { id: true },
+      where: { archivedAt: null, coachMembershipId: membership.id, id: { in: clientIds } },
+    });
+    const ownedIds = new Set(owned.map((item) => item.id));
     const results = [];
-    for (const clientId of clientIds) {
+    for (const clientId of [...new Set(clientIds)]) {
+      if (!ownedIds.has(clientId)) {
+        results.push({ clientId, message: 'Client not found', status: 'error' as const });
+        continue;
+      }
       try {
         await this.runOne(context, clientId, action);
         results.push({ clientId, status: 'ok' as const });
@@ -169,7 +179,10 @@ export class ClientProductivityService {
       await this.tests.scheduleTestForCoach(context, clientId, action);
       return;
     }
-    const client = await this.prisma.client.findFirst({ select: { firstName: true }, where: { id: clientId } });
+    const client = await this.prisma.client.findFirst({
+      select: { firstName: true },
+      where: { archivedAt: null, id: clientId },
+    });
     const thread = await this.threads.execute(context, { clientId });
     await this.messages.execute(context, {
       text: action.message.replaceAll('{nombre}', client?.firstName ?? ''),

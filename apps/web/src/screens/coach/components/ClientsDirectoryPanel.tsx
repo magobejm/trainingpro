@@ -7,6 +7,8 @@ import type { ClientView } from '../../../data/hooks/useClientsQuery';
 import type { ClientSelectorItem } from './ClientSelectionStrip';
 import { clientStatusDot } from '../client-card-items';
 import type { ClientSort } from '../clients-sort';
+import type { Translate } from './bulk/BulkActionFields';
+import { BulkSelectionOverlay, BulkSelectionToolbar, useBulkSelection, type BulkSelection } from './bulk/useBulkSelection';
 import { styles } from './ClientsDirectoryPanel.styles';
 
 type Props = {
@@ -29,6 +31,7 @@ type Props = {
 
 export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
   const vm = useDirectoryModel(props);
+  const selection = useBulkSelection(props.clients);
   const hasActiveFilter = props.searchValue.trim().length > 0 || props.objectiveFilter !== 'ALL';
   const isEmpty = !props.clientsLoading && !props.clientsError && !hasActiveFilter && vm.items.length === 0;
   const status = isEmpty ? (
@@ -73,7 +76,7 @@ export function ClientsDirectoryPanel(props: Props): React.JSX.Element {
       </View>
     );
   }
-  return renderDirectory(props, vm);
+  return renderDirectory(props, vm, selection);
 }
 
 function useDirectoryModel(props: Props) {
@@ -92,9 +95,15 @@ function useDirectoryModel(props: Props) {
   };
 }
 
-function renderDirectory(props: Props, vm: ReturnType<typeof useDirectoryModel>): React.JSX.Element {
+function renderDirectory(
+  props: Props,
+  vm: ReturnType<typeof useDirectoryModel>,
+  selection: BulkSelection,
+): React.JSX.Element {
+  const bulkT = props.t as Translate;
   return (
     <View>
+      <BulkSelectionToolbar selection={selection} t={bulkT} />
       <DirectoryHeader
         order={vm.order}
         onOrderChange={vm.setOrder}
@@ -120,8 +129,12 @@ function renderDirectory(props: Props, vm: ReturnType<typeof useDirectoryModel>)
               : props.t('coach.clients.card.planPending'),
         }))}
         onItemPress={props.onSelectClient}
+        onToggleSelect={selection.toggle}
         selectedId={props.selectedClientId}
+        selectedIds={selection.selectedIds}
+        selectionMode={selection.active}
       />
+      <BulkSelectionOverlay selection={selection} t={bulkT} />
     </View>
   );
 }

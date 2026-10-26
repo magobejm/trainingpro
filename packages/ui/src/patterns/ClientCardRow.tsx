@@ -23,7 +23,10 @@ type Props = {
   items: ClientCardItem[];
   onActionPress?: (clientId: string) => void;
   onItemPress: (clientId: string) => void;
+  onToggleSelect?: (clientId: string) => void;
   selectedId?: string;
+  selectedIds?: string[];
+  selectionMode?: boolean;
 };
 function ClientAvatar({ item, palette }: { item: ClientCardItem; palette?: Props['palette'] }): React.JSX.Element {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -59,15 +62,21 @@ export function ClientCardRow(props: Props): React.JSX.Element {
             styles.card,
             props.vertical && styles.fullCard,
             props.palette && { backgroundColor: props.palette.background, borderColor: props.palette.border },
-            props.selectedId === item.id && styles.selected,
+            (props.selectedId === item.id || props.selectedIds?.includes(item.id)) && styles.selected,
           ]}
         >
           <Pressable
-            accessibilityRole="button"
+            accessibilityRole={props.selectionMode ? 'checkbox' : 'button'}
+            accessibilityState={props.selectionMode ? { checked: Boolean(props.selectedIds?.includes(item.id)) } : undefined}
             accessibilityLabel={item.statusDot ? `${item.title}. ${item.statusDot.reason}` : item.title}
-            onPress={() => props.onItemPress(item.id)}
+            onPress={() => (props.selectionMode ? props.onToggleSelect?.(item.id) : props.onItemPress(item.id))}
             style={styles.content}
           >
+            {props.selectionMode ? (
+              <Text style={[styles.mark, props.selectedIds?.includes(item.id) && styles.markOn]}>
+                {props.selectedIds?.includes(item.id) ? '✓' : '○'}
+              </Text>
+            ) : null}
             <ClientAvatar item={item} palette={props.palette} />
             <View style={styles.titleRow}>
               <Text style={[styles.title, props.palette && { color: props.palette.text }]}>{item.title}</Text>
@@ -95,6 +104,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: space.lg },
   card: { flexGrow: 1, flexBasis: 240, maxWidth: 360, gap: space.md },
   selected: { borderColor: colors.primary },
+  mark: { color: colors.textMuted, fontSize: fontSize.lg, fontWeight: '700' },
+  markOn: { color: colors.primary },
   content: { gap: space.sm, alignItems: 'flex-start' },
   avatar: { width: 56, height: 56, borderRadius: radius.pill },
   initials: {

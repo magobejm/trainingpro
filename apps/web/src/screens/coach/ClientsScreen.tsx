@@ -15,7 +15,6 @@ import { ClientProfileEditScreen } from './ClientProfileEditScreen';
 import { ClientTestsScreen } from './ClientTestsScreen';
 import { ClientMoodScreen } from './ClientMoodScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
-import { BulkClientsPanel } from './BulkClientsPanel';
 import { ClientsDirectoryPanel } from './components/ClientsDirectoryPanel';
 import { CreateClientModal } from './components/CreateClientModal';
 import { CreateClientResultBanner } from './components/CreateClientResultBanner';
@@ -213,7 +212,6 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
       <View style={styles.formCard}>{renderCta(props)}</View>
       {renderCreateResult(props)}
       <View style={styles.listCard}>
-        <BulkClientsPanel clients={props.clients} t={props.t} />
         <ClientsDirectoryPanel
           clients={props.clients}
           clientsError={props.clientsError}

@@ -59,12 +59,17 @@ export function BulkSelectionToolbar(props: { selection: BulkSelection; t: Trans
   );
 }
 
+export function BulkSelectionBar(props: { selection: BulkSelection; t: Translate }): React.JSX.Element | null {
+  const { selection: sel, t } = props;
+  if (!sel.active || sel.kind) return null;
+  return <BulkActionBar count={sel.selectedIds.length} onCancel={sel.exit} onPick={sel.setKind} t={t} />;
+}
+
 export function BulkSelectionOverlay(props: { selection: BulkSelection; t: Translate }): React.JSX.Element | null {
   const { selection: sel, t } = props;
   if (!sel.active) return null;
   return (
     <>
-      {sel.kind ? null : <BulkActionBar count={sel.selectedIds.length} onCancel={sel.exit} onPick={sel.setKind} t={t} />}
       {sel.kind ? (
         <BulkActionModal clientIds={sel.selectedIds} kind={sel.kind} names={sel.names} onClose={sel.exit} t={t} />
       ) : null}

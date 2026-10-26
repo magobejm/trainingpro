@@ -1,27 +1,20 @@
-import { StyleSheet, type ViewStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
-
-const fixedBar = {
-  alignItems: 'center',
-  backgroundColor: colors.surface,
-  borderColor: colors.borderStrong,
-  borderRadius: radius.lg,
-  borderWidth: 1,
-  bottom: space.lg,
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  gap: space.sm,
-  left: '50%',
-  maxWidth: '96%',
-  padding: space.md,
-  position: 'fixed',
-  transform: [{ translateX: '-50%' }],
-  zIndex: 50,
-} as unknown as ViewStyle;
 
 export const bulkStyles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  bar: fixedBar,
+  bar: {
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderColor: colors.borderStrong,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    marginBottom: space.md,
+    padding: space.md,
+  },
   barCount: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
   body: { gap: space.md },
   hint: { color: colors.textMuted, fontSize: fontSize.xs },

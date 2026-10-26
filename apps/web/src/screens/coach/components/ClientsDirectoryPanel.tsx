@@ -8,7 +8,13 @@ import type { ClientSelectorItem } from './ClientSelectionStrip';
 import { clientStatusDot } from '../client-card-items';
 import type { ClientSort } from '../clients-sort';
 import type { Translate } from './bulk/BulkActionFields';
-import { BulkSelectionOverlay, BulkSelectionToolbar, useBulkSelection, type BulkSelection } from './bulk/useBulkSelection';
+import {
+  BulkSelectionBar,
+  BulkSelectionOverlay,
+  BulkSelectionToolbar,
+  useBulkSelection,
+  type BulkSelection,
+} from './bulk/useBulkSelection';
 import { styles } from './ClientsDirectoryPanel.styles';
 
 type Props = {
@@ -104,6 +110,7 @@ function renderDirectory(
   return (
     <View>
       <BulkSelectionToolbar selection={selection} t={bulkT} />
+      <BulkSelectionBar selection={selection} t={bulkT} />
       <DirectoryHeader
         order={vm.order}
         onOrderChange={vm.setOrder}

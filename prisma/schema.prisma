@@ -219,8 +219,6 @@ model OrganizationMember {
   meals                    Meal[]                    @relation("coach_meals")
   nutritionPlans           NutritionPlan[]           @relation("coach_nutrition_plans")
   dailyCheckins            DailyCheckin[]
-  copilotUsage             CopilotUsage[]
-
   @@unique([organizationId, userId, role], map: "uq_org_user_role")
   @@index([organizationId, role], map: "idx_org_member_org_role")
   @@index([userId], map: "idx_org_member_user")
@@ -261,17 +259,6 @@ model BillingSnapshot {
 
   @@unique([organizationId, day], map: "uq_billing_snapshot_org_day")
   @@map("billing_snapshot")
-}
-
-model CopilotUsage {
-  id                String             @id @default(uuid()) @db.Uuid
-  coachMembershipId String             @map("coach_membership_id") @db.Uuid
-  day               DateTime           @db.Date
-  count             Int                @default(0)
-  coachMembership   OrganizationMember @relation(fields: [coachMembershipId], references: [id], onDelete: Cascade)
-
-  @@unique([coachMembershipId, day], map: "uq_copilot_usage_coach_day")
-  @@map("copilot_usage")
 }
 
 model WearableConnection {
@@ -1002,7 +989,6 @@ model PlanTemplate {
   coachMembershipId      String?                 @map("coach_membership_id") @db.Uuid
   kind                   TemplateKind            @default(STRENGTH)
   name                   String                  @db.VarChar(120)
-  blockWeeks             Int?                    @map("block_weeks")
   expectedCompletionDays Int?                    @map("expected_completion_days")
   templateVersion        Int                     @default(1) @map("template_version")
   clientSaveId           String?                 @map("client_save_id") @db.Uuid
@@ -1238,7 +1224,6 @@ model PlanStrengthExercise {
   restSeconds            Int?               @default(0) @map("rest_seconds")
   lockedFieldsJson       Json?              @map("locked_fields_json")
   notes                  String?
-  progressionRule        Json?              @map("progression_rule")
   archivedAt             DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdAt              DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)

@@ -1,4 +1,4 @@
-import { BadRequestException, HttpException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, HttpException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Type } from '@google/genai';
 import type { AuthContext } from '../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../common/prisma/prisma.service';
@@ -16,6 +16,8 @@ type TechniqueUpload = { buffer: Buffer; mimetype: string; size: number };
 
 @Injectable()
 export class AnalyzeTechniqueUseCase {
+  private readonly logger = new Logger(AnalyzeTechniqueUseCase.name);
+
   constructor(
     private readonly gemini: GeminiService,
     private readonly prisma: PrismaService,
@@ -64,6 +66,8 @@ export class AnalyzeTechniqueUseCase {
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
       if (error instanceof HttpException && error.getStatus() < 500) throw error;
+      const reason = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Technique analysis failed (${file.mimetype}, ${file.size} bytes): ${reason}`);
       throw toEvaluatorProviderFailure();
     }
   }

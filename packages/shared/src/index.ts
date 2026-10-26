@@ -152,17 +152,6 @@ export {
   normalizeLegacyLockedFields,
   normalizeRoutineSetVariables,
 } from './set-variable-units';
-export {
-  applyProgression,
-  linearDeloadPreset,
-  progressionRuleSchema,
-  progressionWeekIndex,
-  suggestNextWeight,
-  type AutoLoadRule,
-  type ProgressionRule,
-  type ProgressionSet,
-  type ProgressionWeek,
-} from './progression/apply-progression';
 export { jacksonPollock3, jacksonPollock7, type SkinfoldSites } from './anthropometry/body-fat';
 export {
   fatigueFromSleep,

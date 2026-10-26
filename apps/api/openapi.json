@@ -1288,16 +1288,6 @@
                           "setIndex": {
                             "type": "number"
                           },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -1637,16 +1627,6 @@
                           },
                           "setIndex": {
                             "type": "number"
-                          },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
                           },
                           "weightKg": {
                             "anyOf": [
@@ -1998,16 +1978,6 @@
                           "setIndex": {
                             "type": "number"
                           },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -2348,16 +2318,6 @@
                           "setIndex": {
                             "type": "number"
                           },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
-                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -2673,16 +2633,6 @@
                           },
                           "setIndex": {
                             "type": "number"
-                          },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
                           },
                           "weightKg": {
                             "anyOf": [
@@ -3152,16 +3102,6 @@
                           },
                           "setIndex": {
                             "type": "number"
-                          },
-                          "suggestedWeightKg": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ]
                           },
                           "weightKg": {
                             "anyOf": [
@@ -11630,168 +11570,6 @@
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["admin"]
-      }
-    },
-    "/copilot/nutrition-draft": {
-      "post": {
-        "operationId": "post_copilot_nutrition_draft",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          },
-          "description": "NutritionDraftDto",
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta correcta"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "No autenticado"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "Rol o permiso no permitido"
-          }
-        },
-        "security": [
-          {
-            "activeRole": [],
-            "bearer": []
-          }
-        ],
-        "summary": "POST /copilot/nutrition-draft",
-        "x-controller": "CopilotController",
-        "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
-        "x-roles": ["coach"]
-      }
-    },
-    "/copilot/routine-draft": {
-      "post": {
-        "operationId": "post_copilot_routine_draft",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          },
-          "description": "RoutineDraftDto",
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta correcta"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "No autenticado"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "Rol o permiso no permitido"
-          }
-        },
-        "security": [
-          {
-            "activeRole": [],
-            "bearer": []
-          }
-        ],
-        "summary": "POST /copilot/routine-draft",
-        "x-controller": "CopilotController",
-        "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
-        "x-roles": ["coach"]
-      }
-    },
-    "/copilot/weekly-summary": {
-      "post": {
-        "operationId": "post_copilot_weekly_summary",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          },
-          "description": "WeeklySummaryDto",
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta correcta"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "No autenticado"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "Rol o permiso no permitido"
-          }
-        },
-        "security": [
-          {
-            "activeRole": [],
-            "bearer": []
-          }
-        ],
-        "summary": "POST /copilot/weekly-summary",
-        "x-controller": "CopilotController",
-        "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
-        "x-roles": ["coach"]
       }
     },
     "/files/chat-upload": {

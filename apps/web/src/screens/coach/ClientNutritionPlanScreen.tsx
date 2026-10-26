@@ -12,6 +12,8 @@ import {
   useNutritionMealsQuery,
 } from '../../data/hooks/useNutrition';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
+import { LIST_KEYS, writeListContext } from '../../layout/list-context';
+import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { CheckpointsModal } from './nutrition/CheckpointsModal';
 import { ClientNutritionToday } from './nutrition/ClientNutritionToday';
 import { ClientNutritionAdherence } from './nutrition/ClientNutritionAdherence';
@@ -28,7 +30,21 @@ type Props = {
   clientId: string;
   clientName: string;
   onBack: () => void;
+  onRouteChange?: (route: ShellRoute) => void;
 };
+
+/** Abre la creación de planes del módulo de nutrición, con este cliente como contexto. */
+function openPlanCreation(clientId: string, onRouteChange?: (route: ShellRoute) => void): void {
+  writeListContext(LIST_KEYS.nutrition, {
+    checkpointPlanId: '',
+    hubQuery: '',
+    selectedFoodId: '',
+    selectedMealId: '',
+    view: 'createPlan',
+  });
+  window.history.replaceState(window.history.state, '', `/coach/nutrition?client=${encodeURIComponent(clientId)}`);
+  onRouteChange?.('coach.nutrition');
+}
 
 // eslint-disable-next-line max-lines-per-function
 export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
@@ -129,6 +145,11 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
         <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} />
       ) : null}
       <Text style={styles.sectionTitle}>{t('coach.nutrition.client.libraryTitle')}</Text>
+      <Button
+        label={t('coach.nutrition.client.createPlan')}
+        onPress={() => openPlanCreation(props.clientId, props.onRouteChange)}
+        style={{ alignSelf: 'flex-start' }}
+      />
       {templatesQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {templates.length === 0 && !templatesQuery.isLoading ? (
         <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.libraryEmpty')} />

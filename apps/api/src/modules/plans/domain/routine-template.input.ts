@@ -92,7 +92,6 @@ export type RoutineStrengthInput = {
   weightRangeMaxKg?: null | number;
   weightRangeMinKg?: null | number;
   lockedFields?: string[];
-  progressionRule?: unknown;
 };
 
 export type RoutineCardioInput = {

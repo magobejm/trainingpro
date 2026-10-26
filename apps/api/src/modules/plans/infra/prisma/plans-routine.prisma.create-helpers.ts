@@ -74,7 +74,6 @@ export function mapStrengthCreate(
     sortOrder: e.sortOrder,
     targetRir: e.targetRir ?? null,
     targetRpe: e.targetRpe ?? null,
-    progressionRule: e.progressionRule ?? undefined,
     weightRangeMaxKg: toDecimal(e.weightRangeMaxKg),
     weightRangeMinKg: toDecimal(e.weightRangeMinKg),
   } as any;

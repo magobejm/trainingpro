@@ -1,7 +1,5 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role, SessionStatus } from '@prisma/client';
-import { progressionWeekIndex } from '@trainerpro/shared';
-import { withExerciseProgression } from '../../domain/apply-session-progression';
 import { buildUpdateAuditFields } from '../../../../common/audit/audit-fields';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { exerciseHistoryQuery, mapExerciseHistory } from './exercise-history';
@@ -436,16 +434,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       throw new NotFoundException('Plan day not found for this template');
     }
     const cardioBlocks = (day.cardioBlocks ?? []).map(mapCardioTemplateBlockSnapshot);
-    const weekIndex = await this.progressionWeek(db, templateId, clientId);
-    const lastSets = await this.lastPerformedSets(db, clientId);
-    const exercises = day.exercises.map((exercise) =>
-      withExerciseProgression(
-        mapTemplateExerciseSnapshot(exercise),
-        (exercise as { progressionRule?: unknown }).progressionRule,
-        weekIndex,
-        lastSets.get(exercise.exerciseLibraryId ?? '') ?? null,
-      ),
-    );
+    const exercises = day.exercises.map((exercise) => mapTemplateExerciseSnapshot(exercise));
     const plioBlocks = day.plioBlocks.map(mapTemplatePlioSnapshot);
     const mobilityBlocks = day.mobilityBlocks.map(mapTemplateMobilitySnapshot);
     const isometricBlocks = day.isometricBlocks.map(mapTemplateIsometricSnapshot);
@@ -494,41 +483,6 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       throw new ForbiddenException('Coach membership not found');
     }
     return membership;
-  }
-
-  private async lastPerformedSets(db: Prisma.TransactionClient | PrismaService, clientId?: string) {
-    const found = new Map<string, { reps: number; rir: number | null; weightKg: number }>();
-    if (!clientId) return found;
-    const logs = await db.setLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        effortRir: true,
-        repsDone: true,
-        sessionItem: { select: { sourceExerciseId: true } },
-        weightDoneKg: true,
-      },
-      take: 80,
-      where: { session: { clientId }, weightDoneKg: { not: null } },
-    });
-    for (const log of logs) {
-      const exerciseId = log.sessionItem.sourceExerciseId;
-      if (!exerciseId || found.has(exerciseId) || log.repsDone == null || log.weightDoneKg == null) continue;
-      found.set(exerciseId, { reps: log.repsDone, rir: log.effortRir, weightKg: Number(log.weightDoneKg) });
-    }
-    return found;
-  }
-
-  private async progressionWeek(db: Prisma.TransactionClient | PrismaService, templateId: string, clientId?: string) {
-    if (!clientId) return 0;
-    const [template, assignment] = await Promise.all([
-      db.planTemplate.findUnique({ select: { blockWeeks: true }, where: { id: templateId } }),
-      db.routineAssignment.findFirst({
-        orderBy: { appliedAt: 'desc' },
-        select: { appliedAt: true },
-        where: { clientId, revision: { templateId } },
-      }),
-    ]);
-    return progressionWeekIndex(assignment?.appliedAt ?? new Date(), new Date(), template?.blockWeeks ?? null);
   }
 
   private readSessionItem(sessionId: string, sessionItemId: string, db: Prisma.TransactionClient) {

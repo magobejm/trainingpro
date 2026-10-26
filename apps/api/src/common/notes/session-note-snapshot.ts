@@ -62,8 +62,6 @@ export function readPlannedSetsJson(value: Prisma.JsonValue | null): PlannedSetS
       if (rpe != null) snapshot.rpe = rpe;
       const weightKg = readOptionalNumber(row.weightKg);
       if (weightKg != null) snapshot.weightKg = weightKg;
-      const suggestedWeightKg = readOptionalNumber(row.suggestedWeightKg);
-      if (suggestedWeightKg != null) snapshot.suggestedWeightKg = suggestedWeightKg;
       return [snapshot];
     })
     .sort((a, b) => a.setIndex - b.setIndex);

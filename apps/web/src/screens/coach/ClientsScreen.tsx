@@ -348,6 +348,7 @@ function renderNutritionPage(props: ViewProps): React.JSX.Element {
           clientId={props.selectedClientId}
           clientName={props.selectedClientName}
           onBack={props.onBackToProfile}
+          onRouteChange={props.onRouteChange}
         />
       </View>
     </>

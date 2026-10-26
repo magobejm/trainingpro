@@ -60,7 +60,6 @@ export interface DraftBlock {
   lockedFields?: string[];
   /** Client-side group ID (references DraftExerciseGroup.id) */
   groupId?: string;
-  progressionRule?: unknown;
 }
 
 export interface DraftExerciseGroup {

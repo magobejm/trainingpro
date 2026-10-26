@@ -12,6 +12,12 @@ import { flattenExercises } from './records-view';
 
 type ExerciseType = 'strength' | 'cardio' | 'plio' | 'mobility' | 'isometric' | 'sport';
 type Performed = Record<ExerciseType, Array<{ id: string; name: string }>>;
+const MAX_BARS = 6;
+
+function formatBarLabel(date: string): string {
+  return `${date.slice(8, 10)}/${date.slice(5, 7)}`;
+}
+
 type ExercisePoint = { e1rm: number | null; sessionDate: string };
 
 export function ClientRecordsPanel(props: { t: TFunction }): React.JSX.Element {
@@ -27,7 +33,11 @@ export function ClientRecordsPanel(props: { t: TFunction }): React.JSX.Element {
       <RecordList records={records.data?.records ?? []} t={props.t} />
       <ExercisePicker onSelect={setSelected} options={options} selectedId={exercise?.id ?? null} />
       <BarsChart
-        bars={points.map((point) => ({ id: point.sessionDate, label: point.sessionDate.slice(5), value: point.e1rm ?? 0 }))}
+        bars={points.slice(-MAX_BARS).map((point) => ({
+          id: point.sessionDate,
+          label: formatBarLabel(point.sessionDate),
+          value: point.e1rm ?? 0,
+        }))}
         emptyLabel={props.t('client.progress.empty')}
         title={props.t('client.progress.e1rmChart')}
       />
@@ -35,22 +45,48 @@ export function ClientRecordsPanel(props: { t: TFunction }): React.JSX.Element {
   );
 }
 
+function latestPerExercise(records: ProgressRecordsResponse['records']): ProgressRecordsResponse['records'] {
+  const latest = new Map<string, ProgressRecordsResponse['records'][number]>();
+  for (const record of records) {
+    const current = latest.get(record.exerciseId);
+    const newer =
+      !current ||
+      record.sessionDate > current.sessionDate ||
+      (record.sessionDate === current.sessionDate && record.e1rm > current.e1rm);
+    if (newer) latest.set(record.exerciseId, record);
+  }
+  return [...latest.values()].sort((left, right) => right.sessionDate.localeCompare(left.sessionDate));
+}
+
 function RecordList(props: { records: ProgressRecordsResponse['records']; t: TFunction }): React.JSX.Element {
-  if (props.records.length === 0)
-    return <Text style={{ color: LIGHT.textMuted }}>{props.t('client.progress.recordsEmpty')}</Text>;
+  const records = latestPerExercise(props.records);
+  if (records.length === 0) return <Text style={{ color: LIGHT.textMuted }}>{props.t('client.progress.recordsEmpty')}</Text>;
   return (
-    <View style={{ gap: 6 }}>
-      {props.records.map((record) => (
-        <Text
-          key={`${record.exerciseId}:${record.sessionDate}:${record.e1rm}`}
-          style={{ color: LIGHT.textStrong, fontWeight: '700' }}
+    <View style={{ gap: 8 }}>
+      {records.map((record) => (
+        <View
+          key={record.exerciseId}
+          style={{
+            alignItems: 'center',
+            backgroundColor: LIGHT.bgCard,
+            borderColor: LIGHT.border,
+            borderRadius: LIGHT.radiusMd,
+            borderWidth: 1,
+            flexDirection: 'row',
+            gap: 12,
+            padding: 12,
+          }}
         >
-          {props.t('client.progress.recordLine', {
-            date: record.sessionDate,
-            e1rm: formatSummaryKg(record.e1rm),
-            name: record.exerciseName,
-          })}
-        </Text>
+          <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
+            <Text numberOfLines={2} style={{ color: LIGHT.textStrong, fontSize: 15, fontWeight: '700' }}>
+              {record.exerciseName}
+            </Text>
+            <Text style={{ color: LIGHT.textMuted, fontSize: 12 }}>{record.sessionDate}</Text>
+          </View>
+          <Text style={{ color: LIGHT.accentDark, fontSize: 18, fontWeight: '800' }}>
+            {props.t('client.progress.recordValue', { e1rm: formatSummaryKg(record.e1rm) })}
+          </Text>
+        </View>
       ))}
     </View>
   );

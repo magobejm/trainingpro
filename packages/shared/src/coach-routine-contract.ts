@@ -115,7 +115,6 @@ const strengthSchema = z.object({
   repsMax: z.number().int().min(1).max(100).nullable().optional(),
   repsMin: z.number().int().min(1).max(100).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
-  progressionRule: z.unknown().optional(),
   sets: z.array(strengthSetSchema).max(30).optional().default([]),
   setsPlanned: z.number().int().min(1).max(30).nullable().optional(),
   sortOrder: z.number().int().min(0).max(200),

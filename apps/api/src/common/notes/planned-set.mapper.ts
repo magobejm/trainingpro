@@ -15,7 +15,6 @@ export type PlannedSetSnapshot = {
   rom?: null | string;
   rpe?: null | number;
   setIndex: number;
-  suggestedWeightKg?: null | number;
   weightKg?: null | number;
 };
 

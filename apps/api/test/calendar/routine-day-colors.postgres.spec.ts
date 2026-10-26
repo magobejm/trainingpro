@@ -47,6 +47,7 @@ postgres('routine day color HTTP persistence (isolated PostgreSQL)', () => {
           ...fixture.client,
           id: undefined,
           firstWorkoutGuide: undefined,
+          parqFlags: undefined,
           trainingPlanId: fixture.template.id,
           email: 'sibling@example.test',
         },

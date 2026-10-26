@@ -8,12 +8,17 @@ const mockAuthProvisioner = {
   ensureClientAuthUser: jest.fn(),
 };
 
+const mockPrisma = {
+  clientIntake: { create: jest.fn() },
+};
+
 let useCase: CreateClientUseCase;
 
 beforeEach(() => {
   mockRepository.createClient.mockReset();
   mockAuthProvisioner.ensureClientAuthUser.mockReset();
-  useCase = new CreateClientUseCase(mockRepository as never, mockAuthProvisioner as never);
+  mockPrisma.clientIntake.create.mockReset();
+  useCase = new CreateClientUseCase(mockRepository as never, mockAuthProvisioner as never, mockPrisma as never);
 });
 
 it('should create auth user and client record, returning both', async () => {
@@ -31,6 +36,7 @@ it('should create auth user and client record, returning both', async () => {
     ...input,
     clientSupabaseUid: authUser.userId,
   });
+  expect(mockPrisma.clientIntake.create).toHaveBeenCalledWith({ data: { clientId: client.id } });
   expect(result).toEqual({
     client,
     credentials: {
@@ -56,9 +62,7 @@ it('should propagate auth provisioner errors', async () => {
   const context = { subject: 'coach-1', role: 'coach' } as never;
   mockAuthProvisioner.ensureClientAuthUser.mockRejectedValue(new Error('Auth error'));
 
-  await expect(useCase.execute(context, { email: 'bad@test.com' } as never)).rejects.toThrow(
-    'Auth error',
-  );
+  await expect(useCase.execute(context, { email: 'bad@test.com' } as never)).rejects.toThrow('Auth error');
 });
 
 it('should propagate repository errors (e.g. client limit exceeded)', async () => {
@@ -70,7 +74,5 @@ it('should propagate repository errors (e.g. client limit exceeded)', async () =
   });
   mockRepository.createClient.mockRejectedValue(new Error('Limit exceeded'));
 
-  await expect(useCase.execute(context, { email: 'test@test.com' } as never)).rejects.toThrow(
-    'Limit exceeded',
-  );
+  await expect(useCase.execute(context, { email: 'test@test.com' } as never)).rejects.toThrow('Limit exceeded');
 });

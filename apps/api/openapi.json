@@ -1288,6 +1288,16 @@
                           "setIndex": {
                             "type": "number"
                           },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -1627,6 +1637,16 @@
                           },
                           "setIndex": {
                             "type": "number"
+                          },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "weightKg": {
                             "anyOf": [
@@ -1978,6 +1998,16 @@
                           "setIndex": {
                             "type": "number"
                           },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -2318,6 +2348,16 @@
                           "setIndex": {
                             "type": "number"
                           },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "weightKg": {
                             "anyOf": [
                               {
@@ -2633,6 +2673,16 @@
                           },
                           "setIndex": {
                             "type": "number"
+                          },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "weightKg": {
                             "anyOf": [
@@ -3102,6 +3152,16 @@
                           },
                           "setIndex": {
                             "type": "number"
+                          },
+                          "suggestedWeightKg": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "weightKg": {
                             "anyOf": [

@@ -187,3 +187,20 @@ export {
   parqNeedsCoachReview,
   type ClientIntakeAnswers,
 } from './intake/client-intake';
+export {
+  activeProgressionMicrocycle,
+  applyProgression,
+  loadSuggestionKg,
+  parseProgressionRule,
+  progressionMicrocycleIndex,
+  progressionRuleSchema,
+  suggestLoadIncrease,
+  DEFAULT_MICROCYCLE_DAYS,
+  DELOAD_LOAD_PCT,
+  DELOAD_RIR_BONUS,
+  type AutoLoadRule,
+  type ProgressionHistorySet,
+  type ProgressionMicrocycle,
+  type ProgressionRule,
+  type ProgressionSet,
+} from './progression/apply-progression';

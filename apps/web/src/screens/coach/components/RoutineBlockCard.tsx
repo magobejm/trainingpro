@@ -6,6 +6,7 @@ import { s } from '../RoutinePlanner.styles';
 import type { DraftBlock } from '../RoutinePlanner.types';
 import { MoveMenu } from './RoutineBlockCard/MoveMenu';
 import { BlockFields } from './RoutineBlockCard/BlockFields';
+import { ProgressionPanel } from './RoutineBlockCard/ProgressionPanel';
 import { BlockNotesModal } from './RoutineBlockCard/BlockNotesModal';
 import { BlockHeader } from './RoutineBlockCard/BlockHeader';
 import { BlockDetailModal } from './RoutineBlockCard/BlockDetailModal';
@@ -107,6 +108,7 @@ export function RoutineBlockCard(props: RoutineBlockCardProps) {
                 readOnly={fieldsReadOnly}
                 t={t}
               />
+              <ProgressionPanel block={props.block} onUpdateField={props.onUpdateField} readOnly={fieldsReadOnly} t={t} />
             </View>
           </View>
         </>

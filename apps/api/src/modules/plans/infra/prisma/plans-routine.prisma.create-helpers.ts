@@ -66,6 +66,7 @@ export function mapStrengthCreate(
     lockedFieldsJson: normalizeLockedFields(e.lockedFields),
     notes: normalizeText(e.notes),
     perSetWeightRangesJson: normalizePerSetRanges(e.perSetWeightRanges),
+    progressionRule: (e.progressionRule ?? undefined) as Prisma.InputJsonValue | undefined,
     repsMax: e.repsMax ?? null,
     repsMin: e.repsMin ?? null,
     restSeconds: e.restSeconds ?? 0,

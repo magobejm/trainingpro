@@ -35,6 +35,7 @@ export async function readRoutineContent(tx: Tx, templateId: string) {
   row.days = row.days.filter((day: any) => day.revisionVersion === row.templateVersion);
   const mapped = mapRoutineTemplate(row, {
     expectedCompletionDays: row.expectedCompletionDays,
+    mesocycleMicrocycles: row.mesocycleMicrocycles ?? null,
     objectiveIds: row.routineObjectives.map((item: any) => item.objectiveId),
     objectives: row.routineObjectives.map((item: any) => item.objective),
   });

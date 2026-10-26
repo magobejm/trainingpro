@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { progressionRuleSchema } from './progression/apply-progression';
 
 function isHalfStep(value: number): boolean {
   return Math.abs(value * 2 - Math.round(value * 2)) < 1e-9;
@@ -112,6 +113,7 @@ const strengthSchema = z.object({
   lockedFields: z.array(z.string().max(80)).optional().default([]),
   notes: z.string().max(2000).nullable().optional(),
   perSetWeightRanges: z.array(perSetRangeSchema).optional(),
+  progressionRule: progressionRuleSchema.nullable().optional(),
   repsMax: z.number().int().min(1).max(100).nullable().optional(),
   repsMin: z.number().int().min(1).max(100).nullable().optional(),
   restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
@@ -229,6 +231,7 @@ export const coachRoutineSchema = z.object({
   days: z.array(daySchema).min(1),
   expectedCompletionDays: z.number().int().min(1).max(365).nullable().optional(),
   expectedTemplateVersion: z.number().int().min(1).optional(),
+  mesocycleMicrocycles: z.number().int().min(1).max(16).nullable().optional(),
   name: z.string().trim().min(1).max(120),
   neats: z.array(neatSchema).max(20).optional().default([]),
   objectiveIds: z.array(z.string().uuid()).max(3).optional().default([]),

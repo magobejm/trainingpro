@@ -92,6 +92,7 @@ export type RoutineStrengthInput = {
   weightRangeMaxKg?: null | number;
   weightRangeMinKg?: null | number;
   lockedFields?: string[];
+  progressionRule?: unknown;
 };
 
 export type RoutineCardioInput = {
@@ -199,6 +200,7 @@ export type RoutineTemplateWriteInput = {
   days: RoutineDayInput[];
   expectedCompletionDays?: null | number;
   expectedTemplateVersion?: number;
+  mesocycleMicrocycles?: null | number;
   name: string;
   neats?: RoutineNeatInput[];
   objectiveIds?: string[];

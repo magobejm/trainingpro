@@ -1,3 +1,5 @@
+import type { ProgressionRule } from '@trainerpro/shared';
+
 export type BlockType = 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport' | 'strength';
 
 export interface DraftSet {
@@ -60,6 +62,8 @@ export interface DraftBlock {
   lockedFields?: string[];
   /** Client-side group ID (references DraftExerciseGroup.id) */
   groupId?: string;
+  /** Strength only: how the prescription changes microcycle by microcycle inside the mesocycle. */
+  progressionRule?: ProgressionRule | null;
 }
 
 export interface DraftExerciseGroup {
@@ -88,6 +92,8 @@ export interface NeatItem {
 export interface DraftState {
   days: DraftDay[];
   expectedCompletionDays?: null | number;
+  /** Number of microcycles in the mesocycle; the progression rule repeats after them. */
+  mesocycleMicrocycles?: null | number;
   name: string;
   neats?: NeatItem[];
   objectiveIds?: string[];

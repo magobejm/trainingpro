@@ -50,6 +50,7 @@ export function mapTemplateToDraft(
       warmupTemplates: day.warmupTemplates ?? [],
     })),
     expectedCompletionDays: readExpectedCompletionDays(tpl),
+    mesocycleMicrocycles: readMesocycleMicrocycles(tpl),
     name: tpl.name,
     neats: readNeats(tpl),
     objectiveIds: readObjectiveIds(tpl),
@@ -93,6 +94,11 @@ function mapBlocksFromTemplate(
 
 function readExpectedCompletionDays(tpl: TemplateData): null | number {
   const value = (tpl as TemplateData & { expectedCompletionDays?: null | number }).expectedCompletionDays;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function readMesocycleMicrocycles(tpl: TemplateData): null | number {
+  const value = (tpl as TemplateData & { mesocycleMicrocycles?: null | number }).mesocycleMicrocycles;
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 

@@ -18,6 +18,7 @@ type Props = {
 
 const MAX_OBJECTIVES = 3;
 const DURATION_OPTIONS = Array.from({ length: 30 }, (_, i) => i + 1);
+const MESOCYCLE_OPTIONS = Array.from({ length: 16 }, (_, i) => i + 1);
 const ICON_RADIO = '◉';
 const ICON_REMOVE = '×';
 const ICON_CALENDAR = '📅';
@@ -129,6 +130,22 @@ function renderDurationCard(props: Props, microcycleDays: null | number): React.
           options={DURATION_OPTIONS.map((days) => ({ label: daysLabel(days), value: String(days) }))}
           placeholder={props.t('coach.routine.duration.microcycle.placeholder')}
           value={microcycleDays ? String(microcycleDays) : ''}
+        />
+      </View>
+      <View style={s.durationFieldWrap}>
+        <Select
+          disabled={props.isReadOnly}
+          help={props.t('coach.routine.mesocycle.hint')}
+          label={props.t('coach.routine.mesocycle.label')}
+          onChange={(value) => props.setDraft((prev) => ({ ...prev, mesocycleMicrocycles: value ? Number(value) : null }))}
+          options={[
+            { label: props.t('coach.routine.mesocycle.none'), value: '' },
+            ...MESOCYCLE_OPTIONS.map((count) => ({
+              label: props.t('coach.routine.mesocycle.option', { count }),
+              value: String(count),
+            })),
+          ]}
+          value={props.draft.mesocycleMicrocycles ? String(props.draft.mesocycleMicrocycles) : ''}
         />
       </View>
     </View>

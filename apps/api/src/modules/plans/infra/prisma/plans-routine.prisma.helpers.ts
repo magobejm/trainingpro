@@ -62,6 +62,7 @@ export type RoutineRow = any;
 
 export type RoutineTemplateMetadata = {
   expectedCompletionDays: null | number;
+  mesocycleMicrocycles: null | number;
   objectiveIds: string[];
   objectives: Array<{
     code: string;
@@ -85,6 +86,7 @@ export function mapRoutineTemplate(row: RoutineRow, metadata?: RoutineTemplateMe
     expectedCompletionDays: safeMetadata.expectedCompletionDays,
     id: row.id,
     isAssigned: row.assignedClients.length > 0,
+    mesocycleMicrocycles: safeMetadata.mesocycleMicrocycles,
     name: row.name,
     neats: ((r.neats ?? []) as any[]).map((n: any) => ({
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -104,7 +106,7 @@ export function mapRoutineTemplate(row: RoutineRow, metadata?: RoutineTemplateMe
 }
 
 export function emptyRoutineMetadata(): RoutineTemplateMetadata {
-  return { expectedCompletionDays: null, objectiveIds: [], objectives: [] };
+  return { expectedCompletionDays: null, mesocycleMicrocycles: null, objectiveIds: [], objectives: [] };
 }
 
 function mapRoutineDay(day: any) {
@@ -155,6 +157,7 @@ function mapStrengthOutput(e: any) {
     lockedFields: readLockedFields(e.lockedFieldsJson),
     notes: e.notes,
     perSetWeightRangesJson: e.perSetWeightRangesJson,
+    progressionRule: e.progressionRule ?? null,
     repsMax: e.repsMax,
     repsMin: e.repsMin,
     restSeconds: e.restSeconds,

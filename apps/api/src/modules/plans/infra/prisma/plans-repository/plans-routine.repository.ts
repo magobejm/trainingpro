@@ -20,6 +20,7 @@ import { normalizeSearch } from '../../../../../common/text/normalize-search';
 
 type RoutineMetadataRow = {
   expected_completion_days: null | number;
+  mesocycle_microcycles: null | number;
   objective_code: null | string;
   objective_id: null | string;
   objective_is_default: null | boolean;
@@ -389,6 +390,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       SELECT
         pt.id AS template_id,
         pt.expected_completion_days,
+        pt.mesocycle_microcycles,
         pto.objective_id,
         ro.code AS objective_code,
         ro.label AS objective_label,
@@ -432,6 +434,9 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     if (typeof row.expected_completion_days === 'number') {
       current.expectedCompletionDays = row.expected_completion_days;
     }
+    if (typeof row.mesocycle_microcycles === 'number') {
+      current.mesocycleMicrocycles = row.mesocycle_microcycles;
+    }
     if (row.objective_id && row.objective_code && row.objective_label) {
       current.objectiveIds.push(row.objective_id);
       current.objectives.push({
@@ -450,9 +455,11 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     input: RoutineTemplateWriteInput,
   ): Promise<void> {
     const expectedCompletionDays = input.expectedCompletionDays ?? null;
+    const mesocycleMicrocycles = input.mesocycleMicrocycles ?? null;
     await tx.$executeRaw`
       UPDATE plan_template
-      SET expected_completion_days = ${expectedCompletionDays}
+      SET expected_completion_days = ${expectedCompletionDays},
+          mesocycle_microcycles = ${mesocycleMicrocycles}
       WHERE id = ${templateId}::uuid
     `;
     await tx.$executeRaw`

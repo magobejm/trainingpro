@@ -8,6 +8,7 @@ import { useRestPreferencesStore } from '../../store/rest-preferences.store';
 import { saveSetAndMaybeRest } from '../../features/timers/rest-shift';
 import { CircularCountdown } from './CircularCountdown';
 import { CurrentSetFields, SetRestControl, SetSaveButton } from './ActiveExerciseSetPanel';
+import { resolvePlannedSet } from './planned-set.utils';
 import { SetCopyActions } from './SetCopyActions';
 import { WeightCalculatorModal } from './WeightCalculatorModal';
 import { bestE1rm } from './barbell-load';
@@ -56,6 +57,8 @@ export function ExerciseSetCard(props: {
   const [calculator, setCalculator] = useState(false);
   const heart = useHeartRateProposal(props.screen.item.type, props.setIndex, props.draft);
   const values = setCopy(props);
+  const planned = resolvePlannedSet(props.screen.item.plannedSets, props.setIndex);
+  const suggestion = formatSuggestion(planned?.suggestedWeightKg, planned?.weightKg);
   return (
     <View style={styles.setCard}>
       <View style={styles.setHeader}>
@@ -74,6 +77,9 @@ export function ExerciseSetCard(props: {
           />
         ) : null}
       </View>
+      {suggestion ? (
+        <Text style={styles.suggestion}>{props.t('client.today.suggestedLoad', { kg: suggestion })}</Text>
+      ) : null}
       <SetCopyActions
         lastEnabled={values.lastEnabled}
         onCopyLast={() => props.draft.replaceSet(props.setIndex, values.last)}
@@ -113,6 +119,14 @@ export function ExerciseSetCard(props: {
       )}
     </View>
   );
+}
+
+function formatSuggestion(suggested: null | number | undefined, plannedKg: null | number | undefined): null | string {
+  if (suggested == null || !Number.isFinite(suggested)) return null;
+  const delta = plannedKg != null && Number.isFinite(plannedKg) ? Math.round((suggested - plannedKg) * 100) / 100 : null;
+  if (delta == null || delta === 0) return null;
+  const text = String(Math.abs(delta)).replace('.', ',');
+  return delta > 0 ? `+${text}` : `-${text}`;
 }
 
 function applyWeight(
@@ -196,5 +210,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   setHeader: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  suggestion: { color: LIGHT.textMuted, fontSize: 13, fontWeight: '700' },
   setTitle: { color: LIGHT.textStrong, flex: 1, fontSize: 16, fontWeight: '800' },
 });

@@ -11,6 +11,7 @@ export type RoutineStrengthBlockInput = {
   fieldModes: { fieldKey: string; mode: 'CLIENT_INPUT' | 'COACH_INPUT' | 'HIDDEN' }[];
   notes?: null | string;
   perSetWeightRanges?: { maxKg: null | number; minKg: null | number }[];
+  progressionRule?: null | unknown;
   repsMax?: null | number;
   repsMin?: null | number;
   restSeconds?: null | number;
@@ -88,6 +89,7 @@ export type UpsertRoutineInput = {
   days: RoutineDayInput[];
   expectedCompletionDays?: null | number;
   expectedTemplateVersion?: number;
+  mesocycleMicrocycles?: null | number;
   name: string;
   neats?: RoutineNeatInput[];
   objectiveIds?: string[];
@@ -100,6 +102,7 @@ export type RoutineTemplateView = {
   expectedCompletionDays?: null | number;
   id: string;
   isAssigned?: boolean;
+  mesocycleMicrocycles?: null | number;
   name: string;
   neats?: RoutineNeatInput[];
   objectiveIds?: string[];

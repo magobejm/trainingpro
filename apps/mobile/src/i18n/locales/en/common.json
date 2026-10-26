@@ -398,6 +398,7 @@
   "mobile.client.session.finishExercise": "Finish exercise",
   "mobile.client.session.repRange": "Rep range:",
   "client.today.set": "Set",
+  "client.today.suggestedLoad": "Suggested: {{kg}} kg",
   "mobile.client.chat.coach": "Your coach",
   "mobile.client.chat.online": "Online",
   "mobile.client.chat.today": "Today",

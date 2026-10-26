@@ -40,8 +40,10 @@ export function mapSession(
   const readGroup = (sortOrder: number): ExerciseGroupFields =>
     groupLookup.get(sortOrder) ?? { groupId: null, groupType: null };
   const readLockedFields = (sortOrder: number): string[] => lockedFieldsLookup.get(sortOrder) ?? [];
-  const readPlannedSets = (sortOrder: number, storedJson: Prisma.JsonValue | null): PlannedSetSnapshot[] =>
-    plannedSetsLookup.get(sortOrder) ?? readPlannedSetsJson(storedJson);
+  const readPlannedSets = (sortOrder: number, storedJson: Prisma.JsonValue | null): PlannedSetSnapshot[] => {
+    const stored = readPlannedSetsJson(storedJson);
+    return stored.length > 0 ? stored : (plannedSetsLookup.get(sortOrder) ?? []);
+  };
 
   const strengthItems: SessionStrengthItem[] = row.items.map((item) => ({
     type: 'strength' as const,

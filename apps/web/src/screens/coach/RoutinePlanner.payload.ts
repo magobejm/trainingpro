@@ -59,6 +59,7 @@ const mapStrength = (b: DraftBlock, si: number) => ({
   fieldModes: [{ fieldKey: 'weight', mode: 'COACH_INPUT' as const }],
   groupId: b.groupId ?? null,
   lockedFields: resolveLockedFields(b.type, b.lockedFields),
+  progressionRule: b.progressionRule ?? null,
   sets: (b.sets ?? []).map(mapStrengthSet),
   sortOrder: si,
   notes: appendMeta(b.notes, {
@@ -291,6 +292,7 @@ export function buildRoutinePayload(draft: DraftState) {
   return {
     days: draft.days.map((day, idx) => mapRoutineDay(day, idx)),
     expectedCompletionDays: draft.expectedCompletionDays ?? null,
+    mesocycleMicrocycles: draft.mesocycleMicrocycles ?? null,
     name: draft.name,
     neats: (draft.neats ?? []).map((n) => ({ title: n.title, description: n.description ?? '' })),
     objectiveIds: draft.objectiveIds ?? [],

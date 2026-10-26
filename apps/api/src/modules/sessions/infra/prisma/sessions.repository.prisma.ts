@@ -43,12 +43,12 @@ import {
   mapSetLog,
   mapSportLog,
   mapSportSetLog,
-  mapTemplateExerciseSnapshot,
   mapTemplateIsometricSnapshot,
   mapTemplateMobilitySnapshot,
   mapTemplatePlioSnapshot,
   mapTemplateSportSnapshot,
 } from './sessions-prisma.mappers';
+import { mapProgressedExercises, readAssignmentStart } from './session-progression';
 import { SessionsCardioRepositoryPrisma } from './sessions-cardio.repository.prisma';
 import { mapCardioTemplateBlockSnapshot } from './sessions-cardio.prisma.helpers';
 import { mapSessionWithGroups, normalizeText, sessionInclude } from './sessions-strength.prisma.helpers';
@@ -434,7 +434,12 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       throw new NotFoundException('Plan day not found for this template');
     }
     const cardioBlocks = (day.cardioBlocks ?? []).map(mapCardioTemplateBlockSnapshot);
-    const exercises = day.exercises.map((exercise) => mapTemplateExerciseSnapshot(exercise));
+    const exercises = await mapProgressedExercises(db, day.exercises, {
+      appliedAt: await readAssignmentStart(db, clientId, templateId),
+      clientId,
+      mesocycleMicrocycles: row.mesocycleMicrocycles,
+      microcycleDays: row.expectedCompletionDays,
+    });
     const plioBlocks = day.plioBlocks.map(mapTemplatePlioSnapshot);
     const mobilityBlocks = day.mobilityBlocks.map(mapTemplateMobilitySnapshot);
     const isometricBlocks = day.isometricBlocks.map(mapTemplateIsometricSnapshot);

@@ -1,3 +1,4 @@
+import { ProgressionContext } from '../RoutineBlockCard/ProgressionContext';
 import { ClientPreviewButton } from '../../../../features/client-preview/ClientPreview';
 import { RoutineDraftPreview } from '../../../../features/client-preview/RoutineDraftPreview';
 import { RoutinePdfButton } from '../../../../features/pdf/PlanPdfButton';
@@ -326,8 +327,12 @@ function RoutineLayoutSections(props: {
 }) {
   const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode, onBack, backLabelKey } = props.props;
   const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
+  const progression = {
+    mesocycleMicrocycles: draftState.draft.mesocycleMicrocycles ?? null,
+    microcycleDays: draftState.draft.expectedCompletionDays ?? null,
+  };
   return (
-    <>
+    <ProgressionContext.Provider value={progression}>
       {onBack && backLabelKey ? <RoutinePlannerBackHeader onBack={onBack} backLabelKey={backLabelKey} t={t} /> : null}
       {props.props.statusNode}
       <RoutinePlannerTopSection
@@ -353,6 +358,6 @@ function RoutineLayoutSections(props: {
         onChange={(neats) => draftState.setDraft((prev) => ({ ...prev, neats }))}
         t={t}
       />
-    </>
+    </ProgressionContext.Provider>
   );
 }

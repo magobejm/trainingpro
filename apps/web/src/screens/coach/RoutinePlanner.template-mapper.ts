@@ -1,4 +1,4 @@
-import { normalizeLegacyLockedFields, resolveLockedFields } from '@trainerpro/shared';
+import { normalizeLegacyLockedFields, parseProgressionRule, resolveLockedFields } from '@trainerpro/shared';
 import type { BlockType, DraftBlock, DraftSet } from './RoutinePlanner.types';
 
 type MetaMap = Record<string, unknown>;
@@ -99,6 +99,7 @@ function mapStrengthBlock(base: DraftBlock, item: TemplateBlockData, meta: MetaM
   return {
     ...base,
     ...readWarmupImportFlags(meta),
+    progressionRule: parseProgressionRule(item.progressionRule),
     repsPlanned: toNumber(item.repsMax),
     repsRange: parseRangeText(toNumber(item.repsMin), toNumber(item.repsMax)),
     restSeconds: toNumber(item.restSeconds),

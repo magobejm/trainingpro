@@ -25,6 +25,7 @@ export function createEmptyDraft(t: (k: string) => string, prefixKey = 'coach.ro
   return {
     days: [createEmptyDay(1, t, prefixKey)],
     expectedCompletionDays: null,
+    mesocycleMicrocycles: null,
     name: '',
     neats: [],
     objectiveIds: [],

@@ -58,15 +58,14 @@ jobs:
       - name: Read DIRECT_URL from Secret Manager
         run: |
           echo "DIRECT_URL=$(gcloud secrets versions access latest --secret=DIRECT_URL --project=${GCP_PROJECT_ID})" >> $GITHUB_ENV
-      - name: Prisma migrate status
-        env:
-          DATABASE_URL: ${{ env.DIRECT_URL }}
-        run: pnpm --filter @trainerpro/api db:migrate:status
-        continue-on-error: true
       - name: Prisma migrate deploy
         env:
           DATABASE_URL: ${{ env.DIRECT_URL }}
         run: pnpm --filter @trainerpro/api db:migrate:deploy
+      - name: Prisma migrate status
+        env:
+          DATABASE_URL: ${{ env.DIRECT_URL }}
+        run: pnpm --filter @trainerpro/api db:migrate:status
       - run: pnpm --filter @trainerpro/api db:generate
       - name: Capture existing routine assignments
         env:

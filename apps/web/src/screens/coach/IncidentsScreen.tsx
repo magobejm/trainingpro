@@ -1,5 +1,5 @@
 import { QueryResult } from '../../components/AsyncStatus';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '../../i18n/useFormatDate';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,6 +11,7 @@ import {
   useRespondIncidentMutation,
   useReviewIncidentMutation,
   useTagIncidentMutation,
+  type IncidentView,
 } from '../../data/hooks/useIncidents';
 import { clientCardItems } from './client-card-items';
 import { LIST_KEYS } from '../../layout/list-context';
@@ -34,22 +35,25 @@ function useIncidentsViewModel() {
   useRouteClient(clientId);
   const incidentsQuery = useIncidentsQuery({ clientId: clientId || undefined });
   const actions = useIncidentActions();
-  const fields = useIncidentActionFields();
-  useClearIncidentDraft(clientId, fields);
+  const clients = clientsQuery.data ?? [];
   const clientItems = useMemo(
-    () => [{ id: '', title: t('coach.incidents.allClients'), subtitle: '' }, ...clientCardItems(clientsQuery.data ?? [], t)],
-    [clientsQuery.data, t],
+    () => [{ id: '', title: t('coach.incidents.allClients'), subtitle: '' }, ...clientCardItems(clients, t)],
+    [clients, t],
+  );
+  const clientNames = useMemo(
+    () => new Map(clients.map((item) => [item.id, `${item.firstName} ${item.lastName}`.trim()])),
+    [clients],
   );
   return {
     clientId,
     clientItems,
-    ...fields,
+    clientNames,
     incidents: incidentsQuery.data ?? [],
     error: incidentsQuery.error,
     isError: incidentsQuery.isError,
     onRetry: () => void incidentsQuery.refetch(),
     isLoading: incidentsQuery.isLoading,
-    ...buildActions(actions, fields),
+    ...buildActions(actions),
     pending: readPendingIds(actions),
     setClientId,
     t,
@@ -73,31 +77,12 @@ function useIncidentActions() {
   return { draftMutation, respondMutation, reviewMutation, tagMutation };
 }
 
-function useClearIncidentDraft(clientId: string, fields: ReturnType<typeof useIncidentActionFields>): void {
-  const previous = useRef(clientId);
-  const { setDraft, setReply, setTag } = fields;
-  useEffect(() => {
-    if (previous.current === clientId) return;
-    previous.current = clientId;
-    setReply('');
-    setTag('');
-    setDraft('');
-  }, [clientId, setDraft, setReply, setTag]);
-}
-
-function useIncidentActionFields() {
-  const [reply, setReply] = useState('');
-  const [tag, setTag] = useState('');
-  const [draft, setDraft] = useState('');
-  return { draft, reply, setDraft, setReply, setTag, tag };
-}
-
-function buildActions(actions: ReturnType<typeof useIncidentActions>, fields: ReturnType<typeof useIncidentActionFields>) {
+function buildActions(actions: ReturnType<typeof useIncidentActions>) {
   return {
-    onCreateDraft: (id: string) => actions.draftMutation.mutate({ id, payload: { draft: fields.draft } }),
-    onReply: (id: string) => actions.respondMutation.mutate({ id, payload: { response: fields.reply } }),
+    onCreateDraft: (id: string, draft: string) => actions.draftMutation.mutate({ id, payload: { draft } }),
+    onReply: (id: string, response: string) => actions.respondMutation.mutate({ id, payload: { response } }),
     onReview: (id: string) => actions.reviewMutation.mutate({ id }),
-    onTag: (id: string) => actions.tagMutation.mutate({ id, payload: { tag: fields.tag } }),
+    onTag: (id: string, tag: string) => actions.tagMutation.mutate({ id, payload: { tag } }),
   };
 }
 
@@ -128,79 +113,107 @@ function IncidentList(props: ViewModel) {
   const format = useFormatDate();
   return (
     <View {...{ dataSet: { 'density-list': 'true' } }} style={styles.stack}>
-      {props.incidents.map((incident) => renderIncidentCard(props, incident, format))}
+      {props.incidents.map((incident) => (
+        <IncidentCard
+          clientName={props.clientNames.get(incident.clientId) ?? ''}
+          format={format}
+          incident={incident}
+          key={incident.id}
+          vm={props}
+        />
+      ))}
     </View>
   );
 }
 
-function renderIncidentCard(
-  props: ViewModel,
-  incident: {
-    coachResponse: null | string;
-    createdAt: string;
-    description: string;
-    id: string;
-    severity: string;
-    status: string;
-    tag: null | string;
-  },
-  format: (value: string) => string,
-) {
+function IncidentCard(props: {
+  clientName: string;
+  format: (value: string) => string;
+  incident: IncidentView;
+  vm: ViewModel;
+}): React.JSX.Element {
+  const { incident, vm } = props;
+  const [open, setOpen] = useState(false);
+  const [reply, setReply] = useState(incident.coachResponse ?? '');
+  const [tag, setTag] = useState(incident.tag ?? '');
+  const [draft, setDraft] = useState(incident.adjustmentDraft ?? '');
   return (
-    <Card densityRow key={incident.id} style={styles.card}>
-      <Text style={styles.incidentTitle}>{`${incident.severity} · ${incident.status}`}</Text>
-      <Text style={styles.meta}>{format(incident.createdAt)}</Text>
+    <Card densityRow style={styles.card}>
+      <Text style={styles.incidentTitle}>{props.clientName}</Text>
+      <Text style={styles.meta}>{`${incident.severity} · ${incident.status} · ${props.format(incident.createdAt)}`}</Text>
       <Text style={styles.description}>{incident.description}</Text>
-      <Text style={styles.meta}>{incident.tag ?? props.t('coach.incidents.noTag')}</Text>
-      <Text style={styles.meta}>{incident.coachResponse ?? props.t('coach.incidents.noResponse')}</Text>
-      <ActionInputs {...props} />
-      <ActionButtons props={props} incidentId={incident.id} />
+      <Text style={styles.meta}>{incident.tag ?? vm.t('coach.incidents.noTag')}</Text>
+      <SavedNote
+        label={vm.t('coach.incidents.responseLabel')}
+        value={incident.coachResponse}
+        empty={vm.t('coach.incidents.noResponse')}
+      />
+      <SavedNote label={vm.t('coach.incidents.draftLabel')} value={incident.adjustmentDraft} empty={''} />
+      <Button
+        label={vm.t(open ? 'coach.incidents.closeActions' : 'coach.incidents.manage')}
+        onPress={() => setOpen((current) => !current)}
+        size={SIZE_SM}
+        variant={VARIANT_SECONDARY}
+      />
+      {open ? (
+        <IncidentEditor
+          draft={draft}
+          incidentId={incident.id}
+          reply={reply}
+          setDraft={setDraft}
+          setReply={setReply}
+          setTag={setTag}
+          tag={tag}
+          vm={vm}
+        />
+      ) : null}
     </Card>
   );
 }
 
-function ActionInputs(props: ViewModel) {
-  return (
-    <View style={styles.inputs}>
-      <TextField
-        onChangeText={props.setReply}
-        placeholder={props.t('coach.incidents.replyPlaceholder')}
-        value={props.reply}
-      />
-      <TextField onChangeText={props.setTag} placeholder={props.t('coach.incidents.tagPlaceholder')} value={props.tag} />
-      <TextField
-        onChangeText={props.setDraft}
-        placeholder={props.t('coach.incidents.draftPlaceholder')}
-        value={props.draft}
-      />
-    </View>
-  );
+function SavedNote(props: { empty: string; label: string; value: null | string }): React.JSX.Element | null {
+  if (!props.value && !props.empty) return null;
+  return <Text style={styles.meta}>{`${props.label}: ${props.value ?? props.empty}`}</Text>;
 }
 
-function ActionButtons(props: { incidentId: string; props: ViewModel }) {
-  const { incidentId, props: vm } = props;
+function IncidentEditor(props: {
+  draft: string;
+  incidentId: string;
+  reply: string;
+  setDraft: (value: string) => void;
+  setReply: (value: string) => void;
+  setTag: (value: string) => void;
+  tag: string;
+  vm: ViewModel;
+}): React.JSX.Element {
+  const { incidentId, vm } = props;
   return (
-    <View style={styles.row}>
-      <ActionButton
-        label={vm.t('coach.incidents.review')}
-        loading={vm.pending.review === incidentId}
-        onPress={() => vm.onReview(incidentId)}
-      />
-      <ActionButton
-        label={vm.t('coach.incidents.reply')}
-        loading={vm.pending.reply === incidentId}
-        onPress={() => vm.onReply(incidentId)}
-      />
-      <ActionButton
-        label={vm.t('coach.incidents.tag')}
-        loading={vm.pending.tag === incidentId}
-        onPress={() => vm.onTag(incidentId)}
-      />
-      <ActionButton
-        label={vm.t('coach.incidents.adjust')}
-        loading={vm.pending.draft === incidentId}
-        onPress={() => vm.onCreateDraft(incidentId)}
-      />
+    <View style={styles.inputs}>
+      <TextField onChangeText={props.setReply} placeholder={vm.t('coach.incidents.replyPlaceholder')} value={props.reply} />
+      <TextField onChangeText={props.setTag} placeholder={vm.t('coach.incidents.tagPlaceholder')} value={props.tag} />
+      <TextField onChangeText={props.setDraft} placeholder={vm.t('coach.incidents.draftPlaceholder')} value={props.draft} />
+      <View style={styles.row}>
+        <ActionButton
+          label={vm.t('coach.incidents.review')}
+          loading={vm.pending.review === incidentId}
+          onPress={() => vm.onReview(incidentId)}
+        />
+        <ActionButton
+          label={vm.t('coach.incidents.reply')}
+          loading={vm.pending.reply === incidentId}
+          onPress={() => vm.onReply(incidentId, props.reply)}
+        />
+        <ActionButton
+          label={vm.t('coach.incidents.tag')}
+          loading={vm.pending.tag === incidentId}
+          onPress={() => vm.onTag(incidentId, props.tag)}
+        />
+        <ActionButton
+          label={vm.t('coach.incidents.adjust')}
+          loading={vm.pending.draft === incidentId}
+          onPress={() => vm.onCreateDraft(incidentId, props.draft)}
+        />
+      </View>
     </View>
   );
 }

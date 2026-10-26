@@ -185,6 +185,16 @@ function IncidentCard(props: { item: IncidentListItem; onDelete: () => void; onF
         <Text style={[styles.cardDate, { color: tone.text }]}>{formatIncidentDate(props.item.createdAt)}</Text>
       </View>
       <Text style={[styles.cardTitle, { color: tone.text }]}>{props.item.description}</Text>
+      {props.item.coachResponse ? (
+        <Text style={[styles.cardTitle, { color: tone.text }]}>
+          {`${t('client.incidents.response')}: ${props.item.coachResponse}`}
+        </Text>
+      ) : null}
+      {props.item.adjustmentDraft ? (
+        <Text style={[styles.cardTitle, { color: tone.text }]}>
+          {`${t('client.incidents.adjustment')}: ${props.item.adjustmentDraft}`}
+        </Text>
+      ) : null}
       <View style={styles.cardActions}>
         <Pressable onPress={props.onForward} style={styles.iconBtn}>
           <Text style={[styles.iconBtnText, { color: tone.text }]}>{FORWARD_ICON}</Text>

@@ -27,6 +27,7 @@ import { useOptionalCoachNotice } from './MorningCheckinGate';
 import { ShortWorkoutGuard, type ShortWorkoutStep } from './ShortWorkoutGuard';
 import { freezeWorkoutDuration, isShortWorkout } from './session-rpe.utils';
 import { SessionRpeModal } from './SessionRpeModal';
+import { SessionAdjustmentNote } from './SessionAdjustmentNote';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
 import { WorkoutSummaryScreen } from './WorkoutSummaryScreen';
@@ -350,6 +351,7 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         guideSync={guideSync}
         banner={
           <>
+            <SessionAdjustmentNote />
             <WorkoutGuideCard
               {...guideSync}
               location={'day'}

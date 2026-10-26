@@ -171,6 +171,7 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
       const client = await this.readClientByEmail(context.email ?? '');
       return {
         archivedAt: null,
+        client: { archivedAt: null },
         clientId: client.id,
         status: query.status,
       };
@@ -185,6 +186,7 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
     }
     return {
       archivedAt: null,
+      client: { archivedAt: null },
       clientId: query.clientId,
       coachMembershipId: membership.id,
       status: query.status,

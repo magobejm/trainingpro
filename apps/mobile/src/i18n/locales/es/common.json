@@ -190,6 +190,8 @@
   "client.incidents.status.open": "Abierta",
   "client.incidents.status.reviewed": "Revisada",
   "client.incidents.status.closed": "Cerrada",
+  "client.incidents.response": "Respuesta de tu entrenador",
+  "client.incidents.adjustment": "Ajuste para tu próxima sesión",
   "client.report.title": "Reporte semanal",
   "client.report.subtitle": "Completa al menos un reporte por semana",
   "client.report.date": "Fecha",

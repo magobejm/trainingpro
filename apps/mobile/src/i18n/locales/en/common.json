@@ -190,6 +190,8 @@
   "client.incidents.status.open": "Open",
   "client.incidents.status.reviewed": "Reviewed",
   "client.incidents.status.closed": "Closed",
+  "client.incidents.response": "Reply from your coach",
+  "client.incidents.adjustment": "Adjustment for your next session",
   "client.report.title": "Weekly report",
   "client.report.subtitle": "Complete at least one report per week",
   "client.report.date": "Date",

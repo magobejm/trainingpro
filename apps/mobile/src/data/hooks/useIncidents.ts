@@ -11,6 +11,8 @@ export type CreateIncidentInput = {
 };
 
 export type IncidentListItem = {
+  adjustmentDraft: null | string;
+  coachResponse: null | string;
   createdAt: string;
   description: string;
   id: string;

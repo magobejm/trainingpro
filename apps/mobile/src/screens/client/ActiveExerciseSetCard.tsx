@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useHeartRateProposal } from '../../health/use-heart-rate';
 import { StyleSheet, Text, View } from 'react-native';
 import type { TFunction } from 'i18next';
@@ -10,8 +10,6 @@ import { CircularCountdown } from './CircularCountdown';
 import { CurrentSetFields, SetRestControl, SetSaveButton } from './ActiveExerciseSetPanel';
 import { resolvePlannedSet } from './planned-set.utils';
 import { SetCopyActions } from './SetCopyActions';
-import { WeightCalculatorModal } from './WeightCalculatorModal';
-import { bestE1rm } from './barbell-load';
 import { draftHasCopy, historyDraft, matchHistorySet, sourceOccurrence, targetDraft } from './set-copy';
 import {
   getRestSeconds,
@@ -54,7 +52,6 @@ export function ExerciseSetCard(props: {
   );
   const rest = useSetRest(props, view.setKey);
   const autoStart = useRestPreferencesStore((state) => state.autoStartRest);
-  const [calculator, setCalculator] = useState(false);
   const heart = useHeartRateProposal(props.screen.item.type, props.setIndex, props.draft);
   const values = setCopy(props);
   const planned = resolvePlannedSet(props.screen.item.plannedSets, props.setIndex);
@@ -94,20 +91,11 @@ export function ExerciseSetCard(props: {
         onChange={(key, value) => props.draft.updateField(props.setIndex, key, value)}
         onFocus={props.onFocus}
         onOpenRom={() => props.draft.setRomSet(props.setIndex)}
-        onOpenWeight={props.screen.readOnly ? undefined : () => setCalculator(true)}
         readOnly={props.screen.readOnly}
         t={props.t}
         targets={view.targets}
       />
       {heart ? <Text style={styles.setTitle}>{props.t('mobile.client.health.heartRate', heart)}</Text> : null}
-      <WeightCalculatorModal
-        e1rm={values.e1rm}
-        initialWeight={values.initialWeight}
-        onClose={() => setCalculator(false)}
-        onUse={(weight) => applyWeight(props, weight, setCalculator)}
-        reps={values.reps}
-        visible={calculator}
-      />
       {props.screen.readOnly ? null : (
         <SetSaveButton
           busy={props.save.busy || props.save.finishing}
@@ -127,15 +115,6 @@ function formatSuggestion(suggested: null | number | undefined, plannedKg: null 
   if (delta == null || delta === 0) return null;
   const text = String(Math.abs(delta)).replace('.', ',');
   return delta > 0 ? `+${text}` : `-${text}`;
-}
-
-function applyWeight(
-  props: { draft: ReturnType<typeof useActiveSetDraft>; setIndex: number },
-  weight: string,
-  close: (open: boolean) => void,
-): void {
-  props.draft.updateField(props.setIndex, 'weight', weight);
-  close(false);
 }
 
 function useSetRest(props: { screen: SetCardScreen; setIndex: number }, setKey: string) {
@@ -173,14 +152,9 @@ function setCopy(props: {
   const occurrence = sourceOccurrence(props.screen.exerciseGroup, props.screen.item);
   const matched = matchHistorySet(props.history, props.setIndex, occurrence);
   const last = matched ? historyDraft(props.screen.item, matched) : {};
-  const row = props.draft.drafts[props.setIndex];
-  const reps = Number((row?.reps || target.reps || '5').replace(',', '.'));
   return {
-    e1rm: bestE1rm(props.history.flatMap((entry) => entry.sets)),
-    initialWeight: row?.weight || target.weight || '',
     last,
     lastEnabled: draftHasCopy(last),
-    reps: Number.isFinite(reps) && reps > 0 ? reps : 5,
     target,
     targetEnabled: draftHasCopy(target),
   };

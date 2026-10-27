@@ -1,9 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { LoadingState } from './components/AsyncStatus';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import { Navigate } from 'react-router';
+import { Navigate, useLocation } from 'react-router';
 import { useBreakpoint } from '@trainerpro/ui';
 import './i18n';
 import { LoginScreen } from './screens/auth/LoginScreen';
@@ -197,6 +197,12 @@ const NO_BADGES = {};
 
 function ShellContentArea(props: ShellViewProps): React.JSX.Element {
   const compact = props.breakpoint === 'sm';
+  const { pathname } = useLocation();
+  const bodyRef = useRef<View>(null);
+  useLayoutEffect(() => {
+    const node = bodyRef.current as unknown as HTMLElement | null;
+    if (node) node.scrollTop = 0;
+  }, [pathname]);
   return (
     <View style={styles.content}>
       <TopBar
@@ -206,7 +212,7 @@ function ShellContentArea(props: ShellViewProps): React.JSX.Element {
         roleLabel={props.t(`auth.role.${props.activeRole}`)}
         title={props.t(resolveRouteTitleKey(props.route))}
       />
-      <View style={styles.contentBody}>
+      <View ref={bodyRef} style={styles.contentBody}>
         <React.Suspense fallback={<LoadingState label={props.t('common.loading')} />}>
           {resolveRouteScreen(props.route, props.activeRole, props.goTo)}
         </React.Suspense>

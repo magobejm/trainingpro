@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { Button, useBreakpoint } from '@trainerpro/ui';
@@ -184,8 +184,13 @@ export type ViewProps = ReturnType<typeof useClientsViewModel>;
 
 function ClientsView(props: ViewProps): React.JSX.Element {
   const compact = useBreakpoint() !== 'lg';
+  const scrollRef = useRef<ScrollView>(null);
+  useLayoutEffect(() => {
+    scrollRef.current?.scrollTo({ animated: false, y: 0 });
+  }, [props.screenMode, props.selectedClientId]);
   return (
     <ScrollView
+      ref={scrollRef}
       contentContainerStyle={compact ? [styles.page, styles.pageCompact] : styles.page}
       onScroll={props.onListScroll}
       scrollEventThrottle={200}

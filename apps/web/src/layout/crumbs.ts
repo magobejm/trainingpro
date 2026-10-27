@@ -8,6 +8,7 @@ type Translate = (key: string) => string;
 
 const MODE_LABEL_KEYS: Record<ClientCrumbMode, string> = {
   chat: 'coach.clientProfile.details.chat.title',
+  compare: 'coach.compare.title',
   edit: 'coach.clientProfile.edit.title',
   incidents: 'coach.clientProfile.details.incidents.title',
   mood: 'coach.clientProfile.details.mood.title',

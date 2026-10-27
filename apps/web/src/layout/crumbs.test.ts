@@ -22,6 +22,7 @@ describe('buildClientCrumbs', () => {
   });
 
   it.each([
+    ['compare', 'coach.compare.title'],
     ['edit', 'coach.clientProfile.edit.title'],
     ['nutrition', 'coach.nutrition.client.title'],
     ['mood', 'coach.clientProfile.details.mood.title'],

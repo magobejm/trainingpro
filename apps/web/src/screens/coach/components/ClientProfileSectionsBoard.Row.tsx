@@ -1,9 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { menuStyle, menuStyleTop, expandedRowStyle, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
+import { menuStyle, menuStyleTop, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
 import { Badge, IconButton, colors } from '@trainerpro/ui';
-import { ClientComparePanel } from './ClientComparePanel';
 import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
 
@@ -20,6 +19,7 @@ type Props = {
   testsSubtitle?: string;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onOpenChat?: () => void;
+  onOpenCompare?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
@@ -39,39 +39,31 @@ type Props = {
 
 export function ClientProfileSectionRow(props: Props): React.JSX.Element {
   const dragProps = readDragProps(props.item.id, props.rowIndex, props.onDropReorderByIndex);
-  const hasInlinePanel = props.item.id === 'compare';
-  const rowMain = (
-    <RowMain
-      chatSubtitle={props.chatSubtitle}
-      chatUnread={props.chatUnread}
-      incidentCount={props.incidentCount}
-      incidentSubtitle={props.incidentSubtitle}
-      item={props.item}
-      clientId={props.clientId}
-      moodSubtitle={props.moodSubtitle}
-      nutritionSubtitle={props.nutritionSubtitle}
-      onOpenChat={props.onOpenChat}
-      onOpenIncidents={props.onOpenIncidents}
-      onOpenMood={props.onOpenMood}
-      testsSubtitle={props.testsSubtitle}
-      onOpenNutrition={props.onOpenNutrition}
-      onOpenProgress={props.onOpenProgress}
-      onOpenTests={props.onOpenTests}
-      onOpenTimeline={props.onOpenTimeline}
-      onOpenTrainingPlanner={props.onOpenTrainingPlanner}
-      onToggleMenu={props.onToggleMenu}
-      t={props.t}
-      trainingPlanName={props.trainingPlanName}
-    />
-  );
   return (
-    <div {...dragProps} style={hasInlinePanel ? expandedRowStyle : rowStyle}>
-      {hasInlinePanel ? <View style={styles.rowPanelHeader}>{rowMain}</View> : rowMain}
-      {hasInlinePanel ? (
-        <View style={styles.inlinePanel}>
-          <ClientComparePanel clientId={props.clientId} t={props.t} />
-        </View>
-      ) : null}
+    <div {...dragProps} style={rowStyle}>
+      <RowMain
+        chatSubtitle={props.chatSubtitle}
+        chatUnread={props.chatUnread}
+        incidentCount={props.incidentCount}
+        incidentSubtitle={props.incidentSubtitle}
+        item={props.item}
+        clientId={props.clientId}
+        moodSubtitle={props.moodSubtitle}
+        nutritionSubtitle={props.nutritionSubtitle}
+        onOpenChat={props.onOpenChat}
+        onOpenCompare={props.onOpenCompare}
+        onOpenIncidents={props.onOpenIncidents}
+        onOpenMood={props.onOpenMood}
+        testsSubtitle={props.testsSubtitle}
+        onOpenNutrition={props.onOpenNutrition}
+        onOpenProgress={props.onOpenProgress}
+        onOpenTests={props.onOpenTests}
+        onOpenTimeline={props.onOpenTimeline}
+        onOpenTrainingPlanner={props.onOpenTrainingPlanner}
+        onToggleMenu={props.onToggleMenu}
+        t={props.t}
+        trainingPlanName={props.trainingPlanName}
+      />
       {props.showMenu ? (
         <RowMenu
           hasTrainingPlan={props.hasTrainingPlan}
@@ -96,6 +88,7 @@ function RowMain(props: {
   moodSubtitle?: string;
   nutritionSubtitle?: string;
   onOpenChat?: () => void;
+  onOpenCompare?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   testsSubtitle?: string;
@@ -193,6 +186,7 @@ function readDragProps(
 function onOpenSection(props: {
   item: SectionItem;
   onOpenChat?: () => void;
+  onOpenCompare?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
@@ -208,6 +202,7 @@ function onOpenSection(props: {
   if (props.item.id === 'mood') props.onOpenMood?.();
   if (props.item.id === 'timeline') props.onOpenTimeline();
   if (props.item.id === 'chat') props.onOpenChat?.();
+  if (props.item.id === 'compare') props.onOpenCompare?.();
   if (props.item.id === 'incidents') props.onOpenIncidents?.();
 }
 

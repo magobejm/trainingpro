@@ -11,6 +11,7 @@ describe('readClientsLocation', () => {
   });
 
   it.each([
+    ['compare', 'compare'],
     ['edit', 'profileEdit'],
     ['nutrition', 'nutrition'],
     ['mood', 'mood'],
@@ -37,7 +38,10 @@ describe('clientsScreenPath', () => {
     expect(clientsScreenPath('abc', 'list')).toBe('/coach/clients');
   });
 
-  it.each(['profile', 'profileEdit', 'nutrition', 'mood', 'tests'] as ScreenMode[])('round-trips the %s screen', (mode) => {
-    expect(readClientsLocation(clientsScreenPath('abc', mode))).toEqual({ screenMode: mode, selectedClientId: 'abc' });
-  });
+  it.each(['profile', 'profileEdit', 'nutrition', 'mood', 'tests', 'compare'] as ScreenMode[])(
+    'round-trips the %s screen',
+    (mode) => {
+      expect(readClientsLocation(clientsScreenPath('abc', mode))).toEqual({ screenMode: mode, selectedClientId: 'abc' });
+    },
+  );
 });

@@ -15,6 +15,7 @@ describe('readClientsLocation', () => {
     ['edit', 'profileEdit'],
     ['nutrition', 'nutrition'],
     ['mood', 'mood'],
+    ['measures', 'measures'],
     ['tests', 'tests'],
   ] as const)('maps /%s to the %s screen', (segment, mode) => {
     expect(readClientsLocation(`/coach/clients/abc/${segment}`)).toEqual({ screenMode: mode, selectedClientId: 'abc' });
@@ -38,7 +39,7 @@ describe('clientsScreenPath', () => {
     expect(clientsScreenPath('abc', 'list')).toBe('/coach/clients');
   });
 
-  it.each(['profile', 'profileEdit', 'nutrition', 'mood', 'tests', 'compare'] as ScreenMode[])(
+  it.each(['profile', 'profileEdit', 'nutrition', 'mood', 'tests', 'compare', 'measures'] as ScreenMode[])(
     'round-trips the %s screen',
     (mode) => {
       expect(readClientsLocation(clientsScreenPath('abc', mode))).toEqual({ screenMode: mode, selectedClientId: 'abc' });

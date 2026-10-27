@@ -1,7 +1,7 @@
 import type { ShellRoute } from './usePersistentShellRoute';
 
 /** Subpantallas de la ficha de un cliente que tienen su propia dirección: /coach/clients/:id/<modo>. */
-export type ClientMode = 'compare' | 'edit' | 'mood' | 'nutrition' | 'progress' | 'tests';
+export type ClientMode = 'compare' | 'edit' | 'measures' | 'mood' | 'nutrition' | 'progress' | 'tests';
 
 export type ParsedShellPath = {
   clientId: null | string;
@@ -30,7 +30,7 @@ export const SHELL_PATHS: Record<ShellRoute, string> = {
   'coach.warmup.planner': '/coach/planner/warmup',
 };
 
-const CLIENT_MODES: readonly ClientMode[] = ['compare', 'edit', 'mood', 'nutrition', 'progress', 'tests'];
+const CLIENT_MODES: readonly ClientMode[] = ['compare', 'edit', 'measures', 'mood', 'nutrition', 'progress', 'tests'];
 const CLIENTS_BASE = SHELL_PATHS['coach.clients'];
 
 const ROUTE_BY_PATH = new Map<string, ShellRoute>(

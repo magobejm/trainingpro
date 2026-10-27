@@ -37,6 +37,7 @@ type Props = {
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
   onOpenCompare?: () => void;
+  onOpenMeasures?: () => void;
   onOpenTrainingPlanner: () => void;
   clientName: string;
   onUnassignTrainingPlan: () => void;
@@ -207,6 +208,7 @@ function renderRow(
       onOpenProgress={props.onOpenProgress}
       onOpenTests={props.onOpenTests}
       onOpenCompare={props.onOpenCompare}
+      onOpenMeasures={props.onOpenMeasures}
       onOpenTimeline={vm.onOpenTimeline}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={() => vm.onToggleMenu(item.id)}

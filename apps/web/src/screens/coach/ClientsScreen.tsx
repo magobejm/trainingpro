@@ -13,6 +13,7 @@ import { ClientNutritionPlanScreen } from './ClientNutritionPlanScreen';
 import { ClientProfileScreen } from './ClientProfileScreen';
 import { ClientProfileEditScreen } from './ClientProfileEditScreen';
 import { ClientCompareScreen } from './ClientCompareScreen';
+import { ClientMeasuresScreen } from './ClientMeasuresScreen';
 import { ClientTestsScreen } from './ClientTestsScreen';
 import { ClientMoodScreen } from './ClientMoodScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -36,6 +37,7 @@ const MODE_NUTRITION = 'nutrition' as const;
 const MODE_MOOD = 'mood' as const;
 const MODE_TESTS = 'tests' as const;
 const MODE_COMPARE = 'compare' as const;
+const MODE_MEASURES = 'measures' as const;
 
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
@@ -119,6 +121,7 @@ function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
     onOpenMoodScreen: (clientId: string) => state.open(clientId, 'mood'),
     onOpenTestsScreen: (clientId: string) => state.open(clientId, 'tests'),
     onOpenCompareScreen: (clientId: string) => state.open(clientId, 'compare'),
+    onOpenMeasuresScreen: (clientId: string) => state.open(clientId, 'measures'),
     // La pantalla ya vive en la dirección: al archivar basta con volver a la lista (onBackToList).
     onClearSelectedClient: () => undefined,
     onOpenProfileEdit: (clientId: string) => state.open(clientId, 'profileEdit'),
@@ -207,6 +210,9 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
   }
   if (props.screenMode === 'compare' && props.selectedClientId) {
     return renderComparePage(props);
+  }
+  if (props.screenMode === 'measures' && props.selectedClientId) {
+    return renderMeasuresPage(props);
   }
   if ((props.screenMode === 'profile' || props.screenMode === 'profileEdit') && props.selectedClientId) {
     return renderProfilePage(props);
@@ -339,6 +345,7 @@ function renderProfile(props: ViewProps): React.JSX.Element {
       onOpenNutrition={props.onOpenNutrition}
       onOpenTestsScreen={props.onOpenTestsScreen}
       onOpenCompareScreen={props.onOpenCompareScreen}
+      onOpenMeasuresScreen={props.onOpenMeasuresScreen}
       onRouteChange={props.onRouteChange}
     />
   );
@@ -380,6 +387,17 @@ function renderComparePage(props: ViewProps): React.JSX.Element {
       <CrumbBar mode={MODE_COMPARE} view={props} />
       <View style={styles.profileCard}>
         <ClientCompareScreen clientId={props.selectedClientId} t={props.t} />
+      </View>
+    </>
+  );
+}
+
+function renderMeasuresPage(props: ViewProps): React.JSX.Element {
+  return (
+    <>
+      <CrumbBar mode={MODE_MEASURES} view={props} />
+      <View style={styles.profileCard}>
+        <ClientMeasuresScreen clientId={props.selectedClientId} t={props.t} />
       </View>
     </>
   );

@@ -5,6 +5,7 @@ import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types'
 import { Badge, IconButton, colors } from '@trainerpro/ui';
 import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
+import { ClientMeasuresSubtitle } from './ClientMeasuresSubtitle';
 
 type Props = {
   chatSubtitle?: string;
@@ -20,6 +21,7 @@ type Props = {
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenMeasures?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
@@ -52,6 +54,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
         nutritionSubtitle={props.nutritionSubtitle}
         onOpenChat={props.onOpenChat}
         onOpenCompare={props.onOpenCompare}
+        onOpenMeasures={props.onOpenMeasures}
         onOpenIncidents={props.onOpenIncidents}
         onOpenMood={props.onOpenMood}
         testsSubtitle={props.testsSubtitle}
@@ -89,6 +92,7 @@ function RowMain(props: {
   nutritionSubtitle?: string;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenMeasures?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   testsSubtitle?: string;
@@ -131,6 +135,8 @@ function RowMain(props: {
           <ClientProgressActivitySubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : props.item.id === 'timeline' ? (
           <ClientTimelineSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : props.item.id === 'anthropometrics' ? (
+          <ClientMeasuresSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : (
           <Text style={styles.rowSubtitle}>{subtitle}</Text>
         )}
@@ -187,6 +193,7 @@ function onOpenSection(props: {
   item: SectionItem;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenMeasures?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
@@ -203,6 +210,7 @@ function onOpenSection(props: {
   if (props.item.id === 'timeline') props.onOpenTimeline();
   if (props.item.id === 'chat') props.onOpenChat?.();
   if (props.item.id === 'compare') props.onOpenCompare?.();
+  if (props.item.id === 'anthropometrics') props.onOpenMeasures?.();
   if (props.item.id === 'incidents') props.onOpenIncidents?.();
 }
 

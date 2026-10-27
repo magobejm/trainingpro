@@ -105,6 +105,7 @@ export const clientMeasurementSchema = z
     measuredAt: z.string().optional(),
     notes: z.string().nullable().optional(),
     recordedBy: z.enum(['coach', 'client']),
+    skinfoldsJson: z.record(z.string(), z.number()).nullable().optional(),
     waistCm: z.number().nullable(),
     weightKg: z.number().nullable(),
   })

@@ -21,6 +21,7 @@ export type ClientMeasurement = {
   measuredAt: Date;
   notes: string | null;
   recordedBy: ProgressActor;
+  skinfoldsJson: Record<string, number> | null;
   waistCm: number | null;
   weightKg: number | null;
 };
@@ -39,6 +40,7 @@ export type MeasurementRow = {
   measuredAt?: Date;
   notes?: string | null;
   recordedBy: string;
+  skinfoldsJson?: unknown;
   waistCm: DecimalLike;
   weightKg: DecimalLike;
 };
@@ -75,6 +77,7 @@ export function mapClientMeasurement(row: MeasurementRow): ClientMeasurement {
     measuredAt: row.measuredAt ?? row.createdAt,
     notes: row.notes ?? null,
     recordedBy: row.recordedBy === 'client' ? 'client' : 'coach',
+    skinfoldsJson: readSkinfolds(row.skinfoldsJson),
     waistCm: toNumber(row.waistCm),
     weightKg: toNumber(row.weightKg),
   };
@@ -87,4 +90,13 @@ function roundCm(value: number | null): number | null {
 function toNumber(value: DecimalLike): number | null {
   if (value === null) return null;
   return typeof value === 'number' ? value : value.toNumber();
+}
+
+function readSkinfolds(value: unknown): Record<string, number> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const folds: Record<string, number> = {};
+  for (const [key, item] of Object.entries(value)) {
+    if (typeof item === 'number' && Number.isFinite(item)) folds[key] = item;
+  }
+  return Object.keys(folds).length > 0 ? folds : null;
 }

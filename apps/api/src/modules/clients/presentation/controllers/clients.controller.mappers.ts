@@ -61,6 +61,7 @@ export function mapMeasurementOutput(item: ClientMeasurement) {
     measuredAt: formatIso(item.measuredAt),
     notes: item.notes,
     recordedBy: item.recordedBy,
+    skinfoldsJson: item.skinfoldsJson,
     waistCm: item.waistCm,
     weightKg: item.weightKg,
   };

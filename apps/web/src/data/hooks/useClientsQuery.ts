@@ -39,7 +39,10 @@ export type ClientMeasurementView = {
   hipCm: number | null;
   id: string;
   measuredAt?: string;
+  fcMax?: number | null;
+  fcRest?: number | null;
   recordedBy: 'client' | 'coach';
+  skinfoldsJson?: Record<string, number> | null;
   waistCm: number | null;
   weightKg: number | null;
 };

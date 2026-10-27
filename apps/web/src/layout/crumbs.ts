@@ -11,6 +11,7 @@ const MODE_LABEL_KEYS: Record<ClientCrumbMode, string> = {
   compare: 'coach.compare.title',
   edit: 'coach.clientProfile.edit.title',
   incidents: 'coach.clientProfile.details.incidents.title',
+  measures: 'coach.clientProfile.details.anthropometrics.title',
   mood: 'coach.clientProfile.details.mood.title',
   nutrition: 'coach.nutrition.client.title',
   profile: 'coach.clientProfile.title',

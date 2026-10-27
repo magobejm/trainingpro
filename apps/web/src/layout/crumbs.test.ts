@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildClientCrumbs } from './crumbs';
+import { buildClientCrumbs, buildLibraryPlannerCrumbs } from './crumbs';
 
 const t = (key: string): string => key;
 
@@ -41,5 +41,21 @@ describe('buildClientCrumbs', () => {
   it('encodes the client id in the links', () => {
     const crumbs = buildClientCrumbs({ clientId: 'a b', clientName: 'Ana', mode: 'edit', t });
     expect(crumbs[1]?.to).toBe('/coach/clients/a%20b');
+  });
+});
+
+describe('buildLibraryPlannerCrumbs', () => {
+  it('links the routine library and marks the planner as the current page', () => {
+    expect(buildLibraryPlannerCrumbs({ kind: 'routine', t })).toEqual([
+      { label: 'coach.routineLib.title', to: '/coach/library/routines' },
+      { label: 'coach.routine.title', to: null },
+    ]);
+  });
+
+  it('links the warmup library and marks the warmup planner as the current page', () => {
+    expect(buildLibraryPlannerCrumbs({ kind: 'warmup', t })).toEqual([
+      { label: 'coach.routineLib.title', to: '/coach/library/warmups' },
+      { label: 'coach.warmupPlanner.title', to: null },
+    ]);
   });
 });

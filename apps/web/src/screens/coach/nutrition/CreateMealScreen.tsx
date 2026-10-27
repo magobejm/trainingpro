@@ -6,11 +6,13 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Button, SearchBar, TextField, useToast } from '@trainerpro/ui';
 import { useCreateMealMutation } from '../../../data/hooks/useNutrition';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
+import type { Crumb } from '../../../layout/crumbs';
+import { NutritionCrumbBar } from './nutrition-crumbs';
 import { MEAL_CATEGORIES } from './nutrition.types';
 import { styles } from './nutrition.styles';
 const KEYBOARD_NUMERIC = 'numeric' as const;
 type Props = {
-  onBack: () => void;
+  crumbs: Crumb[];
   onCreated: (mealId: string) => void;
 };
 type DraftIngredient = {
@@ -41,7 +43,7 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
   const layoutStyle1 = getLayoutStyle1;
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+      <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
       <Text style={styles.headerTitle}>{t('coach.nutrition.meals.create')}</Text>
       <TextField
         containerStyle={styles.fieldGap}
@@ -84,15 +86,15 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
         </Pressable>
       ))}
       {ingredients.map((item, index) => (
-        <View key={`${item.foodId}-${index}`} style={styles.card}>
-          <Text style={styles.cardTitle}>{item.foodName}</Text>
-          <TextField
-            keyboardType={KEYBOARD_NUMERIC}
-            label={t('coach.nutrition.meals.grams')}
-            onChangeText={(value) => updateAmount(ingredients, setIngredients, index, value)}
-            value={item.amountGrams}
-          />
-        </View>
+        <IngredientDraft
+          amountGrams={item.amountGrams}
+          foodName={item.foodName}
+          gramsLabel={t('coach.nutrition.meals.grams')}
+          key={`${item.foodId}-${index}`}
+          onChangeAmount={(value) => updateAmount(ingredients, setIngredients, index, value)}
+          onRemove={() => removeIngredient(setIngredients, index)}
+          removeLabel={t('coach.nutrition.meals.removeIngredient')}
+        />
       ))}
       <Text style={styles.cardMuted}>
         {t('coach.nutrition.meals.totals', {
@@ -111,6 +113,32 @@ export function CreateMealScreen(props: Props): React.JSX.Element {
     </ScrollView>
   );
 }
+function IngredientDraft(props: {
+  amountGrams: string;
+  foodName: string;
+  gramsLabel: string;
+  onChangeAmount: (value: string) => void;
+  onRemove: () => void;
+  removeLabel: string;
+}): React.JSX.Element {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.cardTitle}>{props.foodName}</Text>
+      <TextField
+        keyboardType={KEYBOARD_NUMERIC}
+        label={props.gramsLabel}
+        onChangeText={props.onChangeAmount}
+        value={props.amountGrams}
+      />
+      <Button label={props.removeLabel} onPress={props.onRemove} size="sm" style={styles.addButton} variant="danger" />
+    </View>
+  );
+}
+
+function removeIngredient(setIngredients: React.Dispatch<React.SetStateAction<DraftIngredient[]>>, index: number): void {
+  setIngredients((current) => current.filter((_, itemIndex) => itemIndex !== index));
+}
+
 function addIngredient(
   current: DraftIngredient[],
   setIngredients: React.Dispatch<React.SetStateAction<DraftIngredient[]>>,

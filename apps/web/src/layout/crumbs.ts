@@ -1,6 +1,6 @@
 import { clientPath, SHELL_PATHS, type ClientMode } from './shell-routes';
 
-export type Crumb = { label: string; to: null | string };
+export type Crumb = { label: string; onPress?: () => void; to: null | string };
 
 export type ClientCrumbMode = 'chat' | 'incidents' | 'profile' | 'routine' | ClientMode;
 
@@ -37,4 +37,14 @@ export function buildClientCrumbs(input: {
     crumbs.push({ label: input.t(MODE_LABEL_KEYS[input.mode]), to: null });
   }
   return crumbs;
+}
+
+/** Migas de la biblioteca hacia el planificador: "Biblioteca… › Planificador de Rutinas". */
+export function buildLibraryPlannerCrumbs(input: { kind: 'routine' | 'warmup'; t: Translate }): Crumb[] {
+  const library = input.kind === 'warmup' ? 'coach.library.warmups' : 'coach.library.routines';
+  const current = input.kind === 'warmup' ? 'coach.warmupPlanner.title' : 'coach.routine.title';
+  return [
+    { label: input.t('coach.routineLib.title'), to: SHELL_PATHS[library] },
+    { label: input.t(current), to: null },
+  ];
 }

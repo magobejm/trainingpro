@@ -61,6 +61,12 @@ export function clientIdFromSearch(search: string): string | null {
   return id && id.trim() ? id : null;
 }
 
+export function replaceClientSearch(clientId: string | null): void {
+  if (typeof window === 'undefined') return;
+  const next = `${window.location.pathname}${searchWithClient(window.location.search, clientId)}`;
+  window.history.replaceState(window.history.state, '', next);
+}
+
 export function searchWithClient(search: string, clientId: string | null): string {
   const params = new URLSearchParams(search);
   if (clientId) params.set(CLIENT_PARAM, clientId);

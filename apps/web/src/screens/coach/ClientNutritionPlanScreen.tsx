@@ -12,38 +12,41 @@ import {
   useNutritionMealsQuery,
 } from '../../data/hooks/useNutrition';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
-import { LIST_KEYS, writeListContext } from '../../layout/list-context';
+import { LIST_KEYS, replaceClientSearch, writeListContext } from '../../layout/list-context';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { CheckpointsModal } from './nutrition/CheckpointsModal';
 import { ClientNutritionToday } from './nutrition/ClientNutritionToday';
 import { ClientNutritionAdherence } from './nutrition/ClientNutritionAdherence';
+import { ClientPlanChange } from './nutrition/ClientPlanChange';
 import { readSetupData } from './nutrition/nutrition-tdee.utils';
-import type { FreePlanContent, NutritionPlan, NutritionPlanType, StructuredPlanContent } from './nutrition/nutrition.types';
+import { PlanContentView } from './nutrition/PlanContentView';
+import type { NutritionPlan, NutritionPlanType } from './nutrition/nutrition.types';
+import { clientPlanStyles as s } from './nutrition/client-plan.styles';
 import { styles } from './nutrition/nutrition.styles';
-import { formatFoodAmount } from '@trainerpro/shared';
-import { Button, EmptyState, space, useToast } from '@trainerpro/ui';
-
-const VARIANT_SECONDARY = 'secondary' as const;
-const SIZE_SM = 'sm' as const;
+import { Button, EmptyState, useToast } from '@trainerpro/ui';
 
 type Props = {
   clientId: string;
   clientName: string;
-  onBack: () => void;
   onRouteChange?: (route: ShellRoute) => void;
 };
+type Tab = 'adherence' | 'content' | 'today';
+type Translate = (key: string, options?: Record<string, unknown>) => string;
 
-/** Abre la creación de planes del módulo de nutrición, con este cliente como contexto. */
-function openPlanCreation(clientId: string, onRouteChange?: (route: ShellRoute) => void): void {
+/** Abre el asistente de creación del módulo de nutrición, conservando el rastro del cliente. */
+function openPlanCreation(props: Props, type: NutritionPlanType): void {
   writeListContext(LIST_KEYS.nutrition, {
     checkpointPlanId: '',
     hubQuery: '',
+    originClientId: props.clientId,
+    originClientName: props.clientName,
     selectedFoodId: '',
     selectedMealId: '',
-    view: 'createPlan',
+    view: 'wizard',
+    wizardType: type,
   });
-  window.history.replaceState(window.history.state, '', `/coach/nutrition?client=${encodeURIComponent(clientId)}`);
-  onRouteChange?.('coach.nutrition');
+  replaceClientSearch(props.clientId);
+  props.onRouteChange?.('coach.nutrition');
 }
 
 // eslint-disable-next-line max-lines-per-function
@@ -56,132 +59,74 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
   const assignMutation = useAssignPlanMutation();
   const toast = useToast();
   const [planType, setPlanType] = useState<NutritionPlanType | null>(null);
+  const [tab, setTab] = useState<Tab>('content');
+  const [changing, setChanging] = useState(false);
   const [checkpointPlan, setCheckpointPlan] = useState<null | NutritionPlan>(null);
   const plans = plansQuery.data ?? [];
   const selectedType = planType ?? preferredAssignedType(plans);
-  const activePlan = useMemo(() => resolveActivePlan(plans, selectedType), [plans, selectedType]);
-  const templates = useMemo(
-    () => (templatesQuery.data ?? []).filter((plan) => plan.type === selectedType),
-    [selectedType, templatesQuery.data],
-  );
-  const setup = readSetupData(activePlan?.setupData);
-  const assigning = assignMutation.isPending;
+  const activePlan = useMemo(() => plans.find((plan) => plan.type === selectedType), [plans, selectedType]);
+  const foods = foodsQuery.data ?? [];
+  const meals = mealsQuery.data ?? [];
+  const showPanel = changing || (!activePlan && !plansQuery.isLoading);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button
-        label={t('common.back')}
-        onPress={props.onBack}
-        size={SIZE_SM}
-        style={{ alignSelf: 'flex-start' }}
-        variant={VARIANT_SECONDARY}
-      />
-      <Text style={styles.headerTitle}>{props.clientName}</Text>
-      <Text style={styles.headerSubtitle}>{t('coach.nutrition.client.title')}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-        <TypeChip
-          active={selectedType === 'LIBRE'}
-          label={t('coach.nutrition.plans.free')}
-          onPress={() => setPlanType('LIBRE')}
-        />
-        <TypeChip
-          active={selectedType === 'ESTRUCTURADO'}
-          label={t('coach.nutrition.plans.structured')}
-          onPress={() => setPlanType('ESTRUCTURADO')}
-        />
-      </View>
-      {plansQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
-      {setup ? (
-        <View style={styles.macroRow}>
-          <View style={styles.macroBar}>
-            <Text style={styles.macroLabel}>{t('coach.nutrition.macros.calories')}</Text>
-            <Text style={styles.macroValue}>{setup.targetCalories}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <Text style={styles.macroLabel}>{t('coach.nutrition.macros.protein')}</Text>
-            <Text style={styles.macroValue}>{t('coach.nutrition.macros.grams', { value: setup.proteinG })}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <Text style={styles.macroLabel}>{t('coach.nutrition.macros.carbs')}</Text>
-            <Text style={styles.macroValue}>{t('coach.nutrition.macros.grams', { value: setup.carbsG })}</Text>
-          </View>
-          <View style={styles.macroBar}>
-            <Text style={styles.macroLabel}>{t('coach.nutrition.macros.fat')}</Text>
-            <Text style={styles.macroValue}>{t('coach.nutrition.macros.grams', { value: setup.fatG })}</Text>
-          </View>
+      <View style={s.root}>
+        <View>
+          <Text style={styles.headerTitle}>{props.clientName}</Text>
+          <Text style={styles.headerSubtitle}>{t('coach.nutrition.client.title')}</Text>
         </View>
-      ) : null}
-      {activePlan ? (
-        <>
-          <ClientNutritionToday
-            clientId={props.clientId}
-            foods={foodsQuery.data ?? []}
-            meals={mealsQuery.data ?? []}
+        {plansQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
+        {plans.length > 1 ? <AssignedTypeToggle onChange={setPlanType} t={t} value={selectedType} /> : null}
+        {activePlan ? (
+          <AssignedPlanCard
+            clientName={props.clientName}
+            meals={meals}
+            onChange={() => setChanging((value) => !value)}
+            onCheckpoints={() => setCheckpointPlan(activePlan)}
             plan={activePlan}
             t={t}
+            mealsLoading={mealsQuery.isLoading || mealsQuery.isError}
           />
-          <ClientNutritionAdherence clientId={props.clientId} t={t} />
-          <Text style={styles.sectionTitle}>{activePlan.name}</Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <ClientPreviewButton isDraft={false}>
-              <NutritionClientPreview plan={activePlan} meals={mealsQuery.data} />
-            </ClientPreviewButton>
-            <NutritionPdfButton
-              plan={activePlan}
-              meals={mealsQuery.data ?? []}
-              isDraft={false}
-              clientName={props.clientName}
-              disabled={mealsQuery.isLoading || mealsQuery.isError}
-            />
-          </View>
-          {selectedType === 'LIBRE' ? (
-            <FreePlanReadOnly content={activePlan.content} foods={foodsQuery.data ?? []} t={t} />
-          ) : null}
-          {selectedType === 'ESTRUCTURADO' ? <StructuredPlanReadOnly content={activePlan.content} t={t} /> : null}
-          <Button label={t('coach.nutrition.checkpoints.open')} onPress={() => setCheckpointPlan(activePlan)} />
-        </>
-      ) : null}
-      {!activePlan && !plansQuery.isLoading ? (
-        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} />
-      ) : null}
-      <Text style={styles.sectionTitle}>{t('coach.nutrition.client.libraryTitle')}</Text>
-      <Button
-        label={t('coach.nutrition.client.createPlan')}
-        onPress={() => openPlanCreation(props.clientId, props.onRouteChange)}
-        style={{ alignSelf: 'flex-start' }}
-      />
-      {templatesQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
-      {templates.length === 0 && !templatesQuery.isLoading ? (
-        <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.libraryEmpty')} />
-      ) : null}
-      {templates.map((plan) => (
-        <View key={plan.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{plan.name}</Text>
-          <Text style={styles.cardMuted}>
-            {plan.type === 'LIBRE' ? t('coach.nutrition.plans.free') : t('coach.nutrition.plans.structured')}
-          </Text>
-          <Button
-            disabled={assigning || activePlan?.sourcePlanId === plan.id}
-            label={
-              activePlan?.sourcePlanId === plan.id
-                ? t('coach.nutrition.client.assigned')
-                : activePlan
-                  ? t('coach.nutrition.client.replace')
-                  : t('coach.nutrition.client.assign')
-            }
-            loading={assigning && assignMutation.variables?.planId === plan.id}
-            onPress={() =>
+        ) : null}
+        {!activePlan && !plansQuery.isLoading ? (
+          <EmptyState icon={<EmptyIllustration kind={'library'} />} title={t('coach.nutrition.client.empty')} />
+        ) : null}
+        {showPanel ? (
+          <ClientPlanChange
+            assignedSourceIds={plans.map((plan) => plan.sourcePlanId).filter((id): id is string => Boolean(id))}
+            assigning={assignMutation.isPending}
+            assigningPlanId={assignMutation.variables?.planId}
+            foods={foods}
+            hasAssigned={Boolean(activePlan)}
+            initialType={selectedType}
+            meals={meals}
+            onAssign={(planId) =>
               assignMutation.mutate(
-                { clientId: props.clientId, planId: plan.id },
+                { clientId: props.clientId, planId },
                 {
                   onError: () => toast.error(t('coach.nutrition.client.assignError')),
-                  onSuccess: () => toast.success(t('coach.nutrition.client.assignedToast')),
+                  onSuccess: () => {
+                    toast.success(t('coach.nutrition.client.assignedToast'));
+                    setChanging(false);
+                  },
                 },
               )
             }
+            onCreate={(type) => openPlanCreation(props, type)}
+            t={t}
+            templates={templatesQuery.data ?? []}
           />
-        </View>
-      ))}
+        ) : null}
+        {activePlan ? <PlanTabs tab={tab} onChange={setTab} t={t} /> : null}
+        {activePlan && tab === 'content' ? (
+          <PlanContentView content={activePlan.content} foods={foods} meals={meals} t={t} type={activePlan.type} />
+        ) : null}
+        {activePlan && tab === 'today' ? (
+          <ClientNutritionToday clientId={props.clientId} foods={foods} meals={meals} plan={activePlan} t={t} />
+        ) : null}
+        {activePlan && tab === 'adherence' ? <ClientNutritionAdherence clientId={props.clientId} t={t} /> : null}
+      </View>
       {checkpointPlan ? (
         <CheckpointsModal onClose={() => setCheckpointPlan(null)} plan={checkpointPlan} visible={Boolean(checkpointPlan)} />
       ) : null}
@@ -189,7 +134,98 @@ export function ClientNutritionPlanScreen(props: Props): React.JSX.Element {
   );
 }
 
-function TypeChip(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
+function AssignedPlanCard(props: {
+  clientName: string;
+  meals: Parameters<typeof NutritionPdfButton>[0]['meals'];
+  mealsLoading: boolean;
+  onChange: () => void;
+  onCheckpoints: () => void;
+  plan: NutritionPlan;
+  t: Translate;
+}): React.JSX.Element {
+  const { plan, t } = props;
+  const setup = readSetupData(plan.setupData);
+  const tiles = setup
+    ? [
+        [t('coach.nutrition.macros.calories'), String(setup.targetCalories)],
+        [t('coach.nutrition.macros.protein'), t('coach.nutrition.macros.grams', { value: setup.proteinG })],
+        [t('coach.nutrition.macros.carbs'), t('coach.nutrition.macros.grams', { value: setup.carbsG })],
+        [t('coach.nutrition.macros.fat'), t('coach.nutrition.macros.grams', { value: setup.fatG })],
+      ]
+    : [];
+  return (
+    <View style={s.card}>
+      <View style={s.badge}>
+        <Text style={s.badgeText}>
+          {plan.type === 'LIBRE' ? t('coach.nutrition.plans.free') : t('coach.nutrition.plans.structured')}
+        </Text>
+      </View>
+      <Text style={s.cardTitle}>{plan.name}</Text>
+      {tiles.length > 0 ? (
+        <View style={s.tileRow}>
+          {tiles.map(([label, value]) => (
+            <View key={label} style={s.tile}>
+              <Text style={s.tileLabel}>{label}</Text>
+              <Text style={s.tileValue}>{value}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      <View style={s.row}>
+        <ClientPreviewButton isDraft={false}>
+          <NutritionClientPreview plan={plan} meals={props.meals} />
+        </ClientPreviewButton>
+        <NutritionPdfButton
+          plan={plan}
+          meals={props.meals}
+          isDraft={false}
+          clientName={props.clientName}
+          disabled={props.mealsLoading}
+        />
+        <Button label={t('coach.nutrition.checkpoints.open')} onPress={props.onCheckpoints} size="sm" variant="secondary" />
+        <Button label={t('coach.nutrition.client.changePlan')} onPress={props.onChange} size="sm" variant="secondary" />
+      </View>
+    </View>
+  );
+}
+
+function AssignedTypeToggle(props: {
+  onChange: (type: NutritionPlanType) => void;
+  t: Translate;
+  value: NutritionPlanType;
+}): React.JSX.Element {
+  return (
+    <View style={s.chipRow}>
+      <Chip
+        active={props.value === 'LIBRE'}
+        label={props.t('coach.nutrition.plans.free')}
+        onPress={() => props.onChange('LIBRE')}
+      />
+      <Chip
+        active={props.value === 'ESTRUCTURADO'}
+        label={props.t('coach.nutrition.plans.structured')}
+        onPress={() => props.onChange('ESTRUCTURADO')}
+      />
+    </View>
+  );
+}
+
+function PlanTabs(props: { onChange: (tab: Tab) => void; tab: Tab; t: Translate }): React.JSX.Element {
+  const tabs: Array<[Tab, string]> = [
+    ['content', props.t('coach.nutrition.client.tabContent')],
+    ['today', props.t('coach.nutrition.client.tabToday')],
+    ['adherence', props.t('coach.nutrition.client.tabAdherence')],
+  ];
+  return (
+    <View style={s.chipRow}>
+      {tabs.map(([key, label]) => (
+        <Chip key={key} active={props.tab === key} label={label} onPress={() => props.onChange(key)} />
+      ))}
+    </View>
+  );
+}
+
+function Chip(props: { active: boolean; label: string; onPress: () => void }): React.JSX.Element {
   return (
     <Pressable onPress={props.onPress} style={[styles.chip, props.active && styles.chipActive]}>
       <Text style={[styles.chipLabel, props.active && styles.chipLabelActive]}>{props.label}</Text>
@@ -200,82 +236,4 @@ function TypeChip(props: { active: boolean; label: string; onPress: () => void }
 function preferredAssignedType(plans: NutritionPlan[]): NutritionPlanType {
   if (plans.some((plan) => plan.type === 'ESTRUCTURADO')) return 'ESTRUCTURADO';
   return 'LIBRE';
-}
-
-function resolveActivePlan(plans: NutritionPlan[], type: NutritionPlanType): NutritionPlan | undefined {
-  return plans.find((plan) => plan.type === type);
-}
-
-const FREE_COLUMN_ORDER = ['breakfast', 'lunch', 'snack', 'dinner', 'other'];
-
-function FreePlanReadOnly(props: {
-  content: unknown;
-  foods: Array<{ id: string; servingUnit?: string | null }>;
-  t: (key: string, params?: Record<string, number | string>) => string;
-}): React.JSX.Element {
-  const content = (props.content as FreePlanContent | undefined) ?? { columns: {} };
-  const columns = orderedFreeColumns(content.columns ?? {});
-  if (columns.length === 0)
-    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
-  return (
-    <>
-      {columns.map(([column, items]) => (
-        <View key={column} style={styles.card}>
-          <Text style={styles.cardTitle}>{props.t(`coach.nutrition.categories.${column}`, { defaultValue: column })}</Text>
-          {items.map((item) => (
-            <Text key={item.id} style={styles.cardMuted}>
-              {freeItemLabel(item, props.foods, props.t)}
-            </Text>
-          ))}
-        </View>
-      ))}
-    </>
-  );
-}
-
-function orderedFreeColumns(columns: FreePlanContent['columns']): Array<[string, FreePlanContent['columns'][string]]> {
-  const known = FREE_COLUMN_ORDER.filter((key) => (columns[key]?.length ?? 0) > 0).map(
-    (key) => [key, columns[key] ?? []] as [string, FreePlanContent['columns'][string]],
-  );
-  const extra = Object.entries(columns).filter(([key, items]) => !FREE_COLUMN_ORDER.includes(key) && items.length > 0);
-  return [...known, ...extra];
-}
-
-function freeItemLabel(
-  item: FreePlanContent['columns'][string][number],
-  foods: Array<{ id: string; servingUnit?: string | null }>,
-  t: (key: string, params?: Record<string, number | string>) => string,
-): string {
-  const name = item.mealName ?? item.foodName ?? '—';
-  const unit = foods.find((food) => food.id === item.foodId)?.servingUnit;
-  const amount = formatFoodAmount(item.amountGrams, unit, t);
-  return amount ? `${name} · ${amount}` : name;
-}
-
-function StructuredPlanReadOnly(props: {
-  content: unknown;
-  t: (key: string, params?: Record<string, number | string>) => string;
-}): React.JSX.Element {
-  const content = (props.content as StructuredPlanContent | undefined) ?? { weeks: [] };
-  if (content.weeks.length === 0)
-    return <EmptyState icon={<EmptyIllustration kind={'library'} />} title={props.t('coach.nutrition.client.noContent')} />;
-  return (
-    <>
-      {content.weeks.map((week) => (
-        <View key={week.id} style={styles.card}>
-          <Text style={styles.cardTitle}>{week.label}</Text>
-          {week.days.map((day) => (
-            <View key={day.id} style={{ marginTop: space.sm }}>
-              <Text style={styles.cardMuted}>{day.label}</Text>
-              {day.meals.map((meal) => (
-                <Text key={meal.id} style={styles.cardTitle}>
-                  {meal.name}
-                </Text>
-              ))}
-            </View>
-          ))}
-        </View>
-      ))}
-    </>
-  );
 }

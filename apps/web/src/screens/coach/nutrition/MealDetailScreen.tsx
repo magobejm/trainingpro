@@ -3,13 +3,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
 import { useDeleteMealMutation, useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
+import type { Crumb } from '../../../layout/crumbs';
 import { ConsiderationBadges } from './ConsiderationBadges';
+import { NutritionCrumbBar } from './nutrition-crumbs';
 import { styles } from './nutrition.styles';
 import { Button, EmptyState, useToast } from '@trainerpro/ui';
 
 type Props = {
+  crumbs: Crumb[];
   mealId: string;
-  onBack: () => void;
+  onDeleted: () => void;
 };
 
 export function MealDetailScreen(props: Props): React.JSX.Element {
@@ -25,7 +28,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
   if (!meal) {
     return (
       <View style={styles.container}>
-        <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+        <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
         <EmptyState title={t('coach.nutrition.meals.notFound')} />
       </View>
     );
@@ -46,7 +49,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+      <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
       <Text style={styles.headerTitle}>{meal.name}</Text>
       <Text style={styles.cardMuted}>
         {t(`coach.nutrition.categories.${meal.category}`, { defaultValue: meal.category })}
@@ -91,5 +94,5 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
 
 async function deleteMeal(props: Props, deleteMutation: ReturnType<typeof useDeleteMealMutation>): Promise<void> {
   await deleteMutation.mutateAsync(props.mealId);
-  props.onBack();
+  props.onDeleted();
 }

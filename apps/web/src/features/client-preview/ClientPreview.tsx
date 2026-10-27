@@ -1,28 +1,16 @@
 import React, { useState } from 'react';
-import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
-import { LoadingState } from '../../components/AsyncStatus';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
   ClientExerciseCard,
-  ClientNutritionMacrosCard,
-  ClientNutritionMealGroups,
   ClientRoutineDayContent,
   Modal,
   colors,
   clientPlanLight as LIGHT,
 } from '@trainerpro/ui';
-import {
-  buildMealGroups,
-  readSetupData,
-  type ClientNutrition,
-  type ClientRoutine,
-  type ClientRoutineExercise,
-  type NutritionPlan,
-} from '@trainerpro/shared';
+import { type ClientRoutine, type ClientRoutineExercise } from '@trainerpro/shared';
 
-type Plan = Pick<NutritionPlan, 'name' | 'type' | 'content' | 'setupData'> & Partial<Pick<NutritionPlan, 'description'>>;
 export function ClientPreviewButton(props: {
   isDraft: boolean;
   disabled?: boolean;
@@ -175,36 +163,7 @@ function PreviewExercise(props: {
   );
 }
 
-export function NutritionClientPreview(props: {
-  plan: Plan;
-  meals?: ClientNutrition['meals'];
-  foods?: ClientNutrition['foods'];
-}): React.JSX.Element {
-  const { t } = useTranslation();
-  const foods = useLibraryFoodsQuery({});
-  if (!props.foods && foods.isPending) return <LoadingState label={t('common.loading')} />;
-  if (!props.foods && foods.isError)
-    return (
-      <View>
-        <Text style={styles.description}>{t('common.error')}</Text>
-        <Button label={t('common.retry')} onPress={() => void foods.refetch()} />
-      </View>
-    );
-  const setup = readSetupData(props.plan.setupData);
-  const groups = buildMealGroups(props.plan);
-  return (
-    <View style={styles.nutrition}>
-      <Text style={styles.nutritionTitle}>{props.plan.name || t('coach.clientPreview.empty')}</Text>
-      {props.plan.description ? <Text style={styles.description}>{props.plan.description}</Text> : null}
-      {setup ? <ClientNutritionMacrosCard setup={setup} t={t} /> : null}
-      {groups.length ? (
-        <ClientNutritionMealGroups groups={groups} meals={props.meals} foods={props.foods ?? foods.data} t={t} />
-      ) : (
-        <Text style={styles.description}>{t('client.nutrition.noMeals')}</Text>
-      )}
-    </View>
-  );
-}
+export { NutritionClientPreview } from './NutritionClientPreview';
 
 function PhoneAction(props: { label: string; onPress: () => void }): React.JSX.Element {
   return (

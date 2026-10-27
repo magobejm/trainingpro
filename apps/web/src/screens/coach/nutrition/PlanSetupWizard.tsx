@@ -3,12 +3,14 @@ import { getLayoutStyle1, getLayoutStyle2, getLayoutStyle3 } from './PlanSetupWi
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
+import type { Crumb } from '../../../layout/crumbs';
 import { buildPlanSetupData } from './nutrition-tdee.utils';
+import { NutritionCrumbBar } from './nutrition-crumbs';
 import type { ActivityLevel, NutritionPlanType, PlanSetupData, TdeeFormula } from './nutrition.types';
 import { styles } from './nutrition.styles';
 import { Button, TextField } from '@trainerpro/ui';
 type Props = {
-  onBack: () => void;
+  crumbs: Crumb[];
   onComplete: (input: { name: string; setupData: PlanSetupData; type: NutritionPlanType }) => void;
   planType: NutritionPlanType;
 };
@@ -59,7 +61,7 @@ export function PlanSetupWizard(props: Props): React.JSX.Element {
   const layoutStyle3 = getLayoutStyle3;
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+      <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
       <Text style={styles.headerTitle}>{t('coach.nutrition.wizard.title')}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.wizard.generic')}</Text>
       <TextField

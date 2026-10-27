@@ -14,12 +14,12 @@ export function Breadcrumbs(props: { accessibilityLabel: string; crumbs: Crumb[]
   return (
     <View accessibilityLabel={props.accessibilityLabel} role={NAVIGATION} style={styles.row}>
       {props.crumbs.map((crumb, index) => {
-        const target = crumb.to;
+        const open = crumb.onPress ?? (crumb.to ? () => navigate(crumb.to ?? '') : null);
         return (
           <View key={`${index}-${crumb.label}`} style={styles.item}>
             {index > 0 ? <Text style={styles.separator}>{SEPARATOR}</Text> : null}
-            {target ? (
-              <Pressable accessibilityRole="link" onPress={() => navigate(target)}>
+            {open ? (
+              <Pressable accessibilityRole="link" onPress={open}>
                 <Text style={styles.link}>{crumb.label}</Text>
               </Pressable>
             ) : (

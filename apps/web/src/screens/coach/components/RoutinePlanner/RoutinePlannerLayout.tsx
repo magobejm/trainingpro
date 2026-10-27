@@ -4,7 +4,6 @@ import { RoutineDraftPreview } from '../../../../features/client-preview/Routine
 import { RoutinePdfButton } from '../../../../features/pdf/PlanPdfButton';
 import React, { useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
-import { ArrowLeft } from 'lucide-react';
 import { s } from '../../RoutinePlanner.styles';
 import { DayList } from './DayList';
 import { SaveRoutineModal } from './SaveRoutineModal';
@@ -17,10 +16,10 @@ import { createWarmupTemplateSelector, removeWarmupTemplateFromDay } from './Rou
 import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
 import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
-import { Button, colors } from '@trainerpro/ui';
+import { Button } from '@trainerpro/ui';
 import { useClientsQuery } from '../../../../data/hooks/useClientsQuery';
 import { Breadcrumbs } from '../../../../layout/Breadcrumbs';
-import { buildClientCrumbs } from '../../../../layout/crumbs';
+import { buildClientCrumbs, buildLibraryPlannerCrumbs } from '../../../../layout/crumbs';
 import { styles as clientStyles } from '../../clients-screen.styles';
 interface LayoutProps {
   clientContextId?: null | string;
@@ -297,16 +296,11 @@ function RoutinePlannerOrigin(props: LayoutProps): React.JSX.Element | null {
   if (props.clientContextId) {
     return <RoutinePlannerCrumbs clientId={props.clientContextId} clientName={props.clientContextName ?? ''} t={props.t} />;
   }
-  if (!props.onBack || !props.backLabelKey) return null;
+  if (!props.onBack) return null;
+  const crumbs = buildLibraryPlannerCrumbs({ kind: 'routine', t: props.t });
   return (
-    <View style={plannerBackStyles.row}>
-      <Button
-        icon={<ArrowLeft color={colors.textMuted} size={18} />}
-        label={props.t(props.backLabelKey)}
-        onPress={props.onBack}
-        size="sm"
-        variant="ghost"
-      />
+    <View style={clientStyles.breadcrumbCard}>
+      <Breadcrumbs accessibilityLabel={props.t('app.breadcrumb')} crumbs={crumbs} />
     </View>
   );
 }
@@ -326,13 +320,6 @@ function RoutinePlannerCrumbs(props: { clientId: string; clientName: string; t: 
     </View>
   );
 }
-
-const plannerBackStyles = {
-  row: {
-    alignItems: 'flex-start' as const,
-    marginBottom: 8,
-  },
-};
 
 function RoutineLayoutSections(props: {
   onOpenPicker: OpenPickerFn;

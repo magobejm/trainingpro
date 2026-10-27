@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { LIST_KEYS } from '../../../layout/list-context';
+import React, { useEffect, useRef, useState } from 'react';
+import { clientIdFromSearch, LIST_KEYS, replaceClientSearch } from '../../../layout/list-context';
+import { useMenuEpoch } from '../../../layout/menu-client-context';
 import { useListContext } from '../../../layout/useListContext';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
+import { useClientsQuery } from '../../../data/hooks/useClientsQuery';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
-import { useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
+import { useNutritionMealsQuery, useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
 import { BuildFreePlanScreen } from './BuildFreePlanScreen';
 import { BuildStructuredPlanScreen } from './BuildStructuredPlanScreen';
 import { CheckpointsModal } from './CheckpointsModal';
@@ -17,8 +19,8 @@ import { PlanSetupWizard } from './PlanSetupWizard';
 import { readSetupData } from './nutrition-tdee.utils';
 import type { NutritionPlanType, PlanSetupData } from './nutrition.types';
 import { ConsiderationBadges } from './ConsiderationBadges';
+import { buildNutritionCrumbs, NutritionCrumbBar, type NutritionCrumbView } from './nutrition-crumbs';
 import { styles } from './nutrition.styles';
-import { Button } from '@trainerpro/ui';
 
 type ViewState =
   | 'buildFree'
@@ -46,23 +48,36 @@ export function NutritionScreen(): React.JSX.Element {
 function useNutritionScreenModel() {
   const { t } = useTranslation();
   const [list, setList] = useListContext(LIST_KEYS.nutrition, emptyNutritionContext(), reviveNutritionContext);
-  const [wizardDraft, setWizardDraft] = useState<null | WizardDraft>(null);
+  const [wizardDraft, setWizardDraft] = useState<null | WizardDraft>(() =>
+    list.view === 'wizard' && list.wizardType ? { name: '', setupData: emptySetup(), type: list.wizardType } : null,
+  );
   const setView = (view: ViewState) => setList((prev) => ({ ...prev, view }));
   const setSelectedMealId = (selectedMealId: string) => setList((prev) => ({ ...prev, selectedMealId }));
   const setSelectedFoodId = (selectedFoodId: string) => setList((prev) => ({ ...prev, selectedFoodId }));
   const setCheckpointPlanId = (checkpointPlanId: string) => setList((prev) => ({ ...prev, checkpointPlanId }));
   const setHubQuery = (hubQuery: string) => setList((prev) => ({ ...prev, hubQuery }));
   const plansQuery = useNutritionPlansQuery();
+  const mealsQuery = useNutritionMealsQuery();
   const foodsQuery = useLibraryFoodsQuery({ query: '' });
+  const clientsQuery = useClientsQuery();
   const checkpointPlan = plansQuery.data?.find((plan) => plan.id === list.checkpointPlanId) ?? null;
+  const listed = clientsQuery.data?.find((client) => client.id === list.originClientId);
+  const listedName = listed ? `${listed.firstName} ${listed.lastName}`.trim() : '';
+  useClearOriginOnMenu(setList);
 
   return {
     checkpointPlan,
     foodsQuery,
     hubQuery: list.hubQuery,
-    onBackToHub: () => setView('hub'),
+    mealName: mealsQuery.data?.find((meal) => meal.id === list.selectedMealId)?.name ?? '',
+    onBackToHub: () => {
+      replaceClientSearch(null);
+      setList((prev) => ({ ...prev, originClientId: '', originClientName: '', view: 'hub' }));
+    },
     onOpenCheckpoint: (planId: string) => setCheckpointPlanId(planId),
     onCloseCheckpoint: () => setCheckpointPlanId(''),
+    originClientId: list.originClientId,
+    originClientName: list.originClientName.trim() || listedName,
     plansQuery,
     selectedFoodId: list.selectedFoodId,
     selectedMealId: list.selectedMealId,
@@ -77,21 +92,46 @@ function useNutritionScreenModel() {
   };
 }
 
+function useClearOriginOnMenu(setList: React.Dispatch<React.SetStateAction<NutritionContext>>): void {
+  const menuEpoch = useMenuEpoch();
+  const seenEpoch = useRef(menuEpoch);
+  useEffect(() => {
+    if (seenEpoch.current === menuEpoch) return;
+    seenEpoch.current = menuEpoch;
+    setList(emptyNutritionContext());
+  }, [menuEpoch, setList]);
+}
+
 type NutritionContext = {
   checkpointPlanId: string;
   hubQuery: string;
+  originClientId: string;
+  originClientName: string;
   selectedFoodId: string;
   selectedMealId: string;
   view: ViewState;
+  wizardType: '' | NutritionPlanType;
 };
 
 function emptyNutritionContext(): NutritionContext {
-  return { checkpointPlanId: '', hubQuery: '', selectedFoodId: '', selectedMealId: '', view: 'hub' };
+  return {
+    checkpointPlanId: '',
+    hubQuery: '',
+    originClientId: '',
+    originClientName: '',
+    selectedFoodId: '',
+    selectedMealId: '',
+    view: 'hub',
+    wizardType: '',
+  };
 }
 
 function reviveNutritionContext(stored: NutritionContext | null, initial: NutritionContext): NutritionContext {
-  if (!stored || !PERSISTED_NUTRITION_VIEWS.has(stored.view)) return initial;
-  return stored;
+  const keep = stored && (PERSISTED_NUTRITION_VIEWS.has(stored.view) || (stored.view === 'wizard' && stored.wizardType));
+  const revived = stored && keep ? { ...initial, ...stored } : { ...initial };
+  const urlClient = typeof window === 'undefined' ? '' : (clientIdFromSearch(window.location.search) ?? '');
+  if (!revived.originClientId && urlClient && revived.view !== 'hub') revived.originClientId = urlClient;
+  return revived;
 }
 
 const PERSISTED_NUTRITION_VIEWS = new Set<ViewState>([
@@ -107,10 +147,11 @@ type ViewModel = ReturnType<typeof useNutritionScreenModel>;
 
 // eslint-disable-next-line max-lines-per-function
 function NutritionScreenView(props: ViewModel): React.JSX.Element {
+  const crumbs = nutritionCrumbs(props);
   if (props.view === 'meals') {
     return (
       <CreatedMealsScreen
-        onBack={props.onBackToHub}
+        crumbs={crumbs}
         onCreate={() => props.setView('createMeal')}
         onOpenMeal={(mealId) => {
           props.setSelectedMealId(mealId);
@@ -122,7 +163,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
   if (props.view === 'createMeal') {
     return (
       <CreateMealScreen
-        onBack={() => props.setView('meals')}
+        crumbs={crumbs}
         onCreated={(mealId) => {
           props.setSelectedMealId(mealId);
           props.setView('mealDetail');
@@ -131,12 +172,12 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
     );
   }
   if (props.view === 'mealDetail' && props.selectedMealId) {
-    return <MealDetailScreen mealId={props.selectedMealId} onBack={() => props.setView('meals')} />;
+    return <MealDetailScreen crumbs={crumbs} mealId={props.selectedMealId} onDeleted={() => props.setView('meals')} />;
   }
   if (props.view === 'createPlan') {
     return (
       <CreatePlanScreen
-        onBack={props.onBackToHub}
+        crumbs={crumbs}
         onOpenPlan={(planId, type) => openExistingPlan(props, planId, type)}
         onStartWizard={(type) => {
           props.setWizardDraft({ name: '', setupData: emptySetup(), type });
@@ -148,7 +189,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
   if (props.view === 'wizard' && props.wizardDraft) {
     return (
       <PlanSetupWizard
-        onBack={() => props.setView('createPlan')}
+        crumbs={crumbs}
         onComplete={(input) => {
           props.setWizardDraft({ ...props.wizardDraft!, name: input.name, setupData: input.setupData, type: input.type });
           props.setView(input.type === 'LIBRE' ? 'buildFree' : 'buildStructured');
@@ -160,7 +201,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
   if (props.view === 'buildFree' && props.wizardDraft) {
     return (
       <BuildFreePlanScreen
-        onBack={() => props.setView('createPlan')}
+        crumbs={crumbs}
         onSaved={(planId) => {
           props.onOpenCheckpoint(planId);
           props.onBackToHub();
@@ -174,7 +215,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
   if (props.view === 'buildStructured' && props.wizardDraft) {
     return (
       <BuildStructuredPlanScreen
-        onBack={() => props.setView('createPlan')}
+        crumbs={crumbs}
         onSaved={(planId) => {
           props.onOpenCheckpoint(planId);
           props.onBackToHub();
@@ -189,13 +230,7 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
     const food = props.foodsQuery.data?.find((item) => item.id === props.selectedFoodId);
     return (
       <ScrollView contentContainerStyle={styles.container}>
-        <Button
-          label={props.t('common.back')}
-          onPress={props.onBackToHub}
-          size="sm"
-          style={styles.backButton}
-          variant="secondary"
-        />
+        <NutritionCrumbBar crumbs={crumbs} label={props.t('app.breadcrumb')} />
         <Text style={styles.headerTitle}>{food?.name ?? props.t('coach.nutrition.food.notFound')}</Text>
         {food ? (
           <View style={styles.card}>
@@ -235,6 +270,27 @@ function NutritionScreenView(props: ViewModel): React.JSX.Element {
       ) : null}
     </>
   );
+}
+
+function nutritionCrumbs(props: ViewModel) {
+  if (!isNutritionCrumbView(props.view)) return [];
+  const food = props.foodsQuery.data?.find((item) => item.id === props.selectedFoodId);
+  return buildNutritionCrumbs({
+    clientId: props.originClientId,
+    clientName: props.originClientName,
+    foodName: food?.name ?? '',
+    mealName: props.mealName,
+    onHub: props.onBackToHub,
+    onMeals: () => props.setView('meals'),
+    onPlans: () => props.setView('createPlan'),
+    planName: props.wizardDraft?.name ?? '',
+    t: props.t,
+    view: props.view,
+  });
+}
+
+function isNutritionCrumbView(view: ViewState): view is NutritionCrumbView {
+  return view !== 'hub';
 }
 
 function openExistingPlan(props: ViewModel, planId: string, type: NutritionPlanType): void {

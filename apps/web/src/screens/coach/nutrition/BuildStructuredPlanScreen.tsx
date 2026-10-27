@@ -10,11 +10,13 @@ import {
   useNutritionPlansQuery,
   useUpdatePlanMutation,
 } from '../../../data/hooks/useNutrition';
+import type { Crumb } from '../../../layout/crumbs';
 import type { PlanSetupData, StructuredDay, StructuredPlanContent, StructuredWeek } from './nutrition.types';
+import { NutritionCrumbBar } from './nutrition-crumbs';
 import { styles } from './nutrition.styles';
 import { Button, TextField, useToast } from '@trainerpro/ui';
 type Props = {
-  onBack: () => void;
+  crumbs: Crumb[];
   onSaved: (planId: string) => void;
   planId?: string;
   planName: string;
@@ -50,7 +52,7 @@ export function BuildStructuredPlanScreen(props: Props): React.JSX.Element {
   const previewDisabled = Boolean(props.planId && (plansQuery.isLoading || plansQuery.isError || !savedPlan));
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+      <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
       <Text style={styles.headerTitle}>{props.planName}</Text>
       <Text style={styles.headerSubtitle}>{t('coach.nutrition.buildStructured.subtitle')}</Text>
       <NutritionPlanActions

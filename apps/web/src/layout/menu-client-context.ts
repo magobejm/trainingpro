@@ -4,6 +4,7 @@ import {
   clearStoredClientSelection,
   LIST_KEYS,
   readListContext,
+  replaceClientSearch,
   writeListContext,
   writeRouteClientId,
 } from './list-context';
@@ -27,6 +28,7 @@ export function applyMenuClientReset(route: ShellRoute): void {
   }
   if (route === 'coach.chat') clearChatOrigin();
   if (route === 'coach.incidents') clearIncidentOrigin();
+  if (route === 'coach.nutrition') clearNutritionOrigin();
   if (route === 'coach.calendar') {
     clearStoredClientSelection(LIST_KEYS.calendar, { selectedClientId: null, viewMode: 'all' });
   }
@@ -39,6 +41,13 @@ function clearChatOrigin(): void {
 
 function clearIncidentOrigin(): void {
   clearProfileOrigin(LIST_KEYS.incidents);
+}
+
+function clearNutritionOrigin(): void {
+  replaceClientSearch(null);
+  const stored = readListContext<Record<string, unknown>>(LIST_KEYS.nutrition);
+  if (!stored) return;
+  writeListContext(LIST_KEYS.nutrition, { ...stored, originClientId: '', originClientName: '', view: 'hub' });
 }
 
 function clearProfileOrigin(key: string): void {

@@ -1,13 +1,12 @@
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { getLayoutStyle1 } from './WarmupPlannerScreen.layout-styles';
 
-import { WebBox } from '@trainerpro/ui';
+import { Button, EmptyState, space, WebBox } from '@trainerpro/ui';
 /* eslint-disable max-lines-per-function */
 /* eslint-disable max-lines-per-function */
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
-import { ArrowLeft } from 'lucide-react';
 import { createBlock } from './RoutinePlanner.helpers';
 import type { BlockType, DraftDay } from './RoutinePlanner.types';
 import { EMPTY_DRAFT, fromTemplate, moveBlocks, toPayload, type DraftState } from './WarmupPlannerScreen.helpers';
@@ -27,7 +26,9 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { UnsavedStatus, UnsavedWorkDialogs } from '../../layout/UnsavedWorkDialogs';
 import { saveTemplate } from '../../layout/template-save';
 import { useUnsavedWork } from '../../layout/useUnsavedWork';
-import { Button, colors, EmptyState, space } from '@trainerpro/ui';
+import { Breadcrumbs } from '../../layout/Breadcrumbs';
+import { buildLibraryPlannerCrumbs } from '../../layout/crumbs';
+import { styles as clientStyles } from './clients-screen.styles';
 import { SelectionOverlay, WarmupGroupModeBar } from './WarmupPlannerScreen.overlays';
 const WARMUP_BLOCK_TYPES: BlockType[] = ['strength', 'cardio', 'plio', 'mobility', 'isometric', 'sport'];
 type Props = {
@@ -195,21 +196,15 @@ function WarmupPlannerView({ vm }: { vm: VM }): React.JSX.Element {
     </ScrollView>
   );
 }
-const headerStyles = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: space.lg, marginBottom: space.xs };
+const headerStyles = { gap: space.md, marginBottom: space.xs };
 function WarmupPlannerHeader({ vm }: { vm: VM }): React.JSX.Element {
+  const crumbs = vm.fromLibrary ? buildLibraryPlannerCrumbs({ kind: 'warmup', t: vm.t }) : [];
   return (
     <View style={headerStyles}>
-      {vm.fromLibrary ? (
-        <Button
-          icon={<ArrowLeft color={colors.textMuted} size={18} />}
-          label={vm.t('coach.warmupPlanner.back')}
-          onPress={() => {
-            useWarmupPlannerContextStore.getState().clear();
-            vm.onRouteChange('coach.library.warmups');
-          }}
-          size="sm"
-          variant="ghost"
-        />
+      {crumbs.length > 0 ? (
+        <View style={clientStyles.breadcrumbCard}>
+          <Breadcrumbs accessibilityLabel={vm.t('app.breadcrumb')} crumbs={crumbs} />
+        </View>
       ) : null}
       <Text style={s.title}>{vm.t('coach.warmupPlanner.title')}</Text>
     </View>

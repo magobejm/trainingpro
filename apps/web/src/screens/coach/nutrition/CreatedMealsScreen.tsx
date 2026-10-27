@@ -4,11 +4,13 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
+import type { Crumb } from '../../../layout/crumbs';
+import { NutritionCrumbBar } from './nutrition-crumbs';
 import { styles } from './nutrition.styles';
 import { Button, EmptyState } from '@trainerpro/ui';
 
 type Props = {
-  onBack: () => void;
+  crumbs: Crumb[];
   onCreate: () => void;
   onOpenMeal: (mealId: string) => void;
 };
@@ -20,13 +22,14 @@ export function CreatedMealsScreen(props: Props): React.JSX.Element {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Button label={t('common.back')} onPress={props.onBack} size="sm" style={styles.backButton} variant="secondary" />
+      <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
       <Text style={styles.headerTitle}>{t('coach.nutrition.meals.title')}</Text>
       <Button label={t('coach.nutrition.meals.create')} onPress={props.onCreate} style={styles.ctaButton} />
       {mealsQuery.isLoading ? <LoadingState label={t('coach.nutrition.loading')} /> : null}
       {mealsQuery.isError ? <EmptyState title={t('coach.nutrition.error')} /> : null}
       {meals.length === 0 && !mealsQuery.isLoading ? (
-        <EmptyState icon={<EmptyIllustration kind={'library'} />}
+        <EmptyState
+          icon={<EmptyIllustration kind={'library'} />}
           actionLabel={t('coach.nutrition.meals.create')}
           onAction={props.onCreate}
           title={t('coach.nutrition.meals.empty')}

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { QueryResult } from '../../components/AsyncStatus';
@@ -8,9 +8,15 @@ import { useClientsQuery } from '../../data/hooks/useClientsQuery';
 import { useChatMessagesQuery, useCoachThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { AttachmentsPicker, type AttachmentDraft } from '../../features/chat/AttachmentsPicker';
 import { clientCardItems } from './client-card-items';
+import { Breadcrumbs } from '../../layout/Breadcrumbs';
+import { buildClientCrumbs } from '../../layout/crumbs';
 import { LIST_KEYS } from '../../layout/list-context';
+import { useMenuEpoch } from '../../layout/menu-client-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
 import { ChatHistoryPanel } from '../../features/chat/ChatHistoryPanel';
+import { styles as clientStyles } from './clients-screen.styles';
+
+type ChatSelection = { clientId: string; fromProfile: boolean };
 
 export function ChatScreen(): React.JSX.Element {
   const vm = useChatViewModel();
@@ -20,25 +26,45 @@ export function ChatScreen(): React.JSX.Element {
 function useChatViewModel() {
   const { t } = useTranslation();
   const clientsQuery = useClientsQuery();
-  const [client, setClient] = useListContext(LIST_KEYS.chat, { clientId: '' }, reviveClientId);
+  const [client, setClient] = useListContext(LIST_KEYS.chat, { clientId: '', fromProfile: false }, reviveChat);
   const clientId = client.clientId;
-  const setClientId = (nextId: string) => setClient({ clientId: nextId });
+  const setClientId = (nextId: string) =>
+    setClient((prev) => ({ clientId: nextId, fromProfile: nextId === prev.clientId && prev.fromProfile }));
+  useLeaveProfileOrigin(setClient);
   useRouteClient(clientId);
   useDefaultClient(clientId, clientsQuery.data, setClientId);
   const threadQuery = useCoachThreadQuery(clientId);
   const threadId = threadQuery.data?.id ?? '';
   const messagesQuery = useChatMessagesQuery(threadId);
   const clientItems = useMemo(() => clientCardItems(clientsQuery.data ?? [], t), [clientsQuery.data, t]);
+  const selected = clientItems.find((item) => item.id === clientId);
   return {
     clientId,
     clientItems,
+    clientName: selected?.title ?? '',
     clientsQuery,
+    fromProfile: client.fromProfile && clientId.length > 0,
     messagesQuery,
     setClientId,
     threadQuery,
     t,
     threadId,
   };
+}
+
+function reviveChat(stored: ChatSelection | null, initial: ChatSelection): ChatSelection {
+  const revived = reviveClientId(stored, initial);
+  return { clientId: revived.clientId, fromProfile: Boolean(stored?.clientId && stored.fromProfile) };
+}
+
+function useLeaveProfileOrigin(setClient: React.Dispatch<React.SetStateAction<ChatSelection>>): void {
+  const epoch = useMenuEpoch();
+  const seen = useRef(epoch);
+  useEffect(() => {
+    if (seen.current === epoch) return;
+    seen.current = epoch;
+    setClient((prev) => ({ ...prev, fromProfile: false }));
+  }, [epoch, setClient]);
 }
 
 function useDefaultClient(
@@ -113,6 +139,7 @@ type ViewModel = ChatModel & ReturnType<typeof useMessageComposer>;
 function ChatView(props: ChatModel) {
   return (
     <ScrollView contentContainerStyle={styles.page}>
+      {props.fromProfile ? <ChatOriginBar clientId={props.clientId} clientName={props.clientName} t={props.t} /> : null}
       <ChatHeader
         subtitle={props.t('coach.chat.subtitle')}
         title={props.t('coach.chat.title')}
@@ -150,6 +177,20 @@ function ChatConversation(props: ViewModel): React.JSX.Element {
       </View>
       <ChatMessagesPanel {...props} />
       <ChatComposer {...props} />
+    </View>
+  );
+}
+
+function ChatOriginBar(props: { clientId: string; clientName: string; t: ChatModel['t'] }): React.JSX.Element {
+  const crumbs = buildClientCrumbs({
+    clientId: props.clientId,
+    clientName: props.clientName,
+    mode: 'chat',
+    t: props.t,
+  });
+  return (
+    <View style={clientStyles.breadcrumbCard}>
+      <Breadcrumbs accessibilityLabel={props.t('app.breadcrumb')} crumbs={crumbs} />
     </View>
   );
 }

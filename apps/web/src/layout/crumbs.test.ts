@@ -26,6 +26,9 @@ describe('buildClientCrumbs', () => {
     ['nutrition', 'coach.nutrition.client.title'],
     ['mood', 'coach.clientProfile.details.mood.title'],
     ['tests', 'coach.clientProfile.details.tests.title'],
+    ['chat', 'coach.clientProfile.details.chat.title'],
+    ['incidents', 'coach.clientProfile.details.incidents.title'],
+    ['routine', 'coach.routine.title'],
   ] as const)('labels the %s screen', (mode, key) => {
     expect(buildClientCrumbs({ clientId: 'abc', clientName: 'Ana', mode, t }).at(-1)).toEqual({ label: key, to: null });
   });

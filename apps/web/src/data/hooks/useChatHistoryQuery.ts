@@ -27,7 +27,11 @@ export function useChatHistoryQuery(threadId: string) {
   const query = useQuery<ChatHistory>({
     enabled,
     queryKey,
-    queryFn: () => fetchChatRecent(fetchPage, client.getQueryData<ChatHistory>(queryKey)?.messages ?? []),
+    queryFn: async () => {
+      const history = await fetchChatRecent(fetchPage, client.getQueryData<ChatHistory>(queryKey)?.messages ?? []);
+      if (activeRole === 'coach') void client.invalidateQueries({ queryKey: ['coach', 'triage'] });
+      return history;
+    },
     structuralSharing: (previous, incoming) =>
       mergeChatHistory(previous as ChatHistory | undefined, incoming as ChatHistory),
     refetchInterval: enabled ? 10_000 : false,

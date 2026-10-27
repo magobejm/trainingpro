@@ -2,12 +2,16 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { menuStyle, menuStyleTop, expandedRowStyle, rowStyle, styles } from './ClientProfileSectionsBoard.styles';
 import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types';
-import { IconButton, colors } from '@trainerpro/ui';
+import { Badge, IconButton, colors } from '@trainerpro/ui';
 import { ClientComparePanel } from './ClientComparePanel';
 import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
 
 type Props = {
+  chatSubtitle?: string;
+  chatUnread?: boolean;
+  incidentCount?: number;
+  incidentSubtitle?: string;
   hasTrainingPlan: boolean;
   item: SectionItem;
   moodSubtitle?: string;
@@ -15,6 +19,8 @@ type Props = {
   onArchive: () => void;
   testsSubtitle?: string;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
+  onOpenChat?: () => void;
+  onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
@@ -36,10 +42,16 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
   const hasInlinePanel = props.item.id === 'compare';
   const rowMain = (
     <RowMain
+      chatSubtitle={props.chatSubtitle}
+      chatUnread={props.chatUnread}
+      incidentCount={props.incidentCount}
+      incidentSubtitle={props.incidentSubtitle}
       item={props.item}
       clientId={props.clientId}
       moodSubtitle={props.moodSubtitle}
       nutritionSubtitle={props.nutritionSubtitle}
+      onOpenChat={props.onOpenChat}
+      onOpenIncidents={props.onOpenIncidents}
       onOpenMood={props.onOpenMood}
       testsSubtitle={props.testsSubtitle}
       onOpenNutrition={props.onOpenNutrition}
@@ -75,10 +87,16 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
 }
 
 function RowMain(props: {
+  chatSubtitle?: string;
+  chatUnread?: boolean;
+  incidentCount?: number;
+  incidentSubtitle?: string;
   clientId: string;
   item: SectionItem;
   moodSubtitle?: string;
   nutritionSubtitle?: string;
+  onOpenChat?: () => void;
+  onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   testsSubtitle?: string;
   onOpenNutrition?: () => void;
@@ -97,6 +115,8 @@ function RowMain(props: {
     props.moodSubtitle,
     props.testsSubtitle,
     props.nutritionSubtitle,
+    props.chatSubtitle,
+    props.incidentSubtitle,
   );
   return (
     <>
@@ -105,7 +125,15 @@ function RowMain(props: {
         {props.item.icon({ color: props.item.iconColor || colors.textMuted, size: 18 })}
       </View>
       <Pressable onPress={() => onOpenSection(props)} style={styles.rowText}>
-        <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
+        <View style={styles.rowTitleLine}>
+          <Text style={styles.rowTitle}>{props.t(props.item.titleKey)}</Text>
+          {props.item.id === 'chat' && props.chatUnread ? (
+            <Badge label={props.t('coach.clientProfile.details.chat.unread')} tone="danger" />
+          ) : null}
+          {props.item.id === 'incidents' && props.incidentCount ? (
+            <Badge label={String(props.incidentCount)} tone="danger" />
+          ) : null}
+        </View>
         {props.item.id === 'progress' ? (
           <ClientProgressActivitySubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : props.item.id === 'timeline' ? (
@@ -164,6 +192,8 @@ function readDragProps(
 
 function onOpenSection(props: {
   item: SectionItem;
+  onOpenChat?: () => void;
+  onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
@@ -177,6 +207,8 @@ function onOpenSection(props: {
   if (props.item.id === 'tests') props.onOpenTests?.();
   if (props.item.id === 'mood') props.onOpenMood?.();
   if (props.item.id === 'timeline') props.onOpenTimeline();
+  if (props.item.id === 'chat') props.onOpenChat?.();
+  if (props.item.id === 'incidents') props.onOpenIncidents?.();
 }
 
 function readSubtitle(
@@ -186,11 +218,15 @@ function readSubtitle(
   moodSubtitle?: string,
   testsSubtitle?: string,
   nutritionSubtitle?: string,
+  chatSubtitle?: string,
+  incidentSubtitle?: string,
 ): string {
   if (item.id === 'training') return trainingPlanName || t(item.emptyKey);
   if (item.id === 'mood' && moodSubtitle) return moodSubtitle;
   if (item.id === 'tests' && testsSubtitle) return testsSubtitle;
   if (item.id === 'nutrition' && nutritionSubtitle) return nutritionSubtitle;
+  if (item.id === 'chat' && chatSubtitle) return chatSubtitle;
+  if (item.id === 'incidents' && incidentSubtitle) return incidentSubtitle;
   return t(item.emptyKey);
 }
 

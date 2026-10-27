@@ -67,6 +67,7 @@ export const styles = StyleSheet.create({
   rowSubtitle: { color: colors.textMuted, fontSize: fontSize.xs },
   rowText: { flex: 1, gap: 2 },
   rowTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '800' },
+  rowTitleLine: { alignItems: 'center', flexDirection: 'row', gap: space.sm },
 });
 
 export function drawerStyle(visible: boolean): React.CSSProperties {

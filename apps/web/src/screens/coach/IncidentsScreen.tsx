@@ -1,10 +1,13 @@
 import { QueryResult } from '../../components/AsyncStatus';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFormatDate } from '../../i18n/useFormatDate';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
 import { useClientsQuery } from '../../data/hooks/useClientsQuery';
+import { Breadcrumbs } from '../../layout/Breadcrumbs';
+import { buildClientCrumbs } from '../../layout/crumbs';
+import { useMenuEpoch } from '../../layout/menu-client-context';
 import {
   useAdjustmentDraftMutation,
   useIncidentsQuery,
@@ -17,6 +20,9 @@ import { clientCardItems } from './client-card-items';
 import { LIST_KEYS } from '../../layout/list-context';
 import { reviveClientId, useListContext, useRouteClient } from '../../layout/useListContext';
 import { Button, Card, ClientCardRow, TextField, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { styles as clientStyles } from './clients-screen.styles';
+
+type IncidentSelection = { clientId: string; fromProfile: boolean };
 
 const VARIANT_SECONDARY = 'secondary' as const;
 const SIZE_SM = 'sm' as const;
@@ -29,9 +35,11 @@ export function IncidentsScreen(): React.JSX.Element {
 function useIncidentsViewModel() {
   const { t } = useTranslation();
   const clientsQuery = useClientsQuery();
-  const [client, setClient] = useListContext(LIST_KEYS.incidents, { clientId: '' }, reviveClientId);
+  const [client, setClient] = useListContext(LIST_KEYS.incidents, { clientId: '', fromProfile: false }, reviveIncidents);
   const clientId = client.clientId;
-  const setClientId = (nextId: string) => setClient({ clientId: nextId });
+  const setClientId = (nextId: string) =>
+    setClient((prev) => ({ clientId: nextId, fromProfile: nextId === prev.clientId && prev.fromProfile }));
+  useLeaveProfileOrigin(setClient);
   useRouteClient(clientId);
   const incidentsQuery = useIncidentsQuery({ clientId: clientId || undefined });
   const actions = useIncidentActions();
@@ -47,7 +55,9 @@ function useIncidentsViewModel() {
   return {
     clientId,
     clientItems,
+    clientName: clientNames.get(clientId) ?? '',
     clientNames,
+    fromProfile: client.fromProfile && clientId.length > 0,
     incidents: incidentsQuery.data ?? [],
     error: incidentsQuery.error,
     isError: incidentsQuery.isError,
@@ -88,14 +98,44 @@ function buildActions(actions: ReturnType<typeof useIncidentActions>) {
 
 type ViewModel = ReturnType<typeof useIncidentsViewModel>;
 
+function reviveIncidents(stored: IncidentSelection | null, initial: IncidentSelection): IncidentSelection {
+  const revived = reviveClientId(stored, initial);
+  return { clientId: revived.clientId, fromProfile: Boolean(stored?.clientId && stored.fromProfile) };
+}
+
+function useLeaveProfileOrigin(setClient: React.Dispatch<React.SetStateAction<IncidentSelection>>): void {
+  const epoch = useMenuEpoch();
+  const seen = useRef(epoch);
+  useEffect(() => {
+    if (seen.current === epoch) return;
+    seen.current = epoch;
+    setClient((prev) => ({ ...prev, fromProfile: false }));
+  }, [epoch, setClient]);
+}
+
 function IncidentsView(props: ViewModel) {
   return (
     <ScrollView contentContainerStyle={styles.page}>
+      {props.fromProfile ? <IncidentOriginBar clientId={props.clientId} clientName={props.clientName} t={props.t} /> : null}
       <Text style={styles.title}>{props.t('coach.incidents.title')}</Text>
       <Text style={styles.subtitle}>{props.t('coach.incidents.subtitle')}</Text>
       <ClientCardRow items={props.clientItems} onItemPress={props.setClientId} selectedId={props.clientId} />
       <IncidentList {...props} />
     </ScrollView>
+  );
+}
+
+function IncidentOriginBar(props: { clientId: string; clientName: string; t: ViewModel['t'] }): React.JSX.Element {
+  const crumbs = buildClientCrumbs({
+    clientId: props.clientId,
+    clientName: props.clientName,
+    mode: 'incidents',
+    t: props.t,
+  });
+  return (
+    <View style={clientStyles.breadcrumbCard}>
+      <Breadcrumbs accessibilityLabel={props.t('app.breadcrumb')} crumbs={crumbs} />
+    </View>
   );
 }
 

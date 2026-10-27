@@ -18,6 +18,10 @@ import { RoutinePlannerTopSection } from './RoutinePlannerTopSection';
 import { NeatSection } from './NeatSection';
 import { WarmupTemplateDetailModal } from './WarmupTemplateDetailModal';
 import { Button, colors } from '@trainerpro/ui';
+import { useClientsQuery } from '../../../../data/hooks/useClientsQuery';
+import { Breadcrumbs } from '../../../../layout/Breadcrumbs';
+import { buildClientCrumbs } from '../../../../layout/crumbs';
+import { styles as clientStyles } from '../../clients-screen.styles';
 interface LayoutProps {
   clientContextId?: null | string;
   clientContextName?: null | string;
@@ -289,24 +293,36 @@ export function RoutinePlannerLayout(props: LayoutProps) {
   );
 }
 
-function RoutinePlannerBackHeader({
-  onBack,
-  backLabelKey,
-  t,
-}: {
-  onBack: () => void;
-  backLabelKey: string;
-  t: LayoutProps['t'];
-}) {
+function RoutinePlannerOrigin(props: LayoutProps): React.JSX.Element | null {
+  if (props.clientContextId) {
+    return <RoutinePlannerCrumbs clientId={props.clientContextId} clientName={props.clientContextName ?? ''} t={props.t} />;
+  }
+  if (!props.onBack || !props.backLabelKey) return null;
   return (
     <View style={plannerBackStyles.row}>
       <Button
         icon={<ArrowLeft color={colors.textMuted} size={18} />}
-        label={t(backLabelKey)}
-        onPress={onBack}
+        label={props.t(props.backLabelKey)}
+        onPress={props.onBack}
         size="sm"
         variant="ghost"
       />
+    </View>
+  );
+}
+
+function RoutinePlannerCrumbs(props: { clientId: string; clientName: string; t: LayoutProps['t'] }): React.JSX.Element {
+  const listed = useClientsQuery().data?.find((client) => client.id === props.clientId);
+  const listedName = listed ? `${listed.firstName} ${listed.lastName}`.trim() : '';
+  const crumbs = buildClientCrumbs({
+    clientId: props.clientId,
+    clientName: props.clientName.trim() || listedName,
+    mode: 'routine',
+    t: props.t,
+  });
+  return (
+    <View style={clientStyles.breadcrumbCard}>
+      <Breadcrumbs accessibilityLabel={props.t('app.breadcrumb')} crumbs={crumbs} />
     </View>
   );
 }
@@ -325,7 +341,7 @@ function RoutineLayoutSections(props: {
   onViewWarmupTemplate: (dayIdx: number, templateId: string) => void;
   props: LayoutProps;
 }) {
-  const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode, onBack, backLabelKey } = props.props;
+  const { draftState, uiState, t, labels = ROUTINE_LABELS, viewOnlyMode } = props.props;
   const isReadOnly = viewOnlyMode || draftState.draft.scope === 'GLOBAL';
   const progression = {
     mesocycleMicrocycles: draftState.draft.mesocycleMicrocycles ?? null,
@@ -333,7 +349,7 @@ function RoutineLayoutSections(props: {
   };
   return (
     <ProgressionContext.Provider value={progression}>
-      {onBack && backLabelKey ? <RoutinePlannerBackHeader onBack={onBack} backLabelKey={backLabelKey} t={t} /> : null}
+      <RoutinePlannerOrigin {...props.props} />
       {props.props.statusNode}
       <RoutinePlannerTopSection
         draft={draftState.draft}

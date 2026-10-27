@@ -1,4 +1,4 @@
-import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
 import { readAuthContext } from '../../common/auth-context/read-auth-context';
 import { Roles } from '../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../auth/presentation/guards/auth.guard';
@@ -15,5 +15,14 @@ export class CoachHomeController {
   @Get('triage')
   triageToday(@Req() request: HttpAuthRequest) {
     return this.triage.execute(readAuthContext(request));
+  }
+
+  @Put('triage/collapsed')
+  setCollapsed(@Req() request: HttpAuthRequest, @Body() body: { collapsed?: unknown }) {
+    const list = body?.collapsed;
+    if (!Array.isArray(list) || list.length > 20 || list.some((id) => typeof id !== 'string')) {
+      throw new BadRequestException('collapsed must be a list of category ids');
+    }
+    return this.triage.setCollapsed(readAuthContext(request), list as string[]);
   }
 }

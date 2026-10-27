@@ -19,7 +19,10 @@ export class ChatRepositoryPrisma implements ChatRepositoryPort {
   ) {}
 
   async listMessagesByThread(context: AuthContext, threadId: string, before?: Date, beforeId?: string) {
-    await this.threadAccess.assertAccess(context, threadId);
+    const grant = await this.threadAccess.assertAccess(context, threadId);
+    if (grant.senderRole === 'COACH' && !before && !beforeId) {
+      await this.prisma.chatThread.update({ where: { id: threadId }, data: { coachLastReadAt: new Date() } });
+    }
     if (beforeId) {
       const cursor = await this.prisma.chatMessage.findFirst({
         where: { id: beforeId, threadId },

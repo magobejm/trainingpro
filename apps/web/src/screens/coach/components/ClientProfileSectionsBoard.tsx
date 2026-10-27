@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import {
   useClientManagementSectionsQuery,
@@ -22,11 +23,15 @@ import { useClientNutritionPlansQuery } from '../../../data/hooks/useNutrition';
 import { readSetupData } from '../nutrition/nutrition-tdee.utils';
 import type { NutritionPlan } from '../nutrition/nutrition.types';
 import { useClientPhysicalTestsQuery, type ClientPhysicalTestAssignmentView } from '../../../data/hooks/usePhysicalTests';
+import { useCoachTriage } from '../../../data/hooks/useCoachTriage';
+import { useIncidentsQuery, type IncidentView } from '../../../data/hooks/useIncidents';
 import { buildDefaultWellnessRange } from '../client-mood.helpers';
 
 type Props = {
   clientId: string;
   hasTrainingPlan: boolean;
+  onOpenChat?: () => void;
+  onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
   onOpenProgress?: () => void;
@@ -72,6 +77,12 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
   const testsSubtitle = resolveNextTestSubtitle(vm.assignments, props.t);
   const nutritionPlans = useClientNutritionPlansQuery(props.clientId).data;
   const nutritionSubtitle = resolveNutritionSubtitle(nutritionPlans, props.t);
+  const { i18n } = useTranslation();
+  const unreadChat = useCoachTriage().query.data?.chat.find((row) => row.clientId === props.clientId);
+  const chatSubtitle = unreadChatSince(unreadChat?.since, i18n.language, props.t);
+  const incidents = useIncidentsQuery({ clientId: props.clientId }).data ?? [];
+  const openIncidents = incidents.filter((row) => row.status === 'OPEN');
+  const incidentSubtitle = latestIncidentSubtitle(incidents, i18n.language, props.t);
   return (
     <View style={styles.board}>
       <ClientProfileSectionsBoardHeader
@@ -82,7 +93,20 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
       />
       <View style={styles.mainList}>
         {lists.activeSections.map((item, index) =>
-          renderRow(item, index, lists.activeSections.length, props, vm, moodSubtitle, testsSubtitle, nutritionSubtitle),
+          renderRow(
+            item,
+            index,
+            lists.activeSections.length,
+            props,
+            vm,
+            Boolean(unreadChat),
+            openIncidents.length,
+            chatSubtitle,
+            incidentSubtitle,
+            moodSubtitle,
+            testsSubtitle,
+            nutritionSubtitle,
+          ),
         )}
       </View>
       <ClientProfileArchivedDrawer
@@ -153,6 +177,10 @@ function renderRow(
   total: number,
   props: Props,
   vm: BoardViewModel,
+  chatUnread: boolean,
+  incidentCount: number,
+  chatSubtitle?: string,
+  incidentSubtitle?: string,
   moodSubtitle?: string,
   testsSubtitle?: string,
   nutritionSubtitle?: string,
@@ -160,6 +188,10 @@ function renderRow(
   return (
     <ClientProfileSectionRow
       key={item.id}
+      chatSubtitle={chatSubtitle}
+      chatUnread={chatUnread}
+      incidentCount={incidentCount}
+      incidentSubtitle={incidentSubtitle}
       hasTrainingPlan={props.hasTrainingPlan}
       item={item}
       moodSubtitle={moodSubtitle}
@@ -167,6 +199,8 @@ function renderRow(
       testsSubtitle={testsSubtitle}
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
+      onOpenChat={props.onOpenChat}
+      onOpenIncidents={props.onOpenIncidents}
       onOpenMood={props.onOpenMood}
       onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
@@ -183,6 +217,37 @@ function renderRow(
       clientId={props.clientId}
     />
   );
+}
+
+function latestIncidentSubtitle(incidents: IncidentView[], language: string, t: Props['t']): string | undefined {
+  const latest = [...incidents].sort((left, right) => right.createdAt.localeCompare(left.createdAt))[0];
+  if (!latest) return undefined;
+  const reviewed = Boolean(latest.reviewedAt);
+  return t(reviewed ? 'coach.clientProfile.details.incidents.reviewed' : 'coach.clientProfile.details.incidents.latest', {
+    date: formatOpenedAt(latest.reviewedAt ?? latest.createdAt, language),
+    text: excerpt(latest.description),
+  });
+}
+
+function excerpt(text: string): string {
+  const clean = text.replace(/\s+/g, ' ').trim();
+  if (clean.length <= 90) return clean;
+  return `${clean.slice(0, 87).trimEnd()}…`;
+}
+
+function formatOpenedAt(value: string, language: string): string {
+  return new Date(value).toLocaleString(language, { day: 'numeric', hour: '2-digit', minute: '2-digit', month: 'short' });
+}
+
+function unreadChatSince(since: string | undefined, language: string, t: Props['t']): string | undefined {
+  if (!since) return undefined;
+  const date = new Date(since).toLocaleString(language, {
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    month: 'short',
+  });
+  return t('coach.clientProfile.details.chat.unreadSince', { date });
 }
 
 function resolveNutritionSubtitle(plans: NutritionPlan[] | undefined, t: Props['t']): string | undefined {

@@ -340,7 +340,7 @@ function renderProfile(props: ViewProps): React.JSX.Element {
 function renderNutritionPage(props: ViewProps): React.JSX.Element {
   return (
     <>
-      <CrumbBar mode={MODE_NUTRITION} onBack={props.onBackToProfile} view={props} />
+      <CrumbBar mode={MODE_NUTRITION} view={props} />
       <View style={styles.profileCard}>
         <ClientNutritionPlanScreen
           clientId={props.selectedClientId}
@@ -356,7 +356,7 @@ function renderNutritionPage(props: ViewProps): React.JSX.Element {
 function renderMoodPage(props: ViewProps): React.JSX.Element {
   return (
     <>
-      <CrumbBar mode={MODE_MOOD} onBack={props.onBackToProfile} view={props} />
+      <CrumbBar mode={MODE_MOOD} view={props} />
       <View style={styles.profileCard}>
         <ClientMoodScreen
           clientId={props.selectedClientId}
@@ -371,7 +371,7 @@ function renderMoodPage(props: ViewProps): React.JSX.Element {
 function renderTestsPage(props: ViewProps): React.JSX.Element {
   return (
     <>
-      <CrumbBar mode={MODE_TESTS} onBack={props.onBackToProfile} view={props} />
+      <CrumbBar mode={MODE_TESTS} view={props} />
       <View style={styles.profileCard}>
         <ClientTestsScreen
           clientId={props.selectedClientId}
@@ -400,11 +400,7 @@ function renderProfilePage(props: ViewProps): React.JSX.Element {
   const editing = props.screenMode === 'profileEdit';
   return (
     <>
-      <CrumbBar
-        mode={editing ? 'edit' : 'profile'}
-        onBack={editing ? props.onBackToProfile : props.onBackToList}
-        view={props}
-      />
+      <CrumbBar mode={editing ? 'edit' : 'profile'} view={props} />
       <View style={styles.profileCard}>{editing ? renderProfileEdit(props) : renderProfile(props)}</View>
     </>
   );

@@ -2,16 +2,19 @@ import { clientPath, SHELL_PATHS, type ClientMode } from './shell-routes';
 
 export type Crumb = { label: string; to: null | string };
 
-export type ClientCrumbMode = 'profile' | ClientMode;
+export type ClientCrumbMode = 'chat' | 'incidents' | 'profile' | 'routine' | ClientMode;
 
 type Translate = (key: string) => string;
 
 const MODE_LABEL_KEYS: Record<ClientCrumbMode, string> = {
+  chat: 'coach.clientProfile.details.chat.title',
   edit: 'coach.clientProfile.edit.title',
+  incidents: 'coach.clientProfile.details.incidents.title',
   mood: 'coach.clientProfile.details.mood.title',
   nutrition: 'coach.nutrition.client.title',
   profile: 'coach.clientProfile.title',
   progress: 'app.nav.coach.progress',
+  routine: 'coach.routine.title',
   tests: 'coach.clientProfile.details.tests.title',
 };
 

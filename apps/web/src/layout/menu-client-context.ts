@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import type { ShellRoute } from './usePersistentShellRoute';
-import { clearStoredClientSelection, LIST_KEYS, writeRouteClientId } from './list-context';
+import {
+  clearStoredClientSelection,
+  LIST_KEYS,
+  readListContext,
+  writeListContext,
+  writeRouteClientId,
+} from './list-context';
 import { useCalendarContextStore } from '../store/calendarContext.store';
 import { useNutritionContextStore } from '../store/nutritionContext.store';
 import { useProgressContextStore } from '../store/progressContext.store';
@@ -19,10 +25,26 @@ export function applyMenuClientReset(route: ShellRoute): void {
   if (route === 'coach.clients') {
     clearStoredClientSelection(LIST_KEYS.clients, { screenMode: 'list', selectedClientId: '' });
   }
+  if (route === 'coach.chat') clearChatOrigin();
+  if (route === 'coach.incidents') clearIncidentOrigin();
   if (route === 'coach.calendar') {
     clearStoredClientSelection(LIST_KEYS.calendar, { selectedClientId: null, viewMode: 'all' });
   }
   listeners.forEach((listener) => listener());
+}
+
+function clearChatOrigin(): void {
+  clearProfileOrigin(LIST_KEYS.chat);
+}
+
+function clearIncidentOrigin(): void {
+  clearProfileOrigin(LIST_KEYS.incidents);
+}
+
+function clearProfileOrigin(key: string): void {
+  const stored = readListContext<{ clientId?: string }>(key);
+  if (!stored?.clientId) return;
+  writeListContext(key, { clientId: stored.clientId, fromProfile: false });
 }
 
 export function useMenuEpoch(): number {

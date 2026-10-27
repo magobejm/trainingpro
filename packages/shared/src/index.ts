@@ -163,6 +163,15 @@ export {
   RISK_ADHERENCE,
   RISK_INACTIVE_DAYS,
 } from './triage/thresholds';
+export {
+  isLowAdherence,
+  isLowMorningCheckin,
+  lowCheckinFields,
+  NO_WORKOUT_DAYS,
+  routineAlert,
+  type LowCheckinField,
+  type RoutineAlert,
+} from './triage/coach-home-rules';
 export { estimateBilling, type BillingEstimate, type PricingTier } from './billing/pricing-tier';
 export {
   heartRateTarget,

@@ -42,7 +42,7 @@ function setup(count: number) {
   });
   const repo = new ChatRepositoryPrisma(
     new ChatMessagePolicy(),
-    { chatMessage: { findMany, findFirst } } as unknown as PrismaService,
+    { chatMessage: { findMany, findFirst }, chatThread: { update: jest.fn() } } as unknown as PrismaService,
     { sign: (path: string) => path } as PrivateMediaUrlSigner,
     { assertAccess } as unknown as ChatThreadAccessService,
   );

@@ -184,6 +184,7 @@ model User {
 
 model OrganizationMember {
   onboardingHidden         Boolean                   @default(false) @map("onboarding_hidden")
+  coachHomeCollapsed       String[]                  @default([]) @map("coach_home_collapsed")
   brandAccent              String?                   @map("brand_accent") @db.VarChar(20)
   brandLogoPath            String?                   @map("brand_logo_path") @db.VarChar(500)
   id                       String                    @id @default(uuid()) @db.Uuid
@@ -2051,6 +2052,7 @@ model ChatThread {
   organizationId    String             @map("organization_id") @db.Uuid
   coachMembershipId String             @map("coach_membership_id") @db.Uuid
   clientId          String             @map("client_id") @db.Uuid
+  coachLastReadAt   DateTime?          @map("coach_last_read_at") @db.Timestamptz(6)
   archivedAt        DateTime?          @map("archived_at") @db.Timestamptz(6)
   createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)

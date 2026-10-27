@@ -16,7 +16,7 @@ import { emptyForm, toForm, type ClientForm } from './client-profile.form';
 import { type FormErrors } from './client-profile.validation';
 import { styles } from './ClientProfileScreen.styles';
 import { useRoutinePlannerContextStore } from '../../store/routinePlannerContext.store';
-import { writeRouteClientId } from '../../layout/list-context';
+import { LIST_KEYS, writeListContext, writeRouteClientId } from '../../layout/list-context';
 import { useProgressContextStore } from '../../store/progressContext.store';
 import { useNutritionContextStore } from '../../store/nutritionContext.store';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -179,6 +179,8 @@ function buildViewModel(input: ViewModelInput) {
   const onOpenNutrition = buildOpenNutritionAction(input);
   const onOpenMood = buildOpenMoodAction(input);
   const onOpenTests = buildOpenTestsAction(input);
+  const onOpenChat = buildOpenChatAction(input);
+  const onOpenIncidents = buildOpenIncidentsAction(input);
 
   return {
     ...input,
@@ -193,6 +195,8 @@ function buildViewModel(input: ViewModelInput) {
     onOpenMood,
     onOpenProgress,
     onOpenTests,
+    onOpenChat,
+    onOpenIncidents,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
     ...noteActions,
   };
@@ -258,6 +262,21 @@ function buildOpenMoodAction(input: ViewModelInput): () => void {
   };
 }
 
+function buildOpenChatAction(input: ViewModelInput): () => void {
+  return () => openClientSection(input, LIST_KEYS.chat, 'coach.chat');
+}
+
+function buildOpenIncidentsAction(input: ViewModelInput): () => void {
+  return () => openClientSection(input, LIST_KEYS.incidents, 'coach.incidents');
+}
+
+function openClientSection(input: ViewModelInput, key: string, route: ShellRoute): void {
+  const client = input.query.data;
+  if (!client) return;
+  writeListContext(key, { clientId: client.id, fromProfile: true });
+  input.onRouteChange?.(route);
+}
+
 function buildOpenTestsAction(input: ViewModelInput): () => void {
   return () => {
     const client = input.query.data;
@@ -321,6 +340,8 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
         clientId={props.vm.query.data!.id}
         clientName={`${props.vm.query.data!.firstName} ${props.vm.query.data!.lastName}`.trim()}
         hasTrainingPlan={Boolean(props.vm.trainingPlan)}
+        onOpenChat={props.vm.onOpenChat}
+        onOpenIncidents={props.vm.onOpenIncidents}
         onOpenMood={props.vm.onOpenMood}
         onOpenNutrition={props.vm.onOpenNutrition}
         onOpenProgress={props.vm.onOpenProgress}

@@ -40,10 +40,7 @@ export function useUpdateClientManagementSectionsMutation(clientId: string) {
   return useMutation({
     mutationFn: (items: ClientManagementSectionView[]) => updateSections(auth, clientId, items),
     onSuccess: (items) => {
-      queryClient.setQueryData(['clients', 'management-sections', clientId], items);
-      void queryClient.invalidateQueries({
-        queryKey: ['clients', 'management-sections', clientId],
-      });
+      queryClient.setQueriesData({ queryKey: ['clients', 'management-sections', clientId] }, items);
     },
   });
 }

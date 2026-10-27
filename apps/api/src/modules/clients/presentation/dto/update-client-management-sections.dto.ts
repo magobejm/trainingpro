@@ -17,7 +17,7 @@ const sectionSchema = z.object({
 
 export class UpdateClientManagementSectionsDto {
   static schema = z.object({
-    items: z.array(sectionSchema).min(1).max(10),
+    items: z.array(sectionSchema).min(1).max(15),
   });
 
   items!: Array<{

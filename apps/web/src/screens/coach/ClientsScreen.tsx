@@ -14,6 +14,8 @@ import { ClientProfileScreen } from './ClientProfileScreen';
 import { ClientProfileEditScreen } from './ClientProfileEditScreen';
 import { ClientCompareScreen } from './ClientCompareScreen';
 import { ClientMeasuresScreen } from './ClientMeasuresScreen';
+import { ClientPlanningScreen } from './ClientPlanningScreen';
+import { ClientVolumeScreen } from './ClientVolumeScreen';
 import { ClientTestsScreen } from './ClientTestsScreen';
 import { ClientMoodScreen } from './ClientMoodScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -38,6 +40,8 @@ const MODE_MOOD = 'mood' as const;
 const MODE_TESTS = 'tests' as const;
 const MODE_COMPARE = 'compare' as const;
 const MODE_MEASURES = 'measures' as const;
+const MODE_PLANNING = 'planning' as const;
+const MODE_VOLUME = 'volume' as const;
 
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
@@ -122,6 +126,8 @@ function readViewModelActions(state: ReturnType<typeof useClientsViewState>) {
     onOpenTestsScreen: (clientId: string) => state.open(clientId, 'tests'),
     onOpenCompareScreen: (clientId: string) => state.open(clientId, 'compare'),
     onOpenMeasuresScreen: (clientId: string) => state.open(clientId, 'measures'),
+    onOpenPlanningScreen: (clientId: string) => state.open(clientId, 'planning'),
+    onOpenVolumeScreen: (clientId: string) => state.open(clientId, 'volume'),
     // La pantalla ya vive en la dirección: al archivar basta con volver a la lista (onBackToList).
     onClearSelectedClient: () => undefined,
     onOpenProfileEdit: (clientId: string) => state.open(clientId, 'profileEdit'),
@@ -218,6 +224,12 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
   }
   if (props.screenMode === 'measures' && props.selectedClientId) {
     return renderMeasuresPage(props);
+  }
+  if (props.screenMode === 'volume' && props.selectedClientId) {
+    return renderVolumePage(props);
+  }
+  if (props.screenMode === 'planning' && props.selectedClientId) {
+    return renderPlanningPage(props);
   }
   if ((props.screenMode === 'profile' || props.screenMode === 'profileEdit') && props.selectedClientId) {
     return renderProfilePage(props);
@@ -351,6 +363,8 @@ function renderProfile(props: ViewProps): React.JSX.Element {
       onOpenTestsScreen={props.onOpenTestsScreen}
       onOpenCompareScreen={props.onOpenCompareScreen}
       onOpenMeasuresScreen={props.onOpenMeasuresScreen}
+      onOpenPlanningScreen={props.onOpenPlanningScreen}
+      onOpenVolumeScreen={props.onOpenVolumeScreen}
       onRouteChange={props.onRouteChange}
     />
   );
@@ -403,6 +417,28 @@ function renderMeasuresPage(props: ViewProps): React.JSX.Element {
       <CrumbBar mode={MODE_MEASURES} view={props} />
       <View style={styles.profileCard}>
         <ClientMeasuresScreen clientId={props.selectedClientId} t={props.t} />
+      </View>
+    </>
+  );
+}
+
+function renderVolumePage(props: ViewProps): React.JSX.Element {
+  return (
+    <>
+      <CrumbBar mode={MODE_VOLUME} view={props} />
+      <View style={styles.profileCard}>
+        <ClientVolumeScreen clientId={props.selectedClientId} t={props.t} />
+      </View>
+    </>
+  );
+}
+
+function renderPlanningPage(props: ViewProps): React.JSX.Element {
+  return (
+    <>
+      <CrumbBar mode={MODE_PLANNING} view={props} />
+      <View style={styles.profileCard}>
+        <ClientPlanningScreen clientId={props.selectedClientId} t={props.t} />
       </View>
     </>
   );

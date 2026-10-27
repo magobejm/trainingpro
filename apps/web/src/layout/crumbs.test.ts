@@ -26,6 +26,8 @@ describe('buildClientCrumbs', () => {
     ['edit', 'coach.clientProfile.edit.title'],
     ['nutrition', 'coach.nutrition.client.title'],
     ['measures', 'coach.clientProfile.details.anthropometrics.title'],
+    ['planning', 'coach.clientProfile.details.planning.title'],
+    ['volume', 'coach.clientProfile.details.weeklyVolume.title'],
     ['mood', 'coach.clientProfile.details.mood.title'],
     ['tests', 'coach.clientProfile.details.tests.title'],
     ['chat', 'coach.clientProfile.details.chat.title'],

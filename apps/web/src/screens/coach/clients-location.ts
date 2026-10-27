@@ -1,7 +1,17 @@
 import { clientPath, parseShellPath, SHELL_PATHS, type ClientMode } from '../../layout/shell-routes';
 
 /** Pantallas de la sección Clientes: la lista y, para un cliente, su ficha y subpantallas. */
-export type ScreenMode = 'compare' | 'list' | 'measures' | 'mood' | 'nutrition' | 'profile' | 'profileEdit' | 'tests';
+export type ScreenMode =
+  | 'compare'
+  | 'list'
+  | 'measures'
+  | 'mood'
+  | 'nutrition'
+  | 'planning'
+  | 'profile'
+  | 'profileEdit'
+  | 'tests'
+  | 'volume';
 
 const MODE_BY_SEGMENT: Partial<Record<ClientMode, ScreenMode>> = {
   compare: 'compare',
@@ -9,7 +19,9 @@ const MODE_BY_SEGMENT: Partial<Record<ClientMode, ScreenMode>> = {
   measures: 'measures',
   mood: 'mood',
   nutrition: 'nutrition',
+  planning: 'planning',
   tests: 'tests',
+  volume: 'volume',
 };
 
 const SEGMENT_BY_MODE: Partial<Record<ScreenMode, ClientMode>> = {
@@ -17,8 +29,10 @@ const SEGMENT_BY_MODE: Partial<Record<ScreenMode, ClientMode>> = {
   measures: 'measures',
   mood: 'mood',
   nutrition: 'nutrition',
+  planning: 'planning',
   profileEdit: 'edit',
   tests: 'tests',
+  volume: 'volume',
 };
 
 /** Qué cliente y qué pantalla de Clientes corresponden a una dirección. */

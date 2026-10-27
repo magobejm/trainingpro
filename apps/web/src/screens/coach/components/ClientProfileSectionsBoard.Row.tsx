@@ -6,37 +6,41 @@ import { Badge, IconButton, colors } from '@trainerpro/ui';
 import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
 import { ClientMeasuresSubtitle } from './ClientMeasuresSubtitle';
+import { ClientVolumeSubtitle } from './ClientVolumeSubtitle';
+import { ClientPlanningSubtitle } from './ClientPlanningSubtitle';
 
 type Props = {
   chatSubtitle?: string;
   chatUnread?: boolean;
+  clientId: string;
+  hasTrainingPlan: boolean;
   incidentCount?: number;
   incidentSubtitle?: string;
-  hasTrainingPlan: boolean;
   item: SectionItem;
   moodSubtitle?: string;
   nutritionSubtitle?: string;
   onArchive: () => void;
-  testsSubtitle?: string;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
-  onOpenMeasures?: () => void;
   onOpenIncidents?: () => void;
+  onOpenMeasures?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
+  onOpenPlanning?: () => void;
   onOpenProgress?: () => void;
   onOpenTests?: () => void;
   onOpenTimeline: () => void;
   onOpenTrainingPlanner: () => void;
-  rowIndex: number;
+  onOpenVolume?: () => void;
   onToggleMenu: () => void;
   onUnassignTrainingPlan: () => void;
   placeMenuUp: boolean;
+  rowIndex: number;
   showMenu: boolean;
   t: (key: string, params?: Record<string, number | string>) => string;
+  testsSubtitle?: string;
   trainingPlanName?: string;
-  clientId: string;
 };
 
 export function ClientProfileSectionRow(props: Props): React.JSX.Element {
@@ -55,6 +59,8 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
         onOpenChat={props.onOpenChat}
         onOpenCompare={props.onOpenCompare}
         onOpenMeasures={props.onOpenMeasures}
+        onOpenPlanning={props.onOpenPlanning}
+        onOpenVolume={props.onOpenVolume}
         onOpenIncidents={props.onOpenIncidents}
         onOpenMood={props.onOpenMood}
         testsSubtitle={props.testsSubtitle}
@@ -93,6 +99,8 @@ function RowMain(props: {
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
   onOpenMeasures?: () => void;
+  onOpenPlanning?: () => void;
+  onOpenVolume?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   testsSubtitle?: string;
@@ -137,6 +145,10 @@ function RowMain(props: {
           <ClientTimelineSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : props.item.id === 'anthropometrics' ? (
           <ClientMeasuresSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : props.item.id === 'volume' ? (
+          <ClientVolumeSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : props.item.id === 'planning' ? (
+          <ClientPlanningSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : (
           <Text style={styles.rowSubtitle}>{subtitle}</Text>
         )}
@@ -194,6 +206,8 @@ function onOpenSection(props: {
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
   onOpenMeasures?: () => void;
+  onOpenPlanning?: () => void;
+  onOpenVolume?: () => void;
   onOpenIncidents?: () => void;
   onOpenMood?: () => void;
   onOpenNutrition?: () => void;
@@ -211,6 +225,8 @@ function onOpenSection(props: {
   if (props.item.id === 'chat') props.onOpenChat?.();
   if (props.item.id === 'compare') props.onOpenCompare?.();
   if (props.item.id === 'anthropometrics') props.onOpenMeasures?.();
+  if (props.item.id === 'volume') props.onOpenVolume?.();
+  if (props.item.id === 'planning') props.onOpenPlanning?.();
   if (props.item.id === 'incidents') props.onOpenIncidents?.();
 }
 

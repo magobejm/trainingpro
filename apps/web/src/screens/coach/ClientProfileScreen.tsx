@@ -29,6 +29,8 @@ type Props = {
   onArchived?: () => void;
   onOpenCompareScreen?: (clientId: string) => void;
   onOpenMeasuresScreen?: (clientId: string) => void;
+  onOpenPlanningScreen?: (clientId: string) => void;
+  onOpenVolumeScreen?: (clientId: string) => void;
   onOpenEditScreen?: (clientId: string) => void;
   onOpenMoodScreen?: (clientId: string) => void;
   onOpenNutrition?: () => void;
@@ -44,6 +46,8 @@ export function ClientProfileScreen(props: Props): React.JSX.Element {
     props.onOpenEditScreen,
     props.onOpenCompareScreen,
     props.onOpenMeasuresScreen,
+    props.onOpenPlanningScreen,
+    props.onOpenVolumeScreen,
     props.onOpenNutrition,
     props.onOpenMoodScreen,
     props.onOpenTestsScreen,
@@ -58,6 +62,8 @@ function useClientProfileModel(
   onOpenEditScreen?: (clientId: string) => void,
   onOpenCompareScreen?: (clientId: string) => void,
   onOpenMeasuresScreen?: (clientId: string) => void,
+  onOpenPlanningScreen?: (clientId: string) => void,
+  onOpenVolumeScreen?: (clientId: string) => void,
   onOpenNutrition?: () => void,
   onOpenMoodScreen?: (clientId: string) => void,
   onOpenTestsScreen?: (clientId: string) => void,
@@ -78,6 +84,8 @@ function useClientProfileModel(
     onOpenEditScreen,
     onOpenCompareScreen,
     onOpenMeasuresScreen,
+    onOpenPlanningScreen,
+    onOpenVolumeScreen,
     onOpenNutrition,
     onOpenMoodScreen,
     onOpenTestsScreen,
@@ -155,6 +163,8 @@ interface ViewModelInput {
   onArchived?: () => void;
   onOpenCompareScreen?: (clientId: string) => void;
   onOpenMeasuresScreen?: (clientId: string) => void;
+  onOpenPlanningScreen?: (clientId: string) => void;
+  onOpenVolumeScreen?: (clientId: string) => void;
   onOpenEditScreen?: (clientId: string) => void;
   onOpenMoodScreen?: (clientId: string) => void;
   onOpenNutrition?: () => void;
@@ -191,6 +201,8 @@ function buildViewModel(input: ViewModelInput) {
   const onOpenTests = buildOpenTestsAction(input);
   const onOpenCompare = buildOpenCompareAction(input);
   const onOpenMeasures = buildOpenMeasuresAction(input);
+  const onOpenPlanning = buildOpenPlanningAction(input);
+  const onOpenVolume = buildOpenVolumeAction(input);
   const onOpenChat = buildOpenChatAction(input);
   const onOpenIncidents = buildOpenIncidentsAction(input);
 
@@ -209,6 +221,8 @@ function buildViewModel(input: ViewModelInput) {
     onOpenTests,
     onOpenCompare,
     onOpenMeasures,
+    onOpenPlanning,
+    onOpenVolume,
     onOpenChat,
     onOpenIncidents,
     onUnassignPlan: () => void updateMutation.mutateAsync({ trainingPlanId: null }),
@@ -300,11 +314,21 @@ function buildOpenCompareAction(input: ViewModelInput): () => void {
 }
 
 function buildOpenMeasuresAction(input: ViewModelInput): () => void {
-  return () => {
-    const client = input.query.data;
-    if (!client || !input.onOpenMeasuresScreen) return;
-    input.onOpenMeasuresScreen(client.id);
-  };
+  return () => openClientScreen(input, input.onOpenMeasuresScreen);
+}
+
+function buildOpenPlanningAction(input: ViewModelInput): () => void {
+  return () => openClientScreen(input, input.onOpenPlanningScreen);
+}
+
+function buildOpenVolumeAction(input: ViewModelInput): () => void {
+  return () => openClientScreen(input, input.onOpenVolumeScreen);
+}
+
+function openClientScreen(input: ViewModelInput, open?: (clientId: string) => void): void {
+  const client = input.query.data;
+  if (!client || !open) return;
+  open(client.id);
 }
 
 function buildOpenTestsAction(input: ViewModelInput): () => void {
@@ -378,6 +402,8 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
         onOpenTests={props.vm.onOpenTests}
         onOpenCompare={props.vm.onOpenCompare}
         onOpenMeasures={props.vm.onOpenMeasures}
+        onOpenPlanning={props.vm.onOpenPlanning}
+        onOpenVolume={props.vm.onOpenVolume}
         onOpenTrainingPlanner={props.vm.onOpenRoutinePlanner}
         onUnassignTrainingPlan={props.vm.onUnassignPlan}
         t={props.vm.t}

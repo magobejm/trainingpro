@@ -14,8 +14,10 @@ const MODE_LABEL_KEYS: Record<ClientCrumbMode, string> = {
   measures: 'coach.clientProfile.details.anthropometrics.title',
   mood: 'coach.clientProfile.details.mood.title',
   nutrition: 'coach.nutrition.client.title',
+  planning: 'coach.clientProfile.details.planning.title',
   profile: 'coach.clientProfile.title',
   progress: 'app.nav.coach.progress',
+  volume: 'coach.clientProfile.details.weeklyVolume.title',
   routine: 'coach.routine.title',
   tests: 'coach.clientProfile.details.tests.title',
 };

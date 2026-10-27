@@ -11056,6 +11056,49 @@
         "x-roles": ["coach"]
       }
     },
+    "/coach/triage/collapsed": {
+      "put": {
+        "operationId": "put_coach_triage_collapsed",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PUT /coach/triage/collapsed",
+        "x-controller": "CoachHomeController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
     "/coaches": {
       "get": {
         "operationId": "get_coaches",

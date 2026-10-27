@@ -20,7 +20,6 @@ type DashboardRoutineProps = {
   compare: boolean;
   visible?: boolean;
   onSelection: (selected: number[], compare: boolean) => void;
-  onBack: () => void;
   onExercise: (exercise: ProgressExerciseRef) => void;
 };
 
@@ -35,7 +34,6 @@ export function DashboardRoutine(props: DashboardRoutineProps): React.JSX.Elemen
   const cycleDays = routine?.cycleDays ?? 7;
   return (
     <View style={styles.column}>
-      <Button label={t('progressDashboard.backRoutines')} onPress={props.onBack} variant="secondary" />
       <QueryResult
         {...query}
         emptyTitle={t('progressDashboard.noData')}

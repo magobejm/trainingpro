@@ -39,6 +39,29 @@ export function buildClientCrumbs(input: {
   return crumbs;
 }
 
+/**
+ * Migas al profundizar en el progreso: "… › Progreso › Rutina › Ejercicio".
+ * Progreso y la rutina vuelven al nivel anterior; el último tramo es la página actual.
+ */
+export function buildProgressDrillCrumbs(input: {
+  base: Crumb[];
+  exerciseLabel: string | null;
+  onProgress: () => void;
+  onRoutine: () => void;
+  routineLabel: string | null;
+}): Crumb[] {
+  if (!input.routineLabel && !input.exerciseLabel) return input.base;
+  const progress = input.base.at(-1);
+  if (!progress) return input.base;
+  const trail: Crumb[] = [...input.base.slice(0, -1), { ...progress, onPress: input.onProgress, to: null }];
+  if (input.routineLabel && input.exerciseLabel) {
+    trail.push({ label: input.routineLabel, onPress: input.onRoutine, to: null });
+  }
+  const current = input.exerciseLabel ?? input.routineLabel;
+  if (current) trail.push({ label: current, to: null });
+  return trail;
+}
+
 /** Migas de la biblioteca hacia el planificador: "Biblioteca… › Planificador de Rutinas". */
 export function buildLibraryPlannerCrumbs(input: { kind: 'routine' | 'warmup'; t: Translate }): Crumb[] {
   const library = input.kind === 'warmup' ? 'coach.library.warmups' : 'coach.library.routines';

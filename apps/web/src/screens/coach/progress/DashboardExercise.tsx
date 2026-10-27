@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@trainerpro/ui';
 import type { ProgressExerciseRef, ProgressRoutineDetail } from '@trainerpro/shared';
 import { useProgressDaily, useProgressRoutines } from '../../../data/hooks/useProgressDashboard';
 import { QueryResult } from '../../../components/AsyncStatus';
@@ -23,7 +22,6 @@ export function DashboardExercise(props: {
   selected: number[];
   onSelection: (selected: number[]) => void;
   onRange: (range: DateRange) => void;
-  onBack: () => void;
 }): React.JSX.Element {
   const { t } = useTranslation();
   const catalog = useProgressRoutines(props.clientId);
@@ -50,11 +48,6 @@ export function DashboardExercise(props: {
     setActive((current) => (current.includes(key) ? current.filter((id) => id !== key) : [...current, key]));
   return (
     <View style={styles.column}>
-      <Button
-        label={t(`progressDashboard.${props.routine ? 'backRoutine' : 'backHistory'}`)}
-        onPress={props.onBack}
-        variant="secondary"
-      />
       <View style={styles.panel}>
         <Text style={styles.title}>{props.exercise.name}</Text>
         <Text style={styles.muted}>{t(`coach.progress.filter.group.${props.exercise.exerciseType}`)}</Text>

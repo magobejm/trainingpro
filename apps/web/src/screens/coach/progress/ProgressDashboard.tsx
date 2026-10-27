@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button } from '@trainerpro/ui';
 import type { ProgressExerciseRef } from '@trainerpro/shared';
 import { Breadcrumbs } from '../../../layout/Breadcrumbs';
-import { buildClientCrumbs } from '../../../layout/crumbs';
+import { buildClientCrumbs, buildProgressDrillCrumbs } from '../../../layout/crumbs';
 import type { ShellRoute } from '../../../layout/usePersistentShellRoute';
 import { useProgressRoutine } from '../../../data/hooks/useProgressDashboard';
 import { useProgressRouteClient } from './useProgressListState';
@@ -24,14 +24,10 @@ export function ProgressDashboard(props: { onRouteChange?: (route: ShellRoute) =
         <Button label={t('common.back')} onPress={() => props.onRouteChange?.('coach.clients')} variant="secondary" />
       </View>
     );
-  return <ClientDashboard key={clientId} {...props} clientId={clientId} clientName={clientDisplayName ?? ''} />;
+  return <ClientDashboard key={clientId} clientId={clientId} clientName={clientDisplayName ?? ''} />;
 }
 
-function ClientDashboard(props: {
-  clientId: string;
-  clientName: string;
-  onRouteChange?: (route: ShellRoute) => void;
-}): React.JSX.Element {
+function ClientDashboard(props: { clientId: string; clientName: string }): React.JSX.Element {
   const { t } = useTranslation();
   const [assignmentId, setAssignmentId] = useState<string | null>(null);
   const [exercise, setExercise] = useState<ProgressExerciseRef | null>(null);
@@ -39,7 +35,20 @@ function ClientDashboard(props: {
   const [selected, setSelected] = useState<number[]>([]);
   const [compare, setCompare] = useState(false);
   const routine = useProgressRoutine(props.clientId, assignmentId);
-  const crumbs = buildClientCrumbs({ clientId: props.clientId, clientName: props.clientName, mode: 'progress', t });
+  const crumbs = progressCrumbs({
+    clientId: props.clientId,
+    clientName: props.clientName,
+    exerciseName: exercise?.name ?? null,
+    onExercise: () => setExercise(null),
+    onProgress: () => {
+      setAssignmentId(null);
+      setExercise(null);
+      setSelected([]);
+      setCompare(false);
+    },
+    routineName: assignmentId ? (routine.data?.routine.name ?? t('progressDashboard.routines')) : null,
+    t,
+  });
   const selectRoutine = (id: string) => {
     setAssignmentId(id);
     setSelected([]);
@@ -48,17 +57,9 @@ function ClientDashboard(props: {
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <Breadcrumbs accessibilityLabel={t('app.breadcrumb')} crumbs={crumbs} />
-      <View style={styles.between}>
-        <View style={styles.column}>
-          <Text style={styles.title}>{props.clientName}</Text>
-          <Text style={styles.muted}>{t('progressDashboard.subtitle')}</Text>
-        </View>
-        <Button
-          label={t('common.back')}
-          onPress={() => props.onRouteChange?.('coach.clients')}
-          variant="secondary"
-          size="sm"
-        />
+      <View style={styles.column}>
+        <Text style={styles.title}>{props.clientName}</Text>
+        <Text style={styles.muted}>{t('progressDashboard.subtitle')}</Text>
       </View>
       <View style={{ display: !assignmentId && !exercise ? 'flex' : 'none' }}>
         <DashboardHome
@@ -82,10 +83,6 @@ function ClientDashboard(props: {
               setSelected(cycles);
               setCompare(comparing);
             }}
-            onBack={() => {
-              setAssignmentId(null);
-              setSelected([]);
-            }}
             onExercise={setExercise}
           />
         </View>
@@ -104,9 +101,32 @@ function ClientDashboard(props: {
             setCompare(cycles.length > 1);
           }}
           onRange={setRange}
-          onBack={() => setExercise(null)}
         />
       ) : null}
     </ScrollView>
   );
+}
+
+function progressCrumbs(input: {
+  clientId: string;
+  clientName: string;
+  exerciseName: null | string;
+  onExercise: () => void;
+  onProgress: () => void;
+  routineName: null | string;
+  t: (key: string) => string;
+}) {
+  const base = buildClientCrumbs({
+    clientId: input.clientId,
+    clientName: input.clientName,
+    mode: 'progress',
+    t: input.t,
+  });
+  return buildProgressDrillCrumbs({
+    base,
+    exerciseLabel: input.exerciseName,
+    onProgress: input.onProgress,
+    onRoutine: input.onExercise,
+    routineLabel: input.routineName,
+  });
 }

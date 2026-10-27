@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildClientCrumbs, buildLibraryPlannerCrumbs } from './crumbs';
+import { buildClientCrumbs, buildLibraryPlannerCrumbs, buildProgressDrillCrumbs } from './crumbs';
 
 const t = (key: string): string => key;
 
@@ -41,6 +41,51 @@ describe('buildClientCrumbs', () => {
   it('encodes the client id in the links', () => {
     const crumbs = buildClientCrumbs({ clientId: 'a b', clientName: 'Ana', mode: 'edit', t });
     expect(crumbs[1]?.to).toBe('/coach/clients/a%20b');
+  });
+});
+
+describe('buildProgressDrillCrumbs', () => {
+  const base = buildClientCrumbs({ clientId: 'abc', clientName: 'Ana', mode: 'progress', t });
+  const onProgress = (): void => undefined;
+  const onRoutine = (): void => undefined;
+
+  it('keeps the progress trail when nothing is open', () => {
+    expect(buildProgressDrillCrumbs({ base, exerciseLabel: null, onProgress, onRoutine, routineLabel: null })).toBe(base);
+  });
+
+  it('links Progreso and marks the routine as the current page', () => {
+    const crumbs = buildProgressDrillCrumbs({ base, exerciseLabel: null, onProgress, onRoutine, routineLabel: 'Full Body' });
+    expect(crumbs.at(-2)).toMatchObject({ label: 'app.nav.coach.progress', onPress: onProgress, to: null });
+    expect(crumbs.at(-1)).toEqual({ label: 'Full Body', to: null });
+  });
+
+  it('links the routine when an exercise of that routine is open', () => {
+    const crumbs = buildProgressDrillCrumbs({
+      base,
+      exerciseLabel: 'Sentadilla',
+      onProgress,
+      onRoutine,
+      routineLabel: 'Full Body',
+    });
+    expect(crumbs.at(-2)).toMatchObject({ label: 'Full Body', onPress: onRoutine, to: null });
+    expect(crumbs.at(-1)).toEqual({ label: 'Sentadilla', to: null });
+  });
+
+  it('links Progreso when the exercise comes from the history', () => {
+    const crumbs = buildProgressDrillCrumbs({
+      base,
+      exerciseLabel: 'Sentadilla',
+      onProgress,
+      onRoutine,
+      routineLabel: null,
+    });
+    expect(crumbs.map((crumb) => crumb.label)).toEqual([
+      'coach.clients.title',
+      'Ana',
+      'app.nav.coach.progress',
+      'Sentadilla',
+    ]);
+    expect(crumbs[2]?.onPress).toBe(onProgress);
   });
 });
 

@@ -158,6 +158,7 @@ const copy: Record<string, readonly [string, string]> = {
   assign: ['Asignar al cliente', 'Assign to client'],
   unassign: ['Quitar asignación', 'Unassign'],
   schedule: ['Programar prueba', 'Schedule test'],
+  scheduleSameTest: ['Este test ya está programado ese día.', 'This test is already scheduled that day.'],
   record: ['Registrar resultado', 'Record result'],
   'gender.M': ['Hombre', 'Male'],
   'gender.F': ['Mujer', 'Female'],

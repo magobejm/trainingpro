@@ -12,15 +12,16 @@ const SIZE_SM = 'sm' as const;
 
 type ViewModel = ClientTestsViewModel;
 
+export type PlannedSession = { done: boolean; id: string; scheduledDate: string };
+
 export function TestCard(props: {
-  assigned: boolean;
   expanded: boolean;
-  onAssign: () => void;
   onOpenRoute: () => void;
   onOpenTables: () => void;
+  onRemoveSchedule: (scheduleId: string) => void;
+  onSchedule: () => void;
   onToggle: () => void;
-  onUnassign: () => void;
-  scheduledDates: string[];
+  schedules: PlannedSession[];
   t: ViewModel['t'];
   test: PhysicalTestView;
 }): React.JSX.Element {
@@ -30,14 +31,10 @@ export function TestCard(props: {
         <View style={styles.cardTitleBlock}>
           <Text style={styles.cardTitle}>{props.test.name}</Text>
           <Text style={styles.cardMeta}>{`${props.test.category} · ${props.test.level}`}</Text>
-          {props.scheduledDates.length > 0 ? (
-            <Text style={styles.cardMeta}>
-              {props.t('coach.tests.schedule.dates', { dates: formatScheduledDates(props.scheduledDates) })}
-            </Text>
-          ) : null}
         </View>
         <Text style={styles.chevron}>{props.expanded ? '▾' : '▸'}</Text>
       </Pressable>
+      <PlannedSessions onRemove={props.onRemoveSchedule} schedules={props.schedules} t={props.t} />
 
       {props.expanded ? (
         <View style={styles.cardBody}>
@@ -70,12 +67,7 @@ export function TestCard(props: {
           size={SIZE_SM}
           variant={VARIANT_SECONDARY}
         />
-        <Button
-          label={props.assigned ? props.t('coach.tests.actions.unassign') : props.t('coach.tests.actions.assign')}
-          onPress={props.assigned ? props.onUnassign : props.onAssign}
-          size={SIZE_SM}
-          variant={props.assigned ? VARIANT_SECONDARY : undefined}
-        />
+        <Button label={props.t('coach.tests.actions.schedule')} onPress={props.onSchedule} size={SIZE_SM} />
       </View>
     </View>
   );
@@ -127,15 +119,39 @@ export async function recordResultEnsuringAssignment(
   props.setLastResult(result);
 }
 
-function formatScheduledDates(dates: string[]): string {
-  return [...dates]
-    .map((value) => value.slice(0, 10))
-    .sort()
-    .map((value) => {
-      const [year, month, day] = value.split('-');
-      return year && month && day ? `${day}/${month}/${year}` : value;
-    })
-    .join(', ');
+function PlannedSessions(props: {
+  onRemove: (scheduleId: string) => void;
+  schedules: PlannedSession[];
+  t: ViewModel['t'];
+}): React.JSX.Element | null {
+  if (props.schedules.length === 0) return null;
+  const sessions = [...props.schedules].sort((left, right) => left.scheduledDate.localeCompare(right.scheduledDate));
+  return (
+    <View style={styles.sessionList}>
+      {sessions.map((session) => {
+        const date = formatScheduleDate(session.scheduledDate);
+        return (
+          <View key={session.id} style={styles.sessionRow}>
+            <Text style={styles.cardMeta}>{props.t('coach.tests.schedule.pendingDate', { date })}</Text>
+            {session.done ? null : (
+              <Button
+                accessibilityLabel={props.t('coach.tests.schedule.removeLabel', { date })}
+                label={props.t('coach.tests.schedule.remove')}
+                onPress={() => props.onRemove(session.id)}
+                size={SIZE_SM}
+                variant={VARIANT_SECONDARY}
+              />
+            )}
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
+function formatScheduleDate(value: string): string {
+  const [year, month, day] = value.slice(0, 10).split('-');
+  return year && month && day ? `${day}/${month}/${year}` : value;
 }
 
 export function resolveAge(birthDate?: string | null): number | null {
@@ -263,6 +279,8 @@ export const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     lineHeight: 18,
   },
+  sessionList: { gap: space.sm },
+  sessionRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
   actionsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',

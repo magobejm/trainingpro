@@ -359,7 +359,10 @@ export class PhysicalTestsRepository {
       where: { archivedAt: null, clientId: input.clientId, scheduledDate },
       include: { physicalTest: { select: { name: true } } },
     });
-    const decision = decidePhysicalTestSchedule(existing ? { resultId: existing.resultId } : null, input.replace);
+    const decision = decidePhysicalTestSchedule(
+      existing ? { resultId: existing.resultId, sameTest: existing.physicalTestId === input.physicalTestId } : null,
+      input.replace,
+    );
     if (decision.kind === 'reject') {
       throw new ConflictException({
         code: decision.code,

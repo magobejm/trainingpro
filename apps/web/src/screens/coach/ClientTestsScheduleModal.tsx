@@ -32,6 +32,11 @@ export function ScheduleTestModal(props: Props): React.JSX.Element {
       props.onClose();
     } catch (error) {
       const conflict = readScheduleConflict(error);
+      if (conflict?.code === 'PHYSICAL_TEST_ALREADY_SCHEDULED') {
+        setReplace(false);
+        setNotice(props.t('coach.tests.schedule.already'));
+        return;
+      }
       if (conflict?.code === 'PHYSICAL_TEST_DAY_PENDING') {
         setReplace(true);
         setNotice(

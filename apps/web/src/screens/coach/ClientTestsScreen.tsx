@@ -9,7 +9,7 @@ import {
   useClientPhysicalTestsQuery,
   usePhysicalTestsCatalogQuery,
   useRecordPhysicalTestResultMutation,
-  useUnassignPhysicalTestMutation,
+  useArchivePhysicalTestScheduleMutation,
   type PhysicalTestResultView,
   type PhysicalTestView,
 } from '../../data/hooks/usePhysicalTests';
@@ -55,7 +55,7 @@ function useClientTestsViewModel(props: Props) {
   const catalogQuery = usePhysicalTestsCatalogQuery();
   const assignmentsQuery = useClientPhysicalTestsQuery(props.clientId);
   const assignMutation = useAssignPhysicalTestMutation(props.clientId);
-  const unassignMutation = useUnassignPhysicalTestMutation(props.clientId);
+  const archiveSchedule = useArchivePhysicalTestScheduleMutation();
   const recordMutation = useRecordPhysicalTestResultMutation(props.clientId);
   const [viewMode, setViewMode] = useState<ViewMode>('catalog');
   const [search, setSearch] = useState('');
@@ -84,6 +84,7 @@ function useClientTestsViewModel(props: Props) {
   const clientAge = resolveAge(client?.birthDate);
 
   return {
+    archiveSchedule,
     assignMutation,
     assignedIds,
     assignments: assignmentsQuery.data ?? [],
@@ -110,7 +111,6 @@ function useClientTestsViewModel(props: Props) {
     setSearch,
     setViewMode,
     t,
-    unassignMutation,
     viewMode,
   };
 }
@@ -120,9 +120,7 @@ type ViewModel = ReturnType<typeof useClientTestsViewModel>;
 function ClientTestsView(props: ViewModel): React.JSX.Element {
   const items = props.catalogItems;
   const completedRows = buildCompletedRows(props.assignments, props.search, props.category);
-  const datesByTest = new Map(
-    props.assignments.map((item) => [item.physicalTestId, item.schedules.map((schedule) => schedule.scheduledDate)]),
-  );
+  const sessionsByTest = new Map(props.assignments.map((item) => [item.physicalTestId, item.schedules]));
   return (
     <ScrollView contentContainerStyle={styles.page}>
       <View style={styles.header}>
@@ -170,18 +168,19 @@ function ClientTestsView(props: ViewModel): React.JSX.Element {
       {props.viewMode === 'catalog'
         ? items.map((test) => (
             <TestCard
-              assigned={props.assignedIds.has(test.id)}
               expanded={props.expandedId === test.id}
               key={test.id}
-              onAssign={() => props.setScheduling(test)}
-              scheduledDates={datesByTest.get(test.id) ?? []}
-              onUnassign={() => void props.unassignMutation.mutateAsync(test.id)}
               onOpenRoute={() => {
                 props.setLastResult(null);
                 props.setModals((prev) => ({ ...prev, route: test }));
               }}
               onOpenTables={() => props.setModals((prev) => ({ ...prev, tables: test }))}
+              onRemoveSchedule={(scheduleId) =>
+                void props.archiveSchedule.mutateAsync({ clientId: props.clientId, scheduleId })
+              }
+              onSchedule={() => props.setScheduling(test)}
               onToggle={() => props.setExpandedId(props.expandedId === test.id ? null : test.id)}
+              schedules={sessionsByTest.get(test.id) ?? []}
               t={props.t}
               test={test}
             />

@@ -225,17 +225,19 @@ function ScheduledTestRow({
       {!schedule.result && test ? (
         <CoachButton label={t('coachWorkspace.record')} onPress={() => onRecord({ test: test!, scheduleId: schedule.id })} />
       ) : null}
-      <CoachButton
-        label={t('coachWorkspace.cancel')}
-        disabled={write.isPending}
-        onPress={() =>
-          confirmCoachDelete(
-            schedule.physicalTestName,
-            () => write.mutate({ path: `/clients/${clientId}/physical-test-schedules/${schedule.id}`, method: 'DELETE' }),
-            t,
-          )
-        }
-      />
+      {schedule.done ? null : (
+        <CoachButton
+          label={t('coachWorkspace.cancel')}
+          disabled={write.isPending}
+          onPress={() =>
+            confirmCoachDelete(
+              schedule.physicalTestName,
+              () => write.mutate({ path: `/clients/${clientId}/physical-test-schedules/${schedule.id}`, method: 'DELETE' }),
+              t,
+            )
+          }
+        />
+      )}
     </View>
   );
 }

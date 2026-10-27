@@ -4,7 +4,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@trainerpro/ui';
 import { useAuthStore } from '../../store/auth.store';
-import { createApiClient } from '../api-client';
+import { ApiClientError, createApiClient } from '../api-client';
 
 export type CoachWrite = { path: string; method?: 'POST' | 'PATCH' | 'DELETE' | 'PUT'; body?: unknown };
 export function useCoachAuth() {
@@ -83,6 +83,23 @@ export function useCoachWrite<T = unknown>() {
         predicate: (q) => ['coach', 'clients', 'chat-messages', 'calendar', 'nutrition'].includes(String(q.queryKey[0])),
       });
     },
-    onError: (error) => toast.error(error.message || t('coachWorkspace.saveError')),
+    onError: (error) => toast.error(coachWriteErrorMessage(error, t)),
   });
+}
+
+const SAME_TEST_ALREADY_SCHEDULED = 'PHYSICAL_TEST_ALREADY_SCHEDULED';
+
+function coachWriteErrorMessage(error: Error, translate: (key: string) => string): string {
+  if (writeErrorCode(error) === SAME_TEST_ALREADY_SCHEDULED) return translate('coachWorkspace.scheduleSameTest');
+  return error.message || translate('coachWorkspace.saveError');
+}
+
+function writeErrorCode(error: Error): string | null {
+  if (!(error instanceof ApiClientError)) return null;
+  try {
+    const body = JSON.parse(error.responseText) as { code?: unknown };
+    return typeof body.code === 'string' ? body.code : null;
+  } catch {
+    return null;
+  }
 }

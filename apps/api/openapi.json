@@ -1065,6 +1065,16 @@
                               }
                             ]
                           },
+                          "avgHeartRateMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "distanceDoneMeters": {
                             "anyOf": [
                               {
@@ -1105,7 +1115,27 @@
                               }
                             ]
                           },
+                          "hrMaxPctDoneMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "hrReservePctDone": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hrReservePctDoneMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -1205,6 +1235,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -1215,7 +1255,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -1555,6 +1615,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -1565,7 +1635,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -1915,6 +2005,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -1925,7 +2025,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -2265,6 +2385,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -2275,7 +2405,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -2591,6 +2741,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -2601,7 +2761,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -2754,6 +2934,16 @@
                               }
                             ]
                           },
+                          "heartRateDoneMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "hrMaxPctDone": {
                             "anyOf": [
                               {
@@ -2764,7 +2954,27 @@
                               }
                             ]
                           },
+                          "hrMaxPctDoneMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "hrReservePctDone": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hrReservePctDoneMax": {
                             "anyOf": [
                               {
                                 "type": "number"
@@ -3070,6 +3280,16 @@
                               }
                             ]
                           },
+                          "fcMaxPctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "fcReservePct": {
                             "anyOf": [
                               {
@@ -3080,7 +3300,27 @@
                               }
                             ]
                           },
+                          "fcReservePctMax": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
                           "heartRate": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "heartRateMax": {
                             "anyOf": [
                               {
                                 "type": "number"

@@ -23,7 +23,14 @@ describe('set variable units', () => {
     expect(fromSetDisplayValue('sport', 'durationSeconds', toSetDisplayValue('sport', 'durationSeconds', 91))).toBe(91);
   });
   it('preserves legacy active variables when distance exceeds the limit', () => {
-    expect(normalizeLegacyLockedFields('cardio', [])).toEqual([]);
+    expect(normalizeLegacyLockedFields('cardio', [])).toEqual(['durationSeconds']);
+    expect(normalizeLegacyLockedFields('sport', ['heartRate', 'rir', 'fcReservePct', 'rom', 'restSeconds'])).toEqual([
+      'heartRate',
+      'rir',
+      'fcReservePct',
+      'rom',
+      'durationSeconds',
+    ]);
     expect(normalizeLegacyLockedFields('sport', [])).toEqual(['heartRate', 'rir', 'fcReservePct', 'rom', 'distanceMeters']);
     expect(normalizeLegacyLockedFields('cardio', ['rpe'])).toEqual(['rpe']);
     expect(normalizeLegacyLockedFields('sport', ['heartRate', 'rir', 'fcReservePct', 'rom', 'weightKg'])).toEqual([
@@ -41,8 +48,26 @@ it('normalizes old revisions without changing values or applying defaults twice'
     days: [{ cardioBlocks: [{ lockedFields: [], sets: [{ durationSeconds: 90 }] }], sportBlocks: [{ lockedFields: [] }] }],
   };
   const next = normalizeRoutineSetVariables(old);
-  expect(next.days[0]?.cardioBlocks[0]?.lockedFields).toEqual([]);
+  expect(next.days[0]?.cardioBlocks[0]?.lockedFields).toEqual(['durationSeconds']);
   expect(next.days[0]?.sportBlocks[0]?.lockedFields).toEqual(['heartRate', 'rir', 'fcReservePct', 'rom', 'distanceMeters']);
   expect(old.days[0]?.cardioBlocks[0]?.lockedFields).toEqual([]);
   expect(normalizeRoutineSetVariables(next)).toBe(next);
+});
+
+it('rewrites only the stored default locks on a published revision', () => {
+  const published = {
+    setVariablesVersion: 2,
+    days: [
+      {
+        cardioBlocks: [{ lockedFields: [] }],
+        sportBlocks: [{ lockedFields: ['rom', 'restSeconds', 'heartRate', 'rir', 'fcReservePct'] }],
+      },
+    ],
+  };
+  const next = normalizeRoutineSetVariables(published);
+  expect(next.days[0]?.cardioBlocks[0]?.lockedFields).toEqual(['durationSeconds']);
+  expect(next.days[0]?.sportBlocks[0]?.lockedFields).toEqual(['heartRate', 'rir', 'fcReservePct', 'rom', 'durationSeconds']);
+  expect(normalizeRoutineSetVariables(next)).toBe(next);
+  const custom = { setVariablesVersion: 2, days: [{ sportBlocks: [{ lockedFields: ['rir'] }] }] };
+  expect(normalizeRoutineSetVariables(custom)).toBe(custom);
 });

@@ -1,3 +1,4 @@
+import { cardioMetricDistance } from '../../src/modules/progress/application/dashboard-session';
 import { aggregateDailyExercise } from '../../src/modules/progress/domain/metrics/daily-exercise';
 
 const row = (sessionId: string, weightKg: number | null, reps: number | null, rpe: number | null = null) => ({
@@ -68,6 +69,24 @@ describe('canonical daily exercise metrics', () => {
     expect(point.sessionCount).toBe(1);
     expect(point.distanceMeters).toBe(5000);
     expect(point.audit).toEqual([]);
+  });
+  it('sums series distance for pace and falls back to the header when no series has distance', () => {
+    expect(cardioMetricDistance(2500, [1000, 1500], 0)).toBeUndefined();
+    const summed = aggregateDailyExercise('cardio', [
+      { ...row('a', null, null), distanceMeters: 1000, durationSeconds: 300 },
+      { ...row('a', null, null), distanceMeters: 1500, durationSeconds: 300, setIndex: 2 },
+    ])[0]!;
+    expect(summed.distanceMeters).toBe(2500);
+    expect(summed.avgPaceMinKm).toBe(4);
+    const header = aggregateDailyExercise('cardio', [
+      {
+        ...row('a', null, null),
+        durationSeconds: 1500,
+        headerOnly: true,
+        metricDistanceMeters: cardioMetricDistance(5000, [null], 0),
+      },
+    ])[0]!;
+    expect(header).toMatchObject({ distanceMeters: 5000, sets: 0 });
   });
   it('exposes the cardio header used for pace without changing the original series audit', () => {
     const point = aggregateDailyExercise('cardio', [

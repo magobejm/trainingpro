@@ -16,6 +16,7 @@ describe('setVariablesForType', () => {
       'rpe',
       'fcMaxPct',
       'durationSeconds',
+      'distanceMeters',
       'heartRate',
       'fcReservePct',
       'restSeconds',
@@ -53,7 +54,7 @@ describe('setVariablesForType', () => {
 
 describe('sport lock defaults', () => {
   it('locks the four extra sport variables by default', () => {
-    expect(SPORT_DEFAULT_LOCKED_VARIABLES).toEqual(['heartRate', 'rir', 'fcReservePct', 'rom', 'restSeconds']);
+    expect(SPORT_DEFAULT_LOCKED_VARIABLES).toEqual(['heartRate', 'rir', 'fcReservePct', 'rom', 'durationSeconds']);
     expect(resolveLockedFields('sport', [])).toEqual(SPORT_DEFAULT_LOCKED_VARIABLES);
   });
 
@@ -74,10 +75,11 @@ describe('sport lock defaults', () => {
 });
 
 describe('cardio defaults and variable availability', () => {
-  it('offers all six cardio variables by default', () => {
-    expect(resolveLockedFields('cardio')).toEqual([]);
-    expect(canUnlockSetVariable('cardio', undefined, 'fcReservePct')).toBe(true);
-    expect(canUnlockSetVariable('cardio', ['rpe', 'fcReservePct'], 'fcReservePct')).toBe(true);
+  it('locks duration so six cardio variables, including distance, stay active', () => {
+    expect(resolveLockedFields('cardio')).toEqual(['durationSeconds']);
+    expect(resolveLockedFields('cardio', ['rpe'])).toEqual(['rpe']);
+    expect(canUnlockSetVariable('cardio', ['durationSeconds'], 'durationSeconds')).toBe(false);
+    expect(canUnlockSetVariable('cardio', ['durationSeconds', 'rpe'], 'durationSeconds')).toBe(true);
   });
   it.each(['strength', 'plio', 'mobility', 'isometric'] as const)('does not add distance to %s', (type) => {
     expect(setVariablesForType(type)).not.toContain('distanceMeters');

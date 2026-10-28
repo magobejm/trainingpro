@@ -215,31 +215,19 @@ function SeriesSpinbox({
   );
 }
 
+function DistanceTotal({ block, t }: { block: DraftBlock; t: (key: string) => string }) {
+  const metres = (block.sets ?? []).reduce((sum, set) => sum + (set.distanceMeters ?? 0), 0);
+  return (
+    <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
+      {`${t('progressDashboard.distanceKm')}: ${metres / 1000}`}
+    </Text>
+  );
+}
+
 /** Per-type global fields (everything except the Series spinbox) */
 function GlobalFields({ block, readOnly, onUpdateField, t }: BlockFieldsProps) {
   const x = txtField(block, onUpdateField, readOnly, t);
-  if (block.type === 'cardio')
-    return (
-      <UiTextField
-        label={t('progressDashboard.distanceKm')}
-        disabled={readOnly}
-        keyboardType={'decimal-pad'}
-        value={block.targetDistanceMeters == null ? '' : String(block.targetDistanceMeters / 1000)}
-        onChangeText={(text) => {
-          const value = Number(text.replace(',', '.'));
-          onUpdateField(
-            'targetDistanceMeters',
-            text.trim() && Number.isFinite(value) && value >= 0 ? Math.round(value * 1000) : undefined,
-          );
-        }}
-      />
-    );
-  if (block.type === 'sport')
-    return (
-      <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-        {`${t('progressDashboard.distanceKm')}: ${(block.sets ?? []).reduce((sum, set) => sum + (set.distanceMeters ?? 0), 0) / 1000}`}
-      </Text>
-    );
+  if (block.type === 'cardio' || block.type === 'sport') return <DistanceTotal block={block} t={t} />;
   if (block.type === 'isometric') return null;
   if (blockTypeShowsRepRange(block.type)) return <>{x('coach.routine.block.repsRange', 'repsRange')}</>;
   return (

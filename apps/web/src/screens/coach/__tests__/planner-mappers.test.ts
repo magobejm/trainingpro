@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canUnlockSetVariable, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
+import { canUnlockSetVariable, CARDIO_DEFAULT_LOCKED_VARIABLES, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
 import { buildRoutinePayload, createBlock, createEmptyDraft } from '../RoutinePlanner.helpers';
 import { mapTemplateBlock } from '../RoutinePlanner.template-mapper';
 import { resolveDisplaySets, parseSets } from '../components/RoutinePlanner/warmup-exercise-list.helpers';
@@ -7,6 +7,7 @@ import { resolveDisplaySets, parseSets } from '../components/RoutinePlanner/warm
 describe('createBlock sport locks', () => {
   it('locks the four extra sport variables by default', () => {
     expect(createBlock('sport', 'Fútbol').lockedFields).toEqual(SPORT_DEFAULT_LOCKED_VARIABLES);
+    expect(createBlock('cardio', 'Rodar').lockedFields).toEqual(CARDIO_DEFAULT_LOCKED_VARIABLES);
   });
 });
 

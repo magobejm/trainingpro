@@ -9,6 +9,14 @@ export const record = (value: unknown): Record<string, unknown> =>
 export const list = (value: unknown): Record<string, unknown>[] => (Array.isArray(value) ? value.map(record) : []);
 export const numeric = (value: unknown): number | null =>
   value === null || value === undefined || !Number.isFinite(Number(value)) ? null : Number(value);
+export function cardioMetricDistance(
+  headerDistance: number | null,
+  seriesDistances: Array<number | null>,
+  index: number,
+): number | null | undefined {
+  if (headerDistance === null || seriesDistances.some((value) => value !== null)) return undefined;
+  return index === 0 ? headerDistance : null;
+}
 export const nonnegative = (value: unknown): number | null => {
   const result = numeric(value);
   return result !== null && result >= 0 ? result : null;
@@ -98,6 +106,7 @@ export function flattenSession(session: Session, frozenContent?: unknown): Exerc
         );
         if (headerDistance !== null && !rows.length) rows = [{ intervalIndex: 1, headerOnly: true }];
       }
+      const seriesDistances = rows.map((row) => nonnegative(row.distanceDoneMeters));
       rows.forEach((row, index) => {
         result.push({
           exerciseId: String(block[sourceKey] ?? block.id),
@@ -115,7 +124,7 @@ export function flattenSession(session: Session, frozenContent?: unknown): Exerc
           rir: nonnegative(row.effortRir),
           durationSeconds: nonnegative(row.durationSecondsDone),
           distanceMeters: nonnegative(row.distanceDoneMeters),
-          metricDistanceMeters: headerDistance !== null ? (index === 0 ? headerDistance : null) : undefined,
+          metricDistanceMeters: cardioMetricDistance(headerDistance, seriesDistances, index),
           heartRate: nonnegative(row.heartRateDone ?? row.avgHeartRate),
           fcMaxPercent: nonnegative(row.hrMaxPctDone),
           fcReservePercent: nonnegative(row.hrReservePctDone),

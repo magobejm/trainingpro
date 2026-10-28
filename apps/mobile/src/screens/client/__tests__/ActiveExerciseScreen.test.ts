@@ -1,7 +1,8 @@
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
+import { CARDIO_DEFAULT_LOCKED_VARIABLES, SPORT_DEFAULT_LOCKED_VARIABLES } from '@trainerpro/shared';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
-import { ExerciseDistanceHeader, exerciseDistanceMeters } from '../ExerciseDistanceHeader';
+import { exerciseDistanceMeters } from '../ExerciseDistanceHeader';
 import { ActiveExerciseScreen } from '../ActiveExerciseScreen';
 import { loggedDraft } from '../active-exercise.save';
 
@@ -79,15 +80,15 @@ const item = {
   coachInstructions: 'Baja de forma controlada',
 } as unknown as SessionItem;
 
-function renderExercise(readOnly = false) {
+function renderExercise(readOnly = false, current: SessionItem = item) {
   return renderToStaticMarkup(
     React.createElement(ActiveExerciseScreen, {
       guideSync: { pendingCount: 0, conflictsCount: 0 },
       guideContext: 'QA workout',
       guideEditable: !readOnly,
-      item,
+      item: current,
       readOnly,
-      exerciseGroup: [item],
+      exerciseGroup: [current],
       sessionId: 'session',
       visible: true,
       completedRestKeys: [],
@@ -149,16 +150,17 @@ it('shows all series of a finished workout without enabling writes', () => {
   ).toBe(true);
 });
 
-it('uses the cardio header as authoritative distance and sums sport distances once', () => {
+it('sums the distances logged on each series and keeps a header only when none exist', () => {
   const cardio = {
     ...item,
     type: 'cardio',
     distanceDoneMeters: 1250,
     intervalLogs: [{ distanceDoneMeters: 200 }, { distanceDoneMeters: 300 }],
   } as unknown as SessionItem;
-  expect(exerciseDistanceMeters(cardio)).toBe(1250);
-  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: 0 } as SessionItem)).toBe(0);
-  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: null } as SessionItem)).toBe(500);
+  expect(exerciseDistanceMeters(cardio)).toBe(500);
+  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: 0 } as SessionItem)).toBe(500);
+  expect(exerciseDistanceMeters({ ...cardio, distanceDoneMeters: null, intervalLogs: [] } as SessionItem)).toBeNull();
+  expect(exerciseDistanceMeters({ ...cardio, intervalLogs: [], distanceDoneMeters: 1250 } as SessionItem)).toBe(1250);
   expect(
     exerciseDistanceMeters({
       ...item,
@@ -166,7 +168,31 @@ it('uses the cardio header as authoritative distance and sums sport distances on
       setLogs: [{ distanceDoneMeters: 250 }, { distanceDoneMeters: 750 }],
     } as unknown as SessionItem),
   ).toBe(1000);
-  const markup = renderToStaticMarkup(React.createElement(ExerciseDistanceHeader, { item: cardio, readOnly: true }));
-  expect(markup).toContain('1.25');
-  expect(markup).not.toContain('button');
+});
+
+it('shows cardio distance on each series and sport rest instead of duration', () => {
+  const cardio = {
+    ...item,
+    displayName: 'Rodar',
+    distanceDoneMeters: null,
+    intervalLogs: [],
+    lockedFields: [...CARDIO_DEFAULT_LOCKED_VARIABLES],
+    plannedSets: [{ distanceMeters: 2000, setIndex: 1 }],
+    targetDistanceMeters: null,
+    type: 'cardio',
+  } as unknown as SessionItem;
+  const cardioMarkup = renderExercise(false, cardio);
+  expect(cardioMarkup).toContain('mobile.client.history.distanceKm');
+  expect(cardioMarkup).not.toContain('mobile.client.exercise.saveDistance');
+  const sport = {
+    ...item,
+    displayName: 'Fútbol',
+    lockedFields: [...SPORT_DEFAULT_LOCKED_VARIABLES],
+    plannedSets: [{ restSeconds: 60, setIndex: 1 }],
+    setLogs: [],
+    type: 'sport',
+  } as unknown as SessionItem;
+  const sportMarkup = renderExercise(false, sport);
+  expect(sportMarkup).toContain('mobile.client.history.rest');
+  expect(sportMarkup).not.toContain('mobile.client.history.duration');
 });

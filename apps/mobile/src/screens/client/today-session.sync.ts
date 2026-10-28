@@ -40,13 +40,6 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
     enqueue: queue.enqueue,
     enqueueFinish,
     flush: queue.flush,
-    handleCardioDistance: (blockId: string, distanceDoneMeters: number | null) =>
-      save({
-        body: { distanceDoneMeters },
-        dedupeKey: `cardio-distance:${blockId}:0`,
-        kind: 'cardio-distance',
-        path: sessionWritePath(sessionId, 'cardio-distance', blockId),
-      }),
     handleLogInterval: (input: LogIntervalMutationInput) => save(intervalInput(sessionId, input)),
     handleLogIsometricSet: (input: LogIsometricSetMutationInput) => save(isometricInput(sessionId, input)),
     handleLogMobilitySet: (input: LogMobilitySetMutationInput) => save(mobilityInput(sessionId, input)),

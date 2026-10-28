@@ -39,7 +39,7 @@ describe('routineSetColumnsForType', () => {
     expect(routineSetColumnsForType('cardio').map((column) => column.key)).toEqual([
       'rpe',
       'fcMaxPct',
-      'durationSeconds',
+      'distanceMeters',
       'heartRate',
       'fcReservePct',
       'restSeconds',
@@ -72,8 +72,8 @@ describe('routineSetColumnsForType', () => {
       'weightKg',
       'rpe',
       'fcMaxPct',
-      'durationSeconds',
       'distanceMeters',
+      'restSeconds',
     ]);
   });
 });

@@ -72,7 +72,7 @@ export function formatSessionRepRange(item: SessionItem): null | string {
 export function getSetColumns(item: SessionItem): SetColumn[] {
   const columns = getBaseSetColumns(item);
   return filterActiveSetColumns(columns, resolveLockedFields(item.type, item.lockedFields)).filter(
-    (column) => column.key !== 'rest',
+    (column) => column.key !== 'rest' || item.type === 'sport' || item.type === 'cardio',
   );
 }
 
@@ -438,15 +438,18 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
         hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
         hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
         avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
+        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         intervalIndex: setIndex,
+        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
         sessionCardioBlockId: item.id,
       };
     case 'sport':
       return {
         distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
         durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
         effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
         effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
         heartRateDone: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),

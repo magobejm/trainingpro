@@ -64,7 +64,6 @@ export type ActiveExerciseScreenProps = {
   onFinishExercise: (itemId: string) => void;
   onNavigateExercise: (item: SessionItem) => void;
   onRestFinish: () => void;
-  onCardioDistance?: (blockId: string, distanceDoneMeters: number | null) => LogResult;
   onLogInterval: (input: LogIntervalMutationInput) => LogResult;
   onLogIsometricSet: (input: LogIsometricSetMutationInput) => LogResult;
   onLogMobilitySet: (input: LogMobilitySetMutationInput) => LogResult;
@@ -125,12 +124,7 @@ function ActiveExerciseFrame(props: {
           ref={scrollRef}
         >
           {screen.syncBanner}
-          <ExerciseDistanceHeader
-            key={screen.item.id}
-            item={screen.item}
-            onSave={screen.onCardioDistance}
-            readOnly={screen.readOnly}
-          />
+          <ExerciseDistanceHeader key={screen.item.id} item={screen.item} />
           <WorkoutGuideCard
             {...screen.guideSync}
             context={`${screen.guideContext} · ${screen.item.displayName}`}

@@ -55,7 +55,6 @@ type TodaySessionBodyProps = {
   isCompleted: boolean;
   isPending: boolean;
   isRunning: boolean;
-  onCardioDistance: (blockId: string, distanceDoneMeters: number | null) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogInterval: (input: LogIntervalMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogIsometricSet: (input: LogIsometricSetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
   onLogMobilitySet: (input: LogMobilitySetMutationInput) => Promise<EnqueueResult | 'missing' | void> | void;
@@ -146,7 +145,6 @@ function TodaySessionBody(props: TodaySessionBodyProps): React.JSX.Element {
           onLogIsometricSet={props.onLogIsometricSet}
           onLogSport={props.onLogSport}
           onLogInterval={props.onLogInterval}
-          onCardioDistance={props.onCardioDistance}
         />
       ) : null}
     </SafeAreaView>
@@ -369,7 +367,6 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
         isRunning={isRunning}
         onAdjustRest={timers.onAdjustRest}
         onLogInterval={actions.handleLogInterval}
-        onCardioDistance={actions.handleCardioDistance}
         onLogIsometricSet={actions.handleLogIsometricSet}
         onLogMobilitySet={actions.handleLogMobilitySet}
         onLogPlioSet={actions.handleLogPlioSet}

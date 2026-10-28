@@ -59,6 +59,7 @@ export function DashboardChart(props: {
   metric: DashboardMetric;
   points: DashboardPoint[];
   compare?: boolean;
+  connectNulls?: boolean;
   cycleDays?: number;
   expanded?: boolean;
   onDetail?: () => void;
@@ -95,6 +96,7 @@ function DashboardPlot(props: {
   metric: DashboardMetric;
   points: DashboardPoint[];
   compare?: boolean;
+  connectNulls?: boolean;
   cycleDays?: number;
   expanded?: boolean;
 }): React.JSX.Element {
@@ -137,7 +139,7 @@ function DashboardPlot(props: {
               fill={`url(#${gradient})`}
               strokeWidth={2}
               dot={{ r: 3 }}
-              connectNulls={false}
+              connectNulls={props.connectNulls === true}
               isAnimationActive={false}
             />
           </AreaChart>

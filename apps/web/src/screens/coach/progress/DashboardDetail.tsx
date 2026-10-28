@@ -12,6 +12,7 @@ export function DashboardDetail(props: {
   points: DashboardPoint[];
   daily?: ProgressDailyPoint[];
   compare?: boolean;
+  connectNulls?: boolean;
   cycleDays?: number;
   title: string;
   onClose: () => void;
@@ -64,6 +65,7 @@ export function DashboardDetail(props: {
               points={props.points}
               expanded
               compare={props.compare}
+              connectNulls={props.connectNulls}
               cycleDays={props.cycleDays}
             />
             {selected !== null && props.points[selected] ? (

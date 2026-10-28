@@ -11,6 +11,7 @@ import { DashboardChart, routineMetrics, type DashboardMetric } from './Dashboar
 import { DashboardDetail } from './DashboardDetail';
 import { cycleChartPoints, selectedAdherence, formatMetric } from './dashboard-model';
 import { DashboardPdf } from './DashboardPdf';
+import { DaySessions } from './DashboardDaySessions';
 
 type DashboardRoutineProps = {
   clientId: string;
@@ -98,7 +99,13 @@ export function DashboardRoutine(props: DashboardRoutineProps): React.JSX.Elemen
               />
             </>
           ) : (
-            <RoutineOutline days={query.data?.days ?? []} onExercise={props.onExercise} />
+            <RoutineOutline
+              cycleDays={cycleDays}
+              cycles={cycles}
+              days={query.data?.days ?? []}
+              onExercise={props.onExercise}
+              visible={props.visible !== false}
+            />
           )}
         </>
       ) : null}
@@ -139,8 +146,11 @@ function RoutineHeader({ routine }: { routine: ProgressRoutine }): React.JSX.Ele
 }
 
 function RoutineOutline(props: {
+  cycleDays: number;
+  cycles: ProgressRoutineCycle[];
   days: ProgressRoutineDetail['days'];
   onExercise: (exercise: ProgressExerciseRef) => void;
+  visible: boolean;
 }): React.JSX.Element {
   const { t } = useTranslation();
   return (
@@ -160,6 +170,7 @@ function RoutineOutline(props: {
               <Text style={styles.muted}>{t(`coach.progress.filter.group.${exercise.exerciseType}`)}</Text>
             </Pressable>
           ))}
+          <DaySessions cycleDays={props.cycleDays} cycles={props.cycles} dayIndex={day.dayIndex} visible={props.visible} />
         </View>
       ))}
     </View>

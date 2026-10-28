@@ -4,6 +4,8 @@ import {
   mergeDailyResults,
   cycleChartPoints,
   selectedAdherence,
+  sessionChartPoints,
+  sessionsForDay,
   metricSummary,
   exerciseKpis,
   inferRangePreset,
@@ -56,6 +58,41 @@ describe('progress dashboard', () => {
     const cycles = [cycle(2, 1, 2), cycle(0, 2, 3), cycle(1, 1, 4)];
     expect(cycleChartPoints(cycles, [2, 0], true).map((p) => p.cycleIndex)).toEqual([0, 2]);
     expect(selectedAdherence(cycles, [2, 0])).toEqual({ done: 3, planned: 5, percent: 60 });
+  });
+  it('lists the sessions of one routine day and ignores the other days', () => {
+    const session = (id: string, dayIndex: number | null, date: string) => ({
+      id,
+      date,
+      title: 'Día',
+      dayIndex,
+      incomplete: false,
+      tonnage: 100,
+      rpe: 7,
+      durationSeconds: null,
+      trainingLoad: 10,
+      inol: null,
+      effortIndex: null,
+      efficiency: null,
+    });
+    const cycle = (index: number, sessions: ReturnType<typeof session>[]): ProgressRoutineCycle => ({
+      index,
+      from: '2026-10-01',
+      to: '2026-10-07',
+      sessions,
+      tonnage: null,
+      avgRpe: null,
+      trainingLoad: null,
+      adherence: { done: 1, planned: 1, percent: 100 },
+    });
+    const rows = sessionsForDay(
+      [cycle(1, [session('b', 1, '2026-10-12')]), cycle(0, [session('a', 1, '2026-10-05'), session('c', 2, '2026-10-06')])],
+      1,
+    );
+    expect(rows.map((row) => row.id)).toEqual(['a', 'b']);
+    expect(sessionChartPoints(rows)).toEqual([
+      { avgRpe: 7, date: '2026-10-05', label: '2026-10-05', sessionId: 'a', tonnage: 100, trainingLoad: 10 },
+      { avgRpe: 7, date: '2026-10-12', label: '2026-10-12', sessionId: 'b', tonnage: 100, trainingLoad: 10 },
+    ]);
   });
   it('ignores absent measurements but includes recorded zero in statistics', () => {
     expect(metricSummary([{ value: null }, { value: 0 }, { value: 12 }], 'value')).toEqual({

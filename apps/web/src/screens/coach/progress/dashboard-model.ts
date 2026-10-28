@@ -63,6 +63,53 @@ export function cycleChartPoints(cycles: ProgressRoutineCycle[], indices: number
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
+export type RoutineDaySession = {
+  cycleIndex: number;
+  date: string;
+  id: string;
+  incomplete: boolean;
+  rpe: number | null;
+  title: string;
+  tonnage: number | null;
+  trainingLoad: number | null;
+};
+
+/** Sessions performed on one routine day, oldest first, across every completed microcycle. */
+export function sessionsForDay(cycles: ProgressRoutineCycle[], dayIndex: number): RoutineDaySession[] {
+  return cycles
+    .flatMap((cycle) =>
+      cycle.sessions.flatMap((session) =>
+        session.dayIndex === dayIndex
+          ? [
+              {
+                cycleIndex: cycle.index,
+                date: session.date,
+                id: session.id,
+                incomplete: session.incomplete,
+                rpe: session.rpe,
+                title: session.title,
+                tonnage: session.tonnage,
+                trainingLoad: session.trainingLoad,
+              },
+            ]
+          : [],
+      ),
+    )
+    .sort((left, right) => left.date.localeCompare(right.date) || left.id.localeCompare(right.id));
+}
+
+/** One chart point per chosen session of the same routine day. */
+export function sessionChartPoints(sessions: RoutineDaySession[]): DashboardPoint[] {
+  return sessions.map((session) => ({
+    avgRpe: session.rpe,
+    date: session.date,
+    label: session.date,
+    sessionId: session.id,
+    tonnage: session.tonnage,
+    trainingLoad: session.trainingLoad,
+  }));
+}
+
 export function selectedAdherence(cycles: ProgressRoutineCycle[], indices: number[]) {
   const selected = cycles.filter((c) => indices.includes(c.index));
   const done = selected.reduce((sum, c) => sum + c.adherence.done, 0);

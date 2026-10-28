@@ -280,8 +280,11 @@ describe('buildLogPayload for all exercise types', () => {
     );
     expect(payload).toEqual({
       avgHeartRate: 145,
+      avgHeartRateMax: null,
       hrMaxPctDone: 85,
+      hrMaxPctDoneMax: null,
       hrReservePctDone: 60,
+      hrReservePctDoneMax: null,
       distanceDoneMeters: null,
       durationSecondsDone: 120,
       effortRpe: 6,
@@ -316,14 +319,74 @@ describe('buildLogPayload for all exercise types', () => {
       effortRir: null,
       effortRpe: 8,
       heartRateDone: null,
+      heartRateDoneMax: null,
       hrMaxPctDone: 85,
+      hrMaxPctDoneMax: null,
       hrReservePctDone: null,
+      hrReservePctDoneMax: null,
       repsDone: 12,
       restSecondsDone: 45,
       romDone: 'parcial',
       sessionSportBlockId: 'sport-1',
       setIndex: 2,
       weightDoneKg: 5,
+    });
+  });
+});
+
+describe('heart-rate bands', () => {
+  it('sends one exact series and one range, and shows both as text', () => {
+    const item = {
+      type: 'cardio',
+      id: 'cardio-1',
+      intervalLogs: [],
+      lockedFields: ['durationSeconds'],
+    } as unknown as SessionItem;
+    const exact = buildLogPayload(item, 1, emptyDraft({ fcMaxPct: '65', fcReservePct: '55', heartRate: '140' }));
+    const range = buildLogPayload(item, 2, emptyDraft({ fcMaxPct: '60-70', fcReservePct: '50-60', heartRate: '130-150' }));
+    expect(exact).toMatchObject({ avgHeartRate: 140, avgHeartRateMax: null, hrMaxPctDone: 65, hrReservePctDone: 55 });
+    expect(range).toMatchObject({
+      avgHeartRate: 130,
+      avgHeartRateMax: 150,
+      hrMaxPctDone: 60,
+      hrMaxPctDoneMax: 70,
+      hrReservePctDone: 50,
+      hrReservePctDoneMax: 60,
+    });
+    const logged = {
+      ...item,
+      intervalLogs: [{ avgHeartRate: 130, avgHeartRateMax: 150, hrMaxPctDone: 60, hrMaxPctDoneMax: 70, intervalIndex: 2 }],
+    } as unknown as SessionItem;
+    expect(readActualValue(logged, 2, 'heartRate')).toBe('130-150');
+    expect(readActualValue(logged, 2, 'fcMaxPct')).toBe('60-70');
+    const prescribed = { ...item, plannedSets: [{ heartRate: 130, heartRateMax: 150, setIndex: 2 }] };
+    expect(readTargetValue(prescribed as unknown as SessionItem, 2, 'heartRate')).toBe('130-150');
+  });
+
+  it('keeps the logged band when the draft is not a valid range', () => {
+    const item = {
+      type: 'cardio',
+      id: 'cardio-1',
+      intervalLogs: [
+        {
+          avgHeartRate: 140,
+          avgHeartRateMax: null,
+          hrMaxPctDone: 60,
+          hrMaxPctDoneMax: 70,
+          hrReservePctDone: 55,
+          intervalIndex: 1,
+        },
+      ],
+      lockedFields: ['durationSeconds'],
+    } as unknown as SessionItem;
+    const payload = buildLogPayload(item, 1, emptyDraft({ fcMaxPct: '101', fcReservePct: '50-', heartRate: '130-' }));
+    expect(payload).toMatchObject({
+      avgHeartRate: 140,
+      avgHeartRateMax: null,
+      hrMaxPctDone: 60,
+      hrMaxPctDoneMax: 70,
+      hrReservePctDone: 55,
+      hrReservePctDoneMax: null,
     });
   });
 });

@@ -89,8 +89,11 @@ export type LogSportSetInput = {
   effortRir?: null | number;
   effortRpe?: null | number;
   heartRateDone?: null | number;
+  heartRateDoneMax?: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   repsDone?: null | number;
   restSecondsDone?: null | number;
   romDone?: null | string;

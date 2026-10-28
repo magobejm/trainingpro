@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { TFunction } from 'i18next';
@@ -6,7 +6,7 @@ import { LIGHT } from '../../theme/light';
 import { SESSION } from '../../theme/sessionStyles';
 import { formatRestLabel } from './session-completion.utils';
 import { isRomScaleValue } from './rom-scale.utils';
-import { keyboardForField, sanitizeSessionNumber } from './session-number-input';
+import { commitHeartRateBandInput, keyboardForField, sanitizeSessionNumber } from './session-number-input';
 import type { SetColumn, SetFieldKey } from './active-exercise.helpers';
 
 const HIT = 48;
@@ -190,6 +190,11 @@ function SetColumnCell(props: {
 }): React.JSX.Element {
   const label = props.t(props.column.labelKey);
   const romLabel = isRomScaleValue(props.draft) ? props.t(`mobile.client.exercise.rom.${props.draft}`) : props.draft;
+  const focusedValue = useRef(props.draft);
+  const rejectInvalidBand = () => {
+    const next = commitHeartRateBandInput(props.column.key, props.draft, focusedValue.current);
+    if (next !== props.draft) props.onChange(next);
+  };
   return (
     <View style={styles.column}>
       <Text style={styles.columnLabel}>{label}</Text>
@@ -210,8 +215,12 @@ function SetColumnCell(props: {
           accessibilityLabel={label}
           editable={!props.readOnly}
           keyboardType={keyboardForField(props.column.key, props.column.minutes)}
+          onBlur={rejectInvalidBand}
           onChangeText={(value) => props.onChange(sanitizeSessionNumber(props.column.key, value, props.column.minutes))}
-          onFocus={(event) => props.onFocus(Number(event.nativeEvent.target))}
+          onFocus={(event) => {
+            focusedValue.current = props.draft;
+            props.onFocus(Number(event.nativeEvent.target));
+          }}
           style={styles.input}
           value={props.draft}
         />

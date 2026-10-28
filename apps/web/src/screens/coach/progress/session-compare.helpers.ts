@@ -1,11 +1,14 @@
-import { toSetDisplayValue, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
+import { formatHeartRateBand, toSetDisplayValue, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
 
 export type PlannedSetLike = {
   distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   reps?: null | number;
   restSeconds?: null | number;
   rir?: null | number;
@@ -20,9 +23,13 @@ export type LoggedSetLike = {
   durationSecondsDone?: null | number;
   effortRir?: null | number;
   effortRpe?: null | number;
+  avgHeartRateMax?: null | number;
   heartRateDone?: null | number;
+  heartRateDoneMax?: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   intervalIndex?: number;
   repsDone?: null | number;
   restSecondsDone?: null | number;
@@ -92,7 +99,7 @@ export function comparePlannedAndLogged(item: SessionCompareItem): ComparedRow[]
     return {
       setIndex,
       cells: columns.map((key) => {
-        const plannedValue = formatDisplay(item.type, key, planned?.[PLANNED_KEY[key]]);
+        const plannedValue = formatPlanned(item.type, key, planned);
         const doneValue = formatDone(key, done, item.type);
         return {
           differs: plannedValue !== '-' && doneValue !== '-' && plannedValue !== doneValue,
@@ -121,11 +128,21 @@ function collectSetIndexes(planned: PlannedSetLike[], logs: LoggedSetLike[]): nu
   return [...indexes].sort((a, b) => a - b);
 }
 
+function formatPlanned(type: SessionCompareItem['type'], key: SetVariableKey, planned: PlannedSetLike | undefined): string {
+  if (!planned) return '-';
+  if (key === 'heartRate') return formatHeartRateBand(planned.heartRate, planned.heartRateMax) || '-';
+  if (key === 'fcMaxPct') return formatHeartRateBand(planned.fcMaxPct, planned.fcMaxPctMax) || '-';
+  if (key === 'fcReservePct') return formatHeartRateBand(planned.fcReservePct, planned.fcReservePctMax) || '-';
+  return formatDisplay(type, key, planned[PLANNED_KEY[key]]);
+}
+
 function formatDone(key: SetVariableKey, log: LoggedSetLike | undefined, type: SessionCompareItem['type']): string {
   if (!log) return '-';
-  if (key === 'heartRate' && log.heartRateDone == null && log.avgHeartRate != null) {
-    return formatValue(log.avgHeartRate);
+  if (key === 'heartRate') {
+    return formatHeartRateBand(log.heartRateDone ?? log.avgHeartRate, log.heartRateDoneMax ?? log.avgHeartRateMax) || '-';
   }
+  if (key === 'fcMaxPct') return formatHeartRateBand(log.hrMaxPctDone, log.hrMaxPctDoneMax) || '-';
+  if (key === 'fcReservePct') return formatHeartRateBand(log.hrReservePctDone, log.hrReservePctDoneMax) || '-';
   return formatDisplay(type, key, log[DONE_KEY[key]]);
 }
 

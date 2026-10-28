@@ -2,7 +2,7 @@ import { selectRecordedSportRecords, sportRecordsSelect } from './sport-progress
 /* eslint-disable max-lines -- progress repository aggregates many read paths */
 import { readSessionOrigins } from '../../../../common/plan/session-origins.prisma';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
-import { sessionOutcome } from '@trainerpro/shared';
+import { heartRateBandPoint, sessionOutcome } from '@trainerpro/shared';
 import { closedSessionWhere, outcomeSelect } from './closed-session';
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma, Role } from '@prisma/client';
@@ -74,6 +74,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       where: buildDateWhere(clientId, query),
       select: {
         avgHeartRate: true,
+        avgHeartRateMax: true,
         distanceDoneMeters: true,
         durationSecondsDone: true,
         effortRpe: true,
@@ -83,7 +84,7 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
     });
     const methodMap = await this.readMethodTypeMap(rows);
     return rows.map((row) => ({
-      avgHeartRate: row.avgHeartRate,
+      avgHeartRate: heartRateBandPoint(row.avgHeartRate, row.avgHeartRateMax),
       distanceDoneMeters: row.distanceDoneMeters,
       durationSecondsDone: row.durationSecondsDone,
       effortRpe: toRpeNumber(row.effortRpe),
@@ -819,6 +820,7 @@ type SessionProgressRow = {
     durationSecondsDone: number | null;
     effortRpe: StoredRpe;
     avgHeartRate: number | null;
+    avgHeartRateMax?: number | null;
     distanceDoneMeters?: number | null;
   }>;
   plioLogs: Array<{
@@ -846,8 +848,11 @@ type SessionProgressRow = {
     sessionSportBlockId?: string;
     distanceDoneMeters: number | null;
     heartRateDone?: number | null;
+    heartRateDoneMax?: number | null;
     hrMaxPctDone?: number | null;
+    hrMaxPctDoneMax?: number | null;
     hrReservePctDone?: number | null;
+    hrReservePctDoneMax?: number | null;
     romDone?: string | null;
     effortRir: number | null;
     durationSecondsDone: number | null;
@@ -883,6 +888,7 @@ function sessionProgressSelect() {
         durationSecondsDone: true,
         effortRpe: true,
         avgHeartRate: true,
+        avgHeartRateMax: true,
         distanceDoneMeters: true,
       },
     },
@@ -900,8 +906,11 @@ function sessionProgressSelect() {
         sessionSportBlockId: true,
         distanceDoneMeters: true,
         heartRateDone: true,
+        heartRateDoneMax: true,
         hrMaxPctDone: true,
+        hrMaxPctDoneMax: true,
         hrReservePctDone: true,
+        hrReservePctDoneMax: true,
         romDone: true,
         effortRir: true,
         durationSecondsDone: true,
@@ -977,7 +986,12 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
   const hrWeight = hrRows.reduce((sum, log) => sum + log.durationSecondsDone!, 0);
   const avgHr =
     hrWeight > 0
-      ? Math.round(hrRows.reduce((sum, log) => sum + log.avgHeartRate! * log.durationSecondsDone!, 0) / hrWeight)
+      ? Math.round(
+          hrRows.reduce(
+            (sum, log) => sum + heartRateBandPoint(log.avgHeartRate, log.avgHeartRateMax)! * log.durationSecondsDone!,
+            0,
+          ) / hrWeight,
+        )
       : null;
   const rpeValues = session.intervalLogs.map((l) => toRpeNumber(l.effortRpe)).filter(isRecordedNumber);
   const avgRpe =
@@ -988,7 +1002,9 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
   if (avgHr !== null && fcRest != null && fcMax != null && fcMax > fcRest) {
     const total = hrRows.reduce(
       (sum, log) =>
-        sum + (log.durationSecondsDone! / 60) * Math.max(0, ((log.avgHeartRate! - fcRest) / (fcMax - fcRest)) * 100),
+        sum +
+        (log.durationSecondsDone! / 60) *
+          Math.max(0, ((heartRateBandPoint(log.avgHeartRate, log.avgHeartRateMax)! - fcRest) / (fcMax - fcRest)) * 100),
       0,
     );
     trainingLoad = Math.round(total * 100) / 100;

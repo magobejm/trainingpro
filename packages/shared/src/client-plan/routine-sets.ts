@@ -1,3 +1,4 @@
+import { formatHeartRateBand } from '../heart-rate-band';
 import { usesMinuteDuration, toSetDisplayValue } from '../set-variable-units';
 import type { ClientRoutineExercise, ClientRoutineSet } from './types';
 
@@ -14,6 +15,10 @@ export type RoutineSetColumn = {
   key: string;
   labelKey: string;
 };
+
+function formatBand(min: null | number | undefined, max: null | number | undefined): string {
+  return formatHeartRateBand(min, max) || '-';
+}
 
 function formatNumber(value: null | number | undefined): string {
   if (value == null) return '-';
@@ -50,7 +55,7 @@ const ROUTINE_COLUMN_BY_KEY: Record<SetVariableKey, RoutineSetColumn> = {
   fcMaxPct: {
     key: 'fcMaxPct',
     labelKey: 'mobile.client.exercise.seriesTable.fcMaxPct',
-    format: (set) => formatNumber(set.fcMaxPct),
+    format: (set) => formatBand(set.fcMaxPct, set.fcMaxPctMax),
   },
   distanceMeters: {
     key: 'distanceMeters',
@@ -65,13 +70,13 @@ const ROUTINE_COLUMN_BY_KEY: Record<SetVariableKey, RoutineSetColumn> = {
   heartRate: {
     key: 'heartRate',
     labelKey: 'mobile.client.exercise.seriesTable.heartRate',
-    format: (set) => formatNumber(set.heartRate),
+    format: (set) => formatBand(set.heartRate, set.heartRateMax),
   },
   rir: { key: 'rir', labelKey: 'client.label.rir', format: (set) => formatNumber(set.rir) },
   fcReservePct: {
     key: 'fcReservePct',
     labelKey: 'mobile.client.exercise.seriesTable.fcReservePct',
-    format: (set) => formatNumber(set.fcReservePct),
+    format: (set) => formatBand(set.fcReservePct, set.fcReservePctMax),
   },
   rom: { key: 'rom', labelKey: 'mobile.client.exercise.seriesTable.rom', format: (set) => formatText(set.rom) },
   restSeconds: { key: 'restSeconds', labelKey: 'client.today.restTimer', format: (set) => formatRest(set.restSeconds) },

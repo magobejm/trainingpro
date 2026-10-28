@@ -317,8 +317,11 @@ export class SessionsCardioRepositoryPrisma {
     };
     const update = {
       avgHeartRate: input.avgHeartRate ?? null,
+      avgHeartRateMax: input.avgHeartRateMax ?? null,
       hrMaxPctDone: input.hrMaxPctDone ?? null,
+      hrMaxPctDoneMax: input.hrMaxPctDoneMax ?? null,
       hrReservePctDone: input.hrReservePctDone ?? null,
+      hrReservePctDoneMax: input.hrReservePctDoneMax ?? null,
       ...(input.distanceDoneMeters === undefined ? {} : { distanceDoneMeters: input.distanceDoneMeters }),
       durationSecondsDone: input.durationSecondsDone ?? null,
       effortRpe: input.effortRpe ?? null,

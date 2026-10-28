@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { resolveLockedFields, setVariablesForType, type ProgressExerciseRef } from '@trainerpro/shared';
+import { heartRateBandPoint, resolveLockedFields, setVariablesForType, type ProgressExerciseRef } from '@trainerpro/shared';
 import type { DailyRawSet } from '../domain/metrics/daily-exercise';
 
 export const DAY = 86_400_000;
@@ -39,6 +39,17 @@ export const sessionInclude = {
 } satisfies Prisma.SessionInstanceInclude;
 export type Session = Prisma.SessionInstanceGetPayload<{ include: typeof sessionInclude }>;
 type ExerciseRawSet = DailyRawSet & ProgressExerciseRef & { exerciseName: string };
+function heartBand(row: Record<string, unknown>) {
+  return {
+    fcMaxPercent: heartRateBandPoint(nonnegative(row.hrMaxPctDone), nonnegative(row.hrMaxPctDoneMax)),
+    fcReservePercent: heartRateBandPoint(nonnegative(row.hrReservePctDone), nonnegative(row.hrReservePctDoneMax)),
+    heartRate: heartRateBandPoint(
+      nonnegative(row.heartRateDone ?? row.avgHeartRate),
+      nonnegative(row.heartRateDoneMax ?? row.avgHeartRateMax),
+    ),
+  };
+}
+
 export function flattenSession(session: Session, frozenContent?: unknown): ExerciseRawSet[] {
   const result: ExerciseRawSet[] = [];
   const source = record(session);
@@ -125,9 +136,7 @@ export function flattenSession(session: Session, frozenContent?: unknown): Exerc
           durationSeconds: nonnegative(row.durationSecondsDone),
           distanceMeters: nonnegative(row.distanceDoneMeters),
           metricDistanceMeters: cardioMetricDistance(headerDistance, seriesDistances, index),
-          heartRate: nonnegative(row.heartRateDone ?? row.avgHeartRate),
-          fcMaxPercent: nonnegative(row.hrMaxPctDone),
-          fcReservePercent: nonnegative(row.hrReservePctDone),
+          ...heartBand(row),
           restSeconds: nonnegative(row.restSecondsDone),
           rom: typeof row.romDone === 'string' && row.romDone ? row.romDone : null,
           activeVariables,

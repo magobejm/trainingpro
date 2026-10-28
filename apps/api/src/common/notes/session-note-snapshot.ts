@@ -47,10 +47,16 @@ export function readPlannedSetsJson(value: Prisma.JsonValue | null): PlannedSetS
       if (durationSeconds != null) snapshot.durationSeconds = durationSeconds;
       const fcMaxPct = readOptionalNumber(row.fcMaxPct);
       if (fcMaxPct != null) snapshot.fcMaxPct = fcMaxPct;
+      const fcMaxPctMax = readOptionalNumber(row.fcMaxPctMax);
+      if (fcMaxPctMax != null) snapshot.fcMaxPctMax = fcMaxPctMax;
       const fcReservePct = readOptionalNumber(row.fcReservePct);
       if (fcReservePct != null) snapshot.fcReservePct = fcReservePct;
+      const fcReservePctMax = readOptionalNumber(row.fcReservePctMax);
+      if (fcReservePctMax != null) snapshot.fcReservePctMax = fcReservePctMax;
       const heartRate = readOptionalNumber(row.heartRate);
       if (heartRate != null) snapshot.heartRate = heartRate;
+      const heartRateMax = readOptionalNumber(row.heartRateMax);
+      if (heartRateMax != null) snapshot.heartRateMax = heartRateMax;
       const reps = readOptionalNumber(row.reps);
       if (reps != null) snapshot.reps = reps;
       const restSeconds = readOptionalNumber(row.restSeconds);

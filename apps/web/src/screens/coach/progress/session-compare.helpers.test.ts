@@ -30,4 +30,24 @@ describe('comparePlannedAndLogged', () => {
     expect(byKey.reps).toEqual({ differs: false, done: '10', key: 'reps', planned: '10' });
     expect(byKey.durationSeconds).toEqual({ differs: true, done: '80', key: 'durationSeconds', planned: '90' });
   });
+
+  it('shows an exact heart rate and a range as text', () => {
+    const rows = comparePlannedAndLogged({
+      displayName: 'Rodar',
+      id: 'c1',
+      intervalLogs: [
+        { avgHeartRate: 140, intervalIndex: 0 },
+        { avgHeartRate: 130, avgHeartRateMax: 150, intervalIndex: 1 },
+      ],
+      plannedSets: [
+        { heartRate: 140, setIndex: 0 },
+        { heartRate: 130, heartRateMax: 150, setIndex: 1 },
+      ],
+      type: 'cardio',
+    });
+    const exact = Object.fromEntries(rows[0]!.cells.map((cell) => [cell.key, cell]));
+    const range = Object.fromEntries(rows[1]!.cells.map((cell) => [cell.key, cell]));
+    expect(exact.heartRate).toMatchObject({ done: '140', planned: '140' });
+    expect(range.heartRate).toMatchObject({ done: '130-150', planned: '130-150' });
+  });
 });

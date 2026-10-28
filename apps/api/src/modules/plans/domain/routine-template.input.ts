@@ -16,8 +16,11 @@ export type RoutineCardioSetInput = {
   distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   restSeconds?: null | number;
   rpe?: null | number;
   advancedTechnique?: null | string;
@@ -66,8 +69,11 @@ export type RoutineSportSetInput = {
   rir?: null | number;
   weightKg?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   restSeconds?: null | number;
   rom?: null | string;
   advancedTechnique?: null | string;

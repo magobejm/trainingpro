@@ -6,8 +6,11 @@ export type PlannedSetSnapshot = {
   distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   note: null | string;
   reps?: null | number;
   restSeconds?: null | number;
@@ -29,8 +32,11 @@ export function mapPlanSetsToPlannedSnapshots(sets: PlanSetRow[] | undefined): P
           'distanceMeters',
           'durationSeconds',
           'fcMaxPct',
+          'fcMaxPctMax',
           'fcReservePct',
+          'fcReservePctMax',
           'heartRate',
+          'heartRateMax',
           'reps',
           'restSeconds',
           'rir',
@@ -59,8 +65,11 @@ export function mapClientRoutineSetsToPlannedSnapshots(sets: ClientRoutineSet[])
       distanceMeters: set.distanceMeters ?? null,
       durationSeconds: set.durationSeconds ?? null,
       fcMaxPct: set.fcMaxPct ?? null,
+      fcMaxPctMax: set.fcMaxPctMax ?? null,
       fcReservePct: set.fcReservePct ?? null,
+      fcReservePctMax: set.fcReservePctMax ?? null,
       heartRate: set.heartRate ?? null,
+      heartRateMax: set.heartRateMax ?? null,
       note: set.note,
       reps: set.reps ?? null,
       restSeconds: set.restSeconds ?? null,

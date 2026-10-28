@@ -2,11 +2,14 @@ import type { SessionInstance } from './session.entity';
 
 export type CardioIntervalLog = {
   avgHeartRate: null | number;
+  avgHeartRateMax?: null | number;
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
   effortRpe: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;

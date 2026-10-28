@@ -1,5 +1,5 @@
 import type { ExerciseHistoryEntry, ExerciseHistorySet, PlannedSet } from '@trainerpro/shared';
-import { toSetDisplayValue } from '@trainerpro/shared';
+import { formatHeartRateBand, toSetDisplayValue } from '@trainerpro/shared';
 import type { SessionItem } from '../../data/hooks/useTodaySession';
 import { getSetColumns, type SetFieldKey, type SetRowState } from './active-exercise.helpers';
 import { resolvePlannedSet } from './planned-set.utils';
@@ -21,9 +21,9 @@ export function historyDraft(item: SessionItem, set: ExerciseHistorySet): Partia
   copyNumber(keys, draft, 'weight', set.weightDoneKg);
   copyNumber(keys, draft, 'rpe', set.effortRpe);
   copyNumber(keys, draft, 'rir', set.effortRir);
-  copyNumber(keys, draft, 'heartRate', set.heartRateDone);
-  copyNumber(keys, draft, 'fcMaxPct', set.hrMaxPctDone);
-  copyNumber(keys, draft, 'fcReservePct', set.hrReservePctDone);
+  copyBand(keys, draft, 'heartRate', set.heartRateDone, set.heartRateDoneMax);
+  copyBand(keys, draft, 'fcMaxPct', set.hrMaxPctDone, set.hrMaxPctDoneMax);
+  copyBand(keys, draft, 'fcReservePct', set.hrReservePctDone, set.hrReservePctDoneMax);
   if (keys.has('rom') && set.romDone?.trim()) draft.rom = set.romDone;
   if (keys.has('distance') && set.distanceDoneMeters != null) draft.distance = numberText(set.distanceDoneMeters / 1000);
   if (keys.has('duration') && set.durationSecondsDone != null) {
@@ -63,9 +63,9 @@ function plannedField(item: SessionItem, planned: PlannedSet | null, key: SetFie
   if (key === 'rpe') return numberText(planned?.rpe ?? item.targetRpe);
   if (key === 'rir') return numberText(planned?.rir ?? (item.type === 'strength' ? item.targetRir : null));
   if (key === 'rom') return planned?.rom?.trim() ?? '';
-  if (key === 'heartRate') return numberText(planned?.heartRate);
-  if (key === 'fcMaxPct') return numberText(planned?.fcMaxPct);
-  if (key === 'fcReservePct') return numberText(planned?.fcReservePct);
+  if (key === 'heartRate') return formatHeartRateBand(planned?.heartRate, planned?.heartRateMax);
+  if (key === 'fcMaxPct') return formatHeartRateBand(planned?.fcMaxPct, planned?.fcMaxPctMax);
+  if (key === 'fcReservePct') return formatHeartRateBand(planned?.fcReservePct, planned?.fcReservePctMax);
   if (key === 'distance') return numberText(distanceKm(item, planned));
   if (key === 'duration') return durationText(item, planned);
   return '';
@@ -93,6 +93,17 @@ function fallbackDuration(item: SessionItem): number | null {
   if (item.type === 'cardio') return item.workSeconds || null;
   if (item.type === 'sport') return item.durationMinutes * 60;
   return null;
+}
+
+function copyBand(
+  keys: Set<SetFieldKey>,
+  draft: Partial<SetRowState>,
+  key: SetFieldKey,
+  min: number | null | undefined,
+  max: number | null | undefined,
+): void {
+  const text = formatHeartRateBand(min, max);
+  if (keys.has(key) && text) draft[key] = text;
 }
 
 function copyNumber(

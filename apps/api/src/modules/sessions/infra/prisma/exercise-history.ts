@@ -52,15 +52,23 @@ const numericFields = [
   'durationSecondsDone',
   'distanceDoneMeters',
   'heartRateDone',
+  'heartRateDoneMax',
   'hrMaxPctDone',
+  'hrMaxPctDoneMax',
   'hrReservePctDone',
+  'hrReservePctDoneMax',
   'restSecondsDone',
 ] as const;
 
 function mapActualSet(itemId: string, log: ActualLog): ExerciseHistorySet {
   const set: ExerciseHistorySet = { itemId, setIndex: log.setIndex ?? log.intervalIndex ?? 1 };
   for (const field of numericFields) {
-    const value = field === 'heartRateDone' ? (log.heartRateDone ?? log.avgHeartRate) : log[field];
+    const value =
+      field === 'heartRateDone'
+        ? (log.heartRateDone ?? log.avgHeartRate)
+        : field === 'heartRateDoneMax'
+          ? (log.heartRateDoneMax ?? log.avgHeartRateMax)
+          : log[field];
     if (value != null) set[field] = Number(value);
   }
   if (log.romDone != null) set.romDone = String(log.romDone);

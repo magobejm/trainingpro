@@ -1,4 +1,10 @@
-import { SET_VARIABLE_PRIORITY, setVariablesForType, usesMinuteDuration, toSetDisplayValue } from '@trainerpro/shared';
+import {
+  formatHeartRateBand,
+  SET_VARIABLE_PRIORITY,
+  setVariablesForType,
+  usesMinuteDuration,
+  toSetDisplayValue,
+} from '@trainerpro/shared';
 import type { DraftBlock, DraftSet, DraftState } from '../../screens/coach/RoutinePlanner.types';
 import type { WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { mapWarmupTemplateItemsToBlocks } from '../../screens/coach/RoutinePlanner.template-mapper';
@@ -98,19 +104,21 @@ function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
             ],
             rows: sets.map((set, index) => [
               index + 1,
-              ...active.map(({ key }) =>
-                fieldValue(
-                  key,
-                  typeof set[key] === 'number' ? toSetDisplayValue(block.type, key, set[key] as number) : set[key],
-                  t,
-                ),
-              ),
+              ...active.map(({ key }) => fieldValue(key, displayedSetValue(block.type, set, key), t)),
             ]),
             identifyingColumns: 1,
           },
         }
       : {}),
   };
+}
+
+function displayedSetValue(type: DraftBlock['type'], set: DraftSet, key: keyof DraftSet): unknown {
+  if (key === 'fcMaxPct' || key === 'fcReservePct' || key === 'heartRate') {
+    const maxKey = key === 'fcMaxPct' ? 'fcMaxPctMax' : key === 'fcReservePct' ? 'fcReservePctMax' : 'heartRateMax';
+    return formatHeartRateBand(set[key], set[maxKey]) || undefined;
+  }
+  return typeof set[key] === 'number' ? toSetDisplayValue(type, key, set[key]) : set[key];
 }
 
 function fieldValue(key: keyof DraftSet, value: unknown, t: PdfTranslate): string {
@@ -141,8 +149,11 @@ function resolvedSet(block: DraftBlock, index: number): DraftSet {
     rpe: set?.rpe ?? block.targetRpe,
     rir: set?.rir ?? block.targetRir,
     fcMaxPct: set?.fcMaxPct ?? block.intensityFcMax,
+    fcMaxPctMax: set?.fcMaxPctMax,
     fcReservePct: set?.fcReservePct ?? block.intensityFcReserve,
+    fcReservePctMax: set?.fcReservePctMax,
     heartRate: set?.heartRate ?? block.heartRate,
+    heartRateMax: set?.heartRateMax,
     restSeconds: set?.restSeconds ?? block.restSeconds,
     rom: set?.rom,
     advancedTechnique: set?.advancedTechnique,

@@ -98,22 +98,28 @@ export function readFirstDayCardioBlocks(
 
 export function mapCardioIntervalLog(row: {
   avgHeartRate: null | number;
+  avgHeartRateMax?: null | number;
   distanceDoneMeters: null | number;
   durationSecondsDone: null | number;
   effortRpe: Prisma.Decimal | null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   intervalIndex: number;
   restSecondsDone: null | number;
   sessionCardioBlockId: string;
 }): CardioIntervalLog {
   return {
     avgHeartRate: row.avgHeartRate,
+    avgHeartRateMax: row.avgHeartRateMax ?? null,
     distanceDoneMeters: row.distanceDoneMeters,
     durationSecondsDone: row.durationSecondsDone,
     effortRpe: toRpeNumber(row.effortRpe),
     hrMaxPctDone: row.hrMaxPctDone ?? null,
+    hrMaxPctDoneMax: row.hrMaxPctDoneMax ?? null,
     hrReservePctDone: row.hrReservePctDone ?? null,
+    hrReservePctDoneMax: row.hrReservePctDoneMax ?? null,
     intervalIndex: row.intervalIndex,
     restSecondsDone: row.restSecondsDone,
     sessionCardioBlockId: row.sessionCardioBlockId,

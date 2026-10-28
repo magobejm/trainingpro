@@ -146,6 +146,14 @@ export * from './routine-day-colors';
 
 export { CARDIO_DEFAULT_LOCKED_VARIABLES } from './exercise-set-variables';
 export {
+  formatHeartRateBand,
+  heartRateBandPoint,
+  parseHeartRateBand,
+  sanitizeHeartRateBandInput,
+  type HeartRateBand,
+  type HeartRateBandKind,
+} from './heart-rate-band';
+export {
   usesMinuteDuration,
   toSetDisplayValue,
   fromSetDisplayValue,

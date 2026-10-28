@@ -220,9 +220,15 @@ function mapCardioSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    fcMaxPctMax: s.fcMaxPctMax ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcReservePct: s.fcReservePct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    fcReservePctMax: s.fcReservePctMax ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     heartRate: s.heartRate ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    heartRateMax: s.heartRateMax ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -362,9 +368,15 @@ function mapSportSetOutput(s: any) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcMaxPct: s.fcMaxPct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    fcMaxPctMax: s.fcMaxPctMax ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     fcReservePct: s.fcReservePct ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    fcReservePctMax: s.fcReservePctMax ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     heartRate: s.heartRate ?? null,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    heartRateMax: s.heartRateMax ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     note: s.note ?? null,
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment

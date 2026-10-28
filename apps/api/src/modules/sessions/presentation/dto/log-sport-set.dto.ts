@@ -8,8 +8,11 @@ export class LogSportSetDto {
     effortRir: rirIntSchema,
     effortRpe: rpeHalfSchema,
     heartRateDone: z.number().int().min(30).max(250).nullable().optional(),
+    heartRateDoneMax: z.number().int().min(30).max(250).nullable().optional(),
     hrMaxPctDone: z.number().int().min(0).max(100).nullable().optional(),
+    hrMaxPctDoneMax: z.number().int().min(0).max(100).nullable().optional(),
     hrReservePctDone: z.number().int().min(0).max(100).nullable().optional(),
+    hrReservePctDoneMax: z.number().int().min(0).max(100).nullable().optional(),
     repsDone: z.number().int().min(0).max(200).nullable().optional(),
     restSecondsDone: z.number().int().min(0).max(3600).nullable().optional(),
     romDone: z.string().max(30).nullable().optional(),
@@ -22,8 +25,11 @@ export class LogSportSetDto {
   effortRir?: null | number;
   effortRpe?: null | number;
   heartRateDone?: null | number;
+  heartRateDoneMax?: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   repsDone?: null | number;
   restSecondsDone?: null | number;
   romDone?: null | string;

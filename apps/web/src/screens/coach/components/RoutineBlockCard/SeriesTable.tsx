@@ -7,10 +7,12 @@ import {
   toSetDisplayValue,
   usesMinuteDuration,
   setVariablesForType,
+  type HeartRateBandKind,
   type SetVariableKey,
 } from '@trainerpro/shared';
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
+import { SeriesTableBandCell } from './SeriesTableBandCell';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
 import { SelectCell } from './SeriesTable.select';
 import { space } from '@trainerpro/ui';
@@ -23,9 +25,22 @@ interface ColDef {
   numericMode?: 'distance' | 'minutes';
   display?: (value: number) => number;
   store?: (value: number) => number;
+  band?: HeartRateBandKind;
   isSelect?: boolean;
   selectOptions?: string[];
 }
+
+const BAND_KIND: Partial<Record<SetVariableKey, HeartRateBandKind>> = {
+  fcMaxPct: 'percent',
+  fcReservePct: 'percent',
+  heartRate: 'heartRate',
+};
+
+const BAND_MAX: Partial<Record<SetVariableKey, keyof DraftSet>> = {
+  fcMaxPct: 'fcMaxPctMax',
+  fcReservePct: 'fcReservePctMax',
+  heartRate: 'heartRateMax',
+};
 
 const ICON_TRASH = '🗑';
 const ICON_REMOVE = '✕';
@@ -36,9 +51,9 @@ const ICON_LOCK_OFF = '🔓';
 const VARIABLE_WIDTH: Record<SetVariableKey, number> = {
   distanceMeters: 115,
   durationSeconds: 115,
-  fcMaxPct: 90,
-  fcReservePct: 100,
-  heartRate: 100,
+  fcMaxPct: 120,
+  fcReservePct: 120,
+  heartRate: 120,
   reps: 100,
   restSeconds: 100,
   rir: 70,
@@ -84,6 +99,7 @@ function colsForType(t: (k: string) => string, type: BlockType): ColDef[] {
           ? 'coach.routine.seriesTable.col.durationMinutes'
           : VARIABLE_LABEL_KEY[key],
       ),
+      band: BAND_KIND[key],
       width: VARIABLE_WIDTH[key],
       numericMode:
         key === 'distanceMeters'
@@ -348,6 +364,19 @@ function SeriesRowNumberCell({
   );
 }
 
+function bandValue(set: DraftSet, key: keyof DraftSet): number | undefined {
+  const maxKey = BAND_MAX[key as SetVariableKey];
+  return maxKey ? (set[maxKey] as number | undefined) : undefined;
+}
+
+function bandPatch(key: keyof DraftSet, band: { max: number | null; min: number | null }): Partial<DraftSet> {
+  const maxKey = BAND_MAX[key as SetVariableKey];
+  return {
+    [key]: band.min ?? undefined,
+    ...(maxKey ? { [maxKey]: band.max ?? undefined } : {}),
+  };
+}
+
 function SeriesRowValueCells({
   set,
   idx,
@@ -380,6 +409,15 @@ function SeriesRowValueCells({
                 selectPlaceholder={t('coach.routine.seriesTable.selectPlaceholder')}
                 value={(set[col.key] as string) ?? ''}
                 onChange={(v) => onUpdateSet(idx, { [col.key]: v } as Partial<DraftSet>)}
+              />
+            ) : col.band ? (
+              <SeriesTableBandCell
+                kind={col.band}
+                max={bandValue(set, col.key)}
+                min={set[col.key] as number | undefined}
+                onChange={(band) => onUpdateSet(idx, bandPatch(col.key, band))}
+                placeholder={phDash}
+                readOnly={readOnly}
               />
             ) : (
               <SeriesTableNumericCell

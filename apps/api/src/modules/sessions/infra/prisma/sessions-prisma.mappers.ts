@@ -542,8 +542,11 @@ export function mapSportSetLog(row: {
   effortRir: null | number;
   effortRpe: Prisma.Decimal | null | number;
   heartRateDone: null | number;
+  heartRateDoneMax?: null | number;
   hrMaxPctDone: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone: null | number;
+  hrReservePctDoneMax?: null | number;
   repsDone: null | number;
   restSecondsDone: null | number;
   romDone: null | string;
@@ -557,8 +560,11 @@ export function mapSportSetLog(row: {
     effortRir: row.effortRir,
     effortRpe: toRpeNumber(row.effortRpe),
     heartRateDone: row.heartRateDone,
+    heartRateDoneMax: row.heartRateDoneMax ?? null,
     hrMaxPctDone: row.hrMaxPctDone,
+    hrMaxPctDoneMax: row.hrMaxPctDoneMax ?? null,
     hrReservePctDone: row.hrReservePctDone,
+    hrReservePctDoneMax: row.hrReservePctDoneMax ?? null,
     repsDone: row.repsDone,
     restSecondsDone: row.restSecondsDone,
     romDone: row.romDone,

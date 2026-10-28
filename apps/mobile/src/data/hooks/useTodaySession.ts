@@ -79,8 +79,11 @@ export type LogSportMutationInput = {
   effortRir?: null | number;
   effortRpe?: null | number;
   heartRateDone?: null | number;
+  heartRateDoneMax?: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   repsDone?: null | number;
   restSecondsDone?: null | number;
   romDone?: null | string;
@@ -92,10 +95,13 @@ export type LogSportMutationInput = {
 export type LogIntervalMutationInput = {
   distanceDoneMeters?: null | number;
   avgHeartRate?: null | number;
+  avgHeartRateMax?: null | number;
   durationSecondsDone?: null | number;
   effortRpe?: null | number;
   hrMaxPctDone?: null | number;
+  hrMaxPctDoneMax?: null | number;
   hrReservePctDone?: null | number;
+  hrReservePctDoneMax?: null | number;
   intervalIndex: number;
   restSecondsDone?: null | number;
   sessionCardioBlockId: string;

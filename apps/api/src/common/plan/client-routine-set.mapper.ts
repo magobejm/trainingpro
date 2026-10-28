@@ -7,8 +7,11 @@ export type PlanSetRow = {
   distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   note?: null | string;
   reps?: null | number;
   restSeconds?: null | number;
@@ -65,8 +68,11 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
         durationSeconds: set.durationSeconds ?? null,
         distanceMeters: set.distanceMeters ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
+        fcMaxPctMax: set.fcMaxPctMax ?? null,
         fcReservePct: set.fcReservePct ?? null,
+        fcReservePctMax: set.fcReservePctMax ?? null,
         heartRate: set.heartRate ?? null,
+        heartRateMax: set.heartRateMax ?? null,
         restSeconds: set.restSeconds ?? null,
         rpe: mapDecimal(set.rpe),
       };
@@ -102,8 +108,11 @@ function mapSetMetrics(set: PlanSetRow, type: ClientRoutineExercise['type']): Cl
         durationSeconds: set.durationSeconds ?? null,
         distanceMeters: set.distanceMeters ?? null,
         fcMaxPct: set.fcMaxPct ?? null,
+        fcMaxPctMax: set.fcMaxPctMax ?? null,
         fcReservePct: set.fcReservePct ?? null,
+        fcReservePctMax: set.fcReservePctMax ?? null,
         heartRate: set.heartRate ?? null,
+        heartRateMax: set.heartRateMax ?? null,
         reps: set.reps ?? null,
         restSeconds: set.restSeconds ?? null,
         rir: set.rir ?? null,

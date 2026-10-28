@@ -182,8 +182,11 @@ function mapSets(rawSets: unknown): DraftSet[] {
       distanceMeters: toNumber(s.distanceMeters),
       durationSeconds: toNumber(s.durationSeconds),
       fcMaxPct: toNumber(s.fcMaxPct),
+      fcMaxPctMax: toNumber(s.fcMaxPctMax),
       fcReservePct: toNumber(s.fcReservePct),
+      fcReservePctMax: toNumber(s.fcReservePctMax),
       heartRate: toNumber(s.heartRate),
+      heartRateMax: toNumber(s.heartRateMax),
       rom: toStringValue(s.rom),
     }));
 }

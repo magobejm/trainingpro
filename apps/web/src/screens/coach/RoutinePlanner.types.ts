@@ -15,8 +15,11 @@ export interface DraftSet {
   rom?: string;
   // Cardio / Sport
   fcMaxPct?: number;
+  fcMaxPctMax?: number;
   fcReservePct?: number;
+  fcReservePctMax?: number;
   heartRate?: number;
+  heartRateMax?: number;
   // Common
   rpe?: number;
   restSeconds?: number;

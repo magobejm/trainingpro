@@ -13,15 +13,22 @@ import { filterActiveSetColumns, isFieldLocked, isRestFieldLocked } from '../../
 import { toYouTubeEmbedUrl } from '../../utils/library-media.helpers';
 import { resolvePlannedSet } from './planned-set.utils';
 import {
+  formatHeartRateBand,
+  parseHeartRateBand,
   toSetDisplayValue,
   fromSetDisplayValue,
   usesMinuteDuration,
   resolveLockedFields,
   setVariablesForType,
+  type HeartRateBand,
+  type HeartRateBandKind,
   type SetVariableKey,
 } from '@trainerpro/shared';
+import { readActualValue } from './active-exercise.read';
 import { exerciseTypeShowsRepRange, formatRepRangeBounds } from './routine-exercise-set.utils';
 import { formatRestLabel } from './session-completion.utils';
+
+export { readActualValue };
 
 export type SetFieldKey =
   | 'duration'
@@ -119,9 +126,9 @@ export function readTargetValue(item: SessionItem, setIndex: number, key: SetFie
     return formatTargetNumber(planned?.rir ?? fallback);
   }
   if (key === 'rom') return planned?.rom?.trim() ? planned.rom : '-';
-  if (key === 'heartRate') return formatTargetNumber(planned?.heartRate);
-  if (key === 'fcMaxPct') return formatTargetNumber(planned?.fcMaxPct);
-  if (key === 'fcReservePct') return formatTargetNumber(planned?.fcReservePct);
+  if (key === 'heartRate') return formatTargetBand(planned?.heartRate, planned?.heartRateMax);
+  if (key === 'fcMaxPct') return formatTargetBand(planned?.fcMaxPct, planned?.fcMaxPctMax);
+  if (key === 'fcReservePct') return formatTargetBand(planned?.fcReservePct, planned?.fcReservePctMax);
   if (key === 'rest') {
     const rest = planned?.restSeconds ?? ('restSeconds' in item ? item.restSeconds : null);
     return formatTargetSeconds(rest);
@@ -145,88 +152,16 @@ export function readTargetValue(item: SessionItem, setIndex: number, key: SetFie
   return '-';
 }
 
+function formatTargetBand(min: null | number | undefined, max: null | number | undefined): string {
+  return formatHeartRateBand(min, max) || '-';
+}
+
 function formatTargetNumber(value: null | number | undefined): string {
   return value != null ? String(value) : '-';
 }
 
 function formatTargetSeconds(value: null | number | undefined): string {
   return value != null && value > 0 ? formatRestLabel(value) : '-';
-}
-
-export function readActualValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
-  switch (item.type) {
-    case 'strength': {
-      const log = item.logs.find((entry) => entry.setIndex === setIndex);
-      if (!log) return '';
-      if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
-      if (key === 'rir') return log.effortRir != null ? String(log.effortRir) : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
-      return '';
-    }
-    case 'plio': {
-      const log = item.logs.find((entry) => entry.setIndex === setIndex);
-      if (!log) return '';
-      if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
-      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
-      return '';
-    }
-    case 'mobility': {
-      const log = item.logs.find((entry) => entry.setIndex === setIndex);
-      if (!log) return '';
-      if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'rom') return log.romDone ?? '';
-      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
-      return '';
-    }
-    case 'isometric': {
-      const log = item.logs.find((entry) => entry.setIndex === setIndex);
-      if (!log) return '';
-      if (key === 'duration') return log.durationSecondsDone != null ? String(log.durationSecondsDone) : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
-      return '';
-    }
-    case 'cardio': {
-      const log = item.intervalLogs.find((entry) => entry.intervalIndex === setIndex);
-      if (!log) return '';
-      if (key === 'distance') return log.distanceDoneMeters != null ? String(log.distanceDoneMeters / 1000) : '';
-      if (key === 'duration')
-        return log.durationSecondsDone != null
-          ? String(toSetDisplayValue(item.type, 'durationSeconds', log.durationSecondsDone))
-          : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'fcMaxPct') return log.hrMaxPctDone != null ? String(log.hrMaxPctDone) : '';
-      if (key === 'fcReservePct') return log.hrReservePctDone != null ? String(log.hrReservePctDone) : '';
-      if (key === 'heartRate') return log.avgHeartRate != null ? String(log.avgHeartRate) : '';
-      if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
-      return '';
-    }
-    case 'sport': {
-      const log = (item.setLogs ?? []).find((entry) => entry.setIndex === setIndex);
-      if (!log) return '';
-      if (key === 'reps') return log.repsDone != null ? String(log.repsDone) : '';
-      if (key === 'weight') return log.weightDoneKg != null ? String(log.weightDoneKg) : '';
-      if (key === 'rpe') return log.effortRpe != null ? String(log.effortRpe) : '';
-      if (key === 'fcMaxPct') return log.hrMaxPctDone != null ? String(log.hrMaxPctDone) : '';
-      if (key === 'distance') return log.distanceDoneMeters != null ? String(log.distanceDoneMeters / 1000) : '';
-      if (key === 'duration')
-        return log.durationSecondsDone != null
-          ? String(toSetDisplayValue(item.type, 'durationSeconds', log.durationSecondsDone))
-          : '';
-      if (key === 'heartRate') return log.heartRateDone != null ? String(log.heartRateDone) : '';
-      if (key === 'rir') return log.effortRir != null ? String(log.effortRir) : '';
-      if (key === 'fcReservePct') return log.hrReservePctDone != null ? String(log.hrReservePctDone) : '';
-      if (key === 'rom') return log.romDone ?? '';
-      if (key === 'rest') return log.restSecondsDone != null ? String(log.restSecondsDone) : '';
-      return '';
-    }
-    default:
-      return '';
-  }
 }
 
 export function getRestSeconds(item: SessionItem, setIndex: number): number {
@@ -284,6 +219,72 @@ function parseNumber(value: string): null | number {
   if (!trimmed) return null;
   const parsed = Number(trimmed.replace(',', '.'));
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function cardioLogPayload(item: SessionItem, setIndex: number, values: SetRowState): LogPayload {
+  const heart = lockedOrDraftBand(item, setIndex, 'heartRate', 'heartRate', values.heartRate, 'heartRate');
+  const fcMax = lockedOrDraftBand(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct, 'percent');
+  const reserve = lockedOrDraftBand(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct, 'percent');
+  return {
+    avgHeartRate: heart.min,
+    avgHeartRateMax: heart.max,
+    distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
+    durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+    effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+    hrMaxPctDone: fcMax.min,
+    hrMaxPctDoneMax: fcMax.max,
+    hrReservePctDone: reserve.min,
+    hrReservePctDoneMax: reserve.max,
+    intervalIndex: setIndex,
+    restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
+    sessionCardioBlockId: item.id,
+  };
+}
+
+function sportLogPayload(item: SessionItem, setIndex: number, values: SetRowState): LogPayload {
+  const heart = lockedOrDraftBand(item, setIndex, 'heartRate', 'heartRate', values.heartRate, 'heartRate');
+  const fcMax = lockedOrDraftBand(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct, 'percent');
+  const reserve = lockedOrDraftBand(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct, 'percent');
+  return {
+    distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
+    durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
+    effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
+    effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
+    heartRateDone: heart.min,
+    heartRateDoneMax: heart.max,
+    hrMaxPctDone: fcMax.min,
+    hrMaxPctDoneMax: fcMax.max,
+    hrReservePctDone: reserve.min,
+    hrReservePctDoneMax: reserve.max,
+    repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
+    restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
+    romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
+    sessionSportBlockId: item.id,
+    setIndex,
+    weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
+  };
+}
+
+function lockedOrDraftBand(
+  item: SessionItem,
+  setIndex: number,
+  webFieldKey: string,
+  activeKey: SetFieldKey,
+  draftValue: string,
+  kind: HeartRateBandKind,
+): HeartRateBand {
+  const locked = isFieldLocked(resolveLockedFields(item.type, item.lockedFields), webFieldKey);
+  const raw = locked ? readActualValue(item, setIndex, activeKey) : draftValue;
+  const parsed = parseHeartRateBand(raw, kind);
+  if (parsed) return parsed;
+  if (!locked && raw.trim()) {
+    return parseHeartRateBand(readActualValue(item, setIndex, activeKey), kind) ?? emptyBand();
+  }
+  return emptyBand();
+}
+
+function emptyBand(): HeartRateBand {
+  return { max: null, min: null };
 }
 
 function lockedOrDraftNumber(
@@ -434,33 +435,9 @@ function buildRawLogPayload(item: SessionItem, setIndex: number, values: SetRowS
         weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
       };
     case 'cardio':
-      return {
-        hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
-        hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
-        avgHeartRate: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
-        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
-        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
-        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
-        intervalIndex: setIndex,
-        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
-        sessionCardioBlockId: item.id,
-      };
+      return cardioLogPayload(item, setIndex, values);
     case 'sport':
-      return {
-        distanceDoneMeters: lockedOrDraftNumber(item, setIndex, 'distanceMeters', 'distance', values.distance),
-        durationSecondsDone: lockedOrDraftNumber(item, setIndex, 'durationSeconds', 'duration', values.duration),
-        restSecondsDone: lockedOrDraftNumber(item, setIndex, 'restSeconds', 'rest', values.rest),
-        effortRir: lockedOrDraftNumber(item, setIndex, 'rir', 'rir', values.rir),
-        effortRpe: lockedOrDraftNumber(item, setIndex, 'rpe', 'rpe', values.rpe),
-        heartRateDone: lockedOrDraftNumber(item, setIndex, 'heartRate', 'heartRate', values.heartRate),
-        hrMaxPctDone: lockedOrDraftNumber(item, setIndex, 'fcMaxPct', 'fcMaxPct', values.fcMaxPct),
-        hrReservePctDone: lockedOrDraftNumber(item, setIndex, 'fcReservePct', 'fcReservePct', values.fcReservePct),
-        repsDone: lockedOrDraftNumber(item, setIndex, 'reps', 'reps', values.reps),
-        romDone: lockedOrDraftText(item, setIndex, 'rom', 'rom', values.rom),
-        sessionSportBlockId: item.id,
-        setIndex,
-        weightDoneKg: lockedOrDraftNumber(item, setIndex, 'weightKg', 'weight', values.weight),
-      };
+      return sportLogPayload(item, setIndex, values);
     default:
       return null;
   }

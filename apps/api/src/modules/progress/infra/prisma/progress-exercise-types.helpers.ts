@@ -2,7 +2,7 @@ import { selectRecordedSportRecords } from './sport-progress-records';
 import { intervalCoverage, setCoverage } from './progress-metric-coverage';
 import { aggregateExerciseSets } from '../../domain/metrics/exercise-metrics';
 import type { Prisma } from '@prisma/client';
-import { sessionOutcome } from '@trainerpro/shared';
+import { heartRateBandPoint, sessionOutcome } from '@trainerpro/shared';
 import { closedSessionWhere, outcomeSelect } from './closed-session';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import {
@@ -353,7 +353,10 @@ export async function readSportProgress(
         effortRpe: toRpeNumber(set.effortRpe),
       }))
       .filter(sportSetHasData);
-    if (sets.length) entry.rows.push(...sets.map((set) => ({ ...set, avgHeartRate: set.heartRateDone })));
+    if (sets.length)
+      entry.rows.push(
+        ...sets.map((set) => ({ ...set, avgHeartRate: heartRateBandPoint(set.heartRateDone, set.heartRateDoneMax) })),
+      );
     else
       entry.rows.push(
         ...records.legacy

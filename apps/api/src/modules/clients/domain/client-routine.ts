@@ -3,8 +3,11 @@ export type ClientRoutineSet = {
   distanceMeters?: null | number;
   durationSeconds?: null | number;
   fcMaxPct?: null | number;
+  fcMaxPctMax?: null | number;
   fcReservePct?: null | number;
+  fcReservePctMax?: null | number;
   heartRate?: null | number;
+  heartRateMax?: null | number;
   note: null | string;
   reps?: null | number;
   restSeconds?: null | number;

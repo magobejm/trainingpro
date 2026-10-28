@@ -8,6 +8,8 @@ type SportRecord = Omit<Parameters<typeof sportSetHasData>[0], 'effortRpe' | 'we
   weightDoneKg?: Prisma.Decimal | number | null;
   durationMinutesDone?: number | null;
   avgHeartRate?: number | null;
+  heartRateDone?: number | null;
+  heartRateDoneMax?: number | null;
 };
 
 /** Recorded sets supersede the legacy summary only within their own sport block. */

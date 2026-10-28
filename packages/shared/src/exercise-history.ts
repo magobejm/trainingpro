@@ -9,8 +9,11 @@ export type ExerciseHistorySet = {
   durationSecondsDone?: number | null;
   distanceDoneMeters?: number | null;
   heartRateDone?: number | null;
+  heartRateDoneMax?: number | null;
   hrMaxPctDone?: number | null;
+  hrMaxPctDoneMax?: number | null;
   hrReservePctDone?: number | null;
+  hrReservePctDoneMax?: number | null;
   romDone?: string | null;
   restSecondsDone?: number | null;
 };

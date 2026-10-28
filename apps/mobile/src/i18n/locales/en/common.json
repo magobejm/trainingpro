@@ -266,8 +266,6 @@
   "mobile.client.home.nutritionSubtitle": "Your assigned plan",
   "mobile.client.home.progress": "Progress",
   "mobile.client.home.progressSubtitle": "Volume, time and sRPE",
-  "mobile.client.home.trainingStreak": "Training · {{count}} wk",
-  "mobile.client.home.nutritionStreak": "Nutrition · {{count}} wk",
   "mobile.client.home.mood": "Mood",
   "mobile.client.home.moodSubtitle": "Wellness and weekly reports",
   "mobile.client.more.tab": "More",

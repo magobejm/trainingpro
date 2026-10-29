@@ -5,7 +5,14 @@ import type { EnqueueResult } from '../../data/hooks/useSessionDraft';
 import type { SessionItem } from '../../data/hooks/useTodaySession';
 import { showError, showToast } from '../../shell/client/feedback';
 import type { LogPayload, SetRowState } from './active-exercise.helpers';
-import { dirtySetIndexes, persistOneSet, saveNoticeKey, type SaveOutcome } from './active-exercise.save';
+import {
+  dirtySetIndexes,
+  nextFailedSets,
+  persistOneSet,
+  saveErrorKey,
+  saveNoticeKey,
+  type SaveOutcome,
+} from './active-exercise.save';
 
 type SendSet = (body: LogPayload) => Promise<EnqueueResult | 'missing' | void> | void;
 
@@ -18,6 +25,8 @@ export function useActiveSetSave(item: SessionItem, drafts: Record<number, SetRo
   const finishingRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  const [savingSet, setSavingSet] = useState<number | null>(null);
+  const [failedSets, setFailedSets] = useState<ReadonlySet<number>>(() => new Set());
   draftsRef.current = drafts;
   sendRef.current = send;
 
@@ -27,6 +36,7 @@ export function useActiveSetSave(item: SessionItem, drafts: Record<number, SetRo
       const outcomes: SaveOutcome[] = [];
       try {
         for (const setIndex of indexes) {
+          setSavingSet(setIndex);
           const outcome = await persistOneSet(
             inFlight.current,
             item,
@@ -36,14 +46,15 @@ export function useActiveSetSave(item: SessionItem, drafts: Record<number, SetRo
             (body) => sendRef.current(body),
           );
           outcomes.push(outcome);
-          if (outcome === 'failed') {
-            showError(t('mobile.client.session.saveSetError'));
-            break;
-          }
+          setFailedSets((current) => nextFailedSets(current, setIndex, outcome));
+          if (outcome === 'failed') break;
         }
       } finally {
+        setSavingSet(null);
         setBusy(false);
       }
+      const errorKey = outcomes.map(saveErrorKey).find((key) => key != null);
+      if (errorKey) showError(t(errorKey));
       announceSave(outcomes, t);
       return outcomes;
     },
@@ -71,7 +82,7 @@ export function useActiveSetSave(item: SessionItem, drafts: Record<number, SetRo
     restRef.current = { ...restRef.current, [setIndex]: seconds };
   };
 
-  return { busy, finishExercise, finishing, rememberRest, restSeconds: restRef, run };
+  return { busy, failedSets, finishExercise, finishing, rememberRest, restSeconds: restRef, run, savingSet };
 }
 
 function announceSave(outcomes: SaveOutcome[], t: (key: string) => string): void {

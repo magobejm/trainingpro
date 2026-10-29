@@ -1,5 +1,16 @@
+import { refreshSessionAfterSave } from '../../../data/offline/session-refresh';
 import type { SessionItem } from '../../../data/hooks/useTodaySession';
-import { claimSetSave, dirtySetIndexes, loggedDraft, saveNoticeKey, setDraftMatchesLogged } from '../active-exercise.save';
+import {
+  claimSetSave,
+  dirtySetIndexes,
+  loggedDraft,
+  outcomeFromEnqueue,
+  saveButtonKey,
+  saveButtonPhase,
+  saveErrorKey,
+  saveNoticeKey,
+  setDraftMatchesLogged,
+} from '../active-exercise.save';
 import type { SetRowState } from '../active-exercise.helpers';
 
 const logged = {
@@ -43,5 +54,31 @@ describe('set save decisions', () => {
     expect(saveNoticeKey(['pending', 'synced'])).toBe('mobile.client.sync.savedOffline');
     expect(saveNoticeKey(['skipped'])).toBeNull();
     expect(saveNoticeKey(['synced', 'failed'])).toBeNull();
+  });
+
+  it('counts the set as saved when the post is accepted and the session refresh fails', async () => {
+    const outcome = outcomeFromEnqueue('synced');
+    const invalidateQueries = jest.fn(() => Promise.reject(new Error('refresh')));
+
+    expect(outcome).toBe('synced');
+    expect(saveButtonPhase({ busy: false, clean: true, failed: false })).toBe('saved');
+    expect(saveButtonKey('saved')).toBe('mobile.client.session.setSaved');
+    expect(saveNoticeKey([outcome])).toBe('mobile.client.session.setSaved');
+    refreshSessionAfterSave({ invalidateQueries }, 'session-1');
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(invalidateQueries).toHaveBeenCalledWith({ queryKey: ['session', 'session-1'] });
+  });
+
+  it('leaves the save button ready and reports an error when the post is rejected', () => {
+    const outcome = outcomeFromEnqueue('conflict');
+
+    expect(outcome).toBe('failed');
+    expect(saveErrorKey(outcome)).toBe('mobile.client.session.saveSetError');
+    expect(saveButtonPhase({ busy: true, clean: true, failed: false })).toBe('saving');
+    expect(saveButtonKey('saving')).toBe('mobile.client.session.savingSet');
+    expect(saveButtonPhase({ busy: false, clean: true, failed: true })).toBe('idle');
+    expect(saveButtonKey('idle')).toBe('mobile.client.session.saveSet');
+    expect(saveNoticeKey([outcome])).toBeNull();
   });
 });

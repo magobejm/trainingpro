@@ -356,6 +356,7 @@
   "mobile.client.session.superset": "Superset",
   "mobile.client.session.circuit": "Circuit",
   "mobile.client.session.saveSet": "Save set",
+  "mobile.client.session.savingSet": "Saving…",
   "mobile.client.session.copyTarget": "Target",
   "mobile.client.session.copyLast": "Last",
   "mobile.client.session.calculator": "Plates",

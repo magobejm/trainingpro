@@ -356,6 +356,7 @@
   "mobile.client.session.superset": "Superserie",
   "mobile.client.session.circuit": "Circuito",
   "mobile.client.session.saveSet": "Guardar serie",
+  "mobile.client.session.savingSet": "Guardando…",
   "mobile.client.session.copyTarget": "Objetivo",
   "mobile.client.session.copyLast": "Última",
   "mobile.client.session.calculator": "Discos",

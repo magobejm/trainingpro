@@ -17,6 +17,7 @@ import {
   writeSessionDraft,
 } from '../offline/session-draft';
 import { flushQueue } from '../offline/session-queue';
+import { refreshSessionAfterSave } from '../offline/session-refresh';
 import { useAuthStore } from '../../store/auth.store';
 
 export const SESSION_FLUSH_INTERVAL_MS = 20_000;
@@ -151,9 +152,7 @@ async function flushStored(context: FlushContext): Promise<void> {
     context.draftRef.current = stored;
     context.setDraft(stored);
   }
-  if (removedOps(current, stored).length > 0) {
-    await context.queryClient.invalidateQueries({ queryKey: ['session', context.sessionId] });
-  }
+  if (removedOps(current, stored).length > 0) refreshSessionAfterSave(context.queryClient, context.sessionId);
 }
 
 async function postDraft(context: FlushContext, current: SessionDraft): Promise<SessionDraft> {

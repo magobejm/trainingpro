@@ -1,5 +1,5 @@
 import React, { useRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import type { TFunction } from 'i18next';
 import { LIGHT } from '../../theme/light';
@@ -8,6 +8,7 @@ import { formatRestLabel } from './session-completion.utils';
 import { isRomScaleValue } from './rom-scale.utils';
 import { commitHeartRateBandInput, keyboardForField, sanitizeSessionNumber } from './session-number-input';
 import type { SetColumn, SetFieldKey } from './active-exercise.helpers';
+import { saveButtonKey, saveButtonPhase } from './active-exercise.save';
 
 const HIT = 48;
 
@@ -121,21 +122,28 @@ export function ExerciseActionBar(props: {
 export function SetSaveButton(props: {
   busy: boolean;
   clean: boolean;
+  failed?: boolean;
   onSave: () => void;
+  saving?: boolean;
   setIndex: number;
   t: TFunction;
 }): React.JSX.Element {
-  const label = props.t(props.clean ? 'mobile.client.session.setSaved' : 'mobile.client.session.saveSet');
+  const phase = saveButtonPhase({ busy: props.saving === true, clean: props.clean, failed: props.failed === true });
+  const saved = phase === 'saved';
+  const label = props.t(saveButtonKey(phase));
   return (
     <Pressable
       accessibilityLabel={`${label} ${props.setIndex}`}
       accessibilityRole={'button'}
-      accessibilityState={{ busy: props.busy, disabled: props.busy || props.clean }}
-      disabled={props.busy || props.clean}
+      accessibilityState={{ busy: props.saving === true, disabled: props.busy || saved }}
+      disabled={props.busy || saved}
       onPress={props.onSave}
-      style={[styles.saveBtn, props.clean && styles.footerSaved]}
+      style={[styles.saveBtn, saved && styles.footerSaved]}
     >
-      <Text style={[styles.footerSecondaryText, props.clean && styles.footerSavedText]}>{label}</Text>
+      <View style={styles.saveContent}>
+        {phase === 'saving' ? <ActivityIndicator color={LIGHT.accent} size={'small'} /> : null}
+        <Text style={[styles.footerSecondaryText, saved && styles.footerSavedText]}>{label}</Text>
+      </View>
     </Pressable>
   );
 }
@@ -352,4 +360,5 @@ const styles = StyleSheet.create({
     minHeight: HIT,
     paddingHorizontal: 12,
   },
+  saveContent: { alignItems: 'center', columnGap: 8, flexDirection: 'row' },
 });

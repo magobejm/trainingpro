@@ -55,7 +55,14 @@ jest.mock('../../../data/hooks/useTodaySession', () => {
   return { ...actual, useExerciseHistoryQuery: () => ({ data: [] }) };
 });
 jest.mock('../active-exercise.session', () => ({
-  useActiveSetSave: () => ({ busy: false, finishing: false, restSeconds: { current: {} }, run: mockRun }),
+  useActiveSetSave: () => ({
+    busy: false,
+    failedSets: new Set<number>(),
+    finishing: false,
+    restSeconds: { current: {} },
+    run: mockRun,
+    savingSet: null,
+  }),
 }));
 jest.mock('../../../features/timers/useRestCountdown', () => ({ useRestCountdown: () => null }));
 jest.mock('../../../shell/client/feedback', () => ({ showToast: jest.fn() }));

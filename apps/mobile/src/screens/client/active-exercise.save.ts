@@ -102,7 +102,33 @@ export async function persistOneSet(
 export function outcomeFromEnqueue(result: EnqueueResult | 'missing' | void): SaveOutcome {
   if (result === 'pending') return 'pending';
   if (result === 'synced') return 'synced';
+  if (result === 'conflict') return 'failed';
   return 'skipped';
+}
+
+export type SaveButtonPhase = 'idle' | 'saved' | 'saving';
+
+export function saveButtonPhase(input: { busy: boolean; clean: boolean; failed: boolean }): SaveButtonPhase {
+  if (input.busy) return 'saving';
+  if (input.failed || !input.clean) return 'idle';
+  return 'saved';
+}
+
+export function saveErrorKey(outcome: SaveOutcome): string | null {
+  return outcome === 'failed' ? 'mobile.client.session.saveSetError' : null;
+}
+
+export function saveButtonKey(phase: SaveButtonPhase): string {
+  if (phase === 'saving') return 'mobile.client.session.savingSet';
+  if (phase === 'saved') return 'mobile.client.session.setSaved';
+  return 'mobile.client.session.saveSet';
+}
+
+export function nextFailedSets(current: ReadonlySet<number>, setIndex: number, outcome: SaveOutcome): ReadonlySet<number> {
+  const next = new Set(current);
+  if (outcome === 'failed') next.add(setIndex);
+  else if (outcome !== 'skipped') next.delete(setIndex);
+  return next;
 }
 
 function setNeedsSave(item: SessionItem, setIndex: number, values: SetRowState, restSecondsDone?: number): boolean {

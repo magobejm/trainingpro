@@ -35,6 +35,7 @@ import { finishIfOpen } from './session-concurrency';
 import { assertWritableSession, takeStaleFinish } from './session-finish-replace';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
+import { readWritableSession } from './session-write-scope';
 import { persistEnsuredSession } from './session-ensure';
 import {
   mapIsometricSetLog,
@@ -226,7 +227,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   ): Promise<null | SessionPlioSetLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await db.sessionPlioBlock.findFirst({
         where: { archivedAt: null, id: input.sessionPlioBlockId, sessionId: input.sessionId },
@@ -246,7 +247,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   ): Promise<null | SessionMobilitySetLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await db.sessionMobilityBlock.findFirst({
         where: { archivedAt: null, id: input.sessionMobilityBlockId, sessionId: input.sessionId },
@@ -266,7 +267,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   ): Promise<null | SessionIsometricSetLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await db.sessionIsometricBlock.findFirst({
         where: { archivedAt: null, id: input.sessionIsometricBlockId, sessionId: input.sessionId },
@@ -286,7 +287,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   ): Promise<null | SessionSportLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await db.sessionSportBlock.findFirst({
         where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
@@ -306,7 +307,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   ): Promise<null | SessionSportSetLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await db.sessionSportBlock.findFirst({
         where: { archivedAt: null, id: input.sessionSportBlockId, sessionId: input.sessionId },
@@ -322,7 +323,7 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
   async logSet(context: AuthContext, input: LogSetInput, options?: SessionWriteOptions): Promise<null | SessionSetLog> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readSessionForMutation(input.sessionId, db);
+      const session = await readWritableSession(db, input.sessionId);
       assertWritableSession(session, options);
       const item = await this.readSessionItem(input.sessionId, input.sessionItemId, db);
       if (!item) {

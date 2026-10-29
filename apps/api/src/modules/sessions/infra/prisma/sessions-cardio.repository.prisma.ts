@@ -13,6 +13,7 @@ import { finishIfOpen } from './session-concurrency';
 import { assertWritableSession, takeStaleFinish } from './session-finish-replace';
 import { closeStaleSessions } from './session-stale';
 import { withLockedSession } from './session-lock';
+import { readWritableCardioSession } from './session-write-scope';
 import { attachRevisionInstructions } from '../../../plans/infra/prisma/routine-revision.prisma';
 import {
   cardioSessionInclude,
@@ -97,7 +98,7 @@ export class SessionsCardioRepositoryPrisma {
       throw new BadRequestException('Invalid distance');
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
+      const session = await readWritableCardioSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await this.readSessionCardioBlock(input.sessionId, input.blockId, db);
       if (!block) throw new NotFoundException('Session cardio block not found');
@@ -117,7 +118,7 @@ export class SessionsCardioRepositoryPrisma {
   ): Promise<CardioIntervalLog | null> {
     if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
     return withLockedSession(this.prisma, input.sessionId, async (db) => {
-      const session = await this.readCardioSessionForMutation(input.sessionId, db, true);
+      const session = await readWritableCardioSession(db, input.sessionId);
       assertWritableSession(session, options);
       const block = await this.readSessionCardioBlock(input.sessionId, input.sessionCardioBlockId, db);
       if (!block) {
@@ -210,17 +211,12 @@ export class SessionsCardioRepositoryPrisma {
     return mapCardioSession(existing);
   }
 
-  private async readCardioSessionForMutation(sessionId: string, db: Prisma.TransactionClient, allowWorkoutCardio = false) {
+  private async readCardioSessionForMutation(sessionId: string, db: Prisma.TransactionClient) {
     const row = await db.sessionInstance.findFirst({
       where: { archivedAt: null, id: sessionId },
       include: cardioSessionInclude(),
     });
-    const workoutCardio =
-      allowWorkoutCardio &&
-      row &&
-      row.cardioBlocks.length > 0 &&
-      (row.template.kind === TemplateKind.ROUTINE || row.template.kind === TemplateKind.STRENGTH);
-    if (!row || (row.template.kind !== TemplateKind.CARDIO && !workoutCardio)) {
+    if (!row || row.template.kind !== TemplateKind.CARDIO) {
       throw new NotFoundException('Cardio session not found');
     }
     return row;

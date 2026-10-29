@@ -100,7 +100,9 @@ export function ExerciseSetCard(props: {
         <SetSaveButton
           busy={props.save.busy || props.save.finishing}
           clean={view.clean}
+          failed={props.save.failedSets.has(props.setIndex)}
           onSave={() => void saveCurrentSet(props, rest.done, rest.seconds, view.setKey, autoStart)}
+          saving={props.save.savingSet === props.setIndex}
           setIndex={props.setIndex}
           t={props.t}
         />

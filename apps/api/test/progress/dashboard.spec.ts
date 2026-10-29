@@ -265,7 +265,7 @@ describe('progress dashboard', () => {
     expect(repo.resolveProgressClient).toHaveBeenCalledWith(auth, 'client');
     expect(prisma.sessionInstance.findMany.mock.calls[0]?.[0].where).toMatchObject({ clientId: 'client', archivedAt: null });
   });
-  it('prefers cardio header distance once and excludes empty intervals', async () => {
+  it('sums cardio series distance, skips empty intervals and keeps the header only as fallback', async () => {
     prisma.sessionInstance.findMany.mockResolvedValue([
       {
         id: 'a',
@@ -300,7 +300,12 @@ describe('progress dashboard', () => {
       from: '2026-10-01',
       to: '2026-10-20',
     });
-    expect(result.points[0]).toMatchObject({ sets: 2, distanceMeters: 5000, totalDurationSeconds: 1500, avgPaceMinKm: 5 });
+    expect(result.points[0]).toMatchObject({
+      sets: 2,
+      distanceMeters: 1998,
+      totalDurationSeconds: 1500,
+      avgPaceMinKm: 12.512512512512513,
+    });
     expect(result.points[0]?.audit.map((set) => set.distanceMeters)).toEqual([999, 999]);
   });
   it('recovers a legacy routine outline from immutable session snapshots when its revision is unavailable', async () => {

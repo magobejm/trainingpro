@@ -57,7 +57,7 @@ it('upgrades legacy locks without changing queued seconds or metres', async () =
   });
   await writeSessionDraft({ ...draft, version: 1 } as never, backend);
   const restored = await readSessionDraft(draft.sessionId, backend);
-  expect(restored?.session?.items[0]?.lockedFields).toEqual([]);
+  expect(restored?.session?.items[0]?.lockedFields).toEqual(['durationSeconds']);
   expect(restored?.ops[0]?.body).toEqual(draft.ops[0]?.body);
   expect(restored?.version).toBe(2);
 });

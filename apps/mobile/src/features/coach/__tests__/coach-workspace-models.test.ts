@@ -79,7 +79,7 @@ it('formats cardio and sport PDF series in order and display units', () => {
     );
     expect(lines[0]).toBe(
       'coachWorkspace.set 1: coachWorkspace.field.rpe 7 · coachWorkspace.field.durationSeconds 150' +
-        (kind === 'sport' ? ' · coachWorkspace.field.distanceMeters 1.25' : ''),
+        ' · coachWorkspace.field.distanceMeters 1.25',
     );
   }
   expect(coachDocumentSetLines('sport', { durationMinutes: 30 }, (key) => key)[0]).toContain('durationSeconds 1800');

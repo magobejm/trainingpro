@@ -43,7 +43,28 @@ export function applyPendingOps(session: SessionView, ops: SessionOp[]): Session
 function applyOp(session: SessionView, op: SessionOp): SessionView {
   if (op.kind === 'start') return applyStart(session, op);
   if (op.kind === 'finish') return applyFinish(session, op);
+  if (op.kind === 'finish-exercise') return applyFinishExercise(session, op);
   return { ...session, items: session.items.map((item) => applyItem(item, op)) };
+}
+
+function applyFinishExercise(session: SessionView, op: SessionOp): SessionView {
+  const itemId = textOrNull(asRecord(op.body)['itemId']);
+  if (!itemId) return session;
+  const target = session.items.find((item) => item.id === itemId);
+  if (!target || typeof target.completionOrder === 'number') return session;
+  const completionOrder = nextCompletionOrder(session.items);
+  return {
+    ...session,
+    items: session.items.map((item) => (item.id === itemId ? { ...item, completionOrder } : item)),
+  };
+}
+
+function nextCompletionOrder(items: SessionItem[]): number {
+  return (
+    items.reduce((highest, item) => {
+      return typeof item.completionOrder === 'number' ? Math.max(highest, item.completionOrder) : highest;
+    }, 0) + 1
+  );
 }
 
 function applyStart(session: SessionView, op: SessionOp): SessionView {

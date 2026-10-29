@@ -1014,6 +1014,18 @@
                         }
                       ]
                     },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "displayName": {
                       "type": "string"
                     },
@@ -1465,6 +1477,18 @@
                         }
                       ]
                     },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "displayName": {
                       "type": "string"
                     },
@@ -1838,6 +1862,18 @@
                       "anyOf": [
                         {
                           "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
                         },
                         {
                           "type": "null"
@@ -2224,6 +2260,18 @@
                         }
                       ]
                     },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "displayName": {
                       "type": "string"
                     },
@@ -2598,6 +2646,18 @@
                       "anyOf": [
                         {
                           "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
                         },
                         {
                           "type": "null"
@@ -3113,6 +3173,18 @@
                       "anyOf": [
                         {
                           "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "completionOrder": {
+                      "anyOf": [
+                        {
+                          "maximum": 9007199254740991,
+                          "minimum": 1,
+                          "type": "integer"
                         },
                         {
                           "type": "null"
@@ -19677,6 +19749,85 @@
           }
         ],
         "summary": "POST /sessions/{sessionId}/finish",
+        "x-controller": "SessionsController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach", "client"]
+      }
+    },
+    "/sessions/{sessionId}/finish-exercise": {
+      "post": {
+        "operationId": "post_sessions_sessionId_finish_exercise",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "sessionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-occurred-at",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "x-timezone-offset",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "FinishExerciseDto",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /sessions/{sessionId}/finish-exercise",
         "x-controller": "SessionsController",
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],

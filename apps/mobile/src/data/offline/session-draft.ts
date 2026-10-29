@@ -6,6 +6,7 @@ export const SESSION_DRAFT_VERSION = 2;
 export type SessionOpKind =
   | 'cardio-distance'
   | 'finish'
+  | 'finish-exercise'
   | 'log-interval'
   | 'log-isometric-set'
   | 'log-mobility-set'

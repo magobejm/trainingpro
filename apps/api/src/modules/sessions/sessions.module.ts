@@ -6,6 +6,7 @@ import { DiscardSessionUseCase } from './application/use-cases/discard-session.u
 import { EnsureCardioSessionUseCase } from './application/use-cases/ensure-cardio-session.usecase';
 import { EnsureSessionUseCase } from './application/use-cases/ensure-session.usecase';
 import { FinishCardioSessionUseCase } from './application/use-cases/finish-cardio-session.usecase';
+import { FinishExerciseUseCase } from './application/use-cases/finish-exercise.usecase';
 import { FinishSessionUseCase } from './application/use-cases/finish-session.usecase';
 import { GetCardioSessionUseCase } from './application/use-cases/get-cardio-session.usecase';
 import { GetSessionUseCase } from './application/use-cases/get-session.usecase';
@@ -36,6 +37,7 @@ import { SessionsController } from './presentation/controllers/sessions.controll
     EnsureCardioSessionUseCase,
     EnsureSessionUseCase,
     FinishCardioSessionUseCase,
+    FinishExerciseUseCase,
     FinishSessionUseCase,
     GetCardioSessionUseCase,
     GetSessionUseCase,

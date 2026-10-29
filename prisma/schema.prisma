@@ -1628,6 +1628,7 @@ model SessionInstance {
   skippedAt             DateTime?             @map("skipped_at") @db.Timestamptz(6)
   skipReason            String?               @map("skip_reason") @db.VarChar(280)
   finishComment         String?               @map("finish_comment")
+  exerciseOrderJson     Json?                 @map("exercise_order_json")
   status                SessionStatus         @default(PENDING)
   startMode             SessionStartMode?     @map("start_mode")
   preMotivation         Int?                  @map("pre_motivation")

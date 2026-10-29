@@ -4,6 +4,7 @@ import type { EnsureCardioSessionInput, LogIntervalInput } from './cardio-sessio
 import type {
   EnsureSessionInput,
   EnsureSessionForClientInput,
+  FinishExerciseInput,
   FinishSessionInput,
   LogIsometricSetInput,
   LogMobilitySetInput,
@@ -41,6 +42,7 @@ export interface SessionsRepositoryPort {
     excludeSessionId?: string,
   ): Promise<ExerciseHistoryEntry[]>;
   finishCardioSession(context: AuthContext, input: FinishSessionInput): Promise<CardioSessionInstance>;
+  finishExercise(context: AuthContext, input: FinishExerciseInput, options?: SessionWriteOptions): Promise<SessionInstance>;
   finishSession(context: AuthContext, input: FinishSessionInput): Promise<SessionInstance>;
   getCardioSessionById(
     context: AuthContext,

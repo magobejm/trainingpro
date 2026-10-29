@@ -56,6 +56,9 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
             </Text>
           ) : null}
           {query.data.skipReason ? <Text style={styles.noticeText}>{query.data.skipReason}</Text> : null}
+          {query.data.items.some((item) => typeof item.completionOrder === 'number') ? (
+            <Text style={styles.noticeText}>{t('coach.progress.sessionDetail.orderInfo')}</Text>
+          ) : null}
         </View>
       ) : null}
       <View>
@@ -64,7 +67,17 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
           const columns = setVariablesForType(item.type);
           return (
             <View key={item.id} style={styles.block}>
-              <Text style={styles.blockTitle}>{item.displayName}</Text>
+              <View style={styles.titleRow}>
+                <Text style={styles.blockTitle}>{item.displayName}</Text>
+                {typeof item.completionOrder === 'number' ? (
+                  <Text style={styles.orderBadge}>
+                    {t('coach.progress.sessionDetail.orderBadge', {
+                      order: item.completionOrder,
+                      total: query.data?.items.length ?? 0,
+                    })}
+                  </Text>
+                ) : null}
+              </View>
               <View style={styles.tableHead}>
                 <Text style={styles.headCell}>{'#'}</Text>
                 {columns.map((key) => (
@@ -101,7 +114,17 @@ const styles = StyleSheet.create({
   block: { marginBottom: space.lg },
   notice: { gap: space.xs, marginBottom: space.md },
   noticeText: { color: colors.textMuted, fontSize: fontSize.sm },
-  blockTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800', marginBottom: space.sm },
+  titleRow: { alignItems: 'center', flexDirection: 'row', gap: space.sm, marginBottom: space.sm },
+  blockTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
+  orderBadge: {
+    backgroundColor: colors.infoSoft,
+    borderRadius: 999,
+    color: colors.info,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    paddingHorizontal: space.sm,
+    paddingVertical: space.xs,
+  },
   cell: { color: colors.text, flex: 1, fontSize: fontSize.xs },
   differs: { color: colors.warning, fontWeight: '700' },
   headCell: { color: colors.textMuted, flex: 1, fontSize: fontSize.xs, fontWeight: '700' },

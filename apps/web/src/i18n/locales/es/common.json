@@ -1206,6 +1206,8 @@
   "coach.progress.sessionDetail.incomplete": "Solo se muestran las series registradas.",
   "coach.progress.sessionDetail.title": "Planificado vs realizado",
   "coach.progress.sessionDetail.open": "Ver series",
+  "coach.progress.sessionDetail.orderBadge": "{{order}}/{{total}}",
+  "coach.progress.sessionDetail.orderInfo": "Este número indica el orden en el que se han hecho los ejercicios.",
   "coach.progress.filter.group.strength": "🏋️ Grupo muscular",
   "coach.progress.filter.group.cardio": "🚴 Cardio",
   "coach.progress.filter.group.plio": "💥 Pliometría",

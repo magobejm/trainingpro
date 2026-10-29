@@ -40,6 +40,7 @@ export type LoggedSetLike = {
 };
 
 export type SessionCompareItem = {
+  completionOrder?: null | number;
   displayName: string;
   id: string;
   intervalLogs?: LoggedSetLike[];

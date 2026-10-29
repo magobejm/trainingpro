@@ -942,6 +942,8 @@
   "coach.progress.sessionDetail.incomplete": "Only the logged sets are shown.",
   "coach.progress.sessionDetail.title": "Planned vs done",
   "coach.progress.sessionDetail.open": "View sets",
+  "coach.progress.sessionDetail.orderBadge": "{{order}}/{{total}}",
+  "coach.progress.sessionDetail.orderInfo": "This number shows the order in which the exercises were done.",
   "coach.progress.filter.group.strength": "🏋️ Muscle group",
   "coach.progress.filter.group.cardio": "🚴 Cardio",
   "coach.progress.filter.group.plio": "💥 Plyometrics",

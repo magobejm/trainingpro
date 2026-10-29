@@ -68,6 +68,15 @@ async function saveSessionOp(
   return enqueue(session, input);
 }
 
+export function finishExerciseInput(sessionId: string, itemId: string): SessionOpInput {
+  return {
+    body: { itemId },
+    dedupeKey: `finish-exercise:${itemId}`,
+    kind: 'finish-exercise',
+    path: sessionWritePath(sessionId, 'finish-exercise'),
+  };
+}
+
 function enqueueSessionFinish(
   enqueue: Enqueue,
   session: SessionView | null,

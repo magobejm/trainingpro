@@ -236,13 +236,16 @@ export type CardioSessionItem = {
   youtubeUrl: null | string;
 };
 
-export type SessionItem =
+export type SessionItem = (
   | CardioSessionItem
   | SessionIsometricItem
   | SessionMobilityItem
   | SessionPlioItem
   | SessionSportItem
-  | SessionStrengthItem;
+  | SessionStrengthItem
+) & {
+  completionOrder?: null | number;
+};
 
 export type SessionStartMode = 'INTERACTIVE' | 'TIMER';
 

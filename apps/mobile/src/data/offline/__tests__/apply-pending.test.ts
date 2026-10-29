@@ -90,3 +90,31 @@ it('replays header distance independently of series and preserves frozen duratio
   expect(view.finishedAt).toBe('2026-10-12T08:12:00.000Z');
   expect(applyPendingOps(view, done.ops)).toEqual(view);
 });
+
+it('numbers finished exercises in completion order and keeps the first number', () => {
+  const session = sampleSession();
+  const firstItem = session.items[0];
+  if (!firstItem) return;
+  session.items = [
+    { ...firstItem, id: 'row', displayName: 'Remo' },
+    { ...firstItem, id: 'squat', displayName: 'Sentadilla' },
+  ];
+  const row = upsertOp(createSessionDraft(session), {
+    body: { itemId: 'squat' },
+    dedupeKey: 'finish-exercise:squat',
+    kind: 'finish-exercise',
+    path: '/sessions/session-1/finish-exercise',
+  });
+  const both = upsertOp(row, {
+    body: { itemId: 'row' },
+    dedupeKey: 'finish-exercise:row',
+    kind: 'finish-exercise',
+    path: '/sessions/session-1/finish-exercise',
+  });
+  const view = applyPendingOps(session, both.ops);
+  expect(view.items.map((item) => [item.id, item.completionOrder])).toEqual([
+    ['row', 2],
+    ['squat', 1],
+  ]);
+  expect(applyPendingOps(view, both.ops).items.map((item) => item.completionOrder)).toEqual([2, 1]);
+});

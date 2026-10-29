@@ -9,6 +9,7 @@ import { s } from '../../shell/client/client-shell.styles';
 import { LIGHT } from '../../theme/light';
 import { PrimaryButton } from '../../theme/primitives';
 import { ExerciseCard } from './ExerciseCard';
+import { ExerciseOrderBadge } from './ExerciseOrderBadge';
 import { buildExerciseBlocks } from './exercise-group.utils';
 import { isListedExerciseDone } from './session-completion.utils';
 import { MiniRestTimer } from './MiniRestTimer';
@@ -139,35 +140,16 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
         <RoutineBlock warmups={props.warmups} count={props.exercises.length} active>
           {blocks.map((block) => (
             <ExerciseBlockContainer block={block} key={block.exercises.map((e) => e.id).join('-')}>
-              {block.exercises.map((exercise) => {
-                const complete = isListedExerciseDone(exercise, props.finishedExerciseIds);
-                const group = block.exercises;
-                return (
-                  <Pressable
-                    key={exercise.id}
-                    onPress={() => props.onSelectExercise(exercise, group)}
-                    style={[styles.activeRow, complete && styles.activeRowDone]}
-                  >
-                    <View style={styles.activeRowLeft}>
-                      <Text style={styles.activeRowName}>{exercise.displayName}</Text>
-                      {complete ? (
-                        <View style={styles.donePill}>
-                          <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
-                        </View>
-                      ) : null}
-                    </View>
-                    {complete || isFinished ? (
-                      <View style={styles.editBtn}>
-                        <Text style={styles.editBtnText}>
-                          {t(isFinished ? 'mobile.client.exercise.view' : 'mobile.client.exercise.edit')}
-                        </Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.chevron}>{'›'}</Text>
-                    )}
-                  </Pressable>
-                );
-              })}
+              {block.exercises.map((exercise) => (
+                <ActiveExerciseRow
+                  complete={isListedExerciseDone(exercise, props.finishedExerciseIds)}
+                  exercise={exercise}
+                  finished={isFinished}
+                  key={exercise.id}
+                  onSelect={() => props.onSelectExercise(exercise, block.exercises)}
+                  total={props.exercises.length}
+                />
+              ))}
             </ExerciseBlockContainer>
           ))}
         </RoutineBlock>
@@ -187,6 +169,41 @@ function ActiveDay(props: ActiveProps): React.JSX.Element {
           <MiniRestTimer endAt={props.rest.endAt} onFinish={props.onRestFinish} onPress={props.onOpenRest} />
         </View>
       ) : null}
+    </View>
+  );
+}
+
+function ActiveExerciseRow(props: {
+  complete: boolean;
+  exercise: SessionItem;
+  finished: boolean;
+  onSelect: () => void;
+  total: number;
+}): React.JSX.Element {
+  const { t } = useTranslation();
+  const order = props.exercise.completionOrder;
+  return (
+    <View style={[styles.activeRow, props.complete && styles.activeRowDone]}>
+      <Pressable onPress={props.onSelect} style={styles.activeRowLeft}>
+        <Text style={styles.activeRowName}>{props.exercise.displayName}</Text>
+        {props.complete ? (
+          <View style={styles.donePill}>
+            <Text style={styles.donePillText}>{t('mobile.client.session.done')}</Text>
+          </View>
+        ) : null}
+      </Pressable>
+      {props.complete && typeof order === 'number' ? <ExerciseOrderBadge order={order} total={props.total} /> : null}
+      <Pressable onPress={props.onSelect}>
+        {props.complete || props.finished ? (
+          <View style={styles.editBtn}>
+            <Text style={styles.editBtnText}>
+              {t(props.finished ? 'mobile.client.exercise.view' : 'mobile.client.exercise.edit')}
+            </Text>
+          </View>
+        ) : (
+          <Text style={styles.chevron}>{'›'}</Text>
+        )}
+      </Pressable>
     </View>
   );
 }

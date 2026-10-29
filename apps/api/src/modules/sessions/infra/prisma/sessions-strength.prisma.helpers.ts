@@ -12,6 +12,7 @@ import { buildPlanDayLockedFieldsLookup } from '../../../../common/plan/read-loc
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
+import { stampCompletionOrder } from '../../domain/exercise-order';
 import { attachSessionYoutubeUrls, buildSessionYoutubeLookup } from '../../domain/session-youtube.mapper';
 import type {
   CardioSessionItem,
@@ -245,8 +246,11 @@ export function mapSession(
     youtubeUrl: null,
   }));
 
-  const items = [...strengthItems, ...plioItems, ...mobilityItems, ...isometricItems, ...sportItems, ...cardioItems].sort(
-    (a, b) => a.sortOrder - b.sortOrder,
+  const items = stampCompletionOrder(
+    [...strengthItems, ...plioItems, ...mobilityItems, ...isometricItems, ...sportItems, ...cardioItems].sort(
+      (a, b) => a.sortOrder - b.sortOrder,
+    ),
+    row.exerciseOrderJson,
   );
 
   return {

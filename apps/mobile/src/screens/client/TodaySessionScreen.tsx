@@ -29,6 +29,7 @@ import { freezeWorkoutDuration, isShortWorkout } from './session-rpe.utils';
 import { SessionRpeModal } from './SessionRpeModal';
 import { SessionAdjustmentNote } from './SessionAdjustmentNote';
 import { SessionSyncBanner } from './SessionSyncBanner';
+import { useRecordExerciseOrder } from './exercise-order.queue';
 import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
 import { WorkoutSummaryScreen } from './WorkoutSummaryScreen';
 import { usePersistedSessionTimers, useWorkoutElapsed } from './today-session.timers';
@@ -170,6 +171,12 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   });
   const workoutElapsed = useWorkoutElapsed(session);
   const [finishedExerciseIds, setFinishedExerciseIds] = useState<Set<string>>(() => new Set());
+  const recordExerciseOrder = useRecordExerciseOrder(
+    session,
+    sessionQuery.data ?? session,
+    finishedExerciseIds,
+    actions.enqueue,
+  );
   const [guardStep, setGuardStep] = useState<ShortWorkoutStep | null>(null);
   const [rpeVisible, setRpeVisible] = useState(false);
   const finishDurationSeconds = useRef<number | null>(null);
@@ -315,9 +322,10 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   const handleFinishExercise = useCallback(
     (itemId: string) => {
       setFinishedExerciseIds((current) => new Set(current).add(itemId));
+      recordExerciseOrder(itemId);
       timers.leaveExercise();
     },
-    [timers.leaveExercise],
+    [recordExerciseOrder, timers.leaveExercise],
   );
 
   if (!session) {

@@ -20,6 +20,7 @@ import type {
 import type {
   EnsureSessionInput,
   EnsureSessionForClientInput,
+  FinishExerciseInput,
   FinishSessionInput,
   LogIsometricSetInput,
   LogMobilitySetInput,
@@ -34,6 +35,7 @@ import { discardOpenSession } from './session-discard';
 import { finishIfOpen } from './session-concurrency';
 import { assertWritableSession, takeStaleFinish } from './session-finish-replace';
 import { closeStaleSessions } from './session-stale';
+import { writeExerciseOrder } from './finish-exercise.prisma';
 import { withLockedSession } from './session-lock';
 import { readWritableSession } from './session-write-scope';
 import { persistEnsuredSession } from './session-ensure';
@@ -317,6 +319,18 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       const row = await upsertSportSetLog(db, input, block.id);
       void context;
       return row ? mapSportSetLog(row) : null;
+    });
+  }
+
+  async finishExercise(
+    context: AuthContext,
+    input: FinishExerciseInput,
+    options?: SessionWriteOptions,
+  ): Promise<SessionInstance> {
+    if (options?.closeStale !== false) await closeStaleSessions(this.prisma, { sessionId: input.sessionId });
+    return withLockedSession(this.prisma, input.sessionId, async (db) => {
+      await writeExerciseOrder(db, context, input.sessionId, input.itemId, options);
+      return mapSessionWithGroups(db, await this.readSessionForMutation(input.sessionId, db));
     });
   }
 

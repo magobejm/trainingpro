@@ -11,6 +11,11 @@ export type EnsureSessionForClientInput = EnsureSessionInput & {
   organizationId: string;
 };
 
+export type FinishExerciseInput = {
+  itemId: string;
+  sessionId: string;
+};
+
 export type FinishSessionInput = {
   performedDurationSeconds?: null | number;
   comment?: null | string;

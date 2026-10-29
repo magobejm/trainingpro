@@ -4,6 +4,7 @@ import { clientRoutineWarmupSchema } from '../client-plan/warmup-schema';
 
 const nullableNumber = z.number().nullable();
 const nullableString = z.string().nullable();
+const completionOrder = z.number().int().min(1).nullable().optional();
 const groupType = z.enum(['CIRCUIT', 'SUPERSET']).nullable();
 
 export const plannedSetSchema = z
@@ -44,6 +45,7 @@ const setLogSchema = z
 const strengthItemSchema = z
   .object({
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     groupId: nullableString,
     groupType,
@@ -82,6 +84,7 @@ const plioLogSchema = z
 const plioItemSchema = z
   .object({
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     groupId: nullableString,
     groupType,
@@ -116,6 +119,7 @@ const mobilityLogSchema = z
 const mobilityItemSchema = z
   .object({
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     groupId: nullableString,
     groupType,
@@ -149,6 +153,7 @@ const isometricLogSchema = z
 const isometricItemSchema = z
   .object({
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     groupId: nullableString,
     groupType,
@@ -200,6 +205,7 @@ const sportSetLogSchema = z
 const sportItemSchema = z
   .object({
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     durationMinutes: z.number(),
     groupId: nullableString,
@@ -239,6 +245,7 @@ const cardioItemSchema = z
   .object({
     distanceDoneMeters: nullableNumber.optional(),
     coachInstructions: nullableString,
+    completionOrder,
     displayName: z.string(),
     groupId: nullableString,
     groupType,

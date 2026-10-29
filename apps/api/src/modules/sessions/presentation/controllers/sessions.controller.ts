@@ -7,6 +7,7 @@ import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { DiscardSessionUseCase } from '../../application/use-cases/discard-session.usecase';
 import { EnsureSessionUseCase } from '../../application/use-cases/ensure-session.usecase';
+import { FinishExerciseUseCase } from '../../application/use-cases/finish-exercise.usecase';
 import { FinishSessionUseCase } from '../../application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../application/use-cases/get-session.usecase';
 import { LogCardioDistanceUseCase } from '../../application/use-cases/log-cardio-distance.usecase';
@@ -20,6 +21,7 @@ import { LogSportSetUseCase } from '../../application/use-cases/log-sport-set.us
 import { LogSportUseCase } from '../../application/use-cases/log-sport.usecase';
 import { StartSessionUseCase } from '../../application/use-cases/start-session.usecase';
 import { EnsureSessionDto } from '../dto/ensure-session.dto';
+import { FinishExerciseDto } from '../dto/finish-exercise.dto';
 import { FinishSessionDto } from '../dto/finish-session.dto';
 import { LogIntervalDto } from '../dto/log-interval.dto';
 import { LogIsometricSetDto } from '../dto/log-isometric-set.dto';
@@ -40,6 +42,7 @@ export class SessionsController {
   constructor(
     private readonly discardSessionUseCase: DiscardSessionUseCase,
     private readonly ensureSessionUseCase: EnsureSessionUseCase,
+    private readonly finishExerciseUseCase: FinishExerciseUseCase,
     private readonly finishSessionUseCase: FinishSessionUseCase,
     private readonly getSessionUseCase: GetSessionUseCase,
     private readonly logCardioDistanceUseCase: LogCardioDistanceUseCase,
@@ -216,6 +219,23 @@ export class SessionsController {
   @Post(':sessionId/discard')
   async discard(@Param() params: SessionIdParamDto, @Req() request: HttpAuthRequest) {
     const session = await this.discardSessionUseCase.execute(readAuthContext(request), params.sessionId);
+    return mapSession(session);
+  }
+
+  @Post(':sessionId/finish-exercise')
+  async finishExercise(
+    @Param() params: SessionIdParamDto,
+    @Body() body: FinishExerciseDto,
+    @Req() request: HttpAuthRequest,
+    @Headers('x-timezone-offset') timezoneOffset?: string,
+    @Headers('x-occurred-at') occurredAt?: string,
+  ) {
+    const session = await this.finishExerciseUseCase.execute(
+      readAuthContext(request),
+      { itemId: body.itemId, sessionId: params.sessionId },
+      readOffset(timezoneOffset),
+      readOccurredAt(occurredAt),
+    );
     return mapSession(session);
   }
 

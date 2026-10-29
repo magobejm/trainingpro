@@ -41,6 +41,7 @@ import { PlansController } from '../../src/modules/plans/presentation/controller
 import { PlanOwnershipGuard } from '../../src/modules/plans/presentation/guards/plan-ownership.guard';
 import { DiscardSessionUseCase } from '../../src/modules/sessions/application/use-cases/discard-session.usecase';
 import { EnsureSessionUseCase } from '../../src/modules/sessions/application/use-cases/ensure-session.usecase';
+import { FinishExerciseUseCase } from '../../src/modules/sessions/application/use-cases/finish-exercise.usecase';
 import { FinishSessionUseCase } from '../../src/modules/sessions/application/use-cases/finish-session.usecase';
 import { GetSessionUseCase } from '../../src/modules/sessions/application/use-cases/get-session.usecase';
 import { LogIntervalUseCase } from '../../src/modules/sessions/application/use-cases/log-interval.usecase';
@@ -98,6 +99,7 @@ export async function createSessionApp(): Promise<INestApplication> {
     ...stub(
       DiscardSessionUseCase,
       EnsureSessionUseCase,
+      FinishExerciseUseCase,
       FinishSessionUseCase,
       LogCardioDistanceUseCase,
       LogIntervalUseCase,

@@ -2297,5 +2297,7 @@
   "coach.clientFeedback.tag.molestia": "Discomfort",
   "coach.clientFeedback.tag.dolor": "Pain",
   "coach.clientFeedback.tag.lesion": "Injury",
-  "coach.clientFeedback.tag.otro": "Other"
+  "coach.clientFeedback.tag.otro": "Other",
+  "coach.clientRoutine.view.client": "Client view (read-only)",
+  "coach.clientRoutine.view.coach": "Back to editing"
 }

@@ -78,6 +78,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
   const [drawer, setDrawer] = useState(false);
   const [command, setCommand] = useState(false);
   const [feedback, setFeedback] = useState(false);
+  const [clientView, setClientView] = useState(false);
   const selected = picked || (query.data ? defaultWeekId(query.data) : '');
   const week = useRoutineWeek(props.clientId, query.data, selected);
   if (query.isLoading) return <LoadingState label={t('coach.clientRoutine.loading')} />;
@@ -92,6 +93,8 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
     <View style={styles.page}>
       <WeekBar
         clientId={props.clientId}
+        clientView={clientView}
+        onToggleView={() => setClientView((value) => !value)}
         onOpenCommand={() => setCommand(true)}
         onOpenFeedback={() => setFeedback(true)}
         onOpenOlder={() => setDrawer(true)}
@@ -101,7 +104,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
         t={t}
       />
       {week ? (
-        <WeekPanel clientId={props.clientId} t={t} week={week} />
+        <WeekPanel clientId={props.clientId} readOnlyView={clientView} t={t} week={week} />
       ) : (
         <LoadingState label={t('coach.clientRoutine.loading')} />
       )}
@@ -128,6 +131,8 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
 
 function WeekBar(props: {
   clientId: string;
+  clientView: boolean;
+  onToggleView: () => void;
   onOpenCommand: () => void;
   onOpenFeedback: () => void;
   onOpenOlder: () => void;
@@ -147,7 +152,15 @@ function WeekBar(props: {
   return (
     <View style={styles.bar}>
       <FilterChips activeId={props.selected} items={items} onSelect={props.onSelect} />
-      <Button label={props.t('coach.clientRoutine.command.open')} onPress={props.onOpenCommand} size="sm" />
+      {props.clientView ? null : (
+        <Button label={props.t('coach.clientRoutine.command.open')} onPress={props.onOpenCommand} size="sm" />
+      )}
+      <Button
+        label={props.t(props.clientView ? 'coach.clientRoutine.view.coach' : 'coach.clientRoutine.view.client')}
+        onPress={props.onToggleView}
+        size="sm"
+        variant="secondary"
+      />
       <Button label={props.t('coach.clientFeedback.open')} onPress={props.onOpenFeedback} size="sm" variant="secondary" />
       {props.response.olderWeeks.length > 0 ? (
         <Button
@@ -161,7 +174,12 @@ function WeekBar(props: {
   );
 }
 
-function WeekPanel(props: { clientId: string; t: Translate; week: RoutineEditorWeek }): React.JSX.Element {
+function WeekPanel(props: {
+  clientId: string;
+  readOnlyView: boolean;
+  t: Translate;
+  week: RoutineEditorWeek;
+}): React.JSX.Element {
   const { t, week } = props;
   const toast = useToast();
   const actions = useClientRoutineActions(props.clientId, week.id);
@@ -170,19 +188,22 @@ function WeekPanel(props: { clientId: string; t: Translate; week: RoutineEditorW
   return (
     <View style={styles.page}>
       <PhaseBanner t={t} week={week} />
-      {week.days.map((day) => (
-        <RoutineDayCard
-          actions={{
-            onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
-            onPatchSet: (setId, patch) => actions.updateSet.mutate({ patch, setId }, { onError: fail }),
-            onRemoveExercise: (exerciseId) => actions.removeExercise.mutate(exerciseId, { onError: fail }),
-            onReplaceExercise: (exerciseId) => setPicker({ exerciseId, mode: 'replace' }),
-          }}
-          day={day}
-          key={day.id}
-          t={t}
-        />
-      ))}
+      {week.days.map((source) => {
+        const day = props.readOnlyView ? { ...source, editable: false } : source;
+        return (
+          <RoutineDayCard
+            actions={{
+              onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
+              onPatchSet: (setId, patch) => actions.updateSet.mutate({ patch, setId }, { onError: fail }),
+              onRemoveExercise: (exerciseId) => actions.removeExercise.mutate(exerciseId, { onError: fail }),
+              onReplaceExercise: (exerciseId) => setPicker({ exerciseId, mode: 'replace' }),
+            }}
+            day={day}
+            key={day.id}
+            t={t}
+          />
+        );
+      })}
       <ExercisePickerModal
         allowedTypes={PICKER_TYPES}
         blockType={picker ? 'strength' : null}

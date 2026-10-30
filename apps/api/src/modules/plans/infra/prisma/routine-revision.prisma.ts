@@ -2,6 +2,7 @@ import { normalizeRoutineSetVariables } from '@trainerpro/shared';
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Prisma } from '@prisma/client';
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
+import { createClientRoutine } from './client-routine.prisma';
 import { mapRoutineTemplate, routineTemplateInclude } from './plans-routine.prisma.helpers';
 
 type Tx = Prisma.TransactionClient;
@@ -178,6 +179,7 @@ export async function captureLegacyAssignments(tx: Tx, templateId: string) {
 export async function recordRoutineAssignment(tx: Tx, clientId: string, templateId: string | null, appliedBy: string) {
   if (!templateId) {
     await tx.client.update({ where: { id: clientId }, data: { activeRoutineAssignmentId: null } });
+    await createClientRoutine(tx, clientId, null, appliedBy);
     return;
   }
   await tx.$queryRaw`SELECT id FROM plan_template WHERE id = ${templateId}::uuid FOR SHARE`;
@@ -186,4 +188,5 @@ export async function recordRoutineAssignment(tx: Tx, clientId: string, template
   if (current.activeRoutineAssignment?.revisionId === revision.id) return;
   const assignment = await tx.routineAssignment.create({ data: { clientId, revisionId: revision.id, appliedBy } });
   await tx.client.update({ where: { id: clientId }, data: { activeRoutineAssignmentId: assignment.id } });
+  await createClientRoutine(tx, clientId, templateId, appliedBy);
 }

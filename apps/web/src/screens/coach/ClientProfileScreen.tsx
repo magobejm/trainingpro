@@ -23,6 +23,7 @@ import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useDeferredDelete } from '../../layout/useDeferredDelete';
 import { ProfileEditModal, SummarySection } from './ClientProfileScreen.sections';
 import { RoutineAssignmentHistory } from './RoutineAssignmentHistory';
+import { ClientRoutineLink } from './client-routine/ClientRoutineLink';
 
 type Props = {
   clientId: string;
@@ -390,6 +391,7 @@ function LoadedClientView(props: { vm: ViewModel }): React.JSX.Element {
     <View style={styles.page}>
       <SummarySection vm={props.vm} />
       <RoutineAssignmentHistory clientId={props.vm.query.data!.id} />
+      {props.vm.trainingPlan ? <ClientRoutineLink clientId={props.vm.query.data!.id} /> : null}
       <ClientProfileSectionsBoard
         clientId={props.vm.query.data!.id}
         clientName={`${props.vm.query.data!.firstName} ${props.vm.query.data!.lastName}`.trim()}

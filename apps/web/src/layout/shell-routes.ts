@@ -10,6 +10,7 @@ export type ClientMode =
   | 'planning'
   | 'progress'
   | 'tests'
+  | 'training'
   | 'volume';
 
 export type ParsedShellPath = {
@@ -48,6 +49,7 @@ const CLIENT_MODES: readonly ClientMode[] = [
   'planning',
   'progress',
   'tests',
+  'training',
   'volume',
 ];
 const CLIENTS_BASE = SHELL_PATHS['coach.clients'];

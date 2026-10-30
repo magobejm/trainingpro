@@ -11,6 +11,7 @@ export type ScreenMode =
   | 'profile'
   | 'profileEdit'
   | 'tests'
+  | 'training'
   | 'volume';
 
 const MODE_BY_SEGMENT: Partial<Record<ClientMode, ScreenMode>> = {
@@ -21,6 +22,7 @@ const MODE_BY_SEGMENT: Partial<Record<ClientMode, ScreenMode>> = {
   nutrition: 'nutrition',
   planning: 'planning',
   tests: 'tests',
+  training: 'training',
   volume: 'volume',
 };
 
@@ -32,6 +34,7 @@ const SEGMENT_BY_MODE: Partial<Record<ScreenMode, ClientMode>> = {
   planning: 'planning',
   profileEdit: 'edit',
   tests: 'tests',
+  training: 'training',
   volume: 'volume',
 };
 

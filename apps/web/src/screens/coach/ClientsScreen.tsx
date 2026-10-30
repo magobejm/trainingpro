@@ -16,6 +16,7 @@ import { ClientCompareScreen } from './ClientCompareScreen';
 import { ClientMeasuresScreen } from './ClientMeasuresScreen';
 import { ClientPlanningScreen } from './ClientPlanningScreen';
 import { ClientVolumeScreen } from './ClientVolumeScreen';
+import { ClientRoutineScreen } from './client-routine/ClientRoutineScreen';
 import { ClientTestsScreen } from './ClientTestsScreen';
 import { ClientMoodScreen } from './ClientMoodScreen';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
@@ -42,6 +43,7 @@ const MODE_COMPARE = 'compare' as const;
 const MODE_MEASURES = 'measures' as const;
 const MODE_PLANNING = 'planning' as const;
 const MODE_VOLUME = 'volume' as const;
+const MODE_TRAINING = 'training' as const;
 
 type Props = {
   onRouteChange?: (route: ShellRoute) => void;
@@ -231,6 +233,7 @@ function renderMainContent(props: ViewProps): React.JSX.Element {
   if (props.screenMode === 'planning' && props.selectedClientId) {
     return renderPlanningPage(props);
   }
+  if (props.screenMode === 'training' && props.selectedClientId) return renderTrainingPage(props);
   if ((props.screenMode === 'profile' || props.screenMode === 'profileEdit') && props.selectedClientId) {
     return renderProfilePage(props);
   }
@@ -439,6 +442,17 @@ function renderPlanningPage(props: ViewProps): React.JSX.Element {
       <CrumbBar mode={MODE_PLANNING} view={props} />
       <View style={styles.profileCard}>
         <ClientPlanningScreen clientId={props.selectedClientId} t={props.t} />
+      </View>
+    </>
+  );
+}
+
+function renderTrainingPage(props: ViewProps): React.JSX.Element {
+  return (
+    <>
+      <CrumbBar mode={MODE_TRAINING} view={props} />
+      <View style={styles.profileCard}>
+        <ClientRoutineScreen clientId={props.selectedClientId} />
       </View>
     </>
   );

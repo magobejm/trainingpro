@@ -39,6 +39,7 @@ import { writeExerciseOrder } from './finish-exercise.prisma';
 import { withLockedSession } from './session-lock';
 import { readWritableSession } from './session-write-scope';
 import { persistEnsuredSession } from './session-ensure';
+import { resolveClientDay } from '../../../plans/infra/prisma/client-routine.prisma';
 import {
   mapIsometricSetLog,
   mapMobilitySetLog,
@@ -133,7 +134,24 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
             })
           )?.id;
       }
-      return this.readTemplateSnapshot(tx, input.templateId, membership.id, planDayId, input.clientId);
+      const copy = planDayId
+        ? await resolveClientDay(tx, input.clientId, input.templateId, planDayId, input.sessionDate)
+        : null;
+      if (!copy || !planDayId) {
+        return this.readTemplateSnapshot(tx, input.templateId, membership.id, planDayId, input.clientId);
+      }
+      // The session reads the client's copy but keeps pointing at the library plan day, so the calendar,
+      // adherence and progress keep matching it.
+      const [snapshot, original] = await Promise.all([
+        this.readTemplateSnapshot(tx, copy.templateId, membership.id, copy.planDayId, input.clientId),
+        tx.planDay.findUniqueOrThrow({ where: { id: planDayId }, select: { revisionVersion: true } }),
+      ]);
+      return {
+        ...snapshot,
+        id: input.templateId,
+        planDaySnapshot: { ...snapshot.planDaySnapshot, planDayId },
+        templateVersion: original.revisionVersion,
+      };
     });
     return mapSessionWithGroups(this.prisma, row);
   }

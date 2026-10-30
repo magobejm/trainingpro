@@ -112,6 +112,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
       where: {
         archivedAt: null,
         kind: TemplateKind.ROUTINE,
+        ownerClientId: null,
         OR: [{ coachMembershipId: m.id, scope: LibraryItemScope.COACH }, { scope: LibraryItemScope.GLOBAL }],
       },
     });
@@ -132,6 +133,7 @@ export class PlansRoutineRepository extends PlansBaseRepository {
     const clauses = [
       Prisma.sql`archived_at IS NULL`,
       Prisma.sql`kind = 'ROUTINE'`,
+      Prisma.sql`owner_client_id IS NULL`,
       Prisma.sql`(scope = 'GLOBAL' OR (scope = 'COACH' AND coach_membership_id = ${membershipId}::uuid))`,
     ];
     const needle = opts.search ? normalizeSearch(opts.search) : undefined;

@@ -20,6 +20,7 @@ const MODE_LABEL_KEYS: Record<ClientCrumbMode, string> = {
   volume: 'coach.clientProfile.details.weeklyVolume.title',
   routine: 'coach.routine.title',
   tests: 'coach.clientProfile.details.tests.title',
+  training: 'coach.clientRoutine.title',
 };
 
 /**

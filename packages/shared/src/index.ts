@@ -68,6 +68,30 @@ export {
 export { physicalTestFields, type PhysicalTestFieldKey } from './physical-test-fields';
 export { sessionOutcome, sessionOutcomeSchema, type SessionOutcome } from './session-outcome';
 export {
+  CLIENT_ROUTINE_VISIBLE_WEEKS,
+  type RoutineEditorBlock,
+  type RoutineEditorDay,
+  type RoutineEditorExercise,
+  type RoutineEditorGroup,
+  type RoutineEditorLogged,
+  type RoutineEditorResponse,
+  type RoutineEditorSet,
+  type RoutineEditorSetPatch,
+  type RoutineEditorWeek,
+  type RoutineEditorWeekSummary,
+} from './client-routine';
+export {
+  isDayEditable,
+  isDayLocked,
+  isoDate,
+  microcycleIndex,
+  microcycleStart,
+  weekLock,
+  type PlannedDay,
+  type WeekLock,
+  type WeekPhase,
+} from './client-routine-lock';
+export {
   workoutAdherenceSchema,
   metricCoverageSchema,
   type WorkoutAdherenceSummary,

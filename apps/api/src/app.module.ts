@@ -28,6 +28,7 @@ import { CallsModule } from './modules/calls/calls.module';
 import { NotesModule } from './modules/notes/notes.module';
 import { NutritionModule } from './modules/nutrition/nutrition.module';
 import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.module';
+import { ClientRoutinesModule } from './modules/client-routines/client-routines.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { PhysicalTestsModule } from './modules/physical-tests/physical-tests.mod
     CallsModule,
     NutritionModule,
     PhysicalTestsModule,
+    ClientRoutinesModule,
   ],
   controllers: [HealthController],
   providers: [

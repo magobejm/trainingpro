@@ -48,6 +48,12 @@ enum SessionStartMode {
   INTERACTIVE
 }
 
+/// What an incident or a client note is about. The coach filters on it; EXERCISE is the default view.
+enum FeedbackCategory {
+  EXERCISE
+  OTHER
+}
+
 enum IncidentSeverity {
   LOW
   MEDIUM
@@ -158,6 +164,7 @@ model Organization {
   warmupTemplates          WarmupTemplate[]
   sessions                 SessionInstance[]
   incidents                Incident[]
+  clientNotes              ClientNote[]
   weeklyReports            WeeklyReport[]
   chatThreads              ChatThread[]
   notificationDeviceTokens NotificationDeviceToken[]
@@ -209,6 +216,7 @@ model OrganizationMember {
   warmupTemplates          WarmupTemplate[]          @relation("coach_warmup_templates")
   sessions                 SessionInstance[]
   incidents                Incident[]
+  clientNotes              ClientNote[]
   weeklyReports            WeeklyReport[]
   chatThreads              ChatThread[]              @relation("coach_chat_threads")
   notificationDeviceTokens NotificationDeviceToken[]
@@ -405,6 +413,7 @@ model Client {
   measurements              ClientMeasurement[]
   sessions                  SessionInstance[]
   incidents                 Incident[]
+  clientNotes               ClientNote[]
   weeklyReports             WeeklyReport[]
   chatThreads               ChatThread[]                 @relation("client_chat_threads")
   dayNotes                  ClientDayNote[]
@@ -1727,6 +1736,7 @@ model SessionInstance {
   sportLogs                SportSessionLog[]
   sportSetLogs             SportSetLog[]
   incidents                Incident[]
+  clientNotes              ClientNote[]
   weeklyReports            WeeklyReport[]
 
   @@index([clientId, sessionDate], map: "idx_session_client_date")
@@ -1759,6 +1769,7 @@ model SessionStrengthItem {
   session           SessionInstance @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   logs              SetLog[]
   incidents         Incident[]
+  clientNotes       ClientNote[]
 
   @@index([sessionId, archivedAt], map: "idx_session_item_session_archived")
   @@map("session_strength_item")
@@ -2041,6 +2052,7 @@ model Incident {
   status            IncidentStatus       @default(OPEN)
   description       String
   tag               String?              @db.VarChar(60)
+  category          FeedbackCategory     @default(OTHER)
   coachResponse     String?              @map("coach_response")
   adjustmentDraft   String?              @map("adjustment_draft")
   coachAlertedAt    DateTime?            @map("coach_alerted_at") @db.Timestamptz(6)
@@ -2061,6 +2073,32 @@ model Incident {
   @@index([clientId, createdAt], map: "idx_incident_client_created")
   @@index([sessionId], map: "idx_incident_session")
   @@map("incident")
+}
+
+/// Free comment from the client about an exercise or something else. Read-only for the coach.
+model ClientNote {
+  id                String               @id @default(uuid()) @db.Uuid
+  organizationId    String               @map("organization_id") @db.Uuid
+  coachMembershipId String               @map("coach_membership_id") @db.Uuid
+  clientId          String               @map("client_id") @db.Uuid
+  sessionId         String?              @map("session_id") @db.Uuid
+  sessionItemId     String?              @map("session_item_id") @db.Uuid
+  exerciseLibraryId String?              @map("exercise_library_id") @db.Uuid
+  exerciseName      String?              @map("exercise_name") @db.VarChar(120)
+  text              String
+  category          FeedbackCategory
+  archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
+  createdBy         String               @map("created_by") @db.Uuid
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  organization      Organization         @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  coachMembership   OrganizationMember   @relation(fields: [coachMembershipId], references: [id], onDelete: Restrict)
+  client            Client               @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  session           SessionInstance?     @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  sessionItem       SessionStrengthItem? @relation(fields: [sessionItemId], references: [id], onDelete: SetNull)
+
+  @@index([clientId, createdAt], map: "idx_client_note_client_created")
+  @@index([coachMembershipId, createdAt], map: "idx_client_note_coach_created")
+  @@map("client_note")
 }
 
 model IncidentAction {

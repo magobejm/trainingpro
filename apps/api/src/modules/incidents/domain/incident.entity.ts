@@ -7,6 +7,7 @@ export type IncidentActionView = {
 
 export type IncidentView = {
   adjustmentDraft: null | string;
+  category: 'EXERCISE' | 'OTHER';
   clientId: string;
   coachAlertedAt: Date | null;
   coachMembershipId: string;

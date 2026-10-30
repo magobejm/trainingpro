@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { FilterChips } from '@trainerpro/ui';
 import '../../i18n';
+import type { FeedbackCategory } from '../../data/hooks/useClientNotes';
 import { useCreateIncidentMutation } from '../../data/hooks/useIncidents';
+import { FeedbackCategoryPicker } from './FeedbackCategoryPicker';
 import { LIGHT } from '../../theme/light';
 
 type Severity = 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
@@ -34,8 +36,10 @@ function useIncidentCreateViewModel(onCreated: (() => void) | undefined) {
   const mutation = useCreateIncidentMutation();
   const severityOptions = useMemo(() => mapSeverityOptions(t), [t]);
   const onSubmit = () => {
+    if (!fields.scope) return;
     mutation.mutate(
       {
+        category: fields.scope,
         description: fields.description,
         sessionId: fields.sessionId || null,
         sessionItemId: fields.sessionItemId || null,
@@ -58,11 +62,14 @@ function useIncidentFields() {
   const [sessionId, setSessionId] = useState('');
   const [sessionItemId, setSessionItemId] = useState('');
   const [severity, setSeverity] = useState<Severity>('MEDIUM');
+  const [scope, setScope] = useState<FeedbackCategory | null>(null);
   return {
     description,
     sessionId,
     sessionItemId,
+    scope,
     setDescription,
+    setScope,
     setSessionId,
     setSessionItemId,
     setSeverity,
@@ -77,10 +84,17 @@ function IncidentCreateView(props: ViewModel) {
     <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.title}>{props.t('client.incident.title')}</Text>
       <Text style={styles.subtitle}>{props.t('client.incident.subtitle')}</Text>
+      <View style={styles.card}>
+        <FeedbackCategoryPicker onChange={props.setScope} value={props.scope} />
+      </View>
       <SeverityCard {...props} />
       <DescriptionCard {...props} />
       <SessionLinkCard {...props} />
-      <Pressable onPress={props.onSubmit} style={styles.button}>
+      <Pressable
+        disabled={props.scope === null}
+        onPress={props.onSubmit}
+        style={[styles.button, props.scope === null ? styles.buttonDisabled : null]}
+      >
         <Text style={styles.buttonLabel}>{props.t('client.incident.submit')}</Text>
       </Pressable>
       {props.isSuccess ? <Text style={styles.success}>{props.t('client.incident.success')}</Text> : null}
@@ -149,6 +163,7 @@ function mapSeverityOptions(t: (key: string) => string) {
 }
 
 const styles = StyleSheet.create({
+  buttonDisabled: { opacity: 0.45 },
   button: {
     alignItems: 'center',
     backgroundColor: COLORS.action,

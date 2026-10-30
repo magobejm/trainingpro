@@ -13,6 +13,7 @@ import {
 import { useFormatDate } from '../../../i18n/useFormatDate';
 import { ExercisePickerModal } from '../components/RoutinePlanner/ExercisePickerModal';
 import { ProgressionCommandModal } from './command/ProgressionCommandModal';
+import { ClientFeedbackModal } from './feedback/ClientFeedbackModal';
 import { RoutineDayCard } from './RoutineDayCard';
 
 type Picker = { dayId: string; mode: 'add' } | { exerciseId: string; mode: 'replace' } | null;
@@ -76,6 +77,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
   const [picked, setPicked] = useState('');
   const [drawer, setDrawer] = useState(false);
   const [command, setCommand] = useState(false);
+  const [feedback, setFeedback] = useState(false);
   const selected = picked || (query.data ? defaultWeekId(query.data) : '');
   const week = useRoutineWeek(props.clientId, query.data, selected);
   if (query.isLoading) return <LoadingState label={t('coach.clientRoutine.loading')} />;
@@ -91,6 +93,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
       <WeekBar
         clientId={props.clientId}
         onOpenCommand={() => setCommand(true)}
+        onOpenFeedback={() => setFeedback(true)}
         onOpenOlder={() => setDrawer(true)}
         onSelect={setPicked}
         response={query.data}
@@ -102,6 +105,9 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
       ) : (
         <LoadingState label={t('coach.clientRoutine.loading')} />
       )}
+      {feedback ? (
+        <ClientFeedbackModal clientId={props.clientId} onClose={() => setFeedback(false)} weeks={query.data.weeks} />
+      ) : null}
       {command ? (
         <ProgressionCommandModal clientId={props.clientId} onClose={() => setCommand(false)} response={query.data} />
       ) : null}
@@ -123,6 +129,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
 function WeekBar(props: {
   clientId: string;
   onOpenCommand: () => void;
+  onOpenFeedback: () => void;
   onOpenOlder: () => void;
   onSelect: (id: string) => void;
   response: RoutineEditorResponse;
@@ -141,6 +148,7 @@ function WeekBar(props: {
     <View style={styles.bar}>
       <FilterChips activeId={props.selected} items={items} onSelect={props.onSelect} />
       <Button label={props.t('coach.clientRoutine.command.open')} onPress={props.onOpenCommand} size="sm" />
+      <Button label={props.t('coach.clientFeedback.open')} onPress={props.onOpenFeedback} size="sm" variant="secondary" />
       {props.response.olderWeeks.length > 0 ? (
         <Button
           label={props.t('coach.clientRoutine.older.open', { count: props.response.olderWeeks.length })}

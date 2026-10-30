@@ -3,6 +3,7 @@ import type { IncidentActionView, IncidentView } from '../../domain/incident.ent
 
 type IncidentRow = {
   adjustmentDraft: null | string;
+  category: 'EXERCISE' | 'OTHER';
   clientId: string;
   coachAlertedAt: Date | null;
   coachMembershipId: string;
@@ -21,6 +22,7 @@ type IncidentRow = {
 export function mapIncident(row: IncidentRow): IncidentView {
   return {
     adjustmentDraft: row.adjustmentDraft,
+    category: row.category,
     clientId: row.clientId,
     coachAlertedAt: row.coachAlertedAt,
     coachMembershipId: row.coachMembershipId,

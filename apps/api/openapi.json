@@ -5493,6 +5493,90 @@
         "x-roles": ["coach", "client"]
       }
     },
+    "/client-notes": {
+      "get": {
+        "operationId": "get_client_notes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /client-notes",
+        "x-controller": "ClientNotesController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      },
+      "post": {
+        "operationId": "post_client_notes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /client-notes",
+        "x-controller": "ClientNotesController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients": {
       "get": {
         "description": "Lista los clientes del entrenador. Sin limit devuelve la lista completa; con limit añade nextCursor.",
@@ -12752,6 +12836,15 @@
           {
             "description": "Filtro",
             "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
             "name": "clientId",
             "required": false,
             "schema": {
@@ -12801,7 +12894,7 @@
         ],
         "summary": "GET /incidents",
         "x-controller": "IncidentsController",
-        "x-filters": ["clientId", "status"],
+        "x-filters": ["category", "clientId", "status"],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["coach", "client"]

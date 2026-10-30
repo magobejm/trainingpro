@@ -29,7 +29,7 @@ describe('Incident access', () => {
         .post('/incidents')
         .set('Authorization', 'Bearer client')
         .set('x-active-role', 'client')
-        .send({ description: 'Dolor de hombro', severity: 'LOW' })
+        .send({ category: 'EXERCISE', description: 'Dolor de hombro', severity: 'LOW' })
         .expect(201);
       expect(created.body.id).toBe(INCIDENT_ID);
 
@@ -122,6 +122,7 @@ function createIncidentRepository() {
 function buildIncident(input: CreateIncidentInput): IncidentView {
   return {
     adjustmentDraft: null,
+    category: input.category,
     clientId: '55555555-5555-4555-8555-555555555555',
     coachAlertedAt: null,
     coachMembershipId: 'membership-1',

@@ -1221,5 +1221,9 @@
   "mobile.client.intake.next": "Continue",
   "mobile.client.intake.finish": "Complete",
   "mobile.client.intake.yes": "Yes",
-  "mobile.client.intake.no": "No"
+  "mobile.client.intake.no": "No",
+  "mobile.client.feedbackCategory.label": "What is it about?",
+  "mobile.client.feedbackCategory.EXERCISE": "Exercise",
+  "mobile.client.feedbackCategory.OTHER": "Other",
+  "mobile.client.feedbackCategory.required": "Pick a tag to be able to send it."
 }

@@ -3,6 +3,7 @@ import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
 export type CreateIncidentInput = {
+  category: 'EXERCISE' | 'OTHER';
   description: string;
   sessionId?: null | string;
   sessionItemId?: null | string;
@@ -12,6 +13,7 @@ export type CreateIncidentInput = {
 
 export type IncidentListItem = {
   adjustmentDraft: null | string;
+  category: 'EXERCISE' | 'OTHER';
   coachResponse: null | string;
   createdAt: string;
   description: string;

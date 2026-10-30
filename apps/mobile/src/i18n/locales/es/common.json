@@ -1221,5 +1221,9 @@
   "mobile.client.intake.next": "Continuar",
   "mobile.client.intake.finish": "Completar",
   "mobile.client.intake.yes": "Sí",
-  "mobile.client.intake.no": "No"
+  "mobile.client.intake.no": "No",
+  "mobile.client.feedbackCategory.label": "¿Sobre qué es?",
+  "mobile.client.feedbackCategory.EXERCISE": "Ejercicio",
+  "mobile.client.feedbackCategory.OTHER": "Otros",
+  "mobile.client.feedbackCategory.required": "Elige una etiqueta para poder enviarlo."
 }

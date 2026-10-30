@@ -55,3 +55,44 @@ export function extractExerciseName(text: null | string | undefined): string | u
   const name = match?.[1]?.trim();
   return name ? name.slice(0, 120) : undefined;
 }
+
+type ExerciseCommentProps = {
+  exerciseLibraryId?: null | string;
+  exerciseName: string;
+  routineDayLabel: string;
+  sessionId: string;
+  sessionItemId?: null | string;
+};
+
+export function linkTo(props: ExerciseCommentProps) {
+  return { sessionId: props.sessionId, sessionItemId: props.sessionItemId ?? null };
+}
+
+export function noteInput(props: ExerciseCommentProps, category: 'EXERCISE' | 'OTHER', text: string) {
+  return {
+    ...linkTo(props),
+    category,
+    exerciseLibraryId: props.exerciseLibraryId ?? null,
+    exerciseName: props.exerciseName,
+    text,
+  };
+}
+
+export function incidentNotice(props: ExerciseCommentProps, category: string, description: string): string {
+  return formatExerciseIncidentChatNotice({
+    category,
+    date: formatTodayIncidentDate(),
+    description,
+    exerciseName: props.exerciseName,
+    routineDay: props.routineDayLabel,
+  });
+}
+
+export function commentNotice(props: ExerciseCommentProps, comment: string): string {
+  return formatExerciseCommentChatNotice({
+    comment,
+    date: formatTodayIncidentDate(),
+    exerciseName: props.exerciseName,
+    routineDay: props.routineDayLabel,
+  });
+}

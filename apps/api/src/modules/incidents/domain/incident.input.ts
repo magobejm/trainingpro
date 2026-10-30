@@ -1,4 +1,5 @@
 export type CreateIncidentInput = {
+  category: 'EXERCISE' | 'OTHER';
   description: string;
   sessionId?: null | string;
   sessionItemId?: null | string;
@@ -7,6 +8,7 @@ export type CreateIncidentInput = {
 };
 
 export type IncidentListQuery = {
+  category?: 'EXERCISE' | 'OTHER';
   clientId?: string;
   status?: 'CLOSED' | 'OPEN' | 'REVIEWED';
 };

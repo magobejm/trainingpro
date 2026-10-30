@@ -1,4 +1,4 @@
-import { restItemId, shiftRest, shouldAutoStartRest } from '../rest-shift';
+import { restItemId, saveSetAndMaybeRest, shiftRest, shouldAutoStartRest } from '../rest-shift';
 
 const rest = {
   endAt: 1_000_000,
@@ -30,6 +30,26 @@ describe('restItemId', () => {
   it('reads the exercise id before the last colon', () => {
     expect(restItemId('item:1:3')).toBe('item:1');
     expect(restItemId('item')).toBeNull();
+  });
+});
+
+describe('saveSetAndMaybeRest', () => {
+  const ready = { enabled: true, readOnly: false, restActive: false, restDone: false };
+
+  it('starts the prescribed rest after the set is saved', async () => {
+    const start = jest.fn();
+    await saveSetAndMaybeRest({ ...ready, restSeconds: 3930, run: async () => ['synced'], start });
+    expect(start).toHaveBeenCalledTimes(1);
+    start.mockClear();
+    await saveSetAndMaybeRest({ ...ready, restSeconds: 45, run: async () => ['pending'], start });
+    expect(start).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the rest stopped when the save fails or the switch is off', async () => {
+    const start = jest.fn();
+    await saveSetAndMaybeRest({ ...ready, restSeconds: 120, run: async () => ['failed'], start });
+    await saveSetAndMaybeRest({ ...ready, enabled: false, restSeconds: 120, run: async () => ['synced'], start });
+    expect(start).not.toHaveBeenCalled();
   });
 });
 

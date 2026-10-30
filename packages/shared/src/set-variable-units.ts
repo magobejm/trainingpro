@@ -1,5 +1,76 @@
 import { setVariablesForType, MAX_ACTIVE_SET_VARIABLES, type ExerciseBlockType } from './exercise-set-variables';
 
+export const MAX_CLOCK_SECONDS = 24 * 60 * 60;
+
+export type ClockUnit = 'h' | 'min' | 's';
+
+export type ClockPart = { unit: ClockUnit; value: number };
+
+export function clockParts(totalSeconds: number): ClockPart[] {
+  const total = Math.max(0, Math.min(MAX_CLOCK_SECONDS, Math.round(totalSeconds)));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const seconds = total % 60;
+  if (hours > 0) {
+    return [
+      { unit: 'h', value: hours },
+      { unit: 'min', value: minutes },
+      { unit: 's', value: seconds },
+    ];
+  }
+  if (minutes > 0) {
+    return [
+      { unit: 'min', value: minutes },
+      { unit: 's', value: seconds },
+    ];
+  }
+  return [{ unit: 's', value: seconds }];
+}
+
+export function formatClock(totalSeconds: number): string {
+  return clockParts(totalSeconds)
+    .map((part) => `${part.value} ${part.unit}`)
+    .join(' ');
+}
+
+export function carryClock(hours: number, minutes: number, seconds: number): number {
+  const safeHours = Math.max(0, Math.trunc(hours));
+  const safeMinutes = Math.max(0, Math.trunc(minutes));
+  const safeSeconds = Math.max(0, Math.trunc(seconds));
+  const extraMinutes = Math.floor(safeSeconds / 60);
+  const nextSeconds = safeSeconds % 60;
+  const extraHours = Math.floor((safeMinutes + extraMinutes) / 60);
+  const nextMinutes = (safeMinutes + extraMinutes) % 60;
+  const nextHours = safeHours + extraHours;
+  return Math.min(MAX_CLOCK_SECONDS, nextHours * 3600 + nextMinutes * 60 + nextSeconds);
+}
+
+const CLOCK_UNITS: ClockUnit[] = ['h', 'min', 's'];
+
+export type ClockDraft = Partial<Record<ClockUnit, string>>;
+
+export type ClockCommit = { kind: 'empty' } | { kind: 'invalid' } | { kind: 'value'; seconds: number };
+
+export function visibleClockUnits(totalSeconds: number | null | undefined): ClockUnit[] {
+  if (totalSeconds == null) return ['s'];
+  return clockParts(totalSeconds).map((part) => part.unit);
+}
+
+export function clockDraftFrom(totalSeconds: number | null | undefined): ClockDraft {
+  if (totalSeconds == null) return { s: '' };
+  return Object.fromEntries(clockParts(totalSeconds).map((part) => [part.unit, String(part.value)]));
+}
+
+/** Hidden units count as zero. A blank field stays empty, and zero stays zero. */
+export function commitClockDraft(committedSeconds: number | null | undefined, draft: ClockDraft): ClockCommit {
+  const visible = new Set(visibleClockUnits(committedSeconds));
+  const typed = CLOCK_UNITS.some((unit) => visible.has(unit) && (draft[unit] ?? '').trim() !== '');
+  if (!typed) return { kind: 'empty' };
+  const numbers = CLOCK_UNITS.map((unit) => (visible.has(unit) ? Number((draft[unit] ?? '').trim() || '0') : 0));
+  if (numbers.some((value) => !Number.isInteger(value) || value < 0)) return { kind: 'invalid' };
+  return { kind: 'value', seconds: carryClock(numbers[0] ?? 0, numbers[1] ?? 0, numbers[2] ?? 0) };
+}
+
 export function usesMinuteDuration(type: ExerciseBlockType): boolean {
   void type;
   return false;

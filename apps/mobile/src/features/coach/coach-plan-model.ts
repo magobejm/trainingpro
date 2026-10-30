@@ -1,4 +1,5 @@
 import {
+  formatClock,
   setVariablesForType,
   usesMinuteDuration,
   toSetDisplayValue,
@@ -8,6 +9,12 @@ import {
 } from '@trainerpro/shared';
 export type PlanRecord = Record<string, unknown>;
 export type PlanEntry = { kind: CoachBlockKind; index: number; value: PlanRecord };
+function displaySetValue(kind: CoachBlockKind, key: string, value: unknown): string {
+  if (typeof value !== 'number') return String(value);
+  if (key === 'durationSeconds' || key === 'restSeconds') return formatClock(value);
+  return String(toSetDisplayValue(kind, key, value));
+}
+
 export function routineEntries(day: PlanRecord): PlanEntry[] {
   return COACH_BLOCKS.flatMap((kind) =>
     ((day[COACH_BLOCK_ARRAYS[kind]] ?? []) as PlanRecord[]).map((value, index) => ({ kind, index, value })),
@@ -109,7 +116,7 @@ export function coachDocumentSetLines(
           (key) =>
             t('coachWorkspace.field.' + (key === 'durationSeconds' && usesMinuteDuration(kind) ? 'durationMinutes' : key)) +
             ' ' +
-            String(typeof set[key] === 'number' ? toSetDisplayValue(kind, key, set[key] as number) : set[key]),
+            displaySetValue(kind, key, set[key]),
         )
         .join(' · ')
     );

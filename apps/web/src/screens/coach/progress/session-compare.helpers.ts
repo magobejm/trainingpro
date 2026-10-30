@@ -1,4 +1,10 @@
-import { formatHeartRateBand, toSetDisplayValue, setVariablesForType, type SetVariableKey } from '@trainerpro/shared';
+import {
+  formatClock,
+  formatHeartRateBand,
+  toSetDisplayValue,
+  setVariablesForType,
+  type SetVariableKey,
+} from '@trainerpro/shared';
 
 export type PlannedSetLike = {
   distanceMeters?: null | number;
@@ -153,5 +159,6 @@ function formatValue(value: null | number | string | undefined): string {
 }
 
 function formatDisplay(type: SessionCompareItem['type'], key: SetVariableKey, value: unknown): string {
+  if (typeof value === 'number' && (key === 'durationSeconds' || key === 'restSeconds')) return formatClock(value);
   return formatValue(typeof value === 'number' ? toSetDisplayValue(type, key, value) : (value as string | null | undefined));
 }

@@ -61,7 +61,9 @@ describe('routine PDF prescription', () => {
     expect(sections.map((section) => section.heading)).toContain('Día 2');
     const table = sections.find((section) => section.heading === 'Sentadilla')?.table;
     expect(table?.rows).toHaveLength(3);
-    expect(table?.rows[0]).toEqual(expect.arrayContaining([1, '12', '0', '7.5', '60', 'dropSet', 'Controlar bajada']));
+    expect(table?.rows[0]).toEqual(
+      expect.arrayContaining([1, '12', '0', '7.5', '1 min 0 s', 'dropSet', 'Controlar bajada']),
+    );
     const all = JSON.stringify(sections);
     for (const value of ['Sin dolor', 'Alternar', '10000 pasos', '45']) expect(all).toContain(value);
     expect(JSON.stringify(draft)).toBe(before);
@@ -226,8 +228,8 @@ it('exports cardio and sport set units without a global total time', () => {
     ],
   };
   for (const section of routinePdfSections(draft, [], t).filter((s) => s.table)) {
-    expect(section.table?.columns).toEqual(['web.pdf.set', 'web.pdf.durationSeconds (s)', 'web.pdf.distanceMeters (km)']);
-    expect(section.table?.rows[0]).toEqual([1, '150', '1.25']);
+    expect(section.table?.columns).toEqual(['web.pdf.set', 'web.pdf.durationSeconds', 'web.pdf.distanceMeters (km)']);
+    expect(section.table?.rows[0]).toEqual([1, '2 min 30 s', '1.25']);
     expect(section.paragraphs).toEqual([]);
   }
 });
@@ -240,5 +242,5 @@ it('preserves a legacy sport duration when there were no series', () => {
     ],
   };
   const section = routinePdfSections(draft, [], t).find((s) => s.heading === 'Tenis');
-  expect(section?.table?.rows[0]).toEqual([1, '1800']);
+  expect(section?.table?.rows[0]).toEqual([1, '30 min 0 s']);
 });

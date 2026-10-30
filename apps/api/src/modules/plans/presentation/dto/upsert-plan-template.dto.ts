@@ -22,7 +22,7 @@ const exerciseSchema = z.object({
   perSetWeightRanges: z.array(perSetRangeSchema).optional(),
   repsMax: z.number().int().min(1).max(100).nullable().optional(),
   repsMin: z.number().int().min(1).max(100).nullable().optional(),
-  restSeconds: z.number().int().min(0).max(3600).nullable().optional(),
+  restSeconds: z.number().int().min(0).max(86400).nullable().optional(),
   setsPlanned: z.number().int().min(1).max(30).nullable().optional(),
   sortOrder: z.number().int().min(0).max(200),
   targetRir: rirIntSchema,

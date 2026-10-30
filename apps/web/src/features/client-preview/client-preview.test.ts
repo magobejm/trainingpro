@@ -180,8 +180,8 @@ describe('shared client presentation', () => {
       expect(html).toContain('client.today.set 1');
       expect(html).toContain('client.today.set 2');
       expect(html).not.toMatch(/<(input|textarea|select)/);
-      expect(html).toContain('60 seg');
-      expect(html).toContain('90 seg');
+      expect(html).toContain('1 min 0 s');
+      expect(html).toContain('1 min 30 s');
       if (type === 'cardio' || type === 'sport') {
         expect(html).toContain('140');
         expect(html).toContain('150');

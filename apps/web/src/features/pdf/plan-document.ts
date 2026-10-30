@@ -1,8 +1,8 @@
 import {
+  formatClock,
   formatHeartRateBand,
   SET_VARIABLE_PRIORITY,
   setVariablesForType,
-  usesMinuteDuration,
   toSetDisplayValue,
 } from '@trainerpro/shared';
 import type { DraftBlock, DraftSet, DraftState } from '../../screens/coach/RoutinePlanner.types';
@@ -18,12 +18,10 @@ const fields: Array<{ key: keyof DraftSet; unit?: string }> = [
     unit: (
       {
         weightKg: 'kg',
-        durationSeconds: 's',
         distanceMeters: 'km',
         fcMaxPct: '%',
         fcReservePct: '%',
         heartRate: 'bpm',
-        restSeconds: 's',
       } as Record<string, string>
     )[key],
   })),
@@ -97,10 +95,7 @@ function blockSection(block: DraftBlock, t: PdfTranslate): PdfSection {
           table: {
             columns: [
               t('web.pdf.set'),
-              ...active.map(
-                ({ key, unit }) =>
-                  `${t(`web.pdf.${key}`)}${unit ? ` (${key === 'durationSeconds' && usesMinuteDuration(block.type) ? 'min' : unit})` : ''}`,
-              ),
+              ...active.map(({ key, unit }) => `${t(`web.pdf.${key}`)}${unit ? ` (${unit})` : ''}`),
             ],
             rows: sets.map((set, index) => [
               index + 1,
@@ -118,6 +113,7 @@ function displayedSetValue(type: DraftBlock['type'], set: DraftSet, key: keyof D
     const maxKey = key === 'fcMaxPct' ? 'fcMaxPctMax' : key === 'fcReservePct' ? 'fcReservePctMax' : 'heartRateMax';
     return formatHeartRateBand(set[key], set[maxKey]) || undefined;
   }
+  if ((key === 'durationSeconds' || key === 'restSeconds') && typeof set[key] === 'number') return formatClock(set[key]);
   return typeof set[key] === 'number' ? toSetDisplayValue(type, key, set[key]) : set[key];
 }
 

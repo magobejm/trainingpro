@@ -1,13 +1,12 @@
 import { coachWorkspaceLocale } from '../../../i18n/coach-workspace.locale';
 import { adherenceText, coverageText, progressValueText, sessionResultText } from '../coach-outcome-presentation';
 const t = (key: string, options?: Record<string, string | number>) => key + JSON.stringify(options ?? {});
-it('displays recorded distances in km and keeps cardio/sport durations in seconds', () => {
+it('displays recorded distances in km and durations as a clock', () => {
   expect(progressValueText('distanceDoneMeters', 1250, t)).toEqual(['1.25']);
   expect(progressValueText('distanceMeters', 1250, t)).toEqual(['1.25']);
   expect(progressValueText('distanceDoneMeters', 0, t)).toEqual(['0']);
-  expect(progressValueText('durationSecondsDone', 150, t, true)).toEqual(['150']);
-  expect(progressValueText('durationSecondsDone', 150, t, false)).toBeNull();
-  expect(progressValueText('restSecondsDone', 150, t, true)).toBeNull();
+  expect(progressValueText('durationSecondsDone', 150, t)).toEqual(['2 min 30 s']);
+  expect(progressValueText('restSecondsDone', 150, t)).toEqual(['2 min 30 s']);
 });
 it('uses the API denominator and cutoff, preserving an empty agenda', () => {
   const lines = adherenceText(

@@ -74,14 +74,12 @@ describe('session-completion.utils', () => {
     expect(isListedExerciseDone(strengthComplete, new Set())).toBe(true);
   });
 
-  it('formats rest labels in seconds, never years', () => {
-    expect(formatRestLabel(13)).toBe('13 seg');
-    expect(formatRestLabel(14)).toBe('14 seg');
-    expect(formatRestLabel(15)).toBe('15 seg');
-    expect(formatRestLabel(45)).toBe('45 seg');
-    expect(formatRestLabel(60)).toBe('60 seg');
-    expect(formatRestLabel(90)).toBe('90 seg');
-    expect(formatRestLabel(13)).not.toMatch(/año/i);
+  it('formats rest labels in hours, minutes and seconds, never years', () => {
+    expect(formatRestLabel(13)).toBe('13 s');
+    expect(formatRestLabel(45)).toBe('45 s');
+    expect(formatRestLabel(90)).toBe('1 min 30 s');
+    expect(formatRestLabel(120)).toBe('2 min 0 s');
+    expect(formatRestLabel(3930)).toBe('1 h 5 min 30 s');
     expect(formatRestLabel(90)).not.toMatch(/año/i);
   });
 

@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { clockDraftFrom, commitClockDraft, visibleClockUnits } from '@trainerpro/shared';
 import Svg, { Path } from 'react-native-svg';
 import type { TFunction } from 'i18next';
 import { LIGHT } from '../../theme/light';
@@ -62,12 +63,13 @@ export function SetRestControl(props: {
   if (props.active && props.remaining != null) {
     return (
       <Pressable
-        accessibilityLabel={props.t('client.today.restTimer')}
+        accessibilityLabel={`${props.t('client.today.restTimer')} ${formatRestLabel(props.remaining)}`}
         accessibilityRole={'button'}
         onPress={props.onExpand}
         style={styles.restBtn}
       >
         {props.countdown}
+        <Text style={styles.restBtnText}>{formatRestLabel(props.remaining)}</Text>
       </Pressable>
     );
   }
@@ -204,7 +206,7 @@ function SetColumnCell(props: {
     if (next !== props.draft) props.onChange(next);
   };
   return (
-    <View style={styles.column}>
+    <View style={[styles.column, clockColumn(props.column.key) ? styles.clockColumn : null]}>
       <Text style={styles.columnLabel}>{label}</Text>
       <Text style={styles.targetValue}>{props.target}</Text>
       {props.column.scale === 'rom' ? (
@@ -218,6 +220,8 @@ function SetColumnCell(props: {
         >
           <Text style={styles.inputText}>{romLabel || '-'}</Text>
         </Pressable>
+      ) : props.column.key === 'duration' || props.column.key === 'rest' ? (
+        <ClockDraftField draft={props.draft} label={label} onChange={props.onChange} readOnly={props.readOnly} />
       ) : (
         <TextInput
           accessibilityLabel={label}
@@ -233,6 +237,58 @@ function SetColumnCell(props: {
           value={props.draft}
         />
       )}
+    </View>
+  );
+}
+
+function clockColumn(key: SetFieldKey): boolean {
+  return key === 'duration' || key === 'rest';
+}
+
+const KEYBOARD_NUMBER = 'number-pad' as const;
+
+function ClockDraftField(props: {
+  draft: string;
+  label: string;
+  onChange: (value: string) => void;
+  readOnly?: boolean;
+}): React.JSX.Element {
+  const committed = props.draft.trim() === '' ? null : Number(props.draft);
+  const total = committed != null && Number.isFinite(committed) ? committed : null;
+  const [parts, setParts] = useState(() => clockDraftFrom(total));
+  useEffect(() => setParts(clockDraftFrom(total)), [props.draft]);
+  const visible = visibleClockUnits(total);
+  const commit = () => {
+    const result = commitClockDraft(total, parts);
+    if (result.kind === 'empty') {
+      props.onChange('');
+      return;
+    }
+    if (result.kind === 'invalid') {
+      setParts(clockDraftFrom(total));
+      return;
+    }
+    props.onChange(String(result.seconds));
+  };
+  return (
+    <View style={styles.clockRow}>
+      {visible.map((unit) => (
+        <View key={unit} style={styles.clockPart}>
+          <TextInput
+            accessibilityLabel={`${props.label} ${unit}`}
+            editable={!props.readOnly}
+            keyboardType={KEYBOARD_NUMBER}
+            onBlur={commit}
+            onChangeText={(text) => {
+              if (/^\d*$/.test(text)) setParts((current) => ({ ...current, [unit]: text }));
+            }}
+            onSubmitEditing={commit}
+            style={styles.input}
+            value={parts[unit] ?? ''}
+          />
+          <Text style={styles.clockUnit}>{unit}</Text>
+        </View>
+      ))}
     </View>
   );
 }
@@ -286,6 +342,10 @@ function NotesGlyph(): React.JSX.Element {
 const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   column: { flexBasis: 0, flexGrow: 1, minWidth: 56 },
+  clockColumn: { minWidth: 168 },
+  clockRow: { flexDirection: 'row', gap: 4 },
+  clockPart: { flex: 1, gap: 2 },
+  clockUnit: { color: LIGHT.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' },
   columnLabel: {
     color: LIGHT.accentMuted,
     fontSize: 10,
@@ -307,6 +367,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: LIGHT.emeraldSoft,
     borderRadius: LIGHT.radiusFull,
+    flexDirection: 'row',
+    gap: 8,
     justifyContent: 'center',
     minHeight: HIT,
     minWidth: 112,

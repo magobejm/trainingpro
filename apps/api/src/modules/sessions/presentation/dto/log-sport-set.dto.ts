@@ -4,7 +4,7 @@ import { rirIntSchema, rpeHalfSchema } from '../../../../common/validation/effor
 export class LogSportSetDto {
   static schema = z.object({
     distanceDoneMeters: z.number().int().min(0).max(500000).nullable().optional(),
-    durationSecondsDone: z.number().int().min(0).max(50000).nullable().optional(),
+    durationSecondsDone: z.number().int().min(0).max(86400).nullable().optional(),
     effortRir: rirIntSchema,
     effortRpe: rpeHalfSchema,
     heartRateDone: z.number().int().min(30).max(250).nullable().optional(),
@@ -14,7 +14,7 @@ export class LogSportSetDto {
     hrReservePctDone: z.number().int().min(0).max(100).nullable().optional(),
     hrReservePctDoneMax: z.number().int().min(0).max(100).nullable().optional(),
     repsDone: z.number().int().min(0).max(200).nullable().optional(),
-    restSecondsDone: z.number().int().min(0).max(3600).nullable().optional(),
+    restSecondsDone: z.number().int().min(0).max(86400).nullable().optional(),
     romDone: z.string().max(30).nullable().optional(),
     setIndex: z.number().int().min(1).max(100),
     weightDoneKg: z.number().min(0).max(1000).nullable().optional(),

@@ -5,7 +5,7 @@ export class LogMobilitySetDto {
   static schema = z.object({
     effortRpe: rpeHalfSchema,
     repsDone: z.number().int().min(0).max(200).nullable().optional(),
-    restSecondsDone: z.number().int().min(0).max(3600).nullable().optional(),
+    restSecondsDone: z.number().int().min(0).max(86400).nullable().optional(),
     romDone: z.string().max(30).nullable().optional(),
     sessionMobilityBlockId: z.string().uuid(),
     setIndex: z.number().int().min(1).max(100),

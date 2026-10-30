@@ -15,9 +15,7 @@ import { resolvePlannedSet } from './planned-set.utils';
 import {
   formatHeartRateBand,
   parseHeartRateBand,
-  toSetDisplayValue,
   fromSetDisplayValue,
-  usesMinuteDuration,
   resolveLockedFields,
   setVariablesForType,
   type HeartRateBand,
@@ -98,15 +96,7 @@ const ACTIVE_COLUMN_BY_KEY: Record<SetVariableKey, SetColumn> = {
 };
 
 function getBaseSetColumns(item: SessionItem): SetColumn[] {
-  return setVariablesForType(item.type).map((key) =>
-    key === 'durationSeconds' && usesMinuteDuration(item.type)
-      ? {
-          ...ACTIVE_COLUMN_BY_KEY[key],
-          labelKey: 'mobile.client.history.durationMinutes',
-          minutes: true,
-        }
-      : ACTIVE_COLUMN_BY_KEY[key],
-  );
+  return setVariablesForType(item.type).map((key) => ACTIVE_COLUMN_BY_KEY[key]);
 }
 
 export function readTargetValue(item: SessionItem, setIndex: number, key: SetFieldKey): string {
@@ -138,15 +128,9 @@ export function readTargetValue(item: SessionItem, setIndex: number, key: SetFie
     return metres == null ? '-' : `${metres / 1000} km`;
   }
   if (key === 'duration') {
-    if (usesMinuteDuration(item.type)) {
-      const seconds =
-        planned?.durationSeconds ??
-        (item.type === 'cardio' ? item.workSeconds : item.type === 'sport' ? item.durationMinutes * 60 : null);
-      return seconds == null ? '-' : `${toSetDisplayValue(item.type, 'durationSeconds', seconds)} min`;
-    }
     if (planned?.durationSeconds != null) return formatTargetSeconds(planned.durationSeconds);
-    if (item.type === 'cardio' && item.workSeconds) return `${item.workSeconds}s`;
-    if (item.type === 'sport') return `${item.durationMinutes * 60}s`;
+    if (item.type === 'cardio' && item.workSeconds) return formatRestLabel(item.workSeconds);
+    if (item.type === 'sport' && item.durationMinutes) return formatRestLabel(item.durationMinutes * 60);
     return '-';
   }
   return '-';
@@ -161,7 +145,7 @@ function formatTargetNumber(value: null | number | undefined): string {
 }
 
 function formatTargetSeconds(value: null | number | undefined): string {
-  return value != null && value > 0 ? formatRestLabel(value) : '-';
+  return value == null ? '-' : formatRestLabel(value);
 }
 
 export function getRestSeconds(item: SessionItem, setIndex: number): number {

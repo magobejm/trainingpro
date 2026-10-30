@@ -2,7 +2,7 @@ import { LoadingState } from '../../../components/AsyncStatus';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { sessionOutcome, usesMinuteDuration, setVariablesForType } from '@trainerpro/shared';
+import { sessionOutcome, setVariablesForType } from '@trainerpro/shared';
 import { useSessionDetailQuery } from '../../../data/hooks/useSessionDetailQuery';
 import { comparePlannedAndLogged, type ComparedCell } from './session-compare.helpers';
 import { Modal, colors, fontSize, space } from '@trainerpro/ui';
@@ -14,7 +14,7 @@ type Props = {
 
 const COLUMN_LABEL: Record<string, string> = {
   distanceMeters: 'Distancia (km)',
-  durationSeconds: 'Duración (s)',
+  durationSeconds: 'Duración',
   fcMaxPct: '%FC máx',
   fcReservePct: '%FC res',
   heartRate: 'Pulsaciones',
@@ -33,7 +33,7 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
     <Modal
       closeLabel={t('common.close')}
       onClose={props.onClose}
-      size="lg"
+      size="xl"
       title={t('coach.progress.sessionDetail.title')}
       visible={Boolean(props.sessionId)}
     >
@@ -79,18 +79,16 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
                 ) : null}
               </View>
               <View style={styles.tableHead}>
-                <Text style={styles.headCell}>{'#'}</Text>
+                <Text style={[styles.indexTrack, styles.headCell]}>{'#'}</Text>
                 {columns.map((key) => (
-                  <Text key={key} style={styles.headCell}>
-                    {key === 'durationSeconds' && usesMinuteDuration(item.type)
-                      ? 'Duración (min)'
-                      : (COLUMN_LABEL[key] ?? key)}
+                  <Text key={key} style={[trackStyle(key), styles.headCell]}>
+                    {COLUMN_LABEL[key] ?? key}
                   </Text>
                 ))}
               </View>
               {rows.map((row) => (
                 <View key={row.setIndex} style={styles.tableRow}>
-                  <Text style={styles.cell}>{row.setIndex}</Text>
+                  <Text style={[styles.indexTrack, styles.cell]}>{row.setIndex}</Text>
                   {row.cells.map((cell) => (
                     <ComparedValueCell cell={cell} incomplete={query.data?.isIncomplete === true} key={cell.key} />
                   ))}
@@ -107,7 +105,12 @@ export function SessionDetailModal(props: Props): React.JSX.Element {
 function ComparedValueCell(props: { cell: ComparedCell; incomplete: boolean }): React.JSX.Element {
   const { t } = useTranslation();
   const done = props.cell.done === '-' ? t('training.noRecord') : props.cell.done;
-  return <Text style={[styles.cell, props.cell.differs && styles.differs]}>{`${props.cell.planned} / ${done}`}</Text>;
+  const value = `${props.cell.planned} / ${done}`;
+  return <Text style={[trackStyle(props.cell.key), styles.cell, props.cell.differs && styles.differs]}>{value}</Text>;
+}
+
+function trackStyle(key: string) {
+  return key === 'durationSeconds' || key === 'restSeconds' ? styles.clockTrack : styles.track;
 }
 
 const styles = StyleSheet.create({
@@ -125,9 +128,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.sm,
     paddingVertical: space.xs,
   },
-  cell: { color: colors.text, flex: 1, fontSize: fontSize.xs },
+  indexTrack: { flexGrow: 0, flexShrink: 0, width: 32 },
+  track: { flexBasis: 0, flexGrow: 1, flexShrink: 1, minWidth: 0 },
+  clockTrack: { flexBasis: 0, flexGrow: 2, flexShrink: 1, minWidth: 0 },
+  cell: { color: colors.text, fontSize: fontSize.xs },
   differs: { color: colors.warning, fontWeight: '700' },
-  headCell: { color: colors.textMuted, flex: 1, fontSize: fontSize.xs, fontWeight: '700' },
+  headCell: { color: colors.textMuted, fontSize: fontSize.xs, fontWeight: '700' },
   muted: { color: colors.textMuted, marginBottom: space.md },
   tableHead: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },
   tableRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.xs },

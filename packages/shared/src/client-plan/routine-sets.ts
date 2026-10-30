@@ -1,10 +1,10 @@
 import { formatHeartRateBand } from '../heart-rate-band';
-import { usesMinuteDuration, toSetDisplayValue } from '../set-variable-units';
+import { formatClock, usesMinuteDuration, toSetDisplayValue } from '../set-variable-units';
 import type { ClientRoutineExercise, ClientRoutineSet } from './types';
 
 import { resolveLockedFields, setVariablesForType, type SetVariableKey } from '../exercise-set-variables';
 function formatRestLabel(seconds: number): string {
-  return `${Math.max(0, Math.round(seconds))} seg`;
+  return formatClock(seconds);
 }
 function filterRoutineSetColumns<T extends { key: string }>(columns: T[], lockedFields?: string[]): T[] {
   return columns.filter((column) => !lockedFields?.includes(column.key));

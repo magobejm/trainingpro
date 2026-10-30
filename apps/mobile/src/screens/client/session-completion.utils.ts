@@ -1,3 +1,4 @@
+import { formatClock } from '@trainerpro/shared';
 import type { SessionItem } from '../../data/hooks/useTodaySession';
 
 function plannedSetCount(item: SessionItem): number {
@@ -51,5 +52,5 @@ export function isListedExerciseDone(item: SessionItem, finishedIds: ReadonlySet
 }
 
 export function formatRestLabel(seconds: number): string {
-  return `${Math.max(0, Math.round(seconds))} seg`;
+  return formatClock(Math.max(0, seconds));
 }

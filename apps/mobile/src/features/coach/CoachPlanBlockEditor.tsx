@@ -11,6 +11,7 @@ import {
   setVariablesForType,
   type CoachBlockKind,
 } from '@trainerpro/shared';
+import { ClockField } from './ClockField';
 import { CoachButton, CoachField, CoachPage, CoachSelect, ui } from './CoachUi';
 import { CoachLibraryScreen } from './CoachLibraryScreen';
 import type { PlanRecord } from './coach-plan-model';
@@ -83,15 +84,24 @@ export function CoachPlanBlockEditor({
       ) : null}
       {blockNumbers[kind]
         .filter((field) => !warmup || !['weightRangeMinKg', 'weightRangeMaxKg', 'targetDistanceMeters'].includes(field))
-        .map((field) => (
-          <CoachField
-            key={field}
-            label={t('coachWorkspace.field.' + field)}
-            value={String(value[field] ?? '')}
-            onChange={(next) => set(field, next === '' ? null : Number(next.replace(',', '.')))}
-            numeric
-          />
-        ))}
+        .map((field) =>
+          field === 'restSeconds' ? (
+            <ClockField
+              key={field}
+              label={t('coachWorkspace.field.' + field)}
+              onChange={(next) => set(field, next)}
+              value={value[field] as number | null | undefined}
+            />
+          ) : (
+            <CoachField
+              key={field}
+              label={t('coachWorkspace.field.' + field)}
+              value={String(value[field] ?? '')}
+              onChange={(next) => set(field, next === '' ? null : Number(next.replace(',', '.')))}
+              numeric
+            />
+          ),
+        )}
       <CoachSelect
         label={t('coachWorkspace.group')}
         value={String(value.groupId ?? '')}
@@ -226,7 +236,14 @@ function BlockSets({
           {setVariablesForType(kind)
             .filter((field) => !resolveLockedFields(kind, value.lockedFields as string[] | undefined).includes(field))
             .map((field) =>
-              field === 'distanceMeters' || field === 'durationSeconds' ? (
+              field === 'durationSeconds' || field === 'restSeconds' ? (
+                <ClockField
+                  key={field}
+                  label={t('coachWorkspace.field.' + field)}
+                  onChange={(next) => update(index, field, next)}
+                  value={set[field] as number | null | undefined}
+                />
+              ) : field === 'distanceMeters' ? (
                 <SetUnitField
                   key={field}
                   kind={kind}
@@ -290,7 +307,7 @@ function SetUnitField({
   onChange,
 }: {
   kind: CoachBlockKind;
-  field: 'distanceMeters' | 'durationSeconds';
+  field: 'distanceMeters';
   value: number | null | undefined;
   onChange: (next: number | null) => void;
 }) {
@@ -309,9 +326,8 @@ function SetUnitField({
       /^\d*(?:\.\d*)?$/.test(normalized) &&
       Number.isFinite(number) &&
       number >= 0 &&
-      (field === 'distanceMeters'
-        ? number <= 500 && (normalized.split('.')[1]?.length ?? 0) <= 3
-        : Number.isInteger(number) && number <= 50000);
+      number <= 500 &&
+      (normalized.split('.')[1]?.length ?? 0) <= 3;
     if (valid) onChange(fromSetDisplayValue(kind, field, number));
     else setRaw(display);
   };

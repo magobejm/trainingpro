@@ -154,11 +154,22 @@ export {
   type HeartRateBandKind,
 } from './heart-rate-band';
 export {
+  MAX_CLOCK_SECONDS,
+  carryClock,
+  clockDraftFrom,
+  clockParts,
+  commitClockDraft,
+  formatClock,
+  visibleClockUnits,
   usesMinuteDuration,
   toSetDisplayValue,
   fromSetDisplayValue,
   normalizeLegacyLockedFields,
   normalizeRoutineSetVariables,
+  type ClockCommit,
+  type ClockDraft,
+  type ClockPart,
+  type ClockUnit,
 } from './set-variable-units';
 export { jacksonPollock3, jacksonPollock7, type SkinfoldSites } from './anthropometry/body-fat';
 export {

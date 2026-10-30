@@ -1,5 +1,5 @@
 import type { SessionOutcome } from '@trainerpro/shared';
-import { toSetDisplayValue } from '@trainerpro/shared';
+import { formatClock, toSetDisplayValue } from '@trainerpro/shared';
 export type Adherence = {
   cutoffDate: string;
   percent: number | null;
@@ -34,13 +34,14 @@ export function coverageText(
   ]);
 }
 
-export function progressValueText(key: string, value: unknown, t: Translate, minuteDuration = false): string[] | null {
+export function progressValueText(key: string, value: unknown, t: Translate, _minuteDuration = false): string[] | null {
+  void _minuteDuration;
   if (typeof value === 'number' && Number.isFinite(value)) {
     if (key === 'distanceMeters' || key === 'distanceDoneMeters') {
       return [String(toSetDisplayValue('cardio', 'distanceMeters', value))];
     }
-    if (minuteDuration && (key === 'durationSeconds' || key === 'durationSecondsDone')) {
-      return [String(toSetDisplayValue('cardio', 'durationSeconds', value))];
+    if (key === 'durationSeconds' || key === 'durationSecondsDone' || key === 'restSeconds' || key === 'restSecondsDone') {
+      return [formatClock(value)];
     }
   }
   if (key === 'outcome') {

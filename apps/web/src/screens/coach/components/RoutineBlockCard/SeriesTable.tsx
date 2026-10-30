@@ -5,7 +5,6 @@ import type { BlockType, DraftSet } from '../../RoutinePlanner.types';
 import {
   fromSetDisplayValue,
   toSetDisplayValue,
-  usesMinuteDuration,
   setVariablesForType,
   type HeartRateBandKind,
   type SetVariableKey,
@@ -13,6 +12,7 @@ import {
 import { advancedTechniqueDisplayLabel } from './advanced-technique.i18n';
 import { ACTION_COL_W, SERIES_COL_W, st } from './SeriesTable.styles';
 import { SeriesTableBandCell } from './SeriesTableBandCell';
+import { SeriesTableClockCell } from './SeriesTableClockCell';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
 import { SelectCell } from './SeriesTable.select';
 import { space } from '@trainerpro/ui';
@@ -50,12 +50,12 @@ const ICON_LOCK_OFF = '🔓';
 
 const VARIABLE_WIDTH: Record<SetVariableKey, number> = {
   distanceMeters: 115,
-  durationSeconds: 115,
+  durationSeconds: 210,
   fcMaxPct: 120,
   fcReservePct: 120,
   heartRate: 120,
   reps: 100,
-  restSeconds: 100,
+  restSeconds: 210,
   rir: 70,
   rom: 90,
   rpe: 70,
@@ -94,19 +94,10 @@ function colsForType(t: (k: string) => string, type: BlockType): ColDef[] {
     }
     return {
       key,
-      label: t(
-        key === 'durationSeconds' && usesMinuteDuration(type)
-          ? 'coach.routine.seriesTable.col.durationMinutes'
-          : VARIABLE_LABEL_KEY[key],
-      ),
+      label: t(VARIABLE_LABEL_KEY[key]),
       band: BAND_KIND[key],
       width: VARIABLE_WIDTH[key],
-      numericMode:
-        key === 'distanceMeters'
-          ? 'distance'
-          : key === 'durationSeconds' && usesMinuteDuration(type)
-            ? 'minutes'
-            : undefined,
+      numericMode: key === 'distanceMeters' ? 'distance' : undefined,
       display: (value) => toSetDisplayValue(type, key, value),
       store: (value) => fromSetDisplayValue(type, key, value),
     };
@@ -418,6 +409,13 @@ function SeriesRowValueCells({
                 onChange={(band) => onUpdateSet(idx, bandPatch(col.key, band))}
                 placeholder={phDash}
                 readOnly={readOnly}
+              />
+            ) : col.key === 'durationSeconds' || col.key === 'restSeconds' ? (
+              <SeriesTableClockCell
+                onChange={(v) => onUpdateSet(idx, { [col.key]: v } as Partial<DraftSet>)}
+                placeholder={phDash}
+                readOnly={readOnly}
+                value={set[col.key] as number | undefined}
               />
             ) : (
               <SeriesTableNumericCell

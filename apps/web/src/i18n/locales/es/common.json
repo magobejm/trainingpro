@@ -2299,5 +2299,10 @@
   "coach.clientFeedback.tag.lesion": "Lesión",
   "coach.clientFeedback.tag.otro": "Otro",
   "coach.clientRoutine.view.client": "Vista del cliente (solo lectura)",
-  "coach.clientRoutine.view.coach": "Volver a edición"
+  "coach.clientRoutine.view.coach": "Volver a edición",
+  "coach.clientRoutine.group.SUPERSET": "Superserie",
+  "coach.clientRoutine.group.CIRCUIT": "Circuito",
+  "coach.clientRoutine.group.makeSuperset": "Crear superserie",
+  "coach.clientRoutine.group.makeCircuit": "Crear circuito",
+  "coach.clientRoutine.group.ungroup": "Quitar del grupo"
 }

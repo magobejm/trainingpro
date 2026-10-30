@@ -2299,5 +2299,10 @@
   "coach.clientFeedback.tag.lesion": "Injury",
   "coach.clientFeedback.tag.otro": "Other",
   "coach.clientRoutine.view.client": "Client view (read-only)",
-  "coach.clientRoutine.view.coach": "Back to editing"
+  "coach.clientRoutine.view.coach": "Back to editing",
+  "coach.clientRoutine.group.SUPERSET": "Superset",
+  "coach.clientRoutine.group.CIRCUIT": "Circuit",
+  "coach.clientRoutine.group.makeSuperset": "Create superset",
+  "coach.clientRoutine.group.makeCircuit": "Create circuit",
+  "coach.clientRoutine.group.ungroup": "Remove from group"
 }

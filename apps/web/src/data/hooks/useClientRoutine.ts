@@ -69,5 +69,13 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
     mutationFn: (exerciseId: string) => api(auth).delete<RoutineEditorWeek>(`${base}/exercises/${exerciseId}`),
     onSuccess: refresh,
   });
-  return { addExercise, removeExercise, replaceExercise, updateSet };
+  const setGroup = useMutation({
+    mutationFn: (input: { dayId: string; exerciseIds: string[]; groupType: 'CIRCUIT' | 'SUPERSET' | null }) =>
+      api(auth).put<RoutineEditorWeek>(`${base}/days/${input.dayId}/groups`, {
+        exerciseIds: input.exerciseIds,
+        groupType: input.groupType,
+      }),
+    onSuccess: refresh,
+  });
+  return { addExercise, removeExercise, replaceExercise, setGroup, updateSet };
 }

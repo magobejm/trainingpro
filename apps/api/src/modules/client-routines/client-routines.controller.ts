@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { z, type ZodTypeAny } from 'zod';
 import { readAuthContext } from '../../common/auth-context/read-auth-context';
 import { Roles } from '../auth/presentation/decorators/roles.decorator';
@@ -60,6 +60,10 @@ const progressionBody = z.object({
   weekIds: z.array(uuid).min(1).max(200),
 });
 const presetBody = rule;
+const groupBody = z.object({
+  exerciseIds: z.array(uuid).min(1).max(30),
+  groupType: z.enum(['CIRCUIT', 'SUPERSET']).nullable(),
+});
 const replaceBody = exerciseBody.pick({ displayName: true, exerciseLibraryId: true });
 
 @Controller('clients/:clientId/routine')
@@ -105,6 +109,21 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.dayId),
       check(exerciseBody, body),
+    );
+  }
+
+  @Put('weeks/:weekId/days/:dayId/groups')
+  group(
+    @Param() params: { clientId: string; dayId: string; weekId: string },
+    @Body() body: unknown,
+    @Req() request: HttpAuthRequest,
+  ) {
+    return this.service.setGroup(
+      readAuthContext(request),
+      check(uuid, params.clientId),
+      check(uuid, params.weekId),
+      check(uuid, params.dayId),
+      check(groupBody, body),
     );
   }
 

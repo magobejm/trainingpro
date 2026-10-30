@@ -24,6 +24,7 @@ import {
   replaceExercise,
   type NewExercise,
 } from './client-routine-edit';
+import { setExerciseGroup } from './client-routine-groups';
 import { applyProgression } from './client-routine-progression';
 import { buildWeek, weekWindow } from './client-routine-view';
 
@@ -143,6 +144,23 @@ export class ClientRoutinesService {
     const { routine, week } = await this.week(context, clientId, weekId);
     await this.assertExercise(routine, week, exerciseId);
     await removeExercise(this.prisma, routine, week, exerciseId);
+    return this.getWeek(context, clientId, weekId);
+  }
+
+  async setGroup(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    input: { exerciseIds: string[]; groupType: 'CIRCUIT' | 'SUPERSET' | null },
+  ) {
+    const { routine, week } = await this.week(context, clientId, weekId);
+    const day = await assertEditable(this.prisma, routine, week, dayId);
+    const owned = await this.prisma.planStrengthExercise.count({
+      where: { archivedAt: null, dayId, id: { in: input.exerciseIds } },
+    });
+    if (owned !== input.exerciseIds.length) throw new NotFoundException('Exercise not found in this day');
+    await setExerciseGroup(this.prisma, routine, week, day.dayIndex, input);
     return this.getWeek(context, clientId, weekId);
   }
 

@@ -11371,6 +11371,74 @@
         "x-roles": ["coach"]
       }
     },
+    "/clients/{clientId}/routine/weeks/{weekId}/days/{dayId}/groups": {
+      "put": {
+        "operationId": "put_clients_clientId_routine_weeks_weekId_days_dayId_groups",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "weekId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dayId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PUT /clients/{clientId}/routine/weeks/{weekId}/days/{dayId}/groups",
+        "x-controller": "ClientRoutinesController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
     "/clients/{clientId}/routine/weeks/{weekId}/exercises/{exerciseId}": {
       "delete": {
         "operationId": "delete_clients_clientId_routine_weeks_weekId_exercises_exerciseId",

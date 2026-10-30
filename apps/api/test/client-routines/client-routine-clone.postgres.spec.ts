@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { sessionFixture } from '../sessions/session-transitions.fixture';
 import type { PrismaService } from '../../src/common/prisma/prisma.service';
+import { setExerciseGroup } from '../../src/modules/client-routines/client-routine-groups';
 import {
   createClientRoutine,
   resolveClientDay,
@@ -43,7 +44,12 @@ postgres('client routine copy and weeks', () => {
         templateId: fixture.template.id,
         dayIndex: 1,
         title: 'Day 1',
-        exercises: { create: { displayName: 'Squat', repsMin: 8 } },
+        exercises: {
+          create: [
+            { displayName: 'Squat', repsMin: 8, sortOrder: 0 },
+            { displayName: 'Row', repsMin: 8, sortOrder: 1 },
+          ],
+        },
       },
     });
     const routine = await db.$transaction((tx) =>
@@ -120,5 +126,33 @@ postgres('client routine copy and weeks', () => {
       resolveClientDay(tx, fixture.client.id, fixture.template.id, day.id, '2026-11-20'),
     );
     expect(later?.templateId).toBe(routine.baseTemplateId);
+  });
+
+  it('groups two exercises of a future week into a superset and ungroups them', async () => {
+    const { day, routine } = await setup();
+    await db.calendarEvent.create({
+      data: {
+        clientId: fixture.client.id,
+        coachMembershipId: fixture.member.id,
+        date: new Date('2026-12-14'),
+        type: 'workout',
+        planDayId: day.id,
+      },
+    });
+    const prisma = db as PrismaService;
+    await syncClientRoutineWeeks(prisma, fixture.client.id, fixture.context.subject);
+    const full = await db.clientRoutine.findUniqueOrThrow({ where: { id: routine.id }, include: { weeks: true } });
+    const week = full.weeks[0]!;
+    const copy = await db.planStrengthExercise.findMany({
+      where: { day: { templateId: week.templateId, dayIndex: 1 } },
+    });
+    const ids = copy.map((item) => item.id);
+    await setExerciseGroup(prisma, full, week, 1, { exerciseIds: ids, groupType: 'SUPERSET' });
+    const grouped = await db.planStrengthExercise.findMany({ where: { id: { in: ids } } });
+    expect(new Set(grouped.map((item) => item.groupId)).size).toBe(1);
+    expect(grouped[0]!.groupId).not.toBeNull();
+    await setExerciseGroup(prisma, full, week, 1, { exerciseIds: ids, groupType: null });
+    const free = await db.planStrengthExercise.findMany({ where: { id: { in: ids } } });
+    expect(free.every((item) => item.groupId === null)).toBe(true);
   });
 });

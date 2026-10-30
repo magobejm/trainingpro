@@ -5,7 +5,9 @@ import { Roles } from '../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../auth/presentation/http-auth-request';
+import { COMMAND_VARIABLES } from '@trainerpro/shared';
 import { ClientRoutinesService } from './client-routines.service';
+import { CoachPresetsService } from './coach-presets.service';
 
 function check<T extends ZodTypeAny>(schema: T, value: unknown): z.infer<T> {
   const parsed = schema.safeParse(value);
@@ -46,6 +48,18 @@ const exerciseBody = z.object({
     .max(30)
     .default([]),
 });
+const rule = z.object({
+  mode: z.enum(['delta', 'percent', 'set']),
+  value: z.number().min(-10_000).max(10_000),
+  variable: z.enum(COMMAND_VARIABLES),
+});
+const progressionBody = z.object({
+  cascade: z.boolean().default(false),
+  dayIndexes: z.array(z.number().int().min(0).max(60)).max(60).default([]),
+  rules: z.array(rule).min(1).max(6),
+  weekIds: z.array(uuid).min(1).max(200),
+});
+const presetBody = rule;
 const replaceBody = exerciseBody.pick({ displayName: true, exerciseLibraryId: true });
 
 @Controller('clients/:clientId/routine')
@@ -117,5 +131,33 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.exerciseId),
     );
+  }
+
+  @Post('progression')
+  progress(@Param('clientId') clientId: string, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    return this.service.applyProgression(readAuthContext(request), check(uuid, clientId), check(progressionBody, body));
+  }
+}
+
+@Controller('coach/progression-presets')
+@UseGuards(AuthGuard, RolesGuard)
+@Roles('coach')
+export class CoachPresetsController {
+  constructor(private readonly presets: CoachPresetsService) {}
+
+  @Get()
+  list(@Req() request: HttpAuthRequest) {
+    return this.presets.list(readAuthContext(request));
+  }
+
+  @Post()
+  add(@Body() body: unknown, @Req() request: HttpAuthRequest) {
+    return this.presets.add(readAuthContext(request), check(presetBody, body));
+  }
+
+  @Delete(':id')
+  async remove(@Param('id') id: string, @Req() request: HttpAuthRequest) {
+    await this.presets.remove(readAuthContext(request), check(uuid, id));
+    return { ok: true };
   }
 }

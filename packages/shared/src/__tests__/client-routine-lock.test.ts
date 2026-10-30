@@ -1,5 +1,4 @@
-import { describe, expect, it } from 'vitest';
-import { isDayEditable, microcycleIndex, microcycleStart, weekLock } from './client-routine-lock';
+import { isDayEditable, microcycleIndex, microcycleStart, weekLock } from '../client-routine-lock';
 
 const base = { cycleDays: 7, startsOn: '2026-10-05' };
 

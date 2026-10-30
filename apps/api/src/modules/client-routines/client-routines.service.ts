@@ -2,6 +2,8 @@ import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/commo
 import { Role } from '@prisma/client';
 import {
   CLIENT_ROUTINE_VISIBLE_WEEKS,
+  type CommandApplyRequest,
+  type CommandApplyResponse,
   type RoutineEditorResponse,
   type RoutineEditorSetPatch,
   type RoutineEditorWeek,
@@ -22,6 +24,7 @@ import {
   replaceExercise,
   type NewExercise,
 } from './client-routine-edit';
+import { applyProgression } from './client-routine-progression';
 import { buildWeek, weekWindow } from './client-routine-view';
 
 @Injectable()
@@ -141,6 +144,12 @@ export class ClientRoutinesService {
     await this.assertExercise(routine, week, exerciseId);
     await removeExercise(this.prisma, routine, week, exerciseId);
     return this.getWeek(context, clientId, weekId);
+  }
+
+  async applyProgression(context: AuthContext, clientId: string, input: CommandApplyRequest): Promise<CommandApplyResponse> {
+    const routine = await this.ensureRoutine(context, clientId);
+    if (!routine) throw new NotFoundException('The client has no routine');
+    return applyProgression(this.prisma, routine, input);
   }
 
   private async assertExercise(

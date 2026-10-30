@@ -256,3 +256,4 @@ export {
   type ProgressionRule,
   type ProgressionSet,
 } from './progression/apply-progression';
+export * from './client-routine-progression';

@@ -215,6 +215,7 @@ model OrganizationMember {
   notificationPreferences  NotificationPreference[]
   notificationEventLogs    NotificationEventLog[]
   coachNotes               CoachNote[]               @relation("coach_notes")
+  coachPresets             CoachPreset[]             @relation("coach_presets")
   calendarEvents           CalendarEvent[]           @relation("coach_calendar_events")
   callProposals            CallProposal[]            @relation("coach_call_proposals")
   meals                    Meal[]                    @relation("coach_meals")
@@ -1088,6 +1089,20 @@ model ClientRoutineWeek {
 
   @@unique([clientRoutineId, weekIndex], map: "uq_client_routine_week_index")
   @@map("client_routine_week")
+}
+
+/// Custom progression values the coach saves from the command center ("+ Añadir").
+model CoachPreset {
+  id                String             @id @default(uuid()) @db.Uuid
+  coachMembershipId String             @map("coach_membership_id") @db.Uuid
+  variable          String
+  mode              String
+  value             Float
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  coachMembership   OrganizationMember @relation("coach_presets", fields: [coachMembershipId], references: [id], onDelete: Cascade)
+
+  @@unique([coachMembershipId, variable, mode, value], map: "uq_coach_preset_value")
+  @@map("coach_preset")
 }
 
 model PlanTemplateNeat {

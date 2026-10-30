@@ -64,6 +64,7 @@ postgres('routine handoff against PostgreSQL', () => {
         await db.client.update({ where: { id: fixture.client.id }, data: { trainingPlanId: null } });
         await db.client.update({ where: { id: fixture.client.id }, data: { activeRoutineAssignmentId: null } });
         await db.routineAssignment.deleteMany({ where: { clientId: fixture.client.id } });
+        await db.clientRoutine.deleteMany({ where: { clientId: fixture.client.id } });
         if (nextId) await db.routineRevision.deleteMany({ where: { templateId: nextId } });
         if (nextId) await db.planTemplate.delete({ where: { id: nextId } });
         await fixture.cleanup();

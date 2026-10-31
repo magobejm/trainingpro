@@ -11303,6 +11303,74 @@
         "x-roles": ["coach"]
       }
     },
+    "/clients/{clientId}/routine/weeks/{weekId}/days/{dayId}/blocks": {
+      "post": {
+        "operationId": "post_clients_clientId_routine_weeks_weekId_days_dayId_blocks",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "clientId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "weekId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "dayId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "POST /clients/{clientId}/routine/weeks/{weekId}/days/{dayId}/blocks",
+        "x-controller": "ClientRoutinesController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["coach"]
+      }
+    },
     "/clients/{clientId}/routine/weeks/{weekId}/days/{dayId}/exercises": {
       "post": {
         "operationId": "post_clients_clientId_routine_weeks_weekId_days_dayId_exercises",

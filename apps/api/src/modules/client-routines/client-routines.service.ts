@@ -24,6 +24,7 @@ import {
   replaceExercise,
   type NewExercise,
 } from './client-routine-edit';
+import { addBlock, type NewBlock } from './client-routine-blocks';
 import { setDayWarmups, setExerciseGroup } from './client-routine-groups';
 import { applyProgression } from './client-routine-progression';
 import { buildWeek, weekWindow } from './client-routine-view';
@@ -161,6 +162,13 @@ export class ClientRoutinesService {
     });
     if (owned !== input.exerciseIds.length) throw new NotFoundException('Exercise not found in this day');
     await setExerciseGroup(this.prisma, routine, week, day.dayIndex, input);
+    return this.getWeek(context, clientId, weekId);
+  }
+
+  async addBlock(context: AuthContext, clientId: string, weekId: string, dayId: string, input: NewBlock) {
+    const { routine, week } = await this.week(context, clientId, weekId);
+    const day = await assertEditable(this.prisma, routine, week, dayId);
+    await addBlock(this.prisma, routine, week, day.dayIndex, input);
     return this.getWeek(context, clientId, weekId);
   }
 

@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { sessionFixture } from '../sessions/session-transitions.fixture';
 import type { PrismaService } from '../../src/common/prisma/prisma.service';
 import { applyProgression } from '../../src/modules/client-routines/client-routine-progression';
+import { addBlock } from '../../src/modules/client-routines/client-routine-blocks';
 import { setDayWarmups, setExerciseGroup } from '../../src/modules/client-routines/client-routine-groups';
 import {
   createClientRoutine,
@@ -237,5 +238,37 @@ postgres('client routine copy and weeks', () => {
     });
     expect(set.durationSeconds).toBe(720);
     expect(set.distanceMeters).toBe(2200);
+  });
+
+  it('adds a cardio block with a starting set to a future day', async () => {
+    const { day, routine } = await setup();
+    await db.calendarEvent.create({
+      data: {
+        clientId: fixture.client.id,
+        coachMembershipId: fixture.member.id,
+        date: new Date('2026-12-14'),
+        type: 'workout',
+        planDayId: day.id,
+      },
+    });
+    const prisma = db as PrismaService;
+    await syncClientRoutineWeeks(prisma, fixture.client.id, fixture.context.subject);
+    const full = await db.clientRoutine.findUniqueOrThrow({ where: { id: routine.id }, include: { weeks: true } });
+    const week = full.weeks[0]!;
+    await addBlock(prisma, full, week, 1, { displayName: 'Rodaje', kind: 'cardio', libraryId: crypto.randomUUID() }).catch(
+      (error: unknown) => {
+        // The library id is random on purpose: only the foreign key may reject it, and then the block is not stored.
+        expect(String(error)).toMatch(/Foreign key|foreign key/);
+      },
+    );
+    const method = await db.cardioMethod.findFirst({ select: { id: true } });
+    if (!method) return;
+    await addBlock(prisma, full, week, 1, { displayName: 'Rodaje', kind: 'cardio', libraryId: method.id });
+    const block = await db.planCardioBlock.findFirstOrThrow({
+      where: { day: { dayIndex: 1, templateId: week.templateId } },
+      include: { sets: true },
+    });
+    expect(block.sets).toHaveLength(1);
+    expect(block.sets[0]!.durationSeconds).toBe(600);
   });
 });

@@ -19,7 +19,15 @@ import { RoutineDayCard } from './RoutineDayCard';
 type Picker = { dayId: string; mode: 'add' } | { exerciseId: string; mode: 'replace' } | null;
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-const PICKER_TYPES = ['strength' as const];
+const REPLACE_TYPES = ['strength' as const];
+const ADD_TYPES = [
+  'strength' as const,
+  'cardio' as const,
+  'plio' as const,
+  'isometric' as const,
+  'sport' as const,
+  'mobility' as const,
+];
 const DEFAULT_SETS = 3;
 
 function defaultWeekId(data: RoutineEditorResponse): string {
@@ -209,11 +217,14 @@ function WeekPanel(props: {
         );
       })}
       <ExercisePickerModal
-        allowedTypes={PICKER_TYPES}
+        allowedTypes={picker?.mode === 'replace' ? REPLACE_TYPES : ADD_TYPES}
         blockType={picker ? 'strength' : null}
         onCancel={() => setPicker(null)}
-        onSelect={(exerciseLibraryId, displayName) => {
-          if (picker?.mode === 'add') {
+        onSelect={(exerciseLibraryId, displayName, kind) => {
+          if (picker?.mode === 'add' && kind && kind !== 'strength') {
+            const block = { displayName, kind, libraryId: exerciseLibraryId };
+            actions.addBlock.mutate({ block, dayId: picker.dayId }, { onError: fail });
+          } else if (picker?.mode === 'add') {
             const sets = Array.from({ length: DEFAULT_SETS }, () => ({}));
             const exercise = { displayName, exerciseLibraryId, sets };
             actions.addExercise.mutate({ dayId: picker.dayId, exercise }, { onError: fail });

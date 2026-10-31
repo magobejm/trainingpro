@@ -6,6 +6,7 @@ import { AuthGuard } from '../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../auth/presentation/http-auth-request';
 import { COMMAND_VARIABLES } from '@trainerpro/shared';
+import { NEW_BLOCK_KINDS } from './client-routine-blocks';
 import { ClientRoutinesService } from './client-routines.service';
 import { CoachPresetsService } from './coach-presets.service';
 
@@ -65,6 +66,11 @@ const groupBody = z.object({
   groupType: z.enum(['CIRCUIT', 'SUPERSET']).nullable(),
 });
 const warmupsBody = z.object({ warmupTemplateIds: z.array(uuid).max(10) });
+const blockBody = z.object({
+  displayName: z.string().trim().min(1).max(120),
+  kind: z.enum(NEW_BLOCK_KINDS),
+  libraryId: uuid,
+});
 const replaceBody = exerciseBody.pick({ displayName: true, exerciseLibraryId: true });
 
 @Controller('clients/:clientId/routine')
@@ -110,6 +116,21 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.dayId),
       check(exerciseBody, body),
+    );
+  }
+
+  @Post('weeks/:weekId/days/:dayId/blocks')
+  addBlock(
+    @Param() params: { clientId: string; dayId: string; weekId: string },
+    @Body() body: unknown,
+    @Req() request: HttpAuthRequest,
+  ) {
+    return this.service.addBlock(
+      readAuthContext(request),
+      check(uuid, params.clientId),
+      check(uuid, params.weekId),
+      check(uuid, params.dayId),
+      check(blockBody, body),
     );
   }
 

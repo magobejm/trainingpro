@@ -37,12 +37,12 @@ export function Select(props: SelectProps): React.JSX.Element {
           value={props.value}
         >
           {props.placeholder ? (
-            <option disabled value="">
+            <option disabled style={webOptionStyle} value="">
               {props.placeholder}
             </option>
           ) : null}
           {props.options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} style={webOptionStyle} value={option.value}>
               {option.label}
             </option>
           ))}
@@ -72,6 +72,9 @@ const webSelectStyle: React.CSSProperties = {
   padding: `${space.sm}px ${space.md}px`,
   width: '100%',
 };
+
+/** The open list is drawn by the browser; without its own colors it can end up dark text on a dark panel. */
+const webOptionStyle: React.CSSProperties = { backgroundColor: colors.surface, color: colors.text };
 
 const styles = StyleSheet.create({
   native: {

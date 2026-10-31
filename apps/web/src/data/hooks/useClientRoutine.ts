@@ -77,6 +77,11 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
       }),
     onSuccess: refresh,
   });
+  const addBlock = useMutation({
+    mutationFn: (input: { block: { displayName: string; kind: string; libraryId: string }; dayId: string }) =>
+      api(auth).post<RoutineEditorWeek>(base + '/days/' + input.dayId + '/blocks', input.block),
+    onSuccess: refresh,
+  });
   const setWarmups = useMutation({
     mutationFn: (input: { dayId: string; warmupTemplateIds: string[] }) =>
       api(auth).put<RoutineEditorWeek>(base + '/days/' + input.dayId + '/warmups', {
@@ -84,5 +89,5 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
       }),
     onSuccess: refresh,
   });
-  return { addExercise, removeExercise, replaceExercise, setGroup, setWarmups, updateSet };
+  return { addBlock, addExercise, removeExercise, replaceExercise, setGroup, setWarmups, updateSet };
 }

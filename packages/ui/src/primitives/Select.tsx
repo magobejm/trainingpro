@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Platform, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
-import { colors, fontSize, radius, space } from '../theme/tokens';
+import { colors, fontSize, radius, space, webShadow } from '../theme/tokens';
 import { Field } from './Field';
 import { findSelectLabel, nextSelectValue, resolveFieldBorder, type SelectOption } from './field.logic';
 
@@ -148,7 +148,7 @@ const webListStyle: React.CSSProperties = {
   backgroundColor: colors.surface,
   border: `1px solid ${colors.border}`,
   borderRadius: radius.md,
-  boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+  boxShadow: webShadow.lg,
   maxHeight: 280,
   overflowY: 'auto',
   position: 'fixed',

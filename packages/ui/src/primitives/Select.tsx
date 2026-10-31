@@ -20,6 +20,51 @@ export type SelectProps = {
 };
 
 const NATIVE_ROLE = 'button' as const;
+const LISTBOX = 'listbox' as const;
+const OPTION = 'option' as const;
+
+/** The browser paints a native <select> popup with its own colors, which hides the labels on dark pages. */
+function WebSelect(props: SelectProps & { border: string; focused: boolean; onFocus: () => void }): React.JSX.Element {
+  const [open, setOpen] = useState(false);
+  const label = findSelectLabel(props.options, props.value, props.placeholder);
+  return (
+    <div style={{ position: 'relative', width: '100%' }}>
+      <button
+        aria-expanded={open}
+        aria-haspopup={LISTBOX}
+        aria-label={props.label ?? props.placeholder}
+        disabled={props.disabled}
+        onBlur={() => setOpen(false)}
+        onClick={() => setOpen((current) => !current)}
+        onFocus={() => props.onFocus()}
+        style={{ ...webButtonStyle, borderColor: props.border }}
+        type="button"
+      >
+        <span>{label}</span>
+        <span aria-hidden>{open ? '▴' : '▾'}</span>
+      </button>
+      {open ? (
+        <div role={LISTBOX} style={webListStyle}>
+          {props.options.map((option) => (
+            <div
+              aria-selected={option.value === props.value}
+              key={option.value}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                props.onChange(option.value);
+                setOpen(false);
+              }}
+              role={OPTION}
+              style={option.value === props.value ? webOptionOnStyle : webOptionStyle}
+            >
+              {option.label}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function Select(props: SelectProps): React.JSX.Element {
   const [focused, setFocused] = useState(false);
@@ -27,26 +72,7 @@ export function Select(props: SelectProps): React.JSX.Element {
   return (
     <Field error={props.error} help={props.help} label={props.label} required={props.required} style={props.containerStyle}>
       {Platform.OS === 'web' ? (
-        <select
-          aria-label={props.label ?? props.placeholder}
-          disabled={props.disabled}
-          onBlur={() => setFocused(false)}
-          onChange={(event) => props.onChange(event.target.value)}
-          onFocus={() => setFocused(true)}
-          style={{ ...webSelectStyle, borderColor: border }}
-          value={props.value}
-        >
-          {props.placeholder ? (
-            <option disabled style={webOptionStyle} value="">
-              {props.placeholder}
-            </option>
-          ) : null}
-          {props.options.map((option) => (
-            <option key={option.value} style={webOptionStyle} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+        <WebSelect {...props} border={border} focused={focused} onFocus={() => setFocused(true)} />
       ) : (
         <Pressable
           accessibilityRole={NATIVE_ROLE}
@@ -61,20 +87,44 @@ export function Select(props: SelectProps): React.JSX.Element {
   );
 }
 
-const webSelectStyle: React.CSSProperties = {
+const webButtonStyle: React.CSSProperties = {
+  alignItems: 'center',
   backgroundColor: colors.surface,
   border: '1px solid',
   borderRadius: radius.md,
   color: colors.text,
+  cursor: 'pointer',
+  display: 'flex',
   fontFamily: 'inherit',
   fontSize: fontSize.sm,
+  justifyContent: 'space-between',
   minHeight: 40,
   padding: `${space.sm}px ${space.md}px`,
   width: '100%',
 };
 
-/** The open list is drawn by the browser; without its own colors it can end up dark text on a dark panel. */
-const webOptionStyle: React.CSSProperties = { backgroundColor: colors.surface, color: colors.text };
+const webListStyle: React.CSSProperties = {
+  backgroundColor: colors.surface,
+  border: `1px solid ${colors.border}`,
+  borderRadius: radius.md,
+  boxShadow: '0 8px 24px rgba(0,0,0,0.25)',
+  left: 0,
+  maxHeight: 280,
+  overflowY: 'auto',
+  position: 'absolute',
+  right: 0,
+  top: '100%',
+  zIndex: 30,
+};
+
+const webOptionStyle: React.CSSProperties = {
+  color: colors.text,
+  cursor: 'pointer',
+  fontSize: fontSize.sm,
+  padding: `${space.sm}px ${space.md}px`,
+};
+
+const webOptionOnStyle: React.CSSProperties = { ...webOptionStyle, backgroundColor: colors.surfaceMuted, fontWeight: 600 };
 
 const styles = StyleSheet.create({
   native: {
@@ -85,8 +135,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: space.md,
   },
-  nativeLabel: {
-    color: colors.text,
-    fontSize: fontSize.sm,
-  },
+  nativeLabel: { color: colors.text, fontSize: fontSize.sm },
 });

@@ -77,5 +77,12 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
       }),
     onSuccess: refresh,
   });
-  return { addExercise, removeExercise, replaceExercise, setGroup, updateSet };
+  const setWarmups = useMutation({
+    mutationFn: (input: { dayId: string; warmupTemplateIds: string[] }) =>
+      api(auth).put<RoutineEditorWeek>(base + '/days/' + input.dayId + '/warmups', {
+        warmupTemplateIds: input.warmupTemplateIds,
+      }),
+    onSuccess: refresh,
+  });
+  return { addExercise, removeExercise, replaceExercise, setGroup, setWarmups, updateSet };
 }

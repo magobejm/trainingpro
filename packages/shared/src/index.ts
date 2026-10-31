@@ -77,6 +77,8 @@ export {
   type RoutineEditorResponse,
   type RoutineEditorSet,
   type RoutineEditorSetPatch,
+  type RoutineEditorTimedSet,
+  type RoutineEditorWarmup,
   type RoutineEditorWeek,
   type RoutineEditorWeekSummary,
 } from './client-routine';

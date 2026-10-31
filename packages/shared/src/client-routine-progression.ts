@@ -4,7 +4,21 @@
  * starts from what each of those weeks currently prescribes.
  */
 
-export const COMMAND_VARIABLES = ['sets', 'weightKg', 'reps', 'rpe', 'rir', 'restSeconds'] as const;
+export const COMMAND_VARIABLES = [
+  'sets',
+  'weightKg',
+  'reps',
+  'rpe',
+  'rir',
+  'restSeconds',
+  'durationSeconds',
+  'distanceMeters',
+  'fcMaxPct',
+  'heartRate',
+] as const;
+/** Variables of strength sets. The rest belong to cardio and isometric blocks. */
+export const STRENGTH_VARIABLES = ['weightKg', 'reps', 'rpe', 'rir', 'restSeconds'] as const;
+export const TIMED_VARIABLES = ['durationSeconds', 'distanceMeters', 'fcMaxPct', 'heartRate'] as const;
 export const MAX_COMMAND_VARIABLES = 6;
 
 export type CommandVariable = (typeof COMMAND_VARIABLES)[number];
@@ -25,6 +39,11 @@ export type CommandSetValues = {
 export type CommandSetResult = { after: CommandSetValues; warnings: CommandWarning[] };
 
 type ValueVariable = Exclude<CommandVariable, 'sets'>;
+type StrengthVariable = (typeof STRENGTH_VARIABLES)[number];
+type TimedVariable = (typeof TIMED_VARIABLES)[number];
+
+export type CommandTimedValues = Record<TimedVariable, null | number>;
+export type CommandTimedPreview = { after: CommandTimedValues; before: CommandTimedValues; warnings: CommandWarning[] };
 
 const LIMITS: Record<ValueVariable, { decimals: number; max: number }> = {
   reps: { decimals: 0, max: 1000 },
@@ -32,7 +51,19 @@ const LIMITS: Record<ValueVariable, { decimals: number; max: number }> = {
   rir: { decimals: 0, max: 20 },
   rpe: { decimals: 1, max: 10 },
   weightKg: { decimals: 2, max: 2000 },
+  durationSeconds: { decimals: 0, max: 86_400 },
+  distanceMeters: { decimals: 0, max: 1_000_000 },
+  fcMaxPct: { decimals: 0, max: 100 },
+  heartRate: { decimals: 0, max: 250 },
 };
+
+export function isStrengthVariable(variable: CommandVariable): variable is StrengthVariable {
+  return (STRENGTH_VARIABLES as readonly string[]).includes(variable);
+}
+
+export function isTimedVariable(variable: CommandVariable): variable is TimedVariable {
+  return (TIMED_VARIABLES as readonly string[]).includes(variable);
+}
 
 export function isValueVariable(variable: CommandVariable): variable is ValueVariable {
   return variable !== 'sets';
@@ -66,7 +97,7 @@ export function applyCommandRulesToSet(set: CommandSetValues, rules: CommandRule
   const after = { ...set };
   const warnings: CommandWarning[] = [];
   for (const rule of rules) {
-    if (!isValueVariable(rule.variable)) continue;
+    if (!isStrengthVariable(rule.variable)) continue;
     const result = applyCommandRule(rule.variable, after[rule.variable], rule);
     after[rule.variable] = result.value;
     if (result.warning && !warnings.includes(result.warning)) warnings.push(result.warning);
@@ -85,6 +116,21 @@ export function applyCommandSetCount(count: number, rules: CommandRule[]): numbe
         : next + Math.round(rule.mode === 'percent' ? (next * rule.value) / 100 : rule.value);
   }
   return Math.min(30, Math.max(1, next));
+}
+
+/** Cardio and isometric sets: only duration, distance and heart-rate rules apply, and the number of sets never changes. */
+export function previewCommandTimedSets(sets: CommandTimedValues[], rules: CommandRule[]): CommandTimedPreview[] {
+  return sets.map((before) => {
+    const after = { ...before };
+    const warnings: CommandWarning[] = [];
+    for (const rule of rules) {
+      if (!isTimedVariable(rule.variable)) continue;
+      const result = applyCommandRule(rule.variable, after[rule.variable], rule);
+      after[rule.variable] = result.value;
+      if (result.warning && !warnings.includes(result.warning)) warnings.push(result.warning);
+    }
+    return { after, before, warnings };
+  });
 }
 
 export type CommandPreviewSet = {

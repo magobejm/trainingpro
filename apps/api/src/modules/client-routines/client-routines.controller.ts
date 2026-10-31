@@ -64,6 +64,7 @@ const groupBody = z.object({
   exerciseIds: z.array(uuid).min(1).max(30),
   groupType: z.enum(['CIRCUIT', 'SUPERSET']).nullable(),
 });
+const warmupsBody = z.object({ warmupTemplateIds: z.array(uuid).max(10) });
 const replaceBody = exerciseBody.pick({ displayName: true, exerciseLibraryId: true });
 
 @Controller('clients/:clientId/routine')
@@ -124,6 +125,21 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.dayId),
       check(groupBody, body),
+    );
+  }
+
+  @Put('weeks/:weekId/days/:dayId/warmups')
+  warmups(
+    @Param() params: { clientId: string; dayId: string; weekId: string },
+    @Body() body: unknown,
+    @Req() request: HttpAuthRequest,
+  ) {
+    return this.service.setWarmups(
+      readAuthContext(request),
+      check(uuid, params.clientId),
+      check(uuid, params.weekId),
+      check(uuid, params.dayId),
+      check(warmupsBody, body).warmupTemplateIds,
     );
   }
 

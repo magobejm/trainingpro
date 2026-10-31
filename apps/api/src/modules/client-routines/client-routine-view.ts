@@ -5,6 +5,7 @@ import {
   sessionOutcome,
   weekLock,
   type RoutineEditorBlock,
+  type RoutineEditorTimedSet,
   type RoutineEditorDay,
   type RoutineEditorExercise,
   type RoutineEditorLogged,
@@ -32,7 +33,29 @@ const BLOCK_KINDS = [
 ] as const;
 
 const blockInclude = { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } };
+const timedInclude = { ...blockInclude, include: { sets: { orderBy: { setIndex: 'asc' as const } } } };
 
+type TimedSource = {
+  sets?: Array<{
+    distanceMeters?: number | null;
+    durationSeconds: number | null;
+    fcMaxPct?: number | null;
+    heartRate?: number | null;
+    id: string;
+    setIndex: number;
+  }>;
+};
+
+function timedSets(block: object): RoutineEditorTimedSet[] {
+  return ((block as TimedSource).sets ?? []).map((set) => ({
+    distanceMeters: set.distanceMeters ?? null,
+    durationSeconds: set.durationSeconds,
+    fcMaxPct: set.fcMaxPct ?? null,
+    heartRate: set.heartRate ?? null,
+    id: set.id,
+    setIndex: set.setIndex,
+  }));
+}
 function loggedFor(
   logs: Array<{ setIndex: number } & Record<string, unknown>>,
   setIndex: number,
@@ -82,13 +105,14 @@ async function loadWeekData(prisma: PrismaService, routine: ClientRoutine, week:
   return Promise.all([
     prisma.planDay.findMany({
       include: {
-        cardioBlocks: blockInclude,
+        cardioBlocks: timedInclude,
         exerciseGroups: { orderBy: { sortOrder: 'asc' } },
         exercises: { ...blockInclude, include: { sets: { orderBy: { setIndex: 'asc' } } } },
-        isometricBlocks: blockInclude,
+        isometricBlocks: timedInclude,
         mobilityBlocks: blockInclude,
         plioBlocks: blockInclude,
         sportBlocks: blockInclude,
+        warmups: { include: { warmupTemplate: { select: { name: true } } }, orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { dayIndex: 'asc' },
       where: { archivedAt: null, revisionVersion: 1, templateId: week.templateId },
@@ -178,7 +202,13 @@ export async function buildWeek(
         };
       });
       const blocks: RoutineEditorBlock[] = BLOCK_KINDS.flatMap(([key, kind]) =>
-        day[key].map((block) => ({ displayName: block.displayName, id: block.id, kind, sortOrder: block.sortOrder })),
+        day[key].map((block) => ({
+          displayName: block.displayName,
+          id: block.id,
+          kind,
+          sets: timedSets(block),
+          sortOrder: block.sortOrder,
+        })),
       ).sort((a, b) => a.sortOrder - b.sortOrder);
       return {
         blocks,
@@ -191,6 +221,11 @@ export async function buildWeek(
         planned: scheduled.has(day.dayIndex),
         scheduledDates: (scheduled.get(day.dayIndex) ?? []).sort(),
         title: day.title,
+        warmups: day.warmups.map((item) => ({
+          id: item.id,
+          name: item.warmupTemplate.name,
+          warmupTemplateId: item.warmupTemplateId,
+        })),
       };
     }),
     endsOn: to,

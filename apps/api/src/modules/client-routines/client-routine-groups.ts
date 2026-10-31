@@ -60,3 +60,25 @@ export async function setExerciseGroup(
     });
   }
 }
+
+/** Replaces the warm-ups of one day, and of the same day in every later week that is still editable. */
+export async function setDayWarmups(
+  prisma: PrismaService,
+  routine: Routine,
+  week: WeekRow,
+  dayIndex: number,
+  warmupTemplateIds: string[],
+) {
+  const today = todayKey();
+  for (const row of routine.weeks.filter((item) => item.weekIndex >= week.weekIndex)) {
+    const view = await buildWeek(prisma, routine, row, today);
+    const day = view.days.find((item) => item.dayIndex === dayIndex);
+    if (!day?.editable) continue;
+    await prisma.$transaction([
+      prisma.planDayWarmup.deleteMany({ where: { planDayId: day.id } }),
+      prisma.planDayWarmup.createMany({
+        data: warmupTemplateIds.map((warmupTemplateId, sortOrder) => ({ planDayId: day.id, sortOrder, warmupTemplateId })),
+      }),
+    ]);
+  }
+}

@@ -5,6 +5,7 @@ import {
   cascadeCandidates,
   normalizeCommandRules,
   previewCommandExercise,
+  previewCommandTimedSets,
   type CommandRule,
   type CommandSetValues,
 } from '../client-routine-progression';
@@ -86,5 +87,35 @@ describe('normalizeCommandRules and cascadeCandidates', () => {
     expect(cascadeCandidates([1, 2, 3, 4], [1, 2, 3, 4])).toEqual({ later: [], shouldAsk: false });
     expect(cascadeCandidates([4], [1, 2, 3, 4])).toEqual({ later: [], shouldAsk: false });
     expect(cascadeCandidates([2, 4], [2, 3, 4, 5])).toEqual({ later: [5], shouldAsk: true });
+  });
+});
+
+describe('previewCommandTimedSets', () => {
+  const timed = { distanceMeters: 5000, durationSeconds: 1200, fcMaxPct: 70, heartRate: null };
+
+  it('applies duration, distance and heart-rate rules to each set', () => {
+    const [row] = previewCommandTimedSets(
+      [timed],
+      [
+        { mode: 'delta', value: 300, variable: 'durationSeconds' },
+        { mode: 'percent', value: 10, variable: 'distanceMeters' },
+        { mode: 'delta', value: 5, variable: 'fcMaxPct' },
+      ],
+    );
+    expect(row!.after).toEqual({ distanceMeters: 5500, durationSeconds: 1500, fcMaxPct: 75, heartRate: null });
+  });
+
+  it('keeps empty values empty on relative rules, ignores strength variables and caps %FC at 100', () => {
+    const [row] = previewCommandTimedSets(
+      [timed],
+      [
+        { mode: 'delta', value: 10, variable: 'heartRate' },
+        { mode: 'delta', value: 5, variable: 'weightKg' },
+        { mode: 'delta', value: 50, variable: 'fcMaxPct' },
+      ],
+    );
+    expect(row!.after.heartRate).toBeNull();
+    expect(row!.warnings).toContain('emptyDelta');
+    expect(row!.after.fcMaxPct).toBe(100);
   });
 });

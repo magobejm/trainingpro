@@ -37,14 +37,27 @@ export type RoutineEditorExercise = {
   sortOrder: number;
 };
 
+export type RoutineEditorTimedSet = {
+  distanceMeters: number | null;
+  durationSeconds: number | null;
+  fcMaxPct: number | null;
+  heartRate: number | null;
+  id: string;
+  setIndex: number;
+};
+
 export type RoutineEditorBlock = {
   displayName: string;
   id: string;
   kind: 'cardio' | 'isometric' | 'mobility' | 'plio' | 'sport';
+  /** Sets of cardio and isometric blocks; empty for the other kinds. */
+  sets: RoutineEditorTimedSet[];
   sortOrder: number;
 };
 
 export type RoutineEditorGroup = { groupType: 'CIRCUIT' | 'SUPERSET'; id: string; note: string | null };
+
+export type RoutineEditorWarmup = { id: string; name: string; warmupTemplateId: string };
 
 export type RoutineEditorDay = {
   blocks: RoutineEditorBlock[];
@@ -58,6 +71,7 @@ export type RoutineEditorDay = {
   planned: boolean;
   scheduledDates: string[];
   title: string;
+  warmups: RoutineEditorWarmup[];
 };
 
 export type RoutineEditorWeek = {

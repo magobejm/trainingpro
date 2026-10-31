@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Badge, Button, Card, colors, fontSize, space, type BadgeTone } from '@trainerpro/ui';
 import type { RoutineEditorDay, RoutineEditorSetPatch } from '@trainerpro/shared';
 import { DayGrouping, type OnGroup } from './DayGrouping';
+import { DayWarmups, type OnWarmups } from './DayWarmups';
 import { RoutineSetGrid } from './RoutineSetGrid';
 
 type Translate = (key: string) => string;
@@ -18,6 +19,7 @@ const OUTCOME_TONE: Record<string, BadgeTone> = {
 export type RoutineDayActions = {
   onAddExercise: (dayId: string) => void;
   onGroup: OnGroup;
+  onWarmups: OnWarmups;
   onPatchSet: (setId: string, patch: RoutineEditorSetPatch) => void;
   onRemoveExercise: (exerciseId: string) => void;
   onReplaceExercise: (exerciseId: string) => void;
@@ -71,6 +73,9 @@ export function RoutineDayCard(props: {
     <Card>
       <View style={styles.body}>
         <DayHeader day={day} t={t} />
+        {day.editable || day.warmups.length > 0 ? (
+          <DayWarmups day={day} onChange={day.editable ? actions.onWarmups : () => undefined} t={t} />
+        ) : null}
         {day.editable ? <DayGrouping day={day} onGroup={actions.onGroup} t={t} /> : null}
         {day.exercises.map((exercise) => (
           <View key={exercise.id} style={styles.exercise}>

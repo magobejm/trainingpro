@@ -2304,5 +2304,17 @@
   "coach.clientRoutine.group.CIRCUIT": "Circuito",
   "coach.clientRoutine.group.makeSuperset": "Crear superserie",
   "coach.clientRoutine.group.makeCircuit": "Crear circuito",
-  "coach.clientRoutine.group.ungroup": "Quitar del grupo"
+  "coach.clientRoutine.group.ungroup": "Quitar del grupo",
+  "coach.clientRoutine.var.durationSeconds": "Duración (s)",
+  "coach.clientRoutine.var.distanceMeters": "Distancia (m)",
+  "coach.clientRoutine.var.fcMaxPct": "%FC máx",
+  "coach.clientRoutine.var.heartRate": "ppm",
+  "coach.clientRoutine.command.var.durationSeconds": "Duración (s)",
+  "coach.clientRoutine.command.var.distanceMeters": "Distancia (m)",
+  "coach.clientRoutine.command.var.fcMaxPct": "%FC máx",
+  "coach.clientRoutine.command.var.heartRate": "Pulsaciones (ppm)",
+  "coach.clientRoutine.warmup.title": "Calentamiento",
+  "coach.clientRoutine.warmup.add": "Añadir calentamiento",
+  "coach.clientRoutine.warmup.pick": "Elegir calentamiento",
+  "coach.clientRoutine.warmup.none": "No hay más calentamientos en la biblioteca."
 }

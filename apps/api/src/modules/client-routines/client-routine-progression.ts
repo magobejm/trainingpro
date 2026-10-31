@@ -4,10 +4,12 @@ import {
   applyCommandSetCount,
   normalizeCommandRules,
   previewCommandExercise,
+  previewCommandTimedSets,
   type CommandApplyRequest,
   type CommandApplyResponse,
   type CommandRule,
   type CommandWarning,
+  type RoutineEditorBlock,
   type RoutineEditorExercise,
 } from '@trainerpro/shared';
 import type { PrismaService } from '../../common/prisma/prisma.service';
@@ -17,6 +19,34 @@ import { buildWeek } from './client-routine-view';
 type Routine = ClientRoutine & { weeks: WeekRow[] };
 
 type ExercisePlan = { exercise: RoutineEditorExercise; rules: CommandRule[] };
+type BlockPlan = { block: RoutineEditorBlock; rules: CommandRule[] };
+
+function timedValues(set: RoutineEditorBlock['sets'][number]) {
+  return {
+    distanceMeters: set.distanceMeters,
+    durationSeconds: set.durationSeconds,
+    fcMaxPct: set.fcMaxPct,
+    heartRate: set.heartRate,
+  };
+}
+
+/** Cardio sets take all four timed variables; isometric sets only have a duration. */
+async function writeBlock(tx: Prisma.TransactionClient, { block, rules }: BlockPlan) {
+  const rows = previewCommandTimedSets(block.sets.map(timedValues), rules);
+  for (const [index, row] of rows.entries()) {
+    const id = block.sets[index]!.id;
+    if (block.kind === 'cardio') await tx.planCardioSet.update({ data: row.after, where: { id } });
+    else await tx.planIsometricSet.update({ data: { durationSeconds: row.after.durationSeconds }, where: { id } });
+  }
+}
+
+function changedBlockSets(block: RoutineEditorBlock, rules: CommandRule[]): number {
+  const rows = previewCommandTimedSets(block.sets.map(timedValues), rules);
+  const keys = block.kind === 'cardio' ? null : (['durationSeconds'] as const);
+  return rows.filter((row) =>
+    (keys ?? (Object.keys(row.after) as Array<keyof typeof row.after>)).some((key) => row.before[key] !== row.after[key]),
+  ).length;
+}
 
 function values(set: RoutineEditorExercise['sets'][number]) {
   return { reps: set.reps, restSeconds: set.restSeconds, rir: set.rir, rpe: set.rpe, weightKg: set.weightKg };
@@ -67,6 +97,7 @@ export async function applyProgression(
   if (rules.length === 0) throw new BadRequestException('At least one rule is required');
   const today = todayKey();
   const plans: ExercisePlan[] = [];
+  const blockPlans: BlockPlan[] = [];
   const warnings = new Set<CommandWarning>();
   let skippedLockedDays = 0;
   let touchedWeeks = 0;
@@ -82,12 +113,20 @@ export async function applyProgression(
           item.warnings.forEach((w) => warnings.add(w));
         plans.push({ exercise, rules });
       }
+      for (const block of day.blocks) {
+        if (block.kind !== 'cardio' && block.kind !== 'isometric') continue;
+        if (block.sets.length === 0) continue;
+        blockPlans.push({ block, rules });
+      }
     }
   }
-  const changedSets = plans.reduce((total, plan) => total + changedCount(plan.exercise, rules), 0);
+  const changedSets =
+    plans.reduce((total, plan) => total + changedCount(plan.exercise, rules), 0) +
+    blockPlans.reduce((total, plan) => total + changedBlockSets(plan.block, rules), 0);
   await prisma.$transaction(
     async (tx) => {
       for (const plan of plans) await writeExercise(tx, plan);
+      for (const plan of blockPlans) await writeBlock(tx, plan);
     },
     { maxWait: 10_000, timeout: 60_000 },
   );

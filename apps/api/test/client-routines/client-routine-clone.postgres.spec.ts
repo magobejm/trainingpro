@@ -1,7 +1,8 @@
 import { PrismaClient } from '@prisma/client';
 import { sessionFixture } from '../sessions/session-transitions.fixture';
 import type { PrismaService } from '../../src/common/prisma/prisma.service';
-import { setExerciseGroup } from '../../src/modules/client-routines/client-routine-groups';
+import { applyProgression } from '../../src/modules/client-routines/client-routine-progression';
+import { setDayWarmups, setExerciseGroup } from '../../src/modules/client-routines/client-routine-groups';
 import {
   createClientRoutine,
   resolveClientDay,
@@ -154,5 +155,87 @@ postgres('client routine copy and weeks', () => {
     await setExerciseGroup(prisma, full, week, 1, { exerciseIds: ids, groupType: null });
     const free = await db.planStrengthExercise.findMany({ where: { id: { in: ids } } });
     expect(free.every((item) => item.groupId === null)).toBe(true);
+  });
+
+  it('replaces the warm-ups of a future day', async () => {
+    const { day, routine } = await setup();
+    await db.calendarEvent.create({
+      data: {
+        clientId: fixture.client.id,
+        coachMembershipId: fixture.member.id,
+        date: new Date('2026-12-14'),
+        type: 'workout',
+        planDayId: day.id,
+      },
+    });
+    const prisma = db as PrismaService;
+    await syncClientRoutineWeeks(prisma, fixture.client.id, fixture.context.subject);
+    const full = await db.clientRoutine.findUniqueOrThrow({ where: { id: routine.id }, include: { weeks: true } });
+    const week = full.weeks[0]!;
+    const warmup = await db.warmupTemplate.create({
+      data: { name: 'QA warm-up', organizationId: fixture.client.organizationId, scope: 'COACH' },
+    });
+    try {
+      await setDayWarmups(prisma, full, week, 1, [warmup.id]);
+      const copyDay = await db.planDay.findFirstOrThrow({
+        where: { dayIndex: 1, templateId: week.templateId },
+        include: { warmups: true },
+      });
+      expect(copyDay.warmups.map((item) => item.warmupTemplateId)).toEqual([warmup.id]);
+      await setDayWarmups(prisma, full, week, 1, []);
+      expect(await db.planDayWarmup.count({ where: { planDayId: copyDay.id } })).toBe(0);
+    } finally {
+      await db.planDayWarmup.deleteMany({ where: { warmupTemplateId: warmup.id } });
+      await db.warmupTemplate.delete({ where: { id: warmup.id } });
+    }
+  });
+
+  it('applies duration and distance rules to the cardio sets of a future week', async () => {
+    const { day, routine } = await setup();
+    await db.planCardioBlock.create({
+      data: {
+        dayId: day.id,
+        displayName: 'Run',
+        workSeconds: 600,
+        sets: { create: { setIndex: 0, durationSeconds: 600, distanceMeters: 2000 } },
+      },
+    });
+    const copy = await db.clientRoutine.findUniqueOrThrow({ where: { id: routine.id } });
+    await db.planCardioBlock.create({
+      data: {
+        dayId: (await db.planDay.findFirstOrThrow({ where: { dayIndex: 1, templateId: copy.baseTemplateId } })).id,
+        displayName: 'Run',
+        workSeconds: 600,
+        sets: { create: { setIndex: 0, durationSeconds: 600, distanceMeters: 2000 } },
+      },
+    });
+    await db.calendarEvent.create({
+      data: {
+        clientId: fixture.client.id,
+        coachMembershipId: fixture.member.id,
+        date: new Date('2026-12-14'),
+        type: 'workout',
+        planDayId: day.id,
+      },
+    });
+    const prisma = db as PrismaService;
+    await syncClientRoutineWeeks(prisma, fixture.client.id, fixture.context.subject);
+    const full = await db.clientRoutine.findUniqueOrThrow({ where: { id: routine.id }, include: { weeks: true } });
+    const week = full.weeks[0]!;
+    const result = await applyProgression(prisma, full, {
+      cascade: false,
+      dayIndexes: [],
+      rules: [
+        { mode: 'delta', value: 120, variable: 'durationSeconds' },
+        { mode: 'percent', value: 10, variable: 'distanceMeters' },
+      ],
+      weekIds: [week.id],
+    });
+    expect(result.changedSets).toBeGreaterThanOrEqual(1);
+    const set = await db.planCardioSet.findFirstOrThrow({
+      where: { block: { day: { dayIndex: 1, templateId: week.templateId } } },
+    });
+    expect(set.durationSeconds).toBe(720);
+    expect(set.distanceMeters).toBe(2200);
   });
 });

@@ -26,6 +26,8 @@ const OPTION = 'option' as const;
 /** The browser paints a native <select> popup with its own colors, which hides the labels on dark pages. */
 function WebSelect(props: SelectProps & { border: string; focused: boolean; onFocus: () => void }): React.JSX.Element {
   const [open, setOpen] = useState(false);
+  const [listTop, setListTop] = useState(0);
+  const anchor = React.useRef<HTMLButtonElement>(null);
   const label = findSelectLabel(props.options, props.value, props.placeholder);
   return (
     <div style={{ position: 'relative', width: '100%' }}>
@@ -35,7 +37,11 @@ function WebSelect(props: SelectProps & { border: string; focused: boolean; onFo
         aria-label={props.label ?? props.placeholder}
         disabled={props.disabled}
         onBlur={() => setOpen(false)}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          setListTop((anchor.current?.offsetHeight ?? 40) + 4);
+          setOpen((current) => !current);
+        }}
+        ref={anchor}
         onFocus={() => props.onFocus()}
         style={{ ...webButtonStyle, borderColor: props.border }}
         type="button"
@@ -44,7 +50,7 @@ function WebSelect(props: SelectProps & { border: string; focused: boolean; onFo
         <span aria-hidden>{open ? '▴' : '▾'}</span>
       </button>
       {open ? (
-        <div role={LISTBOX} style={webListStyle}>
+        <div role={LISTBOX} style={{ ...webListStyle, top: listTop }}>
           {props.options.map((option) => (
             <div
               aria-selected={option.value === props.value}

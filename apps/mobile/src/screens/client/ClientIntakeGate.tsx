@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { Button, TextField } from '@trainerpro/ui';
+import { Button, TextField, colors, fontSize } from '@trainerpro/ui';
 import { createApiClient } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -76,6 +76,7 @@ function ParqStep(props: {
   return (
     <View style={{ gap: 8 }}>
       <Text>{props.t('mobile.client.intake.parq')}</Text>
+      <Text style={hint}>{props.t('mobile.client.intake.parqHint')}</Text>
       <Button
         label={props.t('mobile.client.intake.yes')}
         onPress={() => props.setParqYes(true)}
@@ -89,3 +90,5 @@ function ParqStep(props: {
     </View>
   );
 }
+
+const hint = { color: colors.textMuted, fontSize: fontSize.sm, lineHeight: 20 };

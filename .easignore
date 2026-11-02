@@ -3,6 +3,11 @@
 # default even when gitignored, which would bake localhost dev URLs into builds).
 
 node_modules
+.pnpm-store
+.cursor
+.playwright-cli
+capturas-candados
+output
 logs
 .worktrees
 docs
@@ -32,8 +37,10 @@ coverage/
 apps/api/prisma/.tmp-seed/
 prisma/_tmp*
 
-# Local app state
+# Local app state. android/ and ios/ are generated on the build server.
 apps/mobile/.expo/
+apps/mobile/android/
+apps/mobile/ios/
 
 # Supabase local temp state
 supabase/.temp/

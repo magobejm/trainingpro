@@ -7,6 +7,7 @@ type Session = {
   beginSave: () => void;
   endSave: () => void;
   rememberCreated: (created: Created, clientSaveId: string) => void;
+  rememberVersion: (version: number) => void;
   reportConflict: (version: number | null) => void;
   resolveTarget: (editingId: string | null) => SaveTarget;
 };
@@ -34,6 +35,7 @@ export async function saveTemplate<T extends Created>(
   try {
     const saved = await send(fields);
     if (target.kind === 'create') session.rememberCreated(saved, target.clientSaveId);
+    else if (typeof saved.templateVersion === 'number') session.rememberVersion(saved.templateVersion);
     return saved;
   } catch (error) {
     if (error instanceof ApiClientError && error.status === 409) {

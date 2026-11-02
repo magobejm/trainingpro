@@ -15,6 +15,7 @@ type SaveSession = {
   endSave: () => void;
   release: (nextClean?: DraftState) => void;
   rememberCreated: (created: { id: string; templateVersion?: number }, clientSaveId: string) => void;
+  rememberVersion: (version: number) => void;
   reportConflict: (version: number | null) => void;
   resolveTarget: (editingId: string | null) => SaveTarget;
 };

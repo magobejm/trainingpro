@@ -1,5 +1,9 @@
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
-import { applyRoutineHandoff, handoffTransaction } from '../../../calendar/infra/prisma/routine-handoff.prisma';
+import {
+  applyRoutineHandoff,
+  handoffTransaction,
+  handoffTransactionOptions,
+} from '../../../calendar/infra/prisma/routine-handoff.prisma';
 import {
   attachRevisionInstructions,
   captureLegacyAssignments,
@@ -487,7 +491,9 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
       await recordCoachMeasurement(tx, client.id, input);
       return updated;
     };
-    const updated = input.routineHandoff ? await handoffTransaction(this.prisma, run) : await this.prisma.$transaction(run);
+    const updated = input.routineHandoff
+      ? await handoffTransaction(this.prisma, run)
+      : await this.prisma.$transaction(run, handoffTransactionOptions);
     return mapClient(updated);
   }
 

@@ -91,6 +91,10 @@ function useDraftStorage<T>(storageKey: string, value: T, onRestore: (value: T) 
       metaRef.current = { ...metaRef.current, ...rememberCreatedTemplate(created, clientSaveId) };
       bump();
     },
+    rememberVersion: (version: number) => {
+      metaRef.current.expectedTemplateVersion = version;
+      bump();
+    },
     recoverValue,
     savedTick,
     release: (nextClean?: T) => {

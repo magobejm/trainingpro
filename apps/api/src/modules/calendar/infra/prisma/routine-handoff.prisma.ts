@@ -149,6 +149,9 @@ export async function archivePreviewWorkouts(
   });
 }
 
+/** Cloning a library routine into the client copy exceeds Prisma's 5s default. */
+export const handoffTransactionOptions = { maxWait: 10_000, timeout: 30_000 } as const;
+
 export async function handoffTransaction<T>(
   prisma: PrismaService,
   run: (tx: Prisma.TransactionClient) => Promise<T>,
@@ -157,6 +160,7 @@ export async function handoffTransaction<T>(
   for (let attempt = 0; ; attempt++) {
     try {
       return await prisma.$transaction(run, {
+        ...handoffTransactionOptions,
         // Read fresh committed state after any row-lock wait. A fixed serializable snapshot
         // could miss sessions inserted between the initial permission read and locking.
         isolationLevel: snapshotOnly

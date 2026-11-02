@@ -603,6 +603,7 @@
   "coach.clientProfile.sections.actions.archive": "Archivar apartado",
   "coach.clientProfile.sections.actions.restore": "Restaurar",
   "coach.clientProfile.sections.actions.unassignTraining": "Quitar rutina",
+  "coach.clientProfile.sections.actions.unassignNutrition": "Quitar plan de nutrición",
   "coach.clientProfile.kpis.lastSession.title": "Última sesión",
   "coach.clientProfile.kpis.lastSession.mockValue": "Ayer, 18:30",
   "coach.clientProfile.kpis.streak.title": "Días seguidos",

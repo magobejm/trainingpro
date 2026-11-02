@@ -258,6 +258,18 @@ export class NutritionRepository extends LibraryBaseRepository {
     });
   }
 
+  async unassignClientPlans(context: AuthContext, clientId: string): Promise<void> {
+    const membership = await this.resolveCoachMembership(context);
+    await this.assertCoachClient(membership.id, clientId);
+    await this.prisma.nutritionPlan.updateMany({
+      data: {
+        ...buildUpdateAuditFields(context),
+        archivedAt: new Date(),
+      },
+      where: { archivedAt: null, clientId, coachMembershipId: membership.id },
+    });
+  }
+
   async assignPlan(context: AuthContext, planId: string, clientId: string): Promise<PlanRow> {
     const membership = await this.resolveCoachMembership(context);
     const source = await this.assertPlanOwned(planId, membership.id);

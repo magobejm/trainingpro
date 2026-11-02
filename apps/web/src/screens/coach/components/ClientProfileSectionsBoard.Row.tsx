@@ -14,6 +14,7 @@ type Props = {
   chatUnread?: boolean;
   clientId: string;
   hasTrainingPlan: boolean;
+  hasNutritionPlan: boolean;
   incidentCount?: number;
   incidentSubtitle?: string;
   item: SectionItem;
@@ -34,6 +35,7 @@ type Props = {
   onOpenTrainingPlanner: () => void;
   onOpenVolume?: () => void;
   onToggleMenu: () => void;
+  onUnassignNutritionPlan: () => void;
   onUnassignTrainingPlan: () => void;
   placeMenuUp: boolean;
   rowIndex: number;
@@ -75,8 +77,10 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
       />
       {props.showMenu ? (
         <RowMenu
+          hasNutritionPlan={props.hasNutritionPlan}
           hasTrainingPlan={props.hasTrainingPlan}
           onArchive={props.onArchive}
+          onUnassignNutritionPlan={props.onUnassignNutritionPlan}
           onUnassignTrainingPlan={props.onUnassignTrainingPlan}
           placeMenuUp={props.placeMenuUp}
           sectionId={props.item.id}
@@ -166,8 +170,10 @@ function RowMain(props: {
 }
 
 function RowMenu(props: {
+  hasNutritionPlan: boolean;
   hasTrainingPlan: boolean;
   onArchive: () => void;
+  onUnassignNutritionPlan: () => void;
   onUnassignTrainingPlan: () => void;
   placeMenuUp: boolean;
   sectionId: SectionId;
@@ -179,6 +185,11 @@ function RowMenu(props: {
       {props.sectionId === 'training' && props.hasTrainingPlan ? (
         <Pressable onPress={props.onUnassignTrainingPlan} style={styles.menuAction}>
           <Text style={styles.menuActionLabel}>{props.t('coach.clientProfile.sections.actions.unassignTraining')}</Text>
+        </Pressable>
+      ) : null}
+      {props.sectionId === 'nutrition' && props.hasNutritionPlan ? (
+        <Pressable onPress={props.onUnassignNutritionPlan} style={styles.menuAction}>
+          <Text style={styles.menuActionLabel}>{props.t('coach.clientProfile.sections.actions.unassignNutrition')}</Text>
         </Pressable>
       ) : null}
       <Pressable onPress={props.onArchive} style={styles.menuAction}>

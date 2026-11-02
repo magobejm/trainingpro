@@ -19,12 +19,13 @@ import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.H
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 import { ClientTimelineDrawer } from './ClientTimelineDrawer';
 import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
-import { useClientNutritionPlansQuery } from '../../../data/hooks/useNutrition';
+import { useClientNutritionPlansQuery, useUnassignNutritionPlansMutation } from '../../../data/hooks/useNutrition';
 import { readSetupData } from '../nutrition/nutrition-tdee.utils';
 import type { NutritionPlan } from '../nutrition/nutrition.types';
 import { useClientPhysicalTestsQuery, type ClientPhysicalTestAssignmentView } from '../../../data/hooks/usePhysicalTests';
 import { useCoachTriage } from '../../../data/hooks/useCoachTriage';
 import { useIncidentsQuery, type IncidentView } from '../../../data/hooks/useIncidents';
+import { useMutationFeedback } from '../../../data/hooks/useFeedbackMutation';
 import { buildDefaultWellnessRange } from '../client-mood.helpers';
 
 type Props = {
@@ -81,6 +82,8 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
   const testsSubtitle = resolveNextTestSubtitle(vm.assignments, props.t);
   const nutritionPlans = useClientNutritionPlansQuery(props.clientId).data;
   const nutritionSubtitle = resolveNutritionSubtitle(nutritionPlans, props.t);
+  const unassignNutrition = useUnassignNutritionPlansMutation(props.clientId);
+  useMutationFeedback(unassignNutrition);
   const { i18n } = useTranslation();
   const unreadChat = useCoachTriage().query.data?.chat.find((row) => row.clientId === props.clientId);
   const chatSubtitle = unreadChatSince(unreadChat?.since, i18n.language, props.t);
@@ -110,6 +113,11 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
             moodSubtitle,
             testsSubtitle,
             nutritionSubtitle,
+            Boolean(nutritionPlans?.length),
+            () => {
+              vm.onToggleMenu('nutrition');
+              unassignNutrition.mutate();
+            },
           ),
         )}
       </View>
@@ -188,6 +196,8 @@ function renderRow(
   moodSubtitle?: string,
   testsSubtitle?: string,
   nutritionSubtitle?: string,
+  hasNutritionPlan = false,
+  onUnassignNutrition = () => undefined,
 ): React.JSX.Element {
   return (
     <ClientProfileSectionRow
@@ -196,6 +206,7 @@ function renderRow(
       chatUnread={chatUnread}
       incidentCount={incidentCount}
       incidentSubtitle={incidentSubtitle}
+      hasNutritionPlan={hasNutritionPlan}
       hasTrainingPlan={props.hasTrainingPlan}
       item={item}
       moodSubtitle={moodSubtitle}
@@ -216,6 +227,7 @@ function renderRow(
       onOpenTimeline={vm.onOpenTimeline}
       onOpenTrainingPlanner={props.onOpenTrainingPlanner}
       onToggleMenu={() => vm.onToggleMenu(item.id)}
+      onUnassignNutritionPlan={onUnassignNutrition}
       onUnassignTrainingPlan={props.onUnassignTrainingPlan}
       placeMenuUp={index >= total - 2}
       rowIndex={index}

@@ -89,6 +89,12 @@ export class NutritionController {
     return { items };
   }
 
+  @Delete('clients/:clientId/plans')
+  async unassignClientPlans(@Param() params: ClientIdParamDto, @Req() request: HttpAuthRequest) {
+    await this.nutritionService.unassignClientPlans(readAuthContext(request), params.clientId);
+    return { status: 'ok' };
+  }
+
   @Get('clients/:clientId/adherence')
   async adherence(@Param() params: ClientIdParamDto, @Query() query: MealLogRangeDto, @Req() request: HttpAuthRequest) {
     return this.logs.adherence(readAuthContext(request), params.clientId, query.from, query.to);

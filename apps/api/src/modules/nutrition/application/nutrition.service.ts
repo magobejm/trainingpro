@@ -97,6 +97,10 @@ export class NutritionService {
     await this.repository.deletePlan(context, planId);
   }
 
+  async unassignClientPlans(context: AuthContext, clientId: string): Promise<void> {
+    await this.repository.unassignClientPlans(context, clientId);
+  }
+
   async assignPlan(context: AuthContext, planId: string, clientId: string): Promise<PlanOutput> {
     const row = await this.repository.assignPlan(context, planId, clientId);
     return mapPlan(row);

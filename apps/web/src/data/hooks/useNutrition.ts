@@ -114,6 +114,18 @@ export function useAssignPlanMutation() {
   });
 }
 
+export function useUnassignNutritionPlansMutation(clientId: string) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => createApiClient(auth!).delete(`/nutrition/clients/${clientId}/plans`),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['nutrition'] });
+      void queryClient.invalidateQueries({ queryKey: ['nutrition', 'client-plans', clientId] });
+    },
+  });
+}
+
 export function useClientNutritionPlansQuery(clientId: string): UseQueryResult<NutritionPlan[], Error> {
   const auth = useAuth();
   return useQuery({

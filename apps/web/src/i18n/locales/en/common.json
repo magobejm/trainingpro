@@ -599,6 +599,7 @@
   "coach.clientProfile.sections.actions.archive": "Archive section",
   "coach.clientProfile.sections.actions.restore": "Restore",
   "coach.clientProfile.sections.actions.unassignTraining": "Remove routine",
+  "coach.clientProfile.sections.actions.unassignNutrition": "Remove nutrition plan",
   "coach.clientProfile.kpis.lastSession.title": "Last session",
   "coach.clientProfile.kpis.lastSession.mockValue": "Yesterday, 6:30 PM",
   "coach.clientProfile.kpis.streak.title": "Consecutive days",

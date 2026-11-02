@@ -182,8 +182,8 @@ function AssignedPlanCard(props: {
           clientName={props.clientName}
           disabled={props.mealsLoading}
         />
-        <Button label={t('coach.nutrition.checkpoints.open')} onPress={props.onCheckpoints} size="sm" variant="secondary" />
-        <Button label={t('coach.nutrition.client.changePlan')} onPress={props.onChange} size="sm" variant="secondary" />
+        <Button label={t('coach.nutrition.checkpoints.open')} onPress={props.onCheckpoints} variant="secondary" />
+        <Button label={t('coach.nutrition.client.changePlan')} onPress={props.onChange} variant="secondary" />
       </View>
     </View>
   );

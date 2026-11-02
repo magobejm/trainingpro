@@ -34,7 +34,6 @@ export function PdfDownloadButton(props: {
         disabled={props.disabled || busy}
         onPress={() => void download()}
         variant="secondary"
-        size="sm"
       />
       {failed ? (
         <Text accessibilityRole="alert" style={{ color: colors.danger, fontSize: fontSize.sm }}>

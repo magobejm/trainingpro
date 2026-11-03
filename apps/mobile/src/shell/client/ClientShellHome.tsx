@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar';
 import { useClientMeQuery, resolveDisplayName } from '../../data/hooks/useClientMeQuery';
@@ -54,7 +54,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
   const routineSubtitle = focusLabel;
 
   return (
-    <View style={s.homeScroll}>
+    <ScrollView contentContainerStyle={s.homeScrollContent} style={s.homeScroll}>
       <View style={s.homeHeader}>
         <Pressable onPress={props.onOpenProfile} style={s.profileCard}>
           <View style={s.profileCardRow}>
@@ -111,6 +111,6 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
           title={t('mobile.client.home.mood')}
         />
       </View>
-    </View>
+    </ScrollView>
   );
 }

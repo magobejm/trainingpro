@@ -184,9 +184,10 @@ export const s = StyleSheet.create({
   },
   heroStatusRow: { alignItems: 'center', flexDirection: 'row', gap: 6, marginTop: 4 },
   heroStatusText: { color: LIGHT.success, fontSize: 12, fontWeight: '600' },
-  homeContent: { flex: 1, gap: 16, paddingBottom: 100, paddingHorizontal: 24, paddingTop: 8 },
+  homeContent: { gap: 16, paddingBottom: 100, paddingHorizontal: 24, paddingTop: 8 },
   homeHeader: { flexDirection: 'row', gap: 16, paddingHorizontal: 24, paddingTop: 32 },
   homeScroll: { flex: 1 },
+  homeScrollContent: { flexGrow: 1 },
   levelLabel: {
     color: LIGHT.accentMuted,
     fontSize: 10,

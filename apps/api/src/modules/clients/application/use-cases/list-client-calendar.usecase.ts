@@ -3,6 +3,7 @@ import { resolveWorkoutResults, type SessionOutcome } from '@trainerpro/shared';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { workoutEventFields } from '../../../calendar/domain/completed-workout';
+import { withoutEarlyCompletedDuplicate } from '../../../calendar/domain/early-completed-workout';
 import { closeStaleSessions } from '../../../sessions/infra/prisma/session-stale';
 import { PhysicalTestsRepository } from '../../../physical-tests/infra/prisma/physical-tests.repository';
 
@@ -71,7 +72,7 @@ export class ListClientCalendarUseCase {
       dateTo: input.dateTo,
     });
     return {
-      data: [
+      data: withoutEarlyCompletedDuplicate([
         ...tests.map((test) => ({
           color: null,
           content: null,
@@ -106,7 +107,7 @@ export class ListClientCalendarUseCase {
         }),
         ...notes,
         ...pending,
-      ],
+      ]),
     };
   }
 

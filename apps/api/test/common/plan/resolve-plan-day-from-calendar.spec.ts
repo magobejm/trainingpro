@@ -23,6 +23,12 @@ describe('resolve-plan-day-from-calendar', () => {
     expect(resolvePlanDayIdFromCalendarEvent({ planDayId: 'day-2', title: 'Día 1' }, planDays)).toBe('day-2');
   });
 
+  it('matches a stale calendar plan day by the current title', () => {
+    expect(
+      resolvePlanDayIdFromCalendarEvent({ linkedPlanDay: { title: 'Pata' }, planDayId: 'old-day', title: null }, planDays),
+    ).toBe('day-1');
+  });
+
   it('finds the full plan day reference', () => {
     expect(findPlanDayFromCalendarEvent({ planDayId: null, title: 'Día 1' }, planDays)?.title).toBe('Pata');
   });

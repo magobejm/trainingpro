@@ -5,6 +5,7 @@ export type PlanDayRef = {
 };
 
 export type CalendarEventRef = {
+  linkedPlanDay?: { title: string | null } | null;
   planDayId: string | null;
   title: string | null;
 };
@@ -22,6 +23,12 @@ export function resolvePlanDayIdFromCalendarEvent(event: CalendarEventRef, planD
   if (event.planDayId) {
     const byId = planDays.find((day) => day.id === event.planDayId);
     if (byId) return byId.id;
+  }
+
+  const linkedTitle = event.linkedPlanDay?.title?.trim();
+  if (linkedTitle) {
+    const linked = planDays.find((day) => day.title === linkedTitle);
+    if (linked) return linked.id;
   }
 
   const title = event.title?.trim();

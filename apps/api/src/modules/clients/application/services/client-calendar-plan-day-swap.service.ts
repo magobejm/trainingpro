@@ -25,6 +25,7 @@ type CalendarWorkoutEvent = {
   date: Date;
   id: string;
   originDate: Date | null;
+  planDay?: { title: string | null } | null;
   planDayId: string | null;
   title: string | null;
 };
@@ -56,7 +57,10 @@ export class ClientCalendarPlanDaySwapService {
   }
 
   resolveEventPlanDayId(event: CalendarWorkoutEvent, planDays: PlanDayRef[]): string | null {
-    return resolvePlanDayIdFromCalendarEvent(event, planDays);
+    return resolvePlanDayIdFromCalendarEvent(
+      { linkedPlanDay: event.planDay, planDayId: event.planDayId, title: event.title },
+      planDays,
+    );
   }
 
   private async place(input: ClientCalendarPlanDaySwapInput): Promise<PlacementContext> {
@@ -144,7 +148,7 @@ export class ClientCalendarPlanDaySwapService {
         type: 'workout',
       },
       orderBy: [{ date: 'asc' }, { createdAt: 'asc' }],
-      select: { date: true, id: true, originDate: true, planDayId: true, title: true },
+      select: { date: true, id: true, originDate: true, planDay: { select: { title: true } }, planDayId: true, title: true },
     });
   }
 

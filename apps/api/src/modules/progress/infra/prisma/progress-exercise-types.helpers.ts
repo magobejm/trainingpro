@@ -470,25 +470,49 @@ export async function readPerformedIds(
   ];
 }
 
+const mediaSelect = { id: true, name: true, mediaUrl: true, mediaType: true } as const;
+
+function listedExercise(
+  row: { id: string; name: string; mediaUrl: string | null; mediaType: string | null },
+  muscleGroup: string | null = null,
+) {
+  const isVideo = row.mediaType !== null && /video/i.test(row.mediaType);
+  return {
+    id: row.id,
+    name: row.name,
+    mediaUrl: row.mediaUrl && !isVideo ? row.mediaUrl : null,
+    muscleGroup,
+    sessionCount: 0,
+    maxWeightKg: null,
+    recordE1rm: null,
+  };
+}
+
 export async function fetchPerformedExerciseNames(
   prisma: PrismaService,
   [sIds, cIds, pIds, mIds, iIds, spIds]: [string[], string[], string[], string[], string[], string[]],
 ): Promise<PerformedExercisesResult> {
-  const idSelect = { id: true, name: true } as const;
   const [exercises, cardioMethods, plioExercises, mobilityExercises, isometricExercises, sports] = await Promise.all([
-    sIds.length > 0 ? prisma.exercise.findMany({ where: { id: { in: sIds } }, select: idSelect }) : [],
-    cIds.length > 0 ? prisma.cardioMethod.findMany({ where: { id: { in: cIds } }, select: idSelect }) : [],
-    pIds.length > 0 ? prisma.plioExercise.findMany({ where: { id: { in: pIds } }, select: idSelect }) : [],
-    mIds.length > 0 ? prisma.mobilityExercise.findMany({ where: { id: { in: mIds } }, select: idSelect }) : [],
-    iIds.length > 0 ? prisma.isometricExercise.findMany({ where: { id: { in: iIds } }, select: idSelect }) : [],
-    spIds.length > 0 ? prisma.sport.findMany({ where: { id: { in: spIds } }, select: idSelect }) : [],
+    sIds.length > 0
+      ? prisma.exercise.findMany({
+          where: { id: { in: sIds } },
+          select: { ...mediaSelect, muscleGroups: { select: { muscleGroup: { select: { label: true } } }, take: 1 } },
+        })
+      : [],
+    cIds.length > 0 ? prisma.cardioMethod.findMany({ where: { id: { in: cIds } }, select: mediaSelect }) : [],
+    pIds.length > 0 ? prisma.plioExercise.findMany({ where: { id: { in: pIds } }, select: mediaSelect }) : [],
+    mIds.length > 0 ? prisma.mobilityExercise.findMany({ where: { id: { in: mIds } }, select: mediaSelect }) : [],
+    iIds.length > 0 ? prisma.isometricExercise.findMany({ where: { id: { in: iIds } }, select: mediaSelect }) : [],
+    spIds.length > 0
+      ? prisma.sport.findMany({ where: { id: { in: spIds } }, select: { id: true, name: true, mediaUrl: true } })
+      : [],
   ]);
   return {
-    strength: exercises.map((e) => ({ id: e.id, name: e.name })),
-    cardio: cardioMethods.map((e) => ({ id: e.id, name: e.name })),
-    plio: plioExercises.map((e) => ({ id: e.id, name: e.name })),
-    mobility: mobilityExercises.map((e) => ({ id: e.id, name: e.name })),
-    isometric: isometricExercises.map((e) => ({ id: e.id, name: e.name })),
-    sport: sports.map((e) => ({ id: e.id, name: e.name })),
+    strength: exercises.map((e) => listedExercise(e, e.muscleGroups[0]?.muscleGroup.label ?? null)),
+    cardio: cardioMethods.map((e) => listedExercise(e)),
+    plio: plioExercises.map((e) => listedExercise(e)),
+    mobility: mobilityExercises.map((e) => listedExercise(e)),
+    isometric: isometricExercises.map((e) => listedExercise(e)),
+    sport: sports.map((e) => listedExercise({ ...e, mediaType: null })),
   };
 }

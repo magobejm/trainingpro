@@ -16,6 +16,7 @@ import { NutritionPlanScreen } from '../../screens/client/NutritionPlanScreen';
 import { ShoppingListScreen } from '../../screens/client/ShoppingListScreen';
 import { PhysicalTestsScreen } from '../../screens/client/PhysicalTestsScreen';
 import { ProgressScreen } from '../../screens/client/ProgressScreen';
+import { ClientProgressScreen } from '../../screens/client/progress/ClientProgressScreen';
 import { TodaySessionScreen } from '../../screens/client/TodaySessionScreen';
 import { RoutineScreen } from '../../screens/client/RoutineScreen';
 import { ScheduledTestScreen } from '../../screens/client/ScheduledTestScreen';
@@ -334,7 +335,11 @@ function ClientShellBody(): React.JSX.Element {
       )}
       {st.overlay === 'progress' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <ProgressScreen mode={st.progressMode} onClose={st.closeOverlay} />
+          {st.progressMode === 'volume' ? (
+            <ProgressScreen mode={st.progressMode} onClose={st.closeOverlay} />
+          ) : (
+            <ClientProgressScreen onClose={st.closeOverlay} />
+          )}
         </Animated.View>
       )}
       {st.overlay === 'measures' && (

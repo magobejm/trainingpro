@@ -8,6 +8,11 @@ import type { MetricCoverage } from '@trainerpro/shared';
 export type PerformedExerciseItem = {
   id: string;
   name: string;
+  mediaUrl: string | null;
+  muscleGroup: string | null;
+  sessionCount: number;
+  maxWeightKg: number | null;
+  recordE1rm: number | null;
 };
 
 export type PerformedExercisesResult = {

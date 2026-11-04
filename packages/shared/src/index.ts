@@ -260,3 +260,6 @@ export {
 } from './progression/apply-progression';
 export * from './client-routine-progression';
 export * from './client-feedback';
+export * from './progress-dashboard/dashboard-model';
+export * from './progress-dashboard/dashboard-metrics';
+export { progressDashboardEn, progressDashboardEs } from './progress-dashboard/dashboard-locale';

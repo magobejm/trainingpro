@@ -59,6 +59,7 @@ import {
   readSportProgress,
   type HeartProfile,
 } from './progress-exercise-types.helpers';
+import { withPerformedHighlights } from './performed-exercise-highlights.prisma';
 
 @Injectable()
 export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
@@ -249,7 +250,8 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
       sessionDate: { gte: query.from, lte: query.to },
     };
     const ids = await readPerformedIds(this.prisma, sessionWhere);
-    return fetchPerformedExerciseNames(this.prisma, ids);
+    const names = await fetchPerformedExerciseNames(this.prisma, ids);
+    return withPerformedHighlights(this.prisma, clientId, query.from, query.to, names);
   }
 
   async readPerformedTemplates(context: AuthContext, query: PerformedTemplatesQuery): Promise<PerformedTemplatesResult> {

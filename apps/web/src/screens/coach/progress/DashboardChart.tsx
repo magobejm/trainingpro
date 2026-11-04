@@ -3,58 +3,28 @@ import { Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { Button, colors, fontSize } from '@trainerpro/ui';
-import type { ProgressExerciseType, ProgressDailyPoint } from '@trainerpro/shared';
+import {
+  exerciseMetricDefs,
+  routineMetricDefs,
+  type DashboardMetricDef,
+  type ProgressDailyPoint,
+  type ProgressExerciseType,
+} from '@trainerpro/shared';
 import { dashboardStyles as styles } from './dashboard.styles';
 import { formatMetric, type DashboardPoint } from './dashboard-model';
 
 export type DashboardMetric = { key: string; unit: string; color: string; divisor?: number };
-const metric = (key: string, unit: string, color: string, divisor?: number): DashboardMetric => ({
-  key,
-  unit,
-  color,
-  divisor,
+const withColor = (def: DashboardMetricDef): DashboardMetric => ({
+  key: def.key,
+  unit: def.unit,
+  divisor: def.divisor,
+  color: colors[def.colorKey],
 });
-export const routineMetrics = [
-  metric('tonnage', 'kg', colors.chartPurple),
-  metric('avgRpe', '', colors.danger),
-  metric('trainingLoad', 'u.a.', colors.primary),
-];
-const sets = metric('sets', '', colors.success);
-const reps = metric('totalReps', '', colors.info);
-const rpe = routineMetrics[1]!;
-const time = metric('totalDurationSeconds', 'min', colors.primary, 60);
-const cardio = [
-  sets,
-  time,
-  metric('avgHeartRate', 'ppm', colors.chartPink),
-  rpe,
-  metric('avgPaceMinKm', 'min/km', colors.chartTeal),
-  metric('fcReservePercent', '%', colors.warning),
-];
-const strength = [
-  sets,
-  reps,
-  routineMetrics[0]!,
-  rpe,
-  metric('inol', '', colors.warning),
-  metric('e1rm', 'kg', colors.primary),
-];
+export const routineMetrics = routineMetricDefs.map(withColor);
 
 export function exerciseMetrics(type: ProgressExerciseType, points: ProgressDailyPoint[]): DashboardMetric[] {
-  if (type === 'strength') return strength;
-  if (type === 'cardio') return cardio;
-  if (type === 'plio') return [sets, reps, routineMetrics[0]!, rpe];
-  if (type === 'isometric') return [sets, { ...time, unit: 's', divisor: 1 }, routineMetrics[0]!, rpe];
-  if (type === 'mobility') return [sets, reps, rpe];
-  const available = [
-    ...strength,
-    time,
-    ...cardio.filter((m) => !['sets', 'totalDurationSeconds', 'avgRpe'].includes(m.key)),
-    metric('distanceMeters', 'km', colors.info, 1000),
-  ];
-  return available.filter((m) => m.key === 'sets' || points.some((p) => p[m.key as keyof ProgressDailyPoint] != null));
+  return exerciseMetricDefs(type, points).map(withColor);
 }
-
 export function DashboardChart(props: {
   metric: DashboardMetric;
   points: DashboardPoint[];

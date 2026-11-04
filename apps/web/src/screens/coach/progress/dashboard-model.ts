@@ -7,6 +7,7 @@ export {
   inferRangePreset,
   mergeDailyResults,
   metricSummary,
+  metricTrend,
   selectedAdherence,
   sessionChartPoints,
   sessionsForDay,

@@ -125,6 +125,48 @@ export function metricSummary(points: Record<string, unknown>[], key: string) {
   return { average: total / values.length, max: Math.max(...values), min: Math.min(...values), total };
 }
 
+export type TrendDirection = 'up' | 'down' | 'flat';
+
+/** First-to-last change, plus the straight trend drawn through the recorded points. */
+export function metricTrend(values: Array<number | null>): {
+  current: number | null;
+  average: number | null;
+  percent: number;
+  direction: TrendDirection;
+  line: Array<number | null>;
+} {
+  const samples = values.flatMap((value, index) =>
+    typeof value === 'number' && Number.isFinite(value) ? [{ index, value }] : [],
+  );
+  const empty = values.map(() => null);
+  if (!samples.length) return { current: null, average: null, percent: 0, direction: 'flat', line: empty };
+  let sumX = 0;
+  let sumY = 0;
+  let sumXY = 0;
+  let sumX2 = 0;
+  for (const sample of samples) {
+    sumX += sample.index;
+    sumY += sample.value;
+    sumXY += sample.index * sample.value;
+    sumX2 += sample.index * sample.index;
+  }
+  const count = samples.length;
+  const denominator = count * sumX2 - sumX * sumX;
+  const slope = denominator !== 0 ? (count * sumXY - sumX * sumY) / denominator : 0;
+  const intercept = (sumY - slope * sumX) / count;
+  const first = samples[0]!.value;
+  const last = samples[count - 1]!.value;
+  const start = samples[0]!.index;
+  const end = samples[count - 1]!.index;
+  return {
+    current: last,
+    average: sumY / count,
+    percent: first !== 0 ? Math.round(((last - first) / first) * 100) : 0,
+    direction: slope > 0.01 ? 'up' : slope < -0.01 ? 'down' : 'flat',
+    line: values.map((_, index) => (index >= start && index <= end ? slope * index + intercept : null)),
+  };
+}
+
 export function defaultRange(days = 365): DateRange {
   const today = new Date();
   const to = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;

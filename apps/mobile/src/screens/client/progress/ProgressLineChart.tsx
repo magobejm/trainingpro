@@ -32,27 +32,43 @@ function fmt(value: number): string {
   return new Intl.NumberFormat('es-ES', { maximumFractionDigits: 1 }).format(value);
 }
 
+function polyline(
+  samples: Array<{ i: number; v: number }>,
+  x: (index: number) => number,
+  y: (value: number) => number,
+): string {
+  return samples.map((sample, index) => `${index === 0 ? 'M' : 'L'} ${x(sample.i)} ${y(sample.v)}`).join(' ');
+}
+
 export function ProgressLineChart(props: {
   data: ChartDatum[];
   metric: DashboardMetricDef;
   height?: number;
+  trend?: Array<number | null>;
+  showValues?: boolean;
 }): React.JSX.Element {
   const [width, setWidth] = useState(300);
   const height = props.height ?? 200;
+  const padTop = props.showValues ? 28 : PAD_TOP;
   const color = colors[props.metric.colorKey];
   const innerWidth = Math.max(width, PAD_LEFT + PAD_RIGHT + props.data.length * STEP);
-  const values = props.data.flatMap((d) => (d.value === null ? [] : [d.value]));
-  const max = values.length ? Math.max(...values) : 1;
-  const min = values.length ? Math.min(...values) : 0;
+  const recorded = [
+    ...props.data.flatMap((datum) => (datum.value === null ? [] : [datum.value])),
+    ...(props.trend ?? []).flatMap((value) => (value === null ? [] : [value])),
+  ];
+  const max = recorded.length ? Math.max(...recorded) : 1;
+  const min = recorded.length ? Math.min(...recorded) : 0;
   const low = Math.min(0, min);
   const span = max - low || 1;
   const plotW = innerWidth - PAD_LEFT - PAD_RIGHT;
-  const plotH = height - PAD_TOP - PAD_BOTTOM;
+  const plotH = height - padTop - PAD_BOTTOM;
   const x = (i: number) => PAD_LEFT + (props.data.length > 1 ? (i / (props.data.length - 1)) * plotW : plotW / 2);
-  const y = (v: number) => PAD_TOP + plotH - ((v - low) / span) * plotH;
-  const present = props.data.flatMap((d, i) => (d.value === null ? [] : [{ i, v: d.value }]));
-  const line = present.map((p, k) => `${k === 0 ? 'M' : 'L'} ${x(p.i)} ${y(p.v)}`).join(' ');
-  const base = PAD_TOP + plotH;
+  const y = (v: number) => padTop + plotH - ((v - low) / span) * plotH;
+  const present = props.data.flatMap((datum, index) => (datum.value === null ? [] : [{ i: index, v: datum.value }]));
+  const trend = (props.trend ?? []).flatMap((value, index) => (value === null ? [] : [{ i: index, v: value }]));
+  const line = polyline(present, x, y);
+  const trendLine = polyline(trend, x, y);
+  const base = padTop + plotH;
   const area =
     present.length > 1 ? `${line} L ${x(present[present.length - 1]!.i)} ${base} L ${x(present[0]!.i)} ${base} Z` : '';
   const grid = [max, (max + low) / 2, low];
@@ -83,12 +99,30 @@ export function ProgressLineChart(props: {
             </React.Fragment>
           ))}
           {area ? <Path d={area} fill={`url(#${gradId})`} /> : null}
+          {trendLine ? (
+            <Path d={trendLine} fill="none" stroke="#f59e0b" strokeDasharray="4 3" strokeLinecap="round" strokeWidth={2.5} />
+          ) : null}
           {line ? (
             <Path d={line} fill="none" stroke={color} strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} />
           ) : null}
           {present.map((p) => (
             <Circle key={p.i} cx={x(p.i)} cy={y(p.v)} fill="#ffffff" r={3.5} stroke={color} strokeWidth={2} />
           ))}
+          {props.showValues
+            ? present.map((p) => (
+                <SvgText
+                  key={`v-${p.i}`}
+                  fill={LIGHT.textStrong}
+                  fontSize={9}
+                  fontWeight="800"
+                  textAnchor="middle"
+                  x={x(p.i)}
+                  y={y(p.v) - 8}
+                >
+                  {fmt(p.v)}
+                </SvgText>
+              ))
+            : null}
           {props.data.map((d, i) => (
             <SvgText key={i} fill={LIGHT.textMuted} fontSize={9} textAnchor="middle" x={x(i)} y={height - 8}>
               {d.axis.length > 10 ? d.axis.slice(5) : d.axis}

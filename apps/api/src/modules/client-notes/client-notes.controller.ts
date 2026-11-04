@@ -18,10 +18,12 @@ function check<T extends ZodTypeAny>(schema: T, value: unknown): z.infer<T> {
 }
 
 const category = z.enum(['EXERCISE', 'OTHER']);
+const label = z.enum(['REVIEW', 'OTHER']).default('OTHER');
 const createBody = z.object({
   category,
   exerciseLibraryId: z.string().uuid().nullable().optional(),
   exerciseName: z.string().trim().max(120).nullable().optional(),
+  label,
   sessionId: z.string().uuid().nullable().optional(),
   sessionItemId: z.string().uuid().nullable().optional(),
   text: z.string().trim().min(1).max(2000),

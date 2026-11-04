@@ -283,6 +283,7 @@ export class IncidentsRepositoryPrisma implements IncidentsRepositoryPort {
       coachAlertedAt,
       coachMembershipId: client.coachMembershipId,
       description: input.description,
+      label: input.label ?? 'OTHER',
       organizationId: client.organizationId,
       sessionId: input.sessionId ?? null,
       sessionItemId: input.sessionItemId ?? null,

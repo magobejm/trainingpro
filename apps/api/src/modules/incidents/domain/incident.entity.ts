@@ -15,6 +15,7 @@ export type IncidentView = {
   createdAt: Date;
   description: string;
   id: string;
+  label: 'OTHER' | 'REVIEW';
   reviewedAt: Date | null;
   sessionId: null | string;
   sessionItemId: null | string;

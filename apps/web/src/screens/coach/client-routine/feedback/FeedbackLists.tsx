@@ -47,6 +47,7 @@ export function FeedbackLists(props: {
           <Card
             badges={
               <>
+                <Badge label={t(`coach.clientFeedback.label.${incident.label ?? 'OTHER'}`)} />
                 <Badge label={t(`coach.clientFeedback.category.${incident.category}`)} />
                 <Badge label={t(`coach.clientFeedback.severity.${incident.severity}`)} />
                 <Badge label={t(`coach.clientFeedback.status.${incident.status}`)} />
@@ -66,7 +67,12 @@ export function FeedbackLists(props: {
       >
         {props.notes.map((note) => (
           <Card
-            badges={<Badge label={t(`coach.clientFeedback.category.${note.category}`)} />}
+            badges={
+              <>
+                <Badge label={t(`coach.clientFeedback.label.${note.label ?? 'OTHER'}`)} />
+                <Badge label={t(`coach.clientFeedback.category.${note.category}`)} />
+              </>
+            }
             date={note.createdAt}
             key={note.id}
             text={note.text}

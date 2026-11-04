@@ -2286,6 +2286,8 @@
   "coach.clientFeedback.emptyNotes": "No hay notas con estos filtros.",
   "coach.clientFeedback.olderOpen": "Ver anteriores a {{months}} meses ({{count}})",
   "coach.clientFeedback.olderTitle": "Anteriores a {{months}} meses",
+  "coach.clientFeedback.label.REVIEW": "Revisión",
+  "coach.clientFeedback.label.OTHER": "Otro",
   "coach.clientFeedback.category.EXERCISE": "Ejercicio",
   "coach.clientFeedback.category.OTHER": "Otros",
   "coach.clientFeedback.severity.LOW": "Baja",

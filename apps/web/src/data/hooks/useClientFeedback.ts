@@ -4,11 +4,14 @@ import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 import { decodeUserKey } from '../../theme/appearance.logic';
 
+export type FeedbackLabelKey = 'OTHER' | 'REVIEW';
+
 export type FeedbackIncident = {
   category: FeedbackCategoryKey;
   createdAt: string;
   description: string;
   id: string;
+  label?: FeedbackLabelKey;
   severity: 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';
   status: 'CLOSED' | 'OPEN' | 'REVIEWED';
   tag: null | string;
@@ -19,6 +22,7 @@ export type FeedbackNote = {
   createdAt: string;
   exerciseName: null | string;
   id: string;
+  label?: FeedbackLabelKey;
   text: string;
 };
 

@@ -10,6 +10,7 @@ export type ClientNoteView = {
   exerciseLibraryId: null | string;
   exerciseName: null | string;
   id: string;
+  label: 'OTHER' | 'REVIEW';
   sessionId: null | string;
   sessionItemId: null | string;
   text: string;
@@ -19,6 +20,7 @@ export type CreateClientNoteInput = {
   category: 'EXERCISE' | 'OTHER';
   exerciseLibraryId?: null | string;
   exerciseName?: null | string;
+  label?: 'OTHER' | 'REVIEW';
   sessionId?: null | string;
   sessionItemId?: null | string;
   text: string;
@@ -31,6 +33,7 @@ const SELECT = {
   exerciseLibraryId: true,
   exerciseName: true,
   id: true,
+  label: true,
   sessionId: true,
   sessionItemId: true,
   text: true,
@@ -57,6 +60,7 @@ export class ClientNotesService {
         createdBy: context.subject,
         exerciseLibraryId: input.exerciseLibraryId ?? null,
         exerciseName: input.exerciseName ?? null,
+        label: input.label ?? 'OTHER',
         organizationId: client.organizationId,
         sessionId: input.sessionId ?? null,
         sessionItemId: input.sessionItemId ?? null,

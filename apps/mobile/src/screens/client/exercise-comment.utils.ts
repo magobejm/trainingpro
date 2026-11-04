@@ -68,12 +68,13 @@ export function linkTo(props: ExerciseCommentProps) {
   return { sessionId: props.sessionId, sessionItemId: props.sessionItemId ?? null };
 }
 
-export function noteInput(props: ExerciseCommentProps, category: 'EXERCISE' | 'OTHER', text: string) {
+export function noteInput(props: ExerciseCommentProps, label: 'OTHER' | 'REVIEW', text: string) {
   return {
     ...linkTo(props),
-    category,
+    category: 'EXERCISE' as const,
     exerciseLibraryId: props.exerciseLibraryId ?? null,
     exerciseName: props.exerciseName,
+    label,
     text,
   };
 }

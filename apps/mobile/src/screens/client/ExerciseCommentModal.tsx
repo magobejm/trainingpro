@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useCreateClientNoteMutation, type FeedbackCategory } from '../../data/hooks/useClientNotes';
+import { useCreateClientNoteMutation } from '../../data/hooks/useClientNotes';
 import { useCreateIncidentMutation } from '../../data/hooks/useIncidents';
 import { showError, showToast } from '../../shell/client/feedback';
 import { ConfirmModal } from '../../theme/ConfirmModal';
@@ -10,7 +10,7 @@ import { useOptionalCoachNotice } from './MorningCheckinGate';
 import { useChatVideoUpload, type PickedChatVideo } from '../../features/chat/useChatVideoUpload';
 import { VideoAttachment } from '../../features/chat/VideoAttachment';
 import { commentNotice, incidentNotice, incidentSeverityForCategory, linkTo, noteInput } from './exercise-comment.utils';
-import { FeedbackCategoryPicker } from './FeedbackCategoryPicker';
+import { FeedbackLabelPicker, type FeedbackLabel } from './FeedbackLabelPicker';
 import { canSubmitFeedback } from './feedback-category.utils';
 import type { IncidentCategory } from './incident-notice.utils';
 
@@ -50,7 +50,7 @@ export function ExerciseCommentModal(props: ExerciseCommentModalProps): React.JS
           </View>
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             <Text style={styles.hint}>{t('mobile.client.comment.hint')}</Text>
-            <FeedbackCategoryPicker onChange={vm.setScope} value={vm.scope} />
+            <FeedbackLabelPicker onChange={vm.setNoteLabel} value={vm.noteLabel} />
             <TextInput
               multiline
               onChangeText={vm.setCommentText}
@@ -61,11 +61,11 @@ export function ExerciseCommentModal(props: ExerciseCommentModalProps): React.JS
             />
             <VideoAttachSection vm={vm} />
             <Pressable
-              disabled={!canSubmitFeedback(vm.scope, vm.commentText) || vm.isSubmitting}
+              disabled={!canSubmitFeedback(vm.commentText) || vm.isSubmitting}
               onPress={() => {
                 void vm.handleSaveComment();
               }}
-              style={[styles.saveCommentBtn, !canSubmitFeedback(vm.scope, vm.commentText) ? styles.btnDisabled : null]}
+              style={[styles.saveCommentBtn, !canSubmitFeedback(vm.commentText) ? styles.btnDisabled : null]}
             >
               <Text style={styles.saveCommentText}>{`✈  ${t('mobile.client.comment.save')}`}</Text>
             </Pressable>
@@ -85,9 +85,11 @@ export function ExerciseCommentModal(props: ExerciseCommentModalProps): React.JS
             {vm.showIncident ? (
               <IncidentRegisterCard
                 category={vm.category}
-                canSend={vm.scope !== null}
+                canSend
                 isSubmitting={vm.isSubmitting}
+                label={vm.incidentLabel}
                 text={vm.incidentText}
+                onChangeLabel={vm.setIncidentLabel}
                 onChangeText={vm.setIncidentText}
                 onSave={() => {
                   void vm.saveIncident(false);
@@ -135,7 +137,8 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
   const noteMutation = useCreateClientNoteMutation();
   const notifyCoach = useOptionalCoachNotice();
   const [commentText, setCommentText] = useState('');
-  const [scope, setScope] = useState<FeedbackCategory | null>(null);
+  const [noteLabel, setNoteLabel] = useState<FeedbackLabel>('OTHER');
+  const [incidentLabel, setIncidentLabel] = useState<FeedbackLabel>('OTHER');
   const [incidentText, setIncidentText] = useState('');
   const [showIncident, setShowIncident] = useState(false);
   const [category, setCategory] = useState<IncidentCategory>('molestia');
@@ -147,7 +150,8 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
     if (props.visible) {
       setVideo(null);
       setCommentText('');
-      setScope(null);
+      setNoteLabel('OTHER');
+      setIncidentLabel('OTHER');
       setIncidentText('');
       setShowIncident(false);
       setCategory('molestia');
@@ -162,11 +166,11 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
 
   const handleSaveComment = async () => {
     const comment = commentText.trim();
-    if (!comment || !scope) {
+    if (!comment) {
       return;
     }
     try {
-      await noteMutation.mutateAsync(noteInput(props, scope, comment));
+      await noteMutation.mutateAsync(noteInput(props, noteLabel, comment));
     } catch (error) {
       showError(error instanceof Error ? error.message : t('mobile.client.comment.saveError'));
       return;
@@ -179,14 +183,15 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
 
   const saveIncident = async (reportToChat: boolean) => {
     const description = incidentText.trim();
-    if (!description || !scope) {
+    if (!description) {
       return;
     }
     try {
       await createMutation.mutateAsync({
         ...linkTo(props),
-        category: scope,
+        category: 'EXERCISE',
         description,
+        label: incidentLabel,
         severity: incidentSeverityForCategory(category),
         tag: category,
       });
@@ -213,18 +218,20 @@ function useExerciseCommentViewModel(props: ExerciseCommentModalProps) {
     commentText,
     confirmReport,
     handleSaveComment,
+    incidentLabel,
     incidentText,
     isSubmitting: createMutation.isPending || noteMutation.isPending,
     pickVideo: (source: 'camera' | 'library') =>
       applyPickedVideo(videoUpload.pick(source), setVideo, (key) => showError(t(key))),
     removeVideo: () => setVideo(null),
     saveIncident,
-    scope,
+    noteLabel,
     setCategory,
     setCommentText,
+    setIncidentLabel,
+    setNoteLabel,
     setConfirmReport,
     setIncidentText,
-    setScope,
     setShowIncident,
     showIncident,
     video,
@@ -285,7 +292,9 @@ function IncidentRegisterCard(props: {
   canSend: boolean;
   category: IncidentCategory;
   isSubmitting: boolean;
+  label: FeedbackLabel;
   text: string;
+  onChangeLabel: (label: FeedbackLabel) => void;
   onChangeText: (value: string) => void;
   onSave: () => void;
   onSaveAndReport: () => void;
@@ -297,6 +306,7 @@ function IncidentRegisterCard(props: {
   return (
     <View style={styles.incidentCard}>
       <Text style={styles.incidentTitle}>{`⚠  ${t('mobile.client.comment.registerTitle').toUpperCase()}`}</Text>
+      <FeedbackLabelPicker onChange={props.onChangeLabel} value={props.label} />
       <View style={styles.chips}>
         {CATEGORIES.map((item) => {
           const selected = item === props.category;

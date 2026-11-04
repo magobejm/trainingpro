@@ -11,6 +11,7 @@ type IncidentRow = {
   createdAt: Date;
   description: string;
   id: string;
+  label: 'OTHER' | 'REVIEW';
   reviewedAt: Date | null;
   sessionId: null | string;
   sessionItemId: null | string;
@@ -30,6 +31,7 @@ export function mapIncident(row: IncidentRow): IncidentView {
     createdAt: row.createdAt,
     description: row.description,
     id: row.id,
+    label: row.label,
     reviewedAt: row.reviewedAt,
     sessionId: row.sessionId,
     sessionItemId: row.sessionItemId,

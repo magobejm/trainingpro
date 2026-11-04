@@ -1,6 +1,4 @@
-import type { FeedbackCategory } from '../../data/hooks/useClientNotes';
-
-/** The tag is mandatory: nothing is chosen by default and nothing can be sent without it. */
-export function canSubmitFeedback(category: FeedbackCategory | null, text: string): boolean {
-  return category !== null && text.trim().length > 0;
+/** The exercise label already has a default, so only the text can block sending. */
+export function canSubmitFeedback(text: string): boolean {
+  return text.trim().length > 0;
 }

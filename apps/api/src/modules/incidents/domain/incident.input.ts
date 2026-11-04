@@ -1,6 +1,7 @@
 export type CreateIncidentInput = {
   category: 'EXERCISE' | 'OTHER';
   description: string;
+  label?: 'OTHER' | 'REVIEW';
   sessionId?: null | string;
   sessionItemId?: null | string;
   severity: 'CRITICAL' | 'HIGH' | 'LOW' | 'MEDIUM';

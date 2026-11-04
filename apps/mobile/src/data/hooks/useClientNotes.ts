@@ -8,6 +8,7 @@ export type CreateClientNoteInput = {
   category: FeedbackCategory;
   exerciseLibraryId?: null | string;
   exerciseName?: null | string;
+  label?: 'OTHER' | 'REVIEW';
   sessionId?: null | string;
   sessionItemId?: null | string;
   text: string;

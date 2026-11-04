@@ -26,6 +26,7 @@ describe('ClientNotesService', () => {
       category: 'EXERCISE',
       clientId: 'client-1',
       coachMembershipId: 'coach-1',
+      label: 'OTHER',
       organizationId: 'org-1',
       text: 'Me pesó',
     });

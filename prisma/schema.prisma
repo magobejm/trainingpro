@@ -54,6 +54,11 @@ enum FeedbackCategory {
   OTHER
 }
 
+enum FeedbackLabel {
+  REVIEW
+  OTHER
+}
+
 enum IncidentSeverity {
   LOW
   MEDIUM
@@ -2053,6 +2058,7 @@ model Incident {
   description       String
   tag               String?              @db.VarChar(60)
   category          FeedbackCategory     @default(OTHER)
+  label             FeedbackLabel        @default(OTHER)
   coachResponse     String?              @map("coach_response")
   adjustmentDraft   String?              @map("adjustment_draft")
   coachAlertedAt    DateTime?            @map("coach_alerted_at") @db.Timestamptz(6)
@@ -2087,6 +2093,7 @@ model ClientNote {
   exerciseName      String?              @map("exercise_name") @db.VarChar(120)
   text              String
   category          FeedbackCategory
+  label             FeedbackLabel        @default(OTHER)
   archivedAt        DateTime?            @map("archived_at") @db.Timestamptz(6)
   createdBy         String               @map("created_by") @db.Uuid
   createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)

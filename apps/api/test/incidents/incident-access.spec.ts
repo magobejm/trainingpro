@@ -130,6 +130,7 @@ function buildIncident(input: CreateIncidentInput): IncidentView {
     createdAt: new Date(),
     description: input.description,
     id: INCIDENT_ID,
+    label: input.label ?? 'OTHER',
     reviewedAt: null,
     sessionId: null,
     sessionItemId: null,

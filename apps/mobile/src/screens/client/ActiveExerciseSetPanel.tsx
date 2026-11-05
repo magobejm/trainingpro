@@ -9,6 +9,7 @@ import { formatRestLabel } from './session-completion.utils';
 import { isRomScaleValue } from './rom-scale.utils';
 import { commitHeartRateBandInput, keyboardForField, sanitizeSessionNumber } from './session-number-input';
 import type { SetColumn, SetFieldKey } from './active-exercise.helpers';
+import { SetVariableHint } from './SetVariableHint';
 import { saveButtonKey, saveButtonPhase } from './active-exercise.save';
 
 const HIT = 48;
@@ -207,7 +208,7 @@ function SetColumnCell(props: {
   };
   return (
     <View style={[styles.column, clockColumn(props.column.key) ? styles.clockColumn : null]}>
-      <Text style={styles.columnLabel}>{label}</Text>
+      <SetVariableHint field={props.column.key} label={label} />
       <Text style={styles.targetValue}>{props.target}</Text>
       {props.column.scale === 'rom' ? (
         <Pressable
@@ -346,14 +347,6 @@ const styles = StyleSheet.create({
   clockRow: { flexDirection: 'row', gap: 4 },
   clockPart: { flex: 1, gap: 2 },
   clockUnit: { color: LIGHT.textMuted, fontSize: 11, fontWeight: '700', textAlign: 'center' },
-  columnLabel: {
-    color: LIGHT.accentMuted,
-    fontSize: 10,
-    fontWeight: '700',
-    marginBottom: 4,
-    textAlign: 'center',
-    textTransform: 'uppercase',
-  },
   targetValue: {
     color: LIGHT.textStrong,
     fontSize: 13,

@@ -172,6 +172,15 @@ export * from './routine-day-colors';
 
 export { CARDIO_DEFAULT_LOCKED_VARIABLES } from './exercise-set-variables';
 export {
+  glossary,
+  glossaryCoversSetVariables,
+  glossaryEntry,
+  glossaryLocale,
+  type GlossaryEntry,
+  type GlossaryGroup,
+  type GlossaryLocale,
+} from './glossary';
+export {
   formatHeartRateBand,
   heartRateBandPoint,
   parseHeartRateBand,

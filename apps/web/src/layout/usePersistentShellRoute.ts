@@ -17,7 +17,8 @@ type CoachRoute =
   | 'coach.chat'
   | 'coach.notes'
   | 'coach.calendar'
-  | 'coach.notifications';
+  | 'coach.notifications'
+  | 'coach.glossary';
 
 export type ShellRoute = AdminRoute | CoachRoute;
 
@@ -40,6 +41,7 @@ export const SHELL_ROUTES: readonly ShellRoute[] = [
   'coach.notes',
   'coach.calendar',
   'coach.notifications',
+  'coach.glossary',
 ];
 
 export type NavGroupId = 'admin' | 'clients' | 'library' | 'planning' | 'tools';

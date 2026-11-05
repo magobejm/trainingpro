@@ -11,6 +11,7 @@ import {
   type RoutineEditorExercise,
   type RoutineEditorWeek,
 } from '@trainerpro/shared';
+import { VariableHint } from '../../components/VariableHint';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 const FIELDS = ['weightKg', 'reps', 'rpe', 'rir', 'restSeconds'] as const;
@@ -48,14 +49,7 @@ function BlockLines(props: { block: RoutineEditorBlock; rules: CommandRule[]; t:
           <View key={`${block.id}-${index}`} style={styles.line}>
             <Text style={styles.index}>{index + 1}</Text>
             {fields.map((field) => (
-              <Text key={field} style={styles.cell}>
-                {`${t(`coach.clientRoutine.var.${field}`)} `}
-                <Text style={styles.before}>{show(row.before[field])}</Text>
-                {' → '}
-                <Text style={row.before[field] === row.after[field] ? styles.same : styles.after}>
-                  {show(row.after[field])}
-                </Text>
-              </Text>
+              <FieldChange after={row.after[field]} before={row.before[field]} field={field} key={field} t={t} />
             ))}
           </View>
         ))}
@@ -66,6 +60,27 @@ function BlockLines(props: { block: RoutineEditorBlock; rules: CommandRule[]; t:
 
 function show(value: null | number): string {
   return value == null ? '–' : String(value);
+}
+
+function FieldChange(props: {
+  after: null | number;
+  before: null | number;
+  field: (typeof FIELDS)[number] | (typeof TIMED_FIELDS)[number];
+  t: Translate;
+}): React.JSX.Element {
+  const same = props.before === props.after;
+  return (
+    <View style={styles.field}>
+      <VariableHint id={props.field}>
+        <Text style={styles.cell}>{props.t(`coach.clientRoutine.var.${props.field}`)}</Text>
+      </VariableHint>
+      <Text style={styles.cell}>
+        <Text style={styles.before}>{show(props.before)}</Text>
+        {' → '}
+        <Text style={same ? styles.same : styles.after}>{show(props.after)}</Text>
+      </Text>
+    </View>
+  );
 }
 
 function ExerciseAccordion(props: {
@@ -92,14 +107,7 @@ function ExerciseAccordion(props: {
             <View key={`${exercise.id}-${index}`} style={styles.line}>
               <Text style={styles.index}>{index + 1}</Text>
               {fields.map((field) => (
-                <Text key={field} style={styles.cell}>
-                  {`${t(`coach.clientRoutine.var.${field}`)} `}
-                  <Text style={styles.before}>{show(row.before[field])}</Text>
-                  {' → '}
-                  <Text style={row.before[field] === row.after[field] ? styles.same : styles.after}>
-                    {show(row.after[field])}
-                  </Text>
-                </Text>
+                <FieldChange after={row.after[field]} before={row.before[field]} field={field} key={field} t={t} />
               ))}
               {row.warnings.includes('zeroPercent') ? (
                 <Text style={styles.warning}>{t('coach.clientRoutine.command.zeroPercent')}</Text>
@@ -153,6 +161,7 @@ const styles = StyleSheet.create({
   changed: { color: colors.success, fontSize: fontSize.xs, fontWeight: '600' },
   day: { gap: space.xs },
   dayTitle: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
+  field: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
   head: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between', padding: space.sm },
   hint: { color: colors.textMuted, fontSize: fontSize.xs },
   index: { color: colors.textMuted, fontSize: fontSize.xs, width: 20 },

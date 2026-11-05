@@ -62,6 +62,9 @@ const ChatScreen = React.lazy(() => import('./screens/coach/ChatScreen').then((m
 const NotificationSettingsScreen = React.lazy(() =>
   import('./screens/coach/NotificationSettingsScreen').then((mod) => ({ default: mod.NotificationSettingsScreen })),
 );
+const GlossaryScreen = React.lazy(() =>
+  import('./screens/coach/GlossaryScreen').then((mod) => ({ default: mod.GlossaryScreen })),
+);
 const RoutinePlannerScreen = React.lazy(() =>
   import('./screens/coach/RoutinePlannerScreen').then((mod) => ({ default: mod.RoutinePlannerScreen })),
 );
@@ -266,6 +269,7 @@ function resolveCoachMonitoringScreen(route: ShellRoute, setRoute: (route: Shell
   if (route === 'coach.notes') return <NotesScreen />;
   if (route === 'coach.calendar') return <CalendarScreen />;
   if (route === 'coach.notifications') return <NotificationSettingsScreen />;
+  if (route === 'coach.glossary') return <GlossaryScreen />;
   return null;
 }
 

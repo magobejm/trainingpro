@@ -11,7 +11,7 @@ export const COACH_MENU_LAYOUT: { group: NavGroupId; routes: ShellRoute[] }[] = 
     routes: ['coach.routine.planner', 'coach.warmup.planner', 'coach.nutrition'],
   },
   { group: 'library', routes: ['coach.library.unified', 'coach.library.foods', 'coach.library.routines'] },
-  { group: 'tools', routes: ['coach.evaluator', 'coach.notifications'] },
+  { group: 'tools', routes: ['coach.evaluator', 'coach.notifications', 'coach.glossary'] },
 ];
 
 export type NavSection = { group: NavGroupId; items: ShellNavItem[] };

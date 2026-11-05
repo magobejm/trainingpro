@@ -12,6 +12,7 @@ type MoreScreenProps = {
 
 const MORE_ITEMS: { emoji: string; id: MoreMenuId; labelKey: string }[] = [
   { emoji: '❔', id: 'help', labelKey: 'mobile.guide.helpTitle' },
+  { emoji: '📖', id: 'glossary', labelKey: 'mobile.client.more.glossary' },
   { emoji: '⚠️', id: 'incidents', labelKey: 'mobile.client.more.incidents' },
   { emoji: '📝', id: 'notes', labelKey: 'mobile.client.more.notes' },
   { emoji: '📐', id: 'measures', labelKey: 'mobile.client.more.measures' },

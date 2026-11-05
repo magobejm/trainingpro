@@ -27,6 +27,7 @@ export const SHELL_PATHS: Record<ShellRoute, string> = {
   'coach.home': '/coach/home',
   'coach.clients': '/coach/clients',
   'coach.evaluator': '/coach/evaluator',
+  'coach.glossary': '/coach/glossary',
   'coach.incidents': '/coach/incidents',
   'coach.library.foods': '/coach/library/foods',
   'coach.library.routines': '/coach/library/routines',

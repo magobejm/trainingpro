@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { WorkoutGuideProvider } from '../../screens/client/WorkoutGuideContext';
 import { WorkoutHelpScreen } from '../../screens/client/WorkoutHelpScreen';
+import { ClientGlossaryScreen } from '../../screens/client/ClientGlossaryScreen';
 import { Animated, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
@@ -243,6 +244,7 @@ function dispatchMoreMenu(
   openProgress: (mode: ProgressMode) => void,
 ): void {
   if (id === 'help') openOverlay('help');
+  else if (id === 'glossary') openOverlay('glossary');
   else if (id === 'incidents') openOverlay('incidents');
   else if (id === 'calendar') openOverlay('calendar');
   else if (id === 'measures') openOverlay('measures');
@@ -289,6 +291,11 @@ function ClientShellBody(): React.JSX.Element {
       {st.overlay === 'help' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
           <WorkoutHelpScreen onClose={st.closeOverlay} />
+        </Animated.View>
+      )}
+      {st.overlay === 'glossary' && (
+        <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
+          <ClientGlossaryScreen onClose={st.closeOverlay} />
         </Animated.View>
       )}
 

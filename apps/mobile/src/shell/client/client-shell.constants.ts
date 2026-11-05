@@ -2,6 +2,7 @@ import type { ViewStyle } from 'react-native';
 
 export type OverlayId =
   | 'help'
+  | 'glossary'
   | 'calendar'
   | 'incidents'
   | 'library'
@@ -26,6 +27,7 @@ export type TabId = 'chat' | 'home' | 'more';
 
 export type MoreMenuId =
   | 'calendar'
+  | 'glossary'
   | 'help'
   | 'incidents'
   | 'library'

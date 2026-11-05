@@ -14,6 +14,7 @@ import { CoachTestsScreen } from './CoachTestsScreen';
 import { CoachPreferencesScreen, CoachAccountScreen } from './CoachSettingsScreen';
 import { CoachNutritionScreen } from './CoachNutritionScreen';
 import { CoachEvaluatorScreen } from './CoachEvaluatorScreen';
+import { CoachGlossaryScreen } from './CoachGlossaryScreen';
 type Props = { feature: string; clientId?: string; onOpen: (feature: string, clientId?: string) => void };
 export function CoachFeatureScreen(props: Props) {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ export function CoachFeatureScreen(props: Props) {
   if (props.feature === 'preferences') return <CoachPreferencesScreen />;
   if (props.feature === 'account') return <CoachAccountScreen />;
   if (props.feature === 'evaluator') return <CoachEvaluatorScreen />;
+  if (props.feature === 'glossary') return <CoachGlossaryScreen />;
   if (props.feature === 'nutrition') return <CoachNutritionScreen clientId={props.clientId} />;
   return (
     <CoachPage title={t('coachWorkspace.error')}>

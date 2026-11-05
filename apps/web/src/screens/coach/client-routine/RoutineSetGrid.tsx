@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 import type { RoutineEditorExercise, RoutineEditorSet, RoutineEditorSetPatch } from '@trainerpro/shared';
+import { VariableHint } from '../components/VariableHint';
 
 type Translate = (key: string) => string;
 const KEYBOARD = 'decimal-pad' as const;
@@ -95,11 +96,13 @@ export function RoutineSetGrid(props: {
   return (
     <View style={styles.grid}>
       <View style={styles.row}>
-        <Text style={styles.index}>{props.t('coach.clientRoutine.set')}</Text>
+        <VariableHint id={'set'} style={styles.index}>
+          <Text style={styles.index}>{props.t('coach.clientRoutine.set')}</Text>
+        </VariableHint>
         {VARIABLES.map((variable) => (
-          <Text key={variable.key} style={styles.head}>
-            {props.t(variable.label)}
-          </Text>
+          <VariableHint id={variable.key} key={variable.key} style={styles.head}>
+            <Text style={styles.head}>{props.t(variable.label)}</Text>
+          </VariableHint>
         ))}
       </View>
       {props.exercise.sets.map((set) => (

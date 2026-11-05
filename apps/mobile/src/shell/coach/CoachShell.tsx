@@ -199,6 +199,7 @@ function CoachMore(props: { onOpen: (feature: string, clientId?: string) => void
           'notes',
           'incidents',
           'evaluator',
+          'glossary',
           'preferences',
           'account',
         ] as CoachCopyKey[]

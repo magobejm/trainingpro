@@ -3,6 +3,7 @@ import {
   Apple,
   Bell,
   BookOpen,
+  CircleHelp,
   CalendarDays,
   House,
   CalendarRange,
@@ -58,6 +59,7 @@ function resolveCoachNavItems(): ShellNavItem[] {
     item('coach.library.routines', 'library', <BookOpen />, 'var(--tp-warningSoft)'),
     item('coach.evaluator', 'tools', <ScanSearch />, 'var(--tp-primarySoft)'),
     item('coach.notifications', 'tools', <Bell />, 'var(--tp-dangerSoft)'),
+    item('coach.glossary', 'tools', <CircleHelp />, 'var(--tp-primarySoft)'),
   ];
 }
 

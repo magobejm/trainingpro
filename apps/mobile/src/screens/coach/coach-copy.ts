@@ -64,6 +64,7 @@ const copy = {
   incidents: ['Incidencias', 'Incidents'],
   library: ['Bibliotecas', 'Libraries'],
   evaluator: ['Evaluador', 'Evaluator'],
+  glossary: ['Glosario', 'Glossary'],
   preferences: ['Preferencias', 'Preferences'],
   account: ['Cuenta', 'Account'],
   logout: ['Cerrar sesión', 'Sign out'],

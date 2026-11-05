@@ -16,6 +16,7 @@ import { SeriesTableClockCell } from './SeriesTableClockCell';
 import { SeriesTableNumericCell } from './SeriesTableNumericCell';
 import { SelectCell } from './SeriesTable.select';
 import { space } from '@trainerpro/ui';
+import { VariableHint } from '../VariableHint';
 
 interface ColDef {
   key: keyof DraftSet;
@@ -188,15 +189,19 @@ function SeriesHeaderRow({
     <View style={[st.row, st.headerRow]}>
       <View style={{ width: ACTION_COL_W }} />
       <View style={[st.headerCell, { width: SERIES_COL_W }]}>
-        <Text style={st.headerText}>{t('coach.routine.seriesTable.seriesCol')}</Text>
+        <VariableHint id={'set'}>
+          <Text style={st.headerText}>{t('coach.routine.seriesTable.seriesCol')}</Text>
+        </VariableHint>
       </View>
       {orderedCols.map((col) => {
         const isLocked = lockedFields.includes(col.key as string);
         return (
           <View key={col.key as string} style={[st.headerCell, { width: col.width + 8 }]}>
-            <Text style={[st.headerText, isLocked && st.headerTextLocked]} numberOfLines={1}>
-              {col.label}
-            </Text>
+            <VariableHint id={col.key as SetVariableKey}>
+              <Text style={[st.headerText, isLocked && st.headerTextLocked]} numberOfLines={1}>
+                {col.label}
+              </Text>
+            </VariableHint>
             {!readOnly && (
               <TouchableOpacity onPress={() => onToggleLock(col.key as string)} style={st.lockBtn}>
                 <Text style={[st.lockIcon, isLocked && st.lockIconActive]}>{isLocked ? ICON_LOCK_ON : ICON_LOCK_OFF}</Text>

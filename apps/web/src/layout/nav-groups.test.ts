@@ -10,7 +10,7 @@ const item = (id: ShellRoute): ShellNavItem => ({ group: 'clients', icon, id, la
 describe('COACH_MENU_LAYOUT', () => {
   it('organizes the screens into four blocks', () => {
     expect(COACH_MENU_LAYOUT.map((entry) => entry.group)).toEqual(['clients', 'planning', 'library', 'tools']);
-    expect(COACH_MENU_LAYOUT.flatMap((entry) => entry.routes)).toHaveLength(14);
+    expect(COACH_MENU_LAYOUT.flatMap((entry) => entry.routes)).toHaveLength(15);
   });
 
   it('does not repeat a screen', () => {
@@ -29,7 +29,7 @@ describe('COACH_MENU_LAYOUT', () => {
       'coach.calendar',
     ]);
     expect(byGroup.library).toEqual(['coach.library.unified', 'coach.library.foods', 'coach.library.routines']);
-    expect(byGroup.tools).toEqual(['coach.evaluator', 'coach.notifications']);
+    expect(byGroup.tools).toEqual(['coach.evaluator', 'coach.notifications', 'coach.glossary']);
   });
 
   it('has a Spanish and an English title for every block', () => {

@@ -23,7 +23,7 @@ const GLOSSARY_ID: Record<SetFieldKey, SetVariableKey> = {
 export function SetVariableHint(props: { field: SetFieldKey; label: string }): React.JSX.Element {
   const { i18n, t } = useTranslation();
   const [open, setOpen] = useState(false);
-  const entry = glossaryEntry(glossaryLocale(i18n.language), GLOSSARY_ID[props.field]);
+  const entry = glossaryEntry(glossaryLocale(i18n?.language ?? 'es'), GLOSSARY_ID[props.field]);
   const close = (): void => setOpen(false);
   return (
     <>

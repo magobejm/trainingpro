@@ -1,4 +1,5 @@
-import type { HealthSnapshot } from './provider';
+import { healthAccessFromGrants } from './health-access';
+import type { HealthAccess, HealthRevoke, HealthSnapshot } from './provider';
 
 const FAKE_KEY = 'trainerpro.mobile.health.fake';
 
@@ -7,8 +8,16 @@ export function healthStatus(): Promise<'ready' | 'unavailable'> {
   return Promise.resolve(globalThis.localStorage?.getItem(FAKE_KEY) ? 'ready' : 'unavailable');
 }
 
+export function readHealthAccess(): Promise<HealthAccess> {
+  return healthStatus().then((status) => healthAccessFromGrants(status === 'ready', status === 'ready' ? 1 : 0));
+}
+
 export function requestHealthAccess(): Promise<boolean> {
-  return healthStatus().then((status) => status === 'ready');
+  return readHealthAccess().then((access) => access === 'connected');
+}
+
+export function revokeHealthAccess(): Promise<HealthRevoke> {
+  return Promise.resolve('unavailable');
 }
 
 export function readHealthSnapshot(): Promise<HealthSnapshot | null> {

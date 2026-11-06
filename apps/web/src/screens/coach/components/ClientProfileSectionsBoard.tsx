@@ -18,6 +18,7 @@ import { ClientProfileArchivedDrawer } from './ClientProfileSectionsBoard.Archiv
 import { ClientProfileSectionsBoardHeader } from './ClientProfileSectionsBoard.Header';
 import { ClientProfileSectionRow } from './ClientProfileSectionsBoard.Row';
 import { ClientTimelineDrawer } from './ClientTimelineDrawer';
+import { ClientExternalDrawer } from '../ClientExternalDrawer';
 import { useClientWellnessQuery, type ClientWellnessResponse } from '../../../data/hooks/useClientWellness';
 import { useClientNutritionPlansQuery, useUnassignNutritionPlansMutation } from '../../../data/hooks/useNutrition';
 import { readSetupData } from '../nutrition/nutrition-tdee.utils';
@@ -53,7 +54,9 @@ type BoardUiState = {
   setOpenMenuId: (value: null | SectionId) => void;
   setShowArchivedDrawer: React.Dispatch<React.SetStateAction<boolean>>;
   setShowTimeline: React.Dispatch<React.SetStateAction<boolean>>;
+  setShowExternal: React.Dispatch<React.SetStateAction<boolean>>;
   showArchivedDrawer: boolean;
+  showExternal: boolean;
   showTimeline: boolean;
 };
 
@@ -64,14 +67,17 @@ type BoardViewModel = {
   onArchive: (id: SectionId) => Promise<void>;
   onCloseArchived: () => void;
   onCloseTimeline: () => void;
+  onCloseExternal: () => void;
   onDropArchive: (sourceId: null | SectionId) => void;
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onRestore: (id: SectionId) => Promise<void>;
   onOpenTimeline: () => void;
+  onOpenExternal: () => void;
   onToggleArchived: () => void;
   onToggleMenu: (id: SectionId) => void;
   openMenuId: null | SectionId;
   showArchivedDrawer: boolean;
+  showExternal: boolean;
   showTimeline: boolean;
 };
 
@@ -135,6 +141,7 @@ export function ClientProfileSectionsBoard(props: Props): React.JSX.Element {
         t={props.t}
         visible={vm.showTimeline}
       />
+      <ClientExternalDrawer clientId={props.clientId} onClose={vm.onCloseExternal} t={props.t} visible={vm.showExternal} />
     </View>
   );
 }
@@ -153,14 +160,17 @@ function useBoardViewModel(clientId: string): BoardViewModel {
     onArchive: (id) => saveItems(mutation, archiveSection(items, id), ui.setOpenMenuId),
     onCloseArchived: () => ui.setShowArchivedDrawer(false),
     onCloseTimeline: () => ui.setShowTimeline(false),
+    onCloseExternal: () => ui.setShowExternal(false),
     onDropArchive: (sourceId) => onDropArchive(items, sourceId, mutation, ui.setOpenMenuId),
     onDropReorderByIndex: (sourceIndex, targetIndex) => onDropReorderByIndex(items, sourceIndex, targetIndex, mutation),
+    onOpenExternal: () => openExternal(ui),
     onOpenTimeline: () => openTimeline(ui),
     onRestore: (id) => saveItems(mutation, restoreSection(items, id), ui.setOpenMenuId),
     onToggleArchived: () => toggleArchived(ui),
     onToggleMenu: (id) => ui.setOpenMenuId(ui.openMenuId === id ? null : id),
     openMenuId: ui.openMenuId,
     showArchivedDrawer: ui.showArchivedDrawer,
+    showExternal: ui.showExternal,
     showTimeline: ui.showTimeline,
   };
 }
@@ -169,7 +179,24 @@ function useBoardUiState(): BoardUiState {
   const [openMenuId, setOpenMenuId] = useState<null | SectionId>(null);
   const [showArchivedDrawer, setShowArchivedDrawer] = useState(false);
   const [showTimeline, setShowTimeline] = useState(false);
-  return { openMenuId, setOpenMenuId, setShowArchivedDrawer, setShowTimeline, showArchivedDrawer, showTimeline };
+  const [showExternal, setShowExternal] = useState(false);
+  return {
+    openMenuId,
+    setOpenMenuId,
+    setShowArchivedDrawer,
+    setShowExternal,
+    setShowTimeline,
+    showArchivedDrawer,
+    showExternal,
+    showTimeline,
+  };
+}
+
+function openExternal(ui: BoardUiState): void {
+  ui.setOpenMenuId(null);
+  ui.setShowArchivedDrawer(false);
+  ui.setShowTimeline(false);
+  ui.setShowExternal(true);
 }
 
 function openTimeline(ui: BoardUiState): void {
@@ -215,12 +242,13 @@ function renderRow(
       onArchive={() => void vm.onArchive(item.id)}
       onDropReorderByIndex={vm.onDropReorderByIndex}
       onOpenChat={props.onOpenChat}
+      onOpenCompare={props.onOpenCompare}
+      onOpenExternal={vm.onOpenExternal}
       onOpenIncidents={props.onOpenIncidents}
       onOpenMood={props.onOpenMood}
       onOpenNutrition={props.onOpenNutrition}
       onOpenProgress={props.onOpenProgress}
       onOpenTests={props.onOpenTests}
-      onOpenCompare={props.onOpenCompare}
       onOpenMeasures={props.onOpenMeasures}
       onOpenPlanning={props.onOpenPlanning}
       onOpenVolume={props.onOpenVolume}

@@ -1,5 +1,14 @@
 export { aggregateHeartRate, sleepScore, stepsTarget } from './health-metrics';
-export { healthStatus, readHealthSnapshot, requestHealthAccess, type HealthSnapshot } from './provider';
+export {
+  healthStatus,
+  readHealthAccess,
+  readHealthSnapshot,
+  requestHealthAccess,
+  revokeHealthAccess,
+  type HealthAccess,
+  type HealthRevoke,
+  type HealthSnapshot,
+} from './provider';
 
 import { readHealthSnapshot } from './provider';
 

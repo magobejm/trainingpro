@@ -1,15 +1,10 @@
 import React, { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
 import { createApiClient, type ActiveRole } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
-
-type Wearables = {
-  activities: Array<{ durationS: number; id: string; source: string; sportType: string }>;
-  connections: Array<{ provider: string; status: string }>;
-  metrics: Array<{ date: string; hrvMs: number | null; sleepMinutes: number | null; source: string; steps: number | null }>;
-};
+import { useClientWearables } from './use-client-wearables';
+import { WearableDayLines } from './WearableDayLines';
 
 const SAMPLE_BLOCK = {
   blocks: [{ displayName: 'Series', fcReservePct: 70, restSeconds: 60, roundsPlanned: 4, workSeconds: 180 }],
@@ -21,14 +16,7 @@ export function ClientWearablesPanel(props: { clientId: string; t: (key: string)
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   const [notice, setNotice] = useState('');
-  const query = useQuery({
-    enabled: Boolean(props.clientId && accessToken),
-    queryFn: () =>
-      createApiClient({ accessToken: accessToken ?? '', activeRole: activeRole ?? 'coach' }).get<Wearables>(
-        `/clients/${props.clientId}/wearables`,
-      ),
-    queryKey: ['coach', 'wearables', props.clientId],
-  });
+  const query = useClientWearables(props.clientId);
   if (!props.clientId) return null;
   const data = query.data;
   return (
@@ -40,10 +28,8 @@ export function ClientWearablesPanel(props: { clientId: string; t: (key: string)
       {data?.connections.map((row) => (
         <Text key={row.provider} style={styles.line}>{`${row.provider} · ${row.status}`}</Text>
       ))}
-      {data?.metrics.slice(0, 3).map((row) => (
-        <Text key={`${row.date}-${row.source}`} style={styles.line}>
-          {`${row.date} · ${row.source} · ${row.steps ?? 0} · ${row.sleepMinutes ?? 0}`}
-        </Text>
+      {data?.metrics.map((row) => (
+        <WearableDayLines key={`${row.date}-${row.source}`} metric={row} t={props.t} />
       ))}
       <Pressable
         accessibilityRole="button"

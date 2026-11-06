@@ -1,5 +1,6 @@
+import { healthAccessFromGrants, type HealthAccess } from './health-access';
 import { aggregateHeartRate } from './health-metrics';
-import type { HealthSnapshot } from './provider';
+import type { HealthRevoke, HealthSnapshot } from './provider';
 
 const PERMISSIONS = [
   'Steps',
@@ -12,17 +13,51 @@ const PERMISSIONS = [
   'ActiveCaloriesBurned',
 ] as const;
 
+type HealthPermission = { accessType: 'read'; recordType: string };
+
 type HealthConnectModule = {
+  getGrantedPermissions: () => Promise<HealthPermission[]>;
   initialize: () => Promise<boolean>;
   readRecords: (
     recordType: string,
     options: { timeRangeFilter: { operator: 'between'; startTime: string; endTime: string } },
   ) => Promise<{ records: Array<Record<string, unknown>> }>;
-  requestPermission: (permissions: Array<{ accessType: 'read'; recordType: string }>) => Promise<unknown>;
+  requestPermission: (permissions: HealthPermission[]) => Promise<HealthPermission[]>;
+  revokeAllPermissions: () => Promise<{ requiresRestart?: boolean } | void>;
 };
 
+const READ_PERMISSIONS: HealthPermission[] = PERMISSIONS.map((recordType) => ({ accessType: 'read', recordType }));
+
 export function healthStatus(): Promise<'ready' | 'unavailable'> {
-  return load().then((module) => (module ? 'ready' : 'unavailable'));
+  return readHealthAccess().then((access) => (access === 'unavailable' ? 'unavailable' : 'ready'));
+}
+
+export async function readHealthAccess(): Promise<HealthAccess> {
+  const module = await load();
+  if (!module) return 'unavailable';
+  try {
+    const ready = await module.initialize();
+    if (!ready) return 'unavailable';
+    const granted = await module.getGrantedPermissions();
+    return healthAccessFromGrants(true, granted.length);
+  } catch {
+    return 'unavailable';
+  }
+}
+
+export async function revokeHealthAccess(): Promise<HealthRevoke> {
+  const module = await load();
+  if (!module) return 'unavailable';
+  try {
+    const ready = await module.initialize();
+    if (!ready) return 'unavailable';
+    const result = await module.revokeAllPermissions();
+    const granted = await module.getGrantedPermissions();
+    if (result?.requiresRestart || granted.length > 0) return 'pending';
+    return 'disconnected';
+  } catch {
+    return 'unavailable';
+  }
 }
 
 export async function requestHealthAccess(): Promise<boolean> {
@@ -30,8 +65,12 @@ export async function requestHealthAccess(): Promise<boolean> {
   if (!module) return false;
   const ready = await module.initialize();
   if (!ready) return false;
-  await module.requestPermission(PERMISSIONS.map((recordType) => ({ accessType: 'read' as const, recordType })));
-  return true;
+  try {
+    const granted = await module.requestPermission(READ_PERMISSIONS);
+    return healthAccessFromGrants(true, granted.length) === 'connected';
+  } catch {
+    return false;
+  }
 }
 
 export async function readHealthSnapshot(): Promise<HealthSnapshot | null> {

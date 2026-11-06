@@ -42,7 +42,13 @@ async function syncDay(
   setStatus: (value: string) => void,
   t: (key: string) => string,
 ): Promise<void> {
-  const snapshot = await readHealthSnapshot();
+  let snapshot;
+  try {
+    snapshot = await readHealthSnapshot();
+  } catch {
+    setStatus(t('mobile.client.health.denied'));
+    return;
+  }
   if (!accessToken || !snapshot) {
     setStatus(t('mobile.client.health.unavailable'));
     return;

@@ -5,6 +5,7 @@ import type { SectionId, SectionItem } from './ClientProfileSectionsBoard.types'
 import { Badge, IconButton, colors } from '@trainerpro/ui';
 import { ClientTimelineSubtitle } from './ClientTimelineSubtitle';
 import { ClientProgressActivitySubtitle } from './ClientProgressActivitySubtitle';
+import { ClientExternalSubtitle } from '../ClientExternalSubtitle';
 import { ClientMeasuresSubtitle } from './ClientMeasuresSubtitle';
 import { ClientVolumeSubtitle } from './ClientVolumeSubtitle';
 import { ClientPlanningSubtitle } from './ClientPlanningSubtitle';
@@ -24,6 +25,7 @@ type Props = {
   onDropReorderByIndex: (sourceIndex: null | number, targetIndex: number) => void;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenExternal?: () => void;
   onOpenIncidents?: () => void;
   onOpenMeasures?: () => void;
   onOpenMood?: () => void;
@@ -60,6 +62,7 @@ export function ClientProfileSectionRow(props: Props): React.JSX.Element {
         nutritionSubtitle={props.nutritionSubtitle}
         onOpenChat={props.onOpenChat}
         onOpenCompare={props.onOpenCompare}
+        onOpenExternal={props.onOpenExternal}
         onOpenMeasures={props.onOpenMeasures}
         onOpenPlanning={props.onOpenPlanning}
         onOpenVolume={props.onOpenVolume}
@@ -102,6 +105,7 @@ function RowMain(props: {
   nutritionSubtitle?: string;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenExternal?: () => void;
   onOpenMeasures?: () => void;
   onOpenPlanning?: () => void;
   onOpenVolume?: () => void;
@@ -153,6 +157,8 @@ function RowMain(props: {
           <ClientVolumeSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : props.item.id === 'planning' ? (
           <ClientPlanningSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
+        ) : props.item.id === 'external' ? (
+          <ClientExternalSubtitle clientId={props.clientId} style={styles.rowSubtitle} t={props.t} />
         ) : (
           <Text style={styles.rowSubtitle}>{subtitle}</Text>
         )}
@@ -216,6 +222,7 @@ function onOpenSection(props: {
   item: SectionItem;
   onOpenChat?: () => void;
   onOpenCompare?: () => void;
+  onOpenExternal?: () => void;
   onOpenMeasures?: () => void;
   onOpenPlanning?: () => void;
   onOpenVolume?: () => void;
@@ -238,6 +245,7 @@ function onOpenSection(props: {
   if (props.item.id === 'anthropometrics') props.onOpenMeasures?.();
   if (props.item.id === 'volume') props.onOpenVolume?.();
   if (props.item.id === 'planning') props.onOpenPlanning?.();
+  if (props.item.id === 'external') props.onOpenExternal?.();
   if (props.item.id === 'incidents') props.onOpenIncidents?.();
 }
 

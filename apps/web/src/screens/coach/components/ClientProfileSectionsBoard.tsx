@@ -1,3 +1,4 @@
+import { nextWeekStart } from '@trainerpro/shared';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -333,6 +334,10 @@ function formatScheduleDate(value: string): string {
 
 function resolveMoodSubtitle(wellness: ClientWellnessResponse | undefined, t: Props['t']): string | undefined {
   if (!wellness) return undefined;
+  const upcoming = nextWeekStart(localDateKey(new Date()));
+  if ((wellness.weeklyLoads ?? []).some((load) => load.weekStartDate >= upcoming)) {
+    return t('coach.clientProfile.details.mood.nextWeekLoad');
+  }
   if (wellness.summary.reportsCount > 0) {
     return t('coach.clientProfile.details.mood.reportsCount', { count: wellness.summary.reportsCount });
   }

@@ -15,6 +15,7 @@ import type { SessionOpInput } from '../../data/offline/session-draft';
 import { createDiscardSessionClient, discardStartedSession } from './session-discard.client';
 import { freezeWorkoutDuration, finishSessionBody, formatSessionRpeChatNotice, sessionRpeBand } from './session-rpe.utils';
 
+export type FinishInput = { comment: string | null; sessionRpe: number | null };
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 type Enqueue = (session: SessionView, input: SessionOpInput) => Promise<EnqueueResult>;
 
@@ -27,8 +28,8 @@ export function useOfflineSessionActions(sessionId: string, session: SessionView
     [queue.enqueue, session],
   );
   const enqueueFinish = useCallback(
-    (sessionRpe: number, performedDurationSeconds?: number | null, finishedAt?: string | null) =>
-      enqueueSessionFinish(queue.enqueue, session, sessionId, sessionRpe, performedDurationSeconds, finishedAt),
+    (input: FinishInput, performedDurationSeconds?: number | null, finishedAt?: string | null) =>
+      enqueueSessionFinish(queue.enqueue, session, sessionId, input, performedDurationSeconds, finishedAt),
     [queue.enqueue, session, sessionId],
   );
   const discard = useCallback(() => discardStartedSession(sessionId, discardClient), [discardClient, sessionId]);
@@ -81,16 +82,17 @@ function enqueueSessionFinish(
   enqueue: Enqueue,
   session: SessionView | null,
   sessionId: string,
-  sessionRpe: number,
+  input: FinishInput,
   performedDurationSeconds?: number | null,
   finishedAt?: string | null,
 ): Promise<EnqueueResult | 'missing'> {
   if (!session) return Promise.resolve('missing');
   return enqueue(session, {
     body: finishSessionBody(
-      sessionRpe,
+      input.sessionRpe,
       performedDurationSeconds === undefined ? freezeWorkoutDuration(session) : performedDurationSeconds,
       finishedAt,
+      input.comment,
     ),
     dedupeKey: 'finish',
     kind: 'finish',

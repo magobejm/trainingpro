@@ -30,7 +30,7 @@ import { SessionRpeModal } from './SessionRpeModal';
 import { SessionAdjustmentNote } from './SessionAdjustmentNote';
 import { SessionSyncBanner } from './SessionSyncBanner';
 import { useRecordExerciseOrder } from './exercise-order.queue';
-import { useOfflineSessionActions, notifyFinishedSession } from './today-session.sync';
+import { useOfflineSessionActions, notifyFinishedSession, type FinishInput } from './today-session.sync';
 import { WorkoutSummaryScreen } from './WorkoutSummaryScreen';
 import { usePersistedSessionTimers, useWorkoutElapsed } from './today-session.timers';
 import { useRestEndNotification } from '../../features/timers/rest-notification';
@@ -282,19 +282,25 @@ export function TodaySessionScreen({ onClose, onFinishedDay, sessionId }: TodayS
   }, [actions, finishBusy, onClose, t, timers]);
 
   const handleSaveSessionRpe = useCallback(
-    (sessionRpe: number) => {
+    (input: FinishInput) => {
+      const { sessionRpe } = input;
       if (finishBusy) return;
       setFinishBusy(true);
       void actions
-        .enqueueFinish(sessionRpe, finishDurationSeconds.current, finishInstant.current)
+        .enqueueFinish(input, finishDurationSeconds.current, finishInstant.current)
         .then(async (outcome) => {
           if (outcome === 'conflict' || outcome === 'missing') {
             setRpeVisible(false);
             return;
           }
           timers.clearSessionTimers();
-          setSummary({ durationSeconds: finishDurationSeconds.current, pending: outcome === 'pending', sessionRpe });
           setRpeVisible(false);
+          if (sessionRpe == null) {
+            if (outcome === 'pending') showToast(t('mobile.client.sync.savedOffline'));
+            onFinishedDay();
+            return;
+          }
+          setSummary({ durationSeconds: finishDurationSeconds.current, pending: outcome === 'pending', sessionRpe });
           if (outcome === 'pending') {
             pendingFinishRpe.current = sessionRpe;
             showToast(t('mobile.client.sync.savedOffline'));

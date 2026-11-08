@@ -272,3 +272,24 @@ export * from './client-feedback';
 export * from './progress-dashboard/dashboard-model';
 export * from './progress-dashboard/dashboard-metrics';
 export { progressDashboardEn, progressDashboardEs } from './progress-dashboard/dashboard-locale';
+export {
+  addDaysToKey,
+  dismissLoadReminder,
+  INITIAL_WEEKLY_LOAD_REMINDER,
+  isMondayKey,
+  mondayOfKey,
+  nextWeekStart,
+  postponeLoadReminder,
+  shouldShowLoadReminder,
+  WEEKLY_LOAD_MAX_CHARS,
+  type WeeklyLoadReminderState,
+} from './weekly-load';
+export {
+  averageOfSeries,
+  buildWellnessTrend,
+  rpeToScale,
+  type WellnessTrendCheckin,
+  type WellnessTrendPoint,
+  type WellnessTrendRange,
+  type WellnessTrendSession,
+} from './wellness-trend';

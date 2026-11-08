@@ -57,6 +57,11 @@ export class ClientNutritionController {
     return { items: await this.logs.listMine(readAuthContext(request), query.from, query.to) };
   }
 
+  @Get('me/nutrition/adherence')
+  async myAdherence(@Query() query: MealLogRangeDto, @Req() request: HttpAuthRequest) {
+    return this.logs.adherenceMine(readAuthContext(request), query.from, query.to);
+  }
+
   @Get('me/nutrition/substitutes')
   async listSubstitutes(@Query() query: SubstituteQueryDto, @Req() request: HttpAuthRequest) {
     return this.substitutes.list(readAuthContext(request), query.foodId, query.grams);

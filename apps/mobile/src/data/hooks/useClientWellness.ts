@@ -1,8 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 
 export type ClientWellnessSession = {
+  finishComment: null | string;
+  finishedAt: null | string;
   id: string;
   isCompleted: boolean;
   planDayTitle: null | string;
@@ -13,7 +15,12 @@ export type ClientWellnessSession = {
   preMotivation: null | number;
   preRecovery: null | number;
   sessionDate: string;
+  sessionRpe: null | number;
 };
+
+export type ClientWellnessCheckin = { date: string; motivation: number; recovery: number; sleep: number };
+
+export type ClientWellnessWeeklyLoad = { content: string; id: string; updatedAt: string; weekStartDate: string };
 
 export type ClientWellnessWeeklyReport = {
   adherencePercent: null | number;
@@ -34,8 +41,10 @@ export type ClientWellnessSummary = {
 };
 
 export type ClientWellnessResponse = {
+  checkins: ClientWellnessCheckin[];
   sessions: ClientWellnessSession[];
   summary: ClientWellnessSummary;
+  weeklyLoads: ClientWellnessWeeklyLoad[];
   weeklyReports: ClientWellnessWeeklyReport[];
 };
 
@@ -62,4 +71,46 @@ async function fetchWellness(
 ): Promise<ClientWellnessResponse> {
   if (!auth) throw new Error('Missing authenticated context');
   return createApiClient(auth).get<ClientWellnessResponse>(`/clients/me/wellness?dateFrom=${dateFrom}&dateTo=${dateTo}`);
+}
+
+export type AdherenceSummary = { percent: null | number };
+
+export function useMyTrainingAdherenceQuery(from: string, to: string) {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).get<AdherenceSummary>(`/progress/adherence?from=${from}&to=${to}`);
+    },
+    queryKey: ['clients', 'me', 'adherence', 'training', from, to],
+  });
+}
+
+export function useMyNutritionAdherenceQuery(from: string, to: string) {
+  const auth = useAuth();
+  return useQuery({
+    enabled: Boolean(auth),
+    queryFn: () => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).get<{ assigned: boolean; summary: AdherenceSummary }>(
+        `/clients/me/nutrition/adherence?from=${from}&to=${to}`,
+      );
+    },
+    queryKey: ['clients', 'me', 'adherence', 'nutrition', from, to],
+  });
+}
+
+export function useSaveWeeklyLoadMutation() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { content: string; weekStartDate: string }) => {
+      if (!auth) throw new Error('Missing authenticated context');
+      return createApiClient(auth).put<{ saved: boolean }>('/clients/me/weekly-load', input);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'wellness'] });
+    },
+  });
 }

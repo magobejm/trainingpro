@@ -3,6 +3,8 @@ import { useAuthStore } from '../../store/auth.store';
 import { createApiClient } from '../api-client';
 
 export type ClientWellnessSession = {
+  finishComment: null | string;
+  finishedAt: null | string;
   id: string;
   isCompleted: boolean;
   planDayTitle: null | string;
@@ -13,7 +15,12 @@ export type ClientWellnessSession = {
   preMotivation: null | number;
   preRecovery: null | number;
   sessionDate: string;
+  sessionRpe: null | number;
 };
+
+export type ClientWellnessCheckin = { date: string; motivation: number; recovery: number; sleep: number };
+
+export type ClientWellnessWeeklyLoad = { content: string; id: string; updatedAt: string; weekStartDate: string };
 
 export type ClientWellnessWeeklyReport = {
   adherencePercent: null | number;
@@ -34,8 +41,10 @@ export type ClientWellnessSummary = {
 };
 
 export type ClientWellnessResponse = {
+  checkins: ClientWellnessCheckin[];
   sessions: ClientWellnessSession[];
   summary: ClientWellnessSummary;
+  weeklyLoads: ClientWellnessWeeklyLoad[];
   weeklyReports: ClientWellnessWeeklyReport[];
 };
 

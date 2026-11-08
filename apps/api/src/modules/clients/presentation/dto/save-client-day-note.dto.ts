@@ -25,3 +25,13 @@ export class SaveClientDayNoteDto {
 
   content!: string;
 }
+
+export class SaveClientWeeklyLoadDto {
+  static schema = z.object({
+    content: z.string().max(2000),
+    weekStartDate: z.string().date(),
+  });
+
+  content!: string;
+  weekStartDate!: string;
+}

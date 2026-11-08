@@ -12,10 +12,16 @@ import {
   type ClientWellnessSummary,
   type ClientWellnessWeeklyReport,
 } from '../../data/hooks/useClientWellness';
-import { buildDefaultWellnessRange, formatDateLabel, formatScore, hasWellnessData } from './client-mood.helpers';
+import { useAdherenceQuery } from '../../data/hooks/useAdherenceQuery';
+import { useClientNutritionPlansQuery, useNutritionAdherenceQuery } from '../../data/hooks/useNutrition';
+import { useAppliedRoutineQuery } from '../../data/hooks/useRoutineAssignments';
+import { MoodAdherenceCards, MoodJournalTabs } from './ClientMoodExtras';
+import { ClientMoodTrendChart } from './ClientMoodTrendChart';
+import { buildDefaultWellnessRange, formatDateLabel, formatScore, hasWellnessData, toDateStr } from './client-mood.helpers';
 import { Button, EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const VARIANT_SECONDARY = 'secondary' as const;
+const ADHERENCE_DAYS = 30;
 
 type Props = {
   clientId: string;
@@ -33,8 +39,25 @@ function useClientMoodViewModel(props: Props) {
   const range = useMemo(() => buildDefaultWellnessRange(), []);
   const query = useClientWellnessQuery(props.clientId, range.dateFrom, range.dateTo);
   const exportMutation = useExportReportPdfMutation();
+  const endDate = useMemo(() => toDateStr(new Date()), []);
+  const adherenceFrom = useMemo(() => {
+    const from = new Date();
+    from.setDate(from.getDate() - ADHERENCE_DAYS + 1);
+    return toDateStr(from);
+  }, []);
+  const routine = useAppliedRoutineQuery(props.clientId);
+  const training = useAdherenceQuery({ clientId: props.clientId, from: adherenceFrom, to: endDate });
+  const nutritionPlans = useClientNutritionPlansQuery(props.clientId);
+  const nutrition = useNutritionAdherenceQuery(props.clientId, adherenceFrom, endDate);
 
   return {
+    adherence: {
+      nutritionAssigned: (nutritionPlans.data?.length ?? 0) > 0,
+      nutritionPercent: nutrition.data?.summary.percent ?? null,
+      trainingAssigned: Boolean(routine.data),
+      trainingPercent: training.data?.percent ?? null,
+    },
+    endDate,
     clientName: props.clientName,
     exportError: exportMutation.isError,
     exporting: exportMutation.isPending,
@@ -76,16 +99,24 @@ function renderBody(props: ViewModel): React.JSX.Element {
   if (props.isError || !props.wellness) {
     return <EmptyState title={props.t('coach.mood.error')} />;
   }
-  const isEmpty = props.wellness.summary.sessionsWithWellness === 0 && props.wellness.summary.reportsCount === 0;
-  if (isEmpty) {
-    return <EmptyState icon={<EmptyIllustration kind={'generic'} />} title={props.t('coach.mood.empty')} />;
-  }
-  return <WellnessBody t={props.t} wellness={props.wellness} />;
+  return <WellnessBody adherence={props.adherence} endDate={props.endDate} t={props.t} wellness={props.wellness} />;
 }
 
-function WellnessBody(props: { t: ViewModel['t']; wellness: ClientWellnessResponse }): React.JSX.Element {
+function WellnessBody(props: {
+  adherence: ViewModel['adherence'];
+  endDate: string;
+  t: ViewModel['t'];
+  wellness: ClientWellnessResponse;
+}): React.JSX.Element {
   return (
     <>
+      <MoodAdherenceCards {...props.adherence} />
+      <ClientMoodTrendChart
+        checkins={props.wellness.checkins ?? []}
+        endDate={props.endDate}
+        sessions={props.wellness.sessions}
+      />
+      <MoodJournalTabs sessions={props.wellness.sessions} weeklyLoads={props.wellness.weeklyLoads ?? []} />
       <KpiStrip summary={props.wellness.summary} t={props.t} />
       <SessionList sessions={props.wellness.sessions} t={props.t} />
       <WeeklyList reports={props.wellness.weeklyReports} t={props.t} />

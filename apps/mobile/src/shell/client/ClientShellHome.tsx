@@ -10,8 +10,10 @@ import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
 import { HomeNeatCard } from './HomeNeatCard';
+import { WeeklyLoadReminderCard } from './WeeklyLoadReminderCard';
 
 type HomeHubProps = {
+  onOpenLoad: () => void;
   onOpenMood: () => void;
   onOpenNutrition: () => void;
   onOpenProfile: () => void;
@@ -84,6 +86,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
           </View>
         </Pressable>
       </View>
+      <WeeklyLoadReminderCard onWrite={props.onOpenLoad} />
       <HomeNeatCard neats={routine?.neats} />
       <View style={s.homeContent}>
         <ActionCard

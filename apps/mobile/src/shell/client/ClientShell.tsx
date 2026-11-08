@@ -10,6 +10,7 @@ import { ClientLibraryScreen } from '../../screens/client/ClientLibraryScreen';
 import { ClientNotesScreen } from '../../screens/client/ClientNotesScreen';
 import { ClientMeasuresScreen } from '../../screens/client/ClientMeasuresScreen';
 import { ClientMoodScreen } from '../../screens/client/ClientMoodScreen';
+import type { JournalTab } from '../../screens/client/ClientMoodJournalTabs';
 import { ClientPlanningScreen } from '../../screens/client/ClientPlanningScreen';
 import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { IncidentsScreen } from '../../screens/client/IncidentsScreen';
@@ -266,6 +267,7 @@ export function ClientShell(): React.JSX.Element {
 function ClientShellBody(): React.JSX.Element {
   const { t } = useTranslation();
   const st = useShellState();
+  const [moodTab, setMoodTab] = useState<JournalTab | undefined>(undefined);
   useHardwareBack(st);
   useClientNotification(st.openSession);
   usePendingDraftFlush();
@@ -275,7 +277,14 @@ function ClientShellBody(): React.JSX.Element {
     <View style={s.root}>
       {st.activeTab === 'home' && (
         <HomeHub
-          onOpenMood={() => st.openOverlay('mood')}
+          onOpenLoad={() => {
+            setMoodTab('load');
+            st.openOverlay('mood');
+          }}
+          onOpenMood={() => {
+            setMoodTab(undefined);
+            st.openOverlay('mood');
+          }}
           onOpenNutrition={() => st.openOverlay('nutrition')}
           onOpenProfile={() => st.openOverlay('profile')}
           onOpenProgress={() => st.openProgress('progress')}
@@ -356,7 +365,7 @@ function ClientShellBody(): React.JSX.Element {
       )}
       {st.overlay === 'mood' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <ClientMoodScreen onClose={st.closeOverlay} />
+          <ClientMoodScreen initialTab={moodTab} onClose={st.closeOverlay} />
         </Animated.View>
       )}
       {st.overlay === 'incidents' && (

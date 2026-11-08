@@ -7585,6 +7585,68 @@
         "x-roles": ["client"]
       }
     },
+    "/clients/me/nutrition/adherence": {
+      "get": {
+        "operationId": "get_clients_me_nutrition_adherence",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/me/nutrition/adherence",
+        "x-controller": "ClientNutritionController",
+        "x-filters": ["from", "to"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients/me/nutrition/foods": {
       "get": {
         "operationId": "get_clients_me_nutrition_foods",
@@ -8621,6 +8683,60 @@
           }
         ],
         "summary": "DELETE /clients/me/sessions/{sessionId}/skip",
+        "x-controller": "ClientSelfController",
+        "x-filters": [],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
+    "/clients/me/weekly-load": {
+      "put": {
+        "operationId": "put_clients_me_weekly_load",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          },
+          "description": "SaveClientWeeklyLoadDto",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "PUT /clients/me/weekly-load",
         "x-controller": "ClientSelfController",
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],

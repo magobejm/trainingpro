@@ -1,9 +1,12 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { addDaysToKey, mondayOfKey } from '@trainerpro/shared';
 import { CLIENTS_REPOSITORY, type ClientsRepositoryPort } from '../../domain/clients-repository.port';
 
 export type ClientWellnessSession = {
+  finishComment: string | null;
+  finishedAt: string | null;
   id: string;
   isCompleted: boolean;
   planDayTitle: string | null;
@@ -14,6 +17,21 @@ export type ClientWellnessSession = {
   preMotivation: number | null;
   preRecovery: number | null;
   sessionDate: string;
+  sessionRpe: number | null;
+};
+
+export type ClientWellnessCheckin = {
+  date: string;
+  motivation: number;
+  recovery: number;
+  sleep: number;
+};
+
+export type ClientWellnessWeeklyLoad = {
+  content: string;
+  id: string;
+  updatedAt: string;
+  weekStartDate: string;
 };
 
 export type ClientWellnessWeeklyReport = {
@@ -35,8 +53,10 @@ export type ClientWellnessSummary = {
 };
 
 export type ClientWellnessResponse = {
+  checkins: ClientWellnessCheckin[];
   sessions: ClientWellnessSession[];
   summary: ClientWellnessSummary;
+  weeklyLoads: ClientWellnessWeeklyLoad[];
   weeklyReports: ClientWellnessWeeklyReport[];
 };
 
@@ -56,11 +76,15 @@ export class ListClientWellnessUseCase {
 
   async execute(context: AuthContext, input: ListClientWellnessInput): Promise<ClientWellnessResponse> {
     const clientId = await this.resolveClientId(context, input.clientId);
-    const [sessionRows, reportRows] = await Promise.all([
+    const [sessionRows, reportRows, checkinRows, loadRows] = await Promise.all([
       this.querySessions(clientId, input.dateFrom, input.dateTo),
       this.queryWeeklyReports(clientId, input.dateFrom, input.dateTo),
+      this.queryCheckins(clientId, input.dateFrom, input.dateTo),
+      this.queryWeeklyLoads(clientId, input.dateFrom, input.dateTo),
     ]);
     const sessions = sessionRows.map((r) => ({
+      finishComment: r.finishComment,
+      finishedAt: r.finishedAt ? r.finishedAt.toISOString() : null,
       id: r.id,
       isCompleted: r.isCompleted,
       planDayTitle: r.planDayTitle,
@@ -71,6 +95,19 @@ export class ListClientWellnessUseCase {
       preMotivation: r.preMotivation,
       preRecovery: r.preRecovery,
       sessionDate: r.sessionDate.toISOString().slice(0, 10),
+      sessionRpe: r.sessionRpe !== null ? Number(r.sessionRpe) : null,
+    }));
+    const checkins = checkinRows.map((r) => ({
+      date: r.date.toISOString().slice(0, 10),
+      motivation: r.motivation,
+      recovery: r.recovery,
+      sleep: r.sleep,
+    }));
+    const weeklyLoads = loadRows.map((r) => ({
+      content: r.content,
+      id: r.id,
+      updatedAt: r.updatedAt.toISOString(),
+      weekStartDate: r.weekStartDate.toISOString().slice(0, 10),
     }));
     const weeklyReports = reportRows.map((r) => ({
       adherencePercent: r.adherencePercent,
@@ -82,8 +119,10 @@ export class ListClientWellnessUseCase {
       weekStartDate: r.weekStartDate.toISOString().slice(0, 10),
     }));
     return {
+      checkins,
       sessions,
       summary: buildSummary(sessions, weeklyReports),
+      weeklyLoads,
       weeklyReports,
     };
   }
@@ -97,6 +136,8 @@ export class ListClientWellnessUseCase {
       },
       orderBy: [{ sessionDate: 'desc' }],
       select: {
+        finishComment: true,
+        finishedAt: true,
         id: true,
         isCompleted: true,
         planDayTitle: true,
@@ -107,7 +148,26 @@ export class ListClientWellnessUseCase {
         preMotivation: true,
         preRecovery: true,
         sessionDate: true,
+        sessionRpe: true,
       },
+    });
+  }
+
+  private async queryCheckins(clientId: string, dateFrom: Date, dateTo: Date) {
+    return this.prisma.dailyCheckin.findMany({
+      where: { clientId, date: { gte: dateFrom, lte: dateTo } },
+      orderBy: [{ date: 'asc' }],
+      select: { date: true, motivation: true, recovery: true, sleep: true },
+    });
+  }
+
+  private async queryWeeklyLoads(clientId: string, dateFrom: Date, dateTo: Date) {
+    const from = new Date(`${mondayOfKey(dateFrom.toISOString().slice(0, 10))}T00:00:00.000Z`);
+    const to = new Date(`${addDaysToKey(dateTo.toISOString().slice(0, 10), 7)}T00:00:00.000Z`);
+    return this.prisma.clientWeeklyLoad.findMany({
+      where: { clientId, weekStartDate: { gte: from, lte: to } },
+      orderBy: [{ weekStartDate: 'desc' }],
+      select: { content: true, id: true, updatedAt: true, weekStartDate: true },
     });
   }
 

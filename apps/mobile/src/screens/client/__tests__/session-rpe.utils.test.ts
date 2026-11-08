@@ -62,6 +62,15 @@ describe('session RPE', () => {
   it('formats a chat notice for the coach', () => {
     expect(formatSessionRpeChatNotice(7.5, 'Muy duro')).toBe('RPE de la sesión registrado: 7.5/10 (Muy duro).');
   });
+  it('guarda el comentario recortado y permite omitir el RPE', () => {
+    expect(finishSessionWithRpePayload(7, '  Buen día  ')).toMatchObject({ comment: 'Buen día', sessionRpe: 7 });
+    expect(finishSessionWithRpePayload(null, '   ')).toMatchObject({ comment: null, sessionRpe: null });
+    expect(finishSessionBody(null, 60, null, 'Solo comentario')).toMatchObject({
+      comment: 'Solo comentario',
+      performedDurationSeconds: 60,
+      sessionRpe: null,
+    });
+  });
 });
 
 it('asks for confirmation only when the clock is under 20 minutes', () => {

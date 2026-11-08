@@ -1,3 +1,4 @@
+import { localDateKey } from './daily-checkin.utils';
 export { MOOD_EMOJI } from './client-calendar.helpers';
 
 const WELLNESS_RANGE_DAYS = 84;
@@ -20,7 +21,7 @@ export function formatDateLabel(dateStr: string): string {
 }
 
 function toDateStr(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  return localDateKey(date);
 }
 
 export function hasWellnessData(session: {

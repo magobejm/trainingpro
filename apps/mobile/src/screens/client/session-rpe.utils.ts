@@ -37,45 +37,46 @@ export function sessionRpeBand(value: number): SessionRpeBand {
   return { key: 'max', bg: '#fef2f2', border: '#fecaca', text: '#b91c1c' };
 }
 
-export function finishSessionWithRpePayload(value: number): {
-  comment: null;
+export type FinishSessionPayload = {
+  comment: string | null;
   isIncomplete: false;
   postFatigue: null;
   postMood: null;
   postPain: null;
-  sessionRpe: number;
-} {
+  sessionRpe: number | null;
+};
+
+export const SESSION_COMMENT_MAX_CHARS = 2000;
+
+export function cleanSessionComment(value: string | null | undefined): string | null {
+  const text = (value ?? '').trim().slice(0, SESSION_COMMENT_MAX_CHARS);
+  return text.length > 0 ? text : null;
+}
+
+/** El RPE y el comentario son opcionales: omitirlos termina la sesión igualmente. */
+export function finishSessionWithRpePayload(value: number | null, comment?: string | null): FinishSessionPayload {
   return {
-    comment: null,
+    comment: cleanSessionComment(comment),
     isIncomplete: false,
     postFatigue: null,
     postMood: null,
     postPain: null,
-    sessionRpe: clampSessionRpe(value),
+    sessionRpe: value == null ? null : clampSessionRpe(value),
   };
 }
 
 export function finishSessionBody(
-  sessionRpe: number,
+  sessionRpe: number | null,
   performedDurationSeconds: number | null,
   finishedAt?: string | null,
-): {
-  comment: null;
-  finishedAt?: string;
-  isIncomplete: false;
-  performedDurationSeconds: number | null;
-  postFatigue: null;
-  postMood: null;
-  postPain: null;
-  sessionRpe: number;
-} {
+  comment?: string | null,
+): FinishSessionPayload & { finishedAt?: string; performedDurationSeconds: number | null } {
   return {
-    ...finishSessionWithRpePayload(sessionRpe),
+    ...finishSessionWithRpePayload(sessionRpe, comment),
     ...(finishedAt ? { finishedAt } : {}),
     performedDurationSeconds,
   };
 }
-
 export function formatSessionRpeChatNotice(value: number, label: string): string {
   return `RPE de la sesión registrado: ${formatSessionRpe(value)}/10 (${label}).`;
 }

@@ -7,6 +7,8 @@ const range = {
 };
 
 const sessionRow = {
+  finishComment: 'Buen día',
+  finishedAt: new Date('2026-09-15T18:00:00.000Z'),
   id: 'session-1',
   isCompleted: true,
   planDayTitle: 'Push',
@@ -17,6 +19,7 @@ const sessionRow = {
   preMotivation: 7,
   preRecovery: 6,
   sessionDate: new Date('2026-09-15T00:00:00.000Z'),
+  sessionRpe: { toString: () => '7.5', valueOf: () => 7.5 },
 };
 
 const reportRow = {
@@ -31,6 +34,8 @@ const reportRow = {
 
 describe('ListClientWellnessUseCase', () => {
   const prisma = {
+    clientWeeklyLoad: { findMany: jest.fn() },
+    dailyCheckin: { findMany: jest.fn() },
     sessionInstance: { findMany: jest.fn() },
     weeklyReport: { findMany: jest.fn() },
   };
@@ -43,10 +48,23 @@ describe('ListClientWellnessUseCase', () => {
   beforeEach(() => {
     prisma.sessionInstance.findMany.mockReset();
     prisma.weeklyReport.findMany.mockReset();
+    prisma.dailyCheckin.findMany.mockReset();
+    prisma.clientWeeklyLoad.findMany.mockReset();
     clientsRepository.canCoachAccessClient.mockReset();
     clientsRepository.findClientByEmail.mockReset();
     prisma.sessionInstance.findMany.mockResolvedValue([sessionRow]);
     prisma.weeklyReport.findMany.mockResolvedValue([reportRow]);
+    prisma.dailyCheckin.findMany.mockResolvedValue([
+      { date: new Date('2026-09-14T00:00:00.000Z'), motivation: 4, recovery: 3, sleep: 5 },
+    ]);
+    prisma.clientWeeklyLoad.findMany.mockResolvedValue([
+      {
+        content: 'Semana de cierre',
+        id: 'load-1',
+        updatedAt: new Date('2026-09-18T10:00:00.000Z'),
+        weekStartDate: new Date('2026-09-21T00:00:00.000Z'),
+      },
+    ]);
     useCase = new ListClientWellnessUseCase(prisma as never, clientsRepository as never);
   });
 
@@ -64,6 +82,9 @@ describe('ListClientWellnessUseCase', () => {
     expect(result.summary.sessionsWithWellness).toBe(1);
     expect(result.sessions[0]?.sessionDate).toBe('2026-09-15');
     expect(result.weeklyReports[0]?.sleepHours).toBe(7.5);
+    expect(result.sessions[0]).toMatchObject({ finishComment: 'Buen día', sessionRpe: 7.5 });
+    expect(result.checkins).toEqual([{ date: '2026-09-14', motivation: 4, recovery: 3, sleep: 5 }]);
+    expect(result.weeklyLoads[0]).toMatchObject({ content: 'Semana de cierre', weekStartDate: '2026-09-21' });
   });
 
   it('returns wellness for a coach-owned clientId', async () => {

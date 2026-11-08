@@ -422,6 +422,7 @@ model Client {
   weeklyReports             WeeklyReport[]
   chatThreads               ChatThread[]                 @relation("client_chat_threads")
   dayNotes                  ClientDayNote[]
+  weeklyLoads               ClientWeeklyLoad[]
   callProposals             CallProposal[]               @relation("client_call_proposals")
   notificationDeviceTokens  NotificationDeviceToken[]
   notificationEventLogs     NotificationEventLog[]
@@ -2342,6 +2343,19 @@ model ClientDayNote {
 
   @@unique([clientId, date], map: "uq_client_day_note_client_date")
   @@map("client_day_note")
+}
+
+model ClientWeeklyLoad {
+  id            String   @id @default(uuid()) @db.Uuid
+  clientId      String   @map("client_id") @db.Uuid
+  weekStartDate DateTime @map("week_start_date") @db.Date
+  content       String   @db.Text
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  client        Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, weekStartDate], map: "uq_client_weekly_load_client_week")
+  @@map("client_weekly_load")
 }
 
 model CallProposal {

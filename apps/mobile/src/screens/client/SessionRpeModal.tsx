@@ -14,7 +14,9 @@ import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
 import { completeRpeValue, sanitizeRpeInput } from './effort-input.utils';
 import {
+  cleanSessionComment,
   clampSessionRpe,
+  SESSION_COMMENT_MAX_CHARS,
   DEFAULT_SESSION_RPE,
   formatSessionRpe,
   SESSION_RPE_STEP,
@@ -25,17 +27,19 @@ type Props = {
   isSubmitting: boolean;
   visible: boolean;
   onClose: () => void;
-  onSubmit: (sessionRpe: number) => void;
+  onSubmit: (input: { comment: string | null; sessionRpe: number | null }) => void;
 };
 
 export function SessionRpeModal(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const [draft, setDraft] = useState(formatSessionRpe(DEFAULT_SESSION_RPE));
+  const [comment, setComment] = useState('');
   const sessionRpe = completeRpeValue(draft);
 
   useEffect(() => {
     if (props.visible) {
       setDraft(formatSessionRpe(DEFAULT_SESSION_RPE));
+      setComment('');
     }
   }, [props.visible]);
 
@@ -65,16 +69,35 @@ export function SessionRpeModal(props: Props): React.JSX.Element {
             style={styles.scrollView}
           >
             <SessionRpeCard draft={draft} onChange={setDraft} />
+            <Text style={styles.commentLabel}>{t('mobile.client.rpe.commentLabel')}</Text>
+            <TextInput
+              accessibilityLabel={t('mobile.client.rpe.commentLabel')}
+              maxLength={SESSION_COMMENT_MAX_CHARS}
+              multiline
+              onChangeText={setComment}
+              placeholder={t('mobile.client.rpe.commentPlaceholder')}
+              placeholderTextColor={LIGHT.textMuted}
+              style={styles.commentInput}
+              textAlignVertical={'top'}
+              value={comment}
+            />
           </ScrollView>
           <Pressable
             disabled={props.isSubmitting || sessionRpe == null}
             onPress={() => {
               if (sessionRpe == null) return;
-              props.onSubmit(sessionRpe);
+              props.onSubmit({ comment: cleanSessionComment(comment), sessionRpe });
             }}
             style={[styles.saveBtn, props.isSubmitting || sessionRpe == null ? styles.saveBtnDisabled : null]}
           >
             <Text style={styles.saveText}>{t('mobile.client.rpe.save')}</Text>
+          </Pressable>
+          <Pressable
+            disabled={props.isSubmitting}
+            onPress={() => props.onSubmit({ comment: cleanSessionComment(comment), sessionRpe: null })}
+            style={styles.skipBtn}
+          >
+            <Text style={styles.skipText}>{t('mobile.client.rpe.skip')}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -144,6 +167,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 12,
   },
+  commentInput: {
+    backgroundColor: LIGHT.bgCard,
+    borderColor: LIGHT.border,
+    borderRadius: LIGHT.radiusLg,
+    borderWidth: 1,
+    color: LIGHT.textStrong,
+    fontSize: 14,
+    minHeight: 84,
+    padding: 10,
+  },
+  commentLabel: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '800', marginBottom: 6, marginTop: 14 },
   closeBtn: {
     alignItems: 'center',
     backgroundColor: LIGHT.accentSoft,
@@ -177,6 +211,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 14,
   },
+  skipBtn: { alignItems: 'center', paddingVertical: 12 },
+  skipText: { color: LIGHT.indigo, fontSize: 13, fontWeight: '800' },
   saveBtnDisabled: { opacity: 0.45 },
   saveText: { color: LIGHT.textOnNavy, fontSize: 14, fontWeight: '800' },
   scroll: { paddingBottom: 8 },

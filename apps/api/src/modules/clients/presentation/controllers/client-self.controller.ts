@@ -41,9 +41,15 @@ import {
 } from '../../application/use-cases/skip-client-session.usecase';
 import { ListClientWellnessUseCase } from '../../application/use-cases/list-client-wellness.usecase';
 import { SaveClientDayNoteUseCase } from '../../application/use-cases/save-client-day-note.usecase';
+import { SaveClientWeeklyLoadUseCase } from '../../application/use-cases/save-client-weekly-load.usecase';
 import type { ClientRoutine } from '../../domain/client-routine';
 import { ClientCalendarQueryDto, ClientWellnessQueryDto } from '../dto/client-calendar-query.dto';
-import { ClientDayNoteParamDto, ClientDayNotesQueryDto, SaveClientDayNoteDto } from '../dto/save-client-day-note.dto';
+import {
+  ClientDayNoteParamDto,
+  ClientDayNotesQueryDto,
+  SaveClientDayNoteDto,
+  SaveClientWeeklyLoadDto,
+} from '../dto/save-client-day-note.dto';
 import { EnsureClientSelfSessionDto } from '../dto/ensure-client-self-session.dto';
 import { SkipClientSessionDto } from '../dto/skip-client-session.dto';
 import { SessionIdParamDto } from '../../../sessions/presentation/dto/session-id-param.dto';
@@ -71,6 +77,7 @@ export class ClientSelfController {
     private readonly clientNeatLogService: ClientNeatLogService,
     private readonly clientSelfProgressService: ClientSelfProgressService,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
+    private readonly saveClientWeeklyLoadUseCase: SaveClientWeeklyLoadUseCase,
     private readonly skipClientSessionUseCase: SkipClientSessionUseCase,
     private readonly undoClientSessionSkipUseCase: UndoClientSessionSkipUseCase,
     @Inject(FILE_STORAGE)
@@ -180,6 +187,11 @@ export class ClientSelfController {
     @Req() request: HttpAuthRequest,
   ) {
     return this.saveClientDayNoteUseCase.execute(readAuthContext(request), params.date, body.content);
+  }
+
+  @Put('me/weekly-load')
+  async saveMyWeeklyLoad(@Body() body: SaveClientWeeklyLoadDto, @Req() request: HttpAuthRequest) {
+    return this.saveClientWeeklyLoadUseCase.execute(readAuthContext(request), body.weekStartDate, body.content);
   }
 
   @Get('me/sessions')

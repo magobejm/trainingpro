@@ -164,6 +164,23 @@ export class NutritionLogService {
     return { days, summary: foldDays(days) };
   }
 
+  /** Adherencia del propio cliente; `assigned` distingue "sin plan" de "plan asignado sin comidas esperadas". */
+  async adherenceMine(
+    context: AuthContext,
+    from: string,
+    to: string,
+  ): Promise<{ assigned: boolean; days: AdherenceDay[]; summary: AdherenceDay }> {
+    const assigned = await this.plans.getClientAssignedPlans(context);
+    const clientId = assigned[0]?.clientId;
+    if (!clientId) {
+      const days = eachPlanDate(from, to).map((date) => daySummary([], [], date));
+      return { assigned: false, days, summary: foldDays(days) };
+    }
+    const logs = (await this.logs.listForCoach(clientId, from, to)).map((row) => this.toView(row));
+    const days = eachPlanDate(from, to).map((date) => daySummary(assigned, logs, date));
+    return { assigned: true, days, summary: foldDays(days) };
+  }
+
   private toView(row: {
     aiEstimate?: Prisma.JsonValue | null;
     comment: string | null;

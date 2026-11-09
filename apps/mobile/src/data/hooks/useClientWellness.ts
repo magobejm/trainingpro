@@ -74,6 +74,7 @@ async function fetchWellness(
 }
 
 export type AdherenceSummary = { percent: null | number };
+export type TrainingAdherence = AdherenceSummary & { assigned: boolean };
 
 export function useMyTrainingAdherenceQuery(from: string, to: string) {
   const auth = useAuth();
@@ -81,7 +82,7 @@ export function useMyTrainingAdherenceQuery(from: string, to: string) {
     enabled: Boolean(auth),
     queryFn: () => {
       if (!auth) throw new Error('Missing authenticated context');
-      return createApiClient(auth).get<AdherenceSummary>(`/progress/adherence?from=${from}&to=${to}`);
+      return createApiClient(auth).get<TrainingAdherence>(`/progress/adherence?from=${from}&to=${to}`);
     },
     queryKey: ['clients', 'me', 'adherence', 'training', from, to],
   });

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 export type AdherenceResult = {
+  assigned: boolean;
   from: string;
   to: string;
   cutoffDate: string;

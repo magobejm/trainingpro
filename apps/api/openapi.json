@@ -4454,6 +4454,9 @@
       "WorkoutAdherence": {
         "additionalProperties": false,
         "properties": {
+          "assigned": {
+            "type": "boolean"
+          },
           "counts": {
             "additionalProperties": false,
             "properties": {
@@ -4524,7 +4527,7 @@
             "type": "integer"
           }
         },
-        "required": ["from", "to", "cutoffDate", "percent", "plannedCount", "counts", "unplannedSessionsCount"],
+        "required": ["assigned", "from", "to", "cutoffDate", "percent", "plannedCount", "counts", "unplannedSessionsCount"],
         "type": "object"
       }
     },

@@ -3,6 +3,7 @@ import { z } from 'zod';
 const count = z.number().int().nonnegative();
 export const workoutAdherenceSchema = z
   .object({
+    assigned: z.boolean(),
     from: z.string().date(),
     to: z.string().date(),
     cutoffDate: z.string().date(),

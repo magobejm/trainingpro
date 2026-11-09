@@ -14,7 +14,6 @@ import {
 } from '../../data/hooks/useClientWellness';
 import { useAdherenceQuery } from '../../data/hooks/useAdherenceQuery';
 import { useClientNutritionPlansQuery, useNutritionAdherenceQuery } from '../../data/hooks/useNutrition';
-import { useAppliedRoutineQuery } from '../../data/hooks/useRoutineAssignments';
 import { MoodAdherenceCards, MoodJournalTabs } from './ClientMoodExtras';
 import { ClientMoodTrendChart } from './ClientMoodTrendChart';
 import { buildDefaultWellnessRange, formatDateLabel, formatScore, hasWellnessData, toDateStr } from './client-mood.helpers';
@@ -45,7 +44,6 @@ function useClientMoodViewModel(props: Props) {
     from.setDate(from.getDate() - ADHERENCE_DAYS + 1);
     return toDateStr(from);
   }, []);
-  const routine = useAppliedRoutineQuery(props.clientId);
   const training = useAdherenceQuery({ clientId: props.clientId, from: adherenceFrom, to: endDate });
   const nutritionPlans = useClientNutritionPlansQuery(props.clientId);
   const nutrition = useNutritionAdherenceQuery(props.clientId, adherenceFrom, endDate);
@@ -54,7 +52,7 @@ function useClientMoodViewModel(props: Props) {
     adherence: {
       nutritionAssigned: (nutritionPlans.data?.length ?? 0) > 0,
       nutritionPercent: nutrition.data?.summary.percent ?? null,
-      trainingAssigned: Boolean(routine.data),
+      trainingAssigned: training.data?.assigned === true,
       trainingPercent: training.data?.percent ?? null,
     },
     endDate,

@@ -78,6 +78,7 @@ it('exports canonical outcomes, real adherence cutoff and coverage without fabri
       },
     ],
     adherence: {
+      assigned: true,
       from: '2026-10-01',
       to: '2026-10-20',
       cutoffDate: '2026-10-19',

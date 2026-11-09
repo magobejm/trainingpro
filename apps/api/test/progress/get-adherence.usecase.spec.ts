@@ -35,6 +35,22 @@ describe('adherence authorization and empty agenda', () => {
     );
     expect(prisma.calendarEvent.findMany).not.toHaveBeenCalled();
   });
+  it('reports a training plan from the client row', async () => {
+    const prisma = emptyAgenda();
+    prisma.client.findFirst.mockResolvedValue({
+      activeRoutineAssignmentId: null,
+      id: 'client',
+      trainingPlanId: 'plan',
+    });
+    Object.assign(prisma, { planTemplateNeat: { count: jest.fn().mockResolvedValue(0) } });
+    const result = await new GetAdherenceUseCase(prisma as never).execute(clientUser, dates);
+    expect(result.assigned).toBe(true);
+  });
+  it('reports no training plan when the client has neither a plan nor an assignment', async () => {
+    const prisma = emptyAgenda();
+    const result = await new GetAdherenceUseCase(prisma as never).execute(clientUser, dates);
+    expect(result.assigned).toBe(false);
+  });
   it('resolves the signed-in client by email', async () => {
     const prisma = emptyAgenda();
     await new GetAdherenceUseCase(prisma as never).execute(clientUser, dates);

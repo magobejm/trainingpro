@@ -8,7 +8,6 @@ import {
   useMyTrainingAdherenceQuery,
   useSaveWeeklyLoadMutation,
 } from '../../data/hooks/useClientWellness';
-import { useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
 import { nextWeekStart } from '@trainerpro/shared';
 import {
   useUpsertWeeklyReportMutation,
@@ -43,7 +42,6 @@ export function ClientMoodScreen({ initialTab, onClose }: Props): React.JSX.Elem
     from.setDate(from.getDate() - ADHERENCE_DAYS + 1);
     return localDateKey(from);
   }, []);
-  const routine = useClientRoutineQuery();
   const training = useMyTrainingAdherenceQuery(adherenceFrom, reportDate);
   const nutrition = useMyNutritionAdherenceQuery(adherenceFrom, reportDate);
   const weeklyQuery = useWeeklyReportQuery(reportDate);
@@ -84,7 +82,7 @@ export function ClientMoodScreen({ initialTab, onClose }: Props): React.JSX.Elem
         <MoodAdherenceCards
           nutritionAssigned={nutrition.data?.assigned === true}
           nutritionPercent={nutrition.data?.summary.percent ?? null}
-          trainingAssigned={Boolean(routine.data)}
+          trainingAssigned={training.data?.assigned === true}
           trainingPercent={training.data?.percent ?? null}
         />
         {query.isLoading ? (

@@ -14,7 +14,7 @@ export class GetAdherenceUseCase {
     if (context.activeRole !== 'coach' && context.activeRole !== 'client')
       throw new ForbiddenException('Client progress is restricted');
     const client = await this.prisma.client.findFirst({
-      select: { id: true },
+      select: { activeRoutineAssignmentId: true, id: true, trainingPlanId: true },
       where: {
         archivedAt: null,
         ...(input.clientId ? { id: input.clientId } : {}),
@@ -28,6 +28,10 @@ export class GetAdherenceUseCase {
     if (!client) throw new ForbiddenException('Client not found for current user');
     const adherence = await readWorkoutAdherence(this.prisma, { ...input, clientId: client.id });
     const neat = await readNeatAdherence(this.prisma, client.id, input.from, input.to, input.timezoneOffset);
-    return { ...adherence, neat };
+    return {
+      ...adherence,
+      assigned: Boolean(client.trainingPlanId || client.activeRoutineAssignmentId),
+      neat,
+    };
   }
 }

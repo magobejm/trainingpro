@@ -3,6 +3,16 @@ import type { AuthContext } from '../../src/common/auth-context/auth-context';
 
 const dates = { from: new Date('2026-10-01'), to: new Date('2026-10-02') };
 const coach = { activeRole: 'coach', subject: 'coach-subject' } as AuthContext;
+const clientUser = { activeRole: 'client', email: 'Client5@example.com', subject: 'client-subject' } as AuthContext;
+
+function emptyAgenda() {
+  return {
+    client: { findFirst: jest.fn().mockResolvedValue({ id: 'client' }) },
+    calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
+    sessionInstance: { findMany: jest.fn().mockResolvedValue([]) },
+    clientNeatLog: { count: jest.fn().mockResolvedValue(0) },
+  };
+}
 
 describe('adherence authorization and empty agenda', () => {
   it('requires a coach client selection before querying data', async () => {
@@ -25,13 +35,17 @@ describe('adherence authorization and empty agenda', () => {
     );
     expect(prisma.calendarEvent.findMany).not.toHaveBeenCalled();
   });
+  it('resolves the signed-in client by email', async () => {
+    const prisma = emptyAgenda();
+    await new GetAdherenceUseCase(prisma as never).execute(clientUser, dates);
+    expect(prisma.client.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { archivedAt: null, email: 'client5@example.com' },
+      }),
+    );
+  });
   it('reports no registered agenda instead of manufacturing planned workouts', async () => {
-    const prisma = {
-      client: { findFirst: jest.fn().mockResolvedValue({ id: 'client' }) },
-      calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
-      sessionInstance: { findMany: jest.fn().mockResolvedValue([]) },
-      clientNeatLog: { count: jest.fn().mockResolvedValue(0) },
-    };
+    const prisma = emptyAgenda();
     const result = await new GetAdherenceUseCase(prisma as never).execute(coach, { ...dates, clientId: 'client' });
     expect(result).toMatchObject({
       percent: null,

@@ -22,7 +22,7 @@ export class GetAdherenceUseCase {
           ? {
               coachMembership: { archivedAt: null, isActive: true, role: 'COACH', user: { supabaseUid: context.subject } },
             }
-          : { user: { supabaseUid: context.subject } }),
+          : { email: context.email?.toLowerCase() ?? '' }),
       },
     });
     if (!client) throw new ForbiddenException('Client not found for current user');

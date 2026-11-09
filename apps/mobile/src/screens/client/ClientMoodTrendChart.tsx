@@ -85,18 +85,19 @@ export function ClientMoodTrendChart(props: Props): React.JSX.Element {
           {visible.map((key) => (
             <SeriesLine geometry={geometry} key={key} points={points} seriesKey={key} />
           ))}
+        </Svg>
+        <View pointerEvents={'box-none'} style={styles.hits}>
           {points.map((point, index) => (
-            <Rect
-              fill={'transparent'}
-              height={CHART_HEIGHT}
+            <DayHit
+              column={columnWidth(points.length, geometry)}
+              index={index}
               key={point.date}
+              label={point.date}
               onPress={() => setSelected(point.date)}
-              width={columnWidth(points.length, geometry)}
-              x={geometry.padLeft + columnWidth(points.length, geometry) * index}
-              y={0}
+              padLeft={geometry.padLeft}
             />
           ))}
-        </Svg>
+        </View>
       </View>
       <ChartLegend />
       {detail ? <DayDetail point={detail} /> : <Text style={styles.hint}>{t('client.mood.chart.tapHint')}</Text>}
@@ -239,6 +240,23 @@ function DayDetail({ point }: { point: WellnessTrendPoint }): React.JSX.Element 
   );
 }
 
+function DayHit(props: {
+  column: number;
+  index: number;
+  label: string;
+  onPress: () => void;
+  padLeft: number;
+}): React.JSX.Element {
+  return (
+    <Pressable
+      accessibilityLabel={props.label}
+      accessibilityRole={'button'}
+      onPress={props.onPress}
+      style={[styles.hit, { left: props.padLeft + props.column * props.index, width: props.column }]}
+    />
+  );
+}
+
 function Pill(props: { color?: string; label: string; on: boolean; onPress: () => void }): React.JSX.Element {
   const tint = props.color ?? LIGHT.accent;
   return (
@@ -267,6 +285,8 @@ const styles = StyleSheet.create({
   detailLine: { color: LIGHT.text, fontSize: 12 },
   detailTitle: { color: LIGHT.textStrong, fontSize: 13, fontWeight: '800' },
   headerRow: { alignItems: 'center', flexDirection: 'row', justifyContent: 'space-between' },
+  hit: { backgroundColor: 'transparent', bottom: 0, position: 'absolute', top: 0 },
+  hits: { bottom: 0, left: 0, position: 'absolute', right: 0, top: 0 },
   hint: { color: LIGHT.textMuted, fontSize: 11, textAlign: 'center' },
   legend: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   legendItem: { alignItems: 'center', flexDirection: 'row', gap: 6 },

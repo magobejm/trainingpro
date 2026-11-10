@@ -5,6 +5,7 @@ export type MobilitySeedExercise = {
   anatomicalPlane: string;
   description: string;
   instructions: string;
+  youtubeUrl?: string;
 };
 
 export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
@@ -127,6 +128,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     instructions:
       '• Intenta mantener el pecho erguido y las manos fuera del suelo si tu movilidad lo permite.' +
       ' | • Mantén ambos glúteos lo más cerca posible del suelo durante la transición.',
+    youtubeUrl: 'https://youtube.com/shorts/qNGTHM5NabA?feature=share',
   },
   {
     name: 'Couch Stretch',
@@ -146,8 +148,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'abduccion de cadera',
     anatomicalPlane: 'transversal',
     description:
-      'Pierna delantera flexionada en suelo y trasera estirada.' +
-      ' Libera la tensión en el glúteo y rotadores externos.',
+      'Pierna delantera flexionada en suelo y trasera estirada.' + ' Libera la tensión en el glúteo y rotadores externos.',
     instructions:
       '• Mantén la cadera "cuadrada", mirando hacia el suelo, sin volcar el peso hacia un lado.' +
       ' | • No fuerces la rodilla delantera; el ángulo debe ser cómodo para tu articulación.',
@@ -158,8 +159,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'abduccion de cadera',
     anatomicalPlane: 'frontal',
     description:
-      'En cuadrupedia, abrir rodillas lateralmente y llevar la cadera hacia atrás.' +
-      ' Apertura profunda de aductores.',
+      'En cuadrupedia, abrir rodillas lateralmente y llevar la cadera hacia atrás.' + ' Apertura profunda de aductores.',
     instructions:
       '• Mantén los pies alineados con las rodillas (pies hacia afuera) para proteger la articulación.' +
       ' | • No permitas que la espalda lumbar se hunda; mantén una posición neutra de columna.',
@@ -206,8 +206,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'bisagra de cadera',
     anatomicalPlane: 'sagital',
     description:
-      'Flexión de columna vértebra a vértebra hacia el suelo con peso ligero.' +
-      ' Fortalece y estira la cadena posterior.',
+      'Flexión de columna vértebra a vértebra hacia el suelo con peso ligero.' + ' Fortalece y estira la cadena posterior.',
     instructions:
       '• Baja de forma extremadamente lenta, sintiendo cómo se dobla cada vértebra una a una.' +
       ' | • El peso debe ser mínimo; la clave es la sensación, no la carga.',
@@ -230,8 +229,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'rotacion/anti-rotacion',
     anatomicalPlane: 'transversal',
     description:
-      'Pasar un brazo por debajo del cuerpo en cuadrupedia, buscando apoyar el hombro.' +
-      ' Rotación de la espalda media.',
+      'Pasar un brazo por debajo del cuerpo en cuadrupedia, buscando apoyar el hombro.' + ' Rotación de la espalda media.',
     instructions:
       '• Mantén la cadera estable y centrada; no permitas que se desplace hacia los lados.' +
       ' | • Busca el máximo rango de rotación empujando el hombro activamente hacia el suelo.',
@@ -242,8 +240,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'estabilizacion',
     anatomicalPlane: 'sagital',
     description:
-      'Sentado sobre talones con el torso hacia adelante en el suelo.' +
-      ' Descomprime la zona lumbar y relaja la espalda.',
+      'Sentado sobre talones con el torso hacia adelante en el suelo.' + ' Descomprime la zona lumbar y relaja la espalda.',
     instructions:
       '• Abre las rodillas para permitir que el torso baje más y la respiración sea fluida.' +
       ' | • Camina con los dedos hacia adelante para estirar también los dorsales y hombros.',
@@ -299,8 +296,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Hombro',
     movementPattern: 'abduccion de hombro',
     anatomicalPlane: 'frontal',
-    description:
-      'Pasar un palo o banda desde la cadera frontal hasta la zona lumbar trasera con brazos estirados.',
+    description: 'Pasar un palo o banda desde la cadera frontal hasta la zona lumbar trasera con brazos estirados.',
     instructions:
       '• Mantén los codos totalmente bloqueados; si se doblan, abre más el agarre en el palo.' +
       ' | • Mantén el abdomen apretado para que las costillas no se "abran" al pasar el palo atrás.',
@@ -311,8 +307,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'traccion horizontal',
     anatomicalPlane: 'transversal',
     description:
-      'Separar la banda frente al pecho hasta tocar el esternón.' +
-      ' Activa los músculos que mantienen los hombros atrás.',
+      'Separar la banda frente al pecho hasta tocar el esternón.' + ' Activa los músculos que mantienen los hombros atrás.',
     instructions:
       '• Inicia el movimiento juntando las escápulas, no tirando solo con los brazos.' +
       ' | • Mantén los hombros bajos, evitando que suban hacia las orejas durante la apertura.',
@@ -335,8 +330,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'rotacion/anti-rotacion',
     anatomicalPlane: 'transversal',
     description:
-      'Con codos pegados al cuerpo, abrir las manos hacia afuera estirando la banda.' +
-      ' Fortalece los rotadores externos.',
+      'Con codos pegados al cuerpo, abrir las manos hacia afuera estirando la banda.' + ' Fortalece los rotadores externos.',
     instructions:
       '• Mantén los codos "cosidos" a tus costados en todo momento; no permitas que se separen.' +
       ' | • Saca pecho y mantén las escápulas retraídas durante toda la serie.',
@@ -347,8 +341,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'abduccion de hombro',
     anatomicalPlane: 'frontal',
     description:
-      'Deslizar los brazos por la pared manteniendo contacto con muñecas y codos.' +
-      ' Excelente para la postura.',
+      'Deslizar los brazos por la pared manteniendo contacto con muñecas y codos.' + ' Excelente para la postura.',
     instructions:
       '• Intenta que toda la espalda y la zona lumbar estén en contacto con la pared.' +
       ' | • No fuerces el rango; sube solo hasta donde puedas mantener el contacto de los codos.',
@@ -359,8 +352,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     movementPattern: 'estabilizacion',
     anatomicalPlane: 'sagital',
     description:
-      'En posición de plancha, juntar y separar las escápulas sin doblar los codos.' +
-      ' Mejora el control del serrato.',
+      'En posición de plancha, juntar y separar las escápulas sin doblar los codos.' + ' Mejora el control del serrato.',
     instructions:
       '• Los brazos deben permanecer totalmente rectos; el movimiento es solo de la espalda media.' +
       ' | • No permitas que la cabeza caiga hacia el suelo al juntar las escápulas.',
@@ -370,8 +362,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Hombro',
     movementPattern: 'rotacion/anti-rotacion',
     anatomicalPlane: 'transversal',
-    description:
-      'Tumbado de lado, presionar el antebrazo hacia el suelo para estirar los rotadores internos.',
+    description: 'Tumbado de lado, presionar el antebrazo hacia el suelo para estirar los rotadores internos.',
     instructions:
       '• Realiza la presión de forma muy suave; es una articulación sensible.' +
       ' | • Mantén el hombro de apoyo directamente debajo del cuerpo para estabilizar la posición.',
@@ -381,8 +372,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Cuello',
     movementPattern: 'rotacion/anti-rotacion',
     anatomicalPlane: 'transversal',
-    description:
-      'Círculos lentos y controlados con el cuello buscando el máximo rango sin dolor.',
+    description: 'Círculos lentos y controlados con el cuello buscando el máximo rango sin dolor.',
     instructions:
       '• Mantén el resto del cuerpo inmóvil; solo debe moverse la articulación del cuello.' +
       ' | • Evita movimientos rápidos; la clave es el control en los puntos de mayor tensión.',
@@ -392,8 +382,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Muñeca',
     movementPattern: 'estabilizacion',
     anatomicalPlane: 'sagital',
-    description:
-      'En cuadrupedia, apoyar palmas con dedos mirando hacia las rodillas e inclinarse atrás.',
+    description: 'En cuadrupedia, apoyar palmas con dedos mirando hacia las rodillas e inclinarse atrás.',
     instructions:
       '• Mantén las palmas totalmente apoyadas en el suelo; no permitas que se levanten.' +
       ' | • Realiza el estiramiento de forma progresiva y sin rebotes.',
@@ -403,8 +392,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Muñeca',
     movementPattern: 'estabilizacion',
     anatomicalPlane: 'transversal',
-    description:
-      'Círculos amplios con las muñecas manteniendo las manos cerradas o abiertas.',
+    description: 'Círculos amplios con las muñecas manteniendo las manos cerradas o abiertas.',
     instructions:
       '• Busca el máximo rango de movimiento en cada dirección del círculo.' +
       ' | • Mantén los antebrazos relajados para que el movimiento sea fluido en la muñeca.',
@@ -414,8 +402,7 @@ export const MOBILITY_EXERCISES: MobilitySeedExercise[] = [
     bodyPart: 'Codo',
     movementPattern: 'rotacion/anti-rotacion',
     anatomicalPlane: 'transversal',
-    description:
-      'Girar la palma de la mano hacia arriba y hacia abajo manteniendo el codo pegado al cuerpo.',
+    description: 'Girar la palma de la mano hacia arriba y hacia abajo manteniendo el codo pegado al cuerpo.',
     instructions:
       '• El movimiento debe ser una rotación pura del antebrazo, sin mover el hombro.' +
       ' | • Mantén el codo flexionado a 90 grados para aislar el movimiento correctamente.',

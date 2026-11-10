@@ -56,17 +56,23 @@ export class LibrarySeedService {
   async seedMobilityLibrary() {
     await this.upsertCatalog(MOBILITY_EXTRA_PATTERNS, (p) =>
       this.prisma.movementPattern.upsert({
-        where: { code: p.code }, update: {}, create: { ...p, isDefault: false },
+        where: { code: p.code },
+        update: {},
+        create: { ...p, isDefault: false },
       }),
     );
     await this.upsertCatalog(MOBILITY_TYPES, (mt) =>
       this.prisma.mobilityTypeRef.upsert({
-        where: { code: mt.code }, update: {}, create: { ...mt, isDefault: mt.isDefault ?? false },
+        where: { code: mt.code },
+        update: {},
+        create: { ...mt, isDefault: mt.isDefault ?? false },
       }),
     );
     await this.upsertCatalog(NEW_EQUIPMENT, (eq) =>
       this.prisma.exerciseEquipment.upsert({
-        where: { code: eq.code }, update: {}, create: { ...eq, isDefault: false },
+        where: { code: eq.code },
+        update: {},
+        create: { ...eq, isDefault: false },
       }),
     );
     const maps = await this.buildLookupMaps();
@@ -76,7 +82,9 @@ export class LibrarySeedService {
   async seedSportsLibrary() {
     await this.upsertCatalog(SPORT_TYPES, (st) =>
       this.prisma.sportTypeRef.upsert({
-        where: { code: st.code }, update: {}, create: { ...st, isDefault: st.isDefault ?? false },
+        where: { code: st.code },
+        update: {},
+        create: { ...st, isDefault: st.isDefault ?? false },
       }),
     );
     const maps = await this.buildLookupMaps();
@@ -95,8 +103,7 @@ export class LibrarySeedService {
       this.prisma.sportTypeRef.findMany(),
       this.prisma.exerciseEquipment.findMany(),
     ]);
-    const toMap = (rows: { code: string; id: string }[]): CodeMap =>
-      Object.fromEntries(rows.map((r) => [r.code, r.id]));
+    const toMap = (rows: { code: string; id: string }[]): CodeMap => Object.fromEntries(rows.map((r) => [r.code, r.id]));
     return {
       patternById: toMap(patterns),
       planeById: toMap(planes),
@@ -112,7 +119,15 @@ export class LibrarySeedService {
       const existing = await this.prisma.mobilityExercise.findFirst({
         where: { name: ex.name, scope: LibraryItemScope.GLOBAL },
       });
-      if (existing) continue;
+      if (existing) {
+        if (ex.youtubeUrl && existing.youtubeUrl !== ex.youtubeUrl) {
+          await this.prisma.mobilityExercise.update({
+            data: { youtubeUrl: ex.youtubeUrl },
+            where: { id: existing.id },
+          });
+        }
+        continue;
+      }
       const patternCode = MOBILITY_PATTERN_MAP[ex.movementPattern];
       const planeCode = MOBILITY_PLANE_MAP[ex.anatomicalPlane];
       const mTypeCode = MOBILITY_BODY_PART_MAP[ex.bodyPart];
@@ -127,6 +142,7 @@ export class LibrarySeedService {
           anatomicalPlaneId: planeCode ? (maps.planeById[planeCode] ?? null) : null,
           mobilityTypeId: mTypeCode ? (maps.mTypeById[mTypeCode] ?? null) : null,
           equipmentId: maps.equipById[eqCode] ?? null,
+          youtubeUrl: ex.youtubeUrl ?? null,
         },
       });
       seeded++;

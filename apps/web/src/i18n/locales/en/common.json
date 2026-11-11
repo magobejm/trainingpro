@@ -1552,6 +1552,7 @@
   "auth.login.submitting": "Signing in…",
   "auth.login.email.invalid": "Enter a valid email address.",
   "auth.login.forgot": "Forgot your password?",
+  "auth.login.privacy": "Privacy policy",
   "auth.login.forgot.sending": "Sending…",
   "auth.login.forgot.sent": "If the email exists, we have sent you a link to reset your password.",
   "auth.login.forgot.error": "We couldn't send the recovery email. Please try again.",

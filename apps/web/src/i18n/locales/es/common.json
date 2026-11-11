@@ -1577,6 +1577,7 @@
   "auth.login.submitting": "Entrando…",
   "auth.login.email.invalid": "Introduce un correo electrónico válido.",
   "auth.login.forgot": "¿Has olvidado tu contraseña?",
+  "auth.login.privacy": "Política de privacidad",
   "auth.login.forgot.sending": "Enviando…",
   "auth.login.forgot.sent": "Si el correo existe, te hemos enviado un enlace para restablecer la contraseña.",
   "auth.login.forgot.error": "No se pudo enviar el correo de recuperación. Inténtalo de nuevo.",

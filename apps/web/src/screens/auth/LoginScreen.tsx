@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
+import { Link } from 'react-router';
 import '../../i18n';
 import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
 import { readSessionExpired } from '../../data/session-end';
@@ -140,6 +141,9 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
           style={styles.forgotLink}
           variant={VARIANT_GHOST}
         />
+        <Link style={styles.privacyLink} to={'/privacidad'}>
+          {props.t('auth.login.privacy')}
+        </Link>
       </View>
     </View>
   );
@@ -168,6 +172,12 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontSize: fontSize.sm,
     marginBottom: space.sm,
+  },
+  privacyLink: {
+    alignSelf: 'center',
+    color: COLORS.muted,
+    fontSize: fontSize.sm,
+    marginTop: space.md,
   },
   page: {
     alignItems: 'center',

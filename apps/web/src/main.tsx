@@ -8,6 +8,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router';
 import './i18n';
 import { App } from './App';
 import { RouteErrorScreen } from './components/RouteErrorScreen';
+import { PrivacyScreen } from './screens/legal/PrivacyScreen';
 import { createQueryClient } from './data/query-client';
 import { AppearanceProvider, bootstrapAppearance } from './theme/AppearanceProvider';
 import './theme/appearance.css';
@@ -15,8 +16,11 @@ import './theme/appearance.css';
 bootstrapAppearance();
 
 const queryClient = createQueryClient();
-// Una sola ruta comodín: App decide qué pantalla toca según la dirección (ver layout/shell-routes.ts).
-const router = createBrowserRouter([{ element: <App />, errorElement: <RouteErrorScreen />, path: '*' }]);
+// /privacidad es pública. El resto lo decide App según la dirección (ver layout/shell-routes.ts).
+const router = createBrowserRouter([
+  { element: <PrivacyScreen />, path: '/privacidad' },
+  { element: <App />, errorElement: <RouteErrorScreen />, path: '*' },
+]);
 
 function Root(): React.JSX.Element {
   const { t } = useTranslation();

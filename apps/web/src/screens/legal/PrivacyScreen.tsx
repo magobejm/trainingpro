@@ -1,12 +1,19 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
-import { PRIVACY_SECTIONS, PRIVACY_TITLE, PRIVACY_UPDATED } from './privacy-policy.copy';
+import {
+  PRIVACY_LOGO_LABEL,
+  PRIVACY_LOGO_SRC,
+  PRIVACY_SECTIONS,
+  PRIVACY_TITLE,
+  PRIVACY_UPDATED,
+} from './privacy-policy.copy';
 
 export function PrivacyScreen(): React.JSX.Element {
   return (
     <ScrollView contentContainerStyle={styles.page} style={styles.scroll}>
       <View style={styles.sheet}>
+        <Image accessibilityLabel={PRIVACY_LOGO_LABEL} source={{ uri: PRIVACY_LOGO_SRC }} style={styles.logo} />
         <Text style={styles.title}>{PRIVACY_TITLE}</Text>
         <Text style={styles.updated}>{PRIVACY_UPDATED}</Text>
         {PRIVACY_SECTIONS.map((section) => (
@@ -25,6 +32,12 @@ export function PrivacyScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  logo: {
+    borderRadius: radius.md,
+    height: 72,
+    marginBottom: space.lg,
+    width: 72,
+  },
   heading: {
     color: colors.text,
     fontSize: fontSize.lg,

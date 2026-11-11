@@ -1,5 +1,7 @@
 export const PRIVACY_TITLE = 'Política de privacidad';
 export const PRIVACY_UPDATED = '11 de noviembre de 2026';
+export const PRIVACY_LOGO_SRC = '/logo.png';
+export const PRIVACY_LOGO_LABEL = 'FitCoach';
 
 export const PRIVACY_SECTIONS: Array<{ title: string; paragraphs: string[] }> = [
   {

@@ -3,8 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 export const CLOUD_PROVIDERS = ['garmin', 'polar', 'strava'] as const;
 export type CloudProvider = (typeof CLOUD_PROVIDERS)[number];
 
-const SCOPES: Record<CloudProvider, string> = {
-  garmin: 'ACTIVITY_READ HEALTH_READ TRAINING_WRITE',
+const SCOPES: Partial<Record<CloudProvider, string>> = {
   polar: 'accesslink.read_all',
   strava: 'activity:write',
 };
@@ -24,9 +23,10 @@ export function authorizeUrl(
     code_challenge_method: 'S256',
     redirect_uri: input.redirectUri,
     response_type: 'code',
-    scope: SCOPES[provider],
     state: input.state,
   });
+  const scope = SCOPES[provider];
+  if (scope) params.set('scope', scope);
   if (provider === 'garmin') params.set('client_id', process.env.GARMIN_CLIENT_ID ?? '');
   if (provider === 'polar') params.set('client_id', process.env.POLAR_CLIENT_ID ?? '');
   if (provider === 'strava') params.set('client_id', process.env.STRAVA_CLIENT_ID ?? '');

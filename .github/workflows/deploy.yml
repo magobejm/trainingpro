@@ -127,10 +127,14 @@ jobs:
             SUPABASE_PRIVATE_STORAGE_BUCKET=SUPABASE_PRIVATE_STORAGE_BUCKET:latest
             MEDIA_URL_SIGNING_SECRET=MEDIA_URL_SIGNING_SECRET:latest
             GEMINI_API_KEY=GEMINI_API_KEY:latest
+            GARMIN_CLIENT_ID=GARMIN_CLIENT_ID:latest
+            GARMIN_CLIENT_SECRET=GARMIN_CLIENT_SECRET:latest
+            INTEGRATIONS_TOKEN_KEY=INTEGRATIONS_TOKEN_KEY:latest
           env_vars: |
             NODE_ENV=production
             CORS_ORIGINS=https://${{ vars.FIREBASE_SITE }}.web.app
             PUBLIC_ASSET_BASE_URL=${{ vars.API_BASE_URL }}
+            PUBLIC_API_BASE_URL=${{ vars.API_BASE_URL }}
       - name: Smoke test /health
         run: |
           for i in $(seq 1 10); do

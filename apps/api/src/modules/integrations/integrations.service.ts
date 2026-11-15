@@ -6,6 +6,7 @@ import { decryptToken, encryptToken, readState, signState } from '../../common/c
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { resolveCoachMembership } from '../clients/infra/prisma/client.repository.prisma.ops';
 import { GetClientMeUseCase } from '../clients/application/use-cases/get-client-me.usecase';
+import { exchangeGarminCode } from './garmin-oauth';
 import { authorizeUrl, createPkce, providerConfigured, toPrismaProvider, type CloudProvider } from './integration-providers';
 
 const SHORT_SLEEP_MINUTES = 360;
@@ -30,21 +31,17 @@ export class IntegrationsService {
   }
 
   async callback(provider: CloudProvider, code: string, stateToken: string) {
-    const state = readState(stateToken, this.secret());
-    if (!state || state.provider !== provider || !state.clientId) throw new BadRequestException('Invalid OAuth state');
-    if (!providerConfigured(provider)) throw new ServiceUnavailableException('La conexión no está configurada.');
-    await this.prisma.wearableConnection.upsert({
-      create: {
-        accessTokenEnc: encryptToken(`mock:${code}`, this.secret()),
-        clientId: state.clientId,
-        provider: toPrismaProvider(provider),
-        scopes: provider === 'strava' ? ['activity:write'] : [],
-        status: 'CONNECTED',
-      },
-      update: { accessTokenEnc: encryptToken(`mock:${code}`, this.secret()), status: 'CONNECTED' },
-      where: { clientId_provider: { clientId: state.clientId, provider: toPrismaProvider(provider) } },
-    });
-    return { url: `trainerpro://integrations/${provider}?status=ok` };
+    try {
+      const state = readState(stateToken, this.secret());
+      if (!state || state.provider !== provider || !state.clientId || !providerConfigured(provider)) {
+        return { url: this.appReturn(provider, 'error') };
+      }
+      if (provider === 'garmin') await this.connectGarmin(state.clientId, code, state.verifier);
+      else await this.connectMock(provider, state.clientId, code);
+      return { url: this.appReturn(provider, 'ok') };
+    } catch {
+      return { url: this.appReturn(provider, 'error') };
+    }
   }
 
   async disconnect(context: AuthContext, provider: CloudProvider) {
@@ -271,6 +268,50 @@ export class IntegrationsService {
     const value = process.env.INTEGRATIONS_TOKEN_KEY;
     if (!value) throw new ServiceUnavailableException('La conexión no está configurada. Puedes intentarlo de nuevo.');
     return value;
+  }
+
+  private async connectGarmin(clientId: string, code: string, verifier: string | undefined): Promise<void> {
+    if (!code || !verifier) throw new Error('Missing Garmin code');
+    const tokens = await exchangeGarminCode({
+      clientId: process.env.GARMIN_CLIENT_ID ?? '',
+      clientSecret: process.env.GARMIN_CLIENT_SECRET ?? '',
+      code,
+      codeVerifier: verifier,
+      redirectUri: this.redirectUri('garmin'),
+    });
+    const secret = this.secret();
+    const data = {
+      accessTokenEnc: encryptToken(tokens.accessToken, secret),
+      expiresAt: tokens.expiresAt,
+      externalUserId: tokens.externalUserId,
+      refreshTokenEnc: encryptToken(tokens.refreshToken, secret),
+      scopes: tokens.scopes,
+      status: 'CONNECTED' as const,
+    };
+    await this.prisma.wearableConnection.upsert({
+      create: { ...data, clientId, provider: 'GARMIN' },
+      update: data,
+      where: { clientId_provider: { clientId, provider: 'GARMIN' } },
+    });
+  }
+
+  private async connectMock(provider: CloudProvider, clientId: string, code: string): Promise<void> {
+    const accessTokenEnc = encryptToken(`mock:${code}`, this.secret());
+    await this.prisma.wearableConnection.upsert({
+      create: {
+        accessTokenEnc,
+        clientId,
+        provider: toPrismaProvider(provider),
+        scopes: provider === 'strava' ? ['activity:write'] : [],
+        status: 'CONNECTED',
+      },
+      update: { accessTokenEnc, status: 'CONNECTED' },
+      where: { clientId_provider: { clientId, provider: toPrismaProvider(provider) } },
+    });
+  }
+
+  private appReturn(provider: CloudProvider, status: 'error' | 'ok'): string {
+    return `trainerpro://integrations/${provider}?status=${status}`;
   }
 
   private redirectUri(provider: CloudProvider): string {

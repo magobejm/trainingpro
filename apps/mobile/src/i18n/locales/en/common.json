@@ -431,6 +431,8 @@
   "mobile.client.wearables.synced": "Day sent",
   "mobile.client.wearables.retry": "The day could not be sent",
   "mobile.client.wearables.unconfigured": "The provider connection is not configured",
+  "mobile.client.wearables.connected": "Account connected",
+  "mobile.client.wearables.rejected": "The connection could not be completed",
   "mobile.client.health.heartRate": "Avg HR {{average}} · max {{max}}",
   "mobile.client.checkin.sleepHours": "{{hours}} h of sleep",
   "mobile.client.neat.badge": "Daily activity",

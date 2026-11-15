@@ -1,17 +1,30 @@
-import React, { useState } from 'react';
-import { Platform, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, Pressable, Text, View, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { createApiClient } from '../data/api-client';
 import { useAuthStore } from '../store/auth.store';
 import { s } from '../shell/client/client-shell.styles';
 import { readHealthSnapshot } from './index';
+import { readWearableReturn } from './wearable-return';
 
 const PROVIDERS = ['garmin', 'polar', 'strava'] as const;
+let handledReturnUrl = '';
 
 export function WearablesSection(): React.JSX.Element {
   const { t } = useTranslation();
   const accessToken = useAuthStore((state) => state.accessToken);
   const [status, setStatus] = useState('');
+  useEffect(() => {
+    const apply = (url: string | null) => {
+      const result = url ? readWearableReturn(url) : null;
+      if (!url || !result || url === handledReturnUrl) return;
+      handledReturnUrl = url;
+      setStatus(t(result.status === 'ok' ? 'mobile.client.wearables.connected' : 'mobile.client.wearables.rejected'));
+    };
+    const subscription = Linking.addEventListener('url', (event) => apply(event.url));
+    void Linking.getInitialURL().then(apply);
+    return () => subscription.remove();
+  }, [t]);
   return (
     <View>
       <Text style={s.moreItemLabel}>{t('mobile.client.wearables.consent')}</Text>
@@ -83,7 +96,15 @@ async function connect(
 ): Promise<void> {
   if (!accessToken) return;
   try {
-    await createApiClient({ accessToken, activeRole: 'client' }).post(`/clients/me/integrations/${provider}/authorize`, {});
+    const result = await createApiClient({ accessToken, activeRole: 'client' }).post<{ url: string }>(
+      `/clients/me/integrations/${provider}/authorize`,
+      {},
+    );
+    if (!result.url) {
+      setStatus(t('mobile.client.wearables.unconfigured'));
+      return;
+    }
+    await Linking.openURL(result.url);
   } catch {
     setStatus(t('mobile.client.wearables.unconfigured'));
   }

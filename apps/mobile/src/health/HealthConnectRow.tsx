@@ -18,16 +18,20 @@ export function HealthConnectRow(): React.JSX.Element {
   return (
     <View>
       <Pressable
-        onPress={() => void requestHealthAccess().then(refresh)}
-        style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
+        onPress={access === 'connected' ? undefined : () => void requestHealthAccess().then(refresh)}
+        style={({ pressed }) => [s.moreItem, pressed && access !== 'connected' && { opacity: 0.9 }]}
       >
         <View style={s.moreItemLeft}>
           <View style={s.moreItemIcon}>
             <Text style={{ fontSize: 22 }}>{'♡'}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.moreItemLabel}>{t('mobile.client.health.connect')}</Text>
-            <Text style={hint}>{t(HEALTH_ACCESS_LABEL[access])}</Text>
+            <Text style={s.moreItemLabel}>
+              {t(access === 'connected' ? 'mobile.client.health.name' : 'mobile.client.health.connect')}
+            </Text>
+            <Text style={hint}>
+              {t(access === 'connected' ? 'mobile.client.link.connected' : HEALTH_ACCESS_LABEL[access])}
+            </Text>
             {lines.map((line) => (
               <Text key={line.id} style={hint}>
                 {t(line.key, line.values)}
@@ -45,7 +49,7 @@ export function HealthConnectRow(): React.JSX.Element {
           onPress={() => void disconnect(setNotice, t, refresh)}
           style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
         >
-          <Text style={s.moreItemLabel}>{t('mobile.client.health.disconnect')}</Text>
+          <Text style={s.moreItemLabel}>{t('mobile.client.link.disconnect', { name: t('mobile.client.health.name') })}</Text>
         </Pressable>
       ) : null}
     </View>

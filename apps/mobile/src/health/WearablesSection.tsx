@@ -1,69 +1,132 @@
-import React, { useEffect, useState } from 'react';
-import { Platform, Pressable, Text, View, Linking } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AppState, Platform, Pressable, Text, View, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { createApiClient } from '../data/api-client';
 import { useAuthStore } from '../store/auth.store';
 import { s } from '../shell/client/client-shell.styles';
 import { readHealthSnapshot } from './index';
 import { readWearableReturn } from './wearable-return';
+import { linkedCloudProviders, type CloudProvider, type SavedConnection } from './wearable-links';
 
-const PROVIDERS = ['garmin', 'polar', 'strava'] as const;
+const PROVIDERS: readonly CloudProvider[] = ['garmin', 'polar', 'strava'];
 let handledReturnUrl = '';
 
 export function WearablesSection(): React.JSX.Element {
   const { t } = useTranslation();
   const accessToken = useAuthStore((state) => state.accessToken);
-  const [status, setStatus] = useState('');
+  const [linked, setLinked] = useState<ReadonlySet<CloudProvider>>(new Set());
+  const [notice, setNotice] = useState('');
+  const refresh = useCallback(() => {
+    void loadLinks(accessToken).then((next) => {
+      if (next) setLinked(next);
+    });
+  }, [accessToken]);
   useEffect(() => {
+    refresh();
     const apply = (url: string | null) => {
       const result = url ? readWearableReturn(url) : null;
       if (!url || !result || url === handledReturnUrl) return;
       handledReturnUrl = url;
-      setStatus(t(result.status === 'ok' ? 'mobile.client.wearables.connected' : 'mobile.client.wearables.rejected'));
+      setNotice(result.status === 'ok' ? '' : t('mobile.client.wearables.rejected'));
+      refresh();
     };
-    const subscription = Linking.addEventListener('url', (event) => apply(event.url));
+    const links = Linking.addEventListener('url', (event) => apply(event.url));
+    const app = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
     void Linking.getInitialURL().then(apply);
-    return () => subscription.remove();
-  }, [t]);
+    return () => {
+      links.remove();
+      app.remove();
+    };
+  }, [refresh, t]);
   return (
     <View>
       <Text style={s.moreItemLabel}>{t('mobile.client.wearables.consent')}</Text>
       <Pressable
         accessibilityRole="button"
-        onPress={() => void syncDay(accessToken, setStatus, t)}
+        onPress={() => void syncDay(accessToken, setNotice, t)}
         style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
       >
         <Text style={s.moreItemLabel}>{t('mobile.client.wearables.sync')}</Text>
       </Pressable>
       {PROVIDERS.map((provider) => (
-        <Pressable
-          accessibilityRole="button"
+        <ProviderRow
+          connected={linked.has(provider)}
           key={provider}
-          onPress={() => void connect(provider, accessToken, setStatus, t)}
-          style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
-        >
-          <Text style={s.moreItemLabel}>{provider}</Text>
-        </Pressable>
+          name={t(`mobile.client.wearables.${provider}`)}
+          onConnect={() => void connect(provider, accessToken, setNotice, t)}
+          onDisconnect={() => void disconnect(provider, accessToken, setNotice, t, refresh)}
+          t={t}
+        />
       ))}
-      {status ? <Text style={s.moreItemLabel}>{status}</Text> : null}
+      {notice ? <Text style={s.moreItemLabel}>{notice}</Text> : null}
     </View>
   );
 }
 
+function ProviderRow(props: {
+  connected: boolean;
+  name: string;
+  onConnect: () => void;
+  onDisconnect: () => void;
+  t: (key: string, values?: Record<string, string>) => string;
+}): React.JSX.Element {
+  return (
+    <View>
+      <Pressable
+        accessibilityRole="button"
+        onPress={props.connected ? undefined : props.onConnect}
+        style={({ pressed }) => [s.moreItem, pressed && !props.connected && { opacity: 0.9 }]}
+      >
+        <View style={{ flex: 1 }}>
+          <Text style={s.moreItemLabel}>{props.name}</Text>
+          <Text style={hint}>
+            {props.t(props.connected ? 'mobile.client.link.connected' : 'mobile.client.link.disconnected')}
+          </Text>
+        </View>
+      </Pressable>
+      {props.connected ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={props.onDisconnect}
+          style={({ pressed }) => [s.moreItem, pressed && { opacity: 0.9 }]}
+        >
+          <Text style={s.moreItemLabel}>{props.t('mobile.client.link.disconnect', { name: props.name })}</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+const hint = { color: '#93c5fd', marginTop: 4 };
+
+async function loadLinks(accessToken: string | null): Promise<ReadonlySet<CloudProvider> | null> {
+  if (!accessToken) return new Set();
+  try {
+    const result = await createApiClient({ accessToken, activeRole: 'client' }).get<{ connections: SavedConnection[] }>(
+      '/clients/me/integrations',
+    );
+    return linkedCloudProviders(result.connections);
+  } catch {
+    return null;
+  }
+}
+
 async function syncDay(
   accessToken: string | null,
-  setStatus: (value: string) => void,
+  setNotice: (value: string) => void,
   t: (key: string) => string,
 ): Promise<void> {
   let snapshot;
   try {
     snapshot = await readHealthSnapshot();
   } catch {
-    setStatus(t('mobile.client.health.denied'));
+    setNotice(t('mobile.client.health.denied'));
     return;
   }
   if (!accessToken || !snapshot) {
-    setStatus(t('mobile.client.health.unavailable'));
+    setNotice(t('mobile.client.health.unavailable'));
     return;
   }
   const source = Platform.OS === 'ios' ? 'HEALTHKIT' : 'HEALTH_CONNECT';
@@ -82,16 +145,16 @@ async function syncDay(
       ],
       source,
     });
-    setStatus(t('mobile.client.wearables.synced'));
+    setNotice(t('mobile.client.wearables.synced'));
   } catch {
-    setStatus(t('mobile.client.wearables.retry'));
+    setNotice(t('mobile.client.wearables.retry'));
   }
 }
 
 async function connect(
-  provider: (typeof PROVIDERS)[number],
+  provider: CloudProvider,
   accessToken: string | null,
-  setStatus: (value: string) => void,
+  setNotice: (value: string) => void,
   t: (key: string) => string,
 ): Promise<void> {
   if (!accessToken) return;
@@ -101,11 +164,28 @@ async function connect(
       {},
     );
     if (!result.url) {
-      setStatus(t('mobile.client.wearables.unconfigured'));
+      setNotice(t('mobile.client.wearables.unconfigured'));
       return;
     }
     await Linking.openURL(result.url);
   } catch {
-    setStatus(t('mobile.client.wearables.unconfigured'));
+    setNotice(t('mobile.client.wearables.unconfigured'));
+  }
+}
+
+async function disconnect(
+  provider: CloudProvider,
+  accessToken: string | null,
+  setNotice: (value: string) => void,
+  t: (key: string) => string,
+  refresh: () => void,
+): Promise<void> {
+  if (!accessToken) return;
+  try {
+    await createApiClient({ accessToken, activeRole: 'client' }).delete(`/clients/me/integrations/${provider}`);
+    setNotice('');
+    refresh();
+  } catch {
+    setNotice(t('mobile.client.link.disconnectFailed'));
   }
 }

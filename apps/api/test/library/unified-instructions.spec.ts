@@ -8,6 +8,7 @@ const WRONG_COLUMN = 'columna-equivocada';
 
 type LibraryModel = {
   create: jest.Mock;
+  findFirst: jest.Mock;
   findMany: jest.Mock;
   update: jest.Mock;
 };
@@ -66,6 +67,7 @@ function libraryModels(): Record<string, LibraryModel> {
       name,
       {
         create: jest.fn(async ({ data }: { data: Record<string, unknown> }) => data),
+        findFirst: jest.fn(async () => ({ coachMembershipId: 'mem-1', scope: 'COACH' })),
         findMany: jest.fn(async () => [listRow()]),
         update: jest.fn(async ({ data }: { data: Record<string, unknown> }) => data),
       },

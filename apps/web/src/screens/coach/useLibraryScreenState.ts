@@ -13,6 +13,7 @@ import {
   useDeleteMobilityExerciseMutation,
   useDeleteSportMutation,
 } from '../../data/hooks/useLibrarySpecializedMutations';
+import type { CopyTarget } from '../../data/hooks/useCopyLibraryItem';
 import { CATEGORIES, CategoryKey } from './UnifiedExerciseLibraryScreen.components';
 import { LIST_KEYS, readListContext, writeListContext } from '../../layout/list-context';
 import { useDeferredDelete } from '../../layout/useDeferredDelete';
@@ -73,6 +74,7 @@ export function useLibraryScreenState() {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<UnifiedExerciseItem | null>(null);
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
   const [detailVisible, setDetailVisible] = useState(false);
   const [itemForDetail, setItemForDetail] = useState<UnifiedExerciseItem | null>(null);
 
@@ -187,6 +189,8 @@ export function useLibraryScreenState() {
     setIsModalVisible,
     itemToEdit,
     setItemToEdit,
+    copyTarget,
+    setCopyTarget,
     detailVisible,
     setDetailVisible,
     itemForDetail,

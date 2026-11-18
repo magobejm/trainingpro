@@ -29,7 +29,7 @@ interface BlockHeaderProps {
 }
 
 const tagColors: Record<BlockType, { bg: string; text: string }> = {
-  cardio: { bg: colors.primaryBorder, text: colors.primary },
+  cardio: { bg: colors.primarySoft, text: colors.primary },
   isometric: { bg: 'var(--tp-chartPinkSoft)', text: 'var(--tp-chartPink)' },
   plio: { bg: colors.warningSoft, text: colors.warning },
   sport: { bg: colors.background, text: colors.textMuted },

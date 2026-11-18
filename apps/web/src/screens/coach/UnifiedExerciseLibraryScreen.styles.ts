@@ -197,7 +197,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: space.md,
   },
   tagPrimary: {
-    backgroundColor: colors.primaryBorder,
+    backgroundColor: colors.primarySoft,
     borderRadius: radius.sm,
     paddingHorizontal: space.sm,
     paddingVertical: 2,

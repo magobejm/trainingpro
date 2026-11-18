@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, EmptyState, FilterChips, fontSize, radius, SearchBar, space } from '@trainerpro/ui';
 import '../../i18n';
-import { useCreateFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
+import { useCreateFoodMutation, useDeleteFoodMutation } from '../../data/hooks/useLibraryFoodMutations';
+import type { CopyTarget } from '../../data/hooks/useCopyLibraryItem';
+import { ActionConfirmModal } from './components/ActionConfirmModal';
+import { CopyItemModal } from './components/CopyItemModal';
+import { formatLibraryDeleteError } from './library-delete';
 import { useFoodsPagedQuery } from '../../data/hooks/usePagedResources';
 import { loadNextPage } from '../../data/hooks/usePagedList';
 import { QueryResult } from '../../components/AsyncStatus';
@@ -46,6 +50,7 @@ function useFoodsViewModel() {
   const state = useFoodState();
   const [expandedId, setExpandedId] = useState('');
   const form = useFoodCreateForm();
+  const removal = useFoodRemoval(t);
   const listQuery = useFoodsPagedQuery({
     query: state.query,
     servingUnit: state.activeUnitFilter === 'all' ? undefined : state.activeUnitFilter,
@@ -57,10 +62,43 @@ function useFoodsViewModel() {
     expandedId,
     ...buildFoodChips(t),
     ...form,
+    ...removal,
     listQuery,
     ...buildFoodActions(state, form, t),
     onToggleDetail: (itemId: string) => setExpandedId((current) => (current === itemId ? '' : itemId)),
     t,
+  };
+}
+
+function useFoodRemoval(t: (key: string, options?: Record<string, unknown>) => string) {
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<null | string>(null);
+  const deleteMutation = useDeleteFoodMutation();
+  return {
+    cancelDelete: () => {
+      setDeleteError(null);
+      setDeleteTarget(null);
+    },
+    confirmDelete: () => {
+      if (!deleteTarget) return;
+      deleteMutation.mutate(deleteTarget.id, {
+        onError: (error) =>
+          setDeleteError(
+            formatLibraryDeleteError(error, deleteTarget.name, t as Parameters<typeof formatLibraryDeleteError>[2]),
+          ),
+        onSuccess: () => setDeleteTarget(null),
+      });
+    },
+    copyTarget,
+    deleteError,
+    deleteMutation,
+    deleteTarget,
+    requestDelete: (target: { id: string; name: string }) => {
+      setDeleteError(null);
+      setDeleteTarget(target);
+    },
+    setCopyTarget,
   };
 }
 
@@ -160,6 +198,18 @@ function LibraryFoodsView(props: ViewModel): React.JSX.Element {
       {renderSearchCard(props)}
       {renderCreateCta(props)}
       {renderCreateModal(props)}
+      <CopyItemModal onClose={() => props.setCopyTarget(null)} target={props.copyTarget} />
+      <ActionConfirmModal
+        cancelLabel={props.t('common.cancel')}
+        confirmLabel={props.t('coach.library.exercises.actions.delete')}
+        errorMessage={props.deleteError}
+        isLoading={props.deleteMutation.isPending}
+        message={props.t('coach.library.deleteConfirm.message', { name: props.deleteTarget?.name ?? '' })}
+        onCancel={props.cancelDelete}
+        onConfirm={props.confirmDelete}
+        title={props.t('coach.library.deleteConfirm.title')}
+        visible={Boolean(props.deleteTarget)}
+      />
       <View style={styles.card}>{renderList(props)}</View>
     </ScrollView>
   );
@@ -265,6 +315,8 @@ function renderList(props: ViewModel): React.JSX.Element {
           expanded={props.expandedId === item.id}
           item={item}
           key={item.id}
+          onCopy={() => props.setCopyTarget({ id: item.id, kind: 'food', name: item.name })}
+          onDelete={() => props.requestDelete({ id: item.id, name: item.name })}
           onToggle={() => props.onToggleDetail(item.id)}
           t={props.t}
         />

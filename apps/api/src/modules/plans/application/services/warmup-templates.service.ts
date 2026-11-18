@@ -1,6 +1,6 @@
 /* eslint-disable max-lines-per-function */
 import { randomUUID } from 'crypto';
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { assertExpectedTemplateVersion } from '../template-save.policy';
 import { isUniqueViolation } from '../../../../common/prisma/unique-violation';
 import { Role } from '@prisma/client';
@@ -224,8 +224,22 @@ export class WarmupTemplatesService {
     return this.getOne(context, templateId);
   }
 
+  /** Copies a visible warmup (global or own) into a new template owned by the coach. */
+  async copy(context: AuthContext, templateId: string, name: string) {
+    const source = await this.getOne(context, templateId);
+    return this.create(context, {
+      name,
+      groups: source.groups as unknown as Input['groups'],
+      items: source.items as unknown as Input['items'],
+    });
+  }
+
   async delete(context: AuthContext, templateId: string): Promise<void> {
     await this.assertMutableTemplate(context, templateId);
+    const usedInRoutines = await this.prisma.planDayWarmup.count({
+      where: { warmupTemplateId: templateId, planDay: { archivedAt: null, template: { archivedAt: null } } },
+    });
+    if (usedInRoutines > 0) throw new ConflictException('Library item is in use by active routines');
     await this.prisma.$executeRawUnsafe(`UPDATE warmup_template SET archived_at = now() WHERE id = $1::uuid`, templateId);
   }
 

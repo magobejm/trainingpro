@@ -28,7 +28,7 @@ export const s = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   typeBtnActive: {
-    backgroundColor: colors.primaryBorder,
+    backgroundColor: colors.primarySoft,
     borderColor: colors.primaryBorder,
   },
   typeBtnText: {
@@ -37,7 +37,7 @@ export const s = StyleSheet.create({
     fontWeight: '600',
   },
   typeBtnTextActive: {
-    color: colors.primaryHover,
+    color: colors.primary,
   },
   footerCount: {
     color: colors.textMuted,

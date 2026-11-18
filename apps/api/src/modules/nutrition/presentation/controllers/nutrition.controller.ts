@@ -7,6 +7,7 @@ import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { NutritionLogService } from '../../application/nutrition-log.service';
 import { NutritionService } from '../../application/nutrition.service';
+import { copyNameSchema } from '../../../plans/presentation/dto/copy-name.schema';
 import { MealLogRangeDto } from '../dto/meal-log.dto';
 import { AssignPlanDto } from '../dto/assign-plan.dto';
 import { ClientIdParamDto } from '../dto/client-id-param.dto';
@@ -41,6 +42,18 @@ export class NutritionController {
   @Patch('meals/:mealId')
   async updateMeal(@Param() params: MealIdParamDto, @Body() body: UpdateMealDto, @Req() request: HttpAuthRequest) {
     return this.nutritionService.updateMeal(readAuthContext(request), params.mealId, body);
+  }
+
+  @Post('meals/:mealId/copy')
+  async copyMeal(@Param() params: MealIdParamDto, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const { name } = copyNameSchema.parse(body);
+    return this.nutritionService.copyMeal(readAuthContext(request), params.mealId, name);
+  }
+
+  @Post('plans/:planId/copy')
+  async copyPlan(@Param() params: PlanIdParamDto, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const { name } = copyNameSchema.parse(body);
+    return this.nutritionService.copyPlan(readAuthContext(request), params.planId, name);
   }
 
   @Delete('meals/:mealId')

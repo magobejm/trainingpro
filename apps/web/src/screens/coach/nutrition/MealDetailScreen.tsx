@@ -1,6 +1,10 @@
 import { LoadingState } from '../../../components/AsyncStatus';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { CopyTarget } from '../../../data/hooks/useCopyLibraryItem';
+import { DeleteItemModal } from '../components/DeleteItemModal';
+import { CopyItemModal } from '../components/CopyItemModal';
+import { formatLibraryDeleteError } from '../library-delete';
 import { ScrollView, Text, View } from 'react-native';
 import { useDeleteMealMutation, useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
 import type { Crumb } from '../../../layout/crumbs';
@@ -20,6 +24,13 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
   const mealsQuery = useNutritionMealsQuery();
   const deleteMutation = useDeleteMealMutation();
   const toast = useToast();
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<null | string>(null);
+  const askDelete = () => {
+    setDeleteError(null);
+    setConfirmDelete(true);
+  };
   const meal = mealsQuery.data?.find((item) => item.id === props.mealId);
 
   if (mealsQuery.isLoading) {
@@ -34,18 +45,7 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
     );
   }
 
-  const totals = meal.ingredients.reduce(
-    (acc, item) => {
-      const factor = item.amountGrams / 100;
-      return {
-        calories: acc.calories + (item.food.caloriesKcal ?? 0) * factor,
-        carbs: acc.carbs + (item.food.carbsG ?? 0) * factor,
-        fat: acc.fat + (item.food.fatG ?? 0) * factor,
-        protein: acc.protein + (item.food.proteinG ?? 0) * factor,
-      };
-    },
-    { calories: 0, carbs: 0, fat: 0, protein: 0 },
-  );
+  const totals = sumMacros(meal.ingredients);
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -82,17 +82,52 @@ export function MealDetailScreen(props: Props): React.JSX.Element {
         </View>
       ))}
       <Button
+        label={t('coach.library.copy.action')}
+        onPress={() => setCopyTarget({ id: meal.id, kind: 'meal', name: meal.name })}
+        style={styles.addButton}
+        variant="secondary"
+      />
+      <Button
         label={t('coach.nutrition.delete')}
         loading={deleteMutation.isPending}
-        onPress={() => void deleteMeal(props, deleteMutation).then(() => toast.success(t('coach.nutrition.meals.deleted')))}
+        onPress={askDelete}
         style={styles.deleteButton}
         variant="danger"
+      />
+      <CopyItemModal onClose={() => setCopyTarget(null)} target={copyTarget} />
+      <DeleteItemModal
+        error={deleteError}
+        isLoading={deleteMutation.isPending}
+        name={meal.name}
+        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() =>
+          deleteMutation.mutate(props.mealId, {
+            onError: (error) => setDeleteError(formatLibraryDeleteError(error, meal.name, t)),
+            onSuccess: () => {
+              toast.success(t('coach.nutrition.meals.deleted'));
+              props.onDeleted();
+            },
+          })
+        }
+        visible={confirmDelete}
       />
     </ScrollView>
   );
 }
 
-async function deleteMeal(props: Props, deleteMutation: ReturnType<typeof useDeleteMealMutation>): Promise<void> {
-  await deleteMutation.mutateAsync(props.mealId);
-  props.onDeleted();
+type MealIngredients = NonNullable<ReturnType<typeof useNutritionMealsQuery>['data']>[number]['ingredients'];
+
+function sumMacros(ingredients: MealIngredients) {
+  return ingredients.reduce(
+    (acc, item) => {
+      const factor = item.amountGrams / 100;
+      return {
+        calories: acc.calories + (item.food.caloriesKcal ?? 0) * factor,
+        carbs: acc.carbs + (item.food.carbsG ?? 0) * factor,
+        fat: acc.fat + (item.food.fatG ?? 0) * factor,
+        protein: acc.protein + (item.food.proteinG ?? 0) * factor,
+      };
+    },
+    { calories: 0, carbs: 0, fat: 0, protein: 0 },
+  );
 }

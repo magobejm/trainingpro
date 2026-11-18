@@ -48,6 +48,7 @@ import { LibraryMediaController } from './presentation/controllers/library-media
 import { LibraryUnifiedController } from './presentation/controllers/library-unified.controller';
 import { LibraryUnifiedService } from './application/library-unified.service';
 import { LibrarySeedService } from './application/library-seed.service';
+import { LibraryCopyService } from './application/library-copy.service';
 
 @Module({
   imports: [AuthModule, FilesModule],
@@ -60,6 +61,7 @@ import { LibrarySeedService } from './application/library-seed.service';
   ],
   providers: [
     LibraryUnifiedService,
+    LibraryCopyService,
     LibrarySeedService,
     CreateIsometricExerciseUseCase,
     CreateCardioMethodUseCase,

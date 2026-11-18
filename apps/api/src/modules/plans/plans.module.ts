@@ -27,6 +27,7 @@ import { PlansController } from './presentation/controllers/plans.controller';
 import { PlanAccessPolicy } from './domain/policies/plan-access.policy';
 import { PlanOwnershipGuard } from './presentation/guards/plan-ownership.guard';
 import { WarmupTemplatesService } from './application/services/warmup-templates.service';
+import { RoutineCopyService } from './application/services/routine-copy.service';
 
 @Module({
   imports: [AuthModule],
@@ -52,6 +53,7 @@ import { WarmupTemplatesService } from './application/services/warmup-templates.
     PlansRulesService,
     PlansRepositoryPrisma,
     WarmupTemplatesService,
+    RoutineCopyService,
     PlanAccessPolicy,
     PlanOwnershipGuard,
     {

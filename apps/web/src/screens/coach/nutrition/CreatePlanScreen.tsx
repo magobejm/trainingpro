@@ -6,7 +6,11 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { LayoutGrid, List } from 'lucide-react';
 import { useLibraryFoodsQuery } from '../../../data/hooks/useLibraryQuery';
-import { useNutritionMealsQuery, useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
+import { useDeletePlanMutation, useNutritionMealsQuery, useNutritionPlansQuery } from '../../../data/hooks/useNutrition';
+import type { CopyTarget } from '../../../data/hooks/useCopyLibraryItem';
+import { DeleteItemModal } from '../components/DeleteItemModal';
+import { CopyItemModal } from '../components/CopyItemModal';
+import { formatLibraryDeleteError } from '../library-delete';
 import type { Crumb } from '../../../layout/crumbs';
 import { NutritionCrumbBar } from './nutrition-crumbs';
 import { PlanContentView } from './PlanContentView';
@@ -26,6 +30,10 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
   const mealsQuery = useNutritionMealsQuery();
   const foodsQuery = useLibraryFoodsQuery({ query: '' });
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<null | string>(null);
+  const deleteMutation = useDeletePlanMutation();
   const plans = plansQuery.data ?? [];
 
   return (
@@ -72,6 +80,13 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
             style={styles.addButton}
             variant="ghost"
           />
+          <PlanCardActions
+            onCopy={() => setCopyTarget({ id: plan.id, kind: 'plan', name: plan.name })}
+            onDelete={() => {
+              setDeleteError(null);
+              setDeleteTarget({ id: plan.id, name: plan.name });
+            }}
+          />
           {previewId === plan.id ? (
             <PlanContentView
               content={plan.content}
@@ -83,6 +98,43 @@ export function CreatePlanScreen(props: Props): React.JSX.Element {
           ) : null}
         </View>
       ))}
+      <CopyItemModal onClose={() => setCopyTarget(null)} target={copyTarget} />
+      <DeleteItemModal
+        error={deleteError}
+        isLoading={deleteMutation.isPending}
+        name={deleteTarget?.name ?? ''}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          deleteMutation.mutate(deleteTarget.id, {
+            onError: (error) => setDeleteError(formatLibraryDeleteError(error, deleteTarget.name, t)),
+            onSuccess: () => setDeleteTarget(null),
+          });
+        }}
+        visible={Boolean(deleteTarget)}
+      />
     </ScrollView>
+  );
+}
+
+function PlanCardActions(props: { onCopy: () => void; onDelete: () => void }): React.JSX.Element {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Button
+        label={t('coach.library.copy.action')}
+        onPress={props.onCopy}
+        size="sm"
+        style={styles.addButton}
+        variant="secondary"
+      />
+      <Button
+        label={t('coach.library.exercises.actions.delete')}
+        onPress={props.onDelete}
+        size="sm"
+        style={styles.addButton}
+        variant="danger"
+      />
+    </>
   );
 }

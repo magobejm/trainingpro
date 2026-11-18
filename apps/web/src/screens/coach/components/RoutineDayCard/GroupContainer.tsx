@@ -26,7 +26,7 @@ interface GroupContainerProps {
 }
 
 const GROUP_STYLE: Record<'CIRCUIT' | 'SUPERSET', { color: string; bgColor: string }> = {
-  CIRCUIT: { color: colors.primaryHover, bgColor: colors.primaryBorder },
+  CIRCUIT: { color: colors.primary, bgColor: colors.primarySoft },
   SUPERSET: { color: colors.warning, bgColor: colors.warningSoft },
 };
 

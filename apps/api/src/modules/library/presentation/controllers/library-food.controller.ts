@@ -5,6 +5,7 @@ import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
+import { LibraryCopyService } from '../../application/library-copy.service';
 import { CreateFoodUseCase } from '../../application/use-cases/create-food.usecase';
 import { DeleteFoodUseCase } from '../../application/use-cases/delete-food.usecase';
 import { ListFoodsUseCase } from '../../application/use-cases/list-foods.usecase';
@@ -24,7 +25,14 @@ export class LibraryFoodController {
     private readonly deleteFoodUseCase: DeleteFoodUseCase,
     private readonly listFoodsUseCase: ListFoodsUseCase,
     private readonly updateFoodUseCase: UpdateFoodUseCase,
+    private readonly copyService: LibraryCopyService,
   ) {}
+
+  @Post(':itemId/copy')
+  async copyFood(@Param() params: LibraryItemIdParamDto, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const item = await this.copyService.copyFood(params.itemId, body, readAuthContext(request).subject);
+    return { id: item.id, name: item.name };
+  }
 
   @Get()
   async listFoods(@Query() query: ListFoodsQueryDto, @Req() request: HttpAuthRequest) {

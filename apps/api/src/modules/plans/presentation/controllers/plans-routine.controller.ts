@@ -13,6 +13,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { PlanOwnershipGuard } from '../guards/plan-ownership.guard';
+import { RoutineCopyService } from '../../application/services/routine-copy.service';
+import { copyNameSchema } from '../dto/copy-name.schema';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { pageByName } from '../../../../common/pagination/page-by-name';
 import { withNextCursor } from '../../../../common/pagination/page-query';
@@ -41,7 +43,14 @@ export class PlansRoutineController {
     private readonly getUseCase: GetRoutineTemplateUseCase,
     private readonly updateUseCase: UpdateRoutineTemplateUseCase,
     private readonly deleteUseCase: DeleteRoutineTemplateUseCase,
+    private readonly copyService: RoutineCopyService,
   ) {}
+
+  @Post(':templateId/copy')
+  async copy(@Param() params: PlanTemplateIdParamDto, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const { name } = copyNameSchema.parse(body);
+    return this.copyService.copy(readAuthContext(request), params.templateId, name);
+  }
 
   @Get('catalog/objectives')
   async listObjectives() {

@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   tag: {
-    backgroundColor: colors.primaryBorder,
+    backgroundColor: colors.primarySoft,
     borderRadius: radius.sm,
     paddingLeft: space.sm,
     paddingRight: space.xs,
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: fontSize.xs,
     fontWeight: '700',
-    color: colors.primaryHover,
+    color: colors.primary,
   },
   tagRemove: {
     marginLeft: space.xs,

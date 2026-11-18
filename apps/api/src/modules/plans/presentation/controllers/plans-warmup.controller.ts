@@ -20,6 +20,7 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import type { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
 import { WarmupTemplatesService } from '../../application/services/warmup-templates.service';
+import { copyNameSchema } from '../dto/copy-name.schema';
 import { PlanTemplateIdParamDto } from '../dto/plan-template-id-param.dto';
 import { ListPlanTemplatesQueryDto } from '../dto/list-plan-templates-query.dto';
 import { UpsertWarmupTemplateDto } from '../dto/upsert-warmup-template.dto';
@@ -35,6 +36,13 @@ export class PlansWarmupController {
     const auth = readAuthContext(request);
     const parsed = UpsertWarmupTemplateDto.schema.parse(body);
     const item = await this.service.create(auth, parsed);
+    return mapOutput(item);
+  }
+
+  @Post(':templateId/copy')
+  async copy(@Param() params: PlanTemplateIdParamDto, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const { name } = copyNameSchema.parse(body);
+    const item = await this.service.copy(readAuthContext(request), params.templateId, name);
     return mapOutput(item);
   }
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Image, Pressable, Text, View, type ViewStyle } from 'react-native';
 import { IconButton, useBreakpoint, useReducedMotion } from '@trainerpro/ui';
 import { C, ss } from './LibraryRoutinesScreen.styles';
-import { Trophy, Activity, Pencil, Trash2, UserPlus } from 'lucide-react';
+import { Trophy, Activity, Copy, Pencil, Trash2, UserPlus } from 'lucide-react';
 import { type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
 import { type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { readFrontEnv } from '../../data/env';
@@ -24,6 +24,7 @@ export function RoutineCard(props: {
   tpl: RoutineTemplateView;
   mediaUrl: string;
   onAssign: (tpl: RoutineTemplateView) => void;
+  onCopy: (tpl: RoutineTemplateView) => void;
   onView: (tpl: RoutineTemplateView) => void;
   onEdit: (tpl: RoutineTemplateView) => void;
   onDelete: (id: string) => void;
@@ -46,6 +47,7 @@ export function RoutineCard(props: {
         canEdit={canEdit}
         icon={<Trophy color={C.blue} size={18} />}
         onAssign={canEdit ? () => props.onAssign(tpl) : undefined}
+        onCopy={() => props.onCopy(tpl)}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
         t={t}
@@ -67,6 +69,7 @@ export function RoutineCard(props: {
 export function WarmupCard(props: {
   tpl: WarmupTemplateView;
   mediaUrl: string;
+  onCopy: (tpl: WarmupTemplateView) => void;
   onView: (tpl: WarmupTemplateView) => void;
   onEdit: (tpl: WarmupTemplateView) => void;
   onDelete: (id: string) => void;
@@ -88,6 +91,7 @@ export function WarmupCard(props: {
       <CardTopBar
         canEdit={canEdit}
         icon={<Activity color={C.blue} size={18} />}
+        onCopy={() => props.onCopy(tpl)}
         onEdit={() => props.onEdit(tpl)}
         onDelete={() => props.onDelete(tpl.id)}
         t={t}
@@ -105,6 +109,7 @@ function CardTopBar(props: {
   canEdit: boolean;
   icon: React.ReactNode;
   onAssign?: () => void;
+  onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
   t: T;
@@ -122,6 +127,12 @@ function CardTopBar(props: {
           size={28}
         />
       )}
+      <IconButton
+        accessibilityLabel={props.t('coach.library.copy.action')}
+        icon={(color) => <Copy color={color} size={14} />}
+        onPress={props.onCopy}
+        size={28}
+      />
       {props.canEdit ? (
         <>
           <IconButton

@@ -74,6 +74,14 @@ export class NutritionService {
     return mapMeal(row);
   }
 
+  async copyMeal(context: AuthContext, mealId: string, name: string): Promise<MealOutput> {
+    return mapMeal(await this.repository.copyMeal(context, mealId, name));
+  }
+
+  async copyPlan(context: AuthContext, planId: string, name: string): Promise<PlanOutput> {
+    return mapPlan(await this.repository.copyPlan(context, planId, name));
+  }
+
   async deleteMeal(context: AuthContext, mealId: string): Promise<void> {
     await this.repository.deleteMeal(context, mealId);
   }

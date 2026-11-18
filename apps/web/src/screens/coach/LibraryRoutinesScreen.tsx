@@ -9,6 +9,7 @@ import { type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { QueryResult } from '../../components/AsyncStatus';
 import { EmptyIllustration } from '../../components/EmptyIllustrations';
 import { ActionConfirmModal } from './components/ActionConfirmModal';
+import { CopyItemModal } from './components/CopyItemModal';
 import { SaveRoutineModal } from './components/RoutinePlanner/SaveRoutineModal';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { useViewModel, type RoutineLibraryTab } from './LibraryRoutinesScreen.model';
@@ -41,6 +42,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
           items={vm.filteredRoutines}
           mediaMap={vm.mediaMap}
           onAssign={vm.onAssignRoutine}
+          onCopy={(tpl) => vm.setCopyTarget({ id: tpl.id, kind: 'routine', name: tpl.name })}
           onCreate={vm.onCreateRoutine}
           onDelete={vm.onDeleteRoutine}
           onEdit={vm.onEditRoutine}
@@ -57,6 +59,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
           onClearFilters={() => vm.setQuery('')}
           items={vm.filteredWarmups}
           mediaMap={vm.mediaMap}
+          onCopy={(tpl) => vm.setCopyTarget({ id: tpl.id, kind: 'warmup', name: tpl.name })}
           onCreate={vm.onCreateWarmup}
           onDelete={vm.onDeleteWarmup}
           onEdit={vm.onEditWarmup}
@@ -68,6 +71,7 @@ function ScreenView({ vm }: { vm: VM }): React.JSX.Element {
           t={vm.t}
         />
       )}
+      <CopyItemModal onClose={() => vm.setCopyTarget(null)} target={vm.copyTarget} />
       <ActionConfirmModal
         cancelLabel={vm.t('coach.routine.delete.cancel')}
         confirmLabel={vm.t('coach.routine.delete.action')}
@@ -153,6 +157,7 @@ function RoutineGrid(props: {
   items: RoutineTemplateView[];
   mediaMap: MediaMap;
   onAssign: (tpl: RoutineTemplateView) => void;
+  onCopy: (tpl: RoutineTemplateView) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
   onEdit: (tpl: RoutineTemplateView) => void;
@@ -198,6 +203,7 @@ function RoutineGrid(props: {
           tpl={tpl}
           mediaUrl={pickRoutineImage(tpl, props.mediaMap)}
           onAssign={props.onAssign}
+          onCopy={props.onCopy}
           onView={props.onView}
           onEdit={props.onEdit}
           onDelete={props.onDelete}
@@ -213,6 +219,7 @@ function WarmupGrid(props: {
   onClearFilters: () => void;
   items: WarmupTemplateView[];
   mediaMap: MediaMap;
+  onCopy: (tpl: WarmupTemplateView) => void;
   onCreate: () => void;
   onDelete: (id: string) => void;
   onEdit: (tpl: WarmupTemplateView) => void;
@@ -256,6 +263,7 @@ function WarmupGrid(props: {
           key={tpl.id}
           tpl={tpl}
           mediaUrl={pickWarmupImage(tpl, props.mediaMap)}
+          onCopy={props.onCopy}
           onView={props.onView}
           onEdit={props.onEdit}
           onDelete={props.onDelete}

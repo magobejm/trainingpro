@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   LibraryItemScope,
@@ -14,6 +15,7 @@ import { PrismaService } from '../../../../common/prisma/prisma.service';
 import { LibraryBaseRepository } from '../../../library/infra/prisma/library-base.repository';
 import { LibraryEditPolicy } from '../../../library/domain/policies/library-edit.policy';
 import { toDomainScope } from '../../../library/infra/prisma/library.repository.prisma.helpers';
+import { assertMealNotInUse, nutritionInUse } from '../../../../common/nutrition/nutrition-usage';
 
 export type FoodSnapshotRow = {
   caloriesKcal: number | null;
@@ -180,9 +182,38 @@ export class NutritionRepository extends LibraryBaseRepository {
     });
   }
 
+  async copyMeal(context: AuthContext, mealId: string, name: string): Promise<MealRow> {
+    const membership = await this.resolveCoachMembership(context);
+    await this.assertMealOwned(mealId, membership.id);
+    const source = await this.prisma.meal.findFirstOrThrow({ include: MEAL_INCLUDE, where: { id: mealId } });
+    const ingredients = source.ingredients
+      .filter((item) => item.food)
+      .map((item, index) => ({
+        amountGrams: Number(item.amountGrams),
+        foodId: item.foodId,
+        sortOrder: item.sortOrder ?? index,
+      }));
+    return this.createMeal(context, { category: source.category, ingredients, name, notes: source.notes });
+  }
+
+  async copyPlan(context: AuthContext, planId: string, name: string): Promise<PlanRow> {
+    const membership = await this.resolveCoachMembership(context);
+    const source = await this.assertPlanOwned(planId, membership.id);
+    if (source.clientId) throw new BadRequestException('Only library plans can be copied');
+    return this.createPlan(context, {
+      content: source.content ?? undefined,
+      description: source.description,
+      name,
+      setupData: source.setupData ?? undefined,
+      strategy: source.strategy,
+      type: source.type,
+    });
+  }
+
   async deleteMeal(context: AuthContext, mealId: string): Promise<void> {
     const membership = await this.resolveCoachMembership(context);
     await this.assertMealOwned(mealId, membership.id);
+    await assertMealNotInUse(this.prisma, mealId);
     await this.prisma.meal.update({
       data: {
         ...buildUpdateAuditFields(context),
@@ -248,7 +279,11 @@ export class NutritionRepository extends LibraryBaseRepository {
 
   async deletePlan(context: AuthContext, planId: string): Promise<void> {
     const membership = await this.resolveCoachMembership(context);
-    await this.assertPlanOwned(planId, membership.id);
+    const plan = await this.assertPlanOwned(planId, membership.id);
+    if (!plan.clientId) {
+      const copies = await this.prisma.nutritionPlan.count({ where: { archivedAt: null, sourcePlanId: planId } });
+      if (copies > 0) throw nutritionInUse('clients');
+    }
     await this.prisma.nutritionPlan.update({
       data: {
         ...buildUpdateAuditFields(context),

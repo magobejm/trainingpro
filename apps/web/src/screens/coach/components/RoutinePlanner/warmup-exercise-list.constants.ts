@@ -19,7 +19,7 @@ export const BLOCK_TYPE_LABELS: Record<string, string> = {
 };
 
 export const BLOCK_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
-  cardio: { bg: colors.primaryBorder, text: colors.primary },
+  cardio: { bg: colors.primarySoft, text: colors.primary },
   isometric: { bg: colors.chartPinkSoft, text: colors.chartPink },
   mobility: { bg: colors.successSoft, text: colors.success },
   plio: { bg: colors.warningSoft, text: colors.warning },

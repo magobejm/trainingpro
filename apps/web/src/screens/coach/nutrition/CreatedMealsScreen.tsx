@@ -1,7 +1,9 @@
 import { EmptyIllustration } from '../../../components/EmptyIllustrations';
 import { LoadingState } from '../../../components/AsyncStatus';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { CopyTarget } from '../../../data/hooks/useCopyLibraryItem';
+import { CopyItemModal } from '../components/CopyItemModal';
 import { Pressable, ScrollView, Text } from 'react-native';
 import { useNutritionMealsQuery } from '../../../data/hooks/useNutrition';
 import type { Crumb } from '../../../layout/crumbs';
@@ -18,6 +20,7 @@ type Props = {
 export function CreatedMealsScreen(props: Props): React.JSX.Element {
   const { t } = useTranslation();
   const mealsQuery = useNutritionMealsQuery();
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
   const meals = mealsQuery.data ?? [];
 
   return (
@@ -44,8 +47,16 @@ export function CreatedMealsScreen(props: Props): React.JSX.Element {
               count: meal.ingredients.length,
             })}
           </Text>
+          <Button
+            label={t('coach.library.copy.action')}
+            onPress={() => setCopyTarget({ id: meal.id, kind: 'meal', name: meal.name })}
+            size="sm"
+            style={styles.addButton}
+            variant="secondary"
+          />
         </Pressable>
       ))}
+      <CopyItemModal onClose={() => setCopyTarget(null)} target={copyTarget} />
     </ScrollView>
   );
 }

@@ -81,24 +81,52 @@ export async function cloneTemplateForClient(
   tx: Tx,
   input: { sourceTemplateId: string; clientId: string; actorId: string },
 ): Promise<string> {
-  const source: any = await tx.planTemplate.findUniqueOrThrow({
-    where: { id: input.sourceTemplateId },
-    include: { neats: true, routineObjectives: true },
-  });
   const client = await tx.client.findUniqueOrThrow({
     where: { id: input.clientId },
     select: { coachMembershipId: true, organizationId: true },
   });
+  return cloneTemplate(tx, {
+    sourceTemplateId: input.sourceTemplateId,
+    actorId: input.actorId,
+    coachMembershipId: client.coachMembershipId,
+    organizationId: client.organizationId,
+    ownerClientId: input.clientId,
+  });
+}
+
+/** Copies a library routine into a new library template owned by the coach under another name. */
+export function cloneTemplateForCoach(
+  tx: Tx,
+  input: { sourceTemplateId: string; actorId: string; coachMembershipId: string; organizationId: string; name: string },
+): Promise<string> {
+  return cloneTemplate(tx, input);
+}
+
+async function cloneTemplate(
+  tx: Tx,
+  input: {
+    sourceTemplateId: string;
+    actorId: string;
+    coachMembershipId: string | null;
+    organizationId: string | null;
+    ownerClientId?: string;
+    name?: string;
+  },
+): Promise<string> {
+  const source: any = await tx.planTemplate.findUniqueOrThrow({
+    where: { id: input.sourceTemplateId },
+    include: { neats: true, routineObjectives: true },
+  });
   const copy = await tx.planTemplate.create({
     data: {
-      coachMembershipId: client.coachMembershipId,
+      coachMembershipId: input.coachMembershipId,
       createdBy: input.actorId,
       expectedCompletionDays: source.expectedCompletionDays,
       kind: source.kind,
       mesocycleMicrocycles: source.mesocycleMicrocycles,
-      name: source.name,
-      organizationId: client.organizationId,
-      ownerClientId: input.clientId,
+      name: input.name ?? source.name,
+      organizationId: input.organizationId,
+      ownerClientId: input.ownerClientId ?? null,
       scope: 'COACH',
       updatedBy: input.actorId,
     },

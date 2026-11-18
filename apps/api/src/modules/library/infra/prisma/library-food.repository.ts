@@ -9,6 +9,7 @@ import { mapFood, normalizeFoodInput } from './library.mappers';
 import { buildFoodWhere, toDomainScope } from './library.repository.prisma.helpers';
 import { matchesSearch, normalizeSearch } from '../../../../common/text/normalize-search';
 import { LibraryBaseRepository } from './library-base.repository';
+import { assertFoodNotInUse } from '../../../../common/nutrition/nutrition-usage';
 import { completeQueryPage, queryPageWindow, type PageSlice } from '../../../../common/pagination/page-query';
 
 @Injectable()
@@ -109,6 +110,7 @@ export class LibraryFoodRepository extends LibraryBaseRepository {
     const membership = await this.resolveCoachMembership(context);
     const row = await this.readFoodForUpdate(itemId);
     this.policy.assertCoachOwned(toDomainScope(row.scope), row.coachMembershipId, membership.id);
+    await assertFoodNotInUse(this.prisma, itemId);
     await this.prisma.food.update({
       where: { id: itemId },
       data: {

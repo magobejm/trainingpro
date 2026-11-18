@@ -7,6 +7,8 @@ import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
 type Props = {
   expanded: boolean;
   item: FoodLibraryItem;
+  onCopy: () => void;
+  onDelete: () => void;
   onToggle: () => void;
   t: (key: string, options?: Record<string, unknown>) => string;
 };
@@ -24,16 +26,27 @@ export function FoodLibraryRow(props: Props): React.JSX.Element {
             {readServingUnitLabel(props.item.servingUnit, props.t)}
           </Text>
         </View>
-        <Button
-          label={
-            props.expanded
-              ? props.t('coach.library.foods.actions.hideDetail')
-              : props.t('coach.library.foods.actions.viewDetail')
-          }
-          onPress={props.onToggle}
-          size="sm"
-          variant="secondary"
-        />
+        <View style={styles.actions}>
+          <Button
+            label={
+              props.expanded
+                ? props.t('coach.library.foods.actions.hideDetail')
+                : props.t('coach.library.foods.actions.viewDetail')
+            }
+            onPress={props.onToggle}
+            size="sm"
+            variant="secondary"
+          />
+          <Button label={props.t('coach.library.copy.action')} onPress={props.onCopy} size="sm" variant="secondary" />
+          {scopeKey === 'coach' ? (
+            <Button
+              label={props.t('coach.library.exercises.actions.delete')}
+              onPress={props.onDelete}
+              size="sm"
+              variant="danger"
+            />
+          ) : null}
+        </View>
       </View>
       {props.expanded ? <FoodDetail item={props.item} t={props.t} /> : null}
     </View>
@@ -125,6 +138,12 @@ function DetailLine(props: { label: string; value: string }): React.JSX.Element 
 }
 
 const styles = StyleSheet.create({
+  actions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.sm,
+    justifyContent: 'flex-end',
+  },
   detail: {
     backgroundColor: colors.primarySoft,
     borderColor: colors.border,

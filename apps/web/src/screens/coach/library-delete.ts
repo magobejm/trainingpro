@@ -25,7 +25,13 @@ export function formatLibraryDeleteError(
   if (raw.toLowerCase().includes('routine template')) {
     return t('coach.library.exercises.actions.deleteInRoutineError', { name });
   }
+  if (isInUseError(error)) return t('coach.library.deleteInUse', { name });
   return raw || t('coach.library.exercises.actions.deleteFailed');
+}
+
+/** The API answers 409 "Library item is in use by ..." when a foods, meal, diet or warmup is still referenced. */
+export function isInUseError(error: unknown): boolean {
+  return readApiErrorMessage(error).toLowerCase().includes('is in use');
 }
 
 function isKind(kind: string): kind is Kind {

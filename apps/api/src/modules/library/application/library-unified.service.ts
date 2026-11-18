@@ -1,4 +1,4 @@
-﻿import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+﻿import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 /* eslint-disable max-lines */
 import { LibraryItemScope, Prisma, Role } from '@prisma/client';
 import { z } from 'zod';
@@ -598,6 +598,7 @@ export class LibraryUnifiedService {
 
   async updateUnifiedItem(id: string, dto: UnifiedExerciseDto, authSubject: string) {
     const mem = await this.getMembership(authSubject);
+    await this.assertCoachOwned(dto.category, id, mem.id);
     const base = {
       name: dto.name,
       coachMembershipId: mem.id,
@@ -644,6 +645,27 @@ export class LibraryUnifiedService {
         });
       default:
         throw new BadRequestException('Valid category required');
+    }
+  }
+
+  private async assertCoachOwned(category: UnifiedCategory, id: string, coachMembershipId: string) {
+    const delegates: Record<UnifiedCategory, Row> = {
+      strength: this.prisma.exercise,
+      cardio: this.prisma.cardioMethod,
+      plio: this.prisma.plioExercise,
+      warmup: this.prisma.mobilityExercise,
+      isometric: this.prisma.isometricExercise,
+      sport: this.prisma.sport,
+    };
+    const delegate = delegates[category];
+    if (!delegate) throw new BadRequestException('Valid category required');
+    const row = await delegate.findFirst({
+      where: { id, archivedAt: null },
+      select: { scope: true, coachMembershipId: true },
+    });
+    if (!row) throw new NotFoundException('Library item not found');
+    if (row.scope !== LibraryItemScope.COACH || row.coachMembershipId !== coachMembershipId) {
+      throw new ForbiddenException('Global library items are read-only');
     }
   }
 

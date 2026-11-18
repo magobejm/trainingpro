@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMutationFeedback } from '../../data/hooks/useFeedbackMutation';
 import { useTranslation } from 'react-i18next';
 import { useAssignRoutineMutation } from '../../data/hooks/useClientMutations';
+import type { CopyTarget } from '../../data/hooks/useCopyLibraryItem';
+import { isInUseError } from './library-delete';
 import { useDeleteRoutineTemplateMutation, type RoutineTemplateView } from '../../data/hooks/useRoutineTemplates';
 import { useDeleteWarmupTemplateMutation, type WarmupTemplateView } from '../../data/hooks/useWarmupTemplates';
 import { useUnifiedExercisesQuery } from '../../data/hooks/useUnifiedLibraryQuery';
@@ -25,6 +27,7 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   const [pendingDeleteId, setPendingDeleteId] = useState('');
   const [deleteKind, setDeleteKind] = useState<RoutineLibraryTab>('routines');
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [copyTarget, setCopyTarget] = useState<CopyTarget | null>(null);
   const catalogs = useLibraryCatalogs(query);
   const routines = catalogs.routinesQuery.items;
   const warmups = catalogs.warmupsQuery.items;
@@ -55,6 +58,8 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
   return {
     assignTemplate,
     clientId,
+    copyTarget,
+    setCopyTarget,
     deleteError,
     filteredRoutines: routines,
     filteredWarmups: warmups,
@@ -197,6 +202,10 @@ function buildConfirmDelete(
       const raw = (err as { message?: string })?.message ?? '';
       const isAssigned = raw.toLowerCase().includes('assigned');
       const name = pendingName ? `"${pendingName}"` : 'esta rutina';
+      if (isInUseError(err)) {
+        setDeleteError(`No se puede eliminar ${name} porque está en una rutina activa. Quítalo de la rutina primero.`);
+        return;
+      }
       setDeleteError(
         isAssigned
           ? `No se puede eliminar ${name} porque está asignada a uno o más clientes activos. Desasígnala primero.`

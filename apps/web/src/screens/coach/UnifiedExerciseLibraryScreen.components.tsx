@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, Image, Pressable, ScrollView } from 'react-native';
-import { Dumbbell, Heart, Zap, Wind, Trophy, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { Copy, Dumbbell, Heart, Zap, Wind, Trophy, Plus, Edit2, Trash2, X } from 'lucide-react';
+import { CopyItemModal } from './components/CopyItemModal';
+import { exerciseCopyTarget } from '../../data/hooks/useCopyLibraryItem';
 import { useTranslation } from 'react-i18next';
 import { QueryResult } from '../../components/AsyncStatus';
 import { UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
@@ -116,11 +118,15 @@ function ExerciseCardTags({ tags }: { tags: string[] }) {
 }
 
 function ExerciseCardActions({
+  coachOwned,
+  onCopy,
   onEdit,
   onDelete,
   disabled,
   t,
 }: {
+  coachOwned: boolean;
+  onCopy: () => void;
   onEdit: () => void;
   onDelete: () => void;
   disabled: boolean;
@@ -129,25 +135,36 @@ function ExerciseCardActions({
   return (
     <View style={styles.actionsRow}>
       <IconButton
-        accessibilityLabel={t('coach.library.exercises.actions.edit')}
-        icon={(color) => <Edit2 size={14} color={color} />}
-        onPress={onEdit}
+        accessibilityLabel={t('coach.library.copy.action')}
+        icon={(color) => <Copy size={14} color={color} />}
+        onPress={onCopy}
         size={28}
       />
-      <IconButton
-        accessibilityLabel={t('coach.library.exercises.actions.delete')}
-        disabled={disabled}
-        icon={(color) => <Trash2 size={14} color={color} />}
-        onPress={onDelete}
-        size={28}
-        tone="danger"
-      />
+      {coachOwned && (
+        <>
+          <IconButton
+            accessibilityLabel={t('coach.library.exercises.actions.edit')}
+            icon={(color) => <Edit2 size={14} color={color} />}
+            onPress={onEdit}
+            size={28}
+          />
+          <IconButton
+            accessibilityLabel={t('coach.library.exercises.actions.delete')}
+            disabled={disabled}
+            icon={(color) => <Trash2 size={14} color={color} />}
+            onPress={onDelete}
+            size={28}
+            tone="danger"
+          />
+        </>
+      )}
     </View>
   );
 }
 
 export type ExerciseCardProps = {
   item: UnifiedExerciseItem;
+  onCopy: () => void;
   onDetail: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -157,7 +174,7 @@ export type ExerciseCardProps = {
 };
 
 export function ExerciseCard(props: ExerciseCardProps) {
-  const { item, onDetail, onEdit, onDelete, deletionDisabled, hovered, setHovered } = props;
+  const { item, onCopy, onDetail, onEdit, onDelete, deletionDisabled, hovered, setHovered } = props;
   const { t } = useTranslation();
   const reduced = useReducedMotion();
   const coachOwned = item.scope?.trim().toLowerCase() === 'coach';
@@ -190,7 +207,14 @@ export function ExerciseCard(props: ExerciseCardProps) {
           {item.name}
         </Text>
         <ExerciseCardTags tags={item.tags} />
-        {coachOwned && <ExerciseCardActions onEdit={onEdit} onDelete={onDelete} disabled={deletionDisabled} t={t} />}
+        <ExerciseCardActions
+          coachOwned={coachOwned}
+          onCopy={onCopy}
+          onEdit={onEdit}
+          onDelete={onDelete}
+          disabled={deletionDisabled}
+          t={t}
+        />
       </View>
     </Pressable>
   );
@@ -317,6 +341,7 @@ export function LibraryMainGrid({ st }: { st: LibraryScreenState }) {
           item={item}
           hovered={st.hoveredCard === item.id}
           setHovered={(h) => st.setHoveredCard(h ? item.id : null)}
+          onCopy={() => st.setCopyTarget(exerciseCopyTarget(item))}
           onDetail={() => {
             st.setItemForDetail(item);
             st.setDetailVisible(true);
@@ -362,6 +387,7 @@ export function LibraryModals({ st }: { st: LibraryScreenState }) {
         onClose={() => st.setDetailVisible(false)}
         item={st.itemForDetail}
       />
+      <CopyItemModal onClose={() => st.setCopyTarget(null)} target={st.copyTarget} />
     </>
   );
 }

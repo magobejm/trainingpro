@@ -4,14 +4,28 @@ import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../../../auth/presentation/guards/roles.guard';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { HttpAuthRequest } from '../../../auth/presentation/http-auth-request';
-import { LibraryUnifiedService, UnifiedExerciseDto } from '../../application/library-unified.service';
+import { LibraryCopyService } from '../../application/library-copy.service';
+import { LibraryUnifiedService, UnifiedCategory, UnifiedExerciseDto } from '../../application/library-unified.service';
 import { ListUnifiedExercisesQueryDto } from '../dto/list-unified-exercises-query.dto';
 
 @Controller('library')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('coach')
 export class LibraryUnifiedController {
-  constructor(private readonly service: LibraryUnifiedService) {}
+  constructor(
+    private readonly service: LibraryUnifiedService,
+    private readonly copyService: LibraryCopyService,
+  ) {}
+
+  @Post('exercises/unified/:category/:id/copy')
+  async copyUnifiedItem(
+    @Param('category') category: UnifiedCategory,
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Req() req: HttpAuthRequest,
+  ) {
+    return this.copyService.copyExercise(category, id, body, readAuthContext(req).subject);
+  }
 
   @Get('catalogs')
   async listAllCatalogs() {

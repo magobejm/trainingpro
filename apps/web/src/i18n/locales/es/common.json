@@ -2399,5 +2399,8 @@
   "coach.clientRoutine.warmup.title": "Calentamiento",
   "coach.clientRoutine.warmup.add": "Añadir calentamiento",
   "coach.clientRoutine.warmup.pick": "Elegir calentamiento",
-  "coach.clientRoutine.warmup.none": "No hay más calentamientos en la biblioteca."
+  "coach.clientRoutine.warmup.none": "No hay más calentamientos en la biblioteca.",
+  "coach.clientRoutine.warmup.empty": "Este día no tiene calentamiento.",
+  "coach.clientRoutine.warmup.noItems": "Este calentamiento no tiene ejercicios.",
+  "coach.clientRoutine.warmup.addExercise": "Añadir ejercicio"
 }

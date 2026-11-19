@@ -127,6 +127,24 @@ function itemArgs(params: ItemParams, request: HttpAuthRequest) {
   ] as const;
 }
 
+type WarmupParams = { clientId: string; dayId: string; itemId: string; setId: string; warmupId: string; weekId: string };
+const warmupItemBody = z.object({
+  displayName: z.string().trim().min(1).max(120),
+  kind: itemKind,
+  libraryId: uuid,
+});
+const warmupSetId = z.string().regex(/^[0-9a-f-]{36}:\d{1,3}$/i);
+
+function warmupArgs(params: WarmupParams, request: HttpAuthRequest) {
+  return [
+    readAuthContext(request),
+    check(uuid, params.clientId),
+    check(uuid, params.weekId),
+    check(uuid, params.dayId),
+    check(uuid, params.warmupId),
+  ] as const;
+}
+
 @Controller('clients/:clientId/routine')
 @UseGuards(AuthGuard, RolesGuard)
 @Roles('coach')
@@ -215,6 +233,81 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.dayId),
       check(warmupsBody, body).warmupTemplateIds,
+    );
+  }
+
+  @Post('weeks/:weekId/days/:dayId/warmups/:warmupId/items')
+  addWarmupItem(@Param() params: WarmupParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.addWarmupItem(context, clientId, weekId, dayId, warmupId, check(warmupItemBody, body));
+  }
+
+  @Patch('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId')
+  updateWarmupItem(@Param() params: WarmupParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.updateWarmupItem(
+      context,
+      clientId,
+      weekId,
+      dayId,
+      warmupId,
+      check(uuid, params.itemId),
+      check(metaBody, body),
+    );
+  }
+
+  @Delete('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId')
+  removeWarmupItem(@Param() params: WarmupParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.removeWarmupItem(context, clientId, weekId, dayId, warmupId, check(uuid, params.itemId));
+  }
+
+  @Post('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId/replace')
+  replaceWarmupItem(@Param() params: WarmupParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.replaceWarmupItem(
+      context,
+      clientId,
+      weekId,
+      dayId,
+      warmupId,
+      check(uuid, params.itemId),
+      check(swapBody, body),
+    );
+  }
+
+  @Post('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId/sets')
+  addWarmupSet(@Param() params: WarmupParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.addWarmupSet(context, clientId, weekId, dayId, warmupId, check(uuid, params.itemId));
+  }
+
+  @Patch('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId/sets/:setId')
+  patchWarmupSet(@Param() params: WarmupParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.patchWarmupSet(
+      context,
+      clientId,
+      weekId,
+      dayId,
+      warmupId,
+      check(uuid, params.itemId),
+      check(warmupSetId, params.setId),
+      check(blockSetPatch, body),
+    );
+  }
+
+  @Delete('weeks/:weekId/days/:dayId/warmups/:warmupId/items/:itemId/sets/:setId')
+  removeWarmupSet(@Param() params: WarmupParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, dayId, warmupId] = warmupArgs(params, request);
+    return this.service.removeWarmupSet(
+      context,
+      clientId,
+      weekId,
+      dayId,
+      warmupId,
+      check(uuid, params.itemId),
+      check(warmupSetId, params.setId),
     );
   }
 

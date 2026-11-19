@@ -37,9 +37,9 @@ export type CardSelection = { onToggle: () => void; selected: boolean };
 /** Everything a card can do to its item, already bound to that item. */
 export type ItemActions = {
   onAddSet: () => void;
-  onDuplicate: () => void;
+  onDuplicate?: () => void;
   onMeta: (meta: RoutineEditorItemMeta) => void;
-  onMove: (direction: 'down' | 'up') => void;
+  onMove?: (direction: 'down' | 'up') => void;
   onPatchSet: (setId: string, patch: SetPatch) => void;
   onRemove: () => void;
   onRemoveSet: (setId: string) => void;
@@ -88,19 +88,25 @@ function EditTools(props: {
           onDragEnd={props.drag.onDragEnd}
         />
       ) : null}
-      <IconButton
-        disabled={props.first}
-        icon={ICON.up}
-        label={t('coach.clientRoutine.moveUp')}
-        onPress={() => actions.onMove('up')}
-      />
-      <IconButton
-        disabled={props.last}
-        icon={ICON.down}
-        label={t('coach.clientRoutine.moveDown')}
-        onPress={() => actions.onMove('down')}
-      />
-      <IconButton icon={ICON.duplicate} label={t('coach.clientRoutine.duplicate')} onPress={actions.onDuplicate} />
+      {actions.onMove ? (
+        <>
+          <IconButton
+            disabled={props.first}
+            icon={ICON.up}
+            label={t('coach.clientRoutine.moveUp')}
+            onPress={() => actions.onMove?.('up')}
+          />
+          <IconButton
+            disabled={props.last}
+            icon={ICON.down}
+            label={t('coach.clientRoutine.moveDown')}
+            onPress={() => actions.onMove?.('down')}
+          />
+        </>
+      ) : null}
+      {actions.onDuplicate ? (
+        <IconButton icon={ICON.duplicate} label={t('coach.clientRoutine.duplicate')} onPress={actions.onDuplicate} />
+      ) : null}
       {actions.onReplace ? (
         <IconButton icon={ICON.replace} label={t('coach.clientRoutine.replace')} onPress={actions.onReplace} />
       ) : null}
@@ -317,7 +323,15 @@ export function RoutineItemCard(props: {
 }
 
 const styles = StyleSheet.create({
-  card: { borderColor: colors.border, borderRadius: radius.md, borderWidth: 1, gap: space.sm, padding: space.sm },
+  card: {
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: space.sm,
+    maxWidth: '100%',
+    minWidth: 0,
+    padding: space.sm,
+  },
   cardSelected: { borderColor: colors.primary, borderWidth: 2 },
   check: {
     alignItems: 'center',

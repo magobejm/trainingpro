@@ -84,6 +84,7 @@ export {
   type RoutineEditorItemKind,
   type RoutineEditorItemMeta,
   type RoutineEditorWarmup,
+  type RoutineEditorWarmupItem,
   type RoutineEditorWeek,
   type RoutineEditorWeekSummary,
 } from './client-routine';

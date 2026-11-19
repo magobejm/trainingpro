@@ -17,6 +17,7 @@ import {
 } from '@trainerpro/shared';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import { readPrescription } from './client-routine-prescription';
+import { warmupItemView } from './client-routine-warmup-view';
 
 const DAY_MS = 86_400_000;
 const num = (value: Prisma.Decimal | number | null | undefined) => (value == null ? null : Number(value));
@@ -130,7 +131,14 @@ async function loadWeekData(prisma: PrismaService, routine: ClientRoutine, week:
         mobilityBlocks: timedInclude,
         plioBlocks: timedInclude,
         sportBlocks: timedInclude,
-        warmups: { include: { warmupTemplate: { select: { name: true } } }, orderBy: { sortOrder: 'asc' } },
+        warmups: {
+          include: {
+            warmupTemplate: {
+              select: { items: { orderBy: { sortOrder: 'asc' }, where: { archivedAt: null } }, name: true },
+            },
+          },
+          orderBy: { sortOrder: 'asc' },
+        },
       },
       orderBy: { dayIndex: 'asc' },
       where: { archivedAt: null, revisionVersion: 1, templateId: week.templateId },
@@ -185,6 +193,7 @@ function editorDay(
     title: day.title,
     warmups: day.warmups.map((item) => ({
       id: item.id,
+      items: item.warmupTemplate.items.map(warmupItemView),
       name: item.warmupTemplate.name,
       warmupTemplateId: item.warmupTemplateId,
     })),

@@ -110,32 +110,43 @@ async function freezeDayWarmups(tx: Tx, templateId: string, version: number) {
     if (reference.warmupTemplate.isRevision) continue;
     let frozenId = copied.get(reference.warmupTemplateId);
     if (!frozenId) {
-      const source = reference.warmupTemplate;
-      const { items, groups } = source;
-      const data = copyFields(source, ['id', 'items', 'groups', 'clientSaveId', 'createdAt', 'updatedAt']);
-      const frozen = await tx.warmupTemplate.create({ data: { ...data, archivedAt: null, isRevision: true } });
-      const groupIds = new Map<string, string>();
-      for (const group of groups) {
-        const fields = copyFields(group, ['id', 'templateId', 'createdAt', 'updatedAt']);
-        const copy = await tx.warmupTemplateGroup.create({ data: { ...fields, templateId: frozen.id } });
-        groupIds.set(group.id, copy.id);
-      }
-      for (const item of items) {
-        const fields = copyFields(item, ['id', 'templateId', 'createdAt', 'updatedAt', 'groupId']);
-        await tx.warmupTemplateItem.create({
-          data: {
-            ...fields,
-            metadataJson: fields.metadataJson ?? Prisma.DbNull,
-            groupId: item.groupId ? groupIds.get(item.groupId) : null,
-            templateId: frozen.id,
-          },
-        });
-      }
-      frozenId = frozen.id;
-      copied.set(source.id, frozenId);
+      frozenId = (await copyWarmupTemplate(tx, reference.warmupTemplate)).id;
+      copied.set(reference.warmupTemplateId, frozenId);
     }
     await tx.planDayWarmup.update({ where: { id: reference.id }, data: { warmupTemplateId: frozenId } });
   }
+}
+
+type WarmupSource = Prisma.WarmupTemplateGetPayload<{ include: { items: true; groups: true } }>;
+
+/** Copies a warm-up with its groups and items as a revision; the library never lists revisions. */
+export async function copyWarmupTemplate(
+  tx: Tx,
+  source: WarmupSource,
+  extra: { ownerClientId?: string } = {},
+): Promise<{ id: string; itemIds: Map<string, string> }> {
+  const data = copyFields(source, ['id', 'items', 'groups', 'clientSaveId', 'createdAt', 'updatedAt']);
+  const copy = await tx.warmupTemplate.create({ data: { ...data, ...extra, archivedAt: null, isRevision: true } });
+  const groupIds = new Map<string, string>();
+  for (const group of source.groups) {
+    const fields = copyFields(group, ['id', 'templateId', 'createdAt', 'updatedAt']);
+    const created = await tx.warmupTemplateGroup.create({ data: { ...fields, templateId: copy.id } });
+    groupIds.set(group.id, created.id);
+  }
+  const itemIds = new Map<string, string>();
+  for (const item of source.items) {
+    const fields = copyFields(item, ['id', 'templateId', 'createdAt', 'updatedAt', 'groupId']);
+    const created = await tx.warmupTemplateItem.create({
+      data: {
+        ...fields,
+        metadataJson: fields.metadataJson ?? Prisma.DbNull,
+        groupId: item.groupId ? groupIds.get(item.groupId) : null,
+        templateId: copy.id,
+      },
+    });
+    itemIds.set(item.id, created.id);
+  }
+  return { id: copy.id, itemIds };
 }
 
 function copyFields<T extends object, K extends keyof T>(value: T, excluded: K[]): Omit<T, K> {

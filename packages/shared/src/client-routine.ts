@@ -97,7 +97,29 @@ export type RoutineEditorItemMeta = {
 
 export type RoutineEditorGroup = { groupType: 'CIRCUIT' | 'SUPERSET'; id: string; note: string | null };
 
-export type RoutineEditorWarmup = { id: string; name: string; warmupTemplateId: string };
+/**
+ * One exercise of a warm-up. Its sets have the id `<itemId>:<setIndex>` because warm-up sets are stored
+ * inside the exercise instead of in their own table. Strength reads as `exercise`.
+ */
+export type RoutineEditorWarmupItem = {
+  displayName: string;
+  durationMinutes: number | null;
+  groupId: string | null;
+  id: string;
+  kind: RoutineEditorItemKind;
+  lockedFields: string[];
+  notes: string | null;
+  repsRange: string | null;
+  sets: RoutineEditorBlockSet[];
+  sortOrder: number;
+};
+
+export type RoutineEditorWarmup = {
+  id: string;
+  items: RoutineEditorWarmupItem[];
+  name: string;
+  warmupTemplateId: string;
+};
 
 export type RoutineEditorDay = {
   blocks: RoutineEditorBlock[];

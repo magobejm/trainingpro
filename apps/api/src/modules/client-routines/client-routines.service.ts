@@ -42,6 +42,15 @@ import {
 } from './client-routine-items';
 import { setDayWarmups, setExerciseGroup, type GroupMember } from './client-routine-groups';
 import { applyProgression } from './client-routine-progression';
+import {
+  addWarmupItem,
+  addWarmupSet,
+  patchWarmupSet,
+  removeWarmupItem,
+  removeWarmupSet,
+  swapWarmupItem,
+  updateWarmupItemMeta,
+} from './client-routine-warmups';
 import { buildWeek, weekWindow } from './client-routine-view';
 
 @Injectable()
@@ -191,12 +200,105 @@ export class ClientRoutinesService {
       where: {
         archivedAt: null,
         id: { in: templateIds },
-        OR: [{ scope: 'GLOBAL' }, { organizationId: client.organizationId }],
+        OR: [{ scope: 'GLOBAL' }, { organizationId: client.organizationId }, { ownerClientId: clientId }],
       },
     });
     if (visible !== new Set(templateIds).size) throw new NotFoundException('Warm-up not found');
     await setDayWarmups(this.prisma, routine, week, day.dayIndex, [...new Set(templateIds)]);
     return this.getWeek(context, clientId, weekId);
+  }
+
+  /** Runs one edit on an exercise of a day's warm-up, which first becomes the client's own copy. */
+  async editWarmup(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    action: (scope: Parameters<typeof addWarmupItem>[0]) => Promise<void>,
+  ) {
+    const { routine, week } = await this.week(context, clientId, weekId);
+    const day = await assertEditable(this.prisma, routine, week, dayId);
+    await action({ day, routine, warmupId, week });
+    return this.getWeek(context, clientId, weekId);
+  }
+
+  addWarmupItem(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    input: { displayName: string; kind: RoutineEditorItemKind; libraryId: string },
+  ) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) => addWarmupItem(scope, this.prisma, input));
+  }
+
+  updateWarmupItem(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    itemId: string,
+    meta: RoutineEditorItemMeta,
+  ) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) =>
+      updateWarmupItemMeta(scope, this.prisma, itemId, meta),
+    );
+  }
+
+  replaceWarmupItem(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    itemId: string,
+    next: { displayName: string; libraryId: string },
+  ) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) =>
+      swapWarmupItem(scope, this.prisma, itemId, next),
+    );
+  }
+
+  removeWarmupItem(context: AuthContext, clientId: string, weekId: string, dayId: string, warmupId: string, itemId: string) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) =>
+      removeWarmupItem(scope, this.prisma, itemId),
+    );
+  }
+
+  addWarmupSet(context: AuthContext, clientId: string, weekId: string, dayId: string, warmupId: string, itemId: string) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) => addWarmupSet(scope, this.prisma, itemId));
+  }
+
+  removeWarmupSet(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    itemId: string,
+    setId: string,
+  ) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) =>
+      removeWarmupSet(scope, this.prisma, itemId, setId),
+    );
+  }
+
+  patchWarmupSet(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    dayId: string,
+    warmupId: string,
+    itemId: string,
+    setId: string,
+    patch: Record<string, unknown>,
+  ) {
+    return this.editWarmup(context, clientId, weekId, dayId, warmupId, (scope) =>
+      patchWarmupSet(scope, this.prisma, itemId, setId, patch),
+    );
   }
 
   /** Runs one edit on an exercise or block after checking its day is open, then returns the fresh week. */

@@ -133,7 +133,7 @@ export async function twinIds(
   return ids.length ? ids : [id];
 }
 
-function pickColumns(kind: RoutineEditorItemKind, patch: Record<string, unknown>) {
+export function pickColumns(kind: RoutineEditorItemKind, patch: Record<string, unknown>) {
   const allowed = new Set(SET_COLUMNS[kind]);
   return Object.fromEntries(Object.entries(patch).filter(([key, value]) => allowed.has(key) && value !== undefined));
 }

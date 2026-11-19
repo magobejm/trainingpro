@@ -213,6 +213,15 @@ function WeekPanel(props: {
           <RoutineDayCard
             actions={{
               onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
+              warmup: {
+                onAddItem: (ref, item) => actions.addWarmupItem.mutate({ item, ref }, { onError: fail }),
+                onAddSet: (ref) => actions.addWarmupSet.mutate(ref, { onError: fail }),
+                onMeta: (ref, meta) => actions.updateWarmupItem.mutate({ meta, ref }, { onError: fail }),
+                onPatchSet: (ref, setId, patch) => actions.patchWarmupSet.mutate({ patch, ref, setId }, { onError: fail }),
+                onRemoveItem: (ref) => actions.removeWarmupItem.mutate(ref, { onError: fail }),
+                onRemoveSet: (ref, setId) => actions.removeWarmupSet.mutate({ ref, setId }, { onError: fail }),
+                onReplaceItem: (ref, next) => actions.replaceWarmupItem.mutate({ ...next, ref }, { onError: fail }),
+              },
               onWarmups: (dayId, warmupTemplateIds) =>
                 actions.setWarmups.mutate({ dayId, warmupTemplateIds }, { onError: fail }),
               onGroup: (dayId, items, groupType) => actions.setGroup.mutate({ dayId, groupType, items }, { onError: fail }),

@@ -4,6 +4,7 @@ import { Badge, Button, Card, colors, fontSize, space, useBreakpoint, type Badge
 import type { RoutineEditorDay, RoutineEditorItemKind, RoutineEditorItemMeta } from '@trainerpro/shared';
 import { DayGrouping, GroupFrame, type GroupMember, type GroupType, type OnGroup } from './DayGrouping';
 import { DayWarmups, type OnWarmups } from './DayWarmups';
+import type { WarmupEditActions } from './WarmupExercisesModal';
 import type { SetPatch } from './ClientSeriesTable';
 import { DropSlot } from './ItemDrag';
 import { RoutineItemCard, type CardItem, type CardSelection, type ItemActions } from './RoutineItemCard';
@@ -33,6 +34,7 @@ export type RoutineDayActions = {
   onRemoveSet: (ref: Ref, setId: string) => void;
   onReplace: (ref: Ref) => void;
   onWarmups: OnWarmups;
+  warmup: WarmupEditActions;
 };
 
 /** Exercises and blocks share one order in the day. */
@@ -264,7 +266,7 @@ export function RoutineDayCard(props: {
         <DayHeader count={items.length} day={day} onToggle={() => setOpen(!open)} open={open} t={t} />
         {open ? (
           <>
-            <DayWarmups day={day} editable={day.editable} onChange={actions.onWarmups} t={t} />
+            <DayWarmups actions={actions.warmup} day={day} editable={day.editable} onChange={actions.onWarmups} t={t} />
             {day.editable ? (
               <DayGrouping
                 day={day}

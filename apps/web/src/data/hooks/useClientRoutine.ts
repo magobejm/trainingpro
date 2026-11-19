@@ -108,6 +108,62 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
     setWarmups,
     updateSet,
     ...useItemActions(auth, base, refresh),
+    ...useWarmupActions(auth, base, refresh),
+  };
+}
+
+export type WarmupRef = { dayId: string; warmupId: string };
+export type WarmupItemRef = WarmupRef & { itemId: string };
+
+/** Edits on the exercises of a day's warm-up. They only touch the client's own copy of that warm-up. */
+function useWarmupActions(auth: Auth, base: string, refresh: () => Promise<void>) {
+  const warmup = (ref: WarmupRef) => `${base}/days/${ref.dayId}/warmups/${ref.warmupId}/items`;
+  const at = (ref: WarmupItemRef) => `${warmup(ref)}/${ref.itemId}`;
+  const options = { onSuccess: refresh };
+  const addWarmupItem = useMutation({
+    mutationFn: (input: { item: { displayName: string; kind: RoutineEditorItemKind; libraryId: string }; ref: WarmupRef }) =>
+      api(auth).post<RoutineEditorWeek>(warmup(input.ref), input.item),
+    ...options,
+  });
+  const updateWarmupItem = useMutation({
+    mutationFn: (input: { meta: RoutineEditorItemMeta; ref: WarmupItemRef }) =>
+      api(auth).patch<RoutineEditorWeek>(at(input.ref), input.meta),
+    ...options,
+  });
+  const replaceWarmupItem = useMutation({
+    mutationFn: (input: { displayName: string; libraryId: string; ref: WarmupItemRef }) =>
+      api(auth).post<RoutineEditorWeek>(`${at(input.ref)}/replace`, {
+        displayName: input.displayName,
+        libraryId: input.libraryId,
+      }),
+    ...options,
+  });
+  const removeWarmupItem = useMutation({
+    mutationFn: (ref: WarmupItemRef) => api(auth).delete<RoutineEditorWeek>(at(ref)),
+    ...options,
+  });
+  const addWarmupSet = useMutation({
+    mutationFn: (ref: WarmupItemRef) => api(auth).post<RoutineEditorWeek>(`${at(ref)}/sets`, {}),
+    ...options,
+  });
+  const removeWarmupSet = useMutation({
+    mutationFn: (input: { ref: WarmupItemRef; setId: string }) =>
+      api(auth).delete<RoutineEditorWeek>(`${at(input.ref)}/sets/${input.setId}`),
+    ...options,
+  });
+  const patchWarmupSet = useMutation({
+    mutationFn: (input: { patch: Record<string, unknown>; ref: WarmupItemRef; setId: string }) =>
+      api(auth).patch<RoutineEditorWeek>(`${at(input.ref)}/sets/${input.setId}`, input.patch),
+    ...options,
+  });
+  return {
+    addWarmupItem,
+    addWarmupSet,
+    patchWarmupSet,
+    removeWarmupItem,
+    removeWarmupSet,
+    replaceWarmupItem,
+    updateWarmupItem,
   };
 }
 

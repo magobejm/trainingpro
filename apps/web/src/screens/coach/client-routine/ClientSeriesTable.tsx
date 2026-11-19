@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { colors, fontSize, space } from '@trainerpro/ui';
 import { setVariablesForType, type RoutineEditorItemKind, type SetVariableKey } from '@trainerpro/shared';
 import { VariableHint } from '../components/VariableHint';
@@ -83,13 +83,52 @@ function tableWidth(keys: SetVariableKey[]): number {
   return INDEX + ACTIONS + keys.reduce((sum, key) => sum + columnWidth(key), 0) + (keys.length + 1) * space.sm;
 }
 
+/** Keeps the table inside the space it actually has, including after the window is resized. */
+function useSeriesScroll() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState({ limit: 0, overflow: false });
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+    const update = () => {
+      const limit = node.parentElement?.clientWidth ?? 0;
+      if (limit > 0) node.style.maxWidth = `${limit}px`;
+      const overflow = node.scrollWidth > node.clientWidth + 1;
+      setBox((current) => (current.limit === limit && current.overflow === overflow ? current : { limit, overflow }));
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(node);
+    if (node.parentElement) observer.observe(node.parentElement);
+    const dialog = node.closest('[role="dialog"]');
+    if (dialog) observer.observe(dialog);
+    window.addEventListener('resize', update);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+    };
+  }, []);
+  return { ...box, ref };
+}
+
 export function ClientSeriesTable(props: ClientSeriesTableProps): React.JSX.Element {
   const variables = setVariablesForType(props.kind === 'exercise' ? 'strength' : props.kind);
   const label = (key: SetVariableKey) => props.t(`coach.clientRoutine.var.${key}`);
   const dash = props.t('coach.routine.seriesTable.placeholderDash');
+  const scroll = useSeriesScroll();
   return (
     <View style={styles.frame}>
-      <ScrollView horizontal showsHorizontalScrollIndicator>
+      <div
+        data-hscroll={scroll.overflow ? 'on' : 'off'}
+        ref={scroll.ref}
+        style={{
+          maxWidth: scroll.limit > 0 ? scroll.limit : '100%',
+          minWidth: 0,
+          overflowX: scroll.overflow ? 'scroll' : 'hidden',
+          overflowY: 'hidden',
+          width: '100%',
+        }}
+      >
         <View style={[styles.grid, { width: tableWidth(variables) }]}>
           <View style={styles.row}>
             <VariableHint id={'set'} style={styles.index}>
@@ -140,7 +179,7 @@ export function ClientSeriesTable(props: ClientSeriesTableProps): React.JSX.Elem
             </View>
           ))}
         </View>
-      </ScrollView>
+      </div>
     </View>
   );
 }
@@ -168,5 +207,5 @@ const styles = StyleSheet.create({
   lock: { fontSize: fontSize.xs },
   remove: { color: colors.danger, fontSize: fontSize.sm },
   row: { alignItems: 'flex-start', flexDirection: 'row', gap: space.sm },
-  frame: { maxWidth: '100%', overflow: 'hidden', width: '100%' },
+  frame: { maxWidth: '100%', minWidth: 0, width: '100%' },
 });

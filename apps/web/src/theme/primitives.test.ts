@@ -111,6 +111,7 @@ describe('modal sizes', () => {
     expect(MODAL_WIDTHS.sm).toBeLessThan(MODAL_WIDTHS.md);
     expect(MODAL_WIDTHS.md).toBeLessThan(MODAL_WIDTHS.lg);
     expect(MODAL_WIDTHS.lg).toBeLessThan(MODAL_WIDTHS.xl);
+    expect(MODAL_WIDTHS.xl).toBeLessThan(MODAL_WIDTHS.xxl);
   });
 });
 

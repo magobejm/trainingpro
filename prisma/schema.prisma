@@ -412,6 +412,7 @@ model Client {
   routineAssignments        RoutineAssignment[]          @relation("client_routine_history")
   clientRoutines            ClientRoutine[]
   ownedPlanTemplates        PlanTemplate[]               @relation("client_owned_plan_templates")
+  ownedWarmupTemplates      WarmupTemplate[]             @relation("client_owned_warmup_templates")
   routineDayColors          ClientRoutineDayColor[]
   managementSections        ClientManagementSection[]
   progressPhotos            ClientProgressPhoto[]
@@ -1188,11 +1189,13 @@ model WarmupTemplate {
   templateVersion   Int                   @default(1) @map("template_version")
   isRevision        Boolean               @default(false) @map("is_revision")
   clientSaveId      String?               @map("client_save_id") @db.Uuid
+  ownerClientId     String?               @map("owner_client_id") @db.Uuid
   archivedAt        DateTime?             @map("archived_at") @db.Timestamptz(6)
   createdBy         String?               @map("created_by") @db.Uuid
   updatedBy         String?               @map("updated_by") @db.Uuid
   createdAt         DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ownerClient       Client?               @relation("client_owned_warmup_templates", fields: [ownerClientId], references: [id], onDelete: Cascade)
   organization      Organization?         @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   coachMembership   OrganizationMember?   @relation("coach_warmup_templates", fields: [coachMembershipId], references: [id], onDelete: SetNull)
   items             WarmupTemplateItem[]
@@ -1203,6 +1206,7 @@ model WarmupTemplate {
   @@index([scope, archivedAt], map: "idx_warmup_template_scope_archived")
   @@index([coachMembershipId, archivedAt], map: "idx_warmup_template_coach_archived")
   @@index([organizationId, archivedAt], map: "idx_warmup_template_org_archived")
+  @@index([ownerClientId], map: "idx_warmup_template_owner_client")
   @@map("warmup_template")
 }
 

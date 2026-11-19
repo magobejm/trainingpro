@@ -42,6 +42,23 @@ html[data-density='compact'] [data-density-list] [data-density-row] {
 [data-group-pick='on'] {
   background-color: color-mix(in srgb, var(--tp-primary) 16%, transparent);
 }
+[data-hscroll='on'] {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: scroll;
+  scrollbar-color: var(--tp-textMuted) var(--tp-surfaceMuted);
+  scrollbar-width: auto;
+}
+[data-hscroll='on']::-webkit-scrollbar {
+  height: 12px;
+}
+[data-hscroll='on']::-webkit-scrollbar-thumb {
+  background: var(--tp-textMuted);
+  border-radius: 8px;
+}
+[data-hscroll='on']::-webkit-scrollbar-track {
+  background: var(--tp-surfaceMuted);
+}
 @media (prefers-reduced-motion: reduce) {
   body *,
   body *::before,

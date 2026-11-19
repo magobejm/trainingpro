@@ -2399,5 +2399,8 @@
   "coach.clientRoutine.warmup.title": "Warm-up",
   "coach.clientRoutine.warmup.add": "Add warm-up",
   "coach.clientRoutine.warmup.pick": "Choose a warm-up",
-  "coach.clientRoutine.warmup.none": "No more warm-ups in the library."
+  "coach.clientRoutine.warmup.none": "No more warm-ups in the library.",
+  "coach.clientRoutine.warmup.empty": "This day has no warm-up.",
+  "coach.clientRoutine.warmup.noItems": "This warm-up has no exercises.",
+  "coach.clientRoutine.warmup.addExercise": "Add exercise"
 }

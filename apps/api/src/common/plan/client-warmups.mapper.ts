@@ -1,6 +1,6 @@
 import { normalizeLegacyLockedFields, resolveLockedFields } from '@trainerpro/shared';
 import type { Prisma } from '@prisma/client';
-import type { ClientRoutineWarmup, ClientRoutineExercise } from '@trainerpro/shared';
+import type { ClientRoutineSet, ClientRoutineWarmup, ClientRoutineExercise } from '@trainerpro/shared';
 import { resolveClientRoutineSets, type PlanSetRow } from './client-routine-set.mapper';
 import { stripMetaNotes } from '../notes/parse-meta-notes';
 
@@ -27,6 +27,41 @@ export const CLIENT_WARMUPS_INCLUDE = {
 } as const;
 type Reference = Prisma.PlanDayWarmupGetPayload<typeof CLIENT_WARMUPS_INCLUDE>;
 type Media = { mediaUrl: string | null; youtubeUrl: string | null; coachInstructions: string | null };
+
+type ItemRow = Prisma.WarmupTemplateItemGetPayload<object>;
+type ItemMetadata = { sets?: PlanSetRow[]; lockedFields?: string[]; setVariablesVersion?: number } | null;
+
+export function warmupItemMetadata(item: Pick<ItemRow, 'metadataJson'>): ItemMetadata {
+  return item.metadataJson as ItemMetadata;
+}
+
+/** The sets a warm-up exercise prescribes, with the item's own values filling what a set leaves empty. */
+export function resolveWarmupItemSets(item: ItemRow): { count: number; sets: ClientRoutineSet[] } {
+  const type = item.blockType as ClientRoutineExercise['type'];
+  const metadata = warmupItemMetadata(item);
+  const prescribed = (Array.isArray(metadata?.sets) ? metadata.sets : [])
+    .filter((set) => set != null && typeof set === 'object')
+    .map((set, index) => ({ ...set, setIndex: typeof set.setIndex === 'number' ? set.setIndex : index }));
+  const hasPrescription =
+    item.workSeconds != null || item.durationMinutes != null || item.repsMin != null || item.repsMax != null;
+  const count = Math.max(item.setsPlanned ?? item.roundsPlanned ?? (hasPrescription ? 1 : 0), prescribed.length);
+  const rows = Array.from(
+    { length: count },
+    (_, setIndex): PlanSetRow => ({
+      durationSeconds: item.workSeconds ?? (item.durationMinutes == null ? null : item.durationMinutes * 60),
+      ...prescribed.find((set) => set.setIndex === setIndex),
+      setIndex,
+    }),
+  );
+  return {
+    count,
+    sets: resolveClientRoutineSets(rows, type, {
+      ...item,
+      setsPlanned: count,
+      targetRpe: item.targetRpe == null ? null : Number(item.targetRpe),
+    }),
+  };
+}
 
 /** Resolve all warmup types without turning their prescriptions into session items. */
 export async function mapClientWarmups(
@@ -59,25 +94,8 @@ export async function mapClientWarmups(
           item.libraryMobilityExercise ??
           extras.get(item.isometricExerciseLibraryId ?? item.sportLibraryId ?? '');
         const type = item.blockType as ClientRoutineExercise['type'];
-        const metadata = item.metadataJson as {
-          sets?: PlanSetRow[];
-          lockedFields?: string[];
-          setVariablesVersion?: number;
-        } | null;
-        const prescribed = (Array.isArray(metadata?.sets) ? metadata.sets : [])
-          .filter((set) => set != null && typeof set === 'object')
-          .map((set, index) => ({ ...set, setIndex: typeof set.setIndex === 'number' ? set.setIndex : index }));
-        const hasPrescription =
-          item.workSeconds != null || item.durationMinutes != null || item.repsMin != null || item.repsMax != null;
-        const count = Math.max(item.setsPlanned ?? item.roundsPlanned ?? (hasPrescription ? 1 : 0), prescribed.length);
-        const sets = Array.from(
-          { length: count },
-          (_, setIndex): PlanSetRow => ({
-            durationSeconds: item.workSeconds ?? (item.durationMinutes == null ? null : item.durationMinutes * 60),
-            ...prescribed.find((set) => set.setIndex === setIndex),
-            setIndex,
-          }),
-        );
+        const metadata = warmupItemMetadata(item);
+        const { count, sets } = resolveWarmupItemSets(item);
         return {
           id: `${referenceId}:${item.id}`,
           displayName: item.displayName,
@@ -100,11 +118,7 @@ export async function mapClientWarmups(
           targetRir: item.targetRir,
           targetRpe: item.targetRpe == null ? null : Number(item.targetRpe),
           setsPlanned: count,
-          sets: resolveClientRoutineSets(sets, type, {
-            ...item,
-            setsPlanned: count,
-            targetRpe: item.targetRpe == null ? null : Number(item.targetRpe),
-          }),
+          sets,
         };
       }),
     }))

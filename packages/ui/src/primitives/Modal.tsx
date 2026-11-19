@@ -40,7 +40,12 @@ export function Modal(props: ModalProps): React.JSX.Element {
   const revealed = reduced || entered;
   const Body = scroll ? ScrollView : View;
   return (
-    <NativeModal animationType={reduced ? 'none' : 'fade'} onRequestClose={props.onClose} transparent visible={props.visible}>
+    <NativeModal
+      animationType={reduced ? 'none' : 'fade'}
+      onRequestClose={props.onClose}
+      transparent
+      visible={props.visible}
+    >
       <View style={styles.overlay}>
         {props.dismissOnOverlay ? (
           <Pressable
@@ -73,7 +78,13 @@ export function Modal(props: ModalProps): React.JSX.Element {
               size={32}
             />
           </View>
-          <Body style={styles.body}>{props.children}</Body>
+          <Body
+            {...(scroll
+              ? { contentContainerStyle: styles.scrollContent, style: [styles.body, styles.scrollBody] }
+              : { style: styles.body })}
+          >
+            {props.children}
+          </Body>
           {props.footer ? <View style={styles.footer}>{props.footer}</View> : null}
         </View>
       </View>
@@ -88,10 +99,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.xl,
     paddingVertical: space.md,
   },
+  scrollBody: {
+    maxWidth: '100%',
+    minWidth: 0,
+    width: '100%',
+  },
+  scrollContent: {
+    maxWidth: '100%',
+    minWidth: 0,
+    width: '100%',
+  },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     maxHeight: '90%',
+    minWidth: 0,
+    overflow: 'hidden',
     width: '100%',
     ...shadow.lg,
   },

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Button, Modal, colors, fontSize, space } from '@trainerpro/ui';
 import type { RoutineEditorDay } from '@trainerpro/shared';
 import { useWarmupTemplatesQuery } from '../../../data/hooks/useWarmupTemplates';
+import { WarmupExercisesModal, type WarmupEditActions } from './WarmupExercisesModal';
 
 type Translate = (key: string) => string;
 export type OnWarmups = (dayId: string, warmupTemplateIds: string[]) => void;
@@ -32,70 +33,49 @@ function WarmupPicker(props: {
   );
 }
 
-/** Warm-ups of one day: remove the ones that are there or add another from the library. */
+/** Warm-ups of one day: their exercises open in a modal; whole warm-ups can be removed or added from the library. */
 export function DayWarmups(props: {
+  actions: WarmupEditActions;
   day: RoutineEditorDay;
   editable: boolean;
   onChange: OnWarmups;
   t: Translate;
 }): React.JSX.Element {
-  const { day, editable, onChange, t } = props;
+  const { actions, day, editable, onChange, t } = props;
   const [picking, setPicking] = useState(false);
+  const [viewing, setViewing] = useState(false);
   const ids = day.warmups.map((item) => item.warmupTemplateId);
-  if (!editable) {
-    return (
-      <View style={styles.row}>
-        <Button
-          label={`${t('coach.clientRoutine.warmup.title')} (${day.warmups.length})`}
-          onPress={() => setPicking(true)}
-          size="sm"
-          variant="secondary"
-        />
-        {picking ? (
-          <Modal
-            closeLabel={t('common.close')}
-            onClose={() => setPicking(false)}
-            title={t('coach.clientRoutine.warmup.title')}
-            visible
-          >
-            <View style={styles.list}>
-              {day.warmups.length === 0 ? <Text style={styles.empty}>{t('coach.clientRoutine.warmup.none')}</Text> : null}
-              {day.warmups.map((warmup) => (
-                <Text key={warmup.id} style={styles.label}>
-                  {warmup.name}
-                </Text>
-              ))}
-            </View>
-          </Modal>
-        ) : null}
-      </View>
-    );
-  }
+  const count = day.warmups.reduce((total, warmup) => total + warmup.items.length, 0);
   return (
     <View style={styles.row}>
-      <Text style={styles.label}>{t('coach.clientRoutine.warmup.title')}</Text>
-      {day.warmups.map((warmup) => (
-        <Button
-          key={warmup.id}
-          disabled={!editable}
-          label={editable ? `${warmup.name} ✕` : warmup.name}
-          onPress={() =>
-            onChange(
-              day.id,
-              ids.filter((id) => id !== warmup.warmupTemplateId),
-            )
-          }
-          size="sm"
-          variant="secondary"
-        />
-      ))}
       <Button
-        disabled={!editable}
-        label={t('coach.clientRoutine.warmup.add')}
-        onPress={() => setPicking(true)}
+        label={`${t('coach.clientRoutine.warmup.title')} (${count})`}
+        onPress={() => setViewing(true)}
         size="sm"
         variant="secondary"
       />
+      {editable
+        ? day.warmups.map((warmup) => (
+            <Button
+              key={warmup.id}
+              label={`${warmup.name} ✕`}
+              onPress={() =>
+                onChange(
+                  day.id,
+                  ids.filter((id) => id !== warmup.warmupTemplateId),
+                )
+              }
+              size="sm"
+              variant="secondary"
+            />
+          ))
+        : null}
+      {editable ? (
+        <Button label={t('coach.clientRoutine.warmup.add')} onPress={() => setPicking(true)} size="sm" variant="secondary" />
+      ) : null}
+      {viewing ? (
+        <WarmupExercisesModal actions={actions} day={day} editable={editable} onClose={() => setViewing(false)} t={t} />
+      ) : null}
       {picking && editable ? (
         <WarmupPicker
           current={ids}
@@ -110,10 +90,8 @@ export function DayWarmups(props: {
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   empty: { color: colors.textMuted, fontSize: fontSize.sm },
-  label: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
   list: { gap: space.sm },
   row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

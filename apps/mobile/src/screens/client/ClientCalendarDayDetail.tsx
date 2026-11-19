@@ -17,7 +17,7 @@ type DayDetailModalProps = {
   onOpenPlanDay?: (planDayId: string, view: PlanDayView) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest?: (scheduleId: string) => void;
-  exerciseCountFor: (planDayId: string | null) => number | null;
+  exerciseCountFor: (planDayId: string | null, dateStr?: string) => number | null;
 };
 
 const MODAL_ANIM = 'fade' as const;

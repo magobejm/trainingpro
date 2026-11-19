@@ -1,6 +1,7 @@
 import type { ClientRoutineDay } from '../../../data/hooks/useClientRoutineQuery';
 import type { ClientCalendarEvent } from '../../../data/hooks/useClientCalendar';
 import {
+  currentMicrocycleRange,
   describePendingMove,
   formatLocalDate,
   formatScheduledDateLabel,
@@ -21,6 +22,13 @@ describe('routine-schedule.utils dates', () => {
     expect(getWeekDateRange(new Date(2026, 8, 1))).toEqual({
       from: '2026-08-31',
       to: '2026-09-06',
+    });
+  });
+
+  it('keeps the current microcycle, from its start through its last day', () => {
+    expect(currentMicrocycleRange('2026-10-30', 7, '2026-11-19')).toEqual({
+      from: '2026-11-13',
+      to: '2026-11-19',
     });
   });
 
@@ -190,9 +198,11 @@ describe('routine-schedule.utils renamed days', () => {
 
   it('builds a preview day from calendar data when the plan day is outside the assigned routine', () => {
     const workout = scheduledWorkoutToRoutineDay({
+      completed: false,
       date: '2026-09-01',
       planDayId: 'legacy-day',
       routineDay: null,
+      sessionId: null,
       title: 'Legacy Day 2',
     });
 

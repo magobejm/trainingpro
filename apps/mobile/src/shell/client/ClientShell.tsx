@@ -327,7 +327,12 @@ function ClientShellBody(): React.JSX.Element {
       )}
       {st.overlay === 'routine' && (
         <Animated.View style={[s.fullOverlay, { transform: [{ translateX: st.slideX }] }]}>
-          <RoutineScreen onClose={st.closeOverlay} onOpenTest={st.openScheduledTest} onSelectDay={st.openDay} />
+          <RoutineScreen
+            onClose={st.closeOverlay}
+            onOpenSession={st.openSession}
+            onOpenTest={st.openScheduledTest}
+            onSelectDay={st.openDay}
+          />
         </Animated.View>
       )}
       {st.overlay === 'routineDay' && st.selectedDay !== null && (

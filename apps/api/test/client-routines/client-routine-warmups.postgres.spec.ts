@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { sessionFixture } from '../sessions/session-transitions.fixture';
 import type { PrismaService } from '../../src/common/prisma/prisma.service';
+import { setExerciseGroup } from '../../src/modules/client-routines/client-routine-groups';
 import {
   addWarmupItem,
   addWarmupSet,
@@ -9,6 +10,10 @@ import {
   swapWarmupItem,
 } from '../../src/modules/client-routines/client-routine-warmups';
 import { buildWeek } from '../../src/modules/client-routines/client-routine-view';
+import {
+  mapSessionWithGroups,
+  sessionInclude,
+} from '../../src/modules/sessions/infra/prisma/sessions-strength.prisma.helpers';
 import {
   createClientRoutine,
   syncClientRoutineWeeks,
@@ -175,5 +180,37 @@ postgres('client routine warm-up copy', () => {
       include: { warmups: { include: { warmupTemplate: { include: { items: true } } } } },
     });
     expect(template.warmups[0]!.warmupTemplate.items).toHaveLength(2);
+  });
+
+  it('shows the client copy warm-up and group on the session for that date', async () => {
+    const { library, prisma, routine } = await setup();
+    const scope = await scopeOf(prisma, routine, 0);
+    const band = scope.day.warmups[0]!.items.find((item) => item.displayName === 'Band pull')!;
+    await patchWarmupSet(scope, prisma, band.id, band.sets[1]!.id, { reps: 15 });
+    await db.planStrengthExercise.create({
+      data: { dayId: scope.day.id, displayName: 'Row', sortOrder: 1 },
+    });
+    const grouped = await scopeOf(prisma, routine, 0);
+    await setExerciseGroup(prisma, routine, grouped.week, 1, {
+      groupType: 'SUPERSET',
+      items: grouped.day.exercises.map((exercise) => ({ id: exercise.id, kind: 'exercise' as const })),
+    });
+    const libraryDay = await db.planDay.findFirstOrThrow({
+      where: { dayIndex: 1, templateId: fixture.template.id },
+    });
+    const created = await fixture.create();
+    await db.sessionInstance.update({
+      data: { planDayId: libraryDay.id, planDayIndex: 1, planDayTitle: 'Day 1', sessionDate: scope.week.startsOn },
+      where: { id: created.id },
+    });
+    const row = await db.sessionInstance.findUniqueOrThrow({ include: sessionInclude(), where: { id: created.id } });
+    const session = await mapSessionWithGroups(db, row);
+    const edited = session.warmups?.flatMap((warmup) => warmup.exercises).find((item) => item.displayName === 'Band pull');
+    expect(edited?.sets.map((set) => set.reps)).toEqual([10, 15]);
+    expect(session.items[0]?.groupType).toBe('SUPERSET');
+    const libraryWarmup = await db.warmupTemplateItem.findFirstOrThrow({
+      where: { displayName: 'Band pull', templateId: library.id },
+    });
+    expect(libraryWarmup.metadataJson).toEqual(library.items.find((item) => item.displayName === 'Band pull')!.metadataJson);
   });
 });

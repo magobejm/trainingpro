@@ -15,7 +15,7 @@ export class GetClientRoutineUseCase {
     if (!email) {
       throw new NotFoundException('Client profile not found');
     }
-    const routine = await this.repository.findClientRoutineByEmail(email);
+    const routine = await this.repository.presentClientRoutine(email);
     if (!routine) {
       throw new NotFoundException('No routine assigned to this client');
     }

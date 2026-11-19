@@ -40,7 +40,7 @@ export function RoutineDayPreviewPanel(props: RoutineDayPreviewPanelProps): Reac
   const calendarQuery = useClientCalendarEventsQuery(moveWindow.from, moveWindow.to);
   const routineQuery = useClientRoutineQuery();
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
-  const planDayQuery = useClientPlanDayQuery(props.day.id);
+  const planDayQuery = useClientPlanDayQuery(props.day.id, props.view?.on);
   const resolvedDay = planDayQuery.data ?? props.day;
   const [dayChangeOpen, setDayChangeOpen] = useState(false);
 

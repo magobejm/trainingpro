@@ -1,3 +1,4 @@
+import { microcycleIndex, microcycleStart } from '@trainerpro/shared';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import type { ClientCalendarEvent } from '../../data/hooks/useClientCalendar';
 
@@ -16,6 +17,18 @@ export function getMoveWindowRange(date: Date): { from: string; to: string } {
   return { from: formatLocalDate(from), to: formatLocalDate(to) };
 }
 
+export function currentMicrocycleRange(
+  cycleStartsOn: string,
+  cycleDays: number,
+  today: string,
+): { from: string; to: string } {
+  const index = Math.max(0, microcycleIndex(cycleStartsOn, today, cycleDays));
+  const from = microcycleStart(cycleStartsOn, index, cycleDays);
+  const next = new Date(`${microcycleStart(cycleStartsOn, index + 1, cycleDays)}T00:00:00.000Z`);
+  next.setUTCDate(next.getUTCDate() - 1);
+  return { from, to: next.toISOString().slice(0, 10) };
+}
+
 export function getWeekDateRange(date: Date): { from: string; to: string } {
   const start = new Date(date);
   start.setHours(0, 0, 0, 0);
@@ -26,9 +39,11 @@ export function getWeekDateRange(date: Date): { from: string; to: string } {
 }
 
 export type ScheduledWorkout = {
+  completed: boolean;
   date: string;
   planDayId: string;
   routineDay: ClientRoutineDay | null;
+  sessionId: string | null;
   title: string;
 };
 
@@ -87,9 +102,11 @@ function buildScheduledWorkout(event: ClientCalendarEvent, planDays: ClientRouti
   const matchedDay = resolvePlanDayFromCalendarEvent(event, planDays);
 
   return {
+    completed: event.isCompleted === true || event.outcome === 'done',
     date: event.date.slice(0, 10),
     planDayId: matchedDay?.id ?? event.planDayId ?? '',
     routineDay: matchedDay,
+    sessionId: event.sessionId ?? null,
     title,
   };
 }
@@ -98,8 +115,9 @@ function listWeekWorkouts(
   calendarEvents: ClientCalendarEvent[],
   planDays: ClientRoutineDay[],
   date: Date,
+  range?: { from: string; to: string },
 ): ScheduledWorkout[] {
-  const { from, to } = getWeekDateRange(date);
+  const { from, to } = range ?? getWeekDateRange(date);
   const seen = new Set<string>();
   const workouts: ScheduledWorkout[] = [];
 
@@ -120,8 +138,9 @@ export function resolveRoutineWeekSchedule(
   planDays: ClientRoutineDay[],
   calendarEvents: ClientCalendarEvent[],
   date: Date,
+  range?: { from: string; to: string },
 ): RoutineWeekSchedule {
-  const weekWorkouts = listWeekWorkouts(calendarEvents, planDays, date);
+  const weekWorkouts = listWeekWorkouts(calendarEvents, planDays, date, range);
   if (weekWorkouts.length === 0) {
     return { mode: 'assigned', days: planDays };
   }

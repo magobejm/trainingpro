@@ -7,7 +7,7 @@ import {
   useClientCalendarSessionsQuery,
   useClientCalendarSummaryQuery,
 } from '../../data/hooks/useClientCalendar';
-import { useClientRoutineQuery, type ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
+import { useClientRoutineQuery, usePlanDaysForDates, type ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { DayDetailModal } from './ClientCalendarDayDetail';
 import { MonthGrid, MonthHeader } from './ClientCalendarGrid';
 import { CalendarWeekView } from './ClientCalendarWeekView';
@@ -49,7 +49,9 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
   const selectedKey = toDateStr(selectedDate);
   const selectedDay = dayData.get(selectedKey);
   const planDays = routineQuery.data?.planDays ?? [];
-  const countFor = (planDayId: string | null): number | null => exerciseCountFor(planDays, planDayId);
+  const datedDays = usePlanDaysForDates(calendarPlanDayRequests(dayData));
+  const countFor = (planDayId: string | null, dateStr?: string): number | null =>
+    exerciseCountFor(planDays, planDayId, datedDays, dateStr);
 
   const openMonth = useCallback(() => {
     setCurrentMonth(startOfMonth(selectedDate));
@@ -57,10 +59,11 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
   }, [selectedDate]);
   const openPlanDay = useCallback(
     (planDayId: string | null | undefined, view?: PlanDayView) => {
-      const day = findPlanDay(planDays, planDayId);
+      const dated = planDayId && view?.on ? datedDays.get(`${view.on}|${planDayId}`) : undefined;
+      const day = dated ?? findPlanDay(planDays, planDayId);
       if (day) onOpenPlanDay?.(day, view);
     },
-    [onOpenPlanDay, planDays],
+    [datedDays, onOpenPlanDay, planDays],
   );
 
   return (
@@ -116,7 +119,7 @@ export function ClientCalendarScreen({ onClose, onOpenPlanDay, onOpenSession, on
 }
 
 function DayPopup(props: {
-  countFor: (planDayId: string | null) => number | null;
+  countFor: (planDayId: string | null, dateStr?: string) => number | null;
   data: DayData | undefined;
   dateStr: string | null;
   onClose: () => void;
@@ -149,8 +152,25 @@ function findPlanDay(days: ClientRoutineDay[], planDayId: string | null | undefi
   return days.find((day) => day.id === planDayId) ?? null;
 }
 
-function exerciseCountFor(days: Array<{ exercises: unknown[]; id: string }>, planDayId: string | null): number | null {
+function calendarPlanDayRequests(dayData: Map<string, DayData>): Array<{ id: string; on: string }> {
+  const requests: Array<{ id: string; on: string }> = [];
+  for (const [date, data] of dayData) {
+    for (const workout of data.workouts) {
+      if (workout.planDayId) requests.push({ id: workout.planDayId, on: date });
+    }
+  }
+  return requests;
+}
+
+function exerciseCountFor(
+  days: Array<{ exercises: unknown[]; id: string }>,
+  planDayId: string | null,
+  datedDays: Map<string, ClientRoutineDay>,
+  dateStr?: string,
+): number | null {
   if (!planDayId) return null;
+  const dated = dateStr ? datedDays.get(`${dateStr}|${planDayId}`) : undefined;
+  if (dated) return dated.exercises.length;
   const day = days.find((item) => item.id === planDayId);
   return day ? day.exercises.length : null;
 }

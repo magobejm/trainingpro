@@ -15,6 +15,8 @@ export type ClientsRepositoryPort = {
   findClientPlanDayByEmail: (email: string, planDayId: string) => Promise<ClientRoutineDay | null>;
   findClientPlanDayTemplateIdByEmail: (email: string, planDayId: string) => Promise<string | null>;
   findClientRoutineByEmail: (email: string) => Promise<ClientRoutine | null>;
+  presentClientPlanDay: (email: string, planDayId: string, on?: Date) => Promise<ClientRoutineDay | null>;
+  presentClientRoutine: (email: string) => Promise<ClientRoutine | null>;
   archiveClient: (context: AuthContext, clientId: string) => Promise<void>;
   listArchivedClientsPage: (
     context: AuthContext,

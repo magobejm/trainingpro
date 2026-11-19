@@ -8324,6 +8324,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "on",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -8359,7 +8368,7 @@
         ],
         "summary": "GET /clients/me/plan-days/{planDayId}",
         "x-controller": "ClientSelfController",
-        "x-filters": [],
+        "x-filters": ["on"],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],
         "x-roles": ["client"]

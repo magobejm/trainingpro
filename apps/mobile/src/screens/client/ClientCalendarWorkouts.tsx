@@ -11,7 +11,7 @@ import { LIGHT } from '../../theme/light';
 type Props = {
   data: DayData | undefined;
   dateStr: string;
-  exerciseCountFor: (planDayId: string | null) => number | null;
+  exerciseCountFor: (planDayId: string | null, dateStr?: string) => number | null;
   onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession?: (sessionId: string) => void;
 };
@@ -31,7 +31,7 @@ export function CalendarWorkoutList(props: Props): React.JSX.Element {
     <View style={styles.block}>
       {workouts.map((workout) => (
         <WorkoutRow
-          count={props.exerciseCountFor(workout.planDayId)}
+          count={props.exerciseCountFor(workout.planDayId, props.dateStr)}
           dateStr={props.dateStr}
           key={`${props.dateStr}:${workout.planDayId ?? workout.sessionId ?? workout.title}`}
           language={i18n.language}
@@ -64,6 +64,7 @@ function WorkoutRow(props: {
         onPress={() => {
           if (props.workout.planDayId) {
             props.onOpenPlanDay(props.workout.planDayId, {
+              on: props.dateStr,
               outcome: props.workout.outcome,
               performed: props.workout.done,
               sessionId: props.workout.sessionId,

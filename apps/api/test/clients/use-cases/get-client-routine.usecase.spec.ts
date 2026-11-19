@@ -2,14 +2,14 @@ import { NotFoundException } from '@nestjs/common';
 import { GetClientRoutineUseCase } from '../../../src/modules/clients/application/use-cases/get-client-routine.usecase';
 
 const mockRepository = {
-  findClientRoutineByEmail: jest.fn(),
+  presentClientRoutine: jest.fn(),
 };
 
 describe('GetClientRoutineUseCase', () => {
   let useCase: GetClientRoutineUseCase;
 
   beforeEach(() => {
-    mockRepository.findClientRoutineByEmail.mockReset();
+    mockRepository.presentClientRoutine.mockReset();
     useCase = new GetClientRoutineUseCase(mockRepository as never);
   });
 
@@ -21,11 +21,11 @@ describe('GetClientRoutineUseCase', () => {
       email: 'client@example.com',
     };
     const routine = { id: 'plan-id', name: 'Torso / Pierna', planDays: [] };
-    mockRepository.findClientRoutineByEmail.mockResolvedValue(routine);
+    mockRepository.presentClientRoutine.mockResolvedValue(routine);
 
     const result = await useCase.execute(context);
 
-    expect(mockRepository.findClientRoutineByEmail).toHaveBeenCalledWith('client@example.com');
+    expect(mockRepository.presentClientRoutine).toHaveBeenCalledWith('client@example.com');
     expect(result).toBe(routine);
   });
 
@@ -42,7 +42,7 @@ describe('GetClientRoutineUseCase', () => {
       roles: ['client' as const],
       email: 'client@example.com',
     };
-    mockRepository.findClientRoutineByEmail.mockResolvedValue(null);
+    mockRepository.presentClientRoutine.mockResolvedValue(null);
 
     await expect(useCase.execute(context)).rejects.toThrow(NotFoundException);
   });

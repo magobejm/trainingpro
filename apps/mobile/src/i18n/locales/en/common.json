@@ -410,7 +410,7 @@
   "mobile.client.routine.noWorkoutToday": "No workout scheduled for today in your calendar.",
   "mobile.client.routine.restDay": "Rest day",
   "mobile.client.routine.restDayHint": "You have no workout scheduled in your calendar today.",
-  "mobile.client.routine.assignedDays": "Training days",
+  "mobile.client.routine.assignedDays": "Assigned routine",
   "mobile.client.routine.otherDays": "Other training days",
   "mobile.client.neat.title": "NEAT",
   "mobile.client.neat.today": "Today",

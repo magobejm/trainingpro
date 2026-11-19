@@ -140,9 +140,13 @@ export class ClientSelfController {
   }
 
   @Get('me/plan-days/:planDayId')
-  async getMyPlanDay(@Param('planDayId') planDayId: string, @Req() request: HttpAuthRequest) {
+  async getMyPlanDay(
+    @Param('planDayId') planDayId: string,
+    @Query('on') on: string | undefined,
+    @Req() request: HttpAuthRequest,
+  ) {
     const context = readAuthContext(request);
-    return this.getClientPlanDayUseCase.execute(context, planDayId);
+    return this.getClientPlanDayUseCase.execute(context, planDayId, on);
   }
 
   @Get('me/exercises/:sourceExerciseId/history')

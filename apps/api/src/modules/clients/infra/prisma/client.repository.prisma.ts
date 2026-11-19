@@ -1,4 +1,5 @@
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
+import { resolveClientDay } from '../../../plans/infra/prisma/client-routine.prisma';
 import {
   applyRoutineHandoff,
   handoffTransaction,
@@ -29,7 +30,7 @@ import { MEASUREMENT_HISTORY_LIMIT, mapClientMeasurement, type ClientMeasurement
 import type { ClientProgressPhoto, ProgressPhotoMeta, ProgressPose } from '../../domain/client-progress-photo';
 import { mapExerciseGroupFields, PLAN_EXERCISE_GROUP_INCLUDE } from '../../../../common/plan/plan-exercise-group.mapper';
 import { toRpeNumber } from '../../../../common/plan/rpe-number';
-import type { ClientRoutine, ClientRoutineExercise } from '../../domain/client-routine';
+import type { ClientRoutine, ClientRoutineDay, ClientRoutineExercise } from '../../domain/client-routine';
 import { mapClientRoutineNeats } from '../../domain/map-client-routine-neats';
 import type { ClientUpdateInput } from '../../domain/client-update.input';
 import { assertAssignableTrainingPlan } from '../../domain/training-plan-assignment';
@@ -526,6 +527,18 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
     return client ? mapClient(client) : null;
   }
 
+  async presentClientRoutine(email: string): Promise<ClientRoutine | null> {
+    const routine = await this.findClientRoutineByEmail(email);
+    if (!routine) return null;
+    return overlayCurrentMicrocycle(this.prisma, email, routine);
+  }
+
+  async presentClientPlanDay(email: string, planDayId: string, on: Date = new Date()): Promise<ClientRoutineDay | null> {
+    const day = await this.findClientPlanDayByEmail(email, planDayId);
+    if (!day) return null;
+    return overlayMicrocycleDay(this.prisma, email, day, on);
+  }
+
   async findClientRoutineByEmail(email: string): Promise<ClientRoutine | null> {
     const client = await this.prisma.client.findFirst({
       where: { email: email.toLowerCase(), archivedAt: null },
@@ -714,6 +727,58 @@ async function loadAccessibleClientPlanDay(
       (planDay as PlanDay & { clientWarmups?: unknown }).clientWarmups ?? (await mapClientWarmups(prisma, planDay.warmups)),
     templateId: planDay.templateId,
   };
+}
+
+async function overlayCurrentMicrocycle(
+  prisma: PrismaService,
+  email: string,
+  routine: ClientRoutine,
+): Promise<ClientRoutine> {
+  const cycle = await prisma.clientRoutine.findFirst({
+    select: { cycleDays: true, cycleStartsOn: true },
+    where: { archivedAt: null, client: { email: email.toLowerCase() } },
+  });
+  const planDays = await Promise.all(routine.planDays.map((day) => overlayMicrocycleDay(prisma, email, day, new Date())));
+  return {
+    ...routine,
+    cycleDays: cycle?.cycleDays,
+    cycleStartsOn: cycle?.cycleStartsOn.toISOString().slice(0, 10),
+    planDays,
+  };
+}
+
+/** The athlete's routine day is the microcycle copy. The id stays the library day the calendar uses. */
+async function overlayMicrocycleDay(
+  prisma: PrismaService,
+  email: string,
+  day: ClientRoutineDay,
+  on: Date,
+): Promise<ClientRoutineDay> {
+  const client = await prisma.client.findFirst({
+    select: { id: true, trainingPlanId: true },
+    where: { archivedAt: null, email: email.toLowerCase() },
+  });
+  if (!client?.trainingPlanId) return day;
+  const copy = await resolveClientDay(
+    prisma as unknown as Prisma.TransactionClient,
+    client.id,
+    client.trainingPlanId,
+    day.id,
+    on,
+  );
+  if (!copy || copy.planDayId === day.id) return day;
+  const mapped = await readMappedPlanDay(prisma, copy.planDayId);
+  return mapped ? { ...mapped, id: day.id } : day;
+}
+
+async function readMappedPlanDay(prisma: PrismaService, planDayId: string): Promise<ClientRoutineDay | null> {
+  const day = await prisma.planDay.findFirst({
+    include: PLAN_DAY_CONTENT_INCLUDE,
+    where: { archivedAt: null, id: planDayId },
+  });
+  if (!day) return null;
+  const warmups = await mapClientWarmups(prisma, day.warmups);
+  return mapPlanDay({ ...day, clientWarmups: warmups } as PlanDay);
 }
 
 function mapPlanDay(day: PlanDay): ClientRoutine['planDays'][number] {

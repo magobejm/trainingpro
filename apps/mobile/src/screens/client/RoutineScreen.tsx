@@ -11,6 +11,7 @@ import { ClientNeatSection } from './ClientNeatSection';
 import { WarmupBadge, warmupStyles } from './WorkoutWarmups';
 import { useScheduledPlanDays } from '../../data/hooks/useClientRoutineQuery';
 import {
+  currentMicrocycleRange,
   formatLocalDate,
   formatScheduledDateLabel,
   getWeekDateRange,
@@ -21,16 +22,23 @@ import {
 
 type RoutineScreenProps = {
   onClose: () => void;
+  onOpenSession: (sessionId: string) => void;
   onOpenTest: (scheduleId: string) => void;
   onSelectDay: (day: ClientRoutineDay) => void;
 };
 
-export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScreenProps): React.JSX.Element {
+export function RoutineScreen({ onClose, onOpenSession, onOpenTest, onSelectDay }: RoutineScreenProps): React.JSX.Element {
   const { t } = useTranslation();
   const { data: routine, isLoading } = useClientRoutineQuery();
   const today = useMemo(() => new Date(), []);
   const todayStr = formatLocalDate(today);
-  const weekRange = useMemo(() => getWeekDateRange(today), [today]);
+  const weekRange = useMemo(
+    () =>
+      routine?.cycleStartsOn && routine.cycleDays
+        ? currentMicrocycleRange(routine.cycleStartsOn, routine.cycleDays, todayStr)
+        : getWeekDateRange(today),
+    [routine?.cycleDays, routine?.cycleStartsOn, today, todayStr],
+  );
   const calendarQuery = useClientCalendarEventsQuery(weekRange.from, weekRange.to);
   const sessionsQuery = useClientCalendarSessionsQuery(todayStr, todayStr);
   const schedulesQuery = usePhysicalTestSchedulesQuery(todayStr, todayStr);
@@ -43,8 +51,13 @@ export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScree
 
   const schedule = useMemo(() => {
     if (!routine) return null;
-    return resolveRoutineWeekSchedule([...routine.planDays, ...historicalDays], calendarQuery.data?.data ?? [], today);
-  }, [calendarQuery.data?.data, historicalDays, routine, today]);
+    return resolveRoutineWeekSchedule(
+      [...routine.planDays, ...historicalDays],
+      calendarQuery.data?.data ?? [],
+      today,
+      weekRange,
+    );
+  }, [calendarQuery.data?.data, historicalDays, routine, today, weekRange]);
 
   const completedPlanDayIds = useMemo(() => {
     const ids = new Set<string>();
@@ -86,7 +99,7 @@ export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScree
         {schedule?.mode === 'calendar' ? (
           <>
             <CalendarScheduleSections
-              completedPlanDayIds={completedPlanDayIds}
+              onOpenSession={onOpenSession}
               onOpenTest={onOpenTest}
               onSelectDay={onSelectDay}
               schedule={schedule}
@@ -110,8 +123,20 @@ export function RoutineScreen({ onClose, onOpenTest, onSelectDay }: RoutineScree
   );
 }
 
+function openScheduledWorkout(
+  workout: ScheduledWorkout,
+  onOpenSession: (sessionId: string) => void,
+  onSelectDay: (day: ClientRoutineDay) => void,
+): void {
+  if (workout.completed && workout.sessionId) {
+    onOpenSession(workout.sessionId);
+    return;
+  }
+  if (!workout.completed) onSelectDay(scheduledWorkoutToRoutineDay(workout));
+}
+
 function CalendarScheduleSections(props: {
-  completedPlanDayIds: Set<string>;
+  onOpenSession: (sessionId: string) => void;
   onOpenTest: (scheduleId: string) => void;
   onSelectDay: (day: ClientRoutineDay) => void;
   schedule: Extract<ReturnType<typeof resolveRoutineWeekSchedule>, { mode: 'calendar' }>;
@@ -130,9 +155,9 @@ function CalendarScheduleSections(props: {
         {schedule.todayWorkouts.map((workout) => (
           <ScheduledWorkoutCard
             isActive
-            isDone={props.completedPlanDayIds.has(workout.planDayId)}
+            isDone={workout.completed}
             key={`${workout.date}-${workout.planDayId}`}
-            onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout))}
+            onPress={() => openScheduledWorkout(workout, props.onOpenSession, props.onSelectDay)}
             subtitle={t('mobile.client.routine.scheduledToday')}
             workout={workout}
           />
@@ -151,9 +176,9 @@ function CalendarScheduleSections(props: {
           <View style={styles.otherDays}>
             {schedule.otherDays.map((workout) => (
               <ScheduledWorkoutCard
-                isDone={props.completedPlanDayIds.has(workout.planDayId)}
+                isDone={workout.completed}
                 key={`${workout.date}-${workout.planDayId}`}
-                onPress={() => props.onSelectDay(scheduledWorkoutToRoutineDay(workout))}
+                onPress={() => openScheduledWorkout(workout, props.onOpenSession, props.onSelectDay)}
                 subtitle={formatScheduledDateLabel(workout.date)}
                 workout={workout}
               />

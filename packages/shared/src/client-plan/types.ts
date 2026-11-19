@@ -62,6 +62,8 @@ export type ClientRoutineNeat = {
 };
 
 export type ClientRoutine = {
+  cycleDays?: number;
+  cycleStartsOn?: string;
   expectedCompletionDays: null | number;
   id: string;
   name: string;

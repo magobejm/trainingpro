@@ -161,6 +161,7 @@ export function todayAttentionCount(events: ClientCalendarEvent[], today: Date):
 }
 
 export type PlanDayView = {
+  on?: string;
   outcome: SessionOutcome;
   performed: boolean;
   sessionId: string | null;

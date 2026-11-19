@@ -13,6 +13,7 @@ import { toRpeNumber } from '../../../../common/plan/rpe-number';
 import type { PlannedSetSnapshot } from '../../../../common/notes/planned-set.mapper';
 import { readPlannedSetsJson } from '../../../../common/notes/session-note-snapshot';
 import { stampCompletionOrder } from '../../domain/exercise-order';
+import { resolveClientDay } from '../../../plans/infra/prisma/client-routine.prisma';
 import { attachSessionYoutubeUrls, buildSessionYoutubeLookup } from '../../domain/session-youtube.mapper';
 import type {
   CardioSessionItem,
@@ -447,6 +448,7 @@ async function loadPlanDayLookups(
   planDayId: null | string | undefined,
   version?: number,
 ): Promise<{
+  found: boolean;
   warmups: ClientRoutineWarmup[];
   dayTitle?: string;
   groupLookup: Map<number, ExerciseGroupFields>;
@@ -454,7 +456,13 @@ async function loadPlanDayLookups(
   plannedSetsLookup: Map<number, PlannedSetSnapshot[]>;
 }> {
   if (!planDayId) {
-    return { warmups: [], groupLookup: new Map(), lockedFieldsLookup: new Map(), plannedSetsLookup: new Map() };
+    return {
+      found: false,
+      groupLookup: new Map(),
+      lockedFieldsLookup: new Map(),
+      plannedSetsLookup: new Map(),
+      warmups: [],
+    };
   }
   const day = await prisma.planDay.findFirst({
     include: {
@@ -465,13 +473,20 @@ async function loadPlanDayLookups(
     where: { archivedAt: null, id: planDayId },
   });
   if (!day) {
-    return { warmups: [], groupLookup: new Map(), lockedFieldsLookup: new Map(), plannedSetsLookup: new Map() };
+    return {
+      found: false,
+      groupLookup: new Map(),
+      lockedFieldsLookup: new Map(),
+      plannedSetsLookup: new Map(),
+      warmups: [],
+    };
   }
   const content = day.template?.revisions[0]?.content as
     | { days?: Array<{ dayIndex: number; clientWarmups?: ClientRoutineWarmup[] }> }
     | undefined;
   const saved = content?.days?.find((saved) => saved.dayIndex === day.dayIndex)?.clientWarmups;
   return {
+    found: true,
     warmups: saved ?? (await mapClientWarmups(prisma, day.warmups)),
     dayTitle: day.title,
     groupLookup: buildPlanDayGroupLookup(day),
@@ -480,29 +495,66 @@ async function loadPlanDayLookups(
   };
 }
 
+async function warmupTemplatesDiffer(
+  prisma: Prisma.TransactionClient,
+  libraryDayId: string,
+  copyDayId: string,
+): Promise<boolean> {
+  const rows = await prisma.planDayWarmup.findMany({
+    select: { planDayId: true, warmupTemplateId: true },
+    where: { planDayId: { in: [libraryDayId, copyDayId] } },
+  });
+  const ids = (planDayId: string) =>
+    rows
+      .filter((row) => row.planDayId === planDayId)
+      .map((row) => row.warmupTemplateId)
+      .sort();
+  const library = ids(libraryDayId);
+  const copy = ids(copyDayId);
+  return library.length !== copy.length || library.some((id, index) => id !== copy[index]);
+}
+
+async function revisionWarmups(
+  prisma: Prisma.TransactionClient,
+  row: { planDayIndex: number | null; sourceTemplateId: string; sourceTemplateVersion: number },
+): Promise<ClientRoutineWarmup[] | null> {
+  if (row.planDayIndex == null) return null;
+  const revision = await prisma.routineRevision.findUnique({
+    select: { content: true },
+    where: { templateId_version: { templateId: row.sourceTemplateId, version: row.sourceTemplateVersion } },
+  });
+  const content = revision?.content as
+    | { days?: Array<{ clientWarmups?: ClientRoutineWarmup[]; dayIndex: number }> }
+    | undefined;
+  return content?.days?.find((day) => day.dayIndex === row.planDayIndex)?.clientWarmups ?? null;
+}
+
+/** The microcycle copy for this date. The stored plan day stays the library day. */
+async function clientCopyPlanDayId(
+  prisma: Prisma.TransactionClient,
+  row: { clientId: string; planDayId: string | null; sessionDate: Date; sourceTemplateId: string },
+): Promise<string | null> {
+  if (!row.planDayId) return null;
+  const copy = await resolveClientDay(prisma, row.clientId, row.sourceTemplateId, row.planDayId, row.sessionDate);
+  return copy?.planDayId ?? null;
+}
+
 export async function mapSessionWithGroups(
   prisma: Prisma.TransactionClient,
   row: Prisma.SessionInstanceGetPayload<{ include: ReturnType<typeof sessionInclude> }>,
 ): Promise<SessionInstance> {
-  const { groupLookup, lockedFieldsLookup, plannedSetsLookup, warmups, dayTitle } = await loadPlanDayLookups(
-    prisma,
-    row.planDayId,
-    row.sourceTemplateVersion,
-  );
-  const session = mapSession(row, groupLookup, lockedFieldsLookup, plannedSetsLookup);
+  const library = await loadPlanDayLookups(prisma, row.planDayId, row.sourceTemplateVersion);
+  const copyPlanDayId = await clientCopyPlanDayId(prisma, row);
+  const copy = copyPlanDayId && copyPlanDayId !== row.planDayId ? await loadPlanDayLookups(prisma, copyPlanDayId) : null;
+  const diverged =
+    copyPlanDayId && row.planDayId ? await warmupTemplatesDiffer(prisma, row.planDayId, copyPlanDayId) : false;
+  const frozen = library.found ? library.warmups : ((await revisionWarmups(prisma, row)) ?? []);
+  const lookups = copy ?? library;
+  const session = mapSession(row, lookups.groupLookup, lookups.lockedFieldsLookup, lookups.plannedSetsLookup);
   session.originDate = (await readSessionOrigins(prisma, [row])).get(row.id) ?? null;
-  session.warmups = warmups;
-  if (dayTitle ?? row.planDayTitle) session.dayTitle = dayTitle ?? row.planDayTitle ?? undefined;
-  if (!dayTitle && row.planDayIndex != null) {
-    const revision = await prisma.routineRevision.findUnique({
-      where: { templateId_version: { templateId: row.sourceTemplateId, version: row.sourceTemplateVersion } },
-      select: { content: true },
-    });
-    const content = revision?.content as
-      | { days?: Array<{ dayIndex: number; clientWarmups?: ClientRoutineWarmup[] }> }
-      | undefined;
-    session.warmups = content?.days?.find((day) => day.dayIndex === row.planDayIndex)?.clientWarmups ?? [];
-  }
+  session.warmups = diverged && copy ? copy.warmups : frozen;
+  const dayTitle = lookups.dayTitle ?? row.planDayTitle;
+  if (dayTitle) session.dayTitle = dayTitle;
   const youtubeLookup = await loadSessionYoutubeLookup(prisma, row);
   return attachSessionYoutubeUrls(session, youtubeLookup);
 }

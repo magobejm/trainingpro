@@ -16,7 +16,7 @@ const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 type Props = {
   data: DayData | undefined;
   dayData: Map<string, DayData>;
-  exerciseCountFor: (planDayId: string | null) => number | null;
+  exerciseCountFor: (planDayId: string | null, dateStr?: string) => number | null;
   onOpenPlanDay: (planDayId: string, view: PlanDayView) => void;
   onOpenSession: (sessionId: string) => void;
   onOpenTest: (scheduleId: string) => void;

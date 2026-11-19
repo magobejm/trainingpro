@@ -15,6 +15,7 @@ import { ExercisePickerModal } from '../components/RoutinePlanner/ExercisePicker
 import { ProgressionCommandModal } from './command/ProgressionCommandModal';
 import { ClientFeedbackModal } from './feedback/ClientFeedbackModal';
 import { RoutineDayCard } from './RoutineDayCard';
+import { isWeekPeriod } from './routine-period';
 
 type Picker = { dayId: string; mode: 'add' } | { id: string; kind: RoutineEditorItemKind; mode: 'replace' } | null;
 type Translate = ReturnType<typeof useTranslation>['t'];
@@ -43,34 +44,46 @@ function defaultWeekId(data: RoutineEditorResponse): string {
   return (current ?? next ?? data.weeks.at(-1))?.id ?? '';
 }
 
-function PhaseBanner(props: { t: Translate; week: RoutineEditorWeek }): React.JSX.Element {
+function PhaseBanner(props: { cycleDays: number; t: Translate; week: RoutineEditorWeek }): React.JSX.Element {
+  const phase = props.week.phase;
+  const weekPeriod = isWeekPeriod(props.cycleDays);
+  const hint =
+    weekPeriod || phase !== 'future'
+      ? `coach.clientRoutine.phase.${phase}.hint`
+      : 'coach.clientRoutine.phase.future.cycleHint';
   return (
     <Banner
-      subtitle={props.t(`coach.clientRoutine.phase.${props.week.phase}.hint`)}
-      title={props.t(`coach.clientRoutine.phase.${props.week.phase}.title`)}
+      subtitle={props.t(hint)}
+      title={props.t(`coach.clientRoutine.phase.${phase}.${weekPeriod ? 'title' : 'cycleTitle'}`)}
     />
   );
 }
 
 function OlderWeeksDrawer(props: {
+  cycleDays: number;
   onClose: () => void;
   onPick: (weekId: string) => void;
   response: RoutineEditorResponse;
   t: Translate;
 }): React.JSX.Element {
   const format = useFormatDate();
+  const weekPeriod = isWeekPeriod(props.cycleDays);
+  const name = weekPeriod ? 'coach.clientRoutine.week' : 'coach.clientRoutine.cycle';
   return (
     <Modal
       closeLabel={props.t('common.close')}
       onClose={props.onClose}
-      title={props.t('coach.clientRoutine.older.title')}
+      title={props.t(weekPeriod ? 'coach.clientRoutine.older.title' : 'coach.clientRoutine.older.cycleTitle')}
       visible
     >
       <View style={styles.drawer}>
+        {weekPeriod ? null : (
+          <Text style={styles.size}>{props.t('coach.clientRoutine.cycleSize', { count: props.cycleDays })}</Text>
+        )}
         {props.response.olderWeeks.map((week) => (
           <Button
             key={week.id}
-            label={`${props.t('coach.clientRoutine.week', { n: week.weekIndex })} · ${format(week.startsOn)}`}
+            label={`${props.t(name, { n: week.weekIndex })} · ${format(week.startsOn)}`}
             onPress={() => props.onPick(week.id)}
             variant="secondary"
           />
@@ -104,10 +117,12 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
   if (query.data.weeks.length === 0) {
     return <Banner subtitle={t('coach.clientRoutine.noWeeks.hint')} title={t('coach.clientRoutine.noWeeks.title')} />;
   }
+  const cycleDays = query.data.routine.cycleDays;
   return (
     <View style={styles.page}>
       <WeekBar
         clientId={props.clientId}
+        cycleDays={cycleDays}
         clientView={clientView}
         onToggleView={() => setClientView((value) => !value)}
         onOpenCommand={() => setCommand(true)}
@@ -119,18 +134,24 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
         t={t}
       />
       {week ? (
-        <WeekPanel clientId={props.clientId} readOnlyView={clientView} t={t} week={week} />
+        <WeekPanel clientId={props.clientId} cycleDays={cycleDays} readOnlyView={clientView} t={t} week={week} />
       ) : (
         <LoadingState label={t('coach.clientRoutine.loading')} />
       )}
       {feedback ? (
-        <ClientFeedbackModal clientId={props.clientId} onClose={() => setFeedback(false)} weeks={query.data.weeks} />
+        <ClientFeedbackModal
+          clientId={props.clientId}
+          cycleDays={cycleDays}
+          onClose={() => setFeedback(false)}
+          weeks={query.data.weeks}
+        />
       ) : null}
       {command ? (
         <ProgressionCommandModal clientId={props.clientId} onClose={() => setCommand(false)} response={query.data} />
       ) : null}
       {drawer ? (
         <OlderWeeksDrawer
+          cycleDays={cycleDays}
           onClose={() => setDrawer(false)}
           onPick={(id) => {
             setPicked(id);
@@ -147,6 +168,7 @@ export function ClientRoutineScreen(props: { clientId: string }): React.JSX.Elem
 function WeekBar(props: {
   clientId: string;
   clientView: boolean;
+  cycleDays: number;
   onToggleView: () => void;
   onOpenCommand: () => void;
   onOpenFeedback: () => void;
@@ -160,14 +182,19 @@ function WeekBar(props: {
     () =>
       props.response.weeks.map((week) => ({
         id: week.id,
-        label: props.t('coach.clientRoutine.week', { n: week.weekIndex }),
+        label: props.t(isWeekPeriod(props.cycleDays) ? 'coach.clientRoutine.week' : 'coach.clientRoutine.cycle', {
+          n: week.weekIndex,
+        }),
       })),
-    [props.response.weeks, props.t],
+    [props.cycleDays, props.response.weeks, props.t],
   );
   return (
     <View style={styles.bar}>
       <View style={styles.chips}>
         <FilterChips activeId={props.selected} items={items} onSelect={props.onSelect} />
+        {isWeekPeriod(props.cycleDays) ? null : (
+          <Text style={styles.size}>{props.t('coach.clientRoutine.cycleSize', { count: props.cycleDays })}</Text>
+        )}
       </View>
       <View style={styles.actions}>
         {props.clientView ? null : (
@@ -182,7 +209,10 @@ function WeekBar(props: {
         <Button label={props.t('coach.clientFeedback.open')} onPress={props.onOpenFeedback} size="sm" variant="secondary" />
         {props.response.olderWeeks.length > 0 ? (
           <Button
-            label={props.t('coach.clientRoutine.older.open', { count: props.response.olderWeeks.length })}
+            label={props.t(
+              isWeekPeriod(props.cycleDays) ? 'coach.clientRoutine.older.open' : 'coach.clientRoutine.older.cycleOpen',
+              { count: props.response.olderWeeks.length },
+            )}
             onPress={props.onOpenOlder}
             size="sm"
             variant="secondary"
@@ -195,6 +225,7 @@ function WeekBar(props: {
 
 function WeekPanel(props: {
   clientId: string;
+  cycleDays: number;
   readOnlyView: boolean;
   t: Translate;
   week: RoutineEditorWeek;
@@ -206,11 +237,12 @@ function WeekPanel(props: {
   const fail = () => toast.error(t('coach.clientRoutine.saveError'));
   return (
     <View style={styles.page}>
-      <PhaseBanner t={t} week={week} />
+      <PhaseBanner cycleDays={props.cycleDays} t={t} week={week} />
       {week.days.map((source) => {
         const day = props.readOnlyView ? { ...source, editable: false } : source;
         return (
           <RoutineDayCard
+            cycleDays={props.cycleDays}
             actions={{
               onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
               warmup: {
@@ -283,5 +315,6 @@ const styles = StyleSheet.create({
   chips: { maxWidth: '100%', width: '100%' },
   drawer: { gap: space.sm },
   empty: { color: colors.textMuted, fontSize: fontSize.sm },
+  size: { color: colors.textMuted, fontSize: fontSize.xs },
   page: { gap: space.lg, padding: space.md },
 });

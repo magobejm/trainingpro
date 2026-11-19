@@ -7,12 +7,14 @@ import '../../../../i18n';
 import { useClientFeedback } from '../../../../data/hooks/useClientFeedback';
 import { LoadingState } from '../../../../components/AsyncStatus';
 import { FeedbackLists } from './FeedbackLists';
+import { isWeekPeriod } from '../routine-period';
 
 const ALL_WEEKS = 'all';
 
 /** What the client wrote, read-only. Shows exercises first and keeps anything over four months in a drawer. */
 export function ClientFeedbackModal(props: {
   clientId: string;
+  cycleDays: number;
   onClose: () => void;
   weeks: RoutineEditorWeek[];
 }): React.JSX.Element {
@@ -38,9 +40,13 @@ export function ClientFeedbackModal(props: {
     };
   }, [feedback.incidents, feedback.notes, query, scope, week]);
   const olderCount = view.incidents.older.length + view.notes.older.length;
+  const weekPeriod = isWeekPeriod(props.cycleDays);
   const weekItems = [
-    { id: ALL_WEEKS, label: t('coach.clientFeedback.allWeeks') },
-    ...props.weeks.map((item) => ({ id: item.id, label: t('coach.clientRoutine.week', { n: item.weekIndex }) })),
+    { id: ALL_WEEKS, label: t(weekPeriod ? 'coach.clientFeedback.allWeeks' : 'coach.clientFeedback.allCycles') },
+    ...props.weeks.map((item) => ({
+      id: item.id,
+      label: t(weekPeriod ? 'coach.clientRoutine.week' : 'coach.clientRoutine.cycle', { n: item.weekIndex }),
+    })),
   ];
   return (
     <Modal closeLabel={t('common.close')} onClose={props.onClose} size="xl" title={t('coach.clientFeedback.title')} visible>
@@ -63,6 +69,9 @@ export function ClientFeedbackModal(props: {
           />
         </View>
         <FilterChips activeId={weekId} items={weekItems} onSelect={setWeekId} />
+        {weekPeriod ? null : (
+          <Text style={styles.size}>{t('coach.clientRoutine.cycleSize', { count: props.cycleDays })}</Text>
+        )}
         {feedback.isLoading ? <LoadingState label={t('coach.clientFeedback.loading')} /> : null}
         {feedback.isError ? <Text style={styles.empty}>{t('coach.clientFeedback.error')}</Text> : null}
         <FeedbackLists incidents={view.incidents.recent} notes={view.notes.recent} t={t} />
@@ -91,6 +100,7 @@ export function ClientFeedbackModal(props: {
 
 const styles = StyleSheet.create({
   empty: { color: colors.textMuted, fontSize: fontSize.sm },
+  size: { color: colors.textMuted, fontSize: fontSize.xs },
   filters: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
   search: {
     backgroundColor: colors.surface,

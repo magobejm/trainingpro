@@ -55,10 +55,26 @@ const rule = z.object({
   value: z.number().min(-10_000).max(10_000),
   variable: z.enum(COMMAND_VARIABLES),
 });
+const targetRef = {
+  dayIndex: z.number().int().min(0).max(60),
+  displayName: z.string().trim().min(1).max(120),
+  kind: z.enum(['cardio', 'exercise', 'isometric']),
+  sortOrder: z.number().int().min(0).max(1000),
+};
+const progressionTarget = z.discriminatedUnion('scope', [
+  z.object({ scope: z.literal('kind') }),
+  z.object({
+    items: z
+      .array(z.object({ ...targetRef, setIndexes: z.array(z.number().int().min(0).max(29)).min(1).max(30).optional() }))
+      .max(200),
+    scope: z.literal('selection'),
+  }),
+]);
 const progressionBody = z.object({
   cascade: z.boolean().default(false),
   dayIndexes: z.array(z.number().int().min(0).max(60)).max(60).default([]),
   rules: z.array(rule).min(1).max(6),
+  target: progressionTarget.optional(),
   weekIds: z.array(uuid).min(1).max(200),
 });
 const presetBody = rule;

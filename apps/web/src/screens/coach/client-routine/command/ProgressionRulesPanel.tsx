@@ -5,6 +5,7 @@ import { COMMAND_VARIABLES, type CoachPresetItem, type CommandVariable } from '@
 import { canEnable, enabledCount, modesFor, type Drafts, type RuleDraft } from './progression-draft';
 
 const KEYBOARD = 'decimal-pad' as const;
+const PRESET_REMOVE = '×';
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
 type RowProps = {
@@ -28,15 +29,22 @@ function PresetChips(props: RowProps): React.JSX.Element {
   return (
     <View style={styles.presets}>
       {props.presets.map((preset) => (
-        <Pressable
-          accessibilityLabel={props.t('coach.clientRoutine.command.presetRemove')}
-          key={preset.id}
-          onLongPress={() => props.onRemovePreset(preset.id)}
-          onPress={() => props.onChange({ mode: preset.mode, text: String(preset.value) })}
-          style={styles.preset}
-        >
-          <Text style={styles.presetText}>{presetLabel(preset)}</Text>
-        </Pressable>
+        <View key={preset.id} style={styles.preset}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => props.onChange({ mode: preset.mode, text: String(preset.value) })}
+          >
+            <Text style={styles.presetText}>{presetLabel(preset)}</Text>
+          </Pressable>
+          <Pressable
+            accessibilityLabel={props.t('coach.clientRoutine.command.presetRemove')}
+            accessibilityRole="button"
+            hitSlop={8}
+            onPress={() => props.onRemovePreset(preset.id)}
+          >
+            <Text style={styles.presetRemove}>{PRESET_REMOVE}</Text>
+          </Pressable>
+        </View>
       ))}
       <Pressable accessibilityRole="button" onPress={props.onAddPreset} style={styles.addPreset}>
         <Text style={styles.addPresetText}>{props.t('coach.clientRoutine.command.addPreset')}</Text>
@@ -142,7 +150,16 @@ const styles = StyleSheet.create({
   },
   muted: { color: colors.textMuted },
   panel: { flex: 1, gap: space.sm, minWidth: 280 },
-  preset: { backgroundColor: colors.primarySoft, borderRadius: radius.sm, paddingHorizontal: space.sm, paddingVertical: 2 },
+  preset: {
+    alignItems: 'center',
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.sm,
+    flexDirection: 'row',
+    gap: space.xs,
+    paddingHorizontal: space.sm,
+    paddingVertical: 2,
+  },
+  presetRemove: { color: colors.textMuted, fontSize: fontSize.sm, fontWeight: '700' },
   presetText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '600' },
   presets: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs },
   row: { borderColor: colors.border, borderRadius: radius.md, borderWidth: 1, padding: space.sm },

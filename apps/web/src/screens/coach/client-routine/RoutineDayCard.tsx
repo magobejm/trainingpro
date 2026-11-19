@@ -8,6 +8,7 @@ import type { WarmupEditActions } from './WarmupExercisesModal';
 import type { SetPatch } from './ClientSeriesTable';
 import { DropSlot } from './ItemDrag';
 import { RoutineItemCard, type CardItem, type CardSelection, type ItemActions } from './RoutineItemCard';
+import { isWeekPeriod } from './routine-period';
 
 type Translate = (key: string) => string;
 type Ref = { id: string; kind: RoutineEditorItemKind };
@@ -57,11 +58,22 @@ function bind(actions: RoutineDayActions, item: CardItem): ItemActions {
   };
 }
 
-function DayHeader(props: { count: number; day: RoutineEditorDay; onToggle: () => void; open: boolean; t: Translate }) {
+function DayHeader(props: {
+  count: number;
+  cycleDays: number;
+  day: RoutineEditorDay;
+  onToggle: () => void;
+  open: boolean;
+  t: Translate;
+}) {
   const { day, t } = props;
   const narrow = useBreakpoint() === 'sm';
-  const lockKey =
-    day.outcome && day.outcome !== 'pending' ? 'coach.clientRoutine.lock.day' : 'coach.clientRoutine.lock.week';
+  const closed = day.outcome && day.outcome !== 'pending';
+  const lockKey = closed
+    ? 'coach.clientRoutine.lock.day'
+    : isWeekPeriod(props.cycleDays)
+      ? 'coach.clientRoutine.lock.week'
+      : 'coach.clientRoutine.lock.cycle';
   return (
     <View style={[styles.header, narrow && styles.headerNarrow]}>
       <TouchableOpacity onPress={props.onToggle} style={styles.titleBlock}>
@@ -242,6 +254,7 @@ function reorder<T>(items: T[], from: number, to: number): T[] {
 
 export function RoutineDayCard(props: {
   actions: RoutineDayActions;
+  cycleDays: number;
   day: RoutineEditorDay;
   t: Translate;
 }): React.JSX.Element {
@@ -263,7 +276,14 @@ export function RoutineDayCard(props: {
   return (
     <Card>
       <View style={styles.body}>
-        <DayHeader count={items.length} day={day} onToggle={() => setOpen(!open)} open={open} t={t} />
+        <DayHeader
+          count={items.length}
+          cycleDays={props.cycleDays}
+          day={day}
+          onToggle={() => setOpen(!open)}
+          open={open}
+          t={t}
+        />
         {open ? (
           <>
             <DayWarmups actions={actions.warmup} day={day} editable={day.editable} onChange={actions.onWarmups} t={t} />

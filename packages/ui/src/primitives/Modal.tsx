@@ -101,6 +101,7 @@ const styles = StyleSheet.create({
   },
   scrollBody: {
     maxWidth: '100%',
+    minHeight: 0,
     minWidth: 0,
     width: '100%',
   },

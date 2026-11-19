@@ -3,9 +3,18 @@ import {
   applyCommandRulesToSet,
   applyCommandSetCount,
   cascadeCandidates,
+  commandChoice,
+  commandItemInScope,
+  commandTargetForRules,
+  commandTouchesSet,
   normalizeCommandRules,
   previewCommandExercise,
   previewCommandTimedSets,
+  rulesForChoice,
+  toggleCommandAll,
+  toggleCommandExercise,
+  toggleCommandSet,
+  type CommandItemRef,
   type CommandRule,
   type CommandSetValues,
 } from '../client-routine-progression';
@@ -117,5 +126,56 @@ describe('previewCommandTimedSets', () => {
     expect(row!.after.heartRate).toBeNull();
     expect(row!.warnings).toContain('emptyDelta');
     expect(row!.after.fcMaxPct).toBe(100);
+  });
+});
+
+describe('command scope', () => {
+  const squat: CommandItemRef = { dayIndex: 0, displayName: 'Sentadilla', kind: 'exercise', sortOrder: 0 };
+  const bench: CommandItemRef = { dayIndex: 0, displayName: 'Press', kind: 'exercise', sortOrder: 1 };
+  const run: CommandItemRef = { dayIndex: 0, displayName: 'Correr', kind: 'cardio', sortOrder: 2 };
+  const hold: CommandItemRef = { dayIndex: 0, displayName: 'Plancha', kind: 'isometric', sortOrder: 3 };
+  const visible = [squat, bench];
+  const weight: CommandRule = { mode: 'delta', value: 2.5, variable: 'weightKg' };
+  const duration: CommandRule = { mode: 'delta', value: 10, variable: 'durationSeconds' };
+  const sets: CommandRule = { mode: 'delta', value: 1, variable: 'sets' };
+
+  it('keeps the marked sets and drops a change to the set count on a partial exercise', () => {
+    const target = toggleCommandSet(undefined, squat, 0, 3, visible);
+    const choice = commandChoice(squat, [weight], target);
+    expect(commandItemInScope(bench, [weight], target)).toBe(true);
+    expect(choice?.setIndexes).toEqual([1, 2]);
+    expect(commandTouchesSet(choice, 1)).toBe(true);
+    expect(commandTouchesSet(choice, 0)).toBe(false);
+    expect(rulesForChoice([weight, sets], choice)).toEqual([weight]);
+  });
+
+  it('widens a partial exercise to every set when the set count changes', () => {
+    const picked = toggleCommandSet(toggleCommandExercise(undefined, bench, visible), squat, 0, 3, visible);
+    const choice = commandChoice(squat, [sets], picked);
+    expect(choice?.setIndexes).toBeUndefined();
+    expect(commandItemInScope(bench, [sets], picked)).toBe(false);
+    expect(rulesForChoice([sets], choice)).toEqual([sets]);
+    expect(commandTargetForRules(picked, [sets], visible).scope).toBe('selection');
+    expect(commandTargetForRules({ scope: 'selection', items: [squat, bench] }, [sets], visible)).toEqual({
+      scope: 'kind',
+    });
+  });
+
+  it('marks several exercises and leaves the ones that were unchecked', () => {
+    const target = toggleCommandExercise(undefined, bench, visible);
+    expect(commandItemInScope(squat, [weight], target)).toBe(true);
+    expect(commandItemInScope(bench, [weight], target)).toBe(false);
+    expect(commandTouchesSet(commandChoice(squat, [weight], target), 2)).toBe(true);
+    expect(toggleCommandAll(target)).toEqual({ scope: 'kind' });
+    expect(toggleCommandAll({ scope: 'kind' })).toEqual({ scope: 'selection', items: [] });
+  });
+
+  it('sends weight to strength only, and duration to cardio and isometric', () => {
+    expect(commandItemInScope(run, [weight], { scope: 'kind' })).toBe(false);
+    expect(commandItemInScope(squat, [weight], { scope: 'kind' })).toBe(true);
+    expect(commandItemInScope(hold, [duration], { scope: 'kind' })).toBe(true);
+    expect(commandItemInScope(run, [duration], { scope: 'kind' })).toBe(true);
+    expect(commandItemInScope(squat, [duration])).toBe(false);
+    expect(commandItemInScope(hold, [{ mode: 'delta', value: 100, variable: 'distanceMeters' }])).toBe(false);
   });
 });

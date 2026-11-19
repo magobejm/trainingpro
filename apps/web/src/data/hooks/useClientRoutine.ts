@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { RoutineEditorResponse, RoutineEditorSetPatch, RoutineEditorWeek } from '@trainerpro/shared';
+import type {
+  RoutineEditorItemKind,
+  RoutineEditorItemMeta,
+  RoutineEditorResponse,
+  RoutineEditorSetPatch,
+  RoutineEditorWeek,
+} from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 import { decodeUserKey } from '../../theme/appearance.logic';
@@ -70,10 +76,14 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
     onSuccess: refresh,
   });
   const setGroup = useMutation({
-    mutationFn: (input: { dayId: string; exerciseIds: string[]; groupType: 'CIRCUIT' | 'SUPERSET' | null }) =>
+    mutationFn: (input: {
+      dayId: string;
+      groupType: 'CIRCUIT' | 'SUPERSET' | null;
+      items: Array<{ id: string; kind: string }>;
+    }) =>
       api(auth).put<RoutineEditorWeek>(`${base}/days/${input.dayId}/groups`, {
-        exerciseIds: input.exerciseIds,
         groupType: input.groupType,
+        items: input.items,
       }),
     onSuccess: refresh,
   });
@@ -89,5 +99,66 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
       }),
     onSuccess: refresh,
   });
-  return { addBlock, addExercise, removeExercise, replaceExercise, setGroup, setWarmups, updateSet };
+  return {
+    addBlock,
+    addExercise,
+    removeExercise,
+    replaceExercise,
+    setGroup,
+    setWarmups,
+    updateSet,
+    ...useItemActions(auth, base, refresh),
+  };
+}
+
+export type ItemRef = { id: string; kind: RoutineEditorItemKind };
+
+/** Edits on one exercise or block: its sets, notes, locked variables, position and copies. */
+function useItemActions(auth: Auth, base: string, refresh: () => Promise<void>) {
+  const at = (ref: ItemRef) => `${base}/items/${ref.kind}/${ref.id}`;
+  const options = { onSuccess: refresh };
+  const addSet = useMutation({
+    mutationFn: (ref: ItemRef) => api(auth).post<RoutineEditorWeek>(`${at(ref)}/sets`, {}),
+    ...options,
+  });
+  const removeSet = useMutation({
+    mutationFn: (input: { ref: ItemRef; setId: string }) =>
+      api(auth).delete<RoutineEditorWeek>(`${at(input.ref)}/sets/${input.setId}`),
+    ...options,
+  });
+  const patchItemSet = useMutation({
+    mutationFn: (input: { patch: Record<string, unknown>; ref: ItemRef; setId: string }) =>
+      api(auth).patch<RoutineEditorWeek>(`${at(input.ref)}/sets/${input.setId}`, input.patch),
+    ...options,
+  });
+  const updateMeta = useMutation({
+    mutationFn: (input: { meta: RoutineEditorItemMeta; ref: ItemRef }) =>
+      api(auth).patch<RoutineEditorWeek>(at(input.ref), input.meta),
+    ...options,
+  });
+  const replaceItem = useMutation({
+    mutationFn: (input: { displayName: string; libraryId: string; ref: ItemRef }) =>
+      api(auth).post<RoutineEditorWeek>(`${at(input.ref)}/replace`, {
+        displayName: input.displayName,
+        libraryId: input.libraryId,
+      }),
+    ...options,
+  });
+  const duplicateItem = useMutation({
+    mutationFn: (ref: ItemRef) => api(auth).post<RoutineEditorWeek>(`${at(ref)}/duplicate`, {}),
+    ...options,
+  });
+  const moveItem = useMutation({
+    mutationFn: (input: { direction: 'down' | 'up'; ref: ItemRef } | { ref: ItemRef; toIndex: number }) =>
+      api(auth).post<RoutineEditorWeek>(
+        `${at(input.ref)}/move`,
+        'toIndex' in input ? { toIndex: input.toIndex } : { direction: input.direction },
+      ),
+    ...options,
+  });
+  const removeItem = useMutation({
+    mutationFn: (ref: ItemRef) => api(auth).delete<RoutineEditorWeek>(at(ref)),
+    ...options,
+  });
+  return { addSet, duplicateItem, moveItem, patchItemSet, removeItem, removeSet, replaceItem, updateMeta };
 }

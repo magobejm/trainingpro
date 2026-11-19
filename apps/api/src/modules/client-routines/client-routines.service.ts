@@ -4,6 +4,8 @@ import {
   CLIENT_ROUTINE_VISIBLE_WEEKS,
   type CommandApplyRequest,
   type CommandApplyResponse,
+  type RoutineEditorItemKind,
+  type RoutineEditorItemMeta,
   type RoutineEditorResponse,
   type RoutineEditorSetPatch,
   type RoutineEditorWeek,
@@ -25,7 +27,20 @@ import {
   type NewExercise,
 } from './client-routine-edit';
 import { addBlock, type NewBlock } from './client-routine-blocks';
-import { setDayWarmups, setExerciseGroup } from './client-routine-groups';
+import {
+  addItemSet,
+  assertItem,
+  assertSetOf,
+  duplicateItem,
+  moveItem,
+  type ItemMove,
+  patchItemSet,
+  removeBlock,
+  removeItemSet,
+  swapItem,
+  updateItemMeta,
+} from './client-routine-items';
+import { setDayWarmups, setExerciseGroup, type GroupMember } from './client-routine-groups';
 import { applyProgression } from './client-routine-progression';
 import { buildWeek, weekWindow } from './client-routine-view';
 
@@ -153,14 +168,10 @@ export class ClientRoutinesService {
     clientId: string,
     weekId: string,
     dayId: string,
-    input: { exerciseIds: string[]; groupType: 'CIRCUIT' | 'SUPERSET' | null },
+    input: { groupType: 'CIRCUIT' | 'SUPERSET' | null; items: GroupMember[] },
   ) {
     const { routine, week } = await this.week(context, clientId, weekId);
     const day = await assertEditable(this.prisma, routine, week, dayId);
-    const owned = await this.prisma.planStrengthExercise.count({
-      where: { archivedAt: null, dayId, id: { in: input.exerciseIds } },
-    });
-    if (owned !== input.exerciseIds.length) throw new NotFoundException('Exercise not found in this day');
     await setExerciseGroup(this.prisma, routine, week, day.dayIndex, input);
     return this.getWeek(context, clientId, weekId);
   }
@@ -186,6 +197,92 @@ export class ClientRoutinesService {
     if (visible !== new Set(templateIds).size) throw new NotFoundException('Warm-up not found');
     await setDayWarmups(this.prisma, routine, week, day.dayIndex, [...new Set(templateIds)]);
     return this.getWeek(context, clientId, weekId);
+  }
+
+  /** Runs one edit on an exercise or block after checking its day is open, then returns the fresh week. */
+  async editItem(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    kind: RoutineEditorItemKind,
+    id: string,
+    action: (routine: Parameters<typeof assertItem>[1], week: Parameters<typeof assertItem>[2]) => Promise<void>,
+  ) {
+    const { routine, week } = await this.week(context, clientId, weekId);
+    await assertItem(this.prisma, routine, week, kind, id);
+    await action(routine, week);
+    return this.getWeek(context, clientId, weekId);
+  }
+
+  addSet(context: AuthContext, clientId: string, weekId: string, kind: RoutineEditorItemKind, id: string) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      addItemSet(this.prisma, routine, week, kind, id),
+    );
+  }
+
+  removeSet(context: AuthContext, clientId: string, weekId: string, kind: RoutineEditorItemKind, id: string, setId: string) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      removeItemSet(this.prisma, routine, week, kind, id, setId),
+    );
+  }
+
+  patchBlockSet(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    kind: RoutineEditorItemKind,
+    id: string,
+    setId: string,
+    patch: Record<string, unknown>,
+  ) {
+    return this.editItem(context, clientId, weekId, kind, id, async () => {
+      await assertSetOf(this.prisma, kind, id, setId);
+      await patchItemSet(this.prisma, kind, setId, patch);
+    });
+  }
+
+  updateMeta(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    kind: RoutineEditorItemKind,
+    id: string,
+    meta: RoutineEditorItemMeta,
+  ) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      updateItemMeta(this.prisma, routine, week, kind, id, meta),
+    );
+  }
+
+  replaceItem(
+    context: AuthContext,
+    clientId: string,
+    weekId: string,
+    kind: RoutineEditorItemKind,
+    id: string,
+    next: { displayName: string; libraryId: string },
+  ) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      swapItem(this.prisma, routine, week, kind, id, next),
+    );
+  }
+
+  duplicate(context: AuthContext, clientId: string, weekId: string, kind: RoutineEditorItemKind, id: string) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      duplicateItem(this.prisma, routine, week, kind, id),
+    );
+  }
+
+  move(context: AuthContext, clientId: string, weekId: string, kind: RoutineEditorItemKind, id: string, target: ItemMove) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      moveItem(this.prisma, routine, week, kind, id, target),
+    );
+  }
+
+  removeBlock(context: AuthContext, clientId: string, weekId: string, kind: RoutineEditorItemKind, id: string) {
+    return this.editItem(context, clientId, weekId, kind, id, (routine, week) =>
+      removeBlock(this.prisma, routine, week, kind, id),
+    );
   }
 
   async applyProgression(context: AuthContext, clientId: string, input: CommandApplyRequest): Promise<CommandApplyResponse> {

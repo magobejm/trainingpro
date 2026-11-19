@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
   base: {
     alignSelf: 'flex-start',
     borderRadius: radius.pill,
+    maxWidth: '100%',
     paddingHorizontal: space.sm,
     paddingVertical: space.xs,
   },

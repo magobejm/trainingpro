@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Text, View } from 'react-native';
 import { Banner, Button, EmptyState, FilterChips, Modal, colors, fontSize, space, useToast } from '@trainerpro/ui';
-import type { RoutineEditorResponse, RoutineEditorWeek } from '@trainerpro/shared';
+import type { RoutineEditorItemKind, RoutineEditorResponse, RoutineEditorWeek } from '@trainerpro/shared';
 import '../../../i18n';
 import { LoadingState } from '../../../components/AsyncStatus';
 import {
@@ -16,10 +16,9 @@ import { ProgressionCommandModal } from './command/ProgressionCommandModal';
 import { ClientFeedbackModal } from './feedback/ClientFeedbackModal';
 import { RoutineDayCard } from './RoutineDayCard';
 
-type Picker = { dayId: string; mode: 'add' } | { exerciseId: string; mode: 'replace' } | null;
+type Picker = { dayId: string; mode: 'add' } | { id: string; kind: RoutineEditorItemKind; mode: 'replace' } | null;
 type Translate = ReturnType<typeof useTranslation>['t'];
 
-const REPLACE_TYPES = ['strength' as const];
 const ADD_TYPES = [
   'strength' as const,
   'cardio' as const,
@@ -28,6 +27,14 @@ const ADD_TYPES = [
   'sport' as const,
   'mobility' as const,
 ];
+const REPLACE_TYPES: Record<RoutineEditorItemKind, Array<(typeof ADD_TYPES)[number]>> = {
+  cardio: ['cardio'],
+  exercise: ['strength'],
+  isometric: ['isometric'],
+  mobility: ['mobility'],
+  plio: ['plio'],
+  sport: ['sport'],
+};
 const DEFAULT_SETS = 3;
 
 function defaultWeekId(data: RoutineEditorResponse): string {
@@ -159,25 +166,29 @@ function WeekBar(props: {
   );
   return (
     <View style={styles.bar}>
-      <FilterChips activeId={props.selected} items={items} onSelect={props.onSelect} />
-      {props.clientView ? null : (
-        <Button label={props.t('coach.clientRoutine.command.open')} onPress={props.onOpenCommand} size="sm" />
-      )}
-      <Button
-        label={props.t(props.clientView ? 'coach.clientRoutine.view.coach' : 'coach.clientRoutine.view.client')}
-        onPress={props.onToggleView}
-        size="sm"
-        variant="secondary"
-      />
-      <Button label={props.t('coach.clientFeedback.open')} onPress={props.onOpenFeedback} size="sm" variant="secondary" />
-      {props.response.olderWeeks.length > 0 ? (
+      <View style={styles.chips}>
+        <FilterChips activeId={props.selected} items={items} onSelect={props.onSelect} />
+      </View>
+      <View style={styles.actions}>
+        {props.clientView ? null : (
+          <Button label={props.t('coach.clientRoutine.command.open')} onPress={props.onOpenCommand} size="sm" />
+        )}
         <Button
-          label={props.t('coach.clientRoutine.older.open', { count: props.response.olderWeeks.length })}
-          onPress={props.onOpenOlder}
+          label={props.t(props.clientView ? 'coach.clientRoutine.view.coach' : 'coach.clientRoutine.view.client')}
+          onPress={props.onToggleView}
           size="sm"
           variant="secondary"
         />
-      ) : null}
+        <Button label={props.t('coach.clientFeedback.open')} onPress={props.onOpenFeedback} size="sm" variant="secondary" />
+        {props.response.olderWeeks.length > 0 ? (
+          <Button
+            label={props.t('coach.clientRoutine.older.open', { count: props.response.olderWeeks.length })}
+            onPress={props.onOpenOlder}
+            size="sm"
+            variant="secondary"
+          />
+        ) : null}
+      </View>
     </View>
   );
 }
@@ -204,11 +215,26 @@ function WeekPanel(props: {
               onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
               onWarmups: (dayId, warmupTemplateIds) =>
                 actions.setWarmups.mutate({ dayId, warmupTemplateIds }, { onError: fail }),
-              onGroup: (dayId, exerciseIds, groupType) =>
-                actions.setGroup.mutate({ dayId, exerciseIds, groupType }, { onError: fail }),
-              onPatchSet: (setId, patch) => actions.updateSet.mutate({ patch, setId }, { onError: fail }),
-              onRemoveExercise: (exerciseId) => actions.removeExercise.mutate(exerciseId, { onError: fail }),
-              onReplaceExercise: (exerciseId) => setPicker({ exerciseId, mode: 'replace' }),
+              onGroup: (dayId, items, groupType) => actions.setGroup.mutate({ dayId, groupType, items }, { onError: fail }),
+              onAddSet: (ref) => actions.addSet.mutate(ref, { onError: fail }),
+              onDuplicate: (ref) => actions.duplicateItem.mutate(ref, { onError: fail }),
+              onMeta: (ref, meta) => actions.updateMeta.mutate({ meta, ref }, { onError: fail }),
+              onMove: (ref, direction) => actions.moveItem.mutate({ direction, ref }, { onError: fail }),
+              onPlace: async (ref, toIndex) => {
+                try {
+                  await actions.moveItem.mutateAsync({ ref, toIndex });
+                } catch (error) {
+                  fail();
+                  throw error;
+                }
+              },
+              onPatchSet: (ref, setId, patch) => actions.patchItemSet.mutate({ patch, ref, setId }, { onError: fail }),
+              onRemoveItem: (ref) =>
+                ref.kind === 'exercise'
+                  ? actions.removeExercise.mutate(ref.id, { onError: fail })
+                  : actions.removeItem.mutate(ref, { onError: fail }),
+              onRemoveSet: (ref, setId) => actions.removeSet.mutate({ ref, setId }, { onError: fail }),
+              onReplace: (ref) => setPicker({ id: ref.id, kind: ref.kind, mode: 'replace' }),
             }}
             day={day}
             key={day.id}
@@ -217,8 +243,9 @@ function WeekPanel(props: {
         );
       })}
       <ExercisePickerModal
-        allowedTypes={picker?.mode === 'replace' ? REPLACE_TYPES : ADD_TYPES}
-        blockType={picker ? 'strength' : null}
+        allowedTypes={picker?.mode === 'replace' ? REPLACE_TYPES[picker.kind] : ADD_TYPES}
+        title={picker?.mode === 'replace' ? t('coach.clientRoutine.replace') : undefined}
+        blockType={picker ? (picker.mode === 'replace' && picker.kind !== 'exercise' ? picker.kind : 'strength') : null}
         onCancel={() => setPicker(null)}
         onSelect={(exerciseLibraryId, displayName, kind) => {
           if (picker?.mode === 'add' && kind && kind !== 'strength') {
@@ -230,8 +257,8 @@ function WeekPanel(props: {
             actions.addExercise.mutate({ dayId: picker.dayId, exercise }, { onError: fail });
           }
           if (picker?.mode === 'replace') {
-            const next = { displayName, exerciseId: picker.exerciseId, exerciseLibraryId };
-            actions.replaceExercise.mutate(next, { onError: fail });
+            const ref = { id: picker.id, kind: picker.kind };
+            actions.replaceItem.mutate({ displayName, libraryId: exerciseLibraryId, ref }, { onError: fail });
             setPicker(null);
           }
         }}
@@ -242,7 +269,9 @@ function WeekPanel(props: {
 }
 
 const styles = StyleSheet.create({
-  bar: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.md },
+  actions: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  bar: { gap: space.md },
+  chips: { maxWidth: '100%', width: '100%' },
   drawer: { gap: space.sm },
   empty: { color: colors.textMuted, fontSize: fontSize.sm },
   page: { gap: space.lg, padding: space.md },

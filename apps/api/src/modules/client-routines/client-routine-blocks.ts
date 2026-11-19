@@ -1,4 +1,5 @@
 import type { Prisma, ClientRoutine, ClientRoutineWeek as WeekRow } from '@prisma/client';
+import { resolveLockedFields, type ExerciseBlockType } from '@trainerpro/shared';
 import type { PrismaService } from '../../common/prisma/prisma.service';
 import { todayKey } from '../plans/infra/prisma/client-routine.prisma';
 import { buildWeek } from './client-routine-view';
@@ -12,6 +13,11 @@ export type NewBlock = { displayName: string; kind: NewBlockKind; libraryId: str
 
 const blank = (count: number) => Array.from({ length: count }, (_, setIndex) => ({ setIndex }));
 
+function lockData(type: ExerciseBlockType): { lockedFieldsJson?: string[] } {
+  const lockedFieldsJson = resolveLockedFields(type);
+  return lockedFieldsJson.length > 0 ? { lockedFieldsJson } : {};
+}
+
 /** One block with simple starting values the coach then adjusts, like the 3 empty sets of a strength exercise. */
 function createBlock(tx: Tx, dayId: string, sortOrder: number, input: NewBlock) {
   const base = { dayId, displayName: input.displayName, sortOrder };
@@ -21,8 +27,9 @@ function createBlock(tx: Tx, dayId: string, sortOrder: number, input: NewBlock) 
         data: {
           ...base,
           cardioMethodLibraryId: input.libraryId,
-          sets: { create: [{ durationSeconds: 600, setIndex: 0 }] },
-          workSeconds: 600,
+          ...lockData('cardio'),
+          sets: { create: [{ setIndex: 0 }] },
+          workSeconds: 0,
         },
       });
     case 'isometric':
@@ -30,21 +37,40 @@ function createBlock(tx: Tx, dayId: string, sortOrder: number, input: NewBlock) 
         data: {
           ...base,
           isometricExerciseLibraryId: input.libraryId,
+          ...lockData('isometric'),
           sets: { create: blank(3).map((set) => ({ ...set, durationSeconds: 30 })) },
           setsPlanned: 3,
         },
       });
     case 'mobility':
       return tx.planMobilityBlock.create({
-        data: { ...base, mobilityExerciseLibraryId: input.libraryId, sets: { create: blank(3) }, workSeconds: 30 },
+        data: {
+          ...base,
+          ...lockData('mobility'),
+          mobilityExerciseLibraryId: input.libraryId,
+          sets: { create: blank(3) },
+          workSeconds: 30,
+        },
       });
     case 'plio':
       return tx.planPlioBlock.create({
-        data: { ...base, plioExerciseLibraryId: input.libraryId, sets: { create: blank(3) }, workSeconds: 30 },
+        data: {
+          ...base,
+          ...lockData('plio'),
+          plioExerciseLibraryId: input.libraryId,
+          sets: { create: blank(3) },
+          workSeconds: 30,
+        },
       });
     case 'sport':
       return tx.planSportBlock.create({
-        data: { ...base, durationMinutes: 30, sets: { create: blank(1) }, sportLibraryId: input.libraryId },
+        data: {
+          ...base,
+          ...lockData('sport'),
+          durationMinutes: 30,
+          sets: { create: blank(1) },
+          sportLibraryId: input.libraryId,
+        },
       });
   }
 }

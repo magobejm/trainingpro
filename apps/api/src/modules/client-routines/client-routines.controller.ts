@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { z, type ZodTypeAny } from 'zod';
 import { readAuthContext } from '../../common/auth-context/read-auth-context';
+import { postgresUuidString } from '../../common/zod/postgres-uuid.schema';
 import { Roles } from '../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../auth/presentation/guards/auth.guard';
 import { RolesGuard } from '../auth/presentation/guards/roles.guard';
@@ -61,17 +62,70 @@ const progressionBody = z.object({
   weekIds: z.array(uuid).min(1).max(200),
 });
 const presetBody = rule;
+const groupItem = z.object({ id: uuid, kind: z.enum(['exercise', ...NEW_BLOCK_KINDS]) });
 const groupBody = z.object({
-  exerciseIds: z.array(uuid).min(1).max(30),
   groupType: z.enum(['CIRCUIT', 'SUPERSET']).nullable(),
+  items: z.array(groupItem).min(1).max(30),
 });
-const warmupsBody = z.object({ warmupTemplateIds: z.array(uuid).max(10) });
+const warmupsBody = z.object({ warmupTemplateIds: z.array(postgresUuidString).max(10) });
 const blockBody = z.object({
   displayName: z.string().trim().min(1).max(120),
   kind: z.enum(NEW_BLOCK_KINDS),
   libraryId: uuid,
 });
 const replaceBody = exerciseBody.pick({ displayName: true, exerciseLibraryId: true });
+const swapBody = z.object({ displayName: z.string().trim().min(1).max(120), libraryId: uuid });
+
+const itemKind = z.enum(['exercise', ...NEW_BLOCK_KINDS]);
+const blockSetPatch = z
+  .object({
+    advancedTechnique: z.string().max(40).nullable().optional(),
+    distanceMeters: z.number().int().min(0).max(1_000_000).nullable().optional(),
+    durationSeconds: z.number().int().min(0).max(86_400).nullable().optional(),
+    fcMaxPct: z.number().int().min(0).max(100).nullable().optional(),
+    fcMaxPctMax: z.number().int().min(0).max(100).nullable().optional(),
+    fcReservePct: z.number().int().min(0).max(100).nullable().optional(),
+    fcReservePctMax: z.number().int().min(0).max(100).nullable().optional(),
+    heartRate: z.number().int().min(0).max(300).nullable().optional(),
+    heartRateMax: z.number().int().min(0).max(300).nullable().optional(),
+    note: z.string().max(2000).nullable().optional(),
+    reps: z.number().int().min(0).max(1000).nullable().optional(),
+    restSeconds: z.number().int().min(0).max(86_400).nullable().optional(),
+    rir: z.number().int().min(0).max(20).nullable().optional(),
+    rom: z.string().max(30).nullable().optional(),
+    rpe: z.number().min(0).max(10).nullable().optional(),
+    weightKg: z.number().min(0).max(2000).nullable().optional(),
+  })
+  .strict();
+const metaBody = z
+  .object({
+    durationMinutes: z.number().int().min(1).max(600).optional(),
+    lockedFields: z.array(z.string().max(40)).max(20).optional(),
+    notes: z.string().max(4000).nullable().optional(),
+    repsRange: z
+      .string()
+      .trim()
+      .max(20)
+      .regex(/^\d+(\s*-\s*\d+)?$/)
+      .nullable()
+      .optional(),
+  })
+  .strict();
+const moveBody = z.union([
+  z.object({ direction: z.enum(['down', 'up']) }).strict(),
+  z.object({ toIndex: z.number().int().min(0).max(200) }).strict(),
+]);
+type ItemParams = { clientId: string; itemId: string; kind: string; weekId: string };
+
+function itemArgs(params: ItemParams, request: HttpAuthRequest) {
+  return [
+    readAuthContext(request),
+    check(uuid, params.clientId),
+    check(uuid, params.weekId),
+    check(itemKind, params.kind),
+    check(uuid, params.itemId),
+  ] as const;
+}
 
 @Controller('clients/:clientId/routine')
 @UseGuards(AuthGuard, RolesGuard)
@@ -187,6 +241,62 @@ export class ClientRoutinesController {
       check(uuid, params.weekId),
       check(uuid, params.exerciseId),
     );
+  }
+
+  @Post('weeks/:weekId/items/:kind/:itemId/sets')
+  addSet(@Param() params: ItemParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.addSet(context, clientId, weekId, kind, id);
+  }
+
+  @Delete('weeks/:weekId/items/:kind/:itemId/sets/:setId')
+  removeSet(@Param() params: ItemParams & { setId: string }, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.removeSet(context, clientId, weekId, kind, id, check(uuid, params.setId));
+  }
+
+  @Patch('weeks/:weekId/items/:kind/:itemId/sets/:setId')
+  patchItemSet(@Param() params: ItemParams & { setId: string }, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.patchBlockSet(
+      context,
+      clientId,
+      weekId,
+      kind,
+      id,
+      check(uuid, params.setId),
+      check(blockSetPatch, body),
+    );
+  }
+
+  @Patch('weeks/:weekId/items/:kind/:itemId')
+  meta(@Param() params: ItemParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.updateMeta(context, clientId, weekId, kind, id, check(metaBody, body));
+  }
+
+  @Post('weeks/:weekId/items/:kind/:itemId/replace')
+  replaceItem(@Param() params: ItemParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.replaceItem(context, clientId, weekId, kind, id, check(swapBody, body));
+  }
+
+  @Post('weeks/:weekId/items/:kind/:itemId/duplicate')
+  duplicate(@Param() params: ItemParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.duplicate(context, clientId, weekId, kind, id);
+  }
+
+  @Post('weeks/:weekId/items/:kind/:itemId/move')
+  move(@Param() params: ItemParams, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.move(context, clientId, weekId, kind, id, check(moveBody, body));
+  }
+
+  @Delete('weeks/:weekId/items/:kind/:itemId')
+  removeItem(@Param() params: ItemParams, @Req() request: HttpAuthRequest) {
+    const [context, clientId, weekId, kind, id] = itemArgs(params, request);
+    return this.service.removeBlock(context, clientId, weekId, kind, id);
   }
 
   @Post('progression')

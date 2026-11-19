@@ -33,17 +33,52 @@ function WarmupPicker(props: {
 }
 
 /** Warm-ups of one day: remove the ones that are there or add another from the library. */
-export function DayWarmups(props: { day: RoutineEditorDay; onChange: OnWarmups; t: Translate }): React.JSX.Element {
-  const { day, onChange, t } = props;
+export function DayWarmups(props: {
+  day: RoutineEditorDay;
+  editable: boolean;
+  onChange: OnWarmups;
+  t: Translate;
+}): React.JSX.Element {
+  const { day, editable, onChange, t } = props;
   const [picking, setPicking] = useState(false);
   const ids = day.warmups.map((item) => item.warmupTemplateId);
+  if (!editable) {
+    return (
+      <View style={styles.row}>
+        <Button
+          label={`${t('coach.clientRoutine.warmup.title')} (${day.warmups.length})`}
+          onPress={() => setPicking(true)}
+          size="sm"
+          variant="secondary"
+        />
+        {picking ? (
+          <Modal
+            closeLabel={t('common.close')}
+            onClose={() => setPicking(false)}
+            title={t('coach.clientRoutine.warmup.title')}
+            visible
+          >
+            <View style={styles.list}>
+              {day.warmups.length === 0 ? <Text style={styles.empty}>{t('coach.clientRoutine.warmup.none')}</Text> : null}
+              {day.warmups.map((warmup) => (
+                <Text key={warmup.id} style={styles.label}>
+                  {warmup.name}
+                </Text>
+              ))}
+            </View>
+          </Modal>
+        ) : null}
+      </View>
+    );
+  }
   return (
     <View style={styles.row}>
       <Text style={styles.label}>{t('coach.clientRoutine.warmup.title')}</Text>
       {day.warmups.map((warmup) => (
         <Button
           key={warmup.id}
-          label={`${warmup.name} ✕`}
+          disabled={!editable}
+          label={editable ? `${warmup.name} ✕` : warmup.name}
           onPress={() =>
             onChange(
               day.id,
@@ -54,8 +89,14 @@ export function DayWarmups(props: { day: RoutineEditorDay; onChange: OnWarmups; 
           variant="secondary"
         />
       ))}
-      <Button label={t('coach.clientRoutine.warmup.add')} onPress={() => setPicking(true)} size="sm" variant="secondary" />
-      {picking ? (
+      <Button
+        disabled={!editable}
+        label={t('coach.clientRoutine.warmup.add')}
+        onPress={() => setPicking(true)}
+        size="sm"
+        variant="secondary"
+      />
+      {picking && editable ? (
         <WarmupPicker
           current={ids}
           onClose={() => setPicking(false)}

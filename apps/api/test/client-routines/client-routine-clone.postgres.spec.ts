@@ -149,11 +149,12 @@ postgres('client routine copy and weeks', () => {
       where: { day: { templateId: week.templateId, dayIndex: 1 } },
     });
     const ids = copy.map((item) => item.id);
-    await setExerciseGroup(prisma, full, week, 1, { exerciseIds: ids, groupType: 'SUPERSET' });
+    const items = ids.map((id) => ({ id, kind: 'exercise' as const }));
+    await setExerciseGroup(prisma, full, week, 1, { groupType: 'SUPERSET', items });
     const grouped = await db.planStrengthExercise.findMany({ where: { id: { in: ids } } });
     expect(new Set(grouped.map((item) => item.groupId)).size).toBe(1);
     expect(grouped[0]!.groupId).not.toBeNull();
-    await setExerciseGroup(prisma, full, week, 1, { exerciseIds: ids, groupType: null });
+    await setExerciseGroup(prisma, full, week, 1, { groupType: null, items });
     const free = await db.planStrengthExercise.findMany({ where: { id: { in: ids } } });
     expect(free.every((item) => item.groupId === null)).toBe(true);
   });

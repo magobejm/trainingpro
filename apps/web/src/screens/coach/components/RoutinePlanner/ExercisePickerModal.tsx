@@ -58,7 +58,7 @@ export const ExercisePickerModal = (p: PickerProps) => {
         onClose={p.onCancel}
         scroll={false}
         size="xl"
-        title={p.t('coach.routine.picker.title')}
+        title={p.title ?? p.t('coach.routine.picker.title')}
         visible={!!p.blockType}
       >
         <ModalView

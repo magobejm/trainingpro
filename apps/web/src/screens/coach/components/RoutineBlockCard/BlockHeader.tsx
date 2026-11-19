@@ -28,7 +28,7 @@ interface BlockHeaderProps {
   t: (k: string) => string;
 }
 
-const tagColors: Record<BlockType, { bg: string; text: string }> = {
+export const blockTagColors: Record<BlockType, { bg: string; text: string }> = {
   cardio: { bg: colors.primarySoft, text: colors.primary },
   isometric: { bg: 'var(--tp-chartPinkSoft)', text: 'var(--tp-chartPink)' },
   plio: { bg: colors.warningSoft, text: colors.warning },
@@ -39,7 +39,7 @@ const tagColors: Record<BlockType, { bg: string; text: string }> = {
 const DRAG_HANDLE_ICON = '⠿';
 
 export function BlockHeader(props: BlockHeaderProps) {
-  const tagColor = tagColors[props.type] || { bg: colors.background, text: colors.textMuted };
+  const tagColor = blockTagColors[props.type] || { bg: colors.background, text: colors.textMuted };
   return (
     <View style={s.blockHeader}>
       {/* eslint-disable-next-line no-restricted-syntax */}

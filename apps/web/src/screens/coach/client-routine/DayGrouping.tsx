@@ -1,68 +1,103 @@
-import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Badge, Button, space } from '@trainerpro/ui';
-import type { RoutineEditorDay } from '@trainerpro/shared';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { Button, colors, fontSize, radius, space } from '@trainerpro/ui';
+import type { RoutineEditorDay, RoutineEditorItemKind } from '@trainerpro/shared';
 
-type Translate = (key: string) => string;
+type Translate = (key: string, options?: Record<string, number | string>) => string;
 export type GroupType = 'CIRCUIT' | 'SUPERSET';
-export type OnGroup = (dayId: string, exerciseIds: string[], groupType: GroupType | null) => void;
+export type GroupMember = { id: string; kind: RoutineEditorItemKind };
+export type OnGroup = (dayId: string, items: GroupMember[], groupType: GroupType | null) => void;
 
-export function groupLabelKey(day: RoutineEditorDay, groupId: null | string): null | string {
-  const group = day.groups.find((item) => item.id === groupId);
-  return group ? `coach.clientRoutine.group.${group.groupType}` : null;
+/** Starts a superset or circuit by letting the coach pick the exercise cards, as in the prototype. */
+export function DayGrouping(props: {
+  day: RoutineEditorDay;
+  mode: GroupType | null;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onStart: (type: GroupType) => void;
+  selectedCount: number;
+  t: Translate;
+}): React.JSX.Element | null {
+  const { mode, onCancel, onConfirm, onStart, selectedCount, t } = props;
+  if (props.day.exercises.length + props.day.blocks.length < 2) return null;
+  if (!mode) {
+    return (
+      <View style={styles.row}>
+        <Button
+          label={t('coach.clientRoutine.group.addSuperset')}
+          onPress={() => onStart('SUPERSET')}
+          size="sm"
+          variant="secondary"
+        />
+        <Button
+          label={t('coach.clientRoutine.group.addCircuit')}
+          onPress={() => onStart('CIRCUIT')}
+          size="sm"
+          variant="secondary"
+        />
+      </View>
+    );
+  }
+  const label = t(`coach.clientRoutine.group.${mode}`);
+  return (
+    <View style={styles.banner}>
+      <Text style={styles.bannerText}>{t('coach.clientRoutine.group.select', { count: selectedCount, label })}</Text>
+      <View style={styles.row}>
+        <Button label={t('common.cancel')} onPress={onCancel} size="sm" variant="secondary" />
+        <Button disabled={selectedCount < 2} label={t('coach.clientRoutine.group.confirm')} onPress={onConfirm} size="sm" />
+      </View>
+    </View>
+  );
 }
 
-/** Selecting exercises of one day and turning them into a superset or circuit, or taking them out of a group. */
-export function DayGrouping(props: { day: RoutineEditorDay; onGroup: OnGroup; t: Translate }): React.JSX.Element | null {
-  const { day, onGroup, t } = props;
-  const [selected, setSelected] = useState<string[]>([]);
-  if (day.exercises.length < 2) return null;
-  const toggle = (id: string) =>
-    setSelected((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
-  const apply = (type: GroupType | null) => {
-    onGroup(day.id, selected, type);
-    setSelected([]);
-  };
+/** Blue frame around a finished superset or circuit, with the prototype's ungroup action. */
+export function GroupFrame(props: {
+  children: React.ReactNode;
+  count: number;
+  editable: boolean;
+  label: string;
+  onUngroup: () => void;
+  t: Translate;
+}): React.JSX.Element {
   return (
-    <View style={styles.row}>
-      {day.exercises.map((exercise, index) => {
-        const label = groupLabelKey(day, exercise.groupId);
-        return (
-          <View key={exercise.id} style={styles.item}>
-            <Button
-              label={`${index + 1}. ${exercise.displayName}`}
-              onPress={() => toggle(exercise.id)}
-              size="sm"
-              variant={selected.includes(exercise.id) ? 'primary' : 'secondary'}
-            />
-            {label ? <Badge label={t(label)} tone="info" /> : null}
-          </View>
-        );
-      })}
-      <Button
-        disabled={selected.length < 2}
-        label={t('coach.clientRoutine.group.makeSuperset')}
-        onPress={() => apply('SUPERSET')}
-        size="sm"
-      />
-      <Button
-        disabled={selected.length < 2}
-        label={t('coach.clientRoutine.group.makeCircuit')}
-        onPress={() => apply('CIRCUIT')}
-        size="sm"
-      />
-      <Button
-        disabled={selected.length < 1}
-        label={t('coach.clientRoutine.group.ungroup')}
-        onPress={() => apply(null)}
-        size="sm"
-        variant="secondary"
-      />
+    <View style={styles.frame}>
+      <View style={styles.frameHead}>
+        <Text style={styles.frameTitle}>{props.label}</Text>
+        <Text style={styles.frameCount}>{props.t('coach.clientRoutine.group.groupedCount', { count: props.count })}</Text>
+        {props.editable ? (
+          <Button
+            label={props.t('coach.clientRoutine.group.ungroupAction')}
+            onPress={props.onUngroup}
+            size="sm"
+            variant="secondary"
+          />
+        ) : null}
+      </View>
+      {props.children}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  item: { alignItems: 'center', flexDirection: 'row', gap: space.xs },
+  banner: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    gap: space.sm,
+    padding: space.sm,
+  },
+  bannerText: { color: colors.text, fontSize: fontSize.sm, fontWeight: '600' },
+  frame: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primary,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    gap: space.sm,
+    padding: space.sm,
+  },
+  frameCount: { color: colors.primary, flexGrow: 1, fontSize: fontSize.xs },
+  frameHead: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
+  frameTitle: { color: colors.primary, fontSize: fontSize.sm, fontWeight: '700' },
   row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });

@@ -20,4 +20,5 @@ export interface PickerProps {
   onCancel: () => void;
   onSelect: (libraryId: string, displayName: string, type: BlockType) => void;
   t: (k: string, options?: { count: number }) => string;
+  title?: string;
 }

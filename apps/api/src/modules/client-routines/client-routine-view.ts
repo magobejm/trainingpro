@@ -2,8 +2,10 @@ import type { ClientRoutine, ClientRoutineWeek as WeekRow, Prisma } from '@prism
 import {
   isDayEditable,
   isoDate,
+  resolveLockedFields,
   sessionOutcome,
   weekLock,
+  type ExerciseBlockType,
   type RoutineEditorBlock,
   type RoutineEditorTimedSet,
   type RoutineEditorDay,
@@ -14,6 +16,7 @@ import {
   type SessionOutcome,
 } from '@trainerpro/shared';
 import type { PrismaService } from '../../common/prisma/prisma.service';
+import { readPrescription } from './client-routine-prescription';
 
 const DAY_MS = 86_400_000;
 const num = (value: Prisma.Decimal | number | null | undefined) => (value == null ? null : Number(value));
@@ -35,26 +38,41 @@ const BLOCK_KINDS = [
 const blockInclude = { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' as const } };
 const timedInclude = { ...blockInclude, include: { sets: { orderBy: { setIndex: 'asc' as const } } } };
 
-type TimedSource = {
-  sets?: Array<{
-    distanceMeters?: number | null;
-    durationSeconds: number | null;
-    fcMaxPct?: number | null;
-    heartRate?: number | null;
-    id: string;
-    setIndex: number;
-  }>;
-};
+type TimedSource = { sets?: Array<Record<string, unknown> & { id: string; setIndex: number }> };
+
+const text = (value: unknown) => (typeof value === 'string' ? value : null);
+const whole = (value: unknown) => (value == null ? null : Number(value));
 
 function timedSets(block: object): RoutineEditorTimedSet[] {
   return ((block as TimedSource).sets ?? []).map((set) => ({
-    distanceMeters: set.distanceMeters ?? null,
-    durationSeconds: set.durationSeconds,
-    fcMaxPct: set.fcMaxPct ?? null,
-    heartRate: set.heartRate ?? null,
+    advancedTechnique: text(set.advancedTechnique),
+    distanceMeters: whole(set.distanceMeters),
+    durationSeconds: whole(set.durationSeconds),
+    fcMaxPct: whole(set.fcMaxPct),
+    fcMaxPctMax: whole(set.fcMaxPctMax),
+    fcReservePct: whole(set.fcReservePct),
+    fcReservePctMax: whole(set.fcReservePctMax),
+    heartRate: whole(set.heartRate),
+    heartRateMax: whole(set.heartRateMax),
     id: set.id,
+    note: text(set.note),
+    reps: whole(set.reps),
+    restSeconds: whole(set.restSeconds),
+    rir: whole(set.rir),
+    rom: text(set.rom),
+    rpe: whole(set.rpe),
     setIndex: set.setIndex,
+    weightKg: whole(set.weightKg),
   }));
+}
+
+/** Variables the coach marked as filled in by the client. */
+function lockedList(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+}
+
+function shownLocks(type: ExerciseBlockType, value: unknown): string[] {
+  return resolveLockedFields(type, lockedList(value));
 }
 function loggedFor(
   logs: Array<{ setIndex: number } & Record<string, unknown>>,
@@ -109,9 +127,9 @@ async function loadWeekData(prisma: PrismaService, routine: ClientRoutine, week:
         exerciseGroups: { orderBy: { sortOrder: 'asc' } },
         exercises: { ...blockInclude, include: { sets: { orderBy: { setIndex: 'asc' } } } },
         isometricBlocks: timedInclude,
-        mobilityBlocks: blockInclude,
-        plioBlocks: blockInclude,
-        sportBlocks: blockInclude,
+        mobilityBlocks: timedInclude,
+        plioBlocks: timedInclude,
+        sportBlocks: timedInclude,
         warmups: { include: { warmupTemplate: { select: { name: true } } }, orderBy: { sortOrder: 'asc' } },
       },
       orderBy: { dayIndex: 'asc' },
@@ -138,6 +156,89 @@ async function loadWeekData(prisma: PrismaService, routine: ClientRoutine, week:
       },
     }),
   ]);
+}
+
+type LoadedDay = Awaited<ReturnType<typeof loadWeekData>>[0][number];
+
+function editorDay(
+  day: LoadedDay,
+  context: { dates: string[]; editable: boolean; logged: LoggedItem[]; outcome: SessionOutcome | null; planned: boolean },
+): RoutineEditorDay {
+  const matches = matchLogged(day.exercises, context.logged);
+  const exercises = day.exercises.map((exercise, position) => {
+    const logged = context.outcome === 'skipped' ? null : (matches[position] ?? null);
+    return exerciseView(exercise, logged);
+  });
+  const blocks = BLOCK_KINDS.flatMap(([key, kind]) => day[key].map((block) => blockView(block, kind))).sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+  return {
+    blocks,
+    dayIndex: day.dayIndex,
+    editable: context.editable,
+    exercises,
+    groups: day.exerciseGroups.map((group) => ({ groupType: group.groupType, id: group.id, note: group.note })),
+    id: day.id,
+    outcome: context.outcome,
+    planned: context.planned,
+    scheduledDates: [...context.dates].sort(),
+    title: day.title,
+    warmups: day.warmups.map((item) => ({
+      id: item.id,
+      name: item.warmupTemplate.name,
+      warmupTemplateId: item.warmupTemplateId,
+    })),
+  };
+}
+
+function exerciseView(exercise: LoadedDay['exercises'][number], item: LoggedItem | null): RoutineEditorExercise {
+  const prescribed = readPrescription('exercise', exercise);
+  return {
+    displayName: exercise.displayName,
+    durationMinutes: prescribed.durationMinutes,
+    exerciseLibraryId: exercise.exerciseLibraryId,
+    groupId: exercise.groupId,
+    id: exercise.id,
+    lockedFields: shownLocks('strength', exercise.lockedFieldsJson),
+    notes: prescribed.notes,
+    repsRange: prescribed.repsRange,
+    restSeconds: exercise.restSeconds,
+    sets: exercise.sets.map((set) => strengthSet(set, item)),
+    sortOrder: exercise.sortOrder,
+  };
+}
+
+function strengthSet(set: LoadedDay['exercises'][number]['sets'][number], item: LoggedItem | null): RoutineEditorSet {
+  return {
+    advancedTechnique: set.advancedTechnique,
+    id: set.id,
+    logged: item ? loggedFor(item.logs, set.setIndex) : null,
+    note: set.note,
+    reps: set.reps,
+    restSeconds: set.restSeconds,
+    rir: set.rir,
+    rpe: num(set.rpe),
+    setIndex: set.setIndex,
+    weightKg: num(set.weightKg),
+  };
+}
+
+type BlockRow = LoadedDay['cardioBlocks' | 'isometricBlocks' | 'mobilityBlocks' | 'plioBlocks' | 'sportBlocks'][number];
+
+function blockView(block: BlockRow, kind: RoutineEditorBlock['kind']): RoutineEditorBlock {
+  const prescribed = readPrescription(kind, block);
+  return {
+    displayName: block.displayName,
+    durationMinutes: prescribed.durationMinutes,
+    groupId: block.groupId,
+    id: block.id,
+    kind,
+    lockedFields: shownLocks(kind, block.lockedFieldsJson),
+    notes: prescribed.notes,
+    repsRange: prescribed.repsRange,
+    sets: timedSets(block),
+    sortOrder: block.sortOrder,
+  };
 }
 
 export async function buildWeek(
@@ -171,63 +272,15 @@ export async function buildWeek(
     today,
   });
   return {
-    days: days.map((day): RoutineEditorDay => {
-      const outcome = outcomes.get(day.dayIndex) ?? null;
-      const matches = matchLogged(day.exercises, itemsByDay.get(day.dayIndex) ?? []);
-      const skipped = outcome === 'skipped';
-      const exercises = day.exercises.map((exercise, position): RoutineEditorExercise => {
-        const item = skipped ? null : matches[position];
-        return {
-          displayName: exercise.displayName,
-          exerciseLibraryId: exercise.exerciseLibraryId,
-          groupId: exercise.groupId,
-          id: exercise.id,
-          notes: exercise.notes,
-          restSeconds: exercise.restSeconds,
-          sets: exercise.sets.map(
-            (set): RoutineEditorSet => ({
-              advancedTechnique: set.advancedTechnique,
-              id: set.id,
-              logged: item ? loggedFor(item.logs, set.setIndex) : null,
-              note: set.note,
-              reps: set.reps,
-              restSeconds: set.restSeconds,
-              rir: set.rir,
-              rpe: num(set.rpe),
-              setIndex: set.setIndex,
-              weightKg: num(set.weightKg),
-            }),
-          ),
-          sortOrder: exercise.sortOrder,
-        };
-      });
-      const blocks: RoutineEditorBlock[] = BLOCK_KINDS.flatMap(([key, kind]) =>
-        day[key].map((block) => ({
-          displayName: block.displayName,
-          id: block.id,
-          kind,
-          sets: timedSets(block),
-          sortOrder: block.sortOrder,
-        })),
-      ).sort((a, b) => a.sortOrder - b.sortOrder);
-      return {
-        blocks,
-        dayIndex: day.dayIndex,
+    days: days.map((day) =>
+      editorDay(day, {
+        dates: scheduled.get(day.dayIndex) ?? [],
         editable: isDayEditable(lock, day.dayIndex),
-        exercises,
-        groups: day.exerciseGroups.map((group) => ({ groupType: group.groupType, id: group.id, note: group.note })),
-        id: day.id,
-        outcome,
+        logged: itemsByDay.get(day.dayIndex) ?? [],
+        outcome: outcomes.get(day.dayIndex) ?? null,
         planned: scheduled.has(day.dayIndex),
-        scheduledDates: (scheduled.get(day.dayIndex) ?? []).sort(),
-        title: day.title,
-        warmups: day.warmups.map((item) => ({
-          id: item.id,
-          name: item.warmupTemplate.name,
-          warmupTemplateId: item.warmupTemplateId,
-        })),
-      };
-    }),
+      }),
+    ),
     endsOn: to,
     id: week.id,
     phase: lock.phase,

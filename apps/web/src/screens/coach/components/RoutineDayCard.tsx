@@ -294,7 +294,10 @@ function DayBlocksContent(props: DayBlocksContentProps) {
 function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: () => void }) {
   return (
     <TouchableOpacity
-      activeOpacity={0.7}
+      {...{ dataSet: { 'group-pick': selected ? 'on' : 'off' } }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      activeOpacity={1}
       onPress={onPress}
       style={{
         position: 'absolute',
@@ -303,7 +306,6 @@ function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: (
         right: 0,
         bottom: 0,
         zIndex: 10,
-        backgroundColor: selected ? 'var(--tp-primarySoft)' : 'var(--tp-surfaceMuted)',
         borderRadius: radius.md,
         borderWidth: selected ? 2 : 1,
         borderColor: selected ? colors.primary : colors.primaryBorder,

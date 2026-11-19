@@ -24,7 +24,7 @@ export function getLayoutStyle2(
       right: 0,
       bottom: 0,
       zIndex: 10,
-      backgroundColor: value1,
+      ...(value1 ? { backgroundColor: value1 } : {}),
       borderRadius: radius.md,
       borderWidth: value2,
       borderColor: value3,

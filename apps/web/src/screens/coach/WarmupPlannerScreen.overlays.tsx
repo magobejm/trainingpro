@@ -10,12 +10,21 @@ import { Button, colors, fontSize, space } from '@trainerpro/ui';
 
 export function SelectionOverlay({ selected, onPress }: { selected: boolean; onPress: () => void }) {
   const layoutStyle2 = getLayoutStyle2(
-    selected ? colors.primarySoft : colors.surfaceMuted,
+    undefined,
     selected ? 2 : 1,
     selected ? colors.primary : colors.primaryBorder,
     selected ? 'solid' : 'dashed',
   );
-  return <TouchableOpacity activeOpacity={0.7} onPress={onPress} style={layoutStyle2} />;
+  return (
+    <TouchableOpacity
+      {...{ dataSet: { 'group-pick': selected ? 'on' : 'off' } }}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: selected }}
+      activeOpacity={1}
+      onPress={onPress}
+      style={layoutStyle2}
+    />
+  );
 }
 interface WarmupGroupModeBarProps {
   groupMode: 'CIRCUIT' | 'SUPERSET' | null;

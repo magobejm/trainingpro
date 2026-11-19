@@ -39,6 +39,9 @@ html[data-density='compact'] [data-density-list] [data-density-row] {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px var(--tp-shadowColor);
 }
+[data-group-pick='on'] {
+  background-color: color-mix(in srgb, var(--tp-primary) 16%, transparent);
+}
 @media (prefers-reduced-motion: reduce) {
   body *,
   body *::before,

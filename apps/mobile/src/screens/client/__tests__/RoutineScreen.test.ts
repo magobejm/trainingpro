@@ -73,6 +73,7 @@ function renderRoutine() {
   const html = renderToStaticMarkup(
     React.createElement(RoutineScreen, {
       onClose: jest.fn(),
+      onOpenSession: jest.fn(),
       onOpenTest: jest.fn(),
       onSelectDay,
     }),

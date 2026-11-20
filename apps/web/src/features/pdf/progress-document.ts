@@ -91,7 +91,7 @@ export function progressDocument(input: ProgressSnapshot): PdfDocument {
       t('coach.progress.heatmap.summary', {
         best: input.heatmap.bestStreak,
         current: input.heatmap.currentStreak,
-        days: input.heatmap.trainedDays,
+        days: t('coach.progress.heatmap.trainedDays', { count: input.heatmap.trainedDays }),
       }),
     ],
     heatmap: input.heatmap.weeks.map((week) => week.map((cell) => ({ ...cell }))),

@@ -110,12 +110,17 @@ export function ClientExerciseCard({
               ) : null}
             </View>
             {exercise.sets.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tableScroll}>
+              <ScrollView
+                contentContainerStyle={styles.tableScrollContent}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.tableScroll}
+              >
                 <View style={styles.table}>
                   <View style={styles.tableHeaderRow}>
                     <Text style={[styles.tableHeaderCell, styles.seriesCol]}>{t('client.today.set')}</Text>
                     {columns.map((column) => (
-                      <Text key={column.key} style={styles.tableHeaderCell}>
+                      <Text key={column.key} numberOfLines={1} style={[styles.tableHeaderCell, columnWidth(column.key)]}>
                         {t(column.labelKey).toUpperCase()}
                       </Text>
                     ))}
@@ -163,7 +168,7 @@ function RoutineSetRow(props: {
         {set.note ? <Text style={styles.advancedLabel}>{set.note}</Text> : null}
       </View>
       {columns.map((column) => (
-        <Text key={column.key} style={styles.tableCell}>
+        <Text key={column.key} numberOfLines={1} style={[styles.tableCell, columnWidth(column.key)]}>
           {column.format(set)}
         </Text>
       ))}
@@ -270,30 +275,32 @@ const styles = StyleSheet.create({
   tableScroll: {
     marginTop: 8,
   },
+  tableScrollContent: {
+    flexGrow: 1,
+  },
   table: {
+    flexGrow: 1,
     gap: 8,
     minWidth: '100%',
   },
   tableHeaderRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   tableHeaderCell: {
     color: LIGHT.accentMuted,
-    flex: 1,
     fontSize: 9,
     fontWeight: '700',
-    minWidth: 52,
     textTransform: 'uppercase',
   },
   tableRow: {
     alignItems: 'flex-start',
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
   },
   seriesCol: {
-    minWidth: 72,
-    width: 72,
+    minWidth: 64,
+    width: 64,
   },
   seriesNumber: {
     color: LIGHT.textStrong,
@@ -308,12 +315,37 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     color: LIGHT.textStrong,
-    flex: 1,
     fontSize: 13,
     fontWeight: '600',
-    minWidth: 52,
+  },
+  compactCell: {
+    flexBasis: 32,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 32,
+  },
+  mediumCell: {
+    flexBasis: 40,
+    flexGrow: 1,
+    flexShrink: 1,
+    minWidth: 36,
+  },
+  wideCell: {
+    flexBasis: 68,
+    flexGrow: 1.6,
+    flexShrink: 0,
+    minWidth: 68,
   },
 });
+
+const MEDIUM_COLUMNS = new Set(['distanceMeters', 'rom', 'weightKg']);
+const WIDE_COLUMNS = new Set(['durationSeconds', 'restSeconds']);
+
+function columnWidth(key: string): object {
+  if (WIDE_COLUMNS.has(key)) return styles.wideCell;
+  if (MEDIUM_COLUMNS.has(key)) return styles.mediumCell;
+  return styles.compactCell;
+}
 
 type AdvancedTechniqueId = 'topSet' | 'backOffSet' | 'clusterSets' | 'myoReps' | 'dropSet';
 const ADVANCED_TECHNIQUE_IDS = ['topSet', 'backOffSet', 'clusterSets', 'myoReps', 'dropSet'];

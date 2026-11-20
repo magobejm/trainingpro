@@ -27,6 +27,7 @@ export type ClientWellnessWeeklyReport = {
   energy: null | number;
   id: string;
   mood: null | number;
+  notes?: null | string;
   reportDate: string;
   sleepHours: null | number;
   weekStartDate: string;

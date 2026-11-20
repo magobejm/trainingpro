@@ -97,7 +97,7 @@ export function useViewModel(defaultTab: RoutineLibraryTab, onRouteChange: (rout
       onRouteChange('coach.warmup.planner');
     },
     onViewRoutine: (tpl: RoutineTemplateView) => {
-      openForView(tpl.id);
+      openForView(tpl.id, clientId ?? undefined);
       onRouteChange('coach.routine.planner');
     },
     onViewWarmup: (tpl: WarmupTemplateView) => {

@@ -5,6 +5,7 @@ import { useAuthStore } from '../../store/auth.store';
 
 export type IncidentView = {
   adjustmentDraft: null | string;
+  category?: 'EXERCISE' | 'OTHER';
   clientId: string;
   coachAlertedAt: null | string;
   coachResponse: null | string;
@@ -58,6 +59,7 @@ function useSimpleIncidentMutation(
     mutationFn: (args: { id: string; payload?: unknown }) => runMutation(auth, executor, args),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      void queryClient.invalidateQueries({ queryKey: ['clients'] });
     },
   });
 }

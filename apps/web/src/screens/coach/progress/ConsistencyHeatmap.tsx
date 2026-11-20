@@ -35,7 +35,7 @@ export function ConsistencyHeatmap(props: { clientId: string; t: Translate }): R
         {props.t('coach.progress.heatmap.summary', {
           best: model.bestStreak,
           current: model.currentStreak,
-          days: model.trainedDays,
+          days: props.t('coach.progress.heatmap.trainedDays', { count: model.trainedDays }),
         })}
       </Text>
       <Text style={styles.explanation}>{props.t('coach.progress.heatmap.criteria')}</Text>

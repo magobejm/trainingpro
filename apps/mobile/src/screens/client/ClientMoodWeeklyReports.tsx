@@ -15,7 +15,7 @@ export function MoodWeeklyReports({ reports }: Props): React.JSX.Element {
     return (
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('client.mood.sections.weeklyReports')}</Text>
-        <Text style={styles.empty}>{t('client.mood.empty')}</Text>
+        <Text style={styles.empty}>{t('client.mood.weeklyReport.empty')}</Text>
       </View>
     );
   }
@@ -32,6 +32,7 @@ export function MoodWeeklyReports({ reports }: Props): React.JSX.Element {
             <Metric label={t('client.mood.fields.sleep')} value={formatScore(report.sleepHours)} />
             <Metric label={t('client.mood.fields.adherence')} value={formatScore(report.adherencePercent)} />
           </View>
+          {report.notes ? <Text style={styles.notes}>{report.notes}</Text> : null}
         </View>
       ))}
     </View>
@@ -61,6 +62,7 @@ const styles = StyleSheet.create({
   metricLabel: { color: LIGHT.accentMuted, fontSize: 9, textTransform: 'uppercase' },
   metrics: { flexDirection: 'row', gap: 8, marginTop: 8 },
   metricValue: { color: LIGHT.textStrong, fontSize: 14, fontWeight: '700', marginTop: 2 },
+  notes: { color: LIGHT.textStrong, fontSize: 13, lineHeight: 18, marginTop: 10 },
   section: { marginTop: 20, paddingHorizontal: 16 },
   sectionTitle: {
     color: LIGHT.textMuted,

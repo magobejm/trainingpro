@@ -1,25 +1,20 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { createApiClient } from '../../data/api-client';
 import { useClientThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { useAuthStore } from '../../store/auth.store';
 import { useDailyCheckinStore } from '../../store/daily-checkin.store';
 import { showToast } from '../../shell/client/feedback';
-import {
-  formatMorningCheckinChatNotice,
-  localDateKey,
-  readTodayCheckin,
-  type MorningCheckinScores,
-} from './daily-checkin.utils';
+import { useTodayKey } from './useTodayKey';
+import { formatMorningCheckinChatNotice, readTodayCheckin, type MorningCheckinScores } from './daily-checkin.utils';
 import { MorningCheckinModal } from './MorningCheckinModal';
-
-const DAY_TICK_MS = 30_000;
 
 export function MorningCheckinGate(): React.JSX.Element {
   const { t } = useTranslation();
   const [hydrated, setHydrated] = useState(useDailyCheckinStore.persist.hasHydrated());
-  const [todayKey, setTodayKey] = useState(localDateKey);
+  const todayKey = useTodayKey();
+  const submitLockRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const status = useAuthStore((state) => state.status);
   const userId = useAuthStore((state) => state.userId);
   const entries = useDailyCheckinStore((state) => state.entries);
@@ -38,18 +33,10 @@ export function MorningCheckinGate(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    const refreshToday = () => setTodayKey(localDateKey());
-    const interval = setInterval(refreshToday, DAY_TICK_MS);
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') {
-        refreshToday();
-      }
-    });
-    return () => {
-      clearInterval(interval);
-      subscription.remove();
-    };
-  }, []);
+    if (visible) return;
+    submitLockRef.current = false;
+    setIsSubmitting(false);
+  }, [visible]);
 
   useEffect(() => {
     if (!visible || !accessToken) return;
@@ -61,9 +48,11 @@ export function MorningCheckinGate(): React.JSX.Element {
 
   const handleSubmit = useCallback(
     (scores: MorningCheckinScores) => {
-      if (!userId) {
+      if (!userId || submitLockRef.current) {
         return;
       }
+      submitLockRef.current = true;
+      setIsSubmitting(true);
       saveToday(userId, todayKey, scores);
       showToast(t('mobile.client.checkin.saved'));
       void createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' })
@@ -84,7 +73,7 @@ export function MorningCheckinGate(): React.JSX.Element {
   return (
     <MorningCheckinModal
       initialSleep={initialSleep}
-      isSubmitting={false}
+      isSubmitting={isSubmitting}
       onSkip={handleSkip}
       onSubmit={handleSubmit}
       visible={visible}

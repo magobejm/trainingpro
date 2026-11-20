@@ -81,15 +81,17 @@ export function useProgressExercises(clientId: string, range: DateRange, enabled
     queryFn: async () => {
       const found = new Map<string, ProgressExerciseRef>();
       for (const part of dateChunks(range)) {
-        const groups = await dashboardApi(auth).get<Record<string, Array<{ id: string; name: string }>>>(
-          '/progress/performed-exercises',
-          { clientId, ...part },
-        );
+        type Performed = { id: string; muscleGroup?: null | string; name: string };
+        const groups = await dashboardApi(auth).get<Record<string, Performed[]>>('/progress/performed-exercises', {
+          clientId,
+          ...part,
+        });
         for (const [type, items] of Object.entries(groups))
           for (const item of items) {
             found.set(`${type}:${item.id}`, {
               exerciseId: item.id,
               exerciseType: type as ProgressExerciseRef['exerciseType'],
+              muscleGroup: item.muscleGroup ?? null,
               name: item.name,
             });
           }

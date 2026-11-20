@@ -119,7 +119,11 @@ function formatMonthLabel(day: string, locale: string): string {
   return capitalize(formatted, locale);
 }
 
-function timelineDay(item: ClientTimelineItem): string {
+export function timelineDay(item: ClientTimelineItem): string {
+  if (item.occurredAt.includes('T')) {
+    const occurred = new Date(item.occurredAt);
+    if (!Number.isNaN(occurred.getTime())) return timelineToday(occurred);
+  }
   return (item.sessionDate ?? item.occurredAt).slice(0, 10);
 }
 
@@ -185,6 +189,7 @@ function extraDetail(detail: null | string, t: Translate): string {
 function translatedDetail(head: string, t: Translate): string {
   if (head === 'incomplete') return t('coach.timeline.incomplete');
   if (head === 'skipped') return t('coach.timeline.skipped');
+  if (['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(head)) return t(`coach.clientFeedback.severity.${head}`);
   return head;
 }
 

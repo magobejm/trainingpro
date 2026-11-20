@@ -15,6 +15,13 @@ export function countsAsDoneSession(row: { isCompleted: boolean; isIncomplete: b
   return row.isCompleted && !row.isIncomplete;
 }
 
+/** Media de la motivación de los check-ins (escala 1-5) expresada en la escala 1-10 del calendario. */
+export function averageCheckinMotivation(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
+  return Math.round(mean * 2 * 100) / 100;
+}
+
 type GetClientCalendarSummaryInput = {
   dateFrom: Date;
   dateTo: Date;
@@ -33,8 +40,11 @@ export class GetClientCalendarSummaryUseCase {
     ]);
     const completedRows = rangeRows.filter((r) => countsAsDoneSession(r));
     const completedDays = completedRows.length;
-    const motivations = completedRows.filter((r) => r.preMotivation !== null).map((r) => r.preMotivation!);
-    const avgMotivation = motivations.length > 0 ? motivations.reduce((a, b) => a + b, 0) / motivations.length : null;
+    const checkins = await this.prisma.dailyCheckin.findMany({
+      where: { clientId: client.id, date: { gte: input.dateFrom, lte: input.dateTo } },
+      select: { motivation: true },
+    });
+    const avgMotivation = averageCheckinMotivation(checkins.map((row) => row.motivation));
     const currentStreakWeeks = this.computeStreakWeeks(streakRows.map((r) => r.sessionDate));
     const nutritionStreakWeeks = await readNutritionStreakWeeks(this.prisma, client.id);
     return { avgMotivation, completedDays, currentStreakWeeks, nutritionStreakWeeks };

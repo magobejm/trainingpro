@@ -45,6 +45,13 @@ describe('timeline helpers', () => {
     expect(groups[1]?.monthLabel?.toLocaleLowerCase('es')).toContain('septiembre');
   });
 
+  it('groups by the local day of occurredAt, not the UTC day', () => {
+    const lateEvening = new Date(2026, 9, 22, 23, 30);
+    const groups = groupTimeline([item({ occurredAt: lateEvening.toISOString() })], '2026-10-22', t, 'es');
+    expect(groups[0]?.dayKey).toBe('2026-10-22');
+    expect(groups[0]?.dayLabel).toBe('coach.timeline.today');
+  });
+
   it('labels today and keeps a named weekday for older days', () => {
     const groups = groupTimeline([item({ occurredAt: '2026-10-14T08:00:00.000Z' })], '2026-10-14', t, 'es');
     expect(groups[0]?.dayLabel).toBe('coach.timeline.today');
@@ -91,7 +98,13 @@ describe('timeline helpers', () => {
 
   it('summarizes the latest event for the profile row', () => {
     const line = lastEventLine(
-      item({ kind: 'session', outcome: 'done', sessionDate: '2026-10-23', title: 'Día 1' }),
+      item({
+        kind: 'session',
+        occurredAt: new Date(2026, 9, 23, 12, 0).toISOString(),
+        outcome: 'done',
+        sessionDate: '2026-10-23',
+        title: 'Día 1',
+      }),
       t,
       '2026-10-23',
       'es',

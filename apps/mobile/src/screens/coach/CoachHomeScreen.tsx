@@ -24,7 +24,7 @@ export function CoachHomeScreen(props: {
   return (
     <CoachPage title={c('home')}>
       <Text style={styles.title}>{c('today')}</Text>
-      <Text style={styles.subtitle}>{now.toLocaleDateString()}</Text>
+      <Text style={styles.subtitle}>{now.toLocaleDateString('es-ES')}</Text>
       <View style={styles.stats}>
         <View style={styles.stat}>
           <Text style={styles.value}>{clients.data?.items.length ?? '–'}</Text>

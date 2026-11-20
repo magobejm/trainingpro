@@ -64,19 +64,29 @@ async function countNeatAdherence(
   timezoneOffset?: number,
 ): Promise<NeatAdherence> {
   const client = await prisma.client.findFirst({
-    select: { trainingPlanId: true },
+    select: { activeRoutineAssignment: { select: { appliedAt: true } }, createdAt: true, trainingPlanId: true },
     where: { archivedAt: null, id: clientId },
   });
   const goals = client?.trainingPlanId
     ? await prisma.planTemplateNeat.count({ where: { templateId: client.trainingPlanId } })
     : 0;
-  const fromKey = sessionDateKey(from);
+  const fromKey = effectiveNeatStart(sessionDateKey(from), client?.createdAt, client?.activeRoutineAssignment?.appliedAt);
   const cutoff = adherenceCutoff(sessionDateKey(to), new Date(), timezoneOffset);
   const days = inclusiveDayCount(fromKey, cutoff);
   const done = await prisma.clientNeatLog.count({
     where: { clientId, done: true, date: { gte: utcDate(fromKey), lte: utcDate(cutoff) } },
   });
   return neatAdherence(done, goals * days);
+}
+
+/** El NEAT solo se espera desde el alta del cliente o la asignación de su rutina, lo que sea más tarde. */
+export function effectiveNeatStart(
+  fromKey: string,
+  createdAt: Date | null | undefined,
+  appliedAt: Date | null | undefined,
+): string {
+  const keys = [fromKey, createdAt?.toISOString().slice(0, 10), appliedAt?.toISOString().slice(0, 10)];
+  return keys.reduce<string>((latest, key) => (key && key > latest ? key : latest), fromKey);
 }
 
 function utcDate(value: string): Date {

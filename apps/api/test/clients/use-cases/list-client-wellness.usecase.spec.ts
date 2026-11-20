@@ -27,6 +27,7 @@ const reportRow = {
   energy: 7,
   id: 'report-1',
   mood: 8,
+  notes: 'Semana dura pero buena',
   reportDate: new Date('2026-09-14T00:00:00.000Z'),
   sleepHours: 7.5,
   weekStartDate: new Date('2026-09-14T00:00:00.000Z'),
@@ -82,6 +83,7 @@ describe('ListClientWellnessUseCase', () => {
     expect(result.summary.sessionsWithWellness).toBe(1);
     expect(result.sessions[0]?.sessionDate).toBe('2026-09-15');
     expect(result.weeklyReports[0]?.sleepHours).toBe(7.5);
+    expect(result.weeklyReports[0]?.notes).toBe('Semana dura pero buena');
     expect(result.sessions[0]).toMatchObject({ finishComment: 'Buen día', sessionRpe: 7.5 });
     expect(result.checkins).toEqual([{ date: '2026-09-14', motivation: 4, recovery: 3, sleep: 5 }]);
     expect(result.weeklyLoads[0]).toMatchObject({ content: 'Semana de cierre', weekStartDate: '2026-09-21' });

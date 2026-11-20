@@ -73,6 +73,7 @@ export function saveNoticeKey(outcomes: SaveOutcome[]): null | string {
   if (outcomes.includes('failed')) return null;
   if (outcomes.includes('pending')) return 'mobile.client.sync.savedOffline';
   if (outcomes.includes('synced')) return 'mobile.client.session.setSaved';
+  if (outcomes.length > 0) return 'mobile.client.session.nothingToSave';
   return null;
 }
 

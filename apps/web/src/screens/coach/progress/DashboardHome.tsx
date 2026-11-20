@@ -171,7 +171,9 @@ function UniversalExercises(props: {
             style={[styles.panel, styles.tile]}
           >
             <Text style={styles.text}>{exercise.name}</Text>
-            <Text style={styles.muted}>{t(`coach.progress.filter.group.${exercise.exerciseType}`)}</Text>
+            <Text style={styles.muted}>
+              {exercise.muscleGroup || t(`coach.progress.filter.group.${exercise.exerciseType}`)}
+            </Text>
           </Pressable>
         ))}
       </View>

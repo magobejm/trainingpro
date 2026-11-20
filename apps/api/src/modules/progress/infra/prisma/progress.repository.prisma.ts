@@ -48,6 +48,7 @@ import type {
   StrengthLogRow,
 } from '../../domain/progress.models';
 import { aggregateExerciseSets, estimateE1rm, calculateSetInol } from '../../domain/metrics/exercise-metrics';
+import { positiveOrNull, resolveDurationMinutes, sessionLoadFromRpe } from '../../domain/metrics/session-level';
 import { collectBrokenRecords } from '../../domain/prior-records';
 import {
   fetchPerformedExerciseNames,
@@ -112,21 +113,26 @@ export class ProgressRepositoryPrisma implements ProgressRepositoryPort {
         ...sportRecordsSelect,
         sessionDate: true,
         startedAt: true,
+        sessionRpe: true,
+        performedDurationSeconds: true,
       },
     });
     return sessions.map((session) => ({
-      durationSeconds: readDurationSeconds(session.startedAt, session.finishedAt, session.intervalLogs),
-      effortRpe: readSessionEffort(
-        [
-          ...session.logs,
-          ...session.plioLogs,
-          ...session.mobilityLogs,
-          ...session.isometricLogs,
-          ...selectRecordedSportRecords(session.sportSetLogs, session.sportLogs).sets,
-          ...selectRecordedSportRecords(session.sportSetLogs, session.sportLogs).legacy,
-        ],
-        session.intervalLogs,
-      ),
+      durationSeconds:
+        readDurationSeconds(session.startedAt, session.finishedAt, session.intervalLogs) ??
+        positiveOrNull(session.performedDurationSeconds),
+      effortRpe:
+        readSessionEffort(
+          [
+            ...session.logs,
+            ...session.plioLogs,
+            ...session.mobilityLogs,
+            ...session.isometricLogs,
+            ...selectRecordedSportRecords(session.sportSetLogs, session.sportLogs).sets,
+            ...selectRecordedSportRecords(session.sportSetLogs, session.sportLogs).legacy,
+          ],
+          session.intervalLogs,
+        ) ?? toRpeNumber(session.sessionRpe),
       sessionDate: session.sessionDate,
     }));
   }
@@ -809,6 +815,8 @@ type SessionProgressRow = {
   sessionDate: Date;
   startedAt: Date | null;
   finishedAt: Date | null;
+  sessionRpe?: StoredRpe;
+  performedDurationSeconds?: number | null;
   client: { fcRest: number | null; fcMax: number | null } | null;
   logs: Array<{
     sessionItemId?: string;
@@ -882,6 +890,8 @@ function sessionProgressSelect() {
     sessionDate: true,
     startedAt: true,
     finishedAt: true,
+    sessionRpe: true,
+    performedDurationSeconds: true,
     client: { select: { fcRest: true, fcMax: true } },
     logs: { select: { sessionItemId: true, repsDone: true, weightDoneKg: true, effortRpe: true, effortRir: true } },
     intervalLogs: {
@@ -1015,8 +1025,15 @@ function cardioTrainingFromIntervals(session: SessionProgressRow): {
 }
 
 function durationMinutesFromSession(session: SessionProgressRow): number | null {
-  if (!session.startedAt || !session.finishedAt || session.finishedAt <= session.startedAt) return null;
-  return Math.round((session.finishedAt.getTime() - session.startedAt.getTime()) / 60000);
+  return resolveDurationMinutes(session.startedAt, session.finishedAt, session.performedDurationSeconds);
+}
+
+/** Completa RPE y carga con la valoración de la sesión cuando no hay RPE por serie. */
+function withSessionLevelRpe(session: SessionProgressRow, point: SessionProgressPoint): SessionProgressPoint {
+  const sessionRpe = point.sessionRpe ?? toRpeNumber(session.sessionRpe ?? null);
+  if (sessionRpe === null || sessionRpe <= 0) return point;
+  const load = point.trainingLoad ?? sessionLoadFromRpe(sessionRpe, point.durationMinutes);
+  return { ...point, sessionRpe, trainingLoad: load };
 }
 
 function peakLoadKgFromLogs(logs: Array<{ weightDoneKg: Prisma.Decimal | null }>): number | null {
@@ -1081,7 +1098,8 @@ function mapLegacySessionProgressPoint(session: SessionProgressRow): SessionProg
     avgIntensityPercent,
     peakLoadKg,
   };
-  return { ...point, metricCoverage: sessionMetricCoverage(session, 'legacy', point) };
+  const adjusted = withSessionLevelRpe(session, point);
+  return { ...adjusted, metricCoverage: sessionMetricCoverage(session, 'legacy', adjusted, point) };
 }
 
 function mapCategorySessionProgressPoint(session: SessionProgressRow, category: string): SessionProgressPoint {
@@ -1093,8 +1111,9 @@ function mapCategorySessionProgressPoint(session: SessionProgressRow, category: 
     mobility: mapCategorySessionMobility,
     sport: mapCategorySessionSport,
   };
-  const point = (mapper[category] ?? mapCategorySessionStrength)(session);
-  return { ...point, metricCoverage: sessionMetricCoverage(session, category, point) };
+  const original = (mapper[category] ?? mapCategorySessionStrength)(session);
+  const point = withSessionLevelRpe(session, original);
+  return { ...point, metricCoverage: sessionMetricCoverage(session, category, point, original) };
 }
 
 function mapCategorySessionBase(session: SessionProgressRow) {
@@ -1330,6 +1349,7 @@ function sessionMetricCoverage(
   session: SessionProgressRow,
   category: string,
   point: SessionProgressPoint,
+  original: SessionProgressPoint = point,
 ): import('../../domain/progress.models').MetricCoverage {
   type MetricLog = {
     effortRpe: StoredRpe;
@@ -1374,7 +1394,10 @@ function sessionMetricCoverage(
     unit: 'sets' | 'intervals' | 'sessions' = category === 'cardio' || category === 'sport' ? 'intervals' : 'sets',
   ) => ({ validSamples, eligibleSamples, unit });
   return {
-    sessionRpe: samples(logs.filter((log) => isRecordedNumber(toRpeNumber(log.effortRpe))).length),
+    sessionRpe:
+      original.sessionRpe === null && point.sessionRpe !== null
+        ? samples(1, 1, 'sessions')
+        : samples(logs.filter((log) => isRecordedNumber(toRpeNumber(log.effortRpe))).length),
     sessionTonnage: samples(
       category === 'cardio' || category === 'mobility' ? 0 : logs.filter(hasTonnage).length,
       category === 'cardio' || category === 'mobility' ? 0 : logs.length,
@@ -1385,7 +1408,9 @@ function sessionMetricCoverage(
     effortIndex: samples(point.effortIndex === null ? 0 : 1, 1, 'sessions'),
     sessionEfficiency: samples(point.sessionEfficiency === null ? 0 : 1, 1, 'sessions'),
     trainingLoad: {
-      ...samples(weighted.length, intervals.length, 'intervals'),
+      ...(original.trainingLoad === null && point.trainingLoad !== null
+        ? samples(1, 1, 'sessions')
+        : samples(weighted.length, intervals.length, 'intervals')),
       weightSeconds: weighted.reduce((sum, log) => sum + log.durationSecondsDone!, 0),
     },
     durationMinutes:

@@ -1,5 +1,10 @@
 export type ProgressExerciseType = 'strength' | 'cardio' | 'plio' | 'mobility' | 'isometric' | 'sport';
-export type ProgressExerciseRef = { exerciseId: string; exerciseType: ProgressExerciseType; name: string };
+export type ProgressExerciseRef = {
+  exerciseId: string;
+  exerciseType: ProgressExerciseType;
+  muscleGroup?: null | string;
+  name: string;
+};
 export type ProgressRoutine = {
   assignmentId: string;
   templateId: string;

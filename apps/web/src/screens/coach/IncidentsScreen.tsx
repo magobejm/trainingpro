@@ -180,14 +180,14 @@ function IncidentCard(props: {
   return (
     <Card densityRow style={styles.card}>
       <Text style={styles.incidentTitle}>{props.clientName}</Text>
-      <Text style={styles.meta}>{`${incident.severity} · ${incident.status} · ${props.format(incident.createdAt)}`}</Text>
+      <Text style={styles.meta}>{incidentMeta(incident, props.format, vm.t)}</Text>
       <Text style={styles.description}>{incident.description}</Text>
       <Text style={styles.meta}>{incident.tag ?? vm.t('coach.incidents.noTag')}</Text>
-      <SavedNote
-        label={vm.t('coach.incidents.responseLabel')}
-        value={incident.coachResponse}
-        empty={vm.t('coach.incidents.noResponse')}
-      />
+      {incident.coachResponse ? (
+        <Text style={styles.meta}>{`${vm.t('coach.incidents.responseLabel')}: ${incident.coachResponse}`}</Text>
+      ) : (
+        <Text style={styles.meta}>{vm.t('coach.incidents.noResponse')}</Text>
+      )}
       <SavedNote label={vm.t('coach.incidents.draftLabel')} value={incident.adjustmentDraft} empty={''} />
       <Button
         label={vm.t(open ? 'coach.incidents.closeActions' : 'coach.incidents.manage')}
@@ -209,6 +209,16 @@ function IncidentCard(props: {
       ) : null}
     </Card>
   );
+}
+
+function incidentMeta(incident: IncidentView, format: (value: string) => string, t: ViewModel['t']): string {
+  const parts = [
+    t(`coach.clientFeedback.severity.${incident.severity}`),
+    t(`coach.clientFeedback.status.${incident.status}`),
+  ];
+  if (incident.category) parts.push(t(`coach.clientFeedback.category.${incident.category}`));
+  parts.push(format(incident.createdAt));
+  return parts.join(' · ');
 }
 
 function SavedNote(props: { empty: string; label: string; value: null | string }): React.JSX.Element | null {

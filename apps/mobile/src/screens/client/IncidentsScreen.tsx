@@ -96,11 +96,10 @@ function useIncidentActions() {
       showError(t('client.incidents.forwardError'));
       return;
     }
-    const category = resolveIncidentCategory(item.tag, item.severity);
     try {
       await sendMutation.mutateAsync({
         text: formatIncidentChatNotice({
-          category: t(`mobile.client.comment.category.${category}`),
+          category: t(`mobile.client.feedbackCategory.${item.category ?? 'OTHER'}`),
           date: formatIncidentDate(item.createdAt),
           description: item.description,
         }),
@@ -180,7 +179,9 @@ function IncidentCard(props: { item: IncidentListItem; onDelete: () => void; onF
     <View style={[styles.card, { backgroundColor: tone.bg, borderColor: tone.border }]}>
       <View style={styles.cardTop}>
         <View style={styles.categoryBadge}>
-          <Text style={[styles.categoryText, { color: tone.text }]}>{t(`mobile.client.comment.category.${category}`)}</Text>
+          <Text style={[styles.categoryText, { color: tone.text }]}>
+            {t(`mobile.client.feedbackCategory.${props.item.category}`)}
+          </Text>
         </View>
         <Text style={[styles.cardDate, { color: tone.text }]}>{formatIncidentDate(props.item.createdAt)}</Text>
       </View>

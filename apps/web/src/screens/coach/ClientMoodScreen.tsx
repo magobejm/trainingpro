@@ -186,6 +186,7 @@ function WeeklyList(props: { reports: ClientWellnessWeeklyReport[]; t: ViewModel
             <Metric label={props.t('coach.mood.fields.sleep')} value={formatScore(report.sleepHours)} />
             <Metric label={props.t('coach.mood.fields.adherence')} value={formatScore(report.adherencePercent)} />
           </View>
+          {report.notes ? <Text style={styles.reportNotes}>{report.notes}</Text> : null}
         </View>
       ))}
     </View>
@@ -213,6 +214,7 @@ const styles = StyleSheet.create({
   cardMeta: { color: colors.textMuted, fontSize: fontSize.xs },
   cardTitle: { color: colors.text, fontSize: fontSize.md, fontWeight: '700' },
   error: { color: colors.danger, fontSize: fontSize.sm },
+  reportNotes: { color: colors.text, fontSize: fontSize.sm },
   exportBtn: { alignSelf: 'flex-start' },
   header: { gap: space.xs },
   kpiChip: {

@@ -103,7 +103,7 @@ export function CoachNotesScreen({ clientId }: { clientId?: string }) {
       }
       renderItem={({ item }) => (
         <View style={ui.card}>
-          <Text style={ui.muted}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+          <Text style={ui.muted}>{new Date(item.createdAt).toLocaleDateString('es-ES')}</Text>
           <Text style={ui.text}>{item.content}</Text>
           <CoachButton label={t('coachWorkspace.edit')} onPress={() => setEditing(item)} />
           <CoachButton

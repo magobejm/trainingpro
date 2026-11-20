@@ -5,6 +5,7 @@ import { useClientCalendarEventsQuery } from '../../data/hooks/useClientCalendar
 import { useClientMeQuery, resolveDisplayName } from '../../data/hooks/useClientMeQuery';
 import { useClientRoutineQuery } from '../../data/hooks/useClientRoutineQuery';
 import { buildMonthGrid, todayAttentionCount } from '../../screens/client/client-calendar.helpers';
+import { useTodayKey } from '../../screens/client/useTodayKey';
 import { resolveRoutineWeekSchedule } from '../../screens/client/routine-schedule.utils';
 import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
@@ -26,7 +27,11 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
   const { t } = useTranslation();
   const { data: client } = useClientMeQuery();
   const { data: routine } = useClientRoutineQuery();
-  const today = useMemo(() => new Date(), []);
+  const todayKey = useTodayKey();
+  const today = useMemo(() => {
+    const [year, monthIndex, day] = todayKey.split('-').map(Number);
+    return new Date(year ?? 1970, (monthIndex ?? 1) - 1, day ?? 1);
+  }, [todayKey]);
   const month = useMemo(() => new Date(today.getFullYear(), today.getMonth(), 1), [today]);
   const monthGrid = useMemo(() => buildMonthGrid(month), [month]);
   const calendarQuery = useClientCalendarEventsQuery(monthGrid[0]?.dateStr ?? '', monthGrid.at(-1)?.dateStr ?? '');

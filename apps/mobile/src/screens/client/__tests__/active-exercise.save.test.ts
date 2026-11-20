@@ -52,7 +52,8 @@ describe('set save decisions', () => {
   it('announces a saved set once and keeps the offline message', () => {
     expect(saveNoticeKey(['synced', 'skipped'])).toBe('mobile.client.session.setSaved');
     expect(saveNoticeKey(['pending', 'synced'])).toBe('mobile.client.sync.savedOffline');
-    expect(saveNoticeKey(['skipped'])).toBeNull();
+    expect(saveNoticeKey(['skipped'])).toBe('mobile.client.session.nothingToSave');
+    expect(saveNoticeKey([])).toBeNull();
     expect(saveNoticeKey(['synced', 'failed'])).toBeNull();
   });
 

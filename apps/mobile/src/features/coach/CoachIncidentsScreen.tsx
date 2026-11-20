@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import type { ClientListResponse } from '@trainerpro/shared';
 import { FlatList, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useCoachQuery, useCoachWrite } from '../../data/hooks/useCoachData';
@@ -23,6 +24,12 @@ export function CoachIncidentsScreen({ clientId }: { clientId?: string }) {
   const [selected, setSelected] = useState<Incident | null>(null);
   const query = useCoachQuery<Incident[]>(
     '/incidents?' + new URLSearchParams({ ...(client ? { clientId: client } : {}), ...(status ? { status } : {}) }),
+  );
+  const clientsQuery = useCoachQuery<ClientListResponse>('/clients');
+  const clientNames = useMemo(
+    () =>
+      new Map((clientsQuery.data?.items ?? []).map((item) => [item.id, [item.firstName, item.lastName].join(' ').trim()])),
+    [clientsQuery.data],
   );
   if (selected) return <IncidentEditor key={selected.id} incident={selected} onBack={() => setSelected(null)} />;
   return (
@@ -49,13 +56,14 @@ export function CoachIncidentsScreen({ clientId }: { clientId?: string }) {
       }
       renderItem={({ item }) => (
         <View style={ui.card}>
+          {clientNames.get(item.clientId) ? <Text style={ui.title}>{clientNames.get(item.clientId)}</Text> : null}
           <Text style={ui.label}>
             {t('coachWorkspace.status.' + item.status)}
             {' · '}
-            {item.severity}
+            {t('coachWorkspace.severity.' + item.severity, { defaultValue: item.severity })}
           </Text>
           <Text style={ui.text}>{item.description}</Text>
-          <Text style={ui.muted}>{new Date(item.createdAt).toLocaleDateString()}</Text>
+          <Text style={ui.muted}>{new Date(item.createdAt).toLocaleDateString('es-ES')}</Text>
           <CoachButton label={t('coachWorkspace.open')} onPress={() => setSelected(item)} />
         </View>
       )}

@@ -73,8 +73,15 @@ function useRoutinePlannerModelData(onRouteChange: undefined | ((route: ShellRou
   const objectiveOptions = useRoutineObjectivesQuery().data ?? [];
   const plannerContext = usePlannerContextState();
   const applied = useAppliedRoutineQuery(plannerContext.viewMode === 'view' ? plannerContext.clientId : null);
-  const templates =
-    plannerContext.viewMode === 'view' && plannerContext.clientId ? (applied.data ? [applied.data] : []) : catalogTemplates;
+  const viewingClient = plannerContext.viewMode === 'view' && plannerContext.clientId;
+  const wantedId = plannerContext.initialTemplateId?.trim().toLowerCase() ?? '';
+  const appliedMatches = applied.data ? (applied.data.id ?? '').trim().toLowerCase() === wantedId : false;
+  const catalogForView = applied.isLoading ? [] : catalogTemplates;
+  const templates = viewingClient
+    ? applied.data && (appliedMatches || !wantedId)
+      ? [applied.data]
+      : catalogForView
+    : catalogTemplates;
   const draftState = useRoutinePlannerDraft(t);
   const uiState = useRoutinePlannerUIState();
   const templateKey = plannerContext.initialTemplateId ?? uiState.editingId ?? 'new';

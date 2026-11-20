@@ -39,6 +39,7 @@ export type ClientWellnessWeeklyReport = {
   energy: number | null;
   id: string;
   mood: number | null;
+  notes: string | null;
   reportDate: string;
   sleepHours: number | null;
   weekStartDate: string;
@@ -114,6 +115,7 @@ export class ListClientWellnessUseCase {
       energy: r.energy,
       id: r.id,
       mood: r.mood,
+      notes: r.notes,
       reportDate: r.reportDate.toISOString().slice(0, 10),
       sleepHours: r.sleepHours !== null ? Number(r.sleepHours) : null,
       weekStartDate: r.weekStartDate.toISOString().slice(0, 10),
@@ -183,6 +185,7 @@ export class ListClientWellnessUseCase {
         energy: true,
         id: true,
         mood: true,
+        notes: true,
         reportDate: true,
         sleepHours: true,
         weekStartDate: true,

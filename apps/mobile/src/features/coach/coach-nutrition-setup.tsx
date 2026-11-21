@@ -5,6 +5,7 @@ import {
   type CoachPlanSetupData as PlanSetupData,
   type CoachActivityLevel as ActivityLevel,
 } from '@trainerpro/shared';
+import { useTranslation } from 'react-i18next';
 import { CoachButton, CoachField, CoachSelect, ui } from './CoachUi';
 import { useNutritionCopy, type NutritionCopyKey } from './coach-nutrition-copy';
 const initial: PlanSetupData = buildPlanSetupData({
@@ -20,6 +21,7 @@ const initial: PlanSetupData = buildPlanSetupData({
 });
 export function NutritionSetupEditor({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) {
   const c = useNutritionCopy();
+  const { t } = useTranslation();
   const raw = value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
   const setup = { ...initial, ...raw } as PlanSetupData;
   const [error, setError] = useState('');
@@ -48,7 +50,10 @@ export function NutritionSetupEditor({ value, onChange }: { value: unknown; onCh
         label={c('formula')}
         value={setup.formula}
         onChange={(v) => set('formula', v)}
-        options={['mifflin', 'harris', 'katch', 'cunningham', 'oms'].map((v) => ({ value: v, label: v.toUpperCase() }))}
+        options={['mifflin', 'harris', 'katch', 'cunningham', 'oms'].map((v) => ({
+          value: v,
+          label: t('coach.nutrition.formulas.' + v),
+        }))}
       />
       <CoachSelect
         label={c('sex')}

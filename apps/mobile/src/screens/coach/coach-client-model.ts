@@ -55,6 +55,8 @@ export const emptyClientForm = {
   notes: '',
 };
 export type CoachClientForm = typeof emptyClientForm;
+export const clientSexValues = ['', 'male', 'female', 'other'] as const;
+export const clientFitnessLevelValues = ['', 'beginner', 'intermediate', 'advanced', 'elite'] as const;
 export function clientFormPayload(form: CoachClientForm, editing: boolean): Record<string, unknown> {
   if (!form.firstName.trim() || !form.lastName.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim()))
     throw new Error('coach.clients.invalidRequired');

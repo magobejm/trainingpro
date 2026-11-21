@@ -39,11 +39,13 @@ export function CoachClientNutrition({ clientId }: { clientId: string }): React.
       <Text style={ui.label}>{plan.name}</Text>
       <MacroTargetBars comparison={compareToTarget(macros.total, readPlanSetup(plan.setupData))} t={t} />
       <Text style={ui.muted}>
-        {t('coach.nutrition.adherence7', {
-          done: met,
-          expected: summary?.expected ?? 0,
-          percent: summary?.percent ?? 0,
-        })}
+        {summary?.expected === 0
+          ? t('coach.nutrition.noMealsWeek')
+          : t('coach.nutrition.adherence7', {
+              done: met,
+              expected: summary?.expected ?? 0,
+              percent: summary?.percent ?? 0,
+            })}
       </Text>
       <CoachClientNutritionDays days={adherence.data?.days ?? []} locale={i18n.language || 'es'} t={t} />
     </View>

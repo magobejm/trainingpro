@@ -15,6 +15,7 @@ import {
   confirmCoachDelete,
   ui,
 } from './CoachUi';
+import { visibleMeasurements } from './coach-outcome-presentation';
 import { CoachValueTree } from './CoachProgressScreen';
 import { coachRange } from './coach-calendar';
 import { useCoachUpload } from './useCoachUpload';
@@ -77,7 +78,37 @@ function CoachMeasures({ clientId }: { clientId: string }) {
           }}
         />
       ) : null}
+      <MeasurementHistory clientId={clientId} revision={revision} />
     </CoachPage>
+  );
+}
+type MeasurementItem = {
+  id: string;
+  measuredAt: string;
+  weightKg?: number | null;
+  waistCm?: number | null;
+  hipCm?: number | null;
+};
+function MeasurementHistory({ clientId, revision }: { clientId: string; revision: number }) {
+  const { t } = useTranslation();
+  const query = useCoachQuery<{ items: MeasurementItem[] }>('/clients/' + clientId + '/measurements?r=' + revision);
+  const items = visibleMeasurements(query.data?.items ?? []);
+  const value = (n?: number | null) => (n == null ? '—' : String(n));
+  return (
+    <View style={ui.field}>
+      <Text style={ui.label}>{t('coachWorkspace.measurementHistory')}</Text>
+      <CoachStatus query={query} empty={items.length === 0} />
+      {items.map((item) => (
+        <View key={item.id} style={ui.card}>
+          <Text style={ui.label}>{new Date(item.measuredAt).toLocaleDateString('es-ES')}</Text>
+          <Text style={ui.text}>
+            {t('coachWorkspace.field.weightKg') + ': ' + value(item.weightKg)}
+            {' · ' + t('coachWorkspace.field.waistCm') + ': ' + value(item.waistCm)}
+            {' · ' + t('coachWorkspace.field.hipCm') + ': ' + value(item.hipCm)}
+          </Text>
+        </View>
+      ))}
+    </View>
   );
 }
 function MeasuresEditor({ client, onReload }: { client: ClientView; onReload: () => Promise<void> }) {
@@ -127,6 +158,7 @@ function MeasuresEditor({ client, onReload }: { client: ClientView; onReload: ()
             async () => {
               await write.mutateAsync({ path: '/clients/' + client.id, method: 'PATCH', body: draft.value });
               await draft.clear();
+              await onReload();
             },
           )
         }

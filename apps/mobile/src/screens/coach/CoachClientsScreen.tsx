@@ -5,6 +5,8 @@ import type { ClientListResponse, ClientView } from '@trainerpro/shared';
 import { useCoachQuery } from '../../data/hooks/useCoachData';
 import { CoachButton, CoachField, CoachSelect, CoachStatus } from '../../features/coach/CoachUi';
 import { LIGHT } from '../../theme/light';
+import { useReadonlyCopy } from '../../features/coach/coach-readonly-copy';
+import type { Triage } from '../../features/coach/coach-triage-model';
 import { useCoachCopy } from './coach-copy';
 import { filterCoachClients, type ClientOrder } from './coach-client-model';
 export const coachClientPalette = {
@@ -22,6 +24,9 @@ export function CoachClientsScreen(props: {
 }): React.JSX.Element {
   const c = useCoachCopy();
   const query = useCoachQuery<ClientListResponse>('/clients');
+  const r = useReadonlyCopy();
+  const triage = useCoachQuery<Triage>(props.selecting ? '/coach/triage' : null);
+  const unread = new Set((triage.data?.chat ?? []).map((row) => row.clientId));
   const [search, setSearch] = useState('');
   const [order, setOrder] = useState<ClientOrder>('name');
   const [objective, setObjective] = useState('');
@@ -79,7 +84,7 @@ export function CoachClientsScreen(props: {
           <ClientCardRow
             vertical
             palette={coachClientPalette}
-            items={[clientCardItem(item, c)]}
+            items={[clientCardItem(item, c, unread.has(item.id) ? r('unread') : undefined)]}
             onItemPress={props.onSelect}
           />
         )}
@@ -87,12 +92,12 @@ export function CoachClientsScreen(props: {
     </View>
   );
 }
-export function clientCardItem(client: ClientView, c: ReturnType<typeof useCoachCopy>) {
+export function clientCardItem(client: ClientView, c: ReturnType<typeof useCoachCopy>, unreadLabel?: string) {
   const level = client.status?.level ?? 'none';
   return {
     id: client.id,
     title: [client.firstName, client.lastName].join(' '),
-    subtitle: client.email,
+    subtitle: unreadLabel ? '● ' + unreadLabel + ' · ' + client.email : client.email,
     objective: client.objective,
     avatarUrl: client.avatarUrl,
     statusLabel: c(level),

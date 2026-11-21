@@ -27,6 +27,7 @@ export function CoachTestsScreen({ clientId }: { clientId: string }) {
   return (
     <CoachPage title={t('coachWorkspace.tests')}>
       <CoachStatus query={catalog} />
+      {catalog.data && catalog.data.length === 0 ? <Text style={ui.muted}>{t('coachWorkspace.noTestsCatalog')}</Text> : null}
       <CoachSelect
         label={t('coachWorkspace.tests')}
         value={selected}
@@ -35,13 +36,13 @@ export function CoachTestsScreen({ clientId }: { clientId: string }) {
       />
       <CoachButton
         label={t('coachWorkspace.assign')}
-        disabled={!selected || write.isPending}
+        disabled={!selected || !catalog.data?.length || write.isPending}
         onPress={() => write.mutate({ path: `/clients/${clientId}/physical-tests/${selected}` })}
       />
       <CoachField label={t('coachWorkspace.date')} value={date} onChange={setDate} />
       <CoachButton
         label={t('coachWorkspace.schedule')}
-        disabled={!selected || !/^\d{4}-\d{2}-\d{2}$/.test(date) || write.isPending}
+        disabled={!selected || !catalog.data?.length || !/^\d{4}-\d{2}-\d{2}$/.test(date) || write.isPending}
         onPress={() =>
           write.mutate({ path: `/clients/${clientId}/physical-test-schedules`, body: { physicalTestId: selected, date } })
         }

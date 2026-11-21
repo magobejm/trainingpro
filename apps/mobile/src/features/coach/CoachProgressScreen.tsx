@@ -12,6 +12,8 @@ import {
   adherenceText,
   coverageText,
   progressValueText,
+  sessionMinutesByWeek,
+  sessionMinutesTotal,
   sessionResultText,
   type Adherence,
 } from './coach-outcome-presentation';
@@ -64,28 +66,30 @@ export function CoachProgressScreen({ clientId, mode = 'progress' }: { clientId:
   const volumes = strength.map((row) => row.volumeKg).filter((v): v is number => v != null);
   const totalVolume = volumes.length ? volumes.reduce((sum, v) => sum + v, 0) : null;
   const totalSets = strength.reduce((sum, row) => sum + row.totalSets, 0);
-  const durations = cardio.map((row) => row.totalDurationSeconds).filter((v): v is number => v != null);
-  const totalMinutes = durations.length ? durations.reduce((sum, v) => sum + v, 0) / 60 : null;
+  const totalMinutes = sessionMinutesTotal(sessions.data ?? [], cardio);
+  const showPanel = mode !== 'sessions';
   return (
     <CoachPage title={t('coachWorkspace.' + mode)}>
       <CoachField label={t('coachWorkspace.from')} value={from} onChange={setFrom} />
       <CoachField label={t('coachWorkspace.to')} value={to} onChange={setTo} />
       {!valid ? <Text style={ui.error}>{t('coachWorkspace.invalidDates')}</Text> : null}
-      <CoachStatus query={overview} />
-      <View style={ui.row}>
-        {[
-          [t('coachWorkspace.volumeKg'), totalVolume],
-          [t('coachWorkspace.sets'), totalSets],
-          [t('coachWorkspace.minutes'), totalMinutes == null ? '—' : Math.round(totalMinutes)],
-        ].map(([label, value]) => (
-          <View key={label} style={ui.card}>
-            <Text style={ui.muted}>{label}</Text>
-            <Text style={ui.title}>{value ?? '—'}</Text>
-          </View>
-        ))}
-      </View>
-      <CoachStatus query={adherence} />
-      {adherence.data ? (
+      {showPanel ? <CoachStatus query={overview} /> : null}
+      {showPanel ? (
+        <View style={ui.row}>
+          {[
+            [t('coachWorkspace.volumeKg'), totalVolume],
+            [t('coachWorkspace.sets'), totalSets],
+            [t('coachWorkspace.minutes'), totalMinutes == null ? '—' : Math.round(totalMinutes)],
+          ].map(([label, value]) => (
+            <View key={label} style={ui.card}>
+              <Text style={ui.muted}>{label}</Text>
+              <Text style={ui.title}>{value ?? '—'}</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
+      {showPanel ? <CoachStatus query={adherence} /> : null}
+      {showPanel && adherence.data ? (
         <View style={ui.card}>
           {adherenceText(adherence.data, t).map((line, index) => (
             <Text key={index} style={ui.text}>
@@ -95,8 +99,8 @@ export function CoachProgressScreen({ clientId, mode = 'progress' }: { clientId:
         </View>
       ) : null}
       <Text style={ui.muted}>{t('training.recordedOnly')}</Text>
-      <ProgressCharts data={overview.data} />
-      {(records.data?.records ?? []).map((record) => (
+      {showPanel ? <ProgressCharts data={overview.data} sessions={sessions.data ?? []} /> : null}
+      {(showPanel ? (records.data?.records ?? []) : []).map((record) => (
         <View key={record.exerciseId + record.sessionDate} style={ui.card}>
           <Text style={ui.label}>{record.exerciseName}</Text>
           <Text style={ui.title}>
@@ -110,7 +114,7 @@ export function CoachProgressScreen({ clientId, mode = 'progress' }: { clientId:
           ) : null}
         </View>
       ))}
-      <CoachStatus query={records} />
+      {showPanel ? <CoachStatus query={records} /> : null}
       <CoachStatus query={sessions} empty={sessions.data?.length === 0} />
       {(sessions.data ?? []).map((session) => (
         <SessionSummaryCard key={session.sessionId} session={session} onOpen={() => setSessionId(session.sessionId)} />
@@ -138,12 +142,19 @@ export function CoachProgressScreen({ clientId, mode = 'progress' }: { clientId:
           },
         ]}
       />
-      <AdvancedProgress clientId={clientId} from={from} to={to} valid={valid} />
+      {showPanel ? <AdvancedProgress clientId={clientId} from={from} to={to} valid={valid} /> : null}
     </CoachPage>
   );
 }
-function ProgressCharts({ data }: { data?: Overview }) {
+function ProgressCharts({
+  data,
+  sessions,
+}: {
+  data?: Overview;
+  sessions: Array<{ sessionDate: string; durationMinutes?: number | null }>;
+}) {
   const { t } = useTranslation();
+  const minuteBars = sessionMinutesByWeek(sessions);
   return (
     <View style={ui.field}>
       {data ? (
@@ -162,13 +173,11 @@ function ProgressCharts({ data }: { data?: Overview }) {
           <BarsChart
             title={t('coachWorkspace.minutes')}
             emptyLabel={t('coachWorkspace.empty')}
-            bars={data.cardioWeekly
-              .filter((row) => row.totalDurationSeconds != null)
-              .map((row, i) => ({
-                id: row.weekStart + ':' + i,
-                label: row.weekStart.slice(5, 10),
-                value: row.totalDurationSeconds! / 60,
-              }))}
+            bars={minuteBars.map((row) => ({
+              id: row.weekStart,
+              label: row.weekStart.slice(5, 10),
+              value: row.minutes,
+            }))}
           />
           <BarsChart
             title={t('coachWorkspace.trainingLoad')}

@@ -18,6 +18,12 @@ export function shiftCoachMonth(value: string, months: number): string {
 export function isCoachDate(value: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(value) && localCoachDate(new Date(value + 'T12:00:00')) === value;
 }
+export function formatCoachDay(value: string): string {
+  const day = value.slice(0, 10);
+  if (!isCoachDate(day)) return day;
+  const [year, month, date] = day.split('-').map(Number);
+  return new Date(year ?? 1970, (month ?? 1) - 1, date ?? 1).toLocaleDateString('es-ES');
+}
 export function coachMonthDays(value: string): string[] {
   const date = new Date(value + 'T12:00:00');
   date.setDate(1);

@@ -17,7 +17,14 @@ import {
   ui,
 } from './CoachUi';
 import { CoachClientPicker } from './CoachClientPicker';
-import { coachMonthDays, localCoachDate, shiftCoachDate, shiftCoachMonth, isCoachDate } from './coach-calendar';
+import {
+  coachMonthDays,
+  formatCoachDay,
+  isCoachDate,
+  localCoachDate,
+  shiftCoachDate,
+  shiftCoachMonth,
+} from './coach-calendar';
 import { useCoachAuth } from '../../data/hooks/useCoachData';
 import { createApiClient } from '../../data/api-client';
 import { useCoachSaveGuard } from './useCoachSaveGuard';
@@ -134,7 +141,7 @@ export function CoachCalendarScreen({
   );
 }
 
-function CalendarEventCard({
+export function CalendarEventCard({
   event,
   onOpen,
   onEdit,
@@ -150,15 +157,14 @@ function CalendarEventCard({
     <View style={[ui.card, eventTone(event.type)]}>
       <Text style={ui.label}>
         {t('coachWorkspace.event.' + event.type)}
-        {' · '}
-        {event.time ?? '—'}
+        {event.time ? ' · ' + event.time : ''}
       </Text>
       <Text style={ui.text}>{event.title ?? event.planDayTitle ?? t('coachWorkspace.event.' + event.type)}</Text>
       <Text style={ui.muted}>
         {event.clientName ?? ''} {event.callStatus ? t('coachWorkspace.call.' + event.callStatus.toLowerCase()) : ''}{' '}
         {event.outcome ? t('training.outcome.' + event.outcome) : ''}
       </Text>
-      <Text style={ui.muted}>{event.date.slice(0, 10)}</Text>
+      <Text style={ui.muted}>{formatCoachDay(event.date)}</Text>
       {event.originDate ? (
         <Text style={ui.muted}>{t('training.originDate') + ': ' + event.originDate.slice(0, 10)}</Text>
       ) : null}
@@ -181,7 +187,7 @@ function CalendarEventCard({
   );
 }
 
-function CalendarEditor({
+export function CalendarEditor({
   event,
   initialDate,
   clientId,

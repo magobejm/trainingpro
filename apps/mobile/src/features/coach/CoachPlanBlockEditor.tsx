@@ -269,7 +269,7 @@ function BlockSets({
             onChange={(next) => update(index, 'advancedTechnique', next || null)}
             options={['', 'topSet', 'backOffSet', 'clusterSets', 'myoReps', 'dropSet'].map((technique) => ({
               value: technique,
-              label: technique || t('coachWorkspace.none'),
+              label: technique ? t('coachWorkspace.technique.' + technique) : t('coachWorkspace.none'),
             }))}
           />
           <CoachField

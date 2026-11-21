@@ -4,6 +4,7 @@ import { Platform, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle }
 import { colors, fontSize, radius, space, webShadow } from '../theme/tokens';
 import { Field } from './Field';
 import { findSelectLabel, nextSelectValue, resolveFieldBorder, type SelectOption } from './field.logic';
+import { FLOATING_LIST_Z, placeFloatingList, type FloatingBox } from './floating-list';
 
 export type { SelectOption } from './field.logic';
 
@@ -24,12 +25,20 @@ const NATIVE_ROLE = 'button' as const;
 const LISTBOX = 'listbox' as const;
 const OPTION = 'option' as const;
 
-type ListBox = { left: number; top: number; width: number };
-
 /** Drawn on document.body: a list inside the card is covered by the next field and clipped by overflow. */
-function WebList(props: SelectProps & { box: ListBox }): React.JSX.Element {
+function WebList(props: SelectProps & { box: FloatingBox }): React.JSX.Element {
   return (
-    <div role={LISTBOX} style={{ ...webListStyle, left: props.box.left, top: props.box.top, width: props.box.width }}>
+    <div
+      role={LISTBOX}
+      style={{
+        ...webListStyle,
+        bottom: props.box.bottom,
+        left: props.box.left,
+        maxHeight: props.box.maxHeight,
+        top: props.box.top,
+        width: props.box.width,
+      }}
+    >
       {props.options.map((option) => (
         <div
           aria-selected={option.value === props.value}
@@ -48,13 +57,13 @@ function WebList(props: SelectProps & { box: ListBox }): React.JSX.Element {
   );
 }
 
-function useFloatingBox(open: boolean, anchor: React.RefObject<HTMLButtonElement | null>): ListBox | null {
-  const [box, setBox] = useState<ListBox | null>(null);
+function useFloatingBox(open: boolean, anchor: React.RefObject<HTMLButtonElement | null>): FloatingBox | null {
+  const [box, setBox] = useState<FloatingBox | null>(null);
   React.useEffect(() => {
     if (!open) return undefined;
     const place = () => {
       const rect = anchor.current?.getBoundingClientRect();
-      setBox(rect ? { left: rect.left, top: rect.bottom + 4, width: rect.width } : null);
+      setBox(rect ? placeFloatingList(rect) : null);
     };
     place();
     window.addEventListener('resize', place);
@@ -149,10 +158,9 @@ const webListStyle: React.CSSProperties = {
   border: `1px solid ${colors.border}`,
   borderRadius: radius.md,
   boxShadow: webShadow.lg,
-  maxHeight: 280,
   overflowY: 'auto',
   position: 'fixed',
-  zIndex: 5000,
+  zIndex: FLOATING_LIST_Z,
 };
 
 const webOptionStyle: React.CSSProperties = {

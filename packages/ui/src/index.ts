@@ -35,6 +35,7 @@ export { IconButton, type IconButtonProps } from './primitives/IconButton';
 export { Field, type FieldProps } from './primitives/Field';
 export { TextField, type TextFieldProps } from './primitives/TextField';
 export { Select, type SelectOption, type SelectProps } from './primitives/Select';
+export { FLOATING_LIST_Z, placeFloatingList, type FloatingBox } from './primitives/floating-list';
 export { Modal, type ModalProps } from './primitives/Modal';
 export { Card, type CardProps } from './primitives/Card';
 export { Badge, type BadgeTone } from './primitives/Badge';

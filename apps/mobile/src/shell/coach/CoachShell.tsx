@@ -88,6 +88,7 @@ function CoachWorkspace(): React.JSX.Element {
         onOpen={onOpen}
         onClients={() => select('clients')}
         onCreate={() => open({ kind: 'client-create' })}
+        onOpenSession={(sessionId) => open({ kind: 'session', sessionId })}
       />
     ) : navigation.tab === 'clients' ? (
       <CoachClientsScreen
@@ -174,7 +175,16 @@ function CoachDetail(props: {
   if (route.kind === 'chat') return <CoachChat clientId={route.clientId} />;
   if (route.kind === 'session') return <CoachSessionView sessionId={route.sessionId} />;
   if (route.kind === 'incident') return <CoachIncidentView incidentId={route.incidentId} onBack={props.back} />;
-  return <CoachFeatureScreen feature={route.feature} clientId={route.clientId} onOpen={props.onOpen} />;
+  return (
+    <CoachFeatureScreen
+      feature={route.feature}
+      clientId={route.clientId}
+      onOpen={props.onOpen}
+      onClient={(clientId) => props.open({ kind: 'client', clientId })}
+      onChat={(clientId) => props.open({ kind: 'chat', clientId })}
+      onIncident={(incidentId) => props.open({ kind: 'incident', incidentId })}
+    />
+  );
 }
 function CoachChat({ clientId }: { clientId: string }) {
   const client = useCoachQuery<ClientView>('/clients/' + clientId);
@@ -194,7 +204,9 @@ function CoachMore(props: { onOpen: (feature: string, clientId?: string) => void
         [
           'routines',
           'warmups',
+          'triage',
           'library',
+          'foods',
           'nutrition',
           'notes',
           'incidents',

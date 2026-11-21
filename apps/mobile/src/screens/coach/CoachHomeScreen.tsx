@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { ClientListResponse } from '@trainerpro/shared';
 import { useCoachQuery } from '../../data/hooks/useCoachData';
+import { CalendarEditor, CalendarEventCard, type CoachCalendarEvent } from '../../features/coach/CoachCalendarScreen';
+import { countClientsWithOpenIncidents } from '../../features/coach/coach-triage-model';
 import { CoachPage, CoachButton, CoachStatus } from '../../features/coach/CoachUi';
 import { LIGHT } from '../../theme/light';
 import { useCoachCopy } from './coach-copy';
@@ -9,18 +11,31 @@ export function CoachHomeScreen(props: {
   onOpen: (feature: string, clientId?: string) => void;
   onClients: () => void;
   onCreate: () => void;
+  onOpenSession: (sessionId: string) => void;
 }): React.JSX.Element {
   const c = useCoachCopy();
+  const [editing, setEditing] = useState<CoachCalendarEvent | null>(null);
   const now = new Date();
   const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join(
     '-',
   );
-  const agenda = useCoachQuery<{ data: Array<{ id: string; title?: string; time?: string; type: string }> }>(
+  const agenda = useCoachQuery<{ data: CoachCalendarEvent[] }>(
     '/calendar?' + new URLSearchParams({ dateFrom: date, dateTo: date }),
   );
   const clients = useCoachQuery<ClientListResponse>('/clients');
-  const incidents = useCoachQuery<Array<{ id: string; status: string; description: string }>>('/incidents');
-  const open = incidents.data?.filter((item) => item.status === 'OPEN') ?? [];
+  const incidents =
+    useCoachQuery<Array<{ id: string; clientId: string; status: string; description: string }>>('/incidents');
+  const open = countClientsWithOpenIncidents(incidents.data ?? []);
+  if (editing) {
+    return (
+      <CalendarEditor
+        clientId={editing.clientId ?? undefined}
+        event={editing}
+        initialDate={editing.date.slice(0, 10)}
+        onClose={() => setEditing(null)}
+      />
+    );
+  }
   return (
     <CoachPage title={c('home')}>
       <Text style={styles.title}>{c('today')}</Text>
@@ -31,8 +46,8 @@ export function CoachHomeScreen(props: {
           <Text style={styles.subtitle}>{c('clients')}</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={styles.value}>{open.length}</Text>
-          <Text style={styles.subtitle}>{c('openIncidents')}</Text>
+          <Text style={styles.value}>{open}</Text>
+          <Text style={styles.subtitle}>{c('clientsOpenIncidents')}</Text>
         </View>
       </View>
       <CoachStatus query={clients} />
@@ -42,9 +57,13 @@ export function CoachHomeScreen(props: {
       <CoachStatus query={agenda} />
       {agenda.data?.data.length === 0 ? <Text style={styles.subtitle}>{c('noEvents')}</Text> : null}
       {agenda.data?.data.map((item) => (
-        <View key={item.id} style={styles.event}>
-          <Text style={styles.text}>{[item.time, item.title || item.type].filter(Boolean).join(' · ')}</Text>
-        </View>
+        <CalendarEventCard
+          event={item}
+          key={item.id}
+          onEdit={setEditing}
+          onOpen={props.onOpen}
+          onOpenSession={props.onOpenSession}
+        />
       ))}
       <CoachButton label={c('calendar')} onPress={() => props.onOpen('calendar')} />
       <Text style={styles.title}>{c('quick')}</Text>

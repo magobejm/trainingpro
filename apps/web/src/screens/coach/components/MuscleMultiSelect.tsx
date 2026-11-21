@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ViewStyle } from 'react-native';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { View, Text, StyleSheet, TouchableOpacity, Pressable, ScrollView, ViewStyle } from 'react-native';
 import { X, Check, ChevronRight } from 'lucide-react';
 import { SelectOption, MODAL_THEME } from '../UnifiedExerciseModal.types';
-import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { FLOATING_LIST_Z, colors, fontSize, placeFloatingList, radius, space, type FloatingBox } from '@trainerpro/ui';
 
 const TAPS_HANDLED = 'handled' as const;
 const BLUE_COLOR = colors.primaryHover;
@@ -23,9 +24,10 @@ export function MuscleMultiSelect(props: MuscleMultiSelectProps) {
   const selectedOptions = useMemo(() => {
     return options.filter((o) => selectedIds.includes(o.value));
   }, [options, selectedIds]);
+  const anchor = useRef<View>(null);
 
   return (
-    <View style={styles.multiSelectOuter}>
+    <View ref={anchor} style={styles.multiSelectOuter}>
       <SelectHeader
         expanded={expanded}
         setExpanded={setExpanded}
@@ -36,6 +38,7 @@ export function MuscleMultiSelect(props: MuscleMultiSelectProps) {
       />
       {expanded && (
         <Dropdown
+          anchor={anchor}
           options={options}
           selectedIds={selectedIds}
           onToggle={onToggle}
@@ -96,6 +99,85 @@ function SelectedTag({ label, onRemove }: { label: string; onRemove: () => void 
 }
 
 function Dropdown(props: {
+  anchor: React.RefObject<View | null>;
+  options: SelectOption[];
+  selectedIds: string[];
+  onToggle: (id: string, opts: SelectOption[]) => void;
+  onClose: () => void;
+  closeLabel: string;
+}) {
+  const box = usePortaledBox(props.anchor);
+  if (box && typeof document !== 'undefined') return <PortaledDropdown {...props} box={box} />;
+  return <InlineDropdown {...props} />;
+}
+
+function usePortaledBox(anchor: React.RefObject<View | null>): FloatingBox | null {
+  const [box, setBox] = useState<FloatingBox | null>(null);
+  useEffect(() => {
+    const place = () => {
+      const node = anchor.current as unknown as HTMLElement | null;
+      const rect = node && typeof node.getBoundingClientRect === 'function' ? node.getBoundingClientRect() : null;
+      setBox(rect ? placeFloatingList(rect) : null);
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [anchor]);
+  return box;
+}
+
+function PortaledDropdown(props: {
+  box: FloatingBox;
+  options: SelectOption[];
+  selectedIds: string[];
+  onToggle: (id: string, opts: SelectOption[]) => void;
+  onClose: () => void;
+  closeLabel: string;
+}) {
+  return createPortal(
+    <View
+      accessibilityRole="list"
+      style={[
+        styles.portal,
+        {
+          bottom: props.box.bottom,
+          left: props.box.left,
+          maxHeight: props.box.maxHeight,
+          top: props.box.top,
+          width: props.box.width,
+        },
+      ]}
+    >
+      <ScrollView keyboardShouldPersistTaps={TAPS_HANDLED} style={{ maxHeight: props.box.maxHeight }}>
+        {props.options.map((opt) => {
+          const isSelected = props.selectedIds.includes(opt.value);
+          return (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ selected: isSelected }}
+              key={opt.value}
+              onPress={() => props.onToggle(opt.value, props.options)}
+              style={styles.multiSelectItem}
+            >
+              <Text style={[styles.multiSelectItemText, isSelected && styles.multiSelectItemActive]}>{opt.label}</Text>
+              {isSelected ? <Check size={14} color={MODAL_THEME.colors.primary} /> : null}
+            </Pressable>
+          );
+        })}
+        <Pressable accessibilityRole="button" onPress={props.onClose} style={styles.multiSelectCloseButton}>
+          <Text style={styles.multiSelectCloseText}>{props.closeLabel}</Text>
+        </Pressable>
+      </ScrollView>
+    </View>,
+    document.body,
+  );
+}
+
+function InlineDropdown(props: {
   options: SelectOption[];
   selectedIds: string[];
   onToggle: (id: string, opts: SelectOption[]) => void;
@@ -128,6 +210,16 @@ const styles = StyleSheet.create({
     zIndex: 50,
     position: 'relative',
   },
+  portal: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    boxShadow: '0 8px 16px var(--tp-shadowColor)',
+    overflow: 'hidden',
+    position: 'fixed',
+    zIndex: FLOATING_LIST_Z,
+  } as unknown as ViewStyle,
   multiSelectHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

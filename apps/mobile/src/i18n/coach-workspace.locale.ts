@@ -327,6 +327,7 @@ Object.assign(fields, {
   totalDistanceMeters: ['Distancia (m)', 'Distance (m)'],
   totalDurationSeconds: ['Duración (s)', 'Duration (s)'],
   groupType: ['Agrupación', 'Grouping'],
+  completionOrder: ['Orden', 'Order'],
   effortRir: ['RIR registrado', 'Recorded RIR'],
   effortRpe: ['RPE registrado', 'Recorded RPE'],
   repsDone: ['Repeticiones registradas', 'Recorded repetitions'],
@@ -340,6 +341,28 @@ Object.assign(fields, {
   hrReservePctDone: ['% FC reserva registrado', 'Recorded % HR reserve'],
   romDone: ['ROM registrado', 'Recorded ROM'],
   intervalIndex: ['Intervalo', 'Interval'],
+});
+Object.assign(fields, {
+  advancedTechnique: ['Técnica avanzada', 'Advanced technique'],
+  finishComment: ['Comentario final', 'Finish comment'],
+  finishedAt: ['Finalizada', 'Finished at'],
+  startedAt: ['Iniciada', 'Started at'],
+  createdAt: ['Creado', 'Created at'],
+  updatedAt: ['Actualizado', 'Updated at'],
+  completedAt: ['Completada', 'Completed at'],
+});
+Object.assign(copy, {
+  timeline: ['Línea de tiempo', 'Timeline'],
+  routineHistory: ['Historial de rutinas', 'Routine history'],
+  noTestsCatalog: ['No hay pruebas en el catálogo', 'No tests in the catalog'],
+  measurementHistory: ['Historial de medidas', 'Measurement history'],
+  'category.EXERCISE': ['Ejercicio', 'Exercise'],
+  'category.OTHER': ['Otros', 'Other'],
+  'technique.topSet': ['Top set', 'Top set'],
+  'technique.backOffSet': ['Back off', 'Back off'],
+  'technique.clusterSets': ['Cluster sets', 'Cluster sets'],
+  'technique.myoReps': ['Myo-reps', 'Myo-reps'],
+  'technique.dropSet': ['Drop set', 'Drop set'],
 });
 export function coachWorkspaceLocale(language: 'es' | 'en') {
   const index = language === 'en' ? 1 : 0;

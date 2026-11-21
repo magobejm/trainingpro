@@ -7,7 +7,14 @@ import { useCoachDraft } from '../../data/hooks/useCoachDraft';
 import { CoachButton, CoachField, CoachPage, CoachSelect, CoachStatus } from '../../features/coach/CoachUi';
 import { LIGHT } from '../../theme/light';
 import { useCoachCopy, type CoachCopyKey } from './coach-copy';
-import { clientFormPayload, clientToForm, emptyClientForm, type CoachClientForm } from './coach-client-model';
+import {
+  clientFitnessLevelValues,
+  clientFormPayload,
+  clientSexValues,
+  clientToForm,
+  emptyClientForm,
+  type CoachClientForm,
+} from './coach-client-model';
 import { useClientAvatarUpload } from './coach-client-upload';
 type Props = {
   clientId: string;
@@ -66,6 +73,7 @@ function ClientProfileBody(props: Props & { client: ClientView; onEdit: () => vo
       {props.client.avatarUrl ? <Image source={{ uri: props.client.avatarUrl }} style={styles.avatar} /> : null}
       <Text style={styles.text}>{props.client.email}</Text>
       <Text style={styles.text}>{props.client.objective}</Text>
+      <ClientProfileDetails client={props.client} />
       <CoachButton label={c('edit')} onPress={props.onEdit} />
       <CoachButton label={c('avatar')} loading={avatar.isPending} onPress={() => avatar.mutate()} />
       <CoachButton label={c('chat')} onPress={() => props.onChat(props.clientId)} />
@@ -78,6 +86,8 @@ function ClientProfileBody(props: Props & { client: ClientView; onEdit: () => vo
           'measures',
           'photos',
           'routines',
+          'routineHistory',
+          'timeline',
           'nutrition',
           'notes',
           'incidents',
@@ -109,6 +119,31 @@ function ClientProfileBody(props: Props & { client: ClientView; onEdit: () => vo
         </View>
       ) : null}
     </View>
+  );
+}
+function ClientProfileDetails({ client }: { client: ClientView }) {
+  const c = useCoachCopy();
+  const record = client as unknown as Record<string, unknown>;
+  const rows: [CoachCopyKey, string][] = [];
+  for (const key of ['phone', 'sex', 'fitnessLevel', 'injuries', 'allergies', 'considerations', 'notes'] as const) {
+    const raw = record[key];
+    const value = raw == null ? '' : String(raw).trim();
+    if (!value) continue;
+    const known = key === 'sex' ? clientSexValues : clientFitnessLevelValues;
+    const isOption = key === 'sex' || key === 'fitnessLevel';
+    rows.push([
+      key,
+      isOption && (known as readonly string[]).includes(value) ? c((key + '_' + value) as CoachCopyKey) : value,
+    ]);
+  }
+  return (
+    <>
+      {rows.map(([key, value]) => (
+        <Text key={key} style={styles.text}>
+          {c(key) + ': ' + value}
+        </Text>
+      ))}
+    </>
   );
 }
 export function CoachClientCreateScreen(props: { onCreated: (id: string) => void }): React.JSX.Element {
@@ -219,12 +254,23 @@ function ClientFormFields(props: {
             value={props.value[key]}
             onChange={(value) => props.set(key, value)}
             options={[
-              { value: '', label: c('none') },
+              { value: '', label: c('noObjective') },
               ...props.objectives.map((item) => ({
                 value: item.id,
                 label: item.label,
               })),
             ]}
+          />
+        ) : key === 'sex' || key === 'fitnessLevel' ? (
+          <CoachSelect
+            key={key}
+            label={c(key)}
+            value={props.value[key]}
+            onChange={(value) => props.set(key, value)}
+            options={(key === 'sex' ? clientSexValues : clientFitnessLevelValues).map((value) => ({
+              value,
+              label: value ? c((key + '_' + value) as CoachCopyKey) : c('noValue'),
+            }))}
           />
         ) : (
           <CoachField

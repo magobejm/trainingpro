@@ -15,17 +15,43 @@ import { CoachPreferencesScreen, CoachAccountScreen } from './CoachSettingsScree
 import { CoachNutritionScreen } from './CoachNutritionScreen';
 import { CoachEvaluatorScreen } from './CoachEvaluatorScreen';
 import { CoachGlossaryScreen } from './CoachGlossaryScreen';
-type Props = { feature: string; clientId?: string; onOpen: (feature: string, clientId?: string) => void };
+import { CoachTriageScreen } from './CoachTriageScreen';
+import { CoachTimelineScreen } from './CoachTimelineScreen';
+import { CoachRoutineHistoryScreen } from './CoachRoutineHistoryScreen';
+type Props = {
+  feature: string;
+  clientId?: string;
+  onOpen: (feature: string, clientId?: string) => void;
+  onClient?: (clientId: string) => void;
+  onChat?: (clientId: string) => void;
+  onIncident?: (incidentId: string) => void;
+};
 export function CoachFeatureScreen(props: Props) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState(props.clientId ?? '');
   const id = props.clientId ?? selected;
-  if (['progress', 'sessions', 'wellness', 'photos', 'measures', 'tests'].includes(props.feature) && !id)
+  if (
+    ['progress', 'sessions', 'wellness', 'photos', 'measures', 'tests', 'timeline', 'routineHistory'].includes(
+      props.feature,
+    ) &&
+    !id
+  )
     return (
       <CoachPage title={t('coachWorkspace.' + props.feature)}>
         <CoachClientPicker value={selected} onChange={setSelected} />
       </CoachPage>
     );
+  if (props.feature === 'triage')
+    return (
+      <CoachTriageScreen
+        onChat={(clientId) => props.onChat?.(clientId)}
+        onClient={(clientId) => props.onClient?.(clientId)}
+        onFeature={(feature) => props.onOpen(feature)}
+        onIncident={(incidentId) => props.onIncident?.(incidentId)}
+      />
+    );
+  if (props.feature === 'timeline') return <CoachTimelineScreen key={id} clientId={id} />;
+  if (props.feature === 'routineHistory') return <CoachRoutineHistoryScreen key={id} clientId={id} />;
   if (props.feature === 'calendar') return <CoachCalendarScreen clientId={props.clientId} onOpen={props.onOpen} />;
   if (props.feature === 'notes') return <CoachNotesScreen clientId={props.clientId} />;
   if (props.feature === 'incidents') return <CoachIncidentsScreen clientId={props.clientId} />;

@@ -11,6 +11,7 @@ type Incident = {
   clientId: string;
   description: string;
   severity: string;
+  category?: string | null;
   status: string;
   coachResponse?: string;
   adjustmentDraft?: string;
@@ -61,6 +62,7 @@ export function CoachIncidentsScreen({ clientId }: { clientId?: string }) {
             {t('coachWorkspace.status.' + item.status)}
             {' · '}
             {t('coachWorkspace.severity.' + item.severity, { defaultValue: item.severity })}
+            {item.category ? ' · ' + t('coachWorkspace.category.' + item.category, { defaultValue: item.category }) : ''}
           </Text>
           <Text style={ui.text}>{item.description}</Text>
           <Text style={ui.muted}>{new Date(item.createdAt).toLocaleDateString('es-ES')}</Text>
@@ -84,7 +86,12 @@ function IncidentEditor({ incident, onBack }: { incident: Incident; onBack: () =
     <CoachPage title={t('coachWorkspace.incidents')} onBack={onBack}>
       <CoachStatus query={query} />
       <Text style={ui.text}>{current.description}</Text>
-      <Text style={ui.label}>{t('coachWorkspace.status.' + current.status)}</Text>
+      <Text style={ui.label}>
+        {t('coachWorkspace.status.' + current.status)}
+        {current.category
+          ? ' · ' + t('coachWorkspace.category.' + current.category, { defaultValue: current.category })
+          : ''}
+      </Text>
       {current.coachResponse ? <Text style={ui.text}>{current.coachResponse}</Text> : null}
       {current.status === 'OPEN' ? (
         <CoachButton

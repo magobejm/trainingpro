@@ -21,10 +21,36 @@ export class ClientRoutineHistoryController {
       where: { id: params.clientId },
       include: { activeRoutineAssignment: { include: { revision: true } } },
     });
-    return (
+    const content =
       normalizeRoutineSetVariables(client.activeRoutineAssignment?.revision.content) ??
-      (client.trainingPlanId ? await readRoutineContent(this.db, client.trainingPlanId) : null)
-    );
+      (client.trainingPlanId ? await readRoutineContent(this.db, client.trainingPlanId) : null);
+    return content && typeof content === 'object' ? this.withOwnDays(params.clientId, content) : content;
+  }
+
+  /** Adds the days the coach created only for this client, so the calendar can schedule them. */
+  private async withOwnDays<T extends object>(clientId: string, content: T): Promise<T> {
+    const routine = await this.db.clientRoutine.findFirst({
+      select: { baseTemplateId: true, sourceTemplateId: true },
+      where: { archivedAt: null, clientId },
+    });
+    const days = (content as { days?: Array<{ dayIndex: number }> }).days;
+    if (!routine || !Array.isArray(days)) return content;
+    const library = await this.db.planDay.findMany({
+      distinct: ['dayIndex'],
+      select: { dayIndex: true },
+      where: { templateId: routine.sourceTemplateId },
+    });
+    const known = new Set(library.map((row) => row.dayIndex));
+    const own = await this.db.planDay.findMany({
+      select: { id: true },
+      where: { archivedAt: null, revisionVersion: 1, templateId: routine.baseTemplateId },
+    });
+    if (own.length === 0) return content;
+    const base = (await readRoutineContent(this.db, routine.baseTemplateId)) as unknown as {
+      days?: Array<{ dayIndex: number }>;
+    };
+    const extra = (base.days ?? []).filter((day) => !known.has(day.dayIndex));
+    return extra.length ? { ...content, days: [...days, ...extra].sort((a, b) => a.dayIndex - b.dayIndex) } : content;
   }
 
   @Get()

@@ -144,13 +144,19 @@ export class SessionsRepositoryPrisma implements SessionsRepositoryPort {
       // adherence and progress keep matching it.
       const [snapshot, original] = await Promise.all([
         this.readTemplateSnapshot(tx, copy.templateId, membership.id, copy.planDayId, input.clientId),
-        tx.planDay.findUniqueOrThrow({ where: { id: planDayId }, select: { revisionVersion: true } }),
+        tx.planDay.findUniqueOrThrow({ where: { id: planDayId }, select: { revisionVersion: true, templateId: true } }),
       ]);
+      // A day the coach added only for this client has no library version, so the session keeps the plan's current one.
+      const templateVersion =
+        original.templateId === input.templateId
+          ? original.revisionVersion
+          : (await tx.planTemplate.findUniqueOrThrow({ where: { id: input.templateId }, select: { templateVersion: true } }))
+              .templateVersion;
       return {
         ...snapshot,
         id: input.templateId,
         planDaySnapshot: { ...snapshot.planDaySnapshot, planDayId },
-        templateVersion: original.revisionVersion,
+        templateVersion,
       };
     });
     return mapSessionWithGroups(this.prisma, row);

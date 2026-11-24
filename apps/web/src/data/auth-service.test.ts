@@ -1,15 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const auth = {
+  getUser: vi.fn(),
   resetPasswordForEmail: vi.fn(),
   setSession: vi.fn(),
+  signInWithPassword: vi.fn(),
   signOut: vi.fn(),
   updateUser: vi.fn(),
 };
 
 vi.mock('./supabase-client', () => ({ createSupabaseClient: () => ({ auth }) }));
 
-const { completePasswordRecovery, requestPasswordReset } = await import('./auth-service');
+const { changeCurrentPassword, completePasswordRecovery, requestPasswordReset } = await import('./auth-service');
 
 const INPUT = { accessToken: 'access', password: 'new-password-1', refreshToken: 'refresh' };
 
@@ -65,6 +67,32 @@ describe('completePasswordRecovery', () => {
   it('keeps the session open when the password is rejected so the user can retry', async () => {
     auth.updateUser.mockResolvedValue({ error: { message: 'Password is too weak' } });
     await expect(completePasswordRecovery(INPUT)).rejects.toThrow('Password is too weak');
+    expect(auth.signOut).not.toHaveBeenCalled();
+  });
+});
+
+describe('changeCurrentPassword', () => {
+  const input = { currentPassword: 'current-password', password: 'new-password-1' };
+
+  beforeEach(() => {
+    auth.getUser.mockResolvedValue({ data: { user: { email: 'coach@example.com' } }, error: null });
+    auth.signInWithPassword.mockResolvedValue({ error: null });
+  });
+
+  it('rejects the current password without changing it or signing out', async () => {
+    auth.signInWithPassword.mockResolvedValue({ error: { message: 'Invalid login credentials' } });
+    await expect(changeCurrentPassword(input)).rejects.toThrow('Invalid login credentials');
+    expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(auth.signOut).not.toHaveBeenCalled();
+  });
+
+  it('saves the new password and keeps the session open', async () => {
+    await changeCurrentPassword(input);
+    expect(auth.signInWithPassword).toHaveBeenCalledWith({
+      email: 'coach@example.com',
+      password: 'current-password',
+    });
+    expect(auth.updateUser).toHaveBeenCalledWith({ password: 'new-password-1' });
     expect(auth.signOut).not.toHaveBeenCalled();
   });
 });

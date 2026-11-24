@@ -9,6 +9,7 @@ import { InfoButton, StatSquare } from '../../theme/primitives';
 import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
 import { ClientProfileNoteSheet } from './ClientProfileNoteSheet';
 import { s } from './client-shell.styles';
+import { PasswordChangeForm } from '../../screens/auth/PasswordChangeForm';
 
 type NoteKey = 'allergies' | 'considerations' | 'injuries';
 
@@ -70,6 +71,7 @@ export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () =>
         </View>
         <MedicalSection client={client} />
         {client.notes ? <NotesSection notes={client.notes} t={t} /> : null}
+        <PasswordChangeForm />
         <Pressable onPress={logout} style={s.logoutBtn}>
           <Text style={s.logoutBtnText}>{t('mobile.shell.logout')}</Text>
         </Pressable>

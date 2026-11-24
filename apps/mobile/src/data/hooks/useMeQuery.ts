@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { usableRoles } from '@trainerpro/shared';
 import { useAuthStore } from '../../store/auth.store';
 import { createApiClient, ForbiddenApiError, type ActiveRole, UnauthorizedApiError } from '../api-client';
 import { handleUnauthorized } from '../auth-service';
@@ -20,7 +21,6 @@ const ALL_ROLES: ActiveRole[] = ['admin', 'coach', 'client'];
 export function useMeQuery(): UseQueryResult<MeQueryData, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
-  const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const setAvailableRoles = useAuthStore((state) => state.setAvailableRoles);
   const query = useQuery({
     enabled: Boolean(accessToken),
@@ -28,7 +28,7 @@ export function useMeQuery(): UseQueryResult<MeQueryData, Error> {
     queryKey: ['users', 'me', activeRole, accessToken],
   });
   useHandleUnauthorized(query.error);
-  useSyncAuthState(query.data, setActiveRole, setAvailableRoles);
+  useSyncAuthState(query.data, setAvailableRoles);
   return query;
 }
 
@@ -40,18 +40,14 @@ function useHandleUnauthorized(error: Error | null): void {
   }, [error]);
 }
 
-function useSyncAuthState(
-  data: MeQueryData | undefined,
-  setActiveRole: (role: ActiveRole) => void,
-  setAvailableRoles: (roles: ActiveRole[]) => void,
-): void {
+/** The probed role only proves the profile loads; the role to work with is the person's choice. */
+function useSyncAuthState(data: MeQueryData | undefined, setAvailableRoles: (roles: ActiveRole[]) => void): void {
   useEffect(() => {
     if (!data) {
       return;
     }
-    setActiveRole(data.activeRole);
-    setAvailableRoles(data.roles);
-  }, [data, setActiveRole, setAvailableRoles]);
+    setAvailableRoles(usableRoles(data.roles, 'mobile'));
+  }, [data, setAvailableRoles]);
 }
 
 async function fetchMeWithFallback(accessToken: string, preferredRole: ActiveRole | null): Promise<MeQueryData> {

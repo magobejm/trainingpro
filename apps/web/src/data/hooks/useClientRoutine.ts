@@ -99,10 +99,33 @@ export function useClientRoutineActions(clientId: string, weekId: string) {
       }),
     onSuccess: refresh,
   });
+  const days = `/clients/${clientId}/routine/days`;
+  const addDay = useMutation({
+    mutationFn: (title: string) => api(auth).post<RoutineEditorResponse>(days, { title }),
+    onSuccess: refresh,
+  });
+  const renameDay = useMutation({
+    mutationFn: (input: { dayId: string; title: string }) =>
+      api(auth).patch<RoutineEditorResponse>(`${days}/${input.dayId}`, { title: input.title }),
+    onSuccess: refresh,
+  });
+  const removeDay = useMutation({
+    mutationFn: (dayId: string) => api(auth).delete<RoutineEditorResponse>(`${days}/${dayId}`),
+    onSuccess: refresh,
+  });
+  const saveNeats = useMutation({
+    mutationFn: (neats: Array<{ description?: string; id?: string; title: string }>) =>
+      api(auth).put<RoutineEditorWeek>(`${base}/neats`, { neats }),
+    onSuccess: refresh,
+  });
   return {
     addBlock,
+    addDay,
     addExercise,
+    removeDay,
     removeExercise,
+    renameDay,
+    saveNeats,
     replaceExercise,
     setGroup,
     setWarmups,

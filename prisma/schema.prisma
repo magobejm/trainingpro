@@ -1127,6 +1127,7 @@ model PlanTemplateNeat {
   title       String          @db.VarChar(200)
   description String?         @db.Text
   sortOrder   Int             @default(0) @map("sort_order")
+  archivedAt  DateTime?       @map("archived_at") @db.Timestamptz(6)
   template    PlanTemplate    @relation(fields: [templateId], references: [id], onDelete: Cascade)
   logs        ClientNeatLog[]
 

@@ -51,6 +51,8 @@ import {
   swapWarmupItem,
   updateWarmupItemMeta,
 } from './client-routine-warmups';
+import { addClientDay, removeClientDay, renameClientDay } from './client-routine-days';
+import { saveWeekNeats, type NeatInput } from './client-routine-neats';
 import { buildWeek, weekWindow } from './client-routine-view';
 
 @Injectable()
@@ -131,6 +133,36 @@ export class ClientRoutinesService {
     const week = routine?.weeks.find((item) => item.id === weekId);
     if (!routine || !week) throw new NotFoundException('Week not found');
     return { routine, week };
+  }
+
+  private async activeRoutine(context: AuthContext, clientId: string) {
+    const routine = await this.ensureRoutine(context, clientId);
+    if (!routine) throw new NotFoundException('The client has no routine');
+    return routine;
+  }
+
+  async addDay(context: AuthContext, clientId: string, title: string) {
+    const routine = await this.activeRoutine(context, clientId);
+    await addClientDay(this.prisma, routine, todayKey(), title);
+    return this.get(context, clientId);
+  }
+
+  async renameDay(context: AuthContext, clientId: string, dayId: string, title: string) {
+    const routine = await this.activeRoutine(context, clientId);
+    await renameClientDay(this.prisma, routine, todayKey(), dayId, title);
+    return this.get(context, clientId);
+  }
+
+  async removeDay(context: AuthContext, clientId: string, dayId: string) {
+    const routine = await this.activeRoutine(context, clientId);
+    await removeClientDay(this.prisma, routine, todayKey(), dayId);
+    return this.get(context, clientId);
+  }
+
+  async setNeats(context: AuthContext, clientId: string, weekId: string, neats: NeatInput[]) {
+    const { routine, week } = await this.week(context, clientId, weekId);
+    await saveWeekNeats(this.prisma, routine, week, todayKey(), neats);
+    return this.getWeek(context, clientId, weekId);
   }
 
   async updateSet(context: AuthContext, clientId: string, weekId: string, setId: string, patch: RoutineEditorSetPatch) {

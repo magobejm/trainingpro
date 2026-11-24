@@ -9,6 +9,7 @@ import type { NotificationPreference } from '../../data/hooks/useNotificationPre
 import { useAuthStore } from '../../store/auth.store';
 import { getSupabaseClient } from '../../data/supabase-client';
 import { CoachButton, CoachPage, CoachSelect, CoachStatus, ui } from './CoachUi';
+import { PasswordChangeForm } from '../../screens/auth/PasswordChangeForm';
 
 export function CoachPreferencesScreen() {
   const { t } = useTranslation();
@@ -92,6 +93,7 @@ export function CoachAccountScreen() {
       {roles.includes('client') ? (
         <CoachButton label={t('coachWorkspace.switchClient')} onPress={() => setRole('client')} />
       ) : null}
+      <PasswordChangeForm />
       <CoachButton label={t('mobile.shell.logout')} onPress={logout} danger />
     </CoachPage>
   );

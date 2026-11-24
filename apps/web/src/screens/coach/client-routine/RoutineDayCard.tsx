@@ -28,7 +28,9 @@ export type RoutineDayActions = {
   onDuplicate: (ref: Ref) => void;
   onGroup: OnGroup;
   onMeta: (ref: Ref, meta: RoutineEditorItemMeta) => void;
+  onDeleteDay: (day: { id: string; title: string }) => void;
   onMove: (ref: Ref, direction: 'down' | 'up') => void;
+  onRenameDay: (day: { id: string; title: string }) => void;
   onPlace: (ref: Ref, toIndex: number) => Promise<void>;
   onPatchSet: (ref: Ref, setId: string, patch: SetPatch) => void;
   onRemoveItem: (ref: Ref) => void;
@@ -62,6 +64,8 @@ function DayHeader(props: {
   count: number;
   cycleDays: number;
   day: RoutineEditorDay;
+  onDelete: () => void;
+  onRename: () => void;
   onToggle: () => void;
   open: boolean;
   t: Translate;
@@ -81,6 +85,13 @@ function DayHeader(props: {
         <Text style={styles.dates}>{day.scheduledDates.join(' · ') || t('coach.clientRoutine.unscheduled')}</Text>
       </TouchableOpacity>
       <View style={[styles.badges, narrow && styles.badgesNarrow]}>
+        {day.extra ? <Badge label={t('coach.clientRoutine.day.own')} tone="info" /> : null}
+        {day.extra && day.editable ? (
+          <>
+            <Button label={t('coach.clientRoutine.day.rename.open')} onPress={props.onRename} size="sm" variant="ghost" />
+            <Button label={t('coach.clientRoutine.day.delete.open')} onPress={props.onDelete} size="sm" variant="ghost" />
+          </>
+        ) : null}
         <Badge label={`${props.count} ${t('coach.clientRoutine.itemsCount')}`} tone="neutral" />
         <Badge
           label={t(`coach.clientRoutine.outcome.${day.outcome ?? 'pending'}`)}
@@ -280,6 +291,8 @@ export function RoutineDayCard(props: {
           count={items.length}
           cycleDays={props.cycleDays}
           day={day}
+          onDelete={() => actions.onDeleteDay({ id: day.id, title: day.title })}
+          onRename={() => actions.onRenameDay({ id: day.id, title: day.title })}
           onToggle={() => setOpen(!open)}
           open={open}
           t={t}

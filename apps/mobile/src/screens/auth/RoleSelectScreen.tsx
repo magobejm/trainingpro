@@ -2,7 +2,9 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import '../../i18n';
+import { defaultRole } from '@trainerpro/shared';
 import type { ActiveRole } from '../../data/api-client';
+import { useMeQuery } from '../../data/hooks/useMeQuery';
 import { useAuthStore } from '../../store/auth.store';
 import { LIGHT } from '../../theme/light';
 
@@ -13,14 +15,18 @@ export function RoleSelectScreen(): React.JSX.Element {
 
 function useRoleSelectViewModel() {
   const { t } = useTranslation();
-  const activeRole = useAuthStore((state) => state.activeRole);
+  const meQuery = useMeQuery();
   const availableRoles = useAuthStore((state) => state.availableRoles);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const hasRoles = availableRoles.length > 0;
-  const onSelectRole = (role: ActiveRole): void => {
-    setActiveRole(role);
+  const [picked, setPicked] = React.useState<ActiveRole | null>(null);
+  // The role with the least privilege is marked until the person picks another one.
+  const activeRole = picked && availableRoles.includes(picked) ? picked : defaultRole(availableRoles, 'mobile');
+  const onContinue = (): void => {
+    if (activeRole) setActiveRole(activeRole);
   };
-  return { activeRole, availableRoles, hasRoles, onSelectRole, t };
+  const isLoading = meQuery.isPending && !hasRoles;
+  return { activeRole, availableRoles, hasRoles, isLoading, onContinue, onSelectRole: setPicked, t };
 }
 
 type RoleSelectCardProps = ReturnType<typeof useRoleSelectViewModel>;
@@ -44,6 +50,9 @@ function RoleSelectCard(props: RoleSelectCardProps): React.JSX.Element {
 }
 
 function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
+  if (props.isLoading) {
+    return <Text style={styles.empty}>{props.t('auth.roleSelect.loading')}</Text>;
+  }
   if (!props.hasRoles) {
     return <Text style={styles.empty}>{props.t('auth.roleSelect.empty')}</Text>;
   }
@@ -57,6 +66,9 @@ function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
           onPress={() => props.onSelectRole(role)}
         />
       ))}
+      <Pressable accessibilityRole={'button'} onPress={props.onContinue} style={styles.continueButton}>
+        <Text style={styles.continueLabel}>{props.t('auth.roleSelect.continue')}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -126,6 +138,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     width: '100%',
+  },
+  continueButton: {
+    alignItems: 'center',
+    backgroundColor: LIGHT.accentDark,
+    borderRadius: LIGHT.radiusMd,
+    marginTop: 6,
+    paddingVertical: 14,
+  },
+  continueLabel: {
+    color: LIGHT.textOnNavy,
+    fontSize: 15,
+    fontWeight: '800',
   },
   empty: {
     color: LIGHT.textMuted,

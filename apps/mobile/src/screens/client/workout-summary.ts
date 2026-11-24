@@ -25,8 +25,24 @@ export function buildWorkoutSummary(session: SessionView, input: SummaryInput = 
   };
 }
 
+/** Una marca por ejercicio: la más alta de esta sesión. */
 export function recordsForSession(records: ProgressRecord[], sessionId: string): ProgressRecord[] {
-  return records.filter((record) => record.sessionId === sessionId);
+  const best = new Map<string, ProgressRecord>();
+  const order: string[] = [];
+  for (const record of records) {
+    if (record.sessionId !== sessionId) continue;
+    const current = best.get(record.exerciseId);
+    if (!current) {
+      best.set(record.exerciseId, record);
+      order.push(record.exerciseId);
+      continue;
+    }
+    if (record.e1rm > current.e1rm) best.set(record.exerciseId, record);
+  }
+  return order.flatMap((exerciseId) => {
+    const record = best.get(exerciseId);
+    return record ? [record] : [];
+  });
 }
 
 export function formatSummaryMinutes(seconds: number | null): string | null {

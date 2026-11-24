@@ -69,7 +69,8 @@ function selectActiveRole(
   if (currentRole && roles.includes(currentRole)) {
     return currentRole;
   }
-  return roles[0] ?? null;
+  // With several roles the person chooses; with a single one there is nothing to ask.
+  return roles.length === 1 ? (roles[0] ?? null) : null;
 }
 
 function createStateStorage(): StateStorage {

@@ -28,7 +28,7 @@ export class ClientRoutineColorsService {
       if (client.archivedAt) throw new NotFoundException('Client not found');
       const content = client.activeRoutineAssignment?.revision.content;
       const snapshot = revisionDays.safeParse(content);
-      const assigned =
+      let assigned =
         content != null
           ? snapshot.success && snapshot.data.days.some((day) => day.id === planDayId)
           : client.trainingPlanId &&
@@ -36,6 +36,17 @@ export class ClientRoutineColorsService {
               where: { id: planDayId, templateId: client.trainingPlanId, archivedAt: null },
               select: { id: true },
             }));
+      if (!assigned) {
+        // A day the coach added only for this client lives in the client's own base copy.
+        assigned = await tx.planDay.findFirst({
+          where: {
+            archivedAt: null,
+            id: planDayId,
+            template: { clientRoutineBase: { is: { archivedAt: null, clientId } } },
+          },
+          select: { id: true },
+        });
+      }
       if (!assigned) throw new BadRequestException('Day does not belong to the assigned routine');
       return tx.clientRoutineDayColor.upsert({
         where: { clientId_planDayId: { clientId, planDayId } },

@@ -16,6 +16,7 @@ import {
   type SessionOutcome,
 } from '@trainerpro/shared';
 import type { PrismaService } from '../../common/prisma/prisma.service';
+import { clientRoutineTemplateIds } from '../plans/infra/prisma/client-routine.prisma';
 import { readPrescription } from './client-routine-prescription';
 import { warmupItemView } from './client-routine-warmup-view';
 
@@ -149,7 +150,7 @@ async function loadWeekData(prisma: PrismaService, routine: ClientRoutine, week:
         archivedAt: null,
         clientId: routine.clientId,
         date: { gte: new Date(from), lte: new Date(to) },
-        planDay: { templateId: routine.sourceTemplateId },
+        planDay: { templateId: { in: clientRoutineTemplateIds(routine) } },
         type: 'workout',
       },
     }),
@@ -170,7 +171,14 @@ type LoadedDay = Awaited<ReturnType<typeof loadWeekData>>[0][number];
 
 function editorDay(
   day: LoadedDay,
-  context: { dates: string[]; editable: boolean; logged: LoggedItem[]; outcome: SessionOutcome | null; planned: boolean },
+  context: {
+    dates: string[];
+    editable: boolean;
+    extra: boolean;
+    logged: LoggedItem[];
+    outcome: SessionOutcome | null;
+    planned: boolean;
+  },
 ): RoutineEditorDay {
   const matches = matchLogged(day.exercises, context.logged);
   const exercises = day.exercises.map((exercise, position) => {
@@ -185,6 +193,7 @@ function editorDay(
     dayIndex: day.dayIndex,
     editable: context.editable,
     exercises,
+    extra: context.extra,
     groups: day.exerciseGroups.map((group) => ({ groupType: group.groupType, id: group.id, note: group.note })),
     id: day.id,
     outcome: context.outcome,
@@ -258,6 +267,21 @@ export async function buildWeek(
 ): Promise<RoutineEditorWeek> {
   const { from, to } = weekWindow(routine, week);
   const [days, events, sessions] = await loadWeekData(prisma, routine, week, from, to);
+  const libraryIndexes = new Set(
+    (
+      await prisma.planDay.findMany({
+        distinct: ['dayIndex'],
+        select: { dayIndex: true },
+        where: { templateId: routine.sourceTemplateId },
+      })
+    ).map((row) => row.dayIndex),
+  );
+  const neats = (
+    await prisma.planTemplateNeat.findMany({
+      orderBy: { sortOrder: 'asc' },
+      where: { archivedAt: null, templateId: week.templateId },
+    })
+  ).map((row) => ({ description: row.description ?? '', id: row.id, title: row.title }));
   const scheduled = new Map<number, string[]>();
   for (const event of events) {
     const index = event.planDay?.dayIndex;
@@ -285,6 +309,7 @@ export async function buildWeek(
       editorDay(day, {
         dates: scheduled.get(day.dayIndex) ?? [],
         editable: isDayEditable(lock, day.dayIndex),
+        extra: !libraryIndexes.has(day.dayIndex),
         logged: itemsByDay.get(day.dayIndex) ?? [],
         outcome: outcomes.get(day.dayIndex) ?? null,
         planned: scheduled.has(day.dayIndex),
@@ -292,6 +317,7 @@ export async function buildWeek(
     ),
     endsOn: to,
     id: week.id,
+    neats,
     phase: lock.phase,
     readOnly: lock.readOnly,
     startsOn: from,

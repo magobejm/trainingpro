@@ -15,6 +15,8 @@ import { ExercisePickerModal } from '../components/RoutinePlanner/ExercisePicker
 import { ProgressionCommandModal } from './command/ProgressionCommandModal';
 import { ClientFeedbackModal } from './feedback/ClientFeedbackModal';
 import { RoutineDayCard } from './RoutineDayCard';
+import { RoutineDayModal, type DayModalState } from './RoutineDayModal';
+import { RoutineWeekNeats } from './RoutineWeekNeats';
 import { isWeekPeriod } from './routine-period';
 
 type Picker = { dayId: string; mode: 'add' } | { id: string; kind: RoutineEditorItemKind; mode: 'replace' } | null;
@@ -223,6 +225,52 @@ function WeekBar(props: {
   );
 }
 
+/** What sits under the days of a week: the button and dialog for own days, and the week's NEAT. */
+function WeekExtras(props: {
+  actions: ReturnType<typeof useClientRoutineActions>;
+  dayModal: DayModalState;
+  fail: () => void;
+  onDayModal: (state: DayModalState) => void;
+  readOnlyView: boolean;
+  t: Translate;
+  week: RoutineEditorWeek;
+}): React.JSX.Element {
+  const { actions, t, week } = props;
+  const toast = useToast();
+  const closed = week.phase === 'completed';
+  return (
+    <>
+      {props.readOnlyView ? null : (
+        <View style={styles.addDay}>
+          <Button
+            label={`+ ${t('coach.clientRoutine.day.add.open')}`}
+            onPress={() => props.onDayModal({ mode: 'add' })}
+            size="sm"
+            variant="secondary"
+          />
+        </View>
+      )}
+      <RoutineDayModal
+        onAdd={(title) => actions.addDay.mutate(title, { onError: props.fail })}
+        onClose={() => props.onDayModal(null)}
+        onDelete={(dayId) =>
+          actions.removeDay.mutate(dayId, { onError: () => toast.error(t('coach.clientRoutine.day.delete.blocked')) })
+        }
+        onRename={(dayId, title) => actions.renameDay.mutate({ dayId, title }, { onError: props.fail })}
+        state={props.dayModal}
+        t={t as never}
+      />
+      <RoutineWeekNeats
+        closed={closed}
+        neats={week.neats}
+        onSave={(neats) => actions.saveNeats.mutate(neats, { onError: props.fail })}
+        readOnly={props.readOnlyView || closed}
+        t={t as never}
+      />
+    </>
+  );
+}
+
 function WeekPanel(props: {
   clientId: string;
   cycleDays: number;
@@ -234,6 +282,7 @@ function WeekPanel(props: {
   const toast = useToast();
   const actions = useClientRoutineActions(props.clientId, week.id);
   const [picker, setPicker] = useState<Picker>(null);
+  const [dayModal, setDayModal] = useState<DayModalState>(null);
   const fail = () => toast.error(t('coach.clientRoutine.saveError'));
   return (
     <View style={styles.page}>
@@ -245,6 +294,8 @@ function WeekPanel(props: {
             cycleDays={props.cycleDays}
             actions={{
               onAddExercise: (dayId) => setPicker({ dayId, mode: 'add' }),
+              onDeleteDay: (target) => setDayModal({ dayId: target.id, mode: 'delete', title: target.title }),
+              onRenameDay: (target) => setDayModal({ dayId: target.id, mode: 'rename', title: target.title }),
               warmup: {
                 onAddItem: (ref, item) => actions.addWarmupItem.mutate({ item, ref }, { onError: fail }),
                 onAddSet: (ref) => actions.addWarmupSet.mutate(ref, { onError: fail }),
@@ -283,6 +334,15 @@ function WeekPanel(props: {
           />
         );
       })}
+      <WeekExtras
+        actions={actions}
+        dayModal={dayModal}
+        fail={fail}
+        onDayModal={setDayModal}
+        readOnlyView={props.readOnlyView}
+        t={t}
+        week={week}
+      />
       <ExercisePickerModal
         allowedTypes={picker?.mode === 'replace' ? REPLACE_TYPES[picker.kind] : ADD_TYPES}
         title={picker?.mode === 'replace' ? t('coach.clientRoutine.replace') : undefined}
@@ -310,6 +370,7 @@ function WeekPanel(props: {
 }
 
 const styles = StyleSheet.create({
+  addDay: { alignItems: 'flex-start' },
   actions: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
   bar: { gap: space.md },
   chips: { maxWidth: '100%', width: '100%' },

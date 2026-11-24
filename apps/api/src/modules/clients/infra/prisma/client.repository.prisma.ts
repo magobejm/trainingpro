@@ -1,5 +1,5 @@
 import { CLIENT_WARMUPS_INCLUDE, mapClientWarmups } from '../../../../common/plan/client-warmups.mapper';
-import { resolveClientDay } from '../../../plans/infra/prisma/client-routine.prisma';
+import { neatsForDate, resolveClientDay } from '../../../plans/infra/prisma/client-routine.prisma';
 import {
   applyRoutineHandoff,
   handoffTransaction,
@@ -555,7 +555,7 @@ export class ClientRepositoryPrisma implements ClientsRepositoryPort {
 
   async findClientPlanDayTemplateIdByEmail(email: string, planDayId: string): Promise<string | null> {
     const planDay = await loadAccessibleClientPlanDay(this.prisma, email, planDayId);
-    return planDay?.templateId ?? null;
+    return planDay?.sessionTemplateId ?? null;
   }
 }
 
@@ -640,7 +640,7 @@ const PLAN_WITH_DAYS_INCLUDE = {
     orderBy: { dayIndex: 'asc' as const },
     include: PLAN_DAY_CONTENT_INCLUDE,
   },
-  neats: { orderBy: { sortOrder: 'asc' as const } },
+  neats: { orderBy: { sortOrder: 'asc' as const }, where: { archivedAt: null } },
 } as const;
 
 type PlanWithDays = Prisma.PlanTemplateGetPayload<{ include: typeof PLAN_WITH_DAYS_INCLUDE }>;
@@ -674,7 +674,7 @@ async function loadClientRoutine(
   };
 }
 
-type AccessiblePlanDay = PlanDay & { templateId: string; clientWarmups?: unknown };
+type AccessiblePlanDay = PlanDay & { clientWarmups?: unknown; sessionTemplateId: string; templateId: string };
 
 async function loadAccessibleClientPlanDay(
   prisma: PrismaService,
@@ -697,16 +697,27 @@ async function loadAccessibleClientPlanDay(
       archivedAt: null,
       id: planDayId,
       template: {
-        OR: [{ coachMembershipId: client.coachMembershipId }, { scope: LibraryItemScope.GLOBAL }],
+        OR: [
+          { coachMembershipId: client.coachMembershipId },
+          { scope: LibraryItemScope.GLOBAL },
+          { ownerClientId: client.id },
+        ],
       },
     },
     include: PLAN_DAY_CONTENT_INCLUDE,
   });
   if (!planDay) return null;
 
+  const ownRoutine = await prisma.clientRoutine.findFirst({
+    select: { baseTemplateId: true, sourceTemplateId: true },
+    where: { archivedAt: null, clientId: client.id },
+  });
+  // A day the coach added only for this client lives in the client's base copy.
+  const inOwnBase = ownRoutine?.baseTemplateId === planDay.templateId;
   const inAssignedPlan =
-    client.trainingPlanId === planDay.templateId &&
-    (!client.activeRoutineAssignment || client.activeRoutineAssignment.revision.version === planDay.revisionVersion);
+    inOwnBase ||
+    (client.trainingPlanId === planDay.templateId &&
+      (!client.activeRoutineAssignment || client.activeRoutineAssignment.revision.version === planDay.revisionVersion));
   if (!inAssignedPlan) {
     const calendarEvent = await prisma.calendarEvent.findFirst({
       where: {
@@ -726,6 +737,7 @@ async function loadAccessibleClientPlanDay(
     clientWarmups:
       (planDay as PlanDay & { clientWarmups?: unknown }).clientWarmups ?? (await mapClientWarmups(prisma, planDay.warmups)),
     templateId: planDay.templateId,
+    sessionTemplateId: inOwnBase && ownRoutine ? ownRoutine.sourceTemplateId : planDay.templateId,
   };
 }
 
@@ -738,13 +750,47 @@ async function overlayCurrentMicrocycle(
     select: { cycleDays: true, cycleStartsOn: true },
     where: { archivedAt: null, client: { email: email.toLowerCase() } },
   });
-  const planDays = await Promise.all(routine.planDays.map((day) => overlayMicrocycleDay(prisma, email, day, new Date())));
+  const libraryDays = await Promise.all(routine.planDays.map((day) => overlayMicrocycleDay(prisma, email, day, new Date())));
+  const ownDays = await readOwnExtraDays(prisma, email);
+  const planDays = [...libraryDays, ...ownDays].sort((a, b) => a.dayIndex - b.dayIndex);
+  const owner = await prisma.client.findFirst({
+    select: { id: true },
+    where: { archivedAt: null, email: email.toLowerCase() },
+  });
+  const todayNeats = owner ? await neatsForDate(prisma, owner.id, new Date().toISOString().slice(0, 10)) : null;
   return {
     ...routine,
+    neats: todayNeats ? mapClientRoutineNeats(todayNeats) : routine.neats,
     cycleDays: cycle?.cycleDays,
     cycleStartsOn: cycle?.cycleStartsOn.toISOString().slice(0, 10),
     planDays,
   };
+}
+
+/** Days the coach added only for this client, as the current microcycle has them. The id is the base copy day. */
+async function readOwnExtraDays(prisma: PrismaService, email: string): Promise<ClientRoutineDay[]> {
+  const routine = await prisma.clientRoutine.findFirst({
+    select: { baseTemplateId: true, sourceTemplateId: true },
+    where: { archivedAt: null, client: { archivedAt: null, email: email.toLowerCase() } },
+  });
+  if (!routine) return [];
+  const library = await prisma.planDay.findMany({
+    distinct: ['dayIndex'],
+    select: { dayIndex: true },
+    where: { templateId: routine.sourceTemplateId },
+  });
+  const known = library.map((row) => row.dayIndex);
+  const own = await prisma.planDay.findMany({
+    orderBy: { dayIndex: 'asc' },
+    select: { id: true },
+    where: { archivedAt: null, dayIndex: { notIn: known }, revisionVersion: 1, templateId: routine.baseTemplateId },
+  });
+  const days = await Promise.all(own.map((day) => readMappedPlanDay(prisma, day.id)));
+  return Promise.all(
+    days
+      .filter((day): day is ClientRoutineDay => day != null)
+      .map((day) => overlayMicrocycleDay(prisma, email, day, new Date())),
+  );
 }
 
 /** The athlete's routine day is the microcycle copy. The id stays the library day the calendar uses. */

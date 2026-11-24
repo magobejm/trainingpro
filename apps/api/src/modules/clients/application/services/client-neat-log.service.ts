@@ -4,6 +4,7 @@ import { sessionDateKey } from '@trainerpro/shared';
 import type { AuthContext } from '../../../../common/auth-context/auth-context';
 import { adherenceCutoff } from '../../../../common/plan/workout-adherence';
 import { PrismaService } from '../../../../common/prisma/prisma.service';
+import { clientNeatTemplateIds, neatGoalDays } from '../../../plans/infra/prisma/client-routine.prisma';
 import { GetClientMeUseCase } from '../use-cases/get-client-me.usecase';
 import { inclusiveDayCount, neatAdherence, type NeatAdherence } from '../neat-adherence';
 
@@ -26,10 +27,12 @@ export class ClientNeatLogService {
 
   async saveMine(context: AuthContext, neatId: string, date: string, body: SaveNeatLog) {
     const client = await this.getClientMeUseCase.execute(context);
+    const templateIds = await clientNeatTemplateIds(this.prisma, client.id);
+    if (client.trainingPlanId) templateIds.push(client.trainingPlanId);
     const neat = await this.prisma.planTemplateNeat.findFirst({
-      where: { id: neatId, templateId: client.trainingPlanId ?? undefined },
+      where: { archivedAt: null, id: neatId, templateId: { in: templateIds } },
     });
-    if (!neat || !client.trainingPlanId) throw new NotFoundException('NEAT goal not found');
+    if (!neat) throw new NotFoundException('NEAT goal not found');
     const row = await this.prisma.clientNeatLog.upsert({
       where: { clientId_neatId_date: { clientId: client.id, date: utcDate(date), neatId } },
       create: {
@@ -67,16 +70,20 @@ async function countNeatAdherence(
     select: { activeRoutineAssignment: { select: { appliedAt: true } }, createdAt: true, trainingPlanId: true },
     where: { archivedAt: null, id: clientId },
   });
-  const goals = client?.trainingPlanId
-    ? await prisma.planTemplateNeat.count({ where: { templateId: client.trainingPlanId } })
-    : 0;
   const fromKey = effectiveNeatStart(sessionDateKey(from), client?.createdAt, client?.activeRoutineAssignment?.appliedAt);
   const cutoff = adherenceCutoff(sessionDateKey(to), new Date(), timezoneOffset);
   const days = inclusiveDayCount(fromKey, cutoff);
+  const copyGoalDays = days > 0 ? await neatGoalDays(prisma, clientId, fromKey, cutoff) : 0;
+  const goals =
+    copyGoalDays != null
+      ? null
+      : client?.trainingPlanId
+        ? await prisma.planTemplateNeat.count({ where: { archivedAt: null, templateId: client.trainingPlanId } })
+        : 0;
   const done = await prisma.clientNeatLog.count({
     where: { clientId, done: true, date: { gte: utcDate(fromKey), lte: utcDate(cutoff) } },
   });
-  return neatAdherence(done, goals * days);
+  return neatAdherence(done, copyGoalDays ?? (goals ?? 0) * days);
 }
 
 /** El NEAT solo se espera desde el alta del cliente o la asignación de su rutina, lo que sea más tarde. */

@@ -7,7 +7,8 @@ import '../../i18n';
 import type { ActiveRole } from '../../data/api-client';
 import { useMeQuery } from '../../data/hooks/useMeQuery';
 import { useAuthStore } from '../../store/auth.store';
-import { EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
+import { defaultRole } from '@trainerpro/shared';
+import { Button, EmptyState, colors, fontSize, radius, space } from '@trainerpro/ui';
 
 const COLORS = {
   accent: colors.primary,
@@ -26,16 +27,18 @@ export function RoleSelectScreen(): React.JSX.Element {
 function useRoleSelectViewModel() {
   const { t } = useTranslation();
   const meQuery = useMeQuery();
-  const activeRole = useAuthStore((state) => state.activeRole);
   const availableRoles = useAuthStore((state) => state.availableRoles);
   const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const hasRoles = availableRoles.length > 0;
-  const onSelectRole = (role: ActiveRole): void => {
-    setActiveRole(role);
+  const [picked, setPicked] = React.useState<ActiveRole | null>(null);
+  // The role with the least privilege is marked until the person picks another one.
+  const activeRole = picked && availableRoles.includes(picked) ? picked : defaultRole(availableRoles, 'web');
+  const onContinue = (): void => {
+    if (activeRole) setActiveRole(activeRole);
   };
   const isLoading = meQuery.isPending;
   const hasError = Boolean(meQuery.error);
-  return { activeRole, availableRoles, hasError, hasRoles, isLoading, onSelectRole, t };
+  return { activeRole, availableRoles, hasError, hasRoles, isLoading, onContinue, onSelectRole: setPicked, t };
 }
 
 type RoleSelectCardProps = ReturnType<typeof useRoleSelectViewModel>;
@@ -72,6 +75,7 @@ function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
           onPress={() => props.onSelectRole(role)}
         />
       ))}
+      <Button disabled={!props.activeRole} fullWidth label={props.t('auth.roleSelect.continue')} onPress={props.onContinue} />
     </View>
   );
 }

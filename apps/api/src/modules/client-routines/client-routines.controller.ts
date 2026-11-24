@@ -83,6 +83,18 @@ const groupBody = z.object({
   groupType: z.enum(['CIRCUIT', 'SUPERSET']).nullable(),
   items: z.array(groupItem).min(1).max(30),
 });
+const dayBody = z.object({ title: z.string().trim().min(1).max(120) });
+const neatsBody = z.object({
+  neats: z
+    .array(
+      z.object({
+        description: z.string().max(500).nullable().optional(),
+        id: uuid.optional(),
+        title: z.string().trim().min(1).max(120),
+      }),
+    )
+    .max(20),
+});
 const warmupsBody = z.object({ warmupTemplateIds: z.array(postgresUuidString).max(10) });
 const blockBody = z.object({
   displayName: z.string().trim().min(1).max(120),
@@ -175,6 +187,36 @@ export class ClientRoutinesController {
   @Get('weeks/:weekId')
   week(@Param('clientId') clientId: string, @Param('weekId') weekId: string, @Req() request: HttpAuthRequest) {
     return this.service.getWeek(readAuthContext(request), check(uuid, clientId), check(uuid, weekId));
+  }
+
+  @Post('days')
+  addDay(@Param('clientId') clientId: string, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    return this.service.addDay(readAuthContext(request), check(uuid, clientId), check(dayBody, body).title);
+  }
+
+  @Patch('days/:dayId')
+  renameDay(@Param() params: { clientId: string; dayId: string }, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    return this.service.renameDay(
+      readAuthContext(request),
+      check(uuid, params.clientId),
+      check(uuid, params.dayId),
+      check(dayBody, body).title,
+    );
+  }
+
+  @Delete('days/:dayId')
+  removeDay(@Param() params: { clientId: string; dayId: string }, @Req() request: HttpAuthRequest) {
+    return this.service.removeDay(readAuthContext(request), check(uuid, params.clientId), check(uuid, params.dayId));
+  }
+
+  @Put('weeks/:weekId/neats')
+  neats(@Param() params: { clientId: string; weekId: string }, @Body() body: unknown, @Req() request: HttpAuthRequest) {
+    return this.service.setNeats(
+      readAuthContext(request),
+      check(uuid, params.clientId),
+      check(uuid, params.weekId),
+      check(neatsBody, body).neats,
+    );
   }
 
   @Patch('weeks/:weekId/sets/:setId')

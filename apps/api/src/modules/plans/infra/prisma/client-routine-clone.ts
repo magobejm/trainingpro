@@ -115,7 +115,7 @@ async function cloneTemplate(
 ): Promise<string> {
   const source: any = await tx.planTemplate.findUniqueOrThrow({
     where: { id: input.sourceTemplateId },
-    include: { neats: true, routineObjectives: true },
+    include: { neats: { where: { archivedAt: null }, orderBy: { sortOrder: 'asc' } }, routineObjectives: true },
   });
   const copy = await tx.planTemplate.create({
     data: {

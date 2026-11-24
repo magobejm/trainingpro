@@ -53,7 +53,7 @@ export function routineTemplateInclude(): any {
       orderBy: { dayIndex: 'asc' as const },
       where,
     },
-    neats: { orderBy },
+    neats: { orderBy, where },
   };
 }
 

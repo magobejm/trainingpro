@@ -47,6 +47,7 @@ describe('client routine day colors', () => {
   });
 
   it('validates against the applied revision, including archived days', async () => {
+    db.planDay.findFirst.mockReset();
     db.client.findUniqueOrThrow.mockResolvedValue({
       archivedAt: null,
       trainingPlanId: 'routine',
@@ -54,6 +55,10 @@ describe('client routine day colors', () => {
     });
     await service().save('one', 'archived-day', '#e2e8f0');
     await expect(service().save('one', 'new-unassigned-day', '#e2e8f0')).rejects.toBeInstanceOf(BadRequestException);
-    expect(db.planDay.findFirst).not.toHaveBeenCalled();
+    // Only the unassigned day falls back to the client's own copy; the archived day passes on the revision alone.
+    expect(db.planDay.findFirst).toHaveBeenCalledTimes(1);
+    expect(db.planDay.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: 'new-unassigned-day' }) }),
+    );
   });
 });

@@ -15,6 +15,7 @@ import { ResetPasswordScreen } from './src/screens/auth/ResetPasswordScreen';
 import { RoleSelectScreen } from './src/screens/auth/RoleSelectScreen';
 import { useAuthStore } from './src/store/auth.store';
 import { usePasswordRecoveryStore } from './src/store/password-recovery.store';
+import { AdminShell } from './src/shell/admin/AdminShell';
 import { ClientShell } from './src/shell/client/ClientShell';
 import { CoachShell } from './src/shell/coach/CoachShell';
 
@@ -101,6 +102,9 @@ function RoleShell(props: { role: AppRole }): React.JSX.Element {
   }
   if (props.role === 'coach') {
     return <CoachShell />;
+  }
+  if (props.role === 'admin') {
+    return <AdminShell />;
   }
   return <LoadingBody />;
 }

@@ -6,6 +6,7 @@ import { useUserSettings } from '../data/hooks/useUserSettings';
 import { styles } from './SidebarUserPanel.styles';
 import { AppearanceSettings } from './AppearanceSettings';
 import { OnboardingUserEntry } from '../components/OnboardingGuide';
+import { PasswordChangeForm } from '../screens/auth/PasswordChangeForm';
 import { useRefreshOnboardingAfterMutation } from '../data/hooks/useOnboarding';
 
 const GEAR_GLYPH = '\u2699\uFE0F';
@@ -120,6 +121,7 @@ function EditProfileModal(props: ViewModel): React.JSX.Element {
       <View style={styles.modalBody}>
         <AvatarEditor {...props} />
         <ProfileFields {...props} />
+        <PasswordChangeForm />
         <AppearanceSettings />
         <OnboardingUserEntry onNavigate={props.onClose} />
       </View>

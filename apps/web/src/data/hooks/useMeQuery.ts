@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { usableRoles } from '@trainerpro/shared';
 import {
   createApiClient,
   ForbiddenApiError,
@@ -24,29 +25,24 @@ const ALL_ROLES: ActiveRole[] = ['admin', 'coach', 'client'];
 export function useMeQuery(): UseQueryResult<MeQueryData, Error> {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
-  const setActiveRole = useAuthStore((state) => state.setActiveRole);
   const setAvailableRoles = useAuthStore((state) => state.setAvailableRoles);
   const query = useQuery({
     enabled: Boolean(accessToken),
     queryFn: () => fetchMeWithFallback(accessToken ?? '', activeRole),
     queryKey: ['users', 'me', activeRole, accessToken],
   });
-  useSyncAuthState(query.data, setActiveRole, setAvailableRoles);
+  useSyncAuthState(query.data, setAvailableRoles);
   return query;
 }
 
-function useSyncAuthState(
-  data: MeQueryData | undefined,
-  setActiveRole: (role: ActiveRole) => void,
-  setAvailableRoles: (roles: ActiveRole[]) => void,
-): void {
+/** The probed role only proves the profile loads; the role to work with is the person's choice. */
+function useSyncAuthState(data: MeQueryData | undefined, setAvailableRoles: (roles: ActiveRole[]) => void): void {
   useEffect(() => {
     if (!data) {
       return;
     }
-    setActiveRole(data.activeRole);
-    setAvailableRoles(data.roles);
-  }, [data, setActiveRole, setAvailableRoles]);
+    setAvailableRoles(usableRoles(data.roles, 'web'));
+  }, [data, setAvailableRoles]);
 }
 
 async function fetchMeWithFallback(

@@ -11,6 +11,7 @@ function emptyAgenda() {
     calendarEvent: { findMany: jest.fn().mockResolvedValue([]) },
     sessionInstance: { findMany: jest.fn().mockResolvedValue([]) },
     clientNeatLog: { count: jest.fn().mockResolvedValue(0) },
+    clientRoutine: { findFirst: jest.fn().mockResolvedValue(null) },
   };
 }
 

@@ -43,17 +43,22 @@ it('returns no tonnage when nothing was loaded', () => {
   expect(buildWorkoutSummary(empty).load).toBeNull();
 });
 
-it('keeps only the records from the finished session', () => {
+it('keeps the highest record of each exercise from the finished session', () => {
   const records = [
-    { e1rm: 100, exerciseId: 'a', exerciseName: 'Press', previousBest: 90, sessionDate: '2026-10-24', sessionId: 'today' },
+    { e1rm: 86.4, exerciseId: 'a', exerciseName: 'Remo en T', previousBest: null, sessionDate: '2026-10-24', sessionId: 'today' },
+    { e1rm: 100, exerciseId: 'b', exerciseName: 'Press', previousBest: 90, sessionDate: '2026-10-24', sessionId: 'today' },
+    { e1rm: 97, exerciseId: 'a', exerciseName: 'Remo en T', previousBest: 86.4, sessionDate: '2026-10-24', sessionId: 'today' },
     {
       e1rm: 80,
-      exerciseId: 'b',
+      exerciseId: 'c',
       exerciseName: 'Sentadilla',
       previousBest: null,
       sessionDate: '2026-10-24',
       sessionId: 'other',
     },
   ] as ProgressRecord[];
-  expect(recordsForSession(records, 'today').map((record) => record.exerciseName)).toEqual(['Press']);
+  expect(recordsForSession(records, 'today').map((record) => [record.exerciseName, record.e1rm])).toEqual([
+    ['Remo en T', 97],
+    ['Press', 100],
+  ]);
 });

@@ -48,6 +48,29 @@ export async function completePasswordRecovery(input: PasswordRecoveryInput): Pr
   await supabase.auth.signOut();
 }
 
+export type PasswordChangeInput = {
+  currentPassword: string;
+  password: string;
+};
+
+/** Comprueba la contraseña actual y guarda la nueva sin cerrar la sesión. */
+export async function changeCurrentPassword(input: PasswordChangeInput): Promise<void> {
+  const supabase = getSupabaseClient();
+  const current = await supabase.auth.getUser();
+  const email = current.data.user?.email;
+  if (current.error || !email) {
+    throw new Error(current.error?.message ?? 'Missing authenticated user');
+  }
+  const signed = await supabase.auth.signInWithPassword({ email, password: input.currentPassword });
+  if (signed.error) {
+    throw new Error(signed.error.message);
+  }
+  const updated = await supabase.auth.updateUser({ password: input.password });
+  if (updated.error) {
+    throw new Error(updated.error.message);
+  }
+}
+
 export async function logout(): Promise<void> {
   await unregisterCurrentPushToken();
   refreshedAccessToken = null;

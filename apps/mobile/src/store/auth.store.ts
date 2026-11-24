@@ -28,7 +28,8 @@ type PersistedAuth = {
 };
 
 const STORAGE_KEY = 'trainerpro.mobile.auth';
-const DEFAULT_ROLE: ActiveRole = 'coach';
+// No role is chosen until the person picks one (or has a single usable role).
+const DEFAULT_ROLE: ActiveRole | null = null;
 const KNOWN_ROLES: ActiveRole[] = ['admin', 'coach', 'client'];
 
 const authPersistOptions: PersistOptions<AuthState, PersistedAuth> = {
@@ -108,7 +109,8 @@ function selectActiveRole(currentRole: ActiveRole | null, roles: ActiveRole[]): 
   if (currentRole && roles.includes(currentRole)) {
     return currentRole;
   }
-  return roles[0] ?? null;
+  // With several roles the person chooses; with a single one there is nothing to ask.
+  return roles.length === 1 ? (roles[0] ?? null) : null;
 }
 
 function isActiveRole(role: unknown): role is ActiveRole {

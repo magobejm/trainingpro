@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Link } from 'react-router';
 import '../../i18n';
 import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
@@ -93,9 +93,22 @@ function mapErrorMessage(caught: unknown, fallback: string): string | null {
 
 type LoginCardProps = ReturnType<typeof useLoginViewModel>;
 
+const HERO_SOURCE = { uri: '/login-hero.jpg' };
+const LOGO_SOURCE = { uri: '/logo.png' };
+const STACKED_BREAKPOINT = 900;
+
 function LoginCard(props: LoginCardProps): React.JSX.Element {
+  const stacked = useWindowDimensions().width < STACKED_BREAKPOINT;
   return (
-    <View style={styles.page}>
+    <View style={stacked ? styles.pageStacked : styles.page}>
+      <LoginHero
+        headline={props.t('auth.login.heroTitle')}
+        label={props.t('auth.login.hero')}
+        lead={props.t('auth.login.heroLead')}
+        stacked={stacked}
+        title={props.t('app.title')}
+      />
+      <View style={styles.formSide}>
       <View style={styles.card}>
         <Text style={styles.title}>{props.t('auth.login.title')}</Text>
         <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
@@ -145,16 +158,116 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
           {props.t('auth.login.privacy')}
         </Link>
       </View>
+      </View>
+    </View>
+  );
+}
+
+function LoginHero(props: {
+  headline: string;
+  label: string;
+  lead: string;
+  stacked: boolean;
+  title: string;
+}): React.JSX.Element {
+  return (
+    <View style={props.stacked ? styles.heroStacked : styles.hero}>
+      <Image accessibilityLabel={props.label} resizeMode={'cover'} source={HERO_SOURCE} style={styles.heroImage} />
+      <View style={styles.brand}>
+        <Image accessibilityLabel={props.title} resizeMode={'contain'} source={LOGO_SOURCE} style={styles.logo} />
+        <Text style={styles.brandLabel}>{props.title}</Text>
+      </View>
+      <View style={styles.heroCopy}>
+        <Text style={styles.heroTitle}>{props.headline}</Text>
+        {props.stacked ? null : <Text style={styles.heroLead}>{props.lead}</Text>}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  brand: {
+    alignItems: 'center',
+    backgroundColor: colors.surfaceInverse,
+    borderRadius: radius.md,
+    flexDirection: 'row',
+    gap: space.sm,
+    left: space.lg,
+    paddingHorizontal: space.sm,
+    paddingVertical: space.sm,
+    position: 'absolute',
+    top: space.lg,
+    zIndex: 1,
+  },
+  brandLabel: {
+    color: colors.textInverse,
+    fontSize: fontSize.md,
+    fontWeight: '800',
+  },
+  logo: {
+    borderRadius: radius.sm,
+    height: 48,
+    width: 48,
+  },
   card: {
     backgroundColor: COLORS.white,
+    borderColor: colors.border,
     borderRadius: radius.lg,
+    borderWidth: 1,
+    maxWidth: 420,
     padding: space.xl,
-    width: 420,
+    width: '100%',
+  },
+  formSide: {
+    alignItems: 'center',
+    backgroundColor: COLORS.page,
+    flex: 1,
+    justifyContent: 'center',
+    minWidth: 0,
+    overflow: 'auto',
+    padding: space.xl,
+  },
+  hero: {
+    backgroundColor: colors.surfaceInverse,
+    flexBasis: '50%',
+    flexGrow: 0,
+    flexShrink: 0,
+    overflow: 'hidden',
+  },
+  heroCopy: {
+    backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    bottom: 0,
+    gap: space.sm,
+    left: 0,
+    padding: space.xl,
+    position: 'absolute',
+    right: 0,
+    zIndex: 1,
+  },
+  heroLead: {
+    color: colors.textInverseMuted,
+    fontSize: fontSize.md,
+    lineHeight: 22,
+  },
+  heroTitle: {
+    color: colors.textInverse,
+    fontSize: fontSize.xxl,
+    fontWeight: '800',
+  },
+  heroImage: {
+    bottom: 0,
+    height: '100%',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    width: '100%',
+  },
+  heroStacked: {
+    backgroundColor: colors.surfaceInverse,
+    height: 220,
+    overflow: 'hidden',
+    width: '100%',
   },
   error: {
     color: COLORS.error,
@@ -180,11 +293,14 @@ const styles = StyleSheet.create({
     marginTop: space.md,
   },
   page: {
-    alignItems: 'center',
     backgroundColor: COLORS.page,
     flex: 1,
-    justifyContent: 'center',
-    padding: space.xl,
+    flexDirection: 'row',
+  },
+  pageStacked: {
+    backgroundColor: COLORS.page,
+    flex: 1,
+    overflow: 'auto',
   },
   sessionExpired: {
     color: COLORS.error,

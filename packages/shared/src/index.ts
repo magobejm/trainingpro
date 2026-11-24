@@ -1,5 +1,6 @@
 export type ActiveRole = 'admin' | 'coach' | 'client';
 export * from './first-workout-guide';
+export * from './role-choice';
 export {
   chatMessageListSchema,
   chatMessageSchema,
@@ -86,6 +87,7 @@ export {
   type RoutineEditorWarmup,
   type RoutineEditorWarmupItem,
   type RoutineEditorWeek,
+  type RoutineEditorNeat,
   type RoutineEditorWeekSummary,
 } from './client-routine';
 export {

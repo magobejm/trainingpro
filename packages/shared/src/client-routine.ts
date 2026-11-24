@@ -125,6 +125,8 @@ export type RoutineEditorDay = {
   blocks: RoutineEditorBlock[];
   dayIndex: number;
   exercises: RoutineEditorExercise[];
+  /** True for a day the coach added to this client's routine. It does not exist in the library routine. */
+  extra: boolean;
   groups: RoutineEditorGroup[];
   id: string;
   /** False when the day is read-only: finished, skipped, started, or inside a completed week. */
@@ -136,10 +138,13 @@ export type RoutineEditorDay = {
   warmups: RoutineEditorWarmup[];
 };
 
+export type RoutineEditorNeat = { description: string; id: string; title: string };
+
 export type RoutineEditorWeek = {
   days: RoutineEditorDay[];
   endsOn: string;
   id: string;
+  neats: RoutineEditorNeat[];
   phase: WeekPhase;
   readOnly: boolean;
   startsOn: string;

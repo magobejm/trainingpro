@@ -59,7 +59,6 @@ export function WorkoutSummaryScreen(props: Props): React.JSX.Element | null {
 
 function SummaryStats(props: { summary: WorkoutSummary; t: TFunction }): React.JSX.Element {
   const minutes = formatSummaryMinutes(props.summary.durationSeconds);
-  const load = props.summary.load == null ? null : formatSummaryKg(props.summary.load);
   return (
     <View style={styles.stats}>
       <Stat
@@ -76,10 +75,6 @@ function SummaryStats(props: { summary: WorkoutSummary; t: TFunction }): React.J
       <Stat
         label={props.t('mobile.client.summary.duration')}
         value={minutes ? props.t('mobile.client.summary.durationValue', { minutes }) : '-'}
-      />
-      <Stat
-        label={props.t('mobile.client.summary.load')}
-        value={load ? props.t('mobile.client.summary.loadValue', { load }) : '-'}
       />
     </View>
   );

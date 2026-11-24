@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions, View, type ViewStyle } from 'react-native';
 import { Link } from 'react-router';
 import '../../i18n';
 import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
@@ -96,11 +96,19 @@ type LoginCardProps = ReturnType<typeof useLoginViewModel>;
 const HERO_SOURCE = { uri: '/login-hero.jpg' };
 const LOGO_SOURCE = { uri: '/logo.png' };
 const STACKED_BREAKPOINT = 900;
+// React Native types omit the CSS value the web login page needs to scroll only when it overflows.
+const webScroll = { overflow: 'auto' } as unknown as ViewStyle;
+const privacyLinkStyle: React.CSSProperties = {
+  alignSelf: 'center',
+  color: COLORS.muted,
+  fontSize: fontSize.sm,
+  marginTop: space.md,
+};
 
 function LoginCard(props: LoginCardProps): React.JSX.Element {
   const stacked = useWindowDimensions().width < STACKED_BREAKPOINT;
   return (
-    <View style={stacked ? styles.pageStacked : styles.page}>
+    <View style={stacked ? [styles.pageStacked, webScroll] : styles.page}>
       <LoginHero
         headline={props.t('auth.login.heroTitle')}
         label={props.t('auth.login.hero')}
@@ -108,56 +116,56 @@ function LoginCard(props: LoginCardProps): React.JSX.Element {
         stacked={stacked}
         title={props.t('app.title')}
       />
-      <View style={styles.formSide}>
-      <View style={styles.card}>
-        <Text style={styles.title}>{props.t('auth.login.title')}</Text>
-        <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
-        {props.sessionExpired ? (
-          <Text accessibilityRole={ALERT_ROLE} style={styles.sessionExpired}>
-            {props.t('auth.login.sessionExpired')}
-          </Text>
-        ) : null}
-        <TextField
-          {...EMAIL_PROPS}
-          containerStyle={styles.field}
-          error={props.emailError}
-          label={props.t('auth.login.email.placeholder')}
-          onChangeText={props.setEmail}
-          onSubmitEditing={props.onLogin}
-          value={props.email}
-        />
-        <TextField
-          containerStyle={styles.field}
-          label={props.t('auth.login.password.placeholder')}
-          onChangeText={props.setPassword}
-          onSubmitEditing={props.onLogin}
-          secureTextEntry
-          value={props.password}
-        />
-        {props.error ? (
-          <Text accessibilityRole={ALERT_ROLE} style={styles.error}>
-            {props.error}
-          </Text>
-        ) : null}
-        {props.resetNotice ? (
-          <Text style={props.resetNotice.isError ? styles.error : styles.notice}>{props.resetNotice.text}</Text>
-        ) : null}
-        <Button
-          fullWidth
-          label={props.isLoading ? props.t('auth.login.submitting') : props.t('auth.login.submit')}
-          loading={props.isLoading}
-          onPress={props.onLogin}
-        />
-        <Button
-          label={props.t('auth.login.forgot')}
-          onPress={props.onForgotPassword}
-          style={styles.forgotLink}
-          variant={VARIANT_GHOST}
-        />
-        <Link style={styles.privacyLink} to={'/privacidad'}>
-          {props.t('auth.login.privacy')}
-        </Link>
-      </View>
+      <View style={[styles.formSide, webScroll]}>
+        <View style={styles.card}>
+          <Text style={styles.title}>{props.t('auth.login.title')}</Text>
+          <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
+          {props.sessionExpired ? (
+            <Text accessibilityRole={ALERT_ROLE} style={styles.sessionExpired}>
+              {props.t('auth.login.sessionExpired')}
+            </Text>
+          ) : null}
+          <TextField
+            {...EMAIL_PROPS}
+            containerStyle={styles.field}
+            error={props.emailError}
+            label={props.t('auth.login.email.placeholder')}
+            onChangeText={props.setEmail}
+            onSubmitEditing={props.onLogin}
+            value={props.email}
+          />
+          <TextField
+            containerStyle={styles.field}
+            label={props.t('auth.login.password.placeholder')}
+            onChangeText={props.setPassword}
+            onSubmitEditing={props.onLogin}
+            secureTextEntry
+            value={props.password}
+          />
+          {props.error ? (
+            <Text accessibilityRole={ALERT_ROLE} style={styles.error}>
+              {props.error}
+            </Text>
+          ) : null}
+          {props.resetNotice ? (
+            <Text style={props.resetNotice.isError ? styles.error : styles.notice}>{props.resetNotice.text}</Text>
+          ) : null}
+          <Button
+            fullWidth
+            label={props.isLoading ? props.t('auth.login.submitting') : props.t('auth.login.submit')}
+            loading={props.isLoading}
+            onPress={props.onLogin}
+          />
+          <Button
+            label={props.t('auth.login.forgot')}
+            onPress={props.onForgotPassword}
+            style={styles.forgotLink}
+            variant={VARIANT_GHOST}
+          />
+          <Link style={privacyLinkStyle} to={'/privacidad'}>
+            {props.t('auth.login.privacy')}
+          </Link>
+        </View>
       </View>
     </View>
   );
@@ -224,7 +232,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     minWidth: 0,
-    overflow: 'auto',
     padding: space.xl,
   },
   hero: {
@@ -286,12 +293,6 @@ const styles = StyleSheet.create({
     fontSize: fontSize.sm,
     marginBottom: space.sm,
   },
-  privacyLink: {
-    alignSelf: 'center',
-    color: COLORS.muted,
-    fontSize: fontSize.sm,
-    marginTop: space.md,
-  },
   page: {
     backgroundColor: COLORS.page,
     flex: 1,
@@ -300,7 +301,6 @@ const styles = StyleSheet.create({
   pageStacked: {
     backgroundColor: COLORS.page,
     flex: 1,
-    overflow: 'auto',
   },
   sessionExpired: {
     color: COLORS.error,

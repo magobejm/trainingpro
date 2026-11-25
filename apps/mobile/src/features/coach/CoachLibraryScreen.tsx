@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { FlatList, Image, Linking, Text, View } from 'react-native';
+import { FlatList, Image, Linking, RefreshControl, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { COACH_LIBRARY_PATHS, type CoachBlockKind } from '@trainerpro/shared';
+import { COACH_LIBRARY_PATHS, isHttpUrl, type CoachBlockKind } from '@trainerpro/shared';
 import { useCoachQuery, useCoachWrite } from '../../data/hooks/useCoachData';
 import { useCoachDraft } from '../../data/hooks/useCoachDraft';
 import {
@@ -62,6 +62,7 @@ export function CoachLibraryScreen({ initialCategory, onPick, onBack }: CoachLib
     <FlatList
       style={ui.page}
       contentContainerStyle={ui.content}
+      refreshControl={<RefreshControl onRefresh={() => void query.refetch()} refreshing={query.isRefetching} />}
       data={items}
       keyExtractor={(item) => item.id}
       ListHeaderComponent={
@@ -211,7 +212,7 @@ function LibraryItemCard({
       {item.mediaUrl || item.media?.url ? (
         <Image accessibilityLabel={item.name} source={{ uri: item.mediaUrl ?? item.media?.url }} style={libraryImage} />
       ) : null}
-      {item.youtubeUrl ? (
+      {isHttpUrl(item.youtubeUrl) ? (
         <CoachButton label={t('coachWorkspace.video')} onPress={() => void Linking.openURL(item.youtubeUrl!)} />
       ) : null}
       {onPick ? <CoachButton label={t('coachWorkspace.choose')} onPress={() => onPick(item, category)} /> : null}

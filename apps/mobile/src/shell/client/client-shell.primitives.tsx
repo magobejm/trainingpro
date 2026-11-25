@@ -1,5 +1,6 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
 
@@ -17,9 +18,15 @@ export function AvatarImage(props: { avatarUrl: null | string; size: number }): 
 }
 
 export function OverlayBackHeader(props: { onClose: () => void; title?: string }): React.JSX.Element {
+  const { t } = useTranslation();
   return (
     <View style={s.overlayHeader}>
-      <Pressable onPress={props.onClose} style={s.backBtn}>
+      <Pressable
+        accessibilityLabel={t('mobile.a11y.back')}
+        accessibilityRole="button"
+        onPress={props.onClose}
+        style={s.backBtn}
+      >
         <Text style={s.backIcon}>{'←'}</Text>
       </Pressable>
       {props.title ? <Text style={s.overlayTitle}>{props.title}</Text> : null}

@@ -31,6 +31,7 @@ export function HomeNeatCard(props: { neats: ClientRoutineNeat[] | undefined }):
               borderRadius: LIGHT.radiusMd,
               flexDirection: 'row',
               gap: 8,
+              minHeight: 44,
               padding: 12,
             }}
           >

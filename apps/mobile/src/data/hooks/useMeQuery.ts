@@ -86,7 +86,7 @@ function normalizeRoles(input: string[], activeRole: ActiveRole): ActiveRole[] {
 }
 
 function fetchMe(accessToken: string, activeRole: ActiveRole): Promise<MeApiResponse> {
-  return createApiClient({ accessToken, activeRole }).get<MeApiResponse>('/users/me');
+  return createApiClient({ accessToken, activeRole, skipUnauthorizedHandler: true }).get<MeApiResponse>('/users/me');
 }
 
 function isRoleError(error: unknown): boolean {

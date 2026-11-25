@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ChatCallProposal, ChatMessage } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { readFrontEnv } from '../env';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type { ChatCallProposal, ChatMessage };
 
@@ -152,13 +152,4 @@ export function useUploadPolicyMutation() {
       return createApiClient(auth).post<UploadPolicy>('/files/upload-policy', input);
     },
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }

@@ -1,7 +1,7 @@
 import { useFeedbackMutation } from './useFeedbackMutation';
 import { useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 /* ── Types ── */
 
@@ -194,12 +194,6 @@ async function fetchRoutineObjectives(auth: Auth): Promise<RoutineObjectiveView[
 }
 
 /* ── Auth helper ── */
-
-function useAuth() {
-  const accessToken = useAuthStore((s) => s.accessToken);
-  const activeRole = useAuthStore((s) => s.activeRole);
-  return accessToken && activeRole ? { accessToken, activeRole } : null;
-}
 
 /* ── API calls ── */
 

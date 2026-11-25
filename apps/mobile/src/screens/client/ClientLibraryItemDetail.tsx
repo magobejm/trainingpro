@@ -31,7 +31,12 @@ export function LibraryItemDetail({ category, item, onClose }: Props): React.JSX
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>{item?.name ?? ''}</Text>
-          <Pressable onPress={onClose} style={styles.closeBtn}>
+          <Pressable
+            accessibilityLabel={t('mobile.a11y.close')}
+            accessibilityRole="button"
+            onPress={onClose}
+            style={styles.closeBtn}
+          >
             <Text style={styles.closeBtnText}>{'✕'}</Text>
           </Pressable>
         </View>
@@ -93,7 +98,7 @@ export function LibraryItemDetail({ category, item, onClose }: Props): React.JSX
 const styles = StyleSheet.create({
   body: { padding: 20 },
   bodyText: { color: LIGHT.text, fontSize: 14, lineHeight: 21, marginTop: 6 },
-  closeBtn: { padding: 8 },
+  closeBtn: { alignItems: 'center', justifyContent: 'center', minHeight: 44, minWidth: 44 },
   closeBtnText: { color: LIGHT.textMuted, fontSize: 20 },
   container: { backgroundColor: LIGHT.bgSoft, flex: 1 },
   fieldLabel: { color: LIGHT.textMuted, fontSize: 12, fontWeight: '700', textTransform: 'uppercase' },

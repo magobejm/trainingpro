@@ -72,24 +72,44 @@ export async function changeCurrentPassword(input: PasswordChangeInput): Promise
 }
 
 export async function logout(): Promise<void> {
-  await unregisterCurrentPushToken();
+  await unregisterCurrentPushToken().catch(() => undefined);
   refreshedAccessToken = null;
-  const { error } = await getSupabaseClient().auth.signOut({ scope: 'local' });
-  if (error) {
+  const failed = await getSupabaseClient()
+    .auth.signOut({ scope: 'local' })
+    .then(({ error }) => Boolean(error))
+    .catch(() => true);
+  if (failed) {
+    onLogoutCleanup?.();
     useAuthStore.getState().resetSession();
   }
 }
 
-export async function handleUnauthorized(): Promise<void> {
+let onLogoutCleanup: (() => void) | null = null;
+
+/** La limpieza de datos del usuario que debe ocurrir aunque signOut falle. */
+export function setLogoutCleanup(cleanup: (() => void) | null): void {
+  onLogoutCleanup = cleanup;
+}
+
+/**
+ * Responde a un 401. 
+equestToken es el token con el que se hizo la llamada: si ya no es el actual,
+ * otra llamada ya renovó la sesión y no hay nada que hacer. Devuelve true si se renovó el token.
+ */
+export async function handleUnauthorized(requestToken?: string): Promise<boolean> {
   const currentToken = useAuthStore.getState().accessToken;
+  if (requestToken !== undefined && requestToken !== currentToken) {
+    return false;
+  }
   if (!currentToken || currentToken === refreshedAccessToken) {
     await logout();
-    return;
+    return false;
   }
   const refreshed = await refreshOnce();
   if (!refreshed) {
     await logout();
   }
+  return refreshed;
 }
 
 function refreshOnce(): Promise<boolean> {

@@ -82,6 +82,16 @@ export const styles = StyleSheet.create({
     minWidth: 200,
     padding: space.md,
   },
+  columnStacked: {
+    marginRight: 0,
+    minWidth: 0,
+    width: '100%',
+  },
+  stackedColumns: {
+    gap: space.md,
+    paddingBottom: space.sm,
+    width: '100%',
+  },
   columnTitle: {
     color: colors.text,
     fontSize: fontSize.sm,

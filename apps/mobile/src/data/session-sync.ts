@@ -1,4 +1,6 @@
 import { clearCoachDrafts } from './coach-draft-storage';
+import { clearBought } from '../screens/client/shopping-storage';
+import { useSessionTimersStore } from '../store/session-timers.store';
 import type { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../store/auth.store';
 import { usePasswordRecoveryStore } from '../store/password-recovery.store';
@@ -78,12 +80,14 @@ function applyStoredSession(queryClient: QueryClient, event: string, session: St
   });
 }
 
-function signOutLocally(queryClient: QueryClient): void {
+export function signOutLocally(queryClient: QueryClient): void {
   clearUserData(queryClient);
   useAuthStore.getState().resetSession();
 }
 
-function clearUserData(queryClient: QueryClient): void {
+export function clearUserData(queryClient: QueryClient): void {
+  useSessionTimersStore.setState({ bySession: {} });
+  clearBought();
   void clearCoachDrafts().catch(() => undefined);
   void clearPersistedQueryCache(useAuthStore.getState().userId);
   queryClient.clear();

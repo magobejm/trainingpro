@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type CreateClientInput = {
   birthDate?: null | string;
@@ -36,15 +36,6 @@ export function useArchiveClientMutation() {
   });
 }
 
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
-}
-
 async function archiveClient(auth: ReturnType<typeof useAuth>, clientId: string): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
@@ -52,10 +43,7 @@ async function archiveClient(auth: ReturnType<typeof useAuth>, clientId: string)
   await createApiClient(auth).delete<{ status: string }>(`/clients/${clientId}`);
 }
 
-async function createClient(
-  auth: ReturnType<typeof useAuth>,
-  input: CreateClientInput,
-): Promise<void> {
+async function createClient(auth: ReturnType<typeof useAuth>, input: CreateClientInput): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

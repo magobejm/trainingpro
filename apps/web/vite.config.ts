@@ -22,6 +22,19 @@ export default defineConfig({
             return 'icons';
           }
           if (id.includes('node_modules')) {
+            const normalized = id.replace(/\\/g, '/');
+            if (
+              /node_modules\/(react-native-web|@react-native|styleq|inline-style-prefixer|css-in-js-utils|postcss-value-parser)\//.test(
+                normalized,
+              )
+            ) {
+              return 'react-native-web';
+            }
+            if (/node_modules\/(react|react-dom|scheduler)\//.test(normalized)) return 'react';
+            if (normalized.includes('node_modules/@tanstack/')) return 'react-query';
+            if (/node_modules\/(react-router|react-router-dom)\//.test(normalized)) return 'react-router';
+            if (/node_modules\/(i18next|react-i18next)\//.test(normalized)) return 'i18next';
+            if (normalized.includes('node_modules/@supabase/')) return 'supabase';
             return 'vendor';
           }
           return undefined;

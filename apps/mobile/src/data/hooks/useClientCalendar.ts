@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { createApiClient } from '../api-client';
 import { refreshCalendarOnSkipConflict } from '../client-session-skip-error';
 import { QUERY_CACHE_MS } from '../query-persistence';
@@ -182,13 +182,6 @@ export function useClientDayNotes(query: string) {
     queryFn: ({ pageParam }) => fetchClientDayNotes(auth, term, pageParam),
     queryKey: ['clients', 'me', 'notes', term],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchClientDayNotes(

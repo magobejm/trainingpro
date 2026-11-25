@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { readFrontEnv } from '../env';
 
 type ExportReportPdfInput = {
@@ -15,19 +15,7 @@ export function useExportReportPdfMutation() {
   });
 }
 
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
-}
-
-async function downloadReportPdf(
-  auth: ReturnType<typeof useAuth>,
-  input: ExportReportPdfInput,
-): Promise<void> {
+async function downloadReportPdf(auth: ReturnType<typeof useAuth>, input: ExportReportPdfInput): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }

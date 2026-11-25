@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Text, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { Button, TextField, colors, fontSize, space } from '@trainerpro/ui';
+import { colors, fontSize, radius, space } from '@trainerpro/ui';
 import { createApiClient } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -13,10 +13,14 @@ type CoachMetric = {
   incidentResponseHours: number | null;
 };
 type Metrics = { coaches: CoachMetric[] };
-type Billing = { activeClients: number; clientsToNext: number | null; estimatedMonthly: number | null };
+type Billing = {
+  activeClients: number;
+  billableMonthly: number;
+  clientLimit: number;
+  estimatedMonthly: number;
+};
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
-const NUMERIC = 'numeric' as const;
 
 export function CoachMetricsCard(props: { t: Translate }): React.JSX.Element {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -44,9 +48,6 @@ export function CoachMetricsCard(props: { t: Translate }): React.JSX.Element {
 
 export function BillingEstimateCard(props: { t: Translate }): React.JSX.Element {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const [from, setFrom] = useState('1');
-  const [to, setTo] = useState('10');
-  const [price, setPrice] = useState('29');
   const query = useQuery({
     enabled: Boolean(accessToken),
     queryFn: () =>
@@ -55,23 +56,129 @@ export function BillingEstimateCard(props: { t: Translate }): React.JSX.Element 
       ),
     queryKey: ['org', 'billing-estimate', accessToken],
   });
-  const save = async () => {
-    await createApiClient({ accessToken: accessToken ?? '', activeRole: 'admin' }).put('/org/subscription/pricing-tiers', {
-      tiers: [{ fromClients: Number(from), monthlyPrice: Number(price), toClients: to ? Number(to) : null }],
-    });
-    await query.refetch();
-  };
   const billing = query.data;
+  const currency = props.t('admin.billing.currency');
   return (
-    <View style={{ gap: space.xs, marginBottom: space.md }}>
-      <Text style={{ color: colors.text, fontSize: fontSize.md }}>{props.t('admin.billing.title')}</Text>
-      <Text style={{ color: colors.textMuted, fontSize: fontSize.sm }}>
-        {props.t('admin.billing.estimate', { price: billing?.estimatedMonthly ?? '—' })}
-      </Text>
-      <TextField keyboardType={NUMERIC} label={props.t('admin.billing.from')} onChangeText={setFrom} value={from} />
-      <TextField keyboardType={NUMERIC} label={props.t('admin.billing.to')} onChangeText={setTo} value={to} />
-      <TextField keyboardType={NUMERIC} label={props.t('admin.billing.price')} onChangeText={setPrice} value={price} />
-      <Button label={props.t('admin.billing.save')} onPress={() => void save()} />
+    <View style={billingStyles.card}>
+      <Text style={billingStyles.title}>{props.t('admin.billing.title')}</Text>
+      <Text style={billingStyles.subtitle}>{props.t('admin.billing.subtitle')}</Text>
+      <View style={billingStyles.row}>
+        <PriceTile
+          amount={billing?.estimatedMonthly}
+          currency={currency}
+          hint={billing ? props.t('admin.billing.estimateHint', { count: billing.clientLimit }) : '—'}
+          label={props.t('admin.billing.estimateLabel')}
+          tone="estimate"
+        />
+        <PriceTile
+          amount={billing?.billableMonthly}
+          currency={currency}
+          hint={billing ? props.t('admin.billing.billableHint', { count: billing.activeClients }) : '—'}
+          label={props.t('admin.billing.billableLabel')}
+          tone="billable"
+        />
+      </View>
     </View>
   );
 }
+
+function PriceTile(props: {
+  amount: number | undefined;
+  currency: string;
+  hint: string;
+  label: string;
+  tone: 'billable' | 'estimate';
+}): React.JSX.Element {
+  const ready = props.amount !== undefined;
+  const amount = ready ? String(props.amount) : '—';
+  return (
+    <View
+      accessibilityLabel={`${props.label}: ${amount} ${props.currency}. ${props.hint}`}
+      style={[billingStyles.tile, props.tone === 'billable' ? billingStyles.tileBillable : billingStyles.tileEstimate]}
+    >
+      <Text style={billingStyles.tileLabel}>{props.label}</Text>
+      <View style={billingStyles.amountRow}>
+        <Text style={[billingStyles.amount, props.tone === 'billable' && billingStyles.amountBillable]}>{amount}</Text>
+        <Text style={billingStyles.currency}>{props.currency}</Text>
+      </View>
+      <Text style={billingStyles.tileHint}>{props.hint}</Text>
+    </View>
+  );
+}
+
+const billingStyles = StyleSheet.create({
+  amount: {
+    color: colors.text,
+    fontSize: fontSize.xxxl,
+    fontVariant: ['tabular-nums'],
+    fontWeight: '800',
+    lineHeight: 40,
+  },
+  amountBillable: {
+    color: colors.primary,
+  },
+  amountRow: {
+    alignItems: 'flex-end',
+    flexDirection: 'row',
+    gap: space.xs,
+    marginTop: space.sm,
+  },
+  card: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    padding: space.xl,
+    width: '100%',
+  },
+  currency: {
+    color: colors.textMuted,
+    fontSize: fontSize.lg,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: space.md,
+    marginTop: space.lg,
+  },
+  subtitle: {
+    color: colors.textMuted,
+    fontSize: fontSize.sm,
+    marginTop: space.xs,
+  },
+  tile: {
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flexBasis: 220,
+    flexGrow: 1,
+    padding: space.lg,
+  },
+  tileBillable: {
+    backgroundColor: colors.primarySoft,
+    borderColor: colors.primaryBorder,
+  },
+  tileEstimate: {
+    backgroundColor: colors.surfaceMuted,
+    borderColor: colors.border,
+  },
+  tileHint: {
+    color: colors.text,
+    fontSize: fontSize.sm,
+    fontWeight: '600',
+    marginTop: space.sm,
+  },
+  tileLabel: {
+    color: colors.textMuted,
+    fontSize: fontSize.xs,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
+  },
+  title: {
+    color: colors.text,
+    fontSize: fontSize.xl,
+    fontWeight: '800',
+  },
+});

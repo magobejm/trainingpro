@@ -1,3 +1,4 @@
+import { coachQueryRootsForPath } from './coach-query-roots';
 import { allSessionPages } from './recent-session-pages';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
@@ -76,11 +77,11 @@ export function useCoachWrite<T = unknown>() {
         running.current = false;
       }
     },
-    onSuccess: () => {
+    onSuccess: (_data, { path }) => {
       toast.success(t('coachWorkspace.saved'));
       // The server can update sessions, calls and assigned plans in a single operation.
       void client.invalidateQueries({
-        predicate: (q) => ['coach', 'clients', 'chat-messages', 'calendar', 'nutrition'].includes(String(q.queryKey[0])),
+        predicate: (q) => coachQueryRootsForPath(path).includes(String(q.queryKey[0])),
       });
     },
     onError: (error) => toast.error(coachWriteErrorMessage(error, t)),

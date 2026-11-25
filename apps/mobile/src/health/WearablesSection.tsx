@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { AppState, Platform, Pressable, Text, View, Linking } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { isHttpUrl } from '@trainerpro/shared';
 import { createApiClient } from '../data/api-client';
 import { useAuthStore } from '../store/auth.store';
 import { s } from '../shell/client/client-shell.styles';
@@ -163,7 +164,7 @@ async function connect(
       `/clients/me/integrations/${provider}/authorize`,
       {},
     );
-    if (!result.url) {
+    if (!isHttpUrl(result.url) || !/^https:/i.test(result.url)) {
       setNotice(t('mobile.client.wearables.unconfigured'));
       return;
     }

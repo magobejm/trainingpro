@@ -27,13 +27,7 @@ type PerformedItem = {
   recordE1rm?: number | null;
 };
 import { createApiClient } from '../../../data/api-client';
-import { useAuthStore } from '../../../store/auth.store';
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  return accessToken && activeRole ? { accessToken, activeRole } : null;
-}
+import { useAuth } from '../../../data/hooks/use-api-auth';
 
 type Auth = NonNullable<ReturnType<typeof useAuth>>;
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useClientDayNotes, type ClientDayNoteItem } from '../../data/hooks/useClientCalendar';
@@ -39,12 +39,14 @@ export function ClientNotesScreen(props: Props): React.JSX.Element {
       hasNextPage={notes.hasNextPage}
       isError={notes.isError}
       isLoading={notes.isLoading}
+      isRefreshing={notes.isRefetching && !notes.isFetchingNextPage}
       items={items}
       onClose={props.onClose}
       onEndReached={() => {
         if (notes.hasNextPage && !notes.isFetchingNextPage) void notes.fetchNextPage();
       }}
       onOpen={setEditing}
+      onRefresh={() => void notes.refetch()}
       onSearch={setDraft}
       query={query}
     />
@@ -60,10 +62,12 @@ function NotesList(props: {
   hasNextPage: boolean;
   isError: boolean;
   isLoading: boolean;
+  isRefreshing: boolean;
   items: ClientDayNoteItem[];
   onClose: () => void;
   onEndReached: () => void;
   onOpen: (date: string) => void;
+  onRefresh: () => void;
   onSearch: (value: string) => void;
   query: string;
 }): React.JSX.Element {
@@ -85,8 +89,10 @@ function NotesList(props: {
       <NotesBody
         isError={props.isError}
         isLoading={props.isLoading}
+        isRefreshing={props.isRefreshing}
         onEndReached={props.onEndReached}
         onOpen={props.onOpen}
+        onRefresh={props.onRefresh}
         query={props.query}
         rows={rows}
         showFooter={props.hasNextPage}
@@ -98,8 +104,10 @@ function NotesList(props: {
 function NotesBody(props: {
   isError: boolean;
   isLoading: boolean;
+  isRefreshing: boolean;
   onEndReached: () => void;
   onOpen: (date: string) => void;
+  onRefresh: () => void;
   query: string;
   rows: NoteRow[];
   showFooter: boolean;
@@ -118,6 +126,7 @@ function NotesBody(props: {
       ListFooterComponent={props.showFooter ? <ActivityIndicator color={SPINNER_COLOR} style={styles.footer} /> : null}
       onEndReached={props.onEndReached}
       onEndReachedThreshold={0.4}
+      refreshControl={<RefreshControl onRefresh={props.onRefresh} refreshing={props.isRefreshing} />}
       renderItem={({ item }) => <NoteRowView onOpen={props.onOpen} row={item} />}
     />
   );

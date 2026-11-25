@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { StrengthPlanListItem } from '@trainerpro/shared';
+import { strengthPlanListResponseSchema, type StrengthPlanListItem } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type FieldModeInput = {
   fieldKey: string;
@@ -36,10 +36,6 @@ export type UpsertTemplateInput = {
 };
 
 export type PlanTemplateView = StrengthPlanListItem;
-
-type ListTemplatesResponse = {
-  items: PlanTemplateView[];
-};
 
 export function usePlanTemplatesQuery(options?: { summary?: boolean }) {
   const auth = useAuth();
@@ -86,15 +82,6 @@ export function useDeletePlanTemplateMutation() {
   });
 }
 
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
-}
-
 async function createTemplate(auth: ReturnType<typeof useAuth>, input: UpsertTemplateInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
@@ -109,8 +96,9 @@ async function listTemplates(
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
-  const response = await createApiClient(auth).get<ListTemplatesResponse>(
+  const response = await createApiClient(auth).getParsed(
     '/plans/templates/strength',
+    strengthPlanListResponseSchema,
     options?.summary ? { summary: 'true' } : undefined,
   );
   return response.items;

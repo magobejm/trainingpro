@@ -2,7 +2,8 @@ import { useMemo, useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../../data/api-client';
-import { useAuth } from '../../data/hooks/library-mutations.helpers';
+import { useAuth } from '../../data/hooks/use-api-auth';
+
 import { useAllCatalogsQuery, UnifiedExerciseItem, UnifiedExercisesFilter } from '../../data/hooks/useUnifiedLibraryQuery';
 import { useUnifiedExercisesPagedQuery } from '../../data/hooks/usePagedResources';
 import { loadNextPage } from '../../data/hooks/usePagedList';
@@ -16,7 +17,6 @@ import {
 import type { CopyTarget } from '../../data/hooks/useCopyLibraryItem';
 import { CATEGORIES, CategoryKey } from './UnifiedExerciseLibraryScreen.components';
 import { LIST_KEYS, readListContext, writeListContext } from '../../layout/list-context';
-import { useDeferredDelete } from '../../layout/useDeferredDelete';
 import { formatLibraryDeleteError, runLibraryDelete } from './library-delete';
 
 // eslint-disable-next-line max-lines-per-function
@@ -70,7 +70,6 @@ export function useLibraryScreenState() {
   }, [expandedCategory, search, selectedCategoryFilters, selectedEquipment]);
 
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
-  const deferred = useDeferredDelete();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [itemToEdit, setItemToEdit] = useState<UnifiedExerciseItem | null>(null);
@@ -135,44 +134,49 @@ export function useLibraryScreenState() {
     });
   }, []);
 
-  const setPendingDelete = useCallback(
-    (item: { id: string; kind: string } | null) => {
-      if (!item) return;
-      const name =
-        exercises?.find((row) => row.id === item.id && row.kind === item.kind)?.name ??
-        t('coach.library.exercises.actions.deleteInRoutineFallbackName');
-      deferred.schedule({
-        formatError: (error) => formatLibraryDeleteError(error, name, t),
-        id: `${item.kind}:${item.id}`,
-        label: t('coach.library.toast.deletedUndo', { name }),
-        run: () =>
-          runLibraryDelete(item.kind, item.id, {
-            cardio: deleteCardio.mutateAsync,
-            exercise: deleteExercise.mutateAsync,
-            isometric: deleteIsometric.mutateAsync,
-            plio: deletePlio.mutateAsync,
-            sport: deleteSport.mutateAsync,
-            warmup: deleteMobility.mutateAsync,
-          }),
-      });
-    },
-    [
-      deferred,
-      deleteCardio.mutateAsync,
-      deleteExercise.mutateAsync,
-      deleteIsometric.mutateAsync,
-      deleteMobility.mutateAsync,
-      deletePlio.mutateAsync,
-      deleteSport.mutateAsync,
-      exercises,
-      t,
-    ],
-  );
-  const visibleExercises = useMemo(
-    () => (exercises ?? []).filter((item) => !deferred.pending.has(`${item.kind}:${item.id}`)),
-    [deferred.pending, exercises],
-  );
+  const [pendingDelete, setPendingDeleteState] = useState<{ id: string; kind: string } | null>(null);
+  const [deleteError, setDeleteError] = useState<null | string>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const pendingDeleteName = pendingDelete
+    ? (exercises?.find((row) => row.id === pendingDelete.id && row.kind === pendingDelete.kind)?.name ??
+      t('coach.library.exercises.actions.deleteInRoutineFallbackName'))
+    : '';
 
+  const setPendingDelete = useCallback((item: { id: string; kind: string } | null) => {
+    setDeleteError(null);
+    setPendingDeleteState(item);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await runLibraryDelete(pendingDelete.kind, pendingDelete.id, {
+        cardio: deleteCardio.mutateAsync,
+        exercise: deleteExercise.mutateAsync,
+        isometric: deleteIsometric.mutateAsync,
+        plio: deletePlio.mutateAsync,
+        sport: deleteSport.mutateAsync,
+        warmup: deleteMobility.mutateAsync,
+      });
+      setPendingDeleteState(null);
+    } catch (error) {
+      setDeleteError(formatLibraryDeleteError(error, pendingDeleteName, t));
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [
+    deleteCardio.mutateAsync,
+    deleteExercise.mutateAsync,
+    deleteIsometric.mutateAsync,
+    deleteMobility.mutateAsync,
+    deletePlio.mutateAsync,
+    deleteSport.mutateAsync,
+    pendingDelete,
+    pendingDeleteName,
+    t,
+  ]);
   return {
     t,
     catalogs,
@@ -195,7 +199,12 @@ export function useLibraryScreenState() {
     setDetailVisible,
     itemForDetail,
     setItemForDetail,
-    exercises: visibleExercises,
+    exercises,
+    pendingDelete,
+    pendingDeleteName,
+    deleteError,
+    isDeleting,
+    confirmDelete,
     isListError: exercisesQuery.isError,
     isLoading,
     listError: exercisesQuery.error,

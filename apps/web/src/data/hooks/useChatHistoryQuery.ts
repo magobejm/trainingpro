@@ -6,6 +6,7 @@ import {
   fetchChatRecent,
   mergeChatHistory,
   type ChatHistory,
+  chatMessageListSchema,
   type ChatMessage,
 } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
@@ -22,7 +23,10 @@ export function useChatHistoryQuery(threadId: string) {
     if (!accessToken || !activeRole || !threadId) throw new Error('Missing authenticated context');
     const params = new URLSearchParams({ threadId });
     if (beforeId) params.set('beforeId', beforeId);
-    return createApiClient({ accessToken, activeRole }).get<ChatMessage[]>('/chat/messages?' + params);
+    return createApiClient({ accessToken, activeRole }).getParsed(
+      '/chat/messages?' + params,
+      chatMessageListSchema,
+    ) as Promise<ChatMessage[]>;
   };
   const query = useQuery<ChatHistory>({
     enabled,

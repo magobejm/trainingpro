@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { deleteItem, updateItem, useAuth, writeItem } from './library-mutations.helpers';
+import { deleteItem, updateItem, writeItem } from './library-mutations.helpers';
+import { useAuth } from './use-api-auth';
 
 export type FoodWriteInput = {
   caloriesKcal?: null | number;

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type OrgOccupancy = {
   activeClientCount: number;
@@ -29,18 +29,9 @@ export function useUpdateOrgClientLimitMutation() {
     mutationFn: (clientLimit: number) =>
       createApiClient(auth).patch<OrgOccupancy>('/org/subscription/limit', { clientLimit }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['org', 'subscription'] });
+      void queryClient.invalidateQueries({ queryKey: ['org'] });
     },
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }
 
 function useAuthStrict() {

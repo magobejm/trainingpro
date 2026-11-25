@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import { useClientThreadQuery, useSendChatMessageMutation } from '../../data/hooks/useChat';
 import { useArchiveIncidentMutation, useIncidentsListQuery, type IncidentListItem } from '../../data/hooks/useIncidents';
+import { QueryErrorNotice } from './QueryErrorNotice';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { showError, showToast } from '../../shell/client/feedback';
 import { ConfirmModal } from '../../theme/ConfirmModal';
@@ -60,13 +61,17 @@ function HistoryTab({ onCreate }: { onCreate: () => void }): React.JSX.Element {
       <View style={styles.historyHeader}>
         <Text style={styles.historyTitle}>{t('client.incidents.historyTitle')}</Text>
       </View>
-      {query.isPending ? <Text style={styles.empty}>{'...'}</Text> : null}
-      {!query.isPending && items.length === 0 ? <Text style={styles.empty}>{t('client.incidents.empty')}</Text> : null}
-      {!query.isPending && items.length > 0 ? (
+      {query.isPending && !query.isError ? <ActivityIndicator style={styles.empty} /> : null}
+      {query.isError && items.length === 0 ? <QueryErrorNotice onRetry={() => void query.refetch()} /> : null}
+      {!query.isPending && !query.isError && items.length === 0 ? (
+        <Text style={styles.empty}>{t('client.incidents.empty')}</Text>
+      ) : null}
+      {items.length > 0 ? (
         <FlatList
           contentContainerStyle={styles.list}
           data={items}
           keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl onRefresh={() => void query.refetch()} refreshing={query.isRefetching} />}
           renderItem={({ item }) => (
             <IncidentCard
               item={item}
@@ -197,10 +202,20 @@ function IncidentCard(props: { item: IncidentListItem; onDelete: () => void; onF
         </Text>
       ) : null}
       <View style={styles.cardActions}>
-        <Pressable onPress={props.onForward} style={styles.iconBtn}>
+        <Pressable
+          accessibilityLabel={t('mobile.a11y.forward')}
+          accessibilityRole="button"
+          onPress={props.onForward}
+          style={styles.iconBtn}
+        >
           <Text style={[styles.iconBtnText, { color: tone.text }]}>{FORWARD_ICON}</Text>
         </Pressable>
-        <Pressable onPress={props.onDelete} style={styles.iconBtn}>
+        <Pressable
+          accessibilityLabel={t('mobile.a11y.delete')}
+          accessibilityRole="button"
+          onPress={props.onDelete}
+          style={styles.iconBtn}
+        >
           <Text style={styles.trashIcon}>{TRASH_ICON}</Text>
         </Pressable>
       </View>
@@ -284,7 +299,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   iconBtn: {
-    padding: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+    minWidth: 44,
   },
   iconBtnText: {
     fontSize: 18,

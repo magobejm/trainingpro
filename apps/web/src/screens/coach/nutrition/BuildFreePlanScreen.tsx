@@ -15,7 +15,7 @@ import type { FreePlanContent, FreePlanItem, PlanSetupData } from './nutrition.t
 import { FREE_PLAN_COLUMNS } from './nutrition.types';
 import { NutritionCrumbBar } from './nutrition-crumbs';
 import { styles } from './nutrition.styles';
-import { Button, useToast } from '@trainerpro/ui';
+import { Button, useBreakpoint, useToast } from '@trainerpro/ui';
 type Props = {
   crumbs: Crumb[];
   onSaved: (planId: string) => void;
@@ -56,8 +56,9 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
   };
   const previewDisabled = Boolean(props.planId && (plansQuery.isLoading || plansQuery.isError || !savedPlan));
   const layoutStyle1 = getLayoutStyle1;
+  const stacked = useBreakpoint() !== 'lg';
   return (
-    <ScrollView contentContainerStyle={styles.container} horizontal>
+    <ScrollView contentContainerStyle={styles.container}>
       <View style={layoutStyle1}>
         <NutritionCrumbBar crumbs={props.crumbs} label={t('app.breadcrumb')} />
         <Text style={styles.headerTitle}>{props.planName}</Text>
@@ -68,9 +69,9 @@ export function BuildFreePlanScreen(props: Props): React.JSX.Element {
           isDraft={isDraft}
           disabled={previewDisabled || mealsQuery.isLoading || mealsQuery.isError}
         />
-        <ScrollView horizontal contentContainerStyle={styles.horizontalScroll}>
+        <ScrollView horizontal={!stacked} contentContainerStyle={stacked ? styles.stackedColumns : styles.horizontalScroll}>
           {FREE_PLAN_COLUMNS.map((column) => (
-            <View key={column} style={styles.column}>
+            <View key={column} style={[styles.column, stacked && styles.columnStacked]}>
               <Text style={styles.columnTitle}>{t(`coach.nutrition.categories.${column}`)}</Text>
               {(content.columns[column] ?? []).map((item) => (
                 <View key={item.id} style={styles.listItem}>

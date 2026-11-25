@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import * as Linking from 'expo-linking';
 import { applyRecoveryUrl } from '../store/password-recovery.store';
+import { isNativeRecoveryUrl } from './password-reset-redirect';
 
 export function useRecoveryLinks(): void {
   useEffect(() => {
@@ -30,11 +31,11 @@ function listenToNativeLinks(): () => void {
   let active = true;
   void Linking.getInitialURL().then((url) => {
     if (active) {
-      applyRecoveryUrl(url);
+      if (isNativeRecoveryUrl(url)) applyRecoveryUrl(url);
     }
   });
   const subscription = Linking.addEventListener('url', (event) => {
-    applyRecoveryUrl(event.url);
+    if (isNativeRecoveryUrl(event.url)) applyRecoveryUrl(event.url);
   });
   return () => {
     active = false;

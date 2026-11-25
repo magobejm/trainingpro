@@ -22,6 +22,42 @@ function restoredState<T>(raw: string | null, key: string, initial: T, baseline?
     ready: true,
   };
 }
+const DRAFT_SAVE_DELAY_MS = 400;
+
+/** Agrupa las escrituras del borrador: guarda 400 ms después de la última edición. */
+function useDeferredDraftSave<T>(
+  live: { current: DraftState<T> },
+  rawValue: { current: string | null },
+  generation: { current: number },
+  onError: () => void,
+) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingSave = useRef(false);
+  const cancelPending = () => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    pendingSave.current = false;
+  };
+  const flush = () => {
+    const shouldSave = pendingSave.current;
+    cancelPending();
+    const current = live.current;
+    if (!shouldSave || !current.ready) return;
+    const expected = rawValue.current;
+    const raw = JSON.stringify({ version: 1, value: current.value, baseline: current.baseline });
+    rawValue.current = raw;
+    void saveCoachDraft(current.key, raw, generation.current, expected).catch(onError);
+  };
+  const flushPending = useRef(flush);
+  flushPending.current = flush;
+  const schedule = () => {
+    pendingSave.current = true;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => flushPending.current(), DRAFT_SAVE_DELAY_MS);
+  };
+  return { cancelPending, flush, flushPending, schedule };
+}
+
 export function useCoachDraft<T>(resource: string, initial: T, serverVersion?: string) {
   const { userId, activeRole } = useCoachAuth();
   const toast = useToast();
@@ -32,6 +68,8 @@ export function useCoachDraft<T>(resource: string, initial: T, serverVersion?: s
   const live = useRef(state);
   const rawValue = useRef<string | null>(null);
   const mounted = useRef(true);
+  const saver = useDeferredDraftSave(live, rawValue, generation, () => toast.error(t('coachWorkspace.draftError')));
+  const { cancelPending, flush, flushPending } = saver;
   const latest = useRef({ key, initial, serverVersion });
   latest.current = { key, initial, serverVersion };
   useEffect(() => {
@@ -54,10 +92,12 @@ export function useCoachDraft<T>(resource: string, initial: T, serverVersion?: s
       });
     return () => {
       active = false;
+      flushPending.current();
       mounted.current = false;
     };
   }, [key]);
   const persistState = async (next: DraftState<T>) => {
+    cancelPending();
     if (!mounted.current || live.current.key !== key || !live.current.ready) throw new Error(t('coachWorkspace.draftError'));
     const expected = rawValue.current;
     const raw = JSON.stringify({ version: 1, value: next.value, baseline: next.baseline });
@@ -72,9 +112,18 @@ export function useCoachDraft<T>(resource: string, initial: T, serverVersion?: s
     await persistState({ ...current, value });
   };
   const setValue = (next: SetStateAction<T>) => {
-    void persistValue(next).catch(() => toast.error(t('coachWorkspace.draftError')));
+    const current = live.current;
+    if (!mounted.current || current.key !== key || !current.ready) {
+      toast.error(t('coachWorkspace.draftError'));
+      return;
+    }
+    const value = typeof next === 'function' ? (next as (value: T) => T)(current.value) : next;
+    live.current = { ...current, value };
+    setState(live.current);
+    saver.schedule();
   };
   const clear = async (expectedValue = state.value) => {
+    flush();
     const snapshot = JSON.stringify({ version: 1, value: expectedValue, baseline: state.baseline });
     const removed = await removeCoachDraft(key, snapshot, generation.current);
     if (!removed || (live.current.key === key && JSON.stringify(live.current.value) !== JSON.stringify(expectedValue))) {

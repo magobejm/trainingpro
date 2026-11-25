@@ -5,24 +5,30 @@ import {
   emptyChatHistory,
   fetchChatRecent,
   mergeChatHistory,
+  chatMessageListSchema,
   type ChatHistory,
   type ChatMessage,
 } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
 import { useAuthStore } from '../../store/auth.store';
 
-export function useChatHistoryQuery(threadId: string) {
+export function useChatHistoryQuery(threadId: string, options: { polling?: boolean } = {}) {
+  const polling = options.polling ?? true;
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   const client = useQueryClient();
   const locks = useRef(new Set<string>());
   const queryKey = ['chat-messages', activeRole, threadId] as string[];
   const enabled = Boolean(accessToken && activeRole && threadId);
+  const pollMs = enabled && polling ? 10_000 : false;
   const fetchPage = async (beforeId?: string) => {
     if (!accessToken || !activeRole || !threadId) throw new Error('Missing authenticated context');
     const params = new URLSearchParams({ threadId });
     if (beforeId) params.set('beforeId', beforeId);
-    return createApiClient({ accessToken, activeRole }).get<ChatMessage[]>('/chat/messages?' + params);
+    return createApiClient({ accessToken, activeRole }).getParsed(
+      '/chat/messages?' + params,
+      chatMessageListSchema,
+    ) as Promise<ChatMessage[]>;
   };
   const query = useQuery<ChatHistory>({
     enabled,
@@ -30,7 +36,7 @@ export function useChatHistoryQuery(threadId: string) {
     queryFn: () => fetchChatRecent(fetchPage, client.getQueryData<ChatHistory>(queryKey)?.messages ?? []),
     structuralSharing: (previous, incoming) =>
       mergeChatHistory(previous as ChatHistory | undefined, incoming as ChatHistory),
-    refetchInterval: enabled ? 10_000 : false,
+    refetchInterval: pollMs,
     refetchIntervalInBackground: false,
   });
   const older = useMutation({

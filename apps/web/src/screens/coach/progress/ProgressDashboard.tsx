@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button } from '@trainerpro/ui';
 import type { ProgressExerciseRef } from '@trainerpro/shared';
 import { Breadcrumbs } from '../../../layout/Breadcrumbs';
 import { buildClientCrumbs, buildProgressDrillCrumbs } from '../../../layout/crumbs';
@@ -16,12 +15,14 @@ import { dashboardStyles as styles } from './dashboard.styles';
 export function ProgressDashboard(props: { onRouteChange?: (route: ShellRoute) => void }): React.JSX.Element {
   const { t } = useTranslation();
   const { clientId, clientDisplayName } = useProgressRouteClient();
+  const { onRouteChange } = props;
+  useEffect(() => {
+    if (!clientId) onRouteChange?.('coach.clients');
+  }, [clientId, onRouteChange]);
   if (!clientId)
     return (
       <View style={styles.page}>
-        <Text style={styles.heading}>{t('coach.progress.empty.title')}</Text>
-        <Text style={styles.muted}>{t('coach.progress.empty.subtitle')}</Text>
-        <Button label={t('common.back')} onPress={() => props.onRouteChange?.('coach.clients')} variant="secondary" />
+        <Text style={styles.muted}>{t('common.loading')}</Text>
       </View>
     );
   return <ClientDashboard key={clientId} clientId={clientId} clientName={clientDisplayName ?? ''} />;

@@ -45,7 +45,13 @@ function createQueryPersister(userId: string): Persister {
     },
     restoreClient: async () => {
       const raw = await storage.getItem(key);
-      return raw ? (JSON.parse(raw) as PersistedClient) : undefined;
+      if (!raw) return undefined;
+      try {
+        return JSON.parse(raw) as PersistedClient;
+      } catch {
+        await storage.removeItem(key);
+        return undefined;
+      }
     },
   };
 }

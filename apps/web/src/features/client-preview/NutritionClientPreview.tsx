@@ -21,6 +21,7 @@ import {
   DayMealsList,
   MacroTargetBars,
   clientPlanLight as LIGHT,
+  fontSize,
 } from '@trainerpro/ui';
 import { LoadingState } from '../../components/AsyncStatus';
 import { useLibraryFoodsQuery } from '../../data/hooks/useLibraryQuery';
@@ -244,14 +245,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 12,
   },
-  cardTitle: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  cardTitle: { color: LIGHT.textStrong, fontSize: fontSize.md, fontWeight: '800', marginBottom: 4 },
   dayButton: { paddingHorizontal: 12, paddingVertical: 8 },
   dayLabel: { color: LIGHT.textStrong, flex: 1, fontSize: 15, fontWeight: '800', textAlign: 'center' },
   dayRow: { alignItems: 'center', flexDirection: 'row', marginBottom: 12, marginHorizontal: 16 },
   description: { color: LIGHT.textMuted, fontSize: 13, marginBottom: 12, marginHorizontal: 16 },
-  empty: { color: LIGHT.textMuted, fontSize: 14, paddingVertical: 12, textAlign: 'center' },
-  item: { color: LIGHT.textStrong, fontSize: 14, paddingVertical: 6 },
-  planName: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '800', marginBottom: 8, marginHorizontal: 16 },
+  empty: { color: LIGHT.textMuted, fontSize: fontSize.sm, paddingVertical: 12, textAlign: 'center' },
+  item: { color: LIGHT.textStrong, fontSize: fontSize.sm, paddingVertical: 6 },
+  planName: { color: LIGHT.textStrong, fontSize: fontSize.lg, fontWeight: '800', marginBottom: 8, marginHorizontal: 16 },
   root: { paddingVertical: 12 },
   toggleBtn: {
     alignItems: 'center',

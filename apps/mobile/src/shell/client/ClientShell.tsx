@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { WorkoutGuideProvider } from '../../screens/client/WorkoutGuideContext';
 import { WorkoutHelpScreen } from '../../screens/client/WorkoutHelpScreen';
 import { ClientGlossaryScreen } from '../../screens/client/ClientGlossaryScreen';
-import { Animated, View } from 'react-native';
+import { Animated, Platform, SafeAreaView, StatusBar } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import type { ClientRoutineDay } from '../../data/hooks/useClientRoutineQuery';
 import { ClientCalendarScreen } from '../../screens/client/ClientCalendarScreen';
@@ -256,6 +256,8 @@ function dispatchMoreMenu(
   else if (id === 'volume') openProgress('volume');
 }
 
+const ANDROID_INSET = { paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) : 0 };
+
 export function ClientShell(): React.JSX.Element {
   return (
     <WorkoutGuideProvider>
@@ -274,7 +276,7 @@ function ClientShellBody(): React.JSX.Element {
   const showBottomNav = st.overlay === null;
 
   return (
-    <View style={s.root}>
+    <SafeAreaView style={[s.root, ANDROID_INSET]}>
       {st.activeTab === 'home' && (
         <HomeHub
           onOpenLoad={() => {
@@ -427,6 +429,6 @@ function ClientShellBody(): React.JSX.Element {
           <PhysicalTestsScreen onClose={st.closeOverlay} />
         </Animated.View>
       )}
-    </View>
+    </SafeAreaView>
   );
 }

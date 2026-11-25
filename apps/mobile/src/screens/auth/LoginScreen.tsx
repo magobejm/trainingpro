@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import '../../i18n';
 import { useLoginMutation, usePasswordResetMutation } from '../../data/hooks/useAuthMutations';
 import { usePasswordRecoveryStore } from '../../store/password-recovery.store';
@@ -13,6 +23,7 @@ const EMAIL_PROPS = {
 };
 
 const ACCESSIBILITY_ROLE_BUTTON = 'button' as const;
+const TAPS_HANDLED = 'handled' as const;
 const PLACEHOLDER_COLOR = LIGHT.accentMuted;
 
 export function LoginScreen(): React.JSX.Element {
@@ -76,45 +87,47 @@ type LoginCardProps = ReturnType<typeof useLoginViewModel>;
 
 function LoginCard(props: LoginCardProps): React.JSX.Element {
   return (
-    <View style={styles.page}>
-      <View style={styles.hero}>
-        <View style={styles.logoWrap}>
-          <Text style={styles.logoEmoji}>{'🏋️'}</Text>
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
+      <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps={TAPS_HANDLED}>
+        <View style={styles.hero}>
+          <View style={styles.logoWrap}>
+            <Text style={styles.logoEmoji}>{'🏋️'}</Text>
+          </View>
+          <Text style={styles.appName}>{props.t('app.title')}</Text>
         </View>
-        <Text style={styles.appName}>{props.t('app.title')}</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.title}>{props.t('auth.login.title')}</Text>
-        <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
-        <Text style={styles.fieldLabel}>{props.t('auth.login.email.placeholder')}</Text>
-        <TextInput
-          {...EMAIL_PROPS}
-          onChangeText={props.setEmail}
-          placeholder={props.t('auth.login.email.placeholder')}
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          style={styles.input}
-          value={props.email}
-        />
-        {props.emailError ? <Text style={styles.error}>{props.emailError}</Text> : null}
-        <Text style={styles.fieldLabel}>{props.t('auth.login.password.placeholder')}</Text>
-        <TextInput
-          onChangeText={props.setPassword}
-          placeholder={props.t('auth.login.password.placeholder')}
-          placeholderTextColor={PLACEHOLDER_COLOR}
-          secureTextEntry
-          style={styles.input}
-          value={props.password}
-        />
-        {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
-        {props.resetNotice ? <ResetNoticeText notice={props.resetNotice} /> : null}
-        <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onLogin} style={styles.button}>
-          {renderSubmitContent(props.isLoading, props.t('auth.login.submit'))}
-        </Pressable>
-        <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onForgotPassword}>
-          <Text style={styles.forgot}>{props.t('auth.login.forgot')}</Text>
-        </Pressable>
-      </View>
-    </View>
+        <View style={styles.card}>
+          <Text style={styles.title}>{props.t('auth.login.title')}</Text>
+          <Text style={styles.subtitle}>{props.t('auth.login.subtitle')}</Text>
+          <Text style={styles.fieldLabel}>{props.t('auth.login.email.placeholder')}</Text>
+          <TextInput
+            {...EMAIL_PROPS}
+            onChangeText={props.setEmail}
+            placeholder={props.t('auth.login.email.placeholder')}
+            placeholderTextColor={PLACEHOLDER_COLOR}
+            style={styles.input}
+            value={props.email}
+          />
+          {props.emailError ? <Text style={styles.error}>{props.emailError}</Text> : null}
+          <Text style={styles.fieldLabel}>{props.t('auth.login.password.placeholder')}</Text>
+          <TextInput
+            onChangeText={props.setPassword}
+            placeholder={props.t('auth.login.password.placeholder')}
+            placeholderTextColor={PLACEHOLDER_COLOR}
+            secureTextEntry
+            style={styles.input}
+            value={props.password}
+          />
+          {props.error ? <Text style={styles.error}>{props.error}</Text> : null}
+          {props.resetNotice ? <ResetNoticeText notice={props.resetNotice} /> : null}
+          <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onLogin} style={styles.button}>
+            {renderSubmitContent(props.isLoading, props.t('auth.login.submit'))}
+          </Pressable>
+          <Pressable accessibilityRole={ACCESSIBILITY_ROLE_BUTTON} onPress={props.onForgotPassword}>
+            <Text style={styles.forgot}>{props.t('auth.login.forgot')}</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -130,10 +143,11 @@ function renderSubmitContent(isLoading: boolean, label: string): React.JSX.Eleme
 }
 
 const styles = StyleSheet.create({
+  flex: { backgroundColor: LIGHT.bgSoft, flex: 1 },
   page: {
     alignItems: 'center',
     backgroundColor: LIGHT.bgSoft,
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
   },

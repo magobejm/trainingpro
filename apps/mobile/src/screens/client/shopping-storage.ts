@@ -14,6 +14,14 @@ export function writeBought(weekKey: string, foodIds: string[]): void {
 function readAll(): Record<string, string[]> {
   const raw = globalThis.localStorage?.getItem(STORAGE_KEY);
   if (!raw) return {};
-  const parsed = JSON.parse(raw) as unknown;
-  return parsed && typeof parsed === 'object' ? (parsed as Record<string, string[]>) : {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, string[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export function clearBought(): void {
+  globalThis.localStorage?.removeItem(STORAGE_KEY);
 }

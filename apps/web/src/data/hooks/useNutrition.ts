@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import type {
   CheckpointWriteInput,
   MealWriteInput,
@@ -11,13 +11,6 @@ import type {
 } from '../../screens/coach/nutrition/nutrition.types';
 
 type ListResponse<T> = { items: T[] };
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
-}
 
 export function useNutritionMealsQuery(): UseQueryResult<NutritionMeal[], Error> {
   const auth = useAuth();

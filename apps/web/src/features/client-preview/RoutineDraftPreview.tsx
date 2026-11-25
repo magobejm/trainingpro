@@ -13,7 +13,9 @@ export function RoutineDraftPreview({ draft }: { draft: DraftState }): React.JSX
   const library = useUnifiedExercisesQuery({});
   const warmups = useWarmupTemplatesQuery();
   const referencedIds = draft.days.flatMap((day) => (day.warmupTemplates ?? []).map((item) => item.id));
-  const referencedWarmups = useWarmupTemplatesByIds(referencedIds);
+  const listedIds = new Set((warmups.data ?? []).map((item) => item.id));
+  const missingIds = warmups.data ? referencedIds.filter((id) => !listedIds.has(id)) : [];
+  const referencedWarmups = useWarmupTemplatesByIds(missingIds);
   const availableWarmups = [
     ...(warmups.data ?? []),
     ...referencedWarmups.flatMap((query) => (query.data ? [query.data] : [])),

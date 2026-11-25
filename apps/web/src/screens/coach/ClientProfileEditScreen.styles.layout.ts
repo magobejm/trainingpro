@@ -19,7 +19,7 @@ export const layoutStyles = {
   mainColumn: {
     flex: 1.7,
     gap: space.md,
-    minWidth: 520,
+    minWidth: 0,
   },
   sideColumn: {
     flex: 1,

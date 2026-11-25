@@ -75,6 +75,10 @@ describe('resolveActiveNavRoute', () => {
     expect(resolveActiveNavRoute('coach.progress')).toBe('coach.clients');
   });
 
+  it('highlights Rutinas while looking at the warm-ups tab', () => {
+    expect(resolveActiveNavRoute('coach.library.warmups')).toBe('coach.library.routines');
+  });
+
   it('leaves every other screen as it is', () => {
     expect(resolveActiveNavRoute('coach.chat')).toBe('coach.chat');
   });

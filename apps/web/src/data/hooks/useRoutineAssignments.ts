@@ -16,10 +16,11 @@ export function useAppliedRoutineQuery(clientId: string | null | undefined) {
   return useQuery({
     queryKey: ['routine-assignments', auth.userId, auth.activeRole, clientId, 'current'],
     enabled: Boolean(clientId && auth.accessToken && auth.activeRole),
-    queryFn: () =>
-      createApiClient(auth as Parameters<typeof createApiClient>[0]).get<RoutineTemplateView | null>(
+    // Sin rutina aplicada la API responde vacío; React Query no admite undefined.
+    queryFn: async () =>
+      (await createApiClient(auth as Parameters<typeof createApiClient>[0]).get<RoutineTemplateView | null | undefined>(
         `/clients/${clientId}/routine-assignments/current`,
-      ),
+      )) ?? null,
   });
 }
 export function useRoutineAssignmentsQuery(clientId: string, enabled: boolean) {

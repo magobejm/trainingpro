@@ -77,26 +77,28 @@ export function SubscriptionScreen(): React.JSX.Element {
 
   return (
     <View style={styles.page}>
-      <BillingEstimateCard t={t} />
-      <View style={styles.card}>
-        <Text style={styles.title}>{t('admin.subscription.title')}</Text>
-        <Text style={styles.subtitle}>{t('admin.subscription.subtitle')}</Text>
-        <View style={styles.metricRow}>
-          <MetricCard label={t('admin.subscription.current')} value={String(activeCount)} />
-          <MetricCard label={t('admin.subscription.max')} value={String(currentLimit)} />
+      <View style={styles.stack}>
+        <BillingEstimateCard t={t} />
+        <View style={styles.card}>
+          <Text style={styles.title}>{t('admin.subscription.title')}</Text>
+          <Text style={styles.subtitle}>{t('admin.subscription.subtitle')}</Text>
+          <View style={styles.metricRow}>
+            <MetricCard label={t('admin.subscription.current')} value={String(activeCount)} />
+            <MetricCard label={t('admin.subscription.max')} value={String(currentLimit)} />
+          </View>
+          <TextField
+            {...LIMIT_INPUT_PROPS}
+            containerStyle={styles.input}
+            disabled={updateLimit.isPending}
+            error={invalidLimit ? t('admin.subscription.invalidLimit') : null}
+            label={t('admin.subscription.limit.label')}
+            onChangeText={onChangeLimit}
+            placeholder={t('admin.subscription.limit.placeholder')}
+            value={limitDraft}
+          />
+          {updateLimit.isError ? <Text style={styles.errorInline}>{t('admin.subscription.saveError')}</Text> : null}
+          <Button label={t('admin.subscription.limit.save')} loading={updateLimit.isPending} onPress={onSave} />
         </View>
-        <TextField
-          {...LIMIT_INPUT_PROPS}
-          containerStyle={styles.input}
-          disabled={updateLimit.isPending}
-          error={invalidLimit ? t('admin.subscription.invalidLimit') : null}
-          label={t('admin.subscription.limit.label')}
-          onChangeText={onChangeLimit}
-          placeholder={t('admin.subscription.limit.placeholder')}
-          value={limitDraft}
-        />
-        {updateLimit.isError ? <Text style={styles.errorInline}>{t('admin.subscription.saveError')}</Text> : null}
-        <Button label={t('admin.subscription.limit.save')} loading={updateLimit.isPending} onPress={onSave} />
       </View>
     </View>
   );
@@ -122,7 +124,6 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
-    maxWidth: 760,
     padding: space.xl,
     width: '100%',
   },
@@ -170,6 +171,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
     flex: 1,
     padding: space.xl,
+  },
+  stack: {
+    gap: space.lg,
+    maxWidth: 760,
+    width: '100%',
   },
   subtitle: {
     color: colors.textMuted,

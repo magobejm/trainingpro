@@ -6,13 +6,7 @@ import { Button, EmptyState, IconButton, Modal, TextField, colors, fontSize, rad
 
 const FLAME_ICON = '\uD83D\uDD25';
 const RETURN_KEY_NEXT = 'next' as const;
-const NEAT_SUGGESTIONS = [
-  'Andar 10.000 pasos diarios',
-  'Subir por las escaleras en lugar del ascensor',
-  'Paseo de 30 minutos después de comer',
-  'Ir al trabajo en bicicleta o caminando',
-  'Levantarse y estirar cada hora de trabajo',
-];
+const NEAT_SUGGESTION_KEYS = [0, 1, 2, 3, 4].map((index) => `coach.routine.neat.suggestion.${index}`);
 
 let neatIdCounter = Date.now();
 const nextNeatId = () => `neat-${++neatIdCounter}`;
@@ -205,9 +199,9 @@ function NeatModal({
         <View style={styles.modalField}>
           <Text style={styles.modalSuggestionsLabel}>{t('coach.routine.neat.suggestions')}</Text>
           <View style={styles.chipsWrap}>
-            {NEAT_SUGGESTIONS.map((s) => (
-              <Pressable key={s} onPress={() => setTitle(s)} style={styles.chip}>
-                <Text style={styles.chipText}>{s}</Text>
+            {NEAT_SUGGESTION_KEYS.map((key) => (
+              <Pressable key={key} onPress={() => setTitle(t(key))} style={styles.chip}>
+                <Text style={styles.chipText}>{t(key)}</Text>
               </Pressable>
             ))}
           </View>

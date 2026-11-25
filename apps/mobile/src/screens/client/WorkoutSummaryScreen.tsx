@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
-import type { ProgressRecordsResponse, SessionView } from '@trainerpro/shared';
+import { progressRecordsResponseSchema, type ProgressRecordsResponse, type SessionView } from '@trainerpro/shared';
 import { createApiClient, type ActiveRole } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
 import { LIGHT } from '../../theme/light';
@@ -124,7 +124,8 @@ function useSessionRecords(session: SessionView | null, enabled: boolean): Progr
 
 function fetchRecords(accessToken: string, activeRole: ActiveRole, date: string): Promise<ProgressRecordsResponse> {
   const params = new URLSearchParams({ from: date, to: date });
-  return createApiClient({ accessToken, activeRole }).get<ProgressRecordsResponse>(`/progress/records?${params}`);
+  const client = createApiClient({ accessToken, activeRole });
+  return client.getParsed(`/progress/records?${params}`, progressRecordsResponseSchema);
 }
 
 const styles = StyleSheet.create({

@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { BarsChart } from '@trainerpro/ui';
-import type { ProgressRecordsResponse } from '@trainerpro/shared';
+import { progressRecordsResponseSchema, type ProgressRecordsResponse } from '@trainerpro/shared';
 import { createApiClient, type ActiveRole } from '../../data/api-client';
 import { useAuthStore } from '../../store/auth.store';
 import { LIGHT } from '../../theme/light';
@@ -22,7 +22,7 @@ type ExercisePoint = { e1rm: number | null; sessionDate: string };
 
 export function ClientRecordsPanel(props: { t: TFunction }): React.JSX.Element {
   const range = useMemo(() => yearRange(), []);
-  const records = useProgressGet<ProgressRecordsResponse>('/progress/records', range);
+  const records = useProgressGet<ProgressRecordsResponse>('/progress/records', range, progressRecordsResponseSchema);
   const performed = useProgressGet<Performed>('/progress/performed-exercises', range);
   const options = useMemo(() => flattenExercises(performed.data), [performed.data]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -129,12 +129,16 @@ function useExercisePoints(
   return (query.data ?? []).filter((point) => point.e1rm != null);
 }
 
-function useProgressGet<T>(path: string | null, range: { from: string; to: string }) {
+function useProgressGet<T>(
+  path: string | null,
+  range: { from: string; to: string },
+  schema?: { safeParse: (value: unknown) => { data?: T; success: boolean } },
+) {
   const accessToken = useAuthStore((state) => state.accessToken);
   const activeRole = useAuthStore((state) => state.activeRole);
   return useQuery({
     enabled: Boolean(path && accessToken && activeRole),
-    queryFn: () => fetchProgress<T>(accessToken ?? '', activeRole ?? 'client', path ?? '', range),
+    queryFn: () => fetchProgress<T>(accessToken ?? '', activeRole ?? 'client', path ?? '', range, schema),
     queryKey: ['progress', path, range.from, range.to, activeRole],
   });
 }
@@ -144,9 +148,12 @@ function fetchProgress<T>(
   activeRole: ActiveRole,
   path: string,
   range: { from: string; to: string },
+  schema?: { safeParse: (value: unknown) => { data?: T; success: boolean } },
 ): Promise<T> {
   const separator = path.includes('?') ? '&' : '?';
-  return createApiClient({ accessToken, activeRole }).get<T>(`${path}${separator}from=${range.from}&to=${range.to}`);
+  const client = createApiClient({ accessToken, activeRole });
+  const url = `${path}${separator}from=${range.from}&to=${range.to}`;
+  return schema ? (client.getParsed(url, schema as never) as Promise<T>) : client.get<T>(url);
 }
 
 function yearRange(): { from: string; to: string } {

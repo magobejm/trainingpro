@@ -8,6 +8,7 @@ import {
   Modal,
   colors,
   clientPlanLight as LIGHT,
+  fontSize,
 } from '@trainerpro/ui';
 import { type ClientRoutine, type ClientRoutineExercise } from '@trainerpro/shared';
 
@@ -199,7 +200,7 @@ const styles = StyleSheet.create({
   hero: { backgroundColor: LIGHT.bgNavy, borderRadius: 24, padding: 20, marginBottom: 20, gap: 8 },
   heroName: { color: LIGHT.textOnNavy, fontSize: 24, fontWeight: '800' },
   heroText: { color: LIGHT.textOnNavyMuted, fontSize: 13 },
-  heading: { color: LIGHT.textStrong, fontSize: 16, fontWeight: '700', marginBottom: 6 },
+  heading: { color: LIGHT.textStrong, fontSize: fontSize.md, fontWeight: '700', marginBottom: 6 },
   card: {
     backgroundColor: LIGHT.bgCard,
     borderColor: LIGHT.border,
@@ -213,8 +214,14 @@ const styles = StyleSheet.create({
   warmupBadge: { borderColor: LIGHT.accentSoft, borderRadius: 8, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
   warmupBadgeText: { color: LIGHT.accentDark, fontSize: 10, fontWeight: '600' },
   action: { paddingVertical: 12, marginBottom: 8 },
-  actionText: { color: LIGHT.accent, fontSize: 14, fontWeight: '700' },
+  actionText: { color: LIGHT.accent, fontSize: fontSize.sm, fontWeight: '700' },
   image: { height: '100%', width: '100%' },
-  nutritionTitle: { color: LIGHT.textStrong, fontSize: 18, fontWeight: '800', marginHorizontal: 16, marginBottom: 8 },
+  nutritionTitle: {
+    color: LIGHT.textStrong,
+    fontSize: fontSize.lg,
+    fontWeight: '800',
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
   description: { color: LIGHT.textMuted, fontSize: 13, marginHorizontal: 16, marginBottom: 12 },
 });

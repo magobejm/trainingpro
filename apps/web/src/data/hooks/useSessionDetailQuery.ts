@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import type { SessionCompareItem } from '../../screens/coach/progress/session-compare.helpers';
 
 export type CoachSessionDetail = {
@@ -24,13 +24,6 @@ export function useSessionDetailQuery(sessionId: string | null) {
     queryFn: () => fetchSessionDetail(auth, sessionId!),
     queryKey: ['sessions', sessionId, auth?.accessToken],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchSessionDetail(auth: ReturnType<typeof useAuth>, sessionId: string): Promise<CoachSessionDetail> {

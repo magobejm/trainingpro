@@ -12,6 +12,7 @@ it('maps sleep hours onto the morning scale', () => {
 it('reads a step target from a NEAT title', () => {
   expect(stepsTarget('Andar 10.000 pasos diarios')).toBe(10000);
   expect(stepsTarget('Caminar 8000 steps')).toBe(8000);
+  expect(stepsTarget('Walk 10,000 steps a day')).toBe(10000);
   expect(stepsTarget('Beber agua')).toBeNull();
 });
 

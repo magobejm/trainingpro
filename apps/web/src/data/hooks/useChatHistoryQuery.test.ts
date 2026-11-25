@@ -22,7 +22,9 @@ vi.mock('@tanstack/react-query', async (original) => {
     useMutation: (options: { mutationFn: (input: unknown) => Promise<void> }) => ({ mutateAsync: options.mutationFn }),
   };
 });
-vi.mock('../api-client', () => ({ createApiClient: () => ({ get: captured.get }) }));
+vi.mock('../api-client', () => ({
+  createApiClient: () => ({ get: captured.get, getParsed: (path: string) => captured.get(path) }),
+}));
 vi.mock('../../store/auth.store', () => ({
   useAuthStore: (select: (value: unknown) => unknown) => select({ accessToken: 'token', activeRole: 'coach' }),
 }));

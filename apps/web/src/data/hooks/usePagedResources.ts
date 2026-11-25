@@ -1,7 +1,7 @@
 import type { ClientView } from '@trainerpro/shared';
 import { useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import type { NoteData } from '../../screens/coach/notes-screen.types';
 import type { FoodLibraryItem } from './useLibraryQuery';
 import type { RoutineTemplateView } from './useRoutineTemplates';
@@ -112,13 +112,6 @@ export function useWarmupTemplatesPagedQuery(search: string) {
 export function invalidatePagedLists(queryClient: ReturnType<typeof useQueryClient>, key: string): void {
   void queryClient.invalidateQueries({ queryKey: [key] });
   void queryClient.invalidateQueries({ queryKey: [key, 'paged'] });
-}
-
-function useAuth(): Auth | null {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchClientsPage(

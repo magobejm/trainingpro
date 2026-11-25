@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
-import { estimateBilling, MIN_CLIENTS_FOR_COACH_METRICS, type PricingTier } from '@trainerpro/shared';
+import { estimateBilling, MIN_CLIENTS_FOR_COACH_METRICS } from '@trainerpro/shared';
 import { PrismaService } from '../../../common/prisma/prisma.service';
 
 @Injectable()
@@ -39,9 +39,9 @@ export class OrgMetricsService {
 
   async billingEstimate(adminUid: string) {
     const organizationId = await this.organizationId(adminUid);
-    const [active, tiers] = await Promise.all([
+    const [active, subscription] = await Promise.all([
       this.prisma.client.count({ where: { archivedAt: null, organizationId } }),
-      this.prisma.pricingTier.findMany({ orderBy: { fromClients: 'asc' }, where: { organizationId } }),
+      this.prisma.organizationSubscription.findUnique({ where: { organizationId } }),
     ]);
     const today = new Date();
     const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
@@ -50,23 +50,13 @@ export class OrgMetricsService {
       update: { activeClientCount: active },
       where: { organizationId_day: { day, organizationId } },
     });
-    const mapped: PricingTier[] = tiers.map((tier) => ({
-      fromClients: tier.fromClients,
-      monthlyPrice: Number(tier.monthlyPrice),
-      toClients: tier.toClients,
-    }));
-    return { activeClients: active, ...estimateBilling(active, mapped) };
-  }
-
-  async replaceTiers(adminUid: string, tiers: PricingTier[]) {
-    const organizationId = await this.organizationId(adminUid);
-    await this.prisma.$transaction([
-      this.prisma.pricingTier.deleteMany({ where: { organizationId } }),
-      this.prisma.pricingTier.createMany({
-        data: tiers.map((tier, index) => ({ ...tier, organizationId, sortOrder: index })),
-      }),
-    ]);
-    return this.billingEstimate(adminUid);
+    const clientLimit = subscription?.clientLimit ?? 0;
+    return {
+      activeClients: active,
+      billableMonthly: estimateBilling(active).monthly,
+      clientLimit,
+      estimatedMonthly: estimateBilling(clientLimit).monthly,
+    };
   }
 
   private async organizationId(adminUid: string) {

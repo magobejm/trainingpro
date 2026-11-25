@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { QUERY_CACHE_MS } from '../query-persistence';
 
 export type NutritionConsideration = {
@@ -85,15 +85,6 @@ export function useClientNutritionQuery(): UseQueryResult<ClientNutrition, Error
     networkMode: 'offlineFirst',
     queryKey: NUTRITION_KEY,
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }
 
 async function fetchClientNutrition(auth: ReturnType<typeof useAuth>): Promise<ClientNutrition> {

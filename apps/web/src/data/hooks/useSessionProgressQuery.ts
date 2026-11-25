@@ -1,7 +1,7 @@
 import type { SessionOutcome } from '@trainerpro/shared';
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import type { SessionProgressCategory } from '../types/session-progress';
 
 export type SessionProgressPoint = {
@@ -47,13 +47,6 @@ export function useSessionProgressQuery(input: QueryInput, options?: { enabled?:
       input.to,
     ],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchSessionProgress(auth: ReturnType<typeof useAuth>, input: QueryInput): Promise<SessionProgressPoint[]> {

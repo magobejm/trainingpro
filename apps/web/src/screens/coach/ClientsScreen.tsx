@@ -9,16 +9,18 @@ import { useClientsPagedQuery } from '../../data/hooks/usePagedResources';
 import { loadNextPage } from '../../data/hooks/usePagedList';
 import type { ClientSort } from './clients-sort';
 import { styles } from './clients-screen.styles';
-import { ClientNutritionPlanScreen } from './ClientNutritionPlanScreen';
-import { ClientProfileScreen } from './ClientProfileScreen';
-import { ClientProfileEditScreen } from './ClientProfileEditScreen';
-import { ClientCompareScreen } from './ClientCompareScreen';
-import { ClientMeasuresScreen } from './ClientMeasuresScreen';
-import { ClientPlanningScreen } from './ClientPlanningScreen';
-import { ClientVolumeScreen } from './ClientVolumeScreen';
-import { ClientRoutineScreen } from './client-routine/ClientRoutineScreen';
-import { ClientTestsScreen } from './ClientTestsScreen';
-import { ClientMoodScreen } from './ClientMoodScreen';
+import {
+  ClientCompareScreen,
+  ClientMeasuresScreen,
+  ClientMoodScreen,
+  ClientNutritionPlanScreen,
+  ClientPlanningScreen,
+  ClientProfileEditScreen,
+  ClientProfileScreen,
+  ClientRoutineScreen,
+  ClientTestsScreen,
+  ClientVolumeScreen,
+} from './ClientsScreen.modes';
 import type { ShellRoute } from '../../layout/usePersistentShellRoute';
 import { ClientsDirectoryPanel } from './components/ClientsDirectoryPanel';
 import { CreateClientModal } from './components/CreateClientModal';

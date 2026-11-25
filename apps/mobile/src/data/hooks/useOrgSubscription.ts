@@ -18,11 +18,10 @@ export type CoachMetric = {
 
 export type BillingEstimate = {
   activeClients: number;
-  clientsToNext: number | null;
-  estimatedMonthly: number | null;
+  billableMonthly: number;
+  clientLimit: number;
+  estimatedMonthly: number;
 };
-
-export type PricingTier = { fromClients: number; monthlyPrice: number; toClients: number | null };
 
 function useAdminAuth() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -69,17 +68,6 @@ export function useUpdateClientLimitMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (clientLimit: number) => requireAuth(auth).patch<OrgOccupancy>('/org/subscription/limit', { clientLimit }),
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: ['org'] });
-    },
-  });
-}
-
-export function usePricingTiersMutation() {
-  const auth = useAdminAuth();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (tiers: PricingTier[]) => requireAuth(auth).put('/org/subscription/pricing-tiers', { tiers }),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['org'] });
     },

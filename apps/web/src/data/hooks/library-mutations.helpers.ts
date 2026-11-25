@@ -1,21 +1,7 @@
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import type { Auth } from './use-api-auth';
 
-export function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
-}
-
-export async function writeItem<TInput>(
-  auth: ReturnType<typeof useAuth>,
-  resource: string,
-  method: 'PATCH' | 'POST',
-  input: TInput,
-) {
+export async function writeItem<TInput>(auth: Auth | null, resource: string, method: 'PATCH' | 'POST', input: TInput) {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -27,11 +13,7 @@ export async function writeItem<TInput>(
   throw new Error('PATCH endpoint requires explicit item id');
 }
 
-export async function deleteItem(
-  auth: ReturnType<typeof useAuth>,
-  resource: string,
-  itemId: string,
-): Promise<void> {
+export async function deleteItem(auth: Auth | null, resource: string, itemId: string): Promise<void> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -39,7 +21,7 @@ export async function deleteItem(
 }
 
 export async function updateItem<TPayload>(
-  auth: ReturnType<typeof useAuth>,
+  auth: Auth | null,
   resource: string,
   itemId: string,
   payload: TPayload,
@@ -50,10 +32,7 @@ export async function updateItem<TPayload>(
   await createApiClient(auth).patch(`/library/${resource}/${itemId}`, payload);
 }
 
-export async function uploadLibraryImage(
-  auth: ReturnType<typeof useAuth>,
-  file: File,
-): Promise<{ imageUrl: string }> {
+export async function uploadLibraryImage(auth: Auth | null, file: File): Promise<{ imageUrl: string }> {
   if (!auth) {
     throw new Error('Missing authenticated context');
   }
@@ -102,11 +81,6 @@ function resolveApiBaseUrl(): string {
     process?: { env?: Record<string, string | undefined> };
   };
   const processEnv = scope.process?.env ?? {};
-  const metaEnv =
-    (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
-  return (
-    metaEnv.EXPO_PUBLIC_API_BASE_URL ??
-    processEnv.EXPO_PUBLIC_API_BASE_URL ??
-    'http://localhost:8080'
-  );
+  const metaEnv = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
+  return metaEnv.EXPO_PUBLIC_API_BASE_URL ?? processEnv.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
 }

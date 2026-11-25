@@ -21,7 +21,7 @@ import type {
 } from '@trainerpro/shared';
 import { ApiClientError, createApiClient } from '../api-client';
 import { readSessionDraft, rememberSession, sessionWritePath } from '../offline/session-draft';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export { sessionWritePath };
 
@@ -259,15 +259,6 @@ export function useExerciseHistoryQuery(sourceExerciseId: null | string, session
     queryFn: () => fetchExerciseHistory(auth, sourceExerciseId!, sessionId),
     queryKey: ['exerciseHistory', sourceExerciseId, sessionId, auth?.accessToken],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }
 
 async function ensureClientSession(

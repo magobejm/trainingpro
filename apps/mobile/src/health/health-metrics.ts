@@ -8,9 +8,9 @@ export function sleepScore(hours: number | null): number | null {
 }
 
 export function stepsTarget(title: string): number | null {
-  const match = /(\d[\d.\s]*)\s*(?:pasos|steps)/i.exec(title);
+  const match = /(\d[\d.,\s]*)\s*(?:pasos|steps)/i.exec(title);
   if (!match?.[1]) return null;
-  const value = Number(match[1].replace(/[.\s]/g, ''));
+  const value = Number(match[1].replace(/[.,\s]/g, ''));
   return Number.isFinite(value) && value > 0 ? value : null;
 }
 

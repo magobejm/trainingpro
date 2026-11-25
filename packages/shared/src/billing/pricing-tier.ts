@@ -1,29 +1,27 @@
-export type PricingTier = {
-  fromClients: number;
-  monthlyPrice: number;
-  toClients: number | null;
-};
-
 export type BillingEstimate = {
-  clientsToNext: number | null;
-  estimatedMonthly: number;
-  nextTier: PricingTier | null;
-  tier: PricingTier | null;
+  count: number;
+  monthly: number;
 };
 
-export function estimateBilling(activeClients: number, tiers: PricingTier[]): BillingEstimate {
-  const sorted = [...tiers].sort((left, right) => left.fromClients - right.fromClients);
-  const tier =
-    sorted.find(
-      (item) => activeClients >= item.fromClients && (item.toClients == null || activeClients <= item.toClients),
-    ) ?? null;
-  const nextTier = tier
-    ? (sorted.find((item) => item.fromClients > (tier.toClients ?? activeClients)) ?? null)
-    : (sorted[0] ?? null);
-  return {
-    clientsToNext: nextTier ? Math.max(0, nextTier.fromClients - activeClients) : null,
-    estimatedMonthly: tier?.monthlyPrice ?? 0,
-    nextTier: tier ? nextTier : null,
-    tier,
-  };
+const STEPS = [
+  { price: 4, upTo: 5 },
+  { price: 3, upTo: 10 },
+  { price: 2, upTo: 20 },
+  { price: 1, upTo: Number.POSITIVE_INFINITY },
+];
+
+/** Suma el precio de cada puesto: 1-5 a 4 €, 6-10 a 3 €, 11-20 a 2 € y el resto a 1 €. */
+export function estimateBilling(count: number): BillingEstimate {
+  const clients = Math.max(0, Math.floor(count));
+  let monthly = 0;
+  let previous = 0;
+  let remaining = clients;
+  for (const step of STEPS) {
+    const width = Math.min(remaining, step.upTo - previous);
+    monthly += width * step.price;
+    remaining -= width;
+    previous = step.upTo;
+    if (remaining <= 0) break;
+  }
+  return { count: clients, monthly };
 }

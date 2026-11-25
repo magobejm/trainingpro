@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { QUERY_CACHE_MS } from '../query-persistence';
 
 export type NeatLog = { date: string; done: boolean; neatId: string; value: number | null };
@@ -38,13 +38,6 @@ export function useClientNeatLogs(date: string) {
     logs: query.data ?? [],
     toggle: (neatId: string, done: boolean) => save.mutate({ date, done, neatId }),
   };
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 function fetchLogs(auth: ReturnType<typeof useAuth>, date: string): Promise<NeatLog[]> {

@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
-import { uploadLibraryImage, useAuth } from './library-mutations.helpers';
+import { uploadLibraryImage } from './library-mutations.helpers';
+import { useAuth } from './use-api-auth';
 
 export function useUploadLibraryImageMutation() {
   const auth = useAuth();

@@ -1,8 +1,9 @@
 import { buildShoppingList, formatFoodAmount, resolvePlanDay, type ShoppingRange } from '@trainerpro/shared';
 import React, { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useClientNutritionQuery } from '../../data/hooks/useClientNutrition';
+import { QueryErrorNotice } from './QueryErrorNotice';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import { readBought, writeBought } from './shopping-storage';
 import { styles } from './nutrition-plan.styles';
@@ -26,9 +27,16 @@ export function ShoppingListScreen({ onClose }: { onClose: () => void }): React.
   return (
     <View style={styles.container}>
       <OverlayBackHeader onClose={onClose} title={t('client.nutrition.shopping')} />
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl onRefresh={() => void query.refetch()} refreshing={query.isRefetching} />}
+      >
         <RangeToggle onChange={setRange} range={range} t={t} />
-        {groups.length === 0 ? <Text style={styles.empty}>{t('client.nutrition.shoppingEmpty')}</Text> : null}
+        {query.isPending && !query.isError ? <ActivityIndicator /> : null}
+        {query.isError && !plan ? <QueryErrorNotice onRetry={() => void query.refetch()} /> : null}
+        {!query.isPending && !query.isError && groups.length === 0 ? (
+          <Text style={styles.empty}>{t('client.nutrition.shoppingEmpty')}</Text>
+        ) : null}
         {groups.map((group) => (
           <ShoppingGroup bought={bought} group={group} key={group.category} onToggle={toggle} t={t} />
         ))}
@@ -48,7 +56,13 @@ function ShoppingGroup(props: {
     <View style={styles.mealCard}>
       <Text style={styles.planName}>{label}</Text>
       {props.group.items.map((item) => (
-        <Pressable key={item.foodId} onPress={() => props.onToggle(item.foodId)}>
+        <Pressable
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: props.bought.includes(item.foodId) }}
+          key={item.foodId}
+          onPress={() => props.onToggle(item.foodId)}
+          style={{ minHeight: 44, justifyContent: 'center' }}
+        >
           <Text style={props.bought.includes(item.foodId) ? styles.bought : styles.item}>
             {props.t('client.nutrition.shoppingItem', {
               amount: formatFoodAmount(item.grams, item.servingUnit, props.t),

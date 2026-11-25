@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type PerformedSessionDay = { dayIndex: number; title: string };
 
@@ -10,13 +10,6 @@ type QueryInput = {
   from: string;
   to: string;
 };
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
-}
 
 export function usePerformedSessionDaysQuery(input: QueryInput, options?: { enabled?: boolean }) {
   const auth = useAuth();

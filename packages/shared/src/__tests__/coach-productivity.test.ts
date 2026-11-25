@@ -11,13 +11,12 @@ describe('coach productivity rules', () => {
     expect(isRiskClient({ adherence: 0.8, inactiveDays: 1 })).toBe(false);
   });
 
-  it('estimates the current price tier and the distance to the next one', () => {
-    const estimate = estimateBilling(8, [
-      { fromClients: 1, monthlyPrice: 29, toClients: 10 },
-      { fromClients: 11, monthlyPrice: 49, toClients: 25 },
-    ]);
-    expect(estimate.estimatedMonthly).toBe(29);
-    expect(estimate.clientsToNext).toBe(3);
+  it('charges each client at the price of their slot', () => {
+    expect(estimateBilling(0)).toEqual({ count: 0, monthly: 0 });
+    expect(estimateBilling(3).monthly).toBe(12);
+    expect(estimateBilling(8).monthly).toBe(29);
+    expect(estimateBilling(12).monthly).toBe(39);
+    expect(estimateBilling(25).monthly).toBe(60);
   });
 
   it('turns three skinfolds into a body-fat percentage', () => {

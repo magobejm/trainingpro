@@ -176,7 +176,6 @@ model Organization {
   notificationEventLogs    NotificationEventLog[]
   meals                    Meal[]
   nutritionPlans           NutritionPlan[]
-  pricingTiers             PricingTier[]
   billingSnapshots         BillingSnapshot[]
 
   @@map("organization")
@@ -251,19 +250,6 @@ model OrganizationSubscription {
   organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@map("organization_subscription")
-}
-
-model PricingTier {
-  id             String       @id @default(uuid()) @db.Uuid
-  organizationId String       @map("organization_id") @db.Uuid
-  fromClients    Int          @map("from_clients")
-  toClients      Int?         @map("to_clients")
-  monthlyPrice   Decimal      @map("monthly_price") @db.Decimal(10, 2)
-  sortOrder      Int          @default(0) @map("sort_order")
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@index([organizationId, fromClients], map: "idx_pricing_tier_org_from")
-  @@map("pricing_tier")
 }
 
 model BillingSnapshot {

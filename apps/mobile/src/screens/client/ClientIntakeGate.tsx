@@ -18,8 +18,12 @@ export function ClientIntakeGate(): React.JSX.Element | null {
   const [allergies, setAllergies] = useState('');
   const query = useQuery({
     enabled: status === 'signedIn' && Boolean(accessToken),
-    queryFn: () =>
-      createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<Intake>('/clients/me/intake'),
+    queryFn: async () => {
+      const intake = await createApiClient({ accessToken: accessToken ?? '', activeRole: 'client' }).get<Intake | undefined>(
+        '/clients/me/intake',
+      );
+      return intake ?? null;
+    },
     queryKey: ['client', 'intake', accessToken],
   });
   if (query.data?.status !== 'PENDING') return null;

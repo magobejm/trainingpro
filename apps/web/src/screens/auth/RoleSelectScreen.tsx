@@ -75,7 +75,12 @@ function renderRoleOptions(props: RoleSelectCardProps): React.JSX.Element {
           onPress={() => props.onSelectRole(role)}
         />
       ))}
-      <Button disabled={!props.activeRole} fullWidth label={props.t('auth.roleSelect.continue')} onPress={props.onContinue} />
+      <Button
+        disabled={!props.activeRole}
+        fullWidth
+        label={props.t('auth.roleSelect.continue')}
+        onPress={props.onContinue}
+      />
     </View>
   );
 }
@@ -108,8 +113,9 @@ const styles = StyleSheet.create({
     borderColor: COLORS.cardBorder,
     borderRadius: 16,
     borderWidth: 1,
+    maxWidth: 460,
     padding: space.xl,
-    width: 460,
+    width: '100%',
   },
   list: {
     gap: space.md,

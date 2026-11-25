@@ -5,7 +5,6 @@ import { CoachButton, CoachField, CoachPage, CoachStatus, ui } from '../../featu
 import {
   useBillingEstimateQuery,
   useOrgOccupancyQuery,
-  usePricingTiersMutation,
   useUpdateClientLimitMutation,
 } from '../../data/hooks/useOrgSubscription';
 import { useLogout } from '../../data/hooks/useAuthMutations';
@@ -57,23 +56,22 @@ function OccupancyCard(): React.JSX.Element {
 function BillingCard(): React.JSX.Element {
   const { t } = useTranslation();
   const query = useBillingEstimateQuery();
-  const save = usePricingTiersMutation();
-  const [from, setFrom] = React.useState('1');
-  const [to, setTo] = React.useState('10');
-  const [price, setPrice] = React.useState('29');
-  const valid = Number.isFinite(Number(from)) && Number.isFinite(Number(price)) && from !== '' && price !== '';
-  const submit = (): void =>
-    save.mutate([{ fromClients: Number(from), monthlyPrice: Number(price), toClients: to.trim() ? Number(to) : null }]);
+  const billing = query.data;
+  const empty = '—';
   return (
     <View style={ui.card}>
+      <CoachStatus query={query} />
       <Text style={ui.label}>{t('mobile.admin.billing.title')}</Text>
-      <Text style={ui.muted}>{t('mobile.admin.billing.estimate', { price: query.data?.estimatedMonthly ?? '—' })}</Text>
-      <CoachField label={t('mobile.admin.billing.from')} numeric onChange={setFrom} value={from} />
-      <CoachField label={t('mobile.admin.billing.to')} numeric onChange={setTo} value={to} />
-      <CoachField label={t('mobile.admin.billing.price')} numeric onChange={setPrice} value={price} />
-      <CoachButton disabled={!valid} label={t('mobile.admin.billing.save')} loading={save.isPending} onPress={submit} />
-      {save.isSuccess ? <Text style={ui.muted}>{t('mobile.admin.billing.saved')}</Text> : null}
-      {save.isError ? <Text style={ui.error}>{t('mobile.admin.coaches.error')}</Text> : null}
+      <Text style={ui.muted}>
+        {billing
+          ? t('mobile.admin.billing.estimate', { count: billing.clientLimit, price: billing.estimatedMonthly })
+          : empty}
+      </Text>
+      <Text style={ui.muted}>
+        {billing
+          ? t('mobile.admin.billing.billable', { count: billing.activeClients, price: billing.billableMonthly })
+          : empty}
+      </Text>
     </View>
   );
 }

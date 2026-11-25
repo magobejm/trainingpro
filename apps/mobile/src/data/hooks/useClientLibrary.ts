@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { createApiClient } from '../api-client';
 
 export type ClientLibraryExercise = {
@@ -138,13 +138,6 @@ export function useClientLibrarySportsQuery(q: string, enabled = true) {
     queryFn: () => fetchLibraryItems<ClientLibrarySport>(auth, 'sports', q),
     queryKey: ['clients', 'me', 'library', 'sports', q],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchLibraryItems<T>(auth: ReturnType<typeof useAuth>, endpoint: string, q: string): Promise<T[]> {

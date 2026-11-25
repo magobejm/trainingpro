@@ -7,7 +7,10 @@ import { useMeQuery } from './src/data/hooks/useMeQuery';
 import { createQueryClient } from './src/data/query-client';
 import { useNotificationNavigation } from './src/data/use-notification-navigation';
 import { usePushRegistration } from './src/data/use-push-registration';
-import { startSessionSync } from './src/data/session-sync';
+import { clearUserData, startSessionSync } from './src/data/session-sync';
+import { handleUnauthorized, setLogoutCleanup } from './src/data/auth-service';
+import { setUnauthorizedHandler } from './src/data/api-client';
+import { ErrorBoundary } from './src/shell/ErrorBoundary';
 import { startQueryPersistence } from './src/data/query-persistence';
 import { useRecoveryLinks } from './src/data/recovery-links';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
@@ -26,10 +29,12 @@ const queryClient = createQueryClient();
 export default function App(): React.JSX.Element {
   useSessionSync();
   return (
-    <QueryClientProvider client={queryClient}>
-      <PersistQueries />
-      <MobileRoot />
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <PersistQueries />
+        <MobileRoot />
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 
@@ -44,6 +49,12 @@ function PersistQueries(): null {
 
 function useSessionSync(): void {
   React.useEffect(() => {
+    setUnauthorizedHandler((token) => {
+      void handleUnauthorized(token)
+        .then((refreshed) => (refreshed ? queryClient.invalidateQueries() : undefined))
+        .catch(() => undefined);
+    });
+    setLogoutCleanup(() => clearUserData(queryClient));
     let stopSync = (): void => undefined;
     let started = false;
     const start = (): void => {
@@ -58,6 +69,8 @@ function useSessionSync(): void {
       start();
     }
     return () => {
+      setUnauthorizedHandler(null);
+      setLogoutCleanup(null);
       unsubscribe();
       stopSync();
     };

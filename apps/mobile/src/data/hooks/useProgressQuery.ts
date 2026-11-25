@@ -1,6 +1,6 @@
 import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type ProgressOverviewView = {
   cardioWeekly: CardioWeeklyPoint[];
@@ -43,15 +43,6 @@ export function useProgressOverviewQuery(input: QueryInput): UseQueryResult<Prog
     queryFn: () => fetchProgressOverview(auth, input),
     queryKey: ['progress', 'overview', input.from, input.to, auth?.activeRole],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }
 
 async function fetchProgressOverview(auth: ReturnType<typeof useAuth>, input: QueryInput): Promise<ProgressOverviewView> {

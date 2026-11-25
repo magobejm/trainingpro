@@ -54,3 +54,5 @@ export type {
   SportSetLog,
   StrengthSessionItem,
 } from './sessions';
+export { clientPlanDayBatchResponseSchema } from './plan-days';
+export type { ClientPlanDayBatchResponse } from './plan-days';

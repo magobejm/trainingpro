@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuth } from './library-mutations.helpers';
+import { useAuth } from './use-api-auth';
 
 export type CopyTarget = {
   /** Only for exercises: strength, cardio, plio, warmup, isometric or sport. */

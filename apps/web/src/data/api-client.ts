@@ -6,6 +6,23 @@ export type ApiClientOptions = {
   baseUrl?: string;
 };
 
+type ResponseSchema<T> = {
+  safeParse: (value: unknown) => { data?: T; error?: { issues?: unknown }; success: boolean };
+};
+
+/**
+ * Devuelve la respuesta tal cual. Si no encaja con el esquema, lo anota en consola pero no rompe la pantalla:
+ * así un campo nuevo de la API no deja inservible una versión anterior de la app.
+ */
+function checkResponse<T>(path: string, schema: ResponseSchema<T>, body: unknown): T {
+  const result = schema.safeParse(body);
+  if (!result.success) {
+    console.warn(JSON.stringify({ issues: result.error?.issues, path, type: 'response_schema_mismatch' }));
+    return body as T;
+  }
+  return result.data as T;
+}
+
 type RequestOptions = {
   body?: unknown;
   headers?: Record<string, string>;
@@ -47,6 +64,9 @@ export function createApiClient(config: ApiClientOptions) {
       }),
     get: <T>(path: string, params?: Record<string, string>, headers?: Record<string, string>): Promise<T> =>
       send<T>({ headers, method: 'GET', path, params }),
+    /** GET que contrasta la respuesta con un esquema compartido y avisa en consola si la API se ha desviado. */
+    getParsed: async <T>(path: string, schema: ResponseSchema<T>, params?: Record<string, string>): Promise<T> =>
+      checkResponse(path, schema, await send<unknown>({ method: 'GET', path, params })),
     patch: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>
       send<T>({ body, headers, method: 'PATCH', path }),
     post: <T>(path: string, body?: unknown, headers?: Record<string, string>): Promise<T> =>

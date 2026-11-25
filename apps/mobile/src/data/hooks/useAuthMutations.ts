@@ -28,7 +28,7 @@ export function useCompleteRecoveryMutation(): UseMutationResult<void, Error, Pa
 
 export function useLogout(): () => void {
   return () => {
-    void logout();
+    void logout().catch(() => undefined);
   };
 }
 

@@ -5,6 +5,7 @@ import {
   Get,
   Headers,
   Inject,
+  NotFoundException,
   Param,
   ParseUUIDPipe,
   Post,
@@ -16,6 +17,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { parsePlanDayBatch } from './plan-day-batch';
 import { readAuthContext } from '../../../../common/auth-context/read-auth-context';
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator';
 import { AuthGuard } from '../../../auth/presentation/guards/auth.guard';
@@ -58,6 +60,8 @@ import { RecordClientMeasurementDto } from '../dto/record-client-measurement.dto
 import { mapClientOutput, mapMeasurementOutput, mapProgressPhotoOutput } from './clients.controller.mappers';
 
 type UploadedPhoto = { buffer: Buffer; mimetype: string; originalname: string; size: number };
+
+const PLAN_DAY_BATCH_CONCURRENCY = 8;
 
 @Controller('clients')
 @UseGuards(AuthGuard, RolesGuard)
@@ -137,6 +141,28 @@ export class ClientSelfController {
   async getMyRoutine(@Req() request: HttpAuthRequest): Promise<ClientRoutine> {
     const context = readAuthContext(request);
     return this.getClientRoutineUseCase.execute(context);
+  }
+
+  @Get('me/plan-days')
+  async getMyPlanDays(@Query('items') items: string | undefined, @Req() request: HttpAuthRequest) {
+    const requests = parsePlanDayBatch(items);
+    const context = readAuthContext(request);
+    const found: Array<{ day: unknown; on: string; planDayId: string }> = [];
+    for (let start = 0; start < requests.length; start += PLAN_DAY_BATCH_CONCURRENCY) {
+      const chunk = requests.slice(start, start + PLAN_DAY_BATCH_CONCURRENCY);
+      const days = await Promise.all(
+        chunk.map(async ({ on, planDayId }) => {
+          try {
+            return { day: await this.getClientPlanDayUseCase.execute(context, planDayId, on), on, planDayId };
+          } catch (error) {
+            if (error instanceof NotFoundException) return null;
+            throw error;
+          }
+        }),
+      );
+      for (const entry of days) if (entry) found.push(entry);
+    }
+    return { items: found };
   }
 
   @Get('me/plan-days/:planDayId')

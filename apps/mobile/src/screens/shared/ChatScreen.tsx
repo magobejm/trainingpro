@@ -1,7 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Image, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { Banner } from '@trainerpro/ui';
+import { isHttpUrl } from '@trainerpro/shared';
 import '../../i18n';
 import {
   useChatMessagesQuery,
@@ -23,6 +35,7 @@ import { useCoachDraft } from '../../data/hooks/useCoachDraft';
 import { canRespondToCall, isOwnChatMessage } from '../coach/coach-client-model';
 import { useCoachCopy } from '../coach/coach-copy';
 import { ChatHistoryList } from './ChatHistoryList';
+import { CoachRouteVisibleContext } from '../../shell/coach/route-visibility';
 
 type ChatScreenProps = {
   clientId?: string;
@@ -53,7 +66,7 @@ function ConversationChat(props: ChatScreenProps & { threadId: string }): React.
 
 function useChatViewModel(threadId: string, initialMessage?: string) {
   const { t } = useTranslation();
-  const messagesQuery = useChatMessagesQuery(threadId);
+  const messagesQuery = useChatMessagesQuery(threadId, { polling: React.useContext(CoachRouteVisibleContext) });
   const composer = useMessageComposer(threadId, t, initialMessage);
   return { ...composer, messagesQuery, t, threadId };
 }
@@ -173,17 +186,17 @@ function ChatView(props: ViewModel) {
           title={props.interlocutorName ?? props.t('client.chat.title')}
         />
       )}
-      <ChatHistoryList
-        query={props.messagesQuery}
-        renderMessage={(message) => <MessageBubble message={message} />}
-        sentVersion={props.sentVersion}
-      />
+      <ChatHistoryList query={props.messagesQuery} renderMessage={renderMessage} sentVersion={props.sentVersion} />
       <ChatComposer {...props} embedded={props.embedded} />
     </>
   );
 
   if (props.embedded) {
-    return <View style={[styles.page, styles.pageEmbedded]}>{content}</View>;
+    return (
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.keyboard}>
+        <View style={[styles.page, styles.pageEmbedded]}>{content}</View>
+      </KeyboardAvoidingView>
+    );
   }
   return <View style={styles.page}>{content}</View>;
 }
@@ -230,7 +243,7 @@ function ChatComposer(props: ViewModel & { embedded?: boolean }) {
   );
 }
 
-function MessageBubble(props: { message: ChatMessage }) {
+const MessageBubble = React.memo(function MessageBubble(props: { message: ChatMessage }) {
   const role = useAuthStore((state) => state.activeRole);
   if (props.message.callProposal && !props.message.text) {
     return <CallProposalCard proposal={props.message.callProposal} />;
@@ -244,6 +257,10 @@ function MessageBubble(props: { message: ChatMessage }) {
       ))}
     </View>
   );
+});
+
+function renderMessage(message: ChatMessage): React.ReactElement {
+  return <MessageBubble message={message} />;
 }
 
 function CallProposalCard(props: { proposal: NonNullable<ChatMessage['callProposal']> }): React.JSX.Element {
@@ -323,7 +340,7 @@ function AttachmentItem(props: {
   attachment: ChatMessage['attachments'][number];
   messageText?: null | string;
 }): React.JSX.Element {
-  const url = props.attachment.publicUrl;
+  const url = isHttpUrl(props.attachment.publicUrl) ? props.attachment.publicUrl : null;
   if (!url) {
     return <Text style={styles.attachmentItem}>{props.attachment.fileName}</Text>;
   }
@@ -358,6 +375,7 @@ function openAttachment(url: string): void {
 const CALL_TEXT = '#f8fafc';
 
 const styles = StyleSheet.create({
+  keyboard: { flex: 1, minHeight: 0 },
   disabled: { opacity: 0.5 },
   callButton: { backgroundColor: '#ffffff22', borderRadius: 10, marginTop: 8, paddingVertical: 8 },
   callButtonText: { color: CALL_TEXT, fontSize: 12, fontWeight: '700', textAlign: 'center' },

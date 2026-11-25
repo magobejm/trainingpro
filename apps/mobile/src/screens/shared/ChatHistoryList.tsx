@@ -23,7 +23,9 @@ export function ChatHistoryList({ query, renderMessage, sentVersion }: Props): R
         testID={'chat-history-mobile-viewport'}
         contentContainerStyle={styles.content}
         data={data}
+        initialNumToRender={20}
         keyExtractor={(message) => message.id}
+        windowSize={9}
         ListEmptyComponent={<Text style={styles.status}>{t('chat.history.empty')}</Text>}
         ListHeaderComponent={<HistoryStatus query={query} retry={() => void loadOlder()} />}
         maintainVisibleContentPosition={{ minIndexForVisible: 1 }}

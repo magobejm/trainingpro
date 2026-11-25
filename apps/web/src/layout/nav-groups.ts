@@ -40,7 +40,9 @@ export function formatBadge(count: number | undefined): null | string {
   return count > 99 ? '99+' : String(count);
 }
 
-/** Pantalla del menú que se resalta: el progreso de un cliente cuelga de Clientes. */
+/** Pantalla del menú que se resalta: el progreso cuelga de Clientes y los calentamientos, de Rutinas. */
 export function resolveActiveNavRoute(route: ShellRoute): ShellRoute {
-  return route === 'coach.progress' ? 'coach.clients' : route;
+  if (route === 'coach.progress') return 'coach.clients';
+  if (route === 'coach.library.warmups') return 'coach.library.routines';
+  return route;
 }

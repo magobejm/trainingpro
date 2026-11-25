@@ -114,18 +114,19 @@ function ProfileHero(props: { client: ClientMe; t: (k: string) => string }): Rea
 }
 
 function ProfileFields(props: { client: ClientMe }): React.JSX.Element {
+  const { t } = useTranslation();
   return (
     <View style={{ gap: 12 }}>
       <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{'Nombre completo'}</Text>
+        <Text style={s.fieldLabel}>{t('mobile.client.profile.fullName')}</Text>
         <Text style={s.fieldValue}>{`${props.client.firstName} ${props.client.lastName}`}</Text>
       </View>
       <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{'Email'}</Text>
+        <Text style={s.fieldLabel}>{t('mobile.client.profile.email')}</Text>
         <Text style={s.fieldValue}>{props.client.email ?? '–'}</Text>
       </View>
       <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{'Teléfono'}</Text>
+        <Text style={s.fieldLabel}>{t('mobile.client.profile.phone')}</Text>
         <Text style={s.fieldValue}>{props.client.phone ?? '–'}</Text>
       </View>
     </View>

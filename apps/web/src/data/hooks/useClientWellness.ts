@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 import { createApiClient } from '../api-client';
 
 export type ClientWellnessSession = {
@@ -56,13 +56,6 @@ export function useClientWellnessQuery(clientId: string, dateFrom: string, dateT
     queryFn: () => fetchWellness(auth, clientId, dateFrom, dateTo),
     queryKey: ['clients', clientId, 'wellness', dateFrom, dateTo],
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
 }
 
 async function fetchWellness(

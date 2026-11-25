@@ -1,8 +1,9 @@
-import { StyleSheet, type ViewStyle, type TextStyle, type ImageStyle } from 'react-native';
+import { StyleSheet } from 'react-native';
+import type { ImageStyle, TextStyle, ViewStyle } from 'react-native';
 
 type NativeStyle = ViewStyle & TextStyle & ImageStyle;
 export const getLayoutStyle1: NativeStyle = StyleSheet.create({
   value: {
-    minWidth: 900,
+    width: '100%',
   },
 }).value;

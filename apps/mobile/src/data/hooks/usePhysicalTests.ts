@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 export type PhysicalTestView = {
   category: string;
@@ -91,15 +91,6 @@ export function useRecordPhysicalTestResultMutation() {
       void queryClient.invalidateQueries({ queryKey: ['clients', 'me', 'calendar'] });
     },
   });
-}
-
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) {
-    return null;
-  }
-  return { accessToken, activeRole };
 }
 
 async function fetchPhysicalTests(auth: ReturnType<typeof useAuth>): Promise<ClientPhysicalTestAssignment[]> {

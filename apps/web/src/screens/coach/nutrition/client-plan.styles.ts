@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { colors, radius, space } from '@trainerpro/ui';
+import { colors, radius, space, fontSize } from '@trainerpro/ui';
 
 export const clientPlanStyles = StyleSheet.create({
   badge: {
@@ -9,7 +9,7 @@ export const clientPlanStyles = StyleSheet.create({
     paddingHorizontal: space.sm,
     paddingVertical: 2,
   },
-  badgeText: { color: colors.primary, fontSize: 12, fontWeight: '700' },
+  badgeText: { color: colors.primary, fontSize: fontSize.xs, fontWeight: '700' },
   card: {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -23,7 +23,7 @@ export const clientPlanStyles = StyleSheet.create({
   muted: { color: colors.textMuted, fontSize: 13 },
   root: { gap: space.lg },
   row: { alignItems: 'center', flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  section: { color: colors.text, fontSize: 16, fontWeight: '800' },
+  section: { color: colors.text, fontSize: fontSize.md, fontWeight: '800' },
   tile: {
     backgroundColor: colors.surfaceMuted,
     borderRadius: radius.md,
@@ -31,8 +31,8 @@ export const clientPlanStyles = StyleSheet.create({
     minWidth: 90,
     padding: space.md,
   },
-  tileLabel: { color: colors.textMuted, fontSize: 12 },
-  tileValue: { color: colors.text, fontSize: 18, fontWeight: '800' },
+  tileLabel: { color: colors.textMuted, fontSize: fontSize.xs },
+  tileValue: { color: colors.text, fontSize: fontSize.lg, fontWeight: '800' },
   tileRow: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
 });
 
@@ -47,5 +47,5 @@ export const planContentStyles = StyleSheet.create({
   dayLabel: { color: colors.primary, fontSize: 13, fontWeight: '800', textTransform: 'uppercase' },
   ingredient: { color: colors.textMuted, fontSize: 13, paddingLeft: space.md },
   meal: { gap: 2, paddingVertical: space.xs },
-  mealName: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  mealName: { color: colors.text, fontSize: fontSize.sm, fontWeight: '700' },
 });

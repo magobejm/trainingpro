@@ -25,6 +25,7 @@ import { useCoachCopy, type CoachCopyKey } from '../../screens/coach/coach-copy'
 import { ChatScreen } from '../../screens/shared/ChatScreen';
 import { CoachFeatureScreen } from '../../features/coach/CoachFeatureScreen';
 import { CoachPage, CoachButton } from '../../features/coach/CoachUi';
+import { CoachRouteVisibleContext } from './route-visibility';
 import { BottomNav, BackHeader } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import {
@@ -67,20 +68,7 @@ function CoachWorkspace(): React.JSX.Element {
       clear();
     }
   }, [clear, open, target]);
-  React.useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (navigation.stack.length) {
-        back();
-        return true;
-      }
-      if (navigation.tab !== 'home') {
-        setNavigation((current) => selectCoachTab(current, 'home'));
-        return true;
-      }
-      return false;
-    });
-    return () => subscription.remove();
-  }, [back, navigation]);
+  useCoachBackHandler(navigation, back, setNavigation);
   const select = (tab: CoachTab) => setNavigation((current) => selectCoachTab(current, tab));
   const body =
     navigation.tab === 'home' ? (
@@ -107,18 +95,22 @@ function CoachWorkspace(): React.JSX.Element {
       <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {route ? <BackHeader title={c('back')} onBack={back} /> : null}
         <Animated.View style={[styles.body, { opacity: fade }]}>
-          <View style={[styles.body, route && styles.hidden]}>{body}</View>
+          <View style={[styles.body, route && styles.hidden]}>
+            <CoachRouteVisibleContext.Provider value={!route}>{body}</CoachRouteVisibleContext.Provider>
+          </View>
           {navigation.stack.map((entry, index) => (
             <View
               key={index + JSON.stringify(entry)}
               style={[styles.body, index !== navigation.stack.length - 1 && styles.hidden]}
             >
-              <CoachDetail
-                route={entry}
-                open={open}
-                onOpen={onOpen}
-                back={() => setNavigation((current) => backCoachRouteIfCurrent(current, entry))}
-              />
+              <CoachRouteVisibleContext.Provider value={index === navigation.stack.length - 1}>
+                <CoachDetail
+                  route={entry}
+                  open={open}
+                  onOpen={onOpen}
+                  back={() => setNavigation((current) => backCoachRouteIfCurrent(current, entry))}
+                />
+              </CoachRouteVisibleContext.Provider>
             </View>
           ))}
         </Animated.View>
@@ -145,6 +137,26 @@ function CoachWorkspace(): React.JSX.Element {
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
+}
+function useCoachBackHandler(
+  navigation: ReturnType<typeof initialCoachNavigation>,
+  back: () => void,
+  setNavigation: React.Dispatch<React.SetStateAction<ReturnType<typeof initialCoachNavigation>>>,
+): void {
+  React.useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      if (navigation.stack.length) {
+        back();
+        return true;
+      }
+      if (navigation.tab !== 'home') {
+        setNavigation((current) => selectCoachTab(current, 'home'));
+        return true;
+      }
+      return false;
+    });
+    return () => subscription.remove();
+  }, [back, navigation, setNavigation]);
 }
 function useCoachTransition(tab: CoachTab, depth: number) {
   const fade = React.useRef(new Animated.Value(1)).current;

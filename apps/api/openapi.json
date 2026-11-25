@@ -8313,6 +8313,59 @@
         "x-roles": ["client"]
       }
     },
+    "/clients/me/plan-days": {
+      "get": {
+        "operationId": "get_clients_me_plan_days",
+        "parameters": [
+          {
+            "description": "Filtro",
+            "in": "query",
+            "name": "items",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "No autenticado"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpError"
+                }
+              }
+            },
+            "description": "Rol o permiso no permitido"
+          }
+        },
+        "security": [
+          {
+            "activeRole": [],
+            "bearer": []
+          }
+        ],
+        "summary": "GET /clients/me/plan-days",
+        "x-controller": "ClientSelfController",
+        "x-filters": ["items"],
+        "x-guards": ["AuthGuard", "RolesGuard"],
+        "x-pagination": [],
+        "x-roles": ["client"]
+      }
+    },
     "/clients/me/plan-days/{planDayId}": {
       "get": {
         "operationId": "get_clients_me_plan_days_planDayId",
@@ -19142,60 +19195,6 @@
         ],
         "summary": "GET /org/subscription/occupancy",
         "x-controller": "OrgAdminController",
-        "x-filters": [],
-        "x-guards": ["AuthGuard", "RolesGuard"],
-        "x-pagination": [],
-        "x-roles": ["admin"]
-      }
-    },
-    "/org/subscription/pricing-tiers": {
-      "put": {
-        "operationId": "put_org_subscription_pricing_tiers",
-        "parameters": [],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object"
-              }
-            }
-          },
-          "description": "ReplaceTiersDto",
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Respuesta correcta"
-          },
-          "401": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "No autenticado"
-          },
-          "403": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HttpError"
-                }
-              }
-            },
-            "description": "Rol o permiso no permitido"
-          }
-        },
-        "security": [
-          {
-            "activeRole": [],
-            "bearer": []
-          }
-        ],
-        "summary": "PUT /org/subscription/pricing-tiers",
-        "x-controller": "OrgMetricsController",
         "x-filters": [],
         "x-guards": ["AuthGuard", "RolesGuard"],
         "x-pagination": [],

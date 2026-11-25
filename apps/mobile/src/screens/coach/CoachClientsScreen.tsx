@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import { ClientCardRow } from '@trainerpro/ui';
 import type { ClientListResponse, ClientView } from '@trainerpro/shared';
 import { useCoachQuery } from '../../data/hooks/useCoachData';
@@ -46,6 +46,7 @@ export function CoachClientsScreen(props: {
       <FlatList
         data={rows}
         keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl onRefresh={() => void query.refetch()} refreshing={query.isRefetching} />}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps={'handled'}
         ListHeaderComponent={

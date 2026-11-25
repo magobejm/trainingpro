@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { ClientTimelineResponse } from '@trainerpro/shared';
+import { clientTimelineResponseSchema, type ClientTimelineResponse } from '@trainerpro/shared';
 import { createApiClient } from '../api-client';
-import { useAuthStore } from '../../store/auth.store';
+import { useAuth } from './use-api-auth';
 
 type Cursor = { before: string; beforeId: string } | null;
 
@@ -17,13 +17,6 @@ export function useClientTimelineQuery(clientId: string) {
   });
 }
 
-function useAuth() {
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const activeRole = useAuthStore((state) => state.activeRole);
-  if (!accessToken || !activeRole) return null;
-  return { accessToken, activeRole };
-}
-
 async function fetchTimeline(
   auth: ReturnType<typeof useAuth>,
   clientId: string,
@@ -35,5 +28,8 @@ async function fetchTimeline(
     params.set('before', cursor.before);
     params.set('beforeId', cursor.beforeId);
   }
-  return createApiClient(auth).get<ClientTimelineResponse>(`/clients/${clientId}/timeline?includeOutcome=true&${params}`);
+  return createApiClient(auth).getParsed(
+    `/clients/${clientId}/timeline?includeOutcome=true&${params}`,
+    clientTimelineResponseSchema,
+  );
 }

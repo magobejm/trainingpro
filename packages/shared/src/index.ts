@@ -1,14 +1,18 @@
 export type ActiveRole = 'admin' | 'coach' | 'client';
 export * from './first-workout-guide';
 export * from './role-choice';
+export { isHttpUrl } from './safe-url';
 export {
   chatMessageListSchema,
   chatMessageSchema,
   clientListResponseSchema,
   clientMeasurementListSchema,
   clientMeasurementSchema,
+  clientPlanDayBatchResponseSchema,
   clientViewSchema,
+  clientTimelineResponseSchema,
   httpErrorSchema,
+  progressRecordsResponseSchema,
   sessionViewSchema,
   strengthPlanListItemSchema,
   strengthPlanListResponseSchema,
@@ -20,6 +24,7 @@ export {
   type ClientMeasurement,
   type ClientMeasurementList,
   type ClientObjective,
+  type ClientPlanDayBatchResponse,
   type ClientProgressPhoto,
   type ClientStatus,
   type ClientTimelineItem,
@@ -234,7 +239,7 @@ export {
   type LowCheckinField,
   type RoutineAlert,
 } from './triage/coach-home-rules';
-export { estimateBilling, type BillingEstimate, type PricingTier } from './billing/pricing-tier';
+export { estimateBilling, type BillingEstimate } from './billing/pricing-tier';
 export {
   heartRateTarget,
   mapCardioToGarminWorkout,

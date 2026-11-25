@@ -1,4 +1,10 @@
-import { ApiClientError, createApiClient, isDayChangeConfirmationRequired } from '../api-client';
+import {
+  ApiClientError,
+  createApiClient,
+  isDayChangeConfirmationRequired,
+  setUnauthorizedHandler,
+  UnauthorizedApiError,
+} from '../api-client';
 
 describe('isDayChangeConfirmationRequired', () => {
   it('detects the 409 confirmation code', () => {
@@ -39,7 +45,7 @@ describe('api client failures', () => {
 it.each(['120', '840'])('sends a single timezone offset when an override uses lowercase headers (%s)', async (offset) => {
   const timezone = jest.spyOn(Date.prototype, 'getTimezoneOffset').mockReturnValue(-120);
   const originalFetch = global.fetch;
-  const fetchMock = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+  const fetchMock = jest.fn().mockResolvedValue(fakeResponse(200, '{}'));
   global.fetch = fetchMock as unknown as typeof fetch;
   try {
     await createApiClient({ activeRole: 'coach', baseUrl: 'http://localhost:8081' }).get('/progress/adherence', {
@@ -72,5 +78,43 @@ function failedResponse(requestId: string): {
         requestId,
         statusCode: 403,
       }),
+  };
+}
+
+describe('global unauthorized handler and empty bodies', () => {
+  afterEach(() => setUnauthorizedHandler(null));
+
+  it('reports a 401 with the request token, unless the client opts out', async () => {
+    const handler = jest.fn();
+    setUnauthorizedHandler(handler);
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue(fakeResponse(401, JSON.stringify({ message: 'Unauthorized' }))) as unknown as typeof fetch;
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const base = { accessToken: 'tok-1', activeRole: 'client' as const, baseUrl: 'http://localhost:8080' };
+    await expect(createApiClient(base).get('/clients/me')).rejects.toBeInstanceOf(UnauthorizedApiError);
+    expect(handler).toHaveBeenCalledWith('tok-1');
+    handler.mockClear();
+    await expect(createApiClient({ ...base, skipUnauthorizedHandler: true }).get('/users/me')).rejects.toBeInstanceOf(
+      UnauthorizedApiError,
+    );
+    expect(handler).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it.each([204, 200])('returns undefined for an empty body (%s)', async (status) => {
+    global.fetch = jest.fn().mockResolvedValue(fakeResponse(status, '')) as unknown as typeof fetch;
+    const client = createApiClient({ accessToken: 't', activeRole: 'client', baseUrl: 'http://localhost:8080' });
+    await expect(client.post('/x', {})).resolves.toBeUndefined();
+  });
+});
+
+function fakeResponse(status: number, body: string): unknown {
+  return {
+    headers: { get: () => null },
+    json: async () => JSON.parse(body || 'null'),
+    ok: status < 400,
+    status,
+    text: async () => body,
   };
 }

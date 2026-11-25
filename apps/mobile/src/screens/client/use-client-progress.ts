@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/auth.store';
-import { createApiClient, UnauthorizedApiError } from '../../data/api-client';
-import { handleUnauthorized } from '../../data/auth-service';
+import { createApiClient } from '../../data/api-client';
 import type { MeasurementKey, ProgressPose } from './client-measures.helpers';
 
 export type ClientMeasurement = {
@@ -44,15 +43,10 @@ export function useUploadProgressPhotoMutation() {
 }
 
 async function loadMeasurements(accessToken: string): Promise<ClientMeasurement[]> {
-  try {
-    const response = await createApiClient({ accessToken, activeRole: 'client' }).get<{ items: ClientMeasurement[] }>(
-      '/clients/me/measurements',
-    );
-    return response.items;
-  } catch (error) {
-    if (error instanceof UnauthorizedApiError) void handleUnauthorized();
-    throw error;
-  }
+  const response = await createApiClient({ accessToken, activeRole: 'client' }).get<{ items: ClientMeasurement[] }>(
+    '/clients/me/measurements',
+  );
+  return response.items;
 }
 
 function saveMeasurement(accessToken: string | null, body: Partial<Record<MeasurementKey, number>>) {

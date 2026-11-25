@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
 import {
@@ -12,6 +12,7 @@ import {
 } from '../../data/hooks/useClientLibrary';
 import { OverlayBackHeader } from '../../shell/client/client-shell.primitives';
 import type { LibraryDisplayItem, LibraryTabId } from './client-library.helpers';
+import { QueryErrorNotice } from './QueryErrorNotice';
 import { LibraryItemCard } from './ClientLibraryItemCard';
 import { LibraryItemDetail } from './ClientLibraryItemDetail';
 import { LibrarySearchBar } from './ClientLibrarySearchBar';
@@ -31,7 +32,8 @@ function useLibraryTabData(activeTab: LibraryTabId, q: string) {
   const mobility = useClientLibraryMobilityQuery(q, activeTab === 'mobility');
   const isometric = useClientLibraryIsometricQuery(q, activeTab === 'isometric');
   const sports = useClientLibrarySportsQuery(q, activeTab === 'sport');
-  const map: Record<LibraryTabId, { data?: unknown[]; isLoading: boolean }> = {
+  type TabData = { data?: unknown[]; isError: boolean; isLoading: boolean; isRefetching: boolean; refetch: () => unknown };
+  const map: Record<LibraryTabId, TabData> = {
     cardio,
     isometric,
     mobility,
@@ -48,7 +50,7 @@ export function ClientLibraryScreen({ onClose }: Props): React.JSX.Element {
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<LibraryDisplayItem | null>(null);
 
-  const { data, isLoading } = useLibraryTabData(activeTab, search);
+  const { data, isError, isLoading, isRefetching, refetch } = useLibraryTabData(activeTab, search);
   const items = (data ?? []) as LibraryDisplayItem[];
 
   return (
@@ -61,6 +63,10 @@ export function ClientLibraryScreen({ onClose }: Props): React.JSX.Element {
         <View style={styles.center}>
           <ActivityIndicator color={SPINNER_COLOR} size={SPINNER_SIZE} />
         </View>
+      ) : isError && items.length === 0 ? (
+        <View style={styles.center}>
+          <QueryErrorNotice onRetry={() => void refetch()} />
+        </View>
       ) : items.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.emptyText}>{search ? t('client.library.noResults') : t('client.library.empty')}</Text>
@@ -70,6 +76,7 @@ export function ClientLibraryScreen({ onClose }: Props): React.JSX.Element {
           contentContainerStyle={styles.list}
           data={items}
           keyExtractor={(item) => item.id}
+          refreshControl={<RefreshControl onRefresh={() => void refetch()} refreshing={isRefetching} />}
           renderItem={({ item }) => (
             <LibraryItemCard activeTab={activeTab} item={item} onPress={() => setSelectedItem(item)} />
           )}

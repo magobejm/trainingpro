@@ -17,6 +17,34 @@ import { updateStoredGuide } from '../first-workout-guide.storage';
 
 const path = '/clients/me/first-workout-guide';
 
+/** Consulta la guía cada 20 s solo con la app activa y mientras la guía no esté terminada. */
+function useGuidePolling(enabled: boolean, guideDone: boolean, refresh: () => Promise<void>): void {
+  useEffect(() => {
+    if (!enabled) return undefined;
+    let timer: ReturnType<typeof setInterval> | null = null;
+    const stop = () => {
+      if (timer) clearInterval(timer);
+      timer = null;
+    };
+    const start = () => {
+      if (!timer && !guideDone) timer = setInterval(() => void refresh(), 20_000);
+    };
+    if (AppState.currentState === 'active') start();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void refresh();
+        start();
+      } else {
+        stop();
+      }
+    });
+    return () => {
+      stop();
+      subscription.remove();
+    };
+  }, [enabled, guideDone, refresh]);
+}
+
 export function useWorkoutGuideController() {
   const userId = useAuthStore((s) => s.userId);
   const accessToken = useAuthStore((s) => s.accessToken);
@@ -69,21 +97,21 @@ export function useWorkoutGuideController() {
     },
     [enabled, publish, refresh, scope],
   );
+  const storedEntry = local?.scope === scope ? local.entry : null;
+  const guideDone = Boolean(
+    storedEntry &&
+    !storedEntry.replayStep &&
+    !storedEntry.pending &&
+    ['completed', 'dismissed'].includes(effectiveGuide(storedEntry).status),
+  );
   useEffect(() => {
     if (!enabled) return;
     void updateStoredGuide(scope, (stored) => stored)
       .then(publish)
       .catch(() => setError(true));
     void refresh();
-    const timer = setInterval(() => void refresh(), 20_000);
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void refresh();
-    });
-    return () => {
-      clearInterval(timer);
-      subscription.remove();
-    };
   }, [enabled, publish, refresh, scope]);
+  useGuidePolling(enabled, guideDone, refresh);
   const entry = local?.scope === scope ? local.entry : emptyGuideEntry();
   const guide = effectiveGuide(entry);
   return {

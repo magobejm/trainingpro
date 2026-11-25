@@ -5,6 +5,7 @@ import { CallProposalCard } from './CallProposalCard';
 import { ChatTechniqueAnalysis } from './ChatTechniqueAnalysis';
 import { extractExerciseName } from './chat-exercise-name';
 import { colors, fontSize, radius, space } from '@trainerpro/ui';
+import { isHttpUrl } from '@trainerpro/shared';
 
 export function ChatMessageBubble(props: { message: ChatMessage }): React.JSX.Element {
   if (props.message.callProposal && !props.message.text) {
@@ -25,7 +26,7 @@ function AttachmentItem(props: {
   attachment: ChatMessage['attachments'][number];
   messageText?: null | string;
 }): React.JSX.Element {
-  const url = props.attachment.publicUrl;
+  const url = isHttpUrl(props.attachment.publicUrl) ? props.attachment.publicUrl : null;
   if (!url) {
     return <Text style={styles.attachmentItem}>{props.attachment.fileName}</Text>;
   }

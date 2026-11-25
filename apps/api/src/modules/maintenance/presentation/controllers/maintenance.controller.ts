@@ -2,6 +2,7 @@ import { Controller, Post, UseGuards } from '@nestjs/common';
 import { DispatchNotificationsUseCase } from '../../../notifications/application/use-cases/dispatch-notifications.usecase';
 import { RunNotificationBatchJobsUseCase } from '../../../notifications/application/use-cases/run-notification-batch-jobs.usecase';
 import { IntegrationsService } from '../../../integrations/integrations.service';
+import { OrgMetricsService } from '../../../org/application/org-metrics.service';
 import { PurgeExpiredChatDataUseCase } from '../../application/use-cases/purge-expired-chat-data.usecase';
 import { CronSecretGuard } from '../guards/cron-secret.guard';
 
@@ -12,6 +13,7 @@ export class MaintenanceController {
     private readonly purgeExpiredChatDataUseCase: PurgeExpiredChatDataUseCase,
     private readonly integrations: IntegrationsService,
     private readonly runNotificationBatchJobsUseCase: RunNotificationBatchJobsUseCase,
+    private readonly orgMetrics: OrgMetricsService,
   ) {}
 
   @Post('dispatch')
@@ -21,6 +23,7 @@ export class MaintenanceController {
     const notificationJobs = await this.runNotificationBatchJobsUseCase.execute();
     const notificationDelivery = await this.dispatchNotificationsUseCase.execute();
     const integrations = await this.integrations.processEvents();
-    return { chatPurge, integrations, notificationDelivery, notificationJobs, status: 'accepted' };
+    const billingSnapshots = await this.orgMetrics.recordDailySnapshots();
+    return { billingSnapshots, chatPurge, integrations, notificationDelivery, notificationJobs, status: 'accepted' };
   }
 }

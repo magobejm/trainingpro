@@ -11,6 +11,7 @@ import { OrgMetricsController } from './presentation/controllers/org-metrics.con
 @Module({
   imports: [AuthModule],
   controllers: [OrgAdminController, OrgMetricsController],
+  exports: [OrgMetricsService],
   providers: [
     GetOrgOccupancyUseCase,
     OrgMetricsService,

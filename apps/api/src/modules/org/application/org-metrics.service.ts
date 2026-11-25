@@ -39,24 +39,60 @@ export class OrgMetricsService {
 
   async billingEstimate(adminUid: string) {
     const organizationId = await this.organizationId(adminUid);
+    const day = utcDay(new Date());
     const [active, subscription] = await Promise.all([
-      this.prisma.client.count({ where: { archivedAt: null, organizationId } }),
+      this.recordOrganization(organizationId, day),
       this.prisma.organizationSubscription.findUnique({ where: { organizationId } }),
     ]);
-    const today = new Date();
-    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()));
+    const peak = await this.monthPeak(organizationId, day);
+    const clientLimit = subscription?.clientLimit ?? 0;
+    return {
+      activeClients: active,
+      billableMonthly: estimateBilling(peak).monthly,
+      clientLimit,
+      estimatedMonthly: estimateBilling(clientLimit).monthly,
+      peakActiveClients: peak,
+    };
+  }
+
+  async recordDailySnapshots(now = new Date()): Promise<{ recorded: number }> {
+    const day = utcDay(now);
+    const [organizations, counts] = await Promise.all([
+      this.prisma.organization.findMany({ select: { id: true } }),
+      this.prisma.client.groupBy({
+        by: ['organizationId'],
+        where: { archivedAt: null },
+        _count: { _all: true },
+      }),
+    ]);
+    const activeByOrg = new Map(counts.map((row) => [row.organizationId, row._count._all]));
+    for (const organization of organizations) {
+      await this.writeSnapshot(organization.id, day, activeByOrg.get(organization.id) ?? 0);
+    }
+    return { recorded: organizations.length };
+  }
+
+  private async recordOrganization(organizationId: string, day: Date): Promise<number> {
+    const active = await this.prisma.client.count({ where: { archivedAt: null, organizationId } });
+    await this.writeSnapshot(organizationId, day, active);
+    return active;
+  }
+
+  private async writeSnapshot(organizationId: string, day: Date, active: number): Promise<void> {
     await this.prisma.billingSnapshot.upsert({
       create: { activeClientCount: active, day, organizationId },
       update: { activeClientCount: active },
       where: { organizationId_day: { day, organizationId } },
     });
-    const clientLimit = subscription?.clientLimit ?? 0;
-    return {
-      activeClients: active,
-      billableMonthly: estimateBilling(active).monthly,
-      clientLimit,
-      estimatedMonthly: estimateBilling(clientLimit).monthly,
-    };
+  }
+
+  private async monthPeak(organizationId: string, day: Date): Promise<number> {
+    const month = utcMonthRange(day);
+    const peak = await this.prisma.billingSnapshot.aggregate({
+      _max: { activeClientCount: true },
+      where: { day: { gte: month.start, lt: month.end }, organizationId },
+    });
+    return peak._max.activeClientCount ?? 0;
   }
 
   private async organizationId(adminUid: string) {
@@ -66,6 +102,17 @@ export class OrgMetricsService {
     if (!membership) throw new ForbiddenException('Admin membership not found');
     return membership.organizationId;
   }
+}
+
+function utcDay(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+}
+
+function utcMonthRange(day: Date): { end: Date; start: Date } {
+  return {
+    end: new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth() + 1, 1)),
+    start: new Date(Date.UTC(day.getUTCFullYear(), day.getUTCMonth(), 1)),
+  };
 }
 
 function meanHours(rows: Array<{ createdAt: Date; reviewedAt: Date | null }>): number | null {

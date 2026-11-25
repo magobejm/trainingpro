@@ -69,7 +69,7 @@ function BillingCard(): React.JSX.Element {
       </Text>
       <Text style={ui.muted}>
         {billing
-          ? t('mobile.admin.billing.billable', { count: billing.activeClients, price: billing.billableMonthly })
+          ? t('mobile.admin.billing.billable', { count: billing.peakActiveClients, price: billing.billableMonthly })
           : empty}
       </Text>
     </View>

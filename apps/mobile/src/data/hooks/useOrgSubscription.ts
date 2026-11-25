@@ -21,6 +21,7 @@ export type BillingEstimate = {
   billableMonthly: number;
   clientLimit: number;
   estimatedMonthly: number;
+  peakActiveClients: number;
 };
 
 function useAdminAuth() {

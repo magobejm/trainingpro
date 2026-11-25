@@ -18,6 +18,7 @@ type Billing = {
   billableMonthly: number;
   clientLimit: number;
   estimatedMonthly: number;
+  peakActiveClients: number;
 };
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
@@ -73,7 +74,7 @@ export function BillingEstimateCard(props: { t: Translate }): React.JSX.Element 
         <PriceTile
           amount={billing?.billableMonthly}
           currency={currency}
-          hint={billing ? props.t('admin.billing.billableHint', { count: billing.activeClients }) : '—'}
+          hint={billing ? props.t('admin.billing.billableHint', { count: billing.peakActiveClients }) : '—'}
           label={props.t('admin.billing.billableLabel')}
           tone="billable"
         />

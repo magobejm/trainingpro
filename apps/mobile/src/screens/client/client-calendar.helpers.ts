@@ -51,10 +51,47 @@ export type DayChipKind = 'call' | 'notes' | 'rest' | 'test' | 'workout';
 
 export type DayChip = {
   color?: string | null;
+  done?: boolean;
   extra?: number;
   kind: DayChipKind;
   text: string;
 };
+
+export type WorkoutChipTone = {
+  backgroundColor: string;
+  borderColor: string;
+  borderWidth: number;
+  color: string;
+};
+
+const WORKOUT_SOLID = '#2563eb';
+const WORKOUT_TEXT = '#1d4ed8';
+
+/** La planificada usa el color claro de la rutina: el texto tiene que ser oscuro para leerse. */
+export function workoutChipTone(color: string | null | undefined, done: boolean): WorkoutChipTone {
+  const stored = color && isLightColor(color) ? color : null;
+  if (done || !stored) {
+    const backgroundColor = color && !isLightColor(color) ? color : WORKOUT_SOLID;
+    return { backgroundColor, borderColor: backgroundColor, borderWidth: 1, color: '#ffffff' };
+  }
+  return { backgroundColor: stored, borderColor: WORKOUT_SOLID, borderWidth: 1, color: WORKOUT_TEXT };
+}
+
+function isLightColor(hex: string): boolean {
+  const raw = hex.trim().replace('#', '');
+  const value =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((channel) => `${channel}${channel}`)
+          .join('')
+      : raw;
+  if (!/^[0-9a-fA-F]{6}$/.test(value)) return false;
+  const red = Number.parseInt(value.slice(0, 2), 16);
+  const green = Number.parseInt(value.slice(2, 4), 16);
+  const blue = Number.parseInt(value.slice(4, 6), 16);
+  return (0.2126 * red + 0.7152 * green + 0.0722 * blue) / 255 > 0.62;
+}
 
 export type GridCell = {
   date: Date;
@@ -311,6 +348,7 @@ function workoutChips(data: DayData | undefined): DayChip[] {
   if (workouts.length === 0) return [{ kind: 'rest', text: '' }];
   const visible: DayChip[] = workouts.slice(0, 2).map((workout) => ({
     color: workout.color,
+    done: workout.done,
     kind: 'workout',
     text: workout.title,
   }));

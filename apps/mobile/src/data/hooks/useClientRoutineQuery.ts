@@ -52,8 +52,24 @@ type PlanDayRequest = { id: string; on: string };
 const PLAN_DAY_BATCH_SIZE = 40;
 
 export function usePlanDaysForDates(requests: PlanDayRequest[]): Map<string, ClientRoutineDay> {
-  const batch = usePlanDayBatch(requests);
-  return new Map([...batch].map(([key, day]) => [key, day]));
+  return new Map(usePlanDayBatch(requests));
+}
+
+/** La caché persistida no puede guardar un Map: un objeto vacío no es iterable y tumba el calendario. */
+export function planDayMapFromCache(data: unknown): Map<string, ClientRoutineDay> {
+  if (data instanceof Map) return data;
+  if (!Array.isArray(data)) return new Map();
+  const entries: Array<[string, ClientRoutineDay]> = [];
+  for (const entry of data) {
+    if (!Array.isArray(entry) || typeof entry[0] !== 'string' || !isPlanDay(entry[1])) continue;
+    entries.push([entry[0], entry[1]]);
+  }
+  return new Map(entries);
+}
+
+function isPlanDay(value: unknown): value is ClientRoutineDay {
+  if (typeof value !== 'object' || value === null) return false;
+  return 'id' in value && 'exercises' in value && Array.isArray(value.exercises);
 }
 
 /** Calendar entries can retain a day from an older assigned revision. */
@@ -79,10 +95,13 @@ function usePlanDayBatch(requests: PlanDayRequest[]): Map<string, ClientRoutineD
     refetchOnMount: 'always',
     staleTime: 0,
   });
-  return query.data ?? new Map<string, ClientRoutineDay>();
+  return planDayMapFromCache(query.data);
 }
 
-async function fetchPlanDayBatch(accessToken: string, requests: PlanDayRequest[]): Promise<Map<string, ClientRoutineDay>> {
+async function fetchPlanDayBatch(
+  accessToken: string,
+  requests: PlanDayRequest[],
+): Promise<Array<[string, ClientRoutineDay]>> {
   const api = createApiClient({ accessToken, activeRole: 'client' });
   const days = new Map<string, ClientRoutineDay>();
   for (let start = 0; start < requests.length; start += PLAN_DAY_BATCH_SIZE) {
@@ -94,7 +113,7 @@ async function fetchPlanDayBatch(accessToken: string, requests: PlanDayRequest[]
     const response = await api.getParsed(path, clientPlanDayBatchResponseSchema);
     for (const item of response.items) days.set(`${item.on}|${item.planDayId}`, item.day);
   }
-  return days;
+  return [...days.entries()];
 }
 
 function localDateKey(date: Date): string {

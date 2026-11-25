@@ -4,6 +4,7 @@ import {
   mergeDayData,
   todayAttentionCount,
   weekDayLabel,
+  workoutChipTone,
   type DayData,
 } from '../client-calendar.helpers';
 import { callTimeOptions } from '../calendar-fixed-colors';
@@ -141,7 +142,7 @@ describe('dayChips', () => {
     const map = mergeDayData([event({ planDayId: 'day-1', planDayTitle: 'Pierna', title: 'Pierna' })], []);
     const chips = dayChips(map.get('2026-10-20'));
     expect(chips.map((chip) => chip.text)).toEqual(['Pierna']);
-    expect(chips[0]?.kind).toBe('workout');
+    expect(chips[0]).toMatchObject({ done: false, kind: 'workout' });
   });
 
   it('shows two workouts on the same day and a more chip after that', () => {
@@ -263,4 +264,16 @@ it('uses the server canonical session while retaining a newer local result for t
     [session('a', 'IN_PROGRESS')],
   );
   expect(offline.get('2026-10-20')?.workouts).toMatchObject([{ sessionId: 'a', outcome: 'in_progress' }]);
+});
+
+describe('workoutChipTone', () => {
+  it('keeps planned light colors readable and done workouts solid', () => {
+    expect(workoutChipTone('#dbeafe', false)).toMatchObject({
+      backgroundColor: '#dbeafe',
+      borderColor: '#2563eb',
+      color: '#1d4ed8',
+    });
+    expect(workoutChipTone('#dbeafe', true).color).toBe('#ffffff');
+    expect(workoutChipTone('#2563eb', false).color).toBe('#ffffff');
+  });
 });

@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import '../../i18n';
-import { dayChips, type DayChip, type DayData, type GridCell } from './client-calendar.helpers';
+import { dayChips, workoutChipTone, type DayChip, type DayData, type GridCell } from './client-calendar.helpers';
 import { LIGHT } from '../../theme/light';
 import { CALL_COLOR, COACH_NOTE_COLOR } from './calendar-fixed-colors';
 
@@ -69,6 +69,11 @@ const CHIP_BG: Record<DayChip['kind'], string> = {
   workout: BG_PLANNED,
 };
 
+function chipStyle(chip: DayChip, data: DayData | undefined) {
+  if (chip.kind !== 'workout') return { backgroundColor: CHIP_BG[chip.kind] };
+  return workoutChipTone(chip.color ?? data?.workoutColor, chip.done === true);
+}
+
 function chipLabel(chip: DayChip, t: (key: string, options?: Record<string, unknown>) => string): string {
   if (chip.extra) return t('client.calendar.chip.more', { count: chip.extra });
   if (chip.kind === 'rest') return t('client.calendar.chip.rest');
@@ -90,14 +95,7 @@ export function DayCell({ cell, data, isToday, onPress }: DayCellProps): React.J
         <Text
           key={`${chip.kind}-${String(index)}`}
           numberOfLines={1}
-          style={[
-            styles.chip,
-            {
-              backgroundColor:
-                chip.kind === 'workout' ? (chip.color ?? data?.workoutColor ?? CHIP_BG.workout) : CHIP_BG[chip.kind],
-            },
-            chip.kind === 'rest' && styles.chipRest,
-          ]}
+          style={[styles.chip, chipStyle(chip, data), chip.kind === 'rest' && styles.chipRest]}
         >
           {chipLabel(chip, t)}
         </Text>

@@ -10,7 +10,7 @@ describe('client-mood-chart helpers', () => {
     expect(xAt(0, 7, g)).toBeLessThan(xAt(6, 7, g));
   });
 
-  it('corta la línea en los días omitidos', () => {
+  it('une los días con dato en una curva aunque falte un día en medio', () => {
     const points = buildWellnessTrend({
       checkins: [
         { date: '2026-11-02', motivation: 4, recovery: 3, sleep: 5 },
@@ -21,8 +21,20 @@ describe('client-mood-chart helpers', () => {
       range: 7,
       sessions: [],
     });
-    expect(seriesSegments(points, 'motivation', g)).toHaveLength(2);
-    expect(seriesSegments(points, 'sleep', g)[0]).toMatch(/^M /);
+    const [path] = seriesSegments(points, 'motivation', g);
+    expect(path?.startsWith(`M ${xAt(0, 7, g).toFixed(1)} ${yAt(4, g).toFixed(1)}`)).toBe(true);
+    expect(path).toContain(`${xAt(2, 7, g).toFixed(1)} ${yAt(2, g).toFixed(1)}`);
+    expect(path?.endsWith(`${xAt(3, 7, g).toFixed(1)} ${yAt(3, g).toFixed(1)}`)).toBe(true);
+    expect(path).toContain('C ');
+    expect(path).not.toContain(`${xAt(1, 7, g).toFixed(1)} `);
+    expect(seriesSegments(points, 'recovery', g)).toHaveLength(1);
+    expect(
+      seriesSegments(
+        [{ date: '2026-11-02', motivation: 4, recovery: null, rpe: null, rpeScaled: null, sleep: null, trained: false }],
+        'sleep',
+        g,
+      ),
+    ).toEqual([]);
   });
 
   it('la barra de RPE parte de la línea base', () => {

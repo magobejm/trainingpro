@@ -38,7 +38,7 @@ export class UploadClientAvatarUseCase {
   }
 }
 
-function validateAvatarFile(file: { mimetype: string; size: number }): void {
+export function validateAvatarFile(file: { mimetype: string; size: number }): void {
   if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
     throw new BadRequestException('Unsupported avatar format');
   }
@@ -47,7 +47,7 @@ function validateAvatarFile(file: { mimetype: string; size: number }): void {
   }
 }
 
-function buildAvatarPath(clientId: string, file: { mimetype: string; originalname: string }): string {
+export function buildAvatarPath(clientId: string, file: { mimetype: string; originalname: string }): string {
   const extension = EXT_BY_MIME[file.mimetype] ?? 'jpg';
   const safeName = sanitizeName(file.originalname);
   return `clients/avatars/${clientId}/${Date.now()}-${safeName}.${extension}`;

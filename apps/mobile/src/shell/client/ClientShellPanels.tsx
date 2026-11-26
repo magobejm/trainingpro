@@ -6,10 +6,12 @@ import { useLogout } from '../../data/hooks/useAuthMutations';
 import { useClientMeQuery, type ClientMe } from '../../data/hooks/useClientMeQuery';
 import { LIGHT } from '../../theme/light';
 import { InfoButton, StatSquare } from '../../theme/primitives';
-import { AvatarImage, OverlayBackHeader } from './client-shell.primitives';
+import { OverlayBackHeader } from './client-shell.primitives';
+import { ProfileAvatarButton, ProfileIdentityFields, ProfileMeasureStat } from './InlineProfileField';
 import { ClientProfileNoteSheet } from './ClientProfileNoteSheet';
 import { s } from './client-shell.styles';
 import { PasswordChangeForm } from '../../screens/auth/PasswordChangeForm';
+import { useUpdateOwnProfileMutation } from './use-client-profile';
 
 type NoteKey = 'allergies' | 'considerations' | 'injuries';
 
@@ -21,10 +23,11 @@ const NOTE_LABEL: Record<NoteKey, string> = {
 
 export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () => void }): React.JSX.Element {
   const { t } = useTranslation();
-  const { data: client, isLoading } = useClientMeQuery();
+  const { data: client, isLoading, refetch } = useClientMeQuery();
   const logout = useLogout();
+  const saveNote = useUpdateOwnProfileMutation();
   const [note, setNote] = useState<NoteKey | null>(null);
-  if (isLoading || !client) {
+  if (isLoading) {
     return (
       <View style={s.sidePanel}>
         <OverlayBackHeader onClose={props.onClose} />
@@ -34,15 +37,33 @@ export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () =>
       </View>
     );
   }
+  if (!client) {
+    return (
+      <View style={s.sidePanel}>
+        <OverlayBackHeader onClose={props.onClose} />
+        <View style={[s.centered, { gap: 12 }]}>
+          <Text style={s.fieldValue}>{t('mobile.error.title')}</Text>
+          <Pressable onPress={() => void refetch()} style={s.logoutBtn}>
+            <Text style={s.logoutBtnText}>{t('mobile.error.retry')}</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
   return (
     <View style={s.sidePanel}>
       <OverlayBackHeader onClose={props.onClose} />
-      <ScrollView contentContainerStyle={s.panelContent}>
+      <ScrollView contentContainerStyle={s.panelContent} keyboardShouldPersistTaps={'handled'}>
         <ProfileHero client={client} t={t} />
-        <ProfileFields client={client} />
+        <ProfileIdentityFields client={client} />
         <View style={s.statGrid}>
-          <StatSquare label={t('mobile.client.profile.waist')} value={client.waistCm} />
-          <StatSquare label={t('mobile.client.profile.hip')} value={client.hipCm} />
+          <ProfileMeasureStat
+            client={client}
+            label={t('mobile.client.profile.waist')}
+            measure={'waistCm'}
+            variant={'square'}
+          />
+          <ProfileMeasureStat client={client} label={t('mobile.client.profile.hip')} measure={'hipCm'} variant={'square'} />
           <StatSquare label={'FC Max'} value={client.fcMax} />
           <StatSquare label={'FC Res'} value={client.fcRest} />
         </View>
@@ -77,9 +98,10 @@ export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () =>
         </Pressable>
       </ScrollView>
       <ClientProfileNoteSheet
-        body={note ? client[note] : null}
         onClose={() => setNote(null)}
+        onSave={(value) => saveHealthNote(saveNote.mutateAsync, note, value)}
         title={note ? t(NOTE_LABEL[note]) : ''}
+        value={note ? client[note] : null}
         visible={note !== null}
       />
     </View>
@@ -89,9 +111,7 @@ export function ProfilePanel(props: { onClose: () => void; onOpenMeasures: () =>
 function ProfileHero(props: { client: ClientMe; t: (k: string) => string }): React.JSX.Element {
   return (
     <View style={s.profileHero}>
-      <View style={s.heroAvatarWrap}>
-        <AvatarImage avatarUrl={props.client.avatarUrl} size={64} />
-      </View>
+      <ProfileAvatarButton client={props.client} />
       <View style={s.heroInfo}>
         <Text style={s.heroName}>{`${props.client.firstName} ${props.client.lastName}`}</Text>
         <View style={s.heroStatusRow}>
@@ -100,34 +120,18 @@ function ProfileHero(props: { client: ClientMe; t: (k: string) => string }): Rea
         </View>
       </View>
       <View style={s.profileStatsRow}>
-        <View style={s.profileStatCol}>
-          <Text style={s.profileStatValue}>{props.client.heightCm ?? '–'}</Text>
-          <Text style={s.profileStatLabel}>{props.t('mobile.client.profile.height')}</Text>
-        </View>
-        <View style={s.profileStatCol}>
-          <Text style={s.profileStatValue}>{props.client.weightKg ?? '–'}</Text>
-          <Text style={s.profileStatLabel}>{props.t('mobile.client.profile.weight')}</Text>
-        </View>
-      </View>
-    </View>
-  );
-}
-
-function ProfileFields(props: { client: ClientMe }): React.JSX.Element {
-  const { t } = useTranslation();
-  return (
-    <View style={{ gap: 12 }}>
-      <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{t('mobile.client.profile.fullName')}</Text>
-        <Text style={s.fieldValue}>{`${props.client.firstName} ${props.client.lastName}`}</Text>
-      </View>
-      <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{t('mobile.client.profile.email')}</Text>
-        <Text style={s.fieldValue}>{props.client.email ?? '–'}</Text>
-      </View>
-      <View style={s.fieldCard}>
-        <Text style={s.fieldLabel}>{t('mobile.client.profile.phone')}</Text>
-        <Text style={s.fieldValue}>{props.client.phone ?? '–'}</Text>
+        <ProfileMeasureStat
+          client={props.client}
+          label={props.t('mobile.client.profile.height')}
+          measure={'heightCm'}
+          variant={'hero'}
+        />
+        <ProfileMeasureStat
+          client={props.client}
+          label={props.t('mobile.client.profile.weight')}
+          measure={'weightKg'}
+          variant={'hero'}
+        />
       </View>
     </View>
   );
@@ -199,6 +203,17 @@ function MedicalRow(props: { color: string; label: string; value: string }): Rea
       </View>
     </View>
   );
+}
+
+function saveHealthNote(
+  mutate: ReturnType<typeof useUpdateOwnProfileMutation>['mutateAsync'],
+  key: NoteKey | null,
+  value: string | null,
+): Promise<unknown> {
+  if (key === 'allergies') return mutate({ allergies: value });
+  if (key === 'considerations') return mutate({ considerations: value });
+  if (key === 'injuries') return mutate({ injuries: value });
+  return Promise.resolve();
 }
 
 function NotesSection(props: { notes: string; t: (k: string) => string }): React.JSX.Element {

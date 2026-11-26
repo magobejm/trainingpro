@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   Query,
@@ -27,6 +28,7 @@ import { FILE_STORAGE, type FileStoragePort } from '../../../files/domain/file-s
 import { PrivateMediaUrlSigner } from '../../../files/domain/private-media-url-signer';
 import { toStoredFileUrls } from '../../../files/domain/resolve-stored-file-url';
 import { ClientNeatLogService } from '../../application/services/client-neat-log.service';
+import { ClientSelfProfileService } from '../../application/services/client-self-profile.service';
 import { ClientSelfProgressService } from '../../application/services/client-self-progress.service';
 import { EnsureClientSelfSessionUseCase } from '../../application/use-cases/ensure-client-self-session.usecase';
 import { GetClientCalendarSummaryUseCase } from '../../application/use-cases/get-client-calendar-summary.usecase';
@@ -57,6 +59,7 @@ import { SkipClientSessionDto } from '../dto/skip-client-session.dto';
 import { SessionIdParamDto } from '../../../sessions/presentation/dto/session-id-param.dto';
 import { readTimezoneOffset } from '../../../sessions/presentation/read-timezone-offset';
 import { RecordClientMeasurementDto } from '../dto/record-client-measurement.dto';
+import { UpdateOwnProfileDto } from '../dto/update-own-profile.dto';
 import { mapClientOutput, mapMeasurementOutput, mapProgressPhotoOutput } from './clients.controller.mappers';
 
 type UploadedPhoto = { buffer: Buffer; mimetype: string; originalname: string; size: number };
@@ -79,6 +82,7 @@ export class ClientSelfController {
     private readonly listClientSessionsUseCase: ListClientSessionsUseCase,
     private readonly listClientWellnessUseCase: ListClientWellnessUseCase,
     private readonly clientNeatLogService: ClientNeatLogService,
+    private readonly clientSelfProfileService: ClientSelfProfileService,
     private readonly clientSelfProgressService: ClientSelfProgressService,
     private readonly saveClientDayNoteUseCase: SaveClientDayNoteUseCase,
     private readonly saveClientWeeklyLoadUseCase: SaveClientWeeklyLoadUseCase,
@@ -94,6 +98,18 @@ export class ClientSelfController {
     const context = readAuthContext(request);
     const client = await this.getClientMeUseCase.execute(context);
     return mapClientOutput(client, toStoredFileUrls(this.storage, this.mediaUrls));
+  }
+
+  @Patch('me')
+  async updateMe(@Body() body: UpdateOwnProfileDto, @Req() request: HttpAuthRequest) {
+    const client = await this.clientSelfProfileService.update(readAuthContext(request), body);
+    return mapClientOutput(client, toStoredFileUrls(this.storage, this.mediaUrls));
+  }
+
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadMyAvatar(@UploadedFile() file: UploadedPhoto | undefined, @Req() request: HttpAuthRequest) {
+    return this.clientSelfProfileService.uploadAvatar(readAuthContext(request), file);
   }
 
   @Get('me/measurements')

@@ -10,8 +10,17 @@ import { resolveRoutineWeekSchedule } from '../../screens/client/routine-schedul
 import { ActionCard, IconUser } from '../../theme/primitives';
 import { LIGHT } from '../../theme/light';
 import { s } from './client-shell.styles';
+import { AvatarImage } from './client-shell.primitives';
 import { HomeNeatCard } from './HomeNeatCard';
 import { WeeklyLoadReminderCard } from './WeeklyLoadReminderCard';
+
+function HomeProfileMark(props: { avatarUrl?: null | string }): React.JSX.Element {
+  return (
+    <View style={s.profileCardAvatar}>
+      {props.avatarUrl ? <AvatarImage avatarUrl={props.avatarUrl} size={44} /> : <IconUser size={20} color={LIGHT.accent} />}
+    </View>
+  );
+}
 
 type HomeHubProps = {
   onOpenLoad: () => void;
@@ -65,9 +74,7 @@ export function HomeHub(props: HomeHubProps): React.JSX.Element {
       <View style={s.homeHeader}>
         <Pressable onPress={props.onOpenProfile} style={s.profileCard}>
           <View style={s.profileCardRow}>
-            <View style={s.profileCardAvatar}>
-              <IconUser size={20} color={LIGHT.accent} />
-            </View>
+            <HomeProfileMark avatarUrl={client?.avatarUrl} />
             <View style={s.profileCardInfo}>
               <Text style={s.profileCardLabel}>{t('mobile.client.home.profile')}</Text>
               <Text style={s.profileCardName}>{resolveDisplayName(client)}</Text>

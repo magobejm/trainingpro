@@ -337,6 +337,7 @@ export const s = StyleSheet.create({
     borderRadius: LIGHT.radiusFull,
     height: 44,
     justifyContent: 'center',
+    overflow: 'hidden',
     width: 44,
   },
   profileCardInfo: { flex: 1 },
